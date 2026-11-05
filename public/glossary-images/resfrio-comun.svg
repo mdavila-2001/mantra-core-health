@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Resfrío común</title>
+  <desc id="d">Perfil de cabeza con la nariz y la faringe ocupadas por virus. A la derecha, la evolución habitual por días hasta la resolución, las medidas de alivio y los signos que obligan a consultar.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="210.0" y="50" text-anchor="middle" class="title">Vía respiratoria alta</text>
+<path d="M240,80 Q180,40 120,70 Q88,90 86,130 L78,150 L64,172 L80,178 Q76,190 82,198 Q78,210 88,220 Q106,236 130,232 L136,310 L220,310 L220,230 Q270,180 240,80 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="120" cy="142" r="5" fill="var(--ink)" stroke="none" stroke-width="1"/>
+<path d="M86,140 Q140,130 170,150 Q180,200 176,250 L180,310" fill="none" stroke="var(--organ-d)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>
+<text x="40" y="120" class="small">Nariz</text>
+<text x="230" y="170" class="small">Faringe</text>
+<line x1="226" y1="166" x2="180" y2="166" stroke="var(--muted)" stroke-width="1.5"/>
+<circle cx="120" cy="140" r="6" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="150" cy="146" r="6" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="174" cy="180" r="6" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="176" cy="220" r="6" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<text x="200" y="360" text-anchor="middle" class="lab" style="fill:var(--purple)">Virus (sobre todo rinovirus)</text>
+<text x="200" y="380" text-anchor="middle" class="small" style="fill:var(--muted)">por gotitas y manos</text>
+<text x="200" y="410" text-anchor="middle" class="step">Los antibióticos no sirven.</text>
+<rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="598.0" y="50" text-anchor="middle" class="title">Evolución habitual</text>
+<rect x="436" y="62" width="74" height="70" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="473" y="86" text-anchor="middle" class="small">Días 1-2</text>
+<text x="473" y="108" text-anchor="middle" class="small">garganta</text>
+<text x="473" y="124" text-anchor="middle" class="small">irritada</text>
+<rect x="516" y="62" width="74" height="70" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="553" y="86" text-anchor="middle" class="small">Días 2-4</text>
+<text x="553" y="108" text-anchor="middle" class="small">moco</text>
+<text x="553" y="124" text-anchor="middle" class="small">estornudos</text>
+<rect x="596" y="62" width="74" height="70" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="633" y="86" text-anchor="middle" class="small">Días 4-7</text>
+<text x="633" y="108" text-anchor="middle" class="small">tos</text>
+<text x="633" y="124" text-anchor="middle" class="small">congestión</text>
+<rect x="676" y="62" width="74" height="70" rx="8" fill="var(--ok-l)" stroke-width="1"/>
+<text x="713" y="86" text-anchor="middle" class="small">7-10 días</text>
+<text x="713" y="108" text-anchor="middle" class="small">se</text>
+<text x="713" y="124" text-anchor="middle" class="small">resuelve</text>
+<text x="436" y="160" class="lab">Alivio: reposo, líquidos, lavado nasal.</text>
+<text x="436" y="180" class="small" style="fill:var(--muted)">La tos puede durar más.</text>
+<rect x="436" y="200" width="324" height="164" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+<text x="448" y="222" class="step" style="fill:var(--warn)">Consultar si aparece:</text>
+<text x="448" y="248" class="lab">• Dificultad para respirar</text>
+<text x="448" y="274" class="lab">• Fiebre alta o de más de 3 días</text>
+<text x="448" y="300" class="lab">• Dolor de oído o de cara intenso</text>
+<text x="448" y="326" class="lab">• Empeora tras mejorar</text>
+<text x="448" y="352" class="lab">• Bebés con rechazo del alimento</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

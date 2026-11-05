@@ -1,14 +1,25 @@
+/* Same box as the KPI tiles (app-card outlined, padding md). Flex row so the
+   legend sits beside the title on wide screens and wraps under it on phones. */
 .grafico {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  column-gap: var(--sp-4);
   margin: var(--sp-5) 0 0;
   padding: var(--sp-4);
   border: 1px solid var(--border-default);
-  border-radius: var(--r-lg);
-  background: var(--surface-raised);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  /* Size container: the plot adapts to its own width, not the viewport. */
+  container: grafico / inline-size;
 }
 
 .grafico__titulo {
   display: grid;
+  flex: 1 1 16rem;
   gap: var(--sp-1);
+  min-inline-size: 0;
   margin-block-end: var(--sp-4);
   font-family: var(--font-display);
   font-weight: 600;
@@ -28,6 +39,7 @@
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
   gap: var(--sp-1);
+  flex: 1 0 100%;
   align-items: end;
   block-size: 9rem;
 }
@@ -48,9 +60,12 @@
   justify-content: flex-end;
   align-items: stretch;
   block-size: 100%;
+  /* Headroom for the value label above the tallest bar (17px line + 2px). */
+  padding-block-start: var(--sp-5);
 }
 
 .grafico__barra {
+  position: relative;
   border-radius: var(--r-sm) var(--r-sm) 0 0;
   background: var(--st-primary-bd);
   min-block-size: 2px;
@@ -61,7 +76,16 @@
   background: var(--brand-primary);
 }
 
+/* Lifted above its bar's top edge: out of flow, so it neither shrinks the
+   bar nor sits on it. */
 .grafico__cifra {
+  position: absolute;
+  inset-block-end: 100%;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  padding-block-end: 2px;
+  white-space: nowrap;
+  line-height: var(--lh-caption);
   font-size: var(--fs-caption);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -90,7 +114,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-1) var(--sp-4);
-  margin: 0 0 var(--sp-3);
+  margin: 0 0 var(--sp-4);
   padding: 0;
   list-style: none;
   font-size: var(--fs-caption);
@@ -150,4 +174,25 @@
 
 :host-context(html[data-theme='dark']) .grafico {
   --serie-sin-seguro: var(--c-aqua-600);
+}
+
+/* ---- narrow plot (phones) ------------------------------------------------
+   Under 30rem a column is ~20px: three-letter months run together and the
+   paired figures overlap. Keep every other month label (always the latest),
+   and let each paired figure grow outward from the pair instead of centering
+   over a 9px bar. The bars are aria-hidden; the hidden table keeps every month. */
+@container grafico (max-width: 30rem) {
+  .grafico__columna:nth-last-child(even) .grafico__mes {
+    visibility: hidden;
+  }
+
+  .grafico__celda:first-child .grafico__cifra--par {
+    inset-inline: auto 0;
+    transform: none;
+  }
+
+  .grafico__celda:last-child .grafico__cifra--par {
+    inset-inline: 0 auto;
+    transform: none;
+  }
 }

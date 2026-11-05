@@ -240,7 +240,7 @@ describe('GroupDetail', () => {
     fixture.detectChanges();
 
     expect(texto()).toContain(
-      'No pudimos leer las solicitudes de ingreso pendientes. (Código de soporte: corr-pend)',
+      'No pudimos leer las solicitudes de ingreso pendientes. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-pend)',
     );
   });
 

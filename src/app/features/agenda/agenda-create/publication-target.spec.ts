@@ -171,6 +171,41 @@ describe('PublicationAttempt', () => {
     expect(attempt.retirement()).toEqual(RETIRED);
   });
 
+  describe('activateIn', () => {
+    const authWith = (active: string | null) => {
+      const selectTenant = vi.fn();
+      return { selectTenant, activeTenantId: () => active };
+    };
+
+    it('pasa la sesión a la organización donde se publicó', () => {
+      const attempt = new PublicationAttempt();
+      const auth = authWith(SESSION_TENANT);
+      attempt.begin({ tenantId: 'tenant-olivos', scope: { tenantId: 'tenant-olivos' } });
+
+      attempt.activateIn(auth);
+
+      expect(auth.selectTenant).toHaveBeenCalledWith('tenant-olivos');
+    });
+
+    it('no toca la sesión si se publicó en la organización activa', () => {
+      const attempt = new PublicationAttempt();
+      const auth = authWith(SESSION_TENANT);
+      attempt.begin({ tenantId: SESSION_TENANT, scope: {} });
+
+      attempt.activateIn(auth);
+
+      expect(auth.selectTenant).not.toHaveBeenCalled();
+    });
+
+    it('sin intento en curso no hace nada', () => {
+      const auth = authWith(SESSION_TENANT);
+
+      new PublicationAttempt().activateIn(auth);
+
+      expect(auth.selectTenant).not.toHaveBeenCalled();
+    });
+  });
+
   it('al soltarlo no queda nada: ni dónde publicaba ni lo que retiró', () => {
     const attempt = new PublicationAttempt();
     attempt.begin({ tenantId: 'tenant-olivos', scope: { tenantId: 'tenant-olivos' } });

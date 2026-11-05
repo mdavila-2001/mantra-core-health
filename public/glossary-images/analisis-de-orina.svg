@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Las tres partes del análisis de orina</title>
+  <desc id="d">Un frasco con la muestra de orina se dirige a tres paneles: examen físico del color y la concentración, tira reactiva con casillas de colores y examen al microscopio del sedimento con células, cilindros y cristales.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --warn:#c0392b; --ok:#1f8a5b; --beam:#f2c46d; --violet:#7b5ea7; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --warn:#ef7467; --ok:#4cc38a; --beam:#8a6f2f; --violet:#b39ddb; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <text x="400" y="42" text-anchor="middle" class="title">Las tres partes del análisis de orina</text>
+  <rect x="340" y="62" width="120" height="20" rx="6" fill="var(--accent)"/>
+  <path d="M348 82 H452 L446 170 Q400 182 354 170 Z" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <path d="M352 112 H448 L446 170 Q400 182 354 170 Z" fill="var(--beam)" opacity=".8"/>
+  <text x="400" y="202" text-anchor="middle" class="lab">Muestra del chorro medio</text>
+  <path d="M350 180 L150 240" stroke="var(--muted)" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M400 210 L400 240" stroke="var(--muted)" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M450 180 L650 240" stroke="var(--muted)" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="30" y="248" width="236" height="200" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="148" y="276" text-anchor="middle" class="step">1 · Examen físico</text>
+  <circle cx="95" cy="330" r="22" fill="#f7e7a1" stroke="var(--line)"/>
+  <circle cx="148" cy="330" r="22" fill="#f2c94c" stroke="var(--line)"/>
+  <circle cx="201" cy="330" r="22" fill="#d9952b" stroke="var(--line)"/>
+  <text x="148" y="380" text-anchor="middle" class="lab">Color y transparencia</text>
+  <text x="148" y="402" text-anchor="middle" class="lab">Concentración</text>
+  <text x="148" y="428" text-anchor="middle" class="small muted">Orienta sobre la hidratación</text>
+  <rect x="282" y="248" width="236" height="200" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="276" text-anchor="middle" class="step">2 · Tira reactiva</text>
+  <rect x="300" y="306" width="200" height="26" rx="4" fill="var(--tissue)" stroke="var(--line)"/>
+  <rect x="312" y="310" width="18" height="18" fill="#f2c94c"/>
+  <rect x="338" y="310" width="18" height="18" fill="#6fcf97"/>
+  <rect x="364" y="310" width="18" height="18" fill="#bb6bd9"/>
+  <rect x="390" y="310" width="18" height="18" fill="#56ccf2"/>
+  <rect x="416" y="310" width="18" height="18" fill="#eb5757"/>
+  <rect x="442" y="310" width="18" height="18" fill="#f2994a"/>
+  <text x="400" y="364" text-anchor="middle" class="lab">Cada casilla cambia de color</text>
+  <text x="400" y="386" text-anchor="middle" class="lab">Proteínas, glucosa, sangre,</text>
+  <text x="400" y="406" text-anchor="middle" class="lab">nitritos, leucocitos…</text>
+  <text x="400" y="430" text-anchor="middle" class="small muted">Lectura cualitativa o aproximada</text>
+  <rect x="534" y="248" width="236" height="200" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="652" y="276" text-anchor="middle" class="step">3 · Microscopio</text>
+  <circle cx="652" cy="336" r="44" fill="var(--tissue)" stroke="var(--accent)" stroke-width="3"/>
+  <circle cx="632" cy="322" r="8" fill="var(--warn)" opacity=".8"/>
+  <circle cx="668" cy="350" r="10" fill="var(--violet)" opacity=".8"/>
+  <rect x="646" y="312" width="22" height="9" rx="4" fill="var(--accent)" opacity=".7"/>
+  <polygon points="626,350 636,340 646,350 636,360" fill="var(--beam)"/>
+  <text x="652" y="404" text-anchor="middle" class="lab">Células, cilindros,</text>
+  <text x="652" y="424" text-anchor="middle" class="lab">cristales y bacterias</text>
+</svg>

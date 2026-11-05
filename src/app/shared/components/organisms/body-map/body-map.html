@@ -1,7 +1,13 @@
 <!-- Sin zonas no hay silueta: las formas están, pero sin `id` no hay nada que
      elegir, y un dibujo que no se puede pulsar es peor que su ausencia. -->
 @if (vistaVisible(); as actual) {
-  <div class="body-map">
+  <div
+    class="body-map"
+    [class.body-map--ampliado]="ampliado()"
+    [attr.role]="ampliado() ? 'dialog' : null"
+    [attr.aria-modal]="ampliado() ? 'true' : null"
+    [attr.aria-label]="ampliado() ? 'Figura ampliada' : null"
+  >
     <!-- Con una sola vista no hay nada que elegir: el selector sobra. -->
     @if (opcionesDeVista().length > 1) {
       <app-segmented-control
@@ -12,6 +18,75 @@
         (valueChange)="cambiarVista($event)"
       />
     }
+
+    <!-- Lo que se hace con la figura: verla de cerca, ocuparla toda la pantalla y
+         llevarse lo que se señaló. Los botones llevan su nombre en `aria-label`
+         porque el ícono solo no se lee; el aumento se dice con palabras. -->
+    <div class="body-map__herramientas" role="toolbar" aria-label="Herramientas de la figura">
+      <div class="body-map__grupo">
+        <button
+          app-button
+          iconOnly
+          variant="outline"
+          size="sm"
+          type="button"
+          aria-label="Alejar"
+          [disabled]="!visor.puedeAlejar()"
+          data-testid="body-map-alejar"
+          (click)="visor.alejar()"
+        >
+          <span aria-hidden="true">−</span>
+        </button>
+        <span class="body-map__zoom" aria-live="polite" data-testid="body-map-zoom">
+          <span class="body-map__zoom-numero">{{ visor.zoomEnTexto() }}</span>
+        </span>
+        <button
+          app-button
+          iconOnly
+          variant="outline"
+          size="sm"
+          type="button"
+          aria-label="Acercar"
+          [disabled]="!visor.puedeAcercar()"
+          data-testid="body-map-acercar"
+          (click)="visor.acercar()"
+        >
+          <span aria-hidden="true">+</span>
+        </button>
+        @if (visor.puedeAlejar()) {
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            data-testid="body-map-restablecer"
+            (click)="visor.restablecer()"
+          >
+            Ver entera
+          </button>
+        }
+      </div>
+      <div class="body-map__grupo">
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-action="ampliar"
+          data-testid="body-map-ampliar"
+          [attr.aria-pressed]="ampliado()"
+          (click)="alternarAmpliado()"
+        >
+          {{ ampliado() ? 'Cerrar' : 'Ampliar' }}
+        </button>
+        <app-share-menu
+          testId="body-map-share"
+          [title]="tituloParaCompartir()"
+          [url]="enlaceParaCompartir()"
+          (exported)="exportar($event)"
+        />
+      </div>
+    </div>
 
     <!-- El escenario: un fondo apenas más claro al centro y una sombra de
          piso. Es lo que hace que el maniquí se lea parado en un lugar y no
@@ -36,42 +111,49 @@
         <svg
           class="body-map__lienzo"
           [class.body-map__lienzo--cara]="actual.vista.id === 'cara'"
-          [attr.viewBox]="actual.vista.viewBox"
+          [class.body-map__lienzo--acercado]="visor.zoom() > 1"
+          [attr.viewBox]="visor.viewBox()"
           role="group"
           [attr.aria-label]="etiqueta() + ' (' + actual.vista.nombre + ')'"
           [attr.data-testid]="testId() + '-vista-' + actual.vista.id"
           focusable="false"
+          (wheel)="visor.alGirarLaRueda($event)"
+          (pointerdown)="visor.empezarArrastre($event)"
+          (pointermove)="visor.arrastrar($event)"
+          (pointerup)="visor.terminarArrastre()"
+          (pointercancel)="visor.terminarArrastre()"
         >
-          <!-- El relleno de la zona elegida, por instancia (dos siluetas en la
-             misma página no se pisan). Los colores salen de tokens: ver la hoja. -->
-          <defs>
-            <linearGradient [attr.id]="idDeLaElegida" x1="0" y1="0" x2="0" y2="1">
-              <stop class="body-map__elegida-arriba" offset="0" />
-              <stop class="body-map__elegida-abajo" offset="1" />
-            </linearGradient>
-          </defs>
-
           <!-- El maniquí renderizado, en el mismo viewBox que las zonas: debajo
              la imagen, encima las zonas transparentes que reciben el clic. Es
              decorativo: el nombre de cada parte llega por su zona. -->
           <image
             class="body-map__render"
-            [attr.href]="actual.vista.image"
+            [attr.href]="imagenes.fuente(actual.vista.image)"
             x="0"
             y="0"
-            width="100%"
-            height="100%"
+            [attr.width]="caja()[0]"
+            [attr.height]="caja()[1]"
             preserveAspectRatio="xMidYMid meet"
             aria-hidden="true"
             [attr.data-testid]="testId() + '-render'"
           />
 
-          <g [style.--body-map-relleno-elegida]="'url(#' + idDeLaElegida + ')'">
+          <!-- The chosen and told zones, painted on the render's own volume. -->
+          <g
+            app-body-map-paint
+            [fuente]="imagenes.fuente(actual.vista.image)"
+            [caja]="caja()"
+            [zonas]="actual.zonas"
+            [elegida]="value()"
+            [marcadas]="marcadasPorId()"
+          />
+
+          <g>
             @for (zona of actual.zonas; track zona.id) {
               <g
                 class="body-map__zona"
                 [class.body-map__zona--elegida]="zona.id === value()"
-                [class.body-map__zona--marcada]="estaMarcada(zona.id)"
+                [class.body-map__zona--marcada]="estaMarcada(zona)"
               >
                 <!-- El `role="button"` y el `tabindex` son lo que convierte un dibujo
                    en un control: sin ellos la silueta sería un adorno que sólo
@@ -85,12 +167,12 @@
                   [attr.aria-pressed]="zona.id === value()"
                   [attr.aria-label]="nombreAccesible(zona)"
                   [attr.data-testid]="testId() + '-' + zona.id"
-                  (click)="elegir(zona)"
+                  (click)="clicEnZona(zona, $event)"
                   (keydown.enter)="elegir(zona)"
                   (keydown.space)="elegirConBarra($event, zona)"
                   (pointerenter)="apuntar(zona.id)"
                   (pointerleave)="apuntar(null)"
-                  (focus)="apuntar(zona.id)"
+                  (focus)="apuntar(zona.id); visor.centrarEn(zona.centros, $event)"
                   (blur)="apuntar(null)"
                 />
               </g>
@@ -110,6 +192,27 @@
               <circle class="body-map__marcador-punto" r="2.6" />
             </g>
           }
+
+          <!-- The chosen part's name next to its pin: with ~40 parts per view,
+             «Codo derecho» must be readable on the body, not only below it. It
+             goes outward, beside the pin, when it fits; otherwise above it. -->
+          @if (nombreElegido(); as nombre) {
+            @if (centrosDeLaElegida()[0]; as c) {
+              @let lado = c[0] < caja()[0] / 2 ? -1 : 1;
+              @let largo = nombre.length * 4.6;
+              @let afuera = lado < 0 ? c[0] - 10 - largo > 0 : c[0] + 10 + largo < caja()[0];
+              <text
+                class="body-map__rotulo"
+                [attr.x]="afuera ? c[0] + lado * 10 : c[0]"
+                [attr.y]="afuera ? c[1] + 3 : c[1] - 11"
+                [attr.text-anchor]="
+                  afuera ? (lado < 0 ? 'end' : 'start') : c[0] < caja()[0] * 0.3 ? 'start' : c[0] > caja()[0] * 0.7 ? 'end' : 'middle'
+                "
+                aria-hidden="true"
+                [attr.data-testid]="testId() + '-rotulo'"
+              >{{ nombre }}</text>
+            }
+          }
         </svg>
       </div>
     </div>
@@ -117,13 +220,27 @@
     <!-- La tercera señal de lo elegido, además del relleno y del trazo: en
          palabras. Es la que sirve cuando no se distinguen los colores y la que
          un lector de pantalla anuncia al cambiar. -->
-    <p class="body-map__elegida" aria-live="polite" [attr.data-testid]="testId() + '-elegida'">
-      @if (nombreElegido(); as nombre) {
-        Zona elegida: <strong>{{ nombre }}</strong>
-      } @else {
-        Toque una parte del cuerpo.
+    <div class="body-map__estado">
+      <p class="body-map__elegida" aria-live="polite" [attr.data-testid]="testId() + '-elegida'">
+        @if (nombreElegido(); as nombre) {
+          Zona elegida: <strong>{{ nombre }}</strong>. Toque otro lugar de la zona para mover el punto.
+        } @else {
+          Toque una parte del cuerpo.
+        }
+      </p>
+      @if (nombreElegido()) {
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          [attr.data-testid]="testId() + '-quitar'"
+          (click)="quitar()"
+        >
+          Quitar
+        </button>
       }
-    </p>
+    </div>
 
     <!-- Lo que se ilumina por lo que la persona escribió o dictó, dicho en
          palabras: el color solo no alcanza, y además nombra las zonas que no

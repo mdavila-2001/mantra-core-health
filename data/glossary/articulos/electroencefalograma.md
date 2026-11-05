@@ -1,5 +1,6 @@
 ---
 slug: electroencefalograma
+image: electroencefalograma.svg | Electrodos en el cuero cabelludo captan la actividad eléctrica cerebral. | Cabeza vista desde arriba con electrodos distribuidos, trazados de ondas cerebrales de vigilia, sueño y actividad rápida, y los usos principales del estudio.
 ---
 
 ## [definition] Introducción

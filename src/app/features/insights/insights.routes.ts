@@ -7,6 +7,7 @@ const TITLE = `${APP_TITLE} - AloVida Insights`;
 
 /** Cada módulo se descarga al entrar; el marco los contiene. */
 const PAGES: Readonly<Record<InsightsModule['id'], NonNullable<Route['loadComponent']>>> = {
+  home: () => import('./modules/home/home-page').then((m) => m.HomePage),
   campaigns: () => import('./modules/campaigns/campaigns-page').then((m) => m.CampaignsPage),
   funnel: () => import('./modules/funnel/funnel-page').then((m) => m.FunnelPage),
   app: () => import('./modules/app-usage/app-usage-page').then((m) => m.AppUsagePage),
@@ -22,7 +23,7 @@ const PAGES: Readonly<Record<InsightsModule['id'], NonNullable<Route['loadCompon
  * (`InsightsShell`) las contiene; los roles los hereda de la sección.
  */
 export const INSIGHTS_RUTAS: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'campaigns' },
+  { path: '', pathMatch: 'full', redirectTo: 'home' },
   ...INSIGHTS_MODULES.map(
     (m): Route => ({ path: m.path, title: `${TITLE} - ${m.label}`, loadComponent: PAGES[m.id] }),
   ),

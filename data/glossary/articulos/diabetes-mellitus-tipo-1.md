@@ -1,5 +1,6 @@
 ---
 slug: diabetes-mellitus-tipo-1
+image: diabetes-mellitus-tipo-1.svg | Las defensas destruyen las células beta y falta la insulina. | Páncreas con un islote cuyas células beta son atacadas por linfocitos, con los síntomas típicos de la diabetes tipo 1 y su tratamiento con insulina.
 ---
 
 ## [definition] Introducción

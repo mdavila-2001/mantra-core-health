@@ -1,0 +1,65 @@
+<app-card padding="lg" data-testid="lab-home-pending">
+  <div card-header class="head">
+    <app-section-heading icono="results" titulo="Resultados pendientes" />
+    @if (data(); as d) {
+      <app-badge
+        variant="warning"
+        size="sm"
+        [value]="d.total + (d.total === 1 ? ' pendiente' : ' pendientes')"
+        [label]="d.total + (d.total === 1 ? ' resultado pendiente' : ' resultados pendientes')"
+      />
+    }
+  </div>
+
+  <app-lab-block-state [state]="state()" subject="los resultados pendientes" note="Salen de la lista de órdenes: al reintentar se vuelve a pedir esa lista." (retry)="retry.emit()">
+    @if (data(); as d) {
+      <ul class="rows" data-testid="lab-home-pending-list">
+        @for (order of d.items; track order.orderId) {
+          <li class="row">
+            <span class="row__main">
+              <span class="row__title">{{ order.studyName }}</span>
+              <span class="row__meta">
+                {{ order.patientName }} ·
+                <time [attr.datetime]="order.requestedAt">{{ order.requestedAt | date: "d MMM" }}</time>
+              </span>
+            </span>
+            <a
+              app-button
+              variant="primary"
+              size="sm"
+              [routerLink]="ordersRoute"
+              [queryParams]="uploadParams"
+              [attr.aria-label]="'Subir resultado de ' + order.studyName + ', ' + order.patientName"
+              data-testid="lab-home-upload"
+            >Subir resultado</a>
+          </li>
+        }
+      </ul>
+      @if (d.total > d.items.length) {
+        <p class="note">
+          <a class="more" data-testid="lab-home-pending-more" [routerLink]="ordersRoute" [queryParams]="uploadParams">
+            Y {{ d.total - d.items.length }} más esperando su archivo
+          </a>
+        </p>
+      }
+    }
+  </app-lab-block-state>
+
+  @if (footer(); as f) {
+    <div card-footer class="footer">
+      <p class="footer__line">
+        <span class="footer__count">
+          <strong data-testid="summary-result-files">{{ f.count }}</strong>
+          {{ f.count === 1 ? 'resultado subido' : 'resultados subidos' }}
+        </span>
+        @if (f.last) {
+          <span class="footer__last" data-testid="summary-activity">
+            <span class="footer__sep" aria-hidden="true">· </span>
+            <span class="footer__label">último: </span>
+            <span class="footer__name">{{ f.last }}</span>
+          </span>
+        }
+      </p>
+    </div>
+  }
+</app-card>

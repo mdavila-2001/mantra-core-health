@@ -1,5 +1,6 @@
 ---
 slug: enfermedad-arterial-periferica
+image: enfermedad-arterial-periferica.svg | La placa estrecha la arteria y el músculo recibe menos sangre. | Pierna con una placa en la arteria del muslo y un corte de arteria estrechada por aterosclerosis, junto a la claudicación y los signos de urgencia.
 ---
 
 ## [definition] Introducción

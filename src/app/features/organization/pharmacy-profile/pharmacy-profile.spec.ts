@@ -88,6 +88,12 @@ describe('PharmacyProfile', () => {
     ]);
   });
 
+  it('las tres pestañas viven dentro de UNA tarjeta, no sueltas sobre el fondo', () => {
+    const tarjetas = root.querySelectorAll('[data-testid="ficha-tarjeta"]');
+    expect(tarjetas).toHaveLength(1);
+    expect(tarjetas[0].querySelectorAll('[role="tab"]')).toHaveLength(3);
+  });
+
   it('se abre en «Empresa», que es lo que se viene a mirar', () => {
     expect(pestanaActiva()).toBe('Empresa');
     expect(root.textContent ?? '').toContain('Farmacia Andina S.R.L.');

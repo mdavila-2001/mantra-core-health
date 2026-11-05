@@ -1,5 +1,6 @@
 ---
 slug: hepatitis-a
+image: hepatitis-a.svg | La hepatitis A se transmite por vía fecal-oral y causa una inflamación aguda del hígado. | Ciclo circular de contagio de la hepatitis A con agua o alimentos contaminados, el hígado inflamado, el virus en las heces y las manos sin lavar, junto a los síntomas y la prevención.
 ---
 
 ## [definition] Introducción

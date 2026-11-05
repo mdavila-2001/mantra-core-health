@@ -1,5 +1,6 @@
 ---
 slug: polineuropatia-periferica
+image: polineuropatia-periferica.svg | La polineuropatía afecta primero a los extremos de los nervios más largos. | Silueta con pies y manos resaltados en patrón de calcetín y guante, una neurona con el extremo dañado, y los síntomas y causas más frecuentes de la polineuropatía.
 ---
 
 ## [definition] Introducción

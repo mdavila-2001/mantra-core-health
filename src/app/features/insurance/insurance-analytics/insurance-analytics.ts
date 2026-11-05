@@ -396,7 +396,7 @@ export class InsuranceAnalytics {
         'KPI',
         'averageMonthlyPerCapitaExpense',
         'Gasto per cápita mensual',
-        k.averageMonthlyPerCapitaExpense ?? 'Sin datos',
+        k.averageMonthlyPerCapitaExpense ?? 'Todavía sin registros',
         dashboard.currency?.code ?? '',
       ),
       seccion('KPI', 'totalClaimsCount', 'Reclamos totales', String(k.totalClaimsCount), ''),
@@ -404,7 +404,7 @@ export class InsuranceAnalytics {
         'KPI',
         'approvalRatePercent',
         'Tasa de aprobación',
-        k.approvalRatePercent ?? 'Sin datos',
+        k.approvalRatePercent ?? 'Todavía sin registros',
         '%',
       ),
       seccion(
@@ -472,7 +472,7 @@ export class InsuranceAnalytics {
         'Inmunización',
         'vaccinationRatePercent',
         'Tasa de inmunización',
-        dashboard.immunization.vaccinationRatePercent ?? 'Sin datos',
+        dashboard.immunization.vaccinationRatePercent ?? 'Todavía sin registros',
         '%',
       ),
     );

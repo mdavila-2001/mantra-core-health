@@ -1,5 +1,6 @@
 ---
 slug: esquizofrenia
+image: esquizofrenia.svg | Los síntomas de la esquizofrenia se agrupan en positivos, negativos y cognitivos. | Tres recuadros con los grupos de síntomas de la esquizofrenia y una cabeza de perfil con el cerebro, junto a los factores que influyen y los tres pilares del tratamiento.
 ---
 
 ## [definition] Introducción

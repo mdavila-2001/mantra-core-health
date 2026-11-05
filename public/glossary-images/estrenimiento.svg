@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Por qué se endurecen las heces en el estreñimiento</title>
+  <desc id="d">Intestino grueso en forma de marco con las heces que avanzan desde el inicio hasta el recto y se hacen más pequeñas y secas porque el colon absorbe agua durante más tiempo. A la derecha, medidas que ayudan y señales de alarma.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Estreñimiento: el tránsito por el colon se enlentece</text>
+  <rect x="20" y="60" width="400" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="88" text-anchor="middle" class="title">El recorrido por el intestino grueso</text>
+  <path d="M110 400 L110 160 C110 120 130 110 160 110 L280 110 C310 110 330 120 330 160 L330 330 C330 360 300 370 270 370 L230 370 L220 420" fill="none" stroke="var(--organ)" stroke-width="30" stroke-linejoin="round" opacity=".7"/>
+  <circle cx="110" cy="340" r="10" fill="var(--warn)" stroke="none"/>
+  <circle cx="110" cy="250" r="10" fill="var(--warn)" stroke="none"/>
+  <circle cx="160" cy="110" r="10" fill="var(--warn)" stroke="none"/>
+  <circle cx="240" cy="110" r="9" fill="var(--warn)" stroke="none"/>
+  <circle cx="330" cy="170" r="9" fill="var(--warn)" stroke="none"/>
+  <circle cx="330" cy="260" r="8" fill="var(--warn)" stroke="none"/>
+  <circle cx="290" cy="370" r="8" fill="var(--warn)" stroke="none"/>
+  <circle cx="240" cy="370" r="7" fill="var(--warn)" stroke="none"/>
+  <text x="220" y="160" text-anchor="middle" class="small b">Se absorbe agua</text>
+  <text x="220" y="176" text-anchor="middle" class="small">a lo largo del colon</text>
+  <text x="220" y="236" text-anchor="middle" class="small">Más tiempo dentro =</text>
+  <text x="220" y="252" text-anchor="middle" class="small">heces más duras y secas</text>
+  <text x="220" y="300" text-anchor="middle" class="small">Recto</text>
+  <line x1="228" y1="304" x2="236" y2="370" stroke="var(--muted)" stroke-width="1"/>
+  <text x="60" y="430" class="small muted">Inicio</text>
+  <rect x="436" y="60" width="344" height="216" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="88" text-anchor="middle" class="h">Medidas que ayudan</text>
+  <text x="454" y="110" class="small">• Más fibra: frutas, verduras,</text>
+  <text x="465" y="136" class="small">legumbres e integrales</text>
+  <text x="454" y="162" class="small">• Beber suficiente agua</text>
+  <text x="454" y="188" class="small">• Actividad física diaria</text>
+  <text x="454" y="214" class="small">• No aguantar las ganas</text>
+  <text x="454" y="240" class="small">• Revisar fármacos con el médico</text>
+  <rect x="436" y="292" width="344" height="148" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="450" y="316" class="lab b" style="fill:var(--red)">Consultar de urgencia si</text>
+  <text x="450" y="340" class="small">• Sangre en las heces</text>
+  <text x="450" y="362" class="small">• Pérdida de peso sin motivo</text>
+  <text x="450" y="384" class="small">• Cambio reciente del hábito</text>
+  <text x="450" y="406" class="small">• Dolor fuerte, vómitos, sin gases</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

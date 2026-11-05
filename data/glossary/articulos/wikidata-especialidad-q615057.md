@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q615057
+image: wikidata-especialidad-q615057.svg | El anestesiólogo cuida al paciente antes, durante y después de la cirugía. | Tres columnas con las tareas antes, durante y después de una operación, los tipos de anestesia general, regional, local y sedación, y un monitor de constantes vitales.
 ---
 
 ## [definition] Introducción

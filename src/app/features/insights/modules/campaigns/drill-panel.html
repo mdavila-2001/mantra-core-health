@@ -1,0 +1,73 @@
+<app-ins-panel title="Detalle y drill-down" question="General → Canal → Campaña → Evento: baje de nivel y toda la pantalla lo sigue.">
+  <nav class="dr__crumbs" aria-label="Nivel de detalle">
+    <button type="button" class="dr__chip" [class.dr__chip--now]="steps().length === 0" [attr.aria-current]="steps().length === 0 ? 'step' : null" (click)="goTo(0)">General</button>
+    @for (c of crumbs(); track c.upTo) {
+      <span aria-hidden="true">›</span>
+      <button type="button" class="dr__chip" [class.dr__chip--now]="c.upTo === steps().length" [attr.aria-current]="c.upTo === steps().length ? 'step' : null" (click)="goTo(c.upTo)">{{ c.text }}</button>
+    }
+    @if (steps().length > 0) {
+      <button type="button" class="dr__up" (click)="goTo(steps().length - 1)">Subir un nivel</button>
+    }
+  </nav>
+
+  <p class="dr__now">
+    @if (view() === 'ev') {
+      Ahora ve: los días más atípicos de «{{ metricLabel() }}».
+    } @else {
+      Ahora ve: {{ levelName() === 'Canal' ? 'canales' : 'campañas' }}, ordenados por «{{ metricLabel() }}». Elija una fila para bajar un nivel.
+    }
+  </p>
+
+  @if (view() === 'ev') {
+    @if (events().length === 0) {
+      <p class="dr__empty">No hay días suficientes con dato para señalar los más atípicos de esta selección.</p>
+    } @else {
+      <div class="dr__wrap">
+        <table class="dr__table">
+          <caption class="dr__sr">Días más atípicos de {{ metricLabel() }}</caption>
+          <thead>
+            <tr><th scope="col">Día</th><th scope="col" class="dr__n">{{ metricLabel() }}</th><th scope="col" class="dr__n">Desvío</th><th scope="col">Hito asociado</th></tr>
+          </thead>
+          <tbody>
+            @for (e of events(); track e.date) {
+              <tr>
+                <th scope="row">{{ e.label }}</th>
+                <td class="dr__n">{{ value(e.value) }}</td>
+                <td class="dr__n">{{ zText(e.z) }}</td>
+                <td>{{ e.milestone ?? '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  } @else if (rows().length === 0) {
+    <p class="dr__empty">No hay filas para esta selección. Amplíe el periodo o quite un filtro.</p>
+  } @else {
+    <div class="dr__wrap">
+      <table class="dr__table">
+        <caption class="dr__sr">Detalle por {{ levelName().toLowerCase() }}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{{ levelName() }}</th>
+            @for (c of columns; track c) {
+              <th scope="col" class="dr__n">{{ heads[c] }}</th>
+            }
+            <th scope="col">Estado · {{ metricLabel() }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows(); track r.id) {
+            <tr>
+              <th scope="row"><button type="button" class="dr__open" (click)="open(r)" [attr.aria-label]="'Bajar a ' + r.name">{{ r.name }}</button></th>
+              @for (c of columns; track c) {
+                <td class="dr__n">{{ show(r, c) }}</td>
+              }
+              <td><app-ins-status [status]="r.status" [short]="true" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</app-ins-panel>

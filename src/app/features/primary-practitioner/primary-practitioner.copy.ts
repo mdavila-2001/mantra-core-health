@@ -18,6 +18,7 @@ export const COPY = {
   noDisponible: 'Este profesional ya no está disponible para elegirlo.',
   sinMedico: 'Todavía no eligió un médico de cabecera.',
   buscar: 'Buscar en la guía de médicos',
+  reservar: 'Reservar cita',
   verFicha: 'Ver su ficha',
   errorAlGuardar: 'No pudimos guardar su médico de cabecera.',
 } as const;

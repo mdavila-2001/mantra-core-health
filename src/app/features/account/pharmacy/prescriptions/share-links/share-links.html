@@ -27,9 +27,17 @@
           }
         </div>
 
-        <p class="link__meta">
-          Creado el {{ row.createdAt | date: 'd/MM/y' }} · vence el {{ row.expiresAt | date: 'd/MM/y' }} ·
-          {{ row.uses }} {{ row.uses === 1 ? 'apertura' : 'aperturas' }} de farmacia
+        <!-- La hora distingue dos enlaces de la misma receta creados el mismo día. -->
+        <p class="link__meta" [attr.data-testid]="testids.linkMeta">
+          Creado el {{ row.createdAt | date: "d/MM/y 'a las' HH:mm" }} ·
+          @if (row.status === 'REVOKED') {
+            ya no abre para nadie
+          } @else if (row.status === 'EXPIRED') {
+            ya no abre
+          } @else {
+            vence el {{ row.expiresAt | date: 'd/MM/y' }}
+          }
+          · {{ row.uses }} {{ row.uses === 1 ? 'apertura' : 'aperturas' }} de farmacia
         </p>
 
         @if (row.status !== 'REVOKED') {

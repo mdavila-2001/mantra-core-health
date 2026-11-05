@@ -80,9 +80,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # Vacía. Con el backend simulado da igual a dónde apunte —nada llega a
-        # la red—, y vacía deja la CSP en `connect-src 'self'`, que es lo mismo
-        # que en producción.
+        # La API simulada sigue en el navegador.
         PUBLIC_API_BASE_URL: ''
         # Explícito, con el mismo valor que el Dockerfile toma si no se le pasa:
         # `production` es la maqueta (`mockBackend: true`), que es lo que este

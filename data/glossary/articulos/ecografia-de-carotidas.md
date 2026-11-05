@@ -1,5 +1,6 @@
 ---
 slug: ecografia-de-carotidas
+image: ecografia-de-carotidas.svg | La ecografía dúplex muestra la pared de la carótida y el flujo de sangre. | Persona con la carótida marcada en el cuello y una sonda de ecografía, junto a una imagen esquemática de la arteria con una placa que estrecha su luz y la lista de lo que mide la prueba.
 ---
 
 ## [definition] Introducción

@@ -133,11 +133,12 @@
 </ng-template>
 
 <!-- Un solo selector de archivos para toda la pantalla: «Subir resultados» de
-     cualquier fila lo abre. Sin tope de tamaño; la cola los manda por partes. -->
+     cualquier fila lo abre. Hasta 10 MB y sólo los formatos que admite la API. -->
 <input
   #fileInput
   type="file"
   multiple
+  [accept]="acceptedFormats"
   class="sr-only"
   tabindex="-1"
   aria-hidden="true"

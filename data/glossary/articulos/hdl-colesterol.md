@@ -1,5 +1,6 @@
 ---
 slug: hdl-colesterol
+image: hdl-colesterol.svg | El HDL transporta el colesterol sobrante desde los tejidos hasta el hígado. | Arteria con partículas HDL que llevan colesterol hacia el hígado, junto a un tubo de sangre y listas de factores que suben y bajan el HDL.
 ---
 
 ## [definition] Introducción

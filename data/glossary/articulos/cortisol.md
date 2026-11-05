@@ -1,5 +1,6 @@
 ---
 slug: cortisol
+image: cortisol.svg | Regulación del cortisol, su ritmo diario y la utilidad de medirlo. | Eje hipotálamo, hipófisis y suprarrenales con retroalimentación, curva del cortisol con máximo al despertar y lista de trastornos que la prueba ayuda a evaluar.
 ---
 
 ## [definition] Introducción

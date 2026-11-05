@@ -87,7 +87,7 @@ test('el botón de la receta oficial descarga un PDF real, en dos anchos, sin er
     await descarga.saveAs(join(EVIDENCIA, `receta-descargada-${viewport.nombre}.pdf`));
     expect(descarga.suggestedFilename()).toMatch(/^receta-.+\.pdf$/);
 
-    await expect(page.getByText('Descarga iniciada exitosamente')).toBeVisible();
+    await expect(page.getByText('Su receta se está descargando.')).toBeVisible();
 
     const propios = erroresDeConsola.filter((error) => !esRuidoDelServidorDeDesarrollo(error));
     expect(propios, `errores de consola en ${viewport.nombre}`).toEqual([]);

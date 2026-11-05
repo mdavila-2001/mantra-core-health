@@ -22,10 +22,12 @@ import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import type { BreadcrumbItem } from '../../../../shared/components/molecules/breadcrumb/breadcrumb.types';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { unavailableMessageOf } from '../../../../core/data-access/simulator-only';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { CustomField } from '../../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { searchConceptOptions } from '../concept-search';
 import { crearBuscadorDePersonas } from '../people-search';
@@ -65,6 +67,7 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
     Alert,
     AnnounceOnAppear,
     CustomField,
+    BackLink,
     PageHeader,
     PaginatedForm,
     ReferenceCombobox,
@@ -79,6 +82,20 @@ export class ChildOrganizationNew {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+
+  /** Si ya se avisó que la búsqueda de personas no está en la API. */
+  private busquedaNoDisponibleAvisada = false;
+
+  /**
+   * «Sin resultados» mentiría si la búsqueda no existe en la API (informe B,
+   * §2): se dice qué falta, una sola vez y no en cada tecla.
+   */
+  private avisarBusquedaNoDisponible(error: unknown): void {
+    const aviso = unavailableMessageOf(error);
+    if (aviso === null || this.busquedaNoDisponibleAvisada) return;
+    this.busquedaNoDisponibleAvisada = true;
+    this.toast.warning(aviso);
+  }
 
   /**
    * La organización madre, del segmento `:tenantId`.
@@ -348,6 +365,9 @@ export class ChildOrganizationNew {
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
     });
   }
+
+  /** A dónde sale el botón «Volver». */
+  protected readonly rutaVolver = computed(() => organizationDetailRoute(this.tenantId()));
 
   protected cancelar(): void {
     void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));

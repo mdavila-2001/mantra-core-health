@@ -1,0 +1,7 @@
+✓ src/app/features/component-stock/component-index.generated.ts
+  1042 componentes · 3 otros · 769 pantallas · 140 maquetas · 25 atomos · 59 moleculas · 46 organismos
+  296 con algo que mirar
+  relaciones: 5351 template-instantiates · 9 imports-available sin instanciar · 88 type-only · 373 dynamic-loads
+  nivel: 0 declarado · 1042 por-ruta · 7 unresolvedEvidence en 7 componentes
+  acreditación: descubiertos 1042/1042 · con escenario 3/1042 · verificados visualmente 3/1042 · bloqueados 206/1042 · montó e interactuó: se miden en el banco (runtime)
+typecheck exit=0

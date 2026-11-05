@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal, type Provider } from '@angular/core';
 
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { PharmacyClient } from '../../core/data-access/pharmacy/pharmacy.client';
@@ -17,6 +17,9 @@ import type { ViewState } from '../../core/view-state/view-state.types';
  *
  * No es `providedIn: 'root'`: cada pantalla lo provee y muere con ella, así que
  * cambiar de pantalla no arrastra una elección vieja ni una lista cacheada.
+ * Las pestañas del catálogo lo piden con {@link providePharmacyScope}: dentro
+ * del catálogo usan el del contenedor, y la farmacia elegida en una pestaña
+ * sigue elegida en la siguiente.
  */
 @Injectable()
 export class PharmacyScope {
@@ -73,4 +76,16 @@ export class PharmacyScope {
         this.options.set(errorToViewState<readonly SelectOption<string>[]>(error)),
     });
   }
+}
+
+/**
+ * El {@link PharmacyScope} de una pestaña del catálogo: el del contenedor si
+ * hay uno arriba —la elección se comparte entre pestañas—, o uno propio si la
+ * pantalla se monta sola.
+ */
+export function providePharmacyScope(): Provider {
+  return {
+    provide: PharmacyScope,
+    useFactory: () => inject(PharmacyScope, { optional: true, skipSelf: true }) ?? new PharmacyScope(),
+  };
 }

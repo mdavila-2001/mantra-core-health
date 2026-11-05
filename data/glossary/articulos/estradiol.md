@@ -1,5 +1,6 @@
 ---
 slug: estradiol
+image: estradiol.svg | El estradiol, producido sobre todo por los ovarios, se mide en una muestra de sangre. | Silueta humana con los ovarios como fuente principal de estradiol y otras fuentes menores, y un tubo de sangre donde se mide la hormona. A la derecha, para qué se pide y por qué se interpreta según la fase del ciclo.
 ---
 
 ## [definition] Introducción

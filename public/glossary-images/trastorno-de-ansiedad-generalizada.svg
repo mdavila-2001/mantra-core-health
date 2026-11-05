@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Trastorno de ansiedad generalizada</title>
+  <desc id="d">Círculo que se retroalimenta entre preocupación excesiva, síntomas físicos y conductas de evitación o búsqueda de seguridad. A la derecha, los síntomas frecuentes y los tratamientos eficaces.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="230.0" y="50" text-anchor="middle" class="title">El círculo de la preocupación</text>
+<circle cx="230" cy="236" r="120" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="6 5"/>
+<rect x="160" y="90" width="140" height="52" rx="8" fill="var(--purple)" stroke-width="1"/>
+<text x="230.0" y="112.7" text-anchor="middle" class="small" style="fill:var(--on)">Preocupación</text>
+<text x="230.0" y="127.7" text-anchor="middle" class="small" style="fill:var(--on)">excesiva</text>
+<rect x="264" y="270" width="140" height="52" rx="8" fill="var(--purple)" stroke-width="1"/>
+<text x="334.0" y="292.7" text-anchor="middle" class="small" style="fill:var(--on)">Síntomas</text>
+<text x="334.0" y="307.7" text-anchor="middle" class="small" style="fill:var(--on)">físicos</text>
+<rect x="56" y="270" width="140" height="52" rx="8" fill="var(--purple)" stroke-width="1"/>
+<text x="126.0" y="292.7" text-anchor="middle" class="small" style="fill:var(--on)">Evitar o</text>
+<text x="126.0" y="307.7" text-anchor="middle" class="small" style="fill:var(--on)">buscar seguridad</text>
+<circle cx="334" cy="176" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="230" cy="356" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="126" cy="176" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<text x="230" y="232" text-anchor="middle" class="lab">Difícil de</text>
+<text x="230" y="250" text-anchor="middle" class="lab">controlar</text>
+<text x="230" y="420" text-anchor="middle" class="small" style="fill:var(--muted)">Dura meses y abarca muchos temas cotidianos.</text>
+<rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="618.0" y="50" text-anchor="middle" class="title">Síntomas frecuentes</text>
+<rect x="476" y="58" width="136" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="544.0" y="79.2" text-anchor="middle" class="small" style="fill:var(--ink)">Inquietud</text>
+<rect x="620" y="58" width="136" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="688.0" y="79.2" text-anchor="middle" class="small" style="fill:var(--ink)">Cansancio</text>
+<rect x="476" y="102" width="136" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="544.0" y="123.2" text-anchor="middle" class="small" style="fill:var(--ink)">Irritabilidad</text>
+<rect x="620" y="102" width="136" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="688.0" y="123.2" text-anchor="middle" class="small" style="fill:var(--ink)">Tensión muscular</text>
+<rect x="476" y="146" width="136" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="544.0" y="167.2" text-anchor="middle" class="small" style="fill:var(--ink)">Insomnio</text>
+<rect x="620" y="146" width="136" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="688.0" y="167.2" text-anchor="middle" class="small" style="fill:var(--ink)">Mente en blanco</text>
+<rect x="476" y="206" width="284" height="122" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="488" y="228" class="step">Tratamientos eficaces</text>
+<text x="488" y="252" class="lab">• Terapia cognitivo-conductual</text>
+<text x="488" y="274" class="lab">• Fármacos indicados por el médico</text>
+<text x="488" y="296" class="lab">• Ejercicio y técnicas de relajación</text>
+<text x="488" y="318" class="lab">• Reducir cafeína y alcohol</text>
+<text x="476" y="356" class="small" style="fill:var(--warn)">Pedir ayuda urgente si hay ideas</text>
+<text x="476" y="374" class="small" style="fill:var(--warn)">de hacerse daño.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

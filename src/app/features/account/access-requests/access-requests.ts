@@ -1,190 +1,142 @@
-import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import type { Observable } from 'rxjs';
 
-import { AuthzClient } from '../../../core/data-access/authz/authz.client';
-import type { CareRelationship } from '../../../core/data-access/authz/authz.types';
-import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
+import { AuthService } from '../../../core/auth/auth.service';
+import { PRACTITIONER_INBOX_ROLES, type AccessRequestItem } from '../../../core/data-access/authz/authz.types';
 import { MedicalSpecialtiesCatalog } from '../../../core/data-access/terminology/medical-specialties.service';
 import { describeApiFailure } from '../../../core/http/api-failure';
+import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
+import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
+import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Checkbox } from '../../../shared/components/atoms/checkbox/checkbox';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-
-/** Una solicitud pendiente, con lo elegido en pantalla para decidirla. */
-interface SolicitudEnPantalla {
-  readonly solicitud: CareRelationship;
-  /** Quién pide, resuelto desde su ficha; el id crudo si la ficha no se puede leer. */
-  readonly profesional: string;
-  elegidas: ReadonlySet<string>;
-  decidiendo: boolean;
-}
+import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { AccessRequestActions } from './access-request-actions';
+import { AccessRequestCard, type AccessRequestDecision } from './access-request-card/access-request-card';
+import { INBOX_COPY, splitByTab, type InboxRole } from './access-requests.copy';
 
 /**
- * **Mis solicitudes de vínculo** (FT-07-R05/R06) — a dónde lleva el aviso
- * "un profesional pide ver tu historia clínica".
+ * **Buzón de solicitudes** — the inbox of access requests, for the patient
+ * and for the practitioner (where the «a professional asks to see your
+ * record» notice leads).
  *
- * Sin entrada de menú a propósito: se llega por el enlace de la notificación,
- * como `/my-account/identity/cases`. El paciente elige QUÉ especialidades
- * autoriza — aceptar no es todo o nada (FT-07-R06). Las especialidades salen
- * del catálogo entero porque el pedido no las trae: las decide quien autoriza,
- * no quien pide.
+ * One card with three tabs: what waits for the reader (Recibidas), what waits
+ * for the other side (Enviadas) and what is decided (Historial). Every action
+ * re-reads the inbox, so what stays on screen is what the API kept. The API
+ * decides who may do what; the screen only offers what each side can do.
  */
 @Component({
   selector: 'app-access-requests',
-  imports: [Alert, AppButton, Card, Checkbox, DatePipe, EmptyState, PageHeader],
+  imports: [AccessRequestCard, Alert, AppButton, Card, EmptyState, PageHeader, Tab, Tabs, ViewStateHost],
   templateUrl: './access-requests.html',
   styleUrl: './access-requests.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccessRequests {
-  private readonly authz = inject(AuthzClient);
-  private readonly profiles = inject(ProfilesClient);
+  private readonly auth = inject(AuthService);
+  private readonly actions = inject(AccessRequestActions);
   private readonly specialties = inject(MedicalSpecialtiesCatalog);
-  private readonly navigation = inject(NavigationService);
+  private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
 
-  protected readonly breadcrumbs = this.navigation.breadcrumbs;
-  protected readonly cargando = signal(true);
-  protected readonly solicitudes = signal<readonly SolicitudEnPantalla[]>([]);
-  protected readonly especialidades = signal<readonly { id: string; nombre: string }[]>([]);
-  /**
-   * Por qué no se pudieron leer las solicitudes, o `null`. Sin esto, una
-   * lectura caída se mostraba como «No tiene solicitudes pendientes».
-   */
-  protected readonly errorDeCarga = signal<string | null>(null);
-  /** Sin especialidades no hay qué autorizar: se dice, en vez de un recuadro vacío. */
-  protected readonly errorDeEspecialidades = signal<string | null>(null);
+  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
+  /** Inside «Mis solicitudes» (as its tab): the host page owns the header. */
+  readonly embebido = input(false);
+  protected readonly role = computed<InboxRole>(() =>
+    this.auth.roles().some((role) => PRACTITIONER_INBOX_ROLES.includes(role)) ? 'practitioner' : 'patient',
+  );
+  protected readonly copy = computed(() => INBOX_COPY[this.role()]);
+  protected readonly state = signal<ViewState<readonly AccessRequestItem[]>>(loading());
+  /** The three tabs, each with its count in the label and its own empty line. */
+  protected readonly sections = computed(() => {
+    const { received, sent, history } = splitByTab(dataOf(this.state()) ?? []);
+    const copy = this.copy();
+    return [
+      { key: 'received', label: `Recibidas (${received.length})`, items: received, none: copy.receivedEmpty },
+      { key: 'sent', label: `Enviadas (${sent.length})`, items: sent, none: copy.sentEmpty },
+      { key: 'history', label: `Historial (${history.length})`, items: history, none: copy.historyEmpty },
+    ];
+  });
+  protected readonly activeTab = signal(0);
+  protected readonly specialtyNames = signal<ReadonlyMap<string, string>>(new Map());
+  protected readonly specialtiesError = signal<string | null>(null);
+  /** The request whose action is on its way; its buttons wait meanwhile. */
+  protected readonly busyId = signal<string | null>(null);
 
   constructor() {
-    this.cargarEspecialidades();
-    this.cargar();
+    this.loadSpecialties();
+    this.reload();
   }
 
-  protected cargarEspecialidades(): void {
-    this.errorDeEspecialidades.set(null);
+  protected retry(): void {
+    this.state.set(loading());
+    this.reload();
+  }
+
+  protected loadSpecialties(): void {
+    this.specialtiesError.set(null);
     this.specialties.listar().subscribe({
-      next: (opciones) =>
-        this.especialidades.set(opciones.map((o) => ({ id: o.conceptId, nombre: o.display }))),
+      next: (options) => this.specialtyNames.set(new Map(options.map((o) => [o.conceptId, o.display]))),
       error: (error: unknown) => {
-        this.especialidades.set([]);
-        this.errorDeEspecialidades.set(
-          describeApiFailure(error, 'No pudimos traer la lista de especialidades para elegir qué autoriza.'),
+        this.specialties.olvidar();
+        this.specialtiesError.set(
+          describeApiFailure(error, 'No pudimos traer los nombres de las especialidades.'),
         );
       },
     });
   }
 
-  protected cargar(): void {
-    this.cargando.set(true);
-    this.errorDeCarga.set(null);
-    this.authz.listMyPendingCareRelationshipRequests().subscribe({
-      next: (lista) => {
-        if (lista.length === 0) {
-          this.solicitudes.set([]);
-          this.cargando.set(false);
-          return;
-        }
-        forkJoin(lista.map((solicitud) => this.enPantalla(solicitud))).subscribe((items) => {
-          this.solicitudes.set(items);
-          this.cargando.set(false);
-        });
-      },
-      error: (error: unknown) => {
-        this.solicitudes.set([]);
-        this.cargando.set(false);
-        this.errorDeCarga.set(describeApiFailure(error, 'No pudimos traer sus solicitudes de vínculo.'));
-      },
-    });
-  }
-
-  /** Resuelve el nombre de quien pide; si su ficha no se puede leer, queda el id. */
-  private enPantalla(solicitud: CareRelationship) {
-    return this.profiles.getPractitionerProfile(solicitud.practitionerProfileId).pipe(
-      map((perfil) => perfil.displayName ?? solicitud.practitionerProfileId),
-      catchError(() => of(solicitud.practitionerProfileId)),
-      map(
-        (profesional): SolicitudEnPantalla => ({
-          solicitud,
-          profesional,
-          elegidas: new Set(),
-          decidiendo: false,
-        }),
-      ),
+  protected decide(item: AccessRequestItem, { decision, specialtyIds }: AccessRequestDecision): void {
+    this.run(
+      item,
+      this.actions.decide(this.role(), item, decision, specialtyIds),
+      decision === 'ACCEPT' ? 'Aceptó la solicitud.' : 'Rechazó la solicitud.',
     );
   }
 
-  protected alternar(item: SolicitudEnPantalla, especialidadId: string, marcada: boolean): void {
-    const siguiente = new Set(item.elegidas);
-    if (marcada) {
-      siguiente.add(especialidadId);
-    } else {
-      siguiente.delete(especialidadId);
+  protected async revoke(item: AccessRequestItem): Promise<void> {
+    const confirmed = await this.dialogs.confirm({
+      title: 'Revocar el acceso',
+      message: `${item.counterpart.displayName || 'Este profesional'} deja de ver su historia clínica por esta solicitud.`,
+      confirmLabel: 'Revocar',
+      destructive: true,
+    });
+    if (confirmed) {
+      this.run(item, this.actions.revoke(item), 'Revocó el acceso.');
     }
-    this.actualizar(item, { elegidas: siguiente });
   }
 
-  protected marcada(item: SolicitudEnPantalla, especialidadId: string): boolean {
-    return item.elegidas.has(especialidadId);
+  private reload(): void {
+    const copy = this.copy();
+    this.actions.list(this.role()).subscribe({
+      next: (items) =>
+        this.state.set(
+          items.length === 0 ? empty(copy.emptyAction, copy.emptyMessage, copy.emptyTitle) : ready(items),
+        ),
+      error: (error: unknown) => this.state.set(errorToViewState(error)),
+    });
   }
 
-  protected aceptar(item: SolicitudEnPantalla): void {
-    if (item.elegidas.size === 0) {
-      this.toasts.warning('Elija al menos una especialidad para autorizar, o rechace la solicitud.');
-      return;
-    }
-    this.actualizar(item, { decidiendo: true });
-    this.authz
-      .respondToCareRelationshipRequest(item.solicitud.id, {
-        decision: 'ACCEPT',
-        authorizedSpecialtyConceptIds: [...item.elegidas],
-      })
-      .subscribe({
-        next: () => {
-          this.toasts.success('Autorizó el acceso. Ya puede retirarlo cuando quiera.');
-          this.quitar(item);
-        },
-        error: (error: unknown) => {
-          this.toasts.error(describeApiFailure(error, 'No se pudo guardar su decisión. Intente de nuevo.'));
-          this.actualizar(item, { decidiendo: false });
-        },
-      });
-  }
-
-  protected rechazar(item: SolicitudEnPantalla): void {
-    this.actualizar(item, { decidiendo: true });
-    this.authz.respondToCareRelationshipRequest(item.solicitud.id, { decision: 'REJECT' }).subscribe({
+  private run(item: AccessRequestItem, request: Observable<unknown>, done: string): void {
+    this.busyId.set(item.id);
+    request.subscribe({
       next: () => {
-        this.toasts.success('Rechazó la solicitud.');
-        this.quitar(item);
+        this.busyId.set(null);
+        this.toasts.success(done);
+        this.reload();
       },
       error: (error: unknown) => {
+        this.busyId.set(null);
         this.toasts.error(describeApiFailure(error, 'No se pudo guardar su decisión. Intente de nuevo.'));
-        this.actualizar(item, { decidiendo: false });
       },
     });
-  }
-
-  /*
-   * Se busca por id y no por referencia: `actualizar` reemplaza el objeto, así
-   * que la referencia que tiene en la mano el `subscribe` de `aceptar` o
-   * `rechazar` ya no está en la lista cuando contesta el servidor. Por
-   * referencia, un fallo dejaba los botones apagados para siempre y un éxito no
-   * quitaba la solicitud de la pantalla.
-   */
-  private actualizar(item: SolicitudEnPantalla, cambio: Partial<SolicitudEnPantalla>): void {
-    this.solicitudes.set(
-      this.solicitudes().map((s) => (s.solicitud.id === item.solicitud.id ? { ...s, ...cambio } : s)),
-    );
-  }
-
-  private quitar(item: SolicitudEnPantalla): void {
-    this.solicitudes.set(this.solicitudes().filter((s) => s.solicitud.id !== item.solicitud.id));
   }
 }

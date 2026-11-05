@@ -1,0 +1,148 @@
+/* El costado de la portada del médico: el avance del alta, el sello de
+   AloVida y la puerta a «Mis verificaciones». Aparte de la hoja principal por
+   el tope de 300 líneas. */
+
+/* ── El costado: su perfil ──────────────────────────────────────────────── */
+.welcome__aside {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+.profile {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+  border: 1px solid var(--st-warning-bd);
+  border-radius: var(--r-xl);
+  background: color-mix(in srgb, var(--st-warning-bg) 55%, var(--bg-surface));
+}
+
+.profile__ring {
+  --welcome-pct: 0;
+  display: grid;
+  place-items: center;
+  inline-size: 4.5rem;
+  aspect-ratio: 1;
+  border-radius: var(--r-full);
+  background:
+    radial-gradient(closest-side, var(--bg-surface) 76%, transparent 77%),
+    conic-gradient(var(--brand-primary) calc(var(--welcome-pct) * 1%), var(--bg-surface-alt) 0);
+}
+
+.profile__ring-value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.profile__ring-value small {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.profile__title {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.profile__text {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}
+
+/* El sello: el logo de AloVida en un círculo blanco con dos anillos que laten. */
+.seal {
+  display: none;
+  place-items: center;
+  inline-size: 12rem;
+  aspect-ratio: 1;
+  justify-self: center;
+}
+
+@media (min-width: 64rem) {
+  .seal {
+    display: grid;
+  }
+}
+
+.seal > * {
+  grid-area: 1 / 1;
+}
+
+.seal__badge {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: 8.5rem;
+  aspect-ratio: 1;
+  border-radius: var(--r-full);
+  background: var(--surface-white);
+  box-shadow: var(--shadow-lg);
+}
+
+.seal__badge img {
+  inline-size: 5.5rem;
+  block-size: auto;
+  translate: 0 4%;
+}
+
+.seal__ring {
+  inline-size: 8.5rem;
+  aspect-ratio: 1;
+  border-radius: var(--r-full);
+  border: 2px solid var(--brand-secondary);
+  opacity: 0;
+  animation: welcome-pulse 3.2s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+}
+
+.seal__ring--late {
+  animation-delay: 1.6s;
+}
+
+@keyframes welcome-pulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.38); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seal__ring { animation: none; }
+}
+
+/* ── «Mis verificaciones» ───────────────────────────────────────────────── */
+.verifications {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+.verifications__text {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.verifications__text app-nav-icon {
+  flex: none;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  color: var(--brand-primary);
+}

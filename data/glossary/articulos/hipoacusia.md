@@ -1,5 +1,6 @@
 ---
 slug: hipoacusia
+image: hipoacusia.svg | Hipoacusia conductiva y neurosensorial según dónde está el fallo. | Oído dividido en externo, medio e interno con tímpano, huesecillos, cóclea y nervio, que separa la hipoacusia conductiva de la neurosensorial y sus causas.
 ---
 
 ## [definition] Introducción

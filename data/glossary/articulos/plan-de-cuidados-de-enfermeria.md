@@ -1,5 +1,6 @@
 ---
 slug: plan-de-cuidados-de-enfermeria
+image: plan-de-cuidados-de-enfermeria.svg | Las cinco fases del proceso de enfermería | Cinco cuadros en secuencia con la valoración, el diagnóstico, la planificación, la ejecución y la evaluación, y una flecha de retorno que indica que el plan se revisa y se reajusta
 ---
 
 ## [definition] Introducción

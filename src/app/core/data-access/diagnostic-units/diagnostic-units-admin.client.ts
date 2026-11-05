@@ -12,8 +12,10 @@ import type {
   DiagnosticUnitAdminList,
   DiagnosticUnitVerificationResult,
   PriceScheduleCreated,
+  SiteUpdated,
   StudyOfferingCreated,
   StudyPriceCreated,
+  UpdateSiteInput,
 } from './diagnostic-units-admin.types';
 
 /**
@@ -161,6 +163,21 @@ export class DiagnosticUnitsAdminClient {
   deleteStudyOffering(offeringId: string): Observable<AdminOperationResult> {
     return this.http.delete<AdminOperationResult>(
       this.url(`/diagnostic-study-offerings/${encodeURIComponent(offeringId)}`),
+    );
+  }
+
+  /**
+   * `PATCH /diagnostic-unit-sites/:id` — cambia el prefijo de accesión y qué
+   * hace la sucursal (toma de muestras, imagenología).
+   *
+   * @param siteId - Sucursal de la unidad.
+   * @param cambios - Sólo los campos que cambian.
+   * @returns La sucursal actualizada.
+   */
+  updateSite(siteId: string, cambios: UpdateSiteInput): Observable<SiteUpdated> {
+    return this.http.patch<SiteUpdated>(
+      this.url(`/diagnostic-unit-sites/${encodeURIComponent(siteId)}`),
+      cambios,
     );
   }
 

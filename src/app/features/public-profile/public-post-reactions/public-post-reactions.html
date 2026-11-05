@@ -33,8 +33,12 @@
             type="button"
             data-testid="reactions-load-more"
             [disabled]="cargandoMas()"
+            [attr.aria-busy]="cargandoMas() || null"
             (click)="verMas()"
           >
+            @if (cargandoMas()) {
+              <app-spinner size="sm" decorative />
+            }
             {{ cargandoMas() ? 'Cargando…' : 'Ver más' }}
           </button>
         </p>

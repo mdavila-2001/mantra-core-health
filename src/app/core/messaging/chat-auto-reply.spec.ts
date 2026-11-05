@@ -344,39 +344,24 @@ describe('ChatAutoReply', () => {
 
     afterEach(() => apiRealForzada.set(false));
 
-    it('en esta rama la app va contra la API real: el modo IA no se ofrece y `replyMode` nunca sale', () => {
-      // `test` y `dev` se construyen con `mockBackend: false`: la maqueta, que es
-      // la única que guarda el modo, no corre acá.
-      expect(servicio.iaDisponible()).toBe(false);
-      servicio.guardar({ activa: true, conIa: true, texto: 'Vuelvo luego.' }, 'pp-1');
+    it('no hay modo IA: `replyMode` nunca sale, ni contra la API real ni contra la maqueta', () => {
+      for (const real of [true, false]) {
+        apiRealForzada.set(real);
+        servicio.guardar({ activa: true, texto: 'Vuelvo luego.' }, 'pp-1');
 
-      const pedido = http.expectOne('/community/profiles/pp-1/auto-reply');
-      expect(pedido.request.body).not.toHaveProperty('replyMode');
-      expect(pedido.request.body).toMatchObject({ bodyText: 'Vuelvo luego.', isActive: true });
-      expect(servicio.configuracion().conIa).toBe(false);
-      pedido.flush(remota);
+        const pedido = http.expectOne('/community/profiles/pp-1/auto-reply');
+        expect(pedido.request.body).not.toHaveProperty('replyMode');
+        expect(pedido.request.body).toMatchObject({ bodyText: 'Vuelvo luego.', isActive: true });
+        pedido.flush(remota);
+      }
     });
 
-    it('lo que dice el servidor sobre el modo gana, donde el modo está disponible', () => {
-      vi.spyOn(servicio, 'iaDisponible').mockReturnValue(true);
+    it('un `replyMode` viejo en el servidor no cambia nada: sale el mensaje fijo', () => {
       servicio.cargar('pp-1');
       http.expectOne('/community/profiles/pp-1/auto-reply').flush({ ...remota, replyMode: 'AI' });
 
-      expect(servicio.configuracion().conIa).toBe(true);
-    });
-
-    it('contra la API real la clave no sale (sería un 400) y el modo IA no se sostiene', () => {
-      apiRealForzada.set(true);
-      expect(servicio.iaDisponible()).toBe(false);
-
-      servicio.guardar({ activa: true, conIa: true }, 'pp-1');
-
-      const pedido = http.expectOne('/community/profiles/pp-1/auto-reply');
-      expect(pedido.request.body).not.toHaveProperty('replyMode');
-      expect(servicio.configuracion().conIa).toBe(false);
-      // Sigue contestando con el texto fijo, que es lo que el servidor sabe hacer.
-      expect(servicio.configuracion().activa).toBe(true);
-      pedido.flush(remota);
+      expect(servicio.configuracion()).not.toHaveProperty('conIa');
+      expect(servicio.configuracion().activa).toBe(remota.isActive);
     });
   });
 

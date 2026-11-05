@@ -1,0 +1,52 @@
+<form class="or-blocks__form" (submit)="$event.preventDefault(); submit()" novalidate data-testid="block-form">
+  <div class="or-blocks__grid">
+    <app-form-field label="Quirófano" [required]="true">
+      <app-select [options]="roomOptions()" [value]="roomId()" placeholder="Elija un quirófano" ariaLabel="Quirófano" data-testid="block-room" (valueChange)="roomId.set($event)" />
+    </app-form-field>
+    <app-form-field label="Dueño del bloque" [required]="true">
+      <app-segmented-control [options]="ownerKinds" [value]="ownerKind()" ariaLabel="Dueño del bloque" (valueChange)="ownerKind.set($event)" />
+    </app-form-field>
+    @if (ownerKind() === 'SERVICE') {
+      <app-form-field label="Servicio (especialidad)" [required]="true">
+        <app-select [options]="specialties()" [value]="specialtyConceptId()" placeholder="Elija la especialidad" ariaLabel="Especialidad" [searchable]="true" data-testid="block-specialty" (valueChange)="specialtyConceptId.set($event)" />
+      </app-form-field>
+    } @else {
+      <app-form-field label="Cirujano" [required]="true">
+        <app-select [options]="surgeonOptions()" [value]="surgeonId()" placeholder="Elija al cirujano" ariaLabel="Cirujano" [searchable]="true" (valueChange)="surgeonId.set($event)" />
+      </app-form-field>
+    }
+    <app-form-field label="Día (o primer día)" [required]="true">
+      <app-input type="date" [value]="day()" testId="block-day" (valueChange)="day.set($any($event) ?? '')" />
+    </app-form-field>
+    <app-form-field label="Desde" [required]="true">
+      <app-input type="time" [value]="from()" testId="block-from" (valueChange)="from.set($any($event) ?? '')" />
+    </app-form-field>
+    <app-form-field label="Hasta" [required]="true" [errorMessage]="from() < to() ? '' : 'Tiene que terminar después de empezar.'">
+      <app-input type="time" [value]="to()" testId="block-to" (valueChange)="to.set($any($event) ?? '')" />
+    </app-form-field>
+    <app-form-field label="Liberación (horas antes)" hint="Si a esa altura no tiene casos, el tiempo vuelve a la agenda abierta.">
+      <app-input type="number" [step]="1" [value]="releaseHours()" testId="block-release" (valueChange)="releaseHours.set(+($event ?? 0))" />
+    </app-form-field>
+    <app-form-field label="Repetición">
+      <app-segmented-control [options]="repeatOptions" [value]="repeat()" ariaLabel="Repetición" (valueChange)="repeat.set($event)" />
+    </app-form-field>
+    @if (repeat() === 'weekly') {
+      <app-form-field label="Hasta el día" [required]="true">
+        <app-input type="date" [value]="until()" (valueChange)="until.set($any($event) ?? '')" />
+      </app-form-field>
+    }
+  </div>
+  @if (repeat() === 'weekly') {
+    <app-form-field label="Días de la semana" [required]="true">
+      <app-checkbox-group [options]="weekdayOptions" [value]="weekdays()" (valueChange)="weekdays.set($event)" />
+    </app-form-field>
+  }
+
+  @if (failure(); as f) {
+    <app-view-state-host [state]="f" data-testid="block-failure" />
+  }
+
+  <div class="or-blocks__row-actions or-blocks__submit">
+    <button app-button type="submit" [disabled]="!valid() || sending()" [isLoading]="sending()" data-testid="block-submit">Asignar bloque</button>
+  </div>
+</form>

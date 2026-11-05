@@ -65,7 +65,7 @@ describe('AppointmentCalendar', () => {
    * El estado bajó al detalle, que es lo que hace que la tarjeta tenga un alto
    * previsible sin importar cuánto texto traiga la cita.
    */
-  it('pone el turno en su día, con hora y con quién', () => {
+  it('pone la cita en su día, con hora y con quién', () => {
     const { fixture } = montar([turno()]);
 
     const [evento] = eventos(fixture);
@@ -77,7 +77,7 @@ describe('AppointmentCalendar', () => {
    * FT-07-R04 · el detalle acompaña a cada tarjeta y trae lo que no entra en
    * ella. El estado también en texto: el color del filo no se lee en voz alta.
    */
-  it('cada turno lleva su detalle con el estado y las líneas extra', () => {
+  it('cada cita lleva su detalle con el estado y las líneas extra', () => {
     const { fixture } = montar([
       turno({ detalles: ['Consultorio: Sala 2', 'Motivo: control anual'] }),
     ]);
@@ -95,7 +95,7 @@ describe('AppointmentCalendar', () => {
    * navega con teclado o con lector de pantalla lo recibe sin apuntar con el
    * puntero — que era justo lo que el `title` nativo no permitía.
    */
-  it('el botón del turno apunta a su detalle con aria-describedby', () => {
+  it('el botón de la cita apunta a su detalle con aria-describedby', () => {
     const { fixture } = montar([turno({ id: 'cita-1' })]);
 
     const boton = fixture.nativeElement.querySelector('.calendario__turno') as HTMLElement;
@@ -104,7 +104,7 @@ describe('AppointmentCalendar', () => {
     expect(detalle.id).toBe('detalle-cita-1');
   });
 
-  it('elegir un turno emite su identificador y no opera nada', () => {
+  it('elegir una cita emite su identificador y no opera nada', () => {
     const { fixture } = montar([turno()]);
     const elegidos: string[] = [];
     fixture.componentInstance.turnoElegido.subscribe((id) => elegidos.push(id));
@@ -114,7 +114,7 @@ describe('AppointmentCalendar', () => {
     expect(elegidos).toEqual(['t-1']);
   });
 
-  it('los turnos sin horario no se dibujan, pero se cuentan', () => {
+  it('las citas sin horario no se dibujan, pero se cuentan', () => {
     const { fixture } = montar([turno({ id: 'sin-hora', cuando: null })]);
 
     expect(eventos(fixture)).toHaveLength(0);
@@ -144,7 +144,7 @@ describe('AppointmentCalendar', () => {
     vi.useRealTimers();
   });
 
-  it('cada día se anuncia con su fecha y cuántos turnos tiene', () => {
+  it('cada día se anuncia con su fecha y cuántas citas tiene', () => {
     const { fixture } = montar([turno()]);
 
     const conTurno = [...fixture.nativeElement.querySelectorAll('td')].find(
@@ -158,7 +158,7 @@ describe('AppointmentCalendar', () => {
     expect(sinTurnos?.getAttribute('aria-label')).toContain('sin citas');
   });
 
-  it('el turno abierto en el detalle queda marcado también acá', () => {
+  it('la cita abierta en el detalle queda marcada también acá', () => {
     const { fixture, ref } = montar([turno()]);
 
     ref.setInput('seleccionado', 't-1');
@@ -168,7 +168,7 @@ describe('AppointmentCalendar', () => {
     expect(eventos(fixture)[0].getAttribute('aria-current')).toBe('true');
   });
 
-  it('ordena los turnos del mismo día por hora', () => {
+  it('ordena las citas del mismo día por hora', () => {
     const tarde = new Date();
     tarde.setHours(16, 0, 0, 0);
     const temprano = new Date();
@@ -247,7 +247,7 @@ describe('AppointmentCalendar', () => {
    * caja propia que se desplaza, así que el bloque se ajusta a la celda y no
    * al revés.
    */
-  it('los turnos de un día viven en una caja acotada, no sueltos en la celda', () => {
+  it('las citas de un día viven en una caja acotada, no sueltas en la celda', () => {
     const manana = new Date();
     manana.setHours(9, 0, 0, 0);
     const tarde = new Date();
@@ -271,7 +271,7 @@ describe('AppointmentCalendar', () => {
    * FT-07 cambió dónde vive: era el `[title]` nativo del botón, que no se puede
    * leer con teclado, tarda un segundo largo y no admite más de una línea.
    */
-  it('un turno con nombre largo conserva su texto completo en el detalle', () => {
+  it('una cita con nombre largo conserva su texto completo en el detalle', () => {
     const { fixture } = montar([
       turno({ titulo: 'Dra. María Fernanda Villarroel Antezana', estado: 'Confirmado' }),
     ]);

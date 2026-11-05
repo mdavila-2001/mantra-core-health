@@ -1,5 +1,6 @@
 ---
 slug: quiste-de-ovario
+image: quiste-de-ovario.svg | Un quiste es una bolsa de líquido en el ovario; la mayoría son funcionales y desaparecen solos. | Útero con las trompas y los dos ovarios, uno de ellos con un quiste lleno de líquido. A la derecha, los tipos de quistes, el papel de la ecografía y los síntomas de torsión o rotura que requieren urgencias.
 ---
 
 ## [definition] Introducción

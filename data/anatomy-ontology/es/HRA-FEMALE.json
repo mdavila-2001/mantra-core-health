@@ -1,0 +1,102 @@
+{
+"FMA:77049": {
+"labelEs": "orificio abdominal de la trompa uterina",
+"definitionEs": null
+},
+"FMA:224876": {
+"labelEs": "pared anterior del útero",
+"definitionEs": null
+},
+"HRA:VH_F_cervicovaginal_junction": {
+"labelEs": "unión cervicovaginal (útero)",
+"definitionEs": null
+},
+"HRA:VH_F_cornua": {
+"labelEs": "cuernos uterinos (útero)",
+"definitionEs": null
+},
+"FMA:17561": {
+"labelEs": "fondo del útero",
+"definitionEs": null
+},
+"FMA:17752": {
+"labelEs": "segmento uterino inferior",
+"definitionEs": null
+},
+"FMA:224878": {
+"labelEs": "pared posterior del útero",
+"definitionEs": null
+},
+"FMA:18492": {
+"labelEs": "ampolla de la trompa uterina izquierda",
+"definitionEs": null
+},
+"FMA:18498": {
+"labelEs": "fimbria de la trompa uterina izquierda",
+"definitionEs": null
+},
+"FMA:18494": {
+"labelEs": "istmo de la trompa uterina izquierda",
+"definitionEs": null
+},
+"FMA:18490": {
+"labelEs": "infundíbulo de la trompa uterina izquierda",
+"definitionEs": null
+},
+"FMA:18491": {
+"labelEs": "ampolla de la trompa uterina derecha",
+"definitionEs": null
+},
+"FMA:18497": {
+"labelEs": "fimbria de la trompa uterina derecha",
+"definitionEs": null
+},
+"FMA:18493": {
+"labelEs": "istmo de la trompa uterina derecha",
+"definitionEs": null
+},
+"FMA:18489": {
+"labelEs": "infundíbulo de la trompa uterina derecha",
+"definitionEs": null
+},
+"FMA:223679": {
+"labelEs": "areola femenina izquierda",
+"definitionEs": null
+},
+"FMA:223677": {
+"labelEs": "areola femenina derecha",
+"definitionEs": null
+},
+"FMA:57991": {
+"labelEs": "glándula mamaria izquierda",
+"definitionEs": null
+},
+"FMA:57987": {
+"labelEs": "glándula mamaria derecha",
+"definitionEs": null
+},
+"FMA:73166": {
+"labelEs": "tejido adiposo interlobular de la glándula mamaria izquierda",
+"definitionEs": null
+},
+"FMA:73165": {
+"labelEs": "tejido adiposo interlobular de la glándula mamaria derecha",
+"definitionEs": null
+},
+"FMA:58088": {
+"labelEs": "seno galactóforo",
+"definitionEs": null
+},
+"UBERON:0018140": {
+"labelEs": "lóbulo mamario",
+"definitionEs": null
+},
+"FMA:73119": {
+"labelEs": "ligamento suspensorio de la mama izquierda",
+"definitionEs": null
+},
+"FMA:73118": {
+"labelEs": "ligamento suspensorio de la mama derecha",
+"definitionEs": null
+}
+}

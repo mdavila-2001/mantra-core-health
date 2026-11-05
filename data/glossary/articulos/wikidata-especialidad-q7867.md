@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q7867
+image: wikidata-especialidad-q7867.svg | Modelo biopsicosocial y trastornos que trata la psiquiatría | Tres círculos superpuestos de los factores biológico, psicológico y social con la persona en el centro, junto a los trastornos frecuentes, los tratamientos y un aviso de ayuda urgente
 ---
 
 ## [definition] Introducción

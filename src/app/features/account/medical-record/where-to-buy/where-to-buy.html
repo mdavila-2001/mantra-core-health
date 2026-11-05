@@ -41,7 +41,7 @@
                     @if (!item.issued) {
                       <app-badge variant="warning">Aún no emitida</app-badge>
                     }
-                    @if (item.productId === null) {
+                    @if (isUnpublished(item)) {
                       <app-badge variant="warning">Sin producto publicado</app-badge>
                     }
                     @if (withInsurance()) {
@@ -322,6 +322,11 @@
                             </span>
                           </p>
                         } @else if (!branch.complete) {
+                          @if (branch.covers.size > 0) {
+                            <p class="purchase__secondary" data-testid="where-to-buy-has">
+                              Tiene: {{ coveredBy(branch) }}
+                            </p>
+                          }
                           <p class="purchase__missing" data-testid="where-to-buy-missing">
                             Le falta: {{ branch.missing.join(', ') }}
                           </p>

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Epileptología: crisis y diagnóstico</title>
+  <desc id="d">Dos cerebros vistos de lado, uno con una crisis focal en una zona y otro con una crisis generalizada, y dos trazados de electroencefalograma, uno normal y otro con descargas. A la derecha, el diagnóstico, el tratamiento y cuándo llamar a emergencias.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="220.0" y="50" text-anchor="middle" class="title">Tipos de crisis</text>
+<path d="M136.0,186.0 L142.4,238.0" fill="none" stroke="var(--organ-d)" stroke-width="17.6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M136.0,186.0 L142.4,238.0" fill="none" stroke="var(--organ)" stroke-width="14.4" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="164.0" cy="194.0" rx="27.2" ry="16.0" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2"/>
+<path d="M40.0,158.0 C32.0,102.0 88.0,78.0 128.0,86.0 C176.0,86.0 208.0,118.0 200.0,166.0 C196.0,190.0 168.0,190.0 152.0,182.0 C128.0,198.0 88.0,198.0 64.0,186.0 C44.0,182.0 40.0,170.0 40.0,158.0 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M72.0,118.0 q16.0,16.0 32.0,0 M112.0,102.0 q8.0,24.0 24.0,16.0 M152.0,118.0 q8.0,24.0 24.0,24.0 M64.0,158.0 q24.0,-8.0 40.0,8.0 M120,142.0 q16.0,16.0 40.0,0" fill="none" stroke="var(--organ-d)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="80" cy="120" r="20" fill="var(--vessel)" stroke="none" stroke-width="1" opacity=".55"/>
+<text x="120" y="256" text-anchor="middle" class="step">Focal</text>
+<text x="120" y="274" text-anchor="middle" class="small" style="fill:var(--muted)">empieza en una zona</text>
+<path d="M326.0,186.0 L332.4,238.0" fill="none" stroke="var(--organ-d)" stroke-width="17.6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M326.0,186.0 L332.4,238.0" fill="none" stroke="var(--vessel-l)" stroke-width="14.4" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="354.0" cy="194.0" rx="27.2" ry="16.0" fill="var(--vessel-l)" stroke="var(--organ-d)" stroke-width="2"/>
+<path d="M230.0,158.0 C222.0,102.0 278.0,78.0 318.0,86.0 C366.0,86.0 398.0,118.0 390.0,166.0 C386.0,190.0 358.0,190.0 342.0,182.0 C318.0,198.0 278.0,198.0 254.0,186.0 C234.0,182.0 230.0,170.0 230.0,158.0 Z" fill="var(--vessel-l)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M262.0,118.0 q16.0,16.0 32.0,0 M302.0,102.0 q8.0,24.0 24.0,16.0 M342.0,118.0 q8.0,24.0 24.0,24.0 M254.0,158.0 q24.0,-8.0 40.0,8.0 M310,142.0 q16.0,16.0 40.0,0" fill="none" stroke="var(--organ-d)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="310" y="256" text-anchor="middle" class="step">Generalizada</text>
+<text x="310" y="274" text-anchor="middle" class="small" style="fill:var(--muted)">ambos hemisferios</text>
+<text x="40" y="316" class="step">EEG</text>
+<path d="M80,330 L88,335 L96,325 L104,335 L112,325 L120,335 L128,325 L136,335 L144,325 L152,335 L160,325 L168,335 L176,325 L184,335 L192,325 L200,335 L208,325 L216,335 L224,325 L232,335" fill="none" stroke="var(--ok)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M80,380 L88,384 L96,376 L104,384 L112,376 L120,384 L128,376 L136,392 L144,392 L152,350 L160,392 L168,392 L176,392 L184,350 L192,392 L200,392 L208,376 L216,384 L224,376 L232,384 L240,376 L248,384 L256,376 L264,384 L272,376 L280,384 L288,376 L296,384 L304,376 L312,384 L320,376 L328,384 L336,376 L344,384 L352,376 L360,384 L368,376 L376,384 L384,376 L392,384" fill="none" stroke="var(--vessel)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="250" y="334" class="small">actividad normal</text>
+<text x="40" y="384" class="small">Crisis</text>
+<text x="220" y="424" text-anchor="middle" class="small" style="fill:var(--muted)">Descargas anómalas de neuronas</text>
+<rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="608.0" y="50" text-anchor="middle" class="title">Qué hace la epileptología</text>
+<rect x="456" y="56" width="304" height="122" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="468" y="78" class="step">Diagnóstico</text>
+<text x="468" y="102" class="lab">• Historia y testigos de la crisis</text>
+<text x="468" y="124" class="lab">• EEG, a veces con vídeo</text>
+<text x="468" y="146" class="lab">• Resonancia magnética cerebral</text>
+<text x="468" y="168" class="lab">• Estudio genético en algunos casos</text>
+<rect x="456" y="194" width="304" height="100" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="468" y="216" class="step">Tratamiento</text>
+<text x="468" y="240" class="lab">• Fármacos antiepilépticos</text>
+<text x="468" y="262" class="lab">• Cirugía si son resistentes</text>
+<text x="468" y="284" class="lab">• Dieta cetogénica, estimuladores</text>
+<rect x="456" y="310" width="304" height="82" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+<text x="468" y="332" class="step" style="fill:var(--warn)">Llamar a emergencias si:</text>
+<text x="468" y="356" class="lab">• Crisis de más de 5 minutos</text>
+<text x="468" y="380" class="lab">• No recupera la conciencia</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

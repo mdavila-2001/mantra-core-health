@@ -6,14 +6,19 @@ import { filter, map, startWith } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
-import { accesoAPortales, cantidadDePortales, PORTAL_SELECTOR_ROUTE } from '../reporting/reporting-access';
+import { accesoAPortales, cantidadDePortales, portalSwitchRoute } from '../reporting/reporting-access';
 import { SYNTHETIC_NOTICE } from './domain/campaigns.data';
 import { longDate, PROTOTYPE_TODAY } from './domain/dates';
 import { InsightsContext } from './insights-context';
 import { InsightsData } from './insights-data';
+import { InsightsPreferences } from './insights-preferences';
+import { InsightsWorkflow } from './insights-workflow';
 import { INSIGHTS_BASE, INSIGHTS_MODULES } from './insights-nav';
-import { openAlertCount } from './insights-summary';
 import { SavedViews } from './components/saved-views';
+import { CommandPalette } from './components/command-palette';
+import { GlossaryDrawer } from './components/glossary-drawer';
+import { MobileTabbar } from './components/mobile-tabbar';
+import { SettingsDrawer } from './components/settings-drawer';
 
 const KEY_COLLAPSED = 'insights.nav.collapsed';
 
@@ -35,8 +40,9 @@ function readCollapsed(): boolean {
  */
 @Component({
   selector: 'app-insights-shell',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, NavIcon, SavedViews, ViewStateHost],
-  providers: [InsightsContext, InsightsData],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, NavIcon, SavedViews, ViewStateHost, CommandPalette, GlossaryDrawer, SettingsDrawer, MobileTabbar],
+  providers: [InsightsContext, InsightsData, InsightsWorkflow, InsightsPreferences],
+  host: { '(document:keydown)': 'shortcut($event)' },
   templateUrl: './insights-shell.html',
   styleUrl: './insights-shell.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,8 +52,12 @@ export class InsightsShell {
   private readonly auth = inject(AuthService);
   protected readonly ctx = inject(InsightsContext);
   protected readonly data = inject(InsightsData);
+  protected readonly prefs = inject(InsightsPreferences);
+  protected readonly palette = signal(false);
+  protected readonly glossary = signal(false);
+  protected readonly settings = signal(false);
 
-  protected readonly selectorRoute = PORTAL_SELECTOR_ROUTE;
+  protected readonly switchRoute = portalSwitchRoute();
   /** «Cambiar de portal» solo se ofrece a quien tiene otro acceso además de Insights. */
   protected readonly canSwitchPortal = computed(
     () => cantidadDePortales(accesoAPortales(this.auth.roles())) >= 2,
@@ -57,9 +67,21 @@ export class InsightsShell {
   protected readonly base = INSIGHTS_BASE;
   protected readonly notice = SYNTHETIC_NOTICE;
   protected readonly asOf = longDate(PROTOTYPE_TODAY);
-  protected readonly alertCount = openAlertCount();
+  private readonly workflow = inject(InsightsWorkflow);
+  protected readonly alertCount = computed(() => this.workflow.openCount());
 
   protected readonly collapsed = signal(readCollapsed());
+
+  constructor() {
+    this.prefs.load();
+  }
+
+  protected shortcut(e: KeyboardEvent): void {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      this.palette.set(true);
+    }
+  }
   protected readonly drawer = signal(false);
 
   private readonly url = toSignal(

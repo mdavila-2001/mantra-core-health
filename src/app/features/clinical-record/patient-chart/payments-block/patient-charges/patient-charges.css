@@ -111,3 +111,46 @@
 .cobros__plan > button {
   justify-self: start;
 }
+.cobros__recibidos {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--app-color-border, #d6e0e5);
+  border-inline-start: 4px solid #c77b13;
+  border-radius: 0.75rem;
+  background: #fffaf1;
+}
+
+.cobros__recibidos h3,
+.cobros__recibidos p {
+  margin-block: 0 0.5rem;
+}
+
+.cobros__recibidos ul {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.cobros__recibidos li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.cobros__comprobante {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: start;
+}
+
+.cobros__comprobante img {
+  display: block;
+  max-inline-size: 100%;
+  max-block-size: 8rem;
+  border: 1px solid var(--border-default);
+  border-radius: 0.5rem;
+  object-fit: contain;
+}

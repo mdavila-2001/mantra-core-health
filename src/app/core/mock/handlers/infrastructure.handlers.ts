@@ -35,6 +35,7 @@ import {
 import { reply, noContent, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, isoDia, nuevoId } from '../mock-store';
 import { casosFuturosEnQuirofano } from './procedures.handlers';
+import { OPS_CATALOG } from '../fixtures/inpatient';
 
 /* ============================================================================
     Infraestructura hospitalaria — franja F1 (§3 de `CONTRATO-F0-F1.md`).
@@ -624,7 +625,8 @@ export function tenantDePractica(practiceId: string): string | null {
 /* ---- rutas ----------------------------------------------------------------- */
 
 export function registrarInfraestructura(router: MockRouter): void {
-  router.get('/practice/infrastructure-catalog', () => CATALOGO);
+  // F2 suma sus ejes, motivos y el mapa v2-0116 al mismo catálogo (§F2.3).
+  router.get('/practice/infrastructure-catalog', () => ({ ...CATALOGO, ...OPS_CATALOG }));
 
   router.get('/sites/:siteId/structure', (request) => {
     const sitio = sitioVisible(request, request.params['siteId']);

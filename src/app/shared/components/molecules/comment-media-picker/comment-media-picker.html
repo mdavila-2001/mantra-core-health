@@ -25,7 +25,10 @@
     }
 
     @if (subiendo()) {
-      <span class="media-picker__estado" aria-live="polite">Subiendo…</span>
+      <span class="media-picker__estado" aria-live="polite" data-testid="comment-media-uploading">
+        <app-spinner size="sm" decorative />
+        Subiendo…
+      </span>
     } @else if (adjuntos().length >= tope) {
       <span class="media-picker__estado">Máximo {{ tope }} adjuntos</span>
     }

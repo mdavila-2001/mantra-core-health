@@ -1,0 +1,81 @@
+<app-page-header title="Activos y centros de costo" subtitle="Dónde está cada activo y a qué unidad se le imputan los costos." [breadcrumbs]="breadcrumbs()" />
+
+@if (failure(); as f) {
+  <app-view-state-host class="infra-accounting__failure" [state]="f" data-testid="infra-accounting-failure" />
+}
+
+<app-card class="infra-accounting" padding="lg" data-testid="infra-accounting">
+  <app-site-switch class="infra-accounting__site" />
+  <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="changeTab($event)">
+    <app-tab label="Activos de infraestructura">
+      <div class="infra-accounting__panel">
+        @if (locating(); as row) {
+          <div class="infra-accounting__picker" data-testid="infra-accounting-locate">
+            <p class="infra-accounting__text">Elija en el árbol dónde está «{{ row.name }}».</p>
+            <div class="infra-accounting__tree">
+              <app-tree [items]="tree()" label="Espacios del establecimiento" [expandedIds]="expanded()" [(selectedId)]="chosenSpace" />
+            </div>
+            <div class="infra-accounting__actions">
+              <button app-button size="sm" [disabled]="chosenSpace() === null || saving()" [isLoading]="saving()" (clicked)="confirmLocate()" data-testid="infra-accounting-locate-confirm">Ubicar aquí</button>
+              <button app-button variant="ghost" size="sm" (clicked)="locating.set(null)">Volver</button>
+            </div>
+          </div>
+        }
+        <app-data-table [state]="items()" [columns]="itemColumns()" [trackBy]="byId" caption="Activos de infraestructura" data-testid="infra-accounting-items" (retry)="reload()" />
+      </div>
+    </app-tab>
+
+    <app-tab label="Centros de costo">
+      <div class="infra-accounting__panel">
+        @if (linking(); as row) {
+          <div class="infra-accounting__picker" data-testid="infra-accounting-link">
+            <app-form-field [label]="'Unidad de ' + row.code + ' · ' + row.name" hint="Una unidad tiene un solo centro de costo vigente.">
+              <app-select [options]="unitOptions()" [value]="chosenUnit()" placeholder="Elija la unidad" ariaLabel="Unidad clínica" data-testid="infra-accounting-unit" (valueChange)="chosenUnit.set($event)" />
+            </app-form-field>
+            <div class="infra-accounting__actions">
+              <button app-button size="sm" [disabled]="chosenUnit() === null || saving()" [isLoading]="saving()" (clicked)="confirmLink()" data-testid="infra-accounting-link-confirm">Vincular</button>
+              <button app-button variant="ghost" size="sm" (clicked)="linking.set(null)">Volver</button>
+            </div>
+          </div>
+        }
+        <app-data-table [state]="centers()" [columns]="centerColumns()" [trackBy]="byId" caption="Centros de costo" data-testid="infra-accounting-centers" (retry)="reload()" />
+      </div>
+    </app-tab>
+  </app-tabs>
+</app-card>
+
+<ng-template #itemCell let-row>
+  <span class="infra-accounting__strong">{{ row.code }} · {{ row.name }}</span>
+  <span class="infra-accounting__muted">{{ row.category }}</span>
+</ng-template>
+
+<ng-template #placeCell let-row>
+  @if (row.careSpace; as space) {
+    <span data-testid="infra-accounting-path">{{ space.path }}</span>
+  } @else {
+    <span class="infra-accounting__warn">Sin ubicar</span>
+  }
+  @if (row.locationText) {
+    <span class="infra-accounting__muted">Dato heredado: «{{ row.locationText }}»</span>
+  }
+</ng-template>
+
+<ng-template #itemActions let-row>
+  <button app-button variant="ghost" size="sm" (clicked)="startLocate(row)" [attr.data-testid]="'infra-accounting-locate-' + row.code">Ubicar</button>
+</ng-template>
+
+<ng-template #centerCell let-row>
+  <span class="infra-accounting__strong">{{ row.code }} · {{ row.name }}</span>
+</ng-template>
+
+<ng-template #unitCell let-row>
+  @if (row.clinicalUnit; as unit) {
+    {{ unit.name }}
+  } @else {
+    <span class="infra-accounting__warn">Sin unidad</span>
+  }
+</ng-template>
+
+<ng-template #centerActions let-row>
+  <button app-button variant="ghost" size="sm" (clicked)="startLink(row)" [attr.data-testid]="'infra-accounting-link-' + row.code">Vincular unidad</button>
+</ng-template>

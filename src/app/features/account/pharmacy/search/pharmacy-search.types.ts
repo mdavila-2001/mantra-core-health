@@ -89,4 +89,6 @@ export interface StoreHit {
 export interface SearchResult<T> {
   readonly items: readonly T[];
   readonly sinOrigen: boolean;
+  /** What the API searched instead of the typed text («ibopofeno» → «ibuprofeno»). */
+  readonly correctedQuery?: string | null;
 }

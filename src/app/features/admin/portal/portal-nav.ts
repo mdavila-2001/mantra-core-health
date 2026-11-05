@@ -67,6 +67,11 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
         path: 'systems/review',
         summary: 'Fichas del catálogo esperando una decisión',
       },
+      {
+        label: 'Piezas en ejecución',
+        path: 'systems/runtime-pieces',
+        summary: 'Workers, crons, consumidores y procesos detectados en el código, y si están vivos',
+      },
     ],
   },
   {
@@ -95,6 +100,11 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
         label: 'Dominios y glosario',
         path: 'catalog/domains',
         summary: 'Dominios de negocio y términos del glosario',
+      },
+      {
+        label: 'Sonda de catalogación',
+        path: 'catalog/fit',
+        summary: 'Si el catálogo sigue ajustado a las rutas del código, la base, el inventario y las fichas',
       },
     ],
   },
@@ -141,6 +151,83 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
         label: 'Deriva de permisos',
         path: 'governance/permission-drift',
         summary: 'Roles que las rutas exigen y nadie siembra, y rutas sin roles',
+      },
+      {
+        label: 'Roles y permisos',
+        path: 'governance/roles',
+        summary: 'Qué permite y qué niega cada rol, con edición',
+      },
+      {
+        label: 'Permisos por campo y alcance',
+        path: 'governance/field-permissions',
+        summary: 'Reglas por columna y permisos sobre un recurso concreto',
+      },
+      {
+        label: 'Quién puede qué',
+        path: 'governance/who-can',
+        summary: 'Simulador de decisión del PDP y mapa permiso → roles → personas',
+      },
+      {
+        label: 'Ciclo de vida y accesos',
+        path: 'governance/access-reviews',
+        summary: 'Suspender, reactivar, dar de baja y revisar accesos',
+      },
+      {
+        label: 'Matriz RBAC por módulo',
+        path: 'governance/rbac-matrix',
+        summary: 'Qué rol puede qué acción en cada módulo, huecos de permisos finos y cobertura',
+      },
+      {
+        label: 'Catálogo de visibilidad',
+        path: 'governance/ui-catalog',
+        summary: 'Cada elemento de la interfaz que puede mostrarse u ocultarse, por módulo y con su jerarquía',
+      },
+      {
+        label: 'Reglas de visibilidad',
+        path: 'governance/ui-rules',
+        summary: 'Mostrar u ocultar elementos por persona, organización, rol o tipo de organización, con vigencia y motivo',
+      },
+      {
+        label: 'Ver como',
+        path: 'governance/ui-preview',
+        summary: 'Previsualiza qué se oculta a una persona o a un rol y qué regla lo decide',
+      },
+      {
+        label: 'Mutabilidad de datos',
+        path: 'governance/mutability',
+        summary: 'Qué tabla es append-only, cuál se actualiza o se borra, y con qué evidencia',
+      },
+      {
+        label: 'Políticas',
+        path: 'governance/policies',
+        summary: 'Escritura, retención, anonimización, clasificación y residencia de los datos',
+      },
+      {
+        label: 'Datos personales',
+        path: 'governance/pii',
+        summary: 'Campos con datos personales, de salud o credenciales, y cómo se protegen',
+      },
+      {
+        label: 'Solicitudes de privacidad',
+        path: 'governance/privacy-requests',
+        summary: 'Solicitudes de acceso, rectificación y supresión de los titulares',
+      },
+    ],
+  },
+  {
+    id: 'data-quality',
+    label: 'Calidad de datos clínicos',
+    icon: 'check',
+    items: [
+      {
+        label: 'Incidencias',
+        path: 'data-quality/issues',
+        summary: 'Datos de salud (health_data) que incumplen una regla, con su estado y cómo cerrarlos',
+      },
+      {
+        label: 'Reglas',
+        path: 'data-quality/rules',
+        summary: 'Las reglas de calidad de los datos clínicos, su expresión y sus últimas corridas',
       },
     ],
   },

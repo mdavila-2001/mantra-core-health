@@ -1,0 +1,51 @@
+<section class="lector" aria-label="Leer el QR de una invitación" data-testid="qr-lector">
+  <p class="lector__ayuda">
+    Apunte la cámara al QR que le dio la organización o suba una foto de él. Lo leído se usa para unirse.
+  </p>
+
+  <div class="lector__controles">
+    <button
+      app-button
+      size="sm"
+      [variant]="camaraActiva() ? 'danger' : 'outline'"
+      type="button"
+      (clicked)="alternarCamara()"
+      data-testid="qr-camara-boton"
+    >
+      {{ camaraActiva() ? 'Detener cámara' : 'Usar la cámara' }}
+    </button>
+    <input
+      #archivo
+      type="file"
+      accept="image/*"
+      class="lector__archivo"
+      (change)="leerDesdeArchivo($event)"
+      aria-label="Subir una foto del QR"
+      data-testid="qr-archivo-input"
+    />
+    <button
+      app-button
+      size="sm"
+      variant="outline"
+      type="button"
+      [isLoading]="leyendoImagen()"
+      (clicked)="archivo.click()"
+      data-testid="qr-archivo-boton"
+    >
+      Subir una foto del QR
+    </button>
+  </div>
+
+  @if (camaraActiva()) {
+    <div class="lector__camara">
+      <video #videoCamara class="lector__video" playsinline muted></video>
+      <p class="lector__guia" role="status">Buscando un QR…</p>
+    </div>
+  }
+
+  @if (errorCamara(); as error) {
+    <app-alert tone="warning" title="Cámara no disponible" data-testid="qr-error-camara">
+      {{ error }} Puede subir una foto del QR o escribir el código arriba.
+    </app-alert>
+  }
+</section>

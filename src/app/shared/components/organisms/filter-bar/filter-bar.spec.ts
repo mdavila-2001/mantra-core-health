@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
@@ -610,5 +612,63 @@ describe('FilterBar · faceta larga con buscador y páginas', () => {
     fixture.detectChanges();
 
     expect(textos(fixture.nativeElement as HTMLElement)[0]).toBe('Infectología');
+  });
+});
+
+@Component({
+  imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `<app-filter-bar [filters]="filters" [collapsible]="collapsible()" />`,
+})
+class CollapsibleHost {
+  readonly filters = FILTROS;
+  readonly collapsible = signal(false);
+}
+
+describe('FilterBar · filtros plegables en teléfono (opt-in)', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  });
+
+  function mount(collapsible: boolean): { fixture: ComponentFixture<CollapsibleHost>; bar: HTMLElement } {
+    const fixture = TestBed.createComponent(CollapsibleHost);
+    fixture.componentInstance.collapsible.set(collapsible);
+    fixture.detectChanges();
+    const bar = fixture.debugElement.query(By.directive(FilterBar)).nativeElement as HTMLElement;
+    return { fixture, bar };
+  }
+
+  it('por omisión no dibuja el botón ni pliega nada', () => {
+    const { bar } = mount(false);
+    expect(bar.querySelector('[data-testid="filter-bar-toggle"]')).toBeNull();
+    expect(bar.classList.contains('filter-bar--folded')).toBe(false);
+  });
+
+  it('con `collapsible` arranca plegada y el botón «Filtros» la despliega y la vuelve a plegar', async () => {
+    const { fixture, bar } = mount(true);
+    const toggle = bar.querySelector<HTMLButtonElement>('[data-testid="filter-bar-toggle"]')!;
+    expect(bar.classList.contains('filter-bar--folded')).toBe(true);
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(toggle.textContent?.trim()).toBe('Filtros');
+
+    toggle.click();
+    await fixture.whenStable();
+    expect(bar.classList.contains('filter-bar--folded')).toBe(false);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(toggle.textContent?.trim()).toBe('Ocultar filtros');
+
+    toggle.click();
+    await fixture.whenStable();
+    expect(bar.classList.contains('filter-bar--folded')).toBe(true);
+  });
+
+  it('el CSS pliega sólo en teléfono: desde 780 px los desplegables se ven y el botón no', () => {
+    const css = readFileSync('src/app/shared/components/organisms/filter-bar/filter-bar.css', 'utf8');
+    const desktop = css.slice(css.indexOf('@media (min-width: 780px)'));
+    expect(css.indexOf(':host(.filter-bar--folded) .filter-bar__filter')).toBeLessThan(
+      css.indexOf('@media (min-width: 780px)'),
+    );
+    expect(desktop).toMatch(/\.filter-bar__toggle \{\s+display: none;/);
+    expect(desktop).toMatch(/:host\(\.filter-bar--folded\) \.filter-bar__filter \{\s+display: block;/);
   });
 });

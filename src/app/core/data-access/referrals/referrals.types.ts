@@ -86,7 +86,7 @@ export type ReferralTargetKind = 'PRACTITIONER' | 'ORGANIZATION';
  * `openapi.json` del que sale el contrato de la maqueta todavía no declara.
  *
  * **No** son «sólo simulador»: van también a la API real, que es la que las
- * publica. Se registran en `core/mock/contract/simulator-extensions.ts` para
+ * publica. Se registran en `mock/contract/simulator-extensions.ts` del simulador para
  * que la maqueta no las rechace mientras tanto, y esa entrada se borra en
  * cuanto `scripts/gen-mock-contract.mjs` regenere el contrato con ellas.
  */
@@ -184,10 +184,11 @@ export interface ReferralTargetService {
   readonly name: string;
   readonly description: string | null;
   /**
-   * El arancel **tal como llega**. Un `numeric` de Postgres viaja como texto y
-   * no se convierte: se muestra, no se calcula con él.
+   * El arancel de lista. La API lo manda siempre como número
+   * (`Number(defaultPrice)`, columna NOT NULL): un `0` es «nadie declaró el
+   * arancel», no «es gratis».
    */
-  readonly price: string | number | null;
+  readonly price: number;
   readonly currency: string | null;
   readonly tenantId: string | null;
   readonly practiceName: string | null;

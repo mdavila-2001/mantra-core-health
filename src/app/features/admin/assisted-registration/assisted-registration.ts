@@ -23,6 +23,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { BackLink } from '../../../shared/components/atoms/back-link/back-link';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import { InlineNameFields } from '../../auth/shared-registration/inline-name-fields/inline-name-fields';
 import { nameGroup } from '../../auth/shared-registration/name-fields/person-name';
@@ -30,6 +31,10 @@ import { joinNames } from '../../../core/profession/additional-names';
 import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
+import {
+  HomonymWarning,
+  isPossibleDuplicatePatient,
+} from '../../../shared/forms/homonym-warning/homonym-warning';
 
 /** Largos que exige `AssistedRegistrationDto` en el backend. */
 const MAX_MOTIVO = 500;
@@ -73,7 +78,9 @@ const MAX_MOTIVO = 500;
     AnnounceOnAppear,
     AppButton,
     DatePipe,
+    HomonymWarning,
     Link,
+    BackLink,
     PageHeader,
     PaginatedForm,
     CustomField,
@@ -87,6 +94,9 @@ const MAX_MOTIVO = 500;
 export class AssistedRegistration {
   private readonly iam = inject(IamClient);
   private readonly navigation = inject(NavigationService);
+
+  /** A dónde sale el botón «Volver». */
+  protected readonly rutaVolver = '/administration/patients';
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
@@ -139,6 +149,9 @@ export class AssistedRegistration {
   /** El resultado con el token, o `null` mientras el formulario sigue abierto. */
   protected readonly result = signal<AssistedRegistrationResult | null>(null);
 
+  /** The API found a live patient with this name (409 POSSIBLE_DUPLICATE_PATIENT). */
+  protected readonly homonimo = signal(false);
+
   /** Si el token ya se copió, para confirmarlo sin quitarlo de la vista. */
   protected readonly copied = signal(false);
 
@@ -154,12 +167,12 @@ export class AssistedRegistration {
       return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     }
     return null;
   });
 
-  protected submit(): void {
+  protected submit(allowHomonym = false): void {
     if (this.isSubmitting()) {
       return;
     }
@@ -171,12 +184,17 @@ export class AssistedRegistration {
 
     this.state.set(loading());
 
-    this.iam.assistedRegistration(this.datos()).subscribe({
+    this.homonimo.set(false);
+    const datos = { ...this.datos(), ...(allowHomonym ? { allowHomonym } : {}) };
+    this.iam.assistedRegistration(datos).subscribe({
       next: (resultado) => {
         this.state.set(ready(null));
         this.result.set(resultado);
       },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+      error: (error: unknown) => {
+        this.homonimo.set(isPossibleDuplicatePatient(error));
+        this.state.set(this.homonimo() ? ready(null) : errorToViewState<null>(error));
+      },
     });
   }
 
@@ -204,6 +222,7 @@ export class AssistedRegistration {
     this.form.reset();
     this.result.set(null);
     this.copied.set(false);
+    this.homonimo.set(false);
     this.state.set(ready(null));
   }
 

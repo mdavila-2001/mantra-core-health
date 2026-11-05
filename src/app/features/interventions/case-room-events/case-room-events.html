@@ -1,0 +1,69 @@
+@if (failure(); as f) {
+  <app-view-state-host [state]="f" data-testid="room-events-failure" />
+}
+
+@if (!eventsReported()) {
+  <app-alert tone="warning" title="La ficha todavía no informa los tiempos registrados" data-testid="room-events-unreported">
+    Registre en orden: la API rechaza el tiempo que no corresponde y lo muestra aquí. Sólo se marcan los que se registren
+    desde esta pantalla.
+  </app-alert>
+}
+
+<ol class="room-events__buttons" aria-label="Tiempos del caso, en orden">
+    @for (b of buttons(); track b.code) {
+      <li class="room-events__button">
+        <button
+          app-button
+          size="sm"
+          [variant]="b.blockedReason === null ? 'primary' : 'outline'"
+          [disabled]="b.blockedReason !== null || sending() !== null"
+          [isLoading]="sending() === b.code"
+          [attr.aria-describedby]="'room-event-why-' + b.code"
+          [attr.data-testid]="'room-event-' + b.code"
+          (clicked)="record(b.code)"
+        >
+          {{ b.label }}
+        </button>
+        <span class="room-events__why" [id]="'room-event-why-' + b.code">
+          {{ b.blockedReason ?? 'Disponible: se registra con la hora actual.' }}
+        </span>
+      </li>
+    }
+  </ol>
+
+<!-- Recambio: la orden de limpieza que abrió la salida de sala (F2). -->
+@if (turnover() === undefined && openedOrderId()) {
+  <app-alert tone="info" title="Se abrió la orden de recambio" data-testid="room-events-turnover-unreported">
+    La sala quedó sucia con su orden de limpieza en la cola del establecimiento. La ficha todavía no informa su estado: el
+    recambio se opera desde la cola de limpieza.
+  </app-alert>
+}
+@if (turnover(); as t) {
+  <section class="room-events__turnover" data-testid="room-events-turnover" aria-label="Recambio de la sala">
+    <h3 class="room-events__subtitle">Recambio de la sala</h3>
+    <p class="room-events__muted" data-testid="room-events-turnover-status">{{ turnoverLabel() }}</p>
+    @if (turnoverNext(); as next) {
+      @if (turnoverAllowed()) {
+        <button app-button size="sm" variant="outline" [disabled]="sending() !== null" (clicked)="advanceTurnover()" data-testid="room-events-turnover-next">{{ next.label }}</button>
+      } @else {
+        <p class="room-events__muted" data-testid="room-events-turnover-not-yours">«{{ next.label }}» lo hace el personal de limpieza o la jefatura del sector.</p>
+      }
+    }
+  </section>
+}
+
+@if (timeline().length === 0) {
+  <p class="room-events__muted" data-testid="room-events-empty">Todavía no se registró ningún tiempo de sala.</p>
+} @else {
+  <ol class="room-events__timeline" data-testid="room-events-timeline">
+    @for (e of timeline(); track e.id) {
+      <li class="room-events__event">
+        <time class="room-events__time" [attr.datetime]="e.occurredAt">{{ timeOf(e.occurredAt) }}</time>
+        <span class="room-events__label">{{ e.label }}</span>
+        @if (e.sincePrevious) {
+          <span class="room-events__muted">+{{ e.sincePrevious }}</span>
+        }
+      </li>
+    }
+  </ol>
+}

@@ -1,5 +1,6 @@
 ---
 slug: ecografia-obstetrica
+image: ecografia-obstetrica.svg | Un transductor emite ultrasonidos y forma una imagen del útero y el feto sin radiación. | Abdomen de una embarazada con un transductor que emite ultrasonidos hacia el útero, donde se ve el feto. A la derecha, qué evalúa la ecografía en el primer, segundo y tercer trimestre.
 ---
 
 ## [definition] Introducción

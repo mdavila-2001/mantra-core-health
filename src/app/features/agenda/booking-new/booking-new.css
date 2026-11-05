@@ -69,3 +69,30 @@ form,
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
 }
+
+/* Summary and form on the left, body figure on the right. From 64rem both fit;
+   below that the figure drops under the form at full width. */
+.reserva__layout {
+  display: grid;
+  gap: var(--sp-8);
+}
+
+.reserva__principal {
+  min-inline-size: 0;
+}
+
+.reserva__figura {
+  margin-block-start: var(--sp-6);
+}
+
+@media (min-width: 64rem) {
+  .reserva__layout {
+    grid-template-columns: minmax(0, 40rem) minmax(18rem, 1fr);
+    align-items: start;
+  }
+
+  .reserva__figura {
+    position: sticky;
+    inset-block-start: var(--sp-6);
+  }
+}

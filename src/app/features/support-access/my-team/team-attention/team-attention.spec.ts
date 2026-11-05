@@ -99,12 +99,27 @@ describe('TeamAttention', () => {
     expect(byId('atencion-alertas')!.textContent).toContain('Ana Gutiérrez: Muchas cancelaciones');
   });
 
-  it('sin nada pendiente es un vacío con su próxima acción en palabras', async () => {
+  it('sin nada pendiente no muestra la tarjeta: «Mi equipo» no repite estados vacíos', async () => {
     getPractitionerPanel.mockReturnValue(of({ ...PANEL, pendingReviews: 0, openAnomalies: [] }));
     listPending.mockReturnValue(of({ items: [], count: 0 }));
     await abrir();
-    expect(host().textContent).toContain('No tiene nada pendiente por ahora.');
-    expect(host().textContent).toContain('Cuando algo necesite su decisión, aparecerá acá');
+    expect(byId('equipo-atencion')).toBeNull();
+    expect(host().textContent).not.toContain('Todavía no hay nada acá');
+  });
+
+  it('si el servidor no publica ninguna de las dos fuentes (404), es «nada pendiente» (sin tarjeta) y no «no encontramos lo que busca»', async () => {
+    getPractitionerPanel.mockReturnValue(throwError(() => falloDeApi(404, 'NOT_FOUND')));
+    listPending.mockReturnValue(throwError(() => falloDeApi(404, 'NOT_FOUND')));
+    await abrir();
+    expect(byId('equipo-atencion')).toBeNull();
+    expect(host().textContent).not.toContain('No encontramos lo que busca');
+  });
+
+  it('si solo falta el panel (404), igual muestra las aprobaciones que sí responden', async () => {
+    getPractitionerPanel.mockReturnValue(throwError(() => falloDeApi(404, 'NOT_FOUND')));
+    await abrir();
+    expect(byId('atencion-aprobaciones')!.textContent).toContain('1 aprobación espera su decisión.');
+    expect(byId('atencion-revisiones')!.textContent).toContain('Ningún acceso de su equipo espera su revisión.');
   });
 
   it('un fallo muestra el código de seguimiento y reintenta con el botón', async () => {

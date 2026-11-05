@@ -1,0 +1,4 @@
+$ gh pr view 1227 --json isDraft,mergeable,mergeStateStatus,headRefOid,baseRefName  (tras el push 11c4060e6)
+{"baseRefName":"mockup","headRefOid":"11c4060e61d0de731a13b3d2398b279450c89c3d","isDraft":false,"mergeStateStatus":"CLEAN","mergeable":"MERGEABLE"}
+$ gh pr checks 1227
+no checks reported on the 'marcelo/lane16-insurance-ui' branch

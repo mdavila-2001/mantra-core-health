@@ -1,0 +1,33 @@
+:host {
+  display: block;
+}
+
+.ux-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+  padding-block-end: var(--sp-4);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.ux-panel__datos {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+.ux-panel__titulo {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-body-lg);
+  color: var(--text-primary);
+}
+
+.ux-panel__texto {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.ux-panel__error {
+  margin: var(--sp-2) 0 0;
+  color: var(--st-error-fg);
+}

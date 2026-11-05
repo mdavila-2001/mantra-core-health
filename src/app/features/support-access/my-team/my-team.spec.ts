@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DelegatedAccessClient } from '../../../core/data-access/delegated-access/delegated-access.client';
 import { SupportAccessClient } from '../../../core/data-access/support-access/support-access.client';
-import type { DoctorTeamMember } from '../../../core/data-access/support-access/support-access.types';
+import type { DoctorTeamMember, SupportActivityEntry } from '../../../core/data-access/support-access/support-access.types';
 import { MyTeam } from './my-team';
 
 const PENDIENTE: DoctorTeamMember = {
@@ -75,6 +75,7 @@ describe('MyTeam', () => {
   let acceptDelegate: ReturnType<typeof vi.fn>;
   let setReplySettings: ReturnType<typeof vi.fn>;
   let resolveAccessRequest: ReturnType<typeof vi.fn>;
+  let actividad: SupportActivityEntry[];
   const host = (): HTMLElement => fixture.nativeElement as HTMLElement;
   const byId = (id: string): HTMLElement | null => host().querySelector(`[data-testid="${id}"]`);
   const clic = (el: Element | null): void => {
@@ -86,6 +87,7 @@ describe('MyTeam', () => {
     acceptDelegate = vi.fn(() => of({ ok: true }));
     setReplySettings = vi.fn(() => of({ ok: true }));
     resolveAccessRequest = vi.fn(() => of({ requestId: 'ar-1', decision: 'APPROVED' }));
+    actividad = [];
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -96,7 +98,7 @@ describe('MyTeam', () => {
           provide: SupportAccessClient,
           useValue: {
             getMyTeam: () => of({ items: [PENDIENTE, ACTIVA, SUSPENDIDA, RETIRADA, VENCIDA] }),
-            getMyTeamActivity: () => of({ items: [] }),
+            getMyTeamActivity: () => of({ items: actividad }),
             acceptDelegate,
             setReplySettings,
           },
@@ -164,8 +166,8 @@ describe('MyTeam', () => {
 
   it('una persona que ya no está activa dice por qué: suspendida por su organización, retirada o vencida', () => {
     expect(byId('miembro-estado-dl-silvia')!.textContent).toContain('Suspendida');
-    expect(byId('miembro-baja-dl-silvia')!.textContent).toContain('lo renueve');
-    expect(byId('miembro-baja-dl-silvia')!.textContent).toContain('usted no tiene que hacer nada');
+    expect(byId('miembro-baja-dl-silvia')!.textContent).toContain('no renovarlo a tiempo');
+    expect(byId('miembro-baja-dl-silvia')!.textContent).toContain('Su organización suspendió el vínculo de esta persona');
     expect(byId('miembro-estado-dl-pedro')!.textContent).toContain('Retirada');
     expect(byId('miembro-baja-dl-pedro')!.textContent).toContain('ya no forma parte de su equipo');
     expect(byId('miembro-estado-dl-gabriel')!.textContent).toContain('Vencida');
@@ -177,9 +179,26 @@ describe('MyTeam', () => {
     }
   });
 
-  it('lleva a la actividad completa de su equipo, con filtros y exportación', () => {
+  it('sin actividad no muestra la tarjeta «Qué hizo su equipo»: no repite otro vacío', () => {
+    expect(byId('mi-equipo-actividad')).toBeNull();
+  });
+
+  it('con actividad, «Ver toda la actividad» va en la cabecera de la tarjeta, junto al título', async () => {
+    actividad = [{ id: 'a-1', summary: 'Lucía agendó una cita', createdAt: '2026-10-30T10:00:00.000Z' } as SupportActivityEntry];
+    fixture = TestBed.createComponent(MyTeam);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
     const enlace = byId('mi-equipo-ver-actividad') as HTMLAnchorElement;
+    expect(enlace.closest('.actividad__cabeza')?.querySelector('h2')?.textContent).toContain('Qué hizo su equipo');
     expect(enlace.getAttribute('href')).toBe('/my-team/activity');
     expect(byId('mi-equipo-actividad')!.textContent).toContain('exportación a CSV');
+    expect(byId('mi-equipo-actividad')!.textContent).toContain('Lucía agendó una cita');
+  });
+
+  it('no ofrece un generador de QR propio: el QR válido lo emite la organización', () => {
+    expect(byId('boton-toggle-qr')).toBeNull();
+    expect(host().querySelector('app-team-qr-tool')).toBeNull();
   });
 });

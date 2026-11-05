@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Qué ocurre en la sangre cuando hay anemia</title>
+  <desc id="d">Arriba, dos tramos de vaso sanguíneo: el de la izquierda con muchos glóbulos rojos de color intenso y el de la derecha, con anemia, con menos glóbulos rojos y más pálidos. Abajo, tres recuadros con los mecanismos principales: se fabrican menos glóbulos rojos, se pierden por sangrado o se destruyen antes de tiempo.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#e3eef9; --vessel:#f6e3e3; --rbc:#c0392b; --rbc-pale:#e9a49c; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#1f3047; --vessel:#33262a; --rbc:#ef7467; --rbc-pale:#8a5550; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <defs>
+    <g id="r"><ellipse rx="16" ry="11" fill="var(--rbc)"/><ellipse rx="7" ry="4" fill="#000" opacity=".15"/></g>
+    <g id="p"><ellipse rx="14" ry="9" fill="var(--rbc-pale)"/><ellipse rx="6" ry="3" fill="#000" opacity=".08"/></g>
+  </defs>
+  <rect x="20" y="20" width="760" height="230" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210" y="50" text-anchor="middle" class="h">Sangre normal</text>
+  <text x="590" y="50" text-anchor="middle" class="h">Anemia</text>
+  <rect x="40" y="70" width="340" height="120" rx="60" fill="var(--vessel)" stroke="var(--line)"/>
+  <rect x="420" y="70" width="340" height="120" rx="60" fill="var(--vessel)" stroke="var(--line)"/>
+  <g>
+    <use href="#r" x="90" y="105"/><use href="#r" x="130" y="150"/><use href="#r" x="160" y="100"/><use href="#r" x="200" y="140"/>
+    <use href="#r" x="240" y="105"/><use href="#r" x="270" y="155"/><use href="#r" x="310" y="115"/><use href="#r" x="340" y="150"/>
+    <use href="#r" x="110" y="130"/><use href="#r" x="225" y="165"/>
+  </g>
+  <g>
+    <use href="#p" x="480" y="115"/><use href="#p" x="560" y="150"/><use href="#p" x="640" y="110"/><use href="#p" x="710" y="145"/>
+  </g>
+  <text x="210" y="220" text-anchor="middle" class="lab">Mucha hemoglobina: llega oxígeno de sobra</text>
+  <text x="590" y="220" text-anchor="middle" class="lab">Menos glóbulos o más pálidos: llega menos oxígeno</text>
+
+  <text x="400" y="284" text-anchor="middle" class="title">Tres grandes mecanismos</text>
+  <g>
+    <rect x="20" y="300" width="244" height="160" rx="12" fill="var(--accent-l)" stroke="var(--accent)"/>
+    <text x="142" y="330" text-anchor="middle" class="h">Se fabrican menos</text>
+    <text x="142" y="356" text-anchor="middle" class="small">Falta de hierro, vitamina B12</text>
+    <text x="142" y="374" text-anchor="middle" class="small">o ácido fólico</text>
+    <text x="142" y="398" text-anchor="middle" class="small">Enfermedad renal o crónica</text>
+    <text x="142" y="422" text-anchor="middle" class="small">Problemas de la médula ósea</text>
+
+    <rect x="278" y="300" width="244" height="160" rx="12" fill="var(--accent-l)" stroke="var(--accent)"/>
+    <text x="400" y="330" text-anchor="middle" class="h">Se pierden</text>
+    <text x="400" y="356" text-anchor="middle" class="small">Menstruaciones abundantes</text>
+    <text x="400" y="380" text-anchor="middle" class="small">Sangrado digestivo, a veces</text>
+    <text x="400" y="398" text-anchor="middle" class="small">lento y poco visible</text>
+    <text x="400" y="422" text-anchor="middle" class="small">Cirugías o heridas</text>
+
+    <rect x="536" y="300" width="244" height="160" rx="12" fill="var(--accent-l)" stroke="var(--accent)"/>
+    <text x="658" y="330" text-anchor="middle" class="h">Se destruyen antes</text>
+    <text x="658" y="356" text-anchor="middle" class="small">Causas hereditarias</text>
+    <text x="658" y="380" text-anchor="middle" class="small">Causas autoinmunes</text>
+    <text x="658" y="404" text-anchor="middle" class="small">Infecciones o medicamentos</text>
+  </g>
+</svg>

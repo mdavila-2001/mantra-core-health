@@ -361,38 +361,13 @@
           </div>
         }
 
-        @if (tenants().length > 1) {
-          <div class="menu-anclaje">
-            <button
-              class="app-tenant-switcher"
-              appTutorialTarget="shell-selector-organizacion"
-              type="button"
-              app-tenant-switcher
-              data-testid="header-organizacion"
-              aria-haspopup="menu"
-              aria-expanded="false"
-              aria-controls="menu-organizaciones"
-              [attr.aria-label]="'Organización activa: ' + organizacionActiva()"
-            >
-              <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>
-              <span>{{ organizacionActiva() }}</span>
-              <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
-            </button>
-            <div class="app-menu" id="menu-organizaciones" role="menu" hidden>
-              @for (organizacion of tenants(); track organizacion.id) {
-                <button
-                  class="app-menu-item"
-                  type="button"
-                  role="menuitem"
-                  [attr.aria-current]="organizacion.id === activeTenantId() ? 'true' : null"
-                  (click)="changeTenant(organizacion.id)"
-                >
-                  {{ organizacion.name }}
-                </button>
-              }
-            </div>
-          </div>
-        }
+        <app-tenant-menu
+          [tenants]="tenants()"
+          [activeTenantId]="activeTenantId()"
+          [label]="organizacionActiva()"
+          (tenantChanged)="changeTenant($event)"
+          (platformChosen)="changeTenant(null)"
+        />
 
 
         <!-- En móvil estos destinos forman un menú legible. En escritorio se
@@ -701,8 +676,13 @@
               aria-controls="menu-cuenta"
               [title]="persona.displayName"
               [attr.aria-label]="'Cuenta de ' + persona.displayName"
-              >{{ iniciales() }}</button
             >
+              @if (fotoDePerfil(); as foto) {
+                <img class="app-header__foto" [src]="foto" alt="" />
+              } @else {
+                {{ iniciales() }}
+              }
+            </button>
             <!-- El marco de la bóveda pone iniciales, no el nombre completo: en
                  un header de 320 px el nombre no entra. Pero quién tiene la
                  sesión no puede quedar sólo insinuado por dos letras, así que el
@@ -777,6 +757,9 @@
       <app-new-device-banner />
       <!-- Las organizaciones que niegan ahora a la persona (`deniedTenants` del token): aviso, no bloqueo. -->
       <app-denied-tenants-banner />
+      <!-- Aviso de una sola vez sobre la medición de uso (consentimiento de los mapas de calor). En el flujo,
+           solo en el área autenticada: nunca sobre rutas públicas ni de acceso. -->
+      <app-ux-consent-notice />
       <router-outlet />
     </main>
   </div>

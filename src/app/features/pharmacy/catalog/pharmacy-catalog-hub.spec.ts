@@ -1,12 +1,15 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { PharmacyCategories } from '../categories/pharmacy-categories';
 import { PharmacyInventory } from '../inventory/pharmacy-inventory';
+import { PharmacyPrices } from '../prices/pharmacy-prices';
 import { PharmacyProducts } from '../products/pharmacy-products';
 import { PharmacyCatalogHub } from './pharmacy-catalog-hub';
 
@@ -155,5 +158,120 @@ describe('PharmacyCatalogHub', () => {
     harness.detectChanges();
     expect(selectedLabel()).toBe('Productos');
     expect(mountedScreens()).toEqual(['app-pharmacy-products']);
+  });
+
+  describe('pestañas que comparten la farmacia y no pierden lo escrito', () => {
+    const FARMACIAS = [
+      { id: 'f-1', name: 'Farmacia Uno', code: 'F1', siteCount: 1, productCount: 1 },
+      { id: 'f-2', name: 'Farmacia Dos', code: 'F2', siteCount: 1, productCount: 1 },
+    ];
+    const PRODUCT = {
+      id: 'p-1',
+      pharmacyId: 'f-1',
+      pharmacyName: 'Farmacia Uno',
+      productCode: 'PAR-500',
+      brandName: 'Paracetamol',
+      genericName: null,
+      strengthText: null,
+      packageSizeText: null,
+      dosageForm: null,
+      medication: null,
+      requiresPrescription: false,
+      status: 'PUBLISHED' as const,
+      unitPrice: '12.50',
+    };
+
+    let http: HttpTestingController;
+    let discard: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      http = TestBed.inject(HttpTestingController);
+      discard = vi.spyOn(TestBed.inject(DialogService), 'confirmarDescarte');
+    });
+
+    function flushPharmacies(items: readonly unknown[]): void {
+      http.match((r) => r.url.endsWith('/pharmacy/pharmacies')).forEach((r) => r.flush({ items, count: items.length }));
+      harness.detectChanges();
+    }
+
+    function flushProducts(): void {
+      http
+        .match((r) => r.url.endsWith('/pharmacy/products'))
+        .forEach((r) => r.flush({ items: [PRODUCT], limit: 500, truncated: false }));
+      harness.detectChanges();
+    }
+
+    async function pricesWithAnEdit(): Promise<PharmacyPrices> {
+      await open(`${ROUTE}?tab=prices`);
+      flushPharmacies([FARMACIAS[0]]);
+      flushProducts();
+      const prices = harness.fixture.debugElement.query(By.directive(PharmacyPrices))
+        .componentInstance as PharmacyPrices;
+      (prices as unknown as { setPrice: (product: unknown, value: string) => void }).setPrice(PRODUCT, '13');
+      harness.detectChanges();
+      return prices;
+    }
+
+    it('con un precio sin guardar, cambiar de pestaña pregunta y, si no se acepta, no se mueve ni se pierde nada', async () => {
+      discard.mockResolvedValue(false);
+      const prices = await pricesWithAnEdit();
+
+      tabButtons()[3]!.click();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(discard).toHaveBeenCalledTimes(1);
+      expect(selectedLabel()).toBe('Precios');
+      expect(mountedScreens()).toEqual(['app-pharmacy-prices']);
+      expect(router.url).toBe(`${ROUTE}?tab=prices`);
+      expect(harness.fixture.debugElement.query(By.directive(PharmacyPrices)).componentInstance).toBe(prices);
+      expect(prices.hasUnsavedChanges()).toBe(true);
+    });
+
+    it('si se acepta descartar, cambia de pestaña', async () => {
+      discard.mockResolvedValue(true);
+      await pricesWithAnEdit();
+
+      tabButtons()[3]!.click();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(selectedLabel()).toBe('Inventario');
+      expect(router.url).toBe(`${ROUTE}?tab=inventory`);
+    });
+
+    it('sin cambios sin guardar, cambia sin preguntar', async () => {
+      await open(`${ROUTE}?tab=prices`);
+      flushPharmacies([FARMACIAS[0]]);
+      flushProducts();
+
+      tabButtons()[0]!.click();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(discard).not.toHaveBeenCalled();
+      expect(selectedLabel()).toBe('Productos');
+    });
+
+    it('la farmacia elegida en una pestaña sigue elegida en la siguiente, sin volver a pedir la lista', async () => {
+      await open(`${ROUTE}?tab=categories`);
+      flushPharmacies(FARMACIAS);
+      const choose = (): void =>
+        (
+          harness.fixture.debugElement.query(By.directive(PharmacyCategories)).componentInstance as unknown as {
+            scope: { choose: (id: string) => void };
+          }
+        ).scope.choose('f-2');
+      choose();
+      harness.detectChanges();
+
+      tabButtons()[2]!.click();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(http.match((r) => r.url.endsWith('/pharmacy/pharmacies'))).toHaveLength(0);
+      const listing = http.match((r) => r.url.endsWith('/pharmacy/products'));
+      expect(listing.map((r) => r.request.params.get('pharmacyId'))).toEqual(['f-2']);
+    });
   });
 });

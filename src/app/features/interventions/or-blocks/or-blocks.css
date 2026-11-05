@@ -1,0 +1,72 @@
+:host {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.or-blocks {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.or-blocks__panel {
+  display: grid;
+  gap: var(--sp-4);
+  padding-block-start: var(--sp-4);
+}
+
+.or-blocks__toolbar,
+.or-blocks__row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.or-blocks__week {
+  font-weight: 600;
+}
+
+.or-blocks__when,
+.or-blocks__owner {
+  display: block;
+  font-weight: 600;
+}
+
+.or-blocks__muted {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.or-blocks__form {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.or-blocks__grid {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: 1fr;
+}
+
+.or-blocks__submit {
+  justify-content: flex-end;
+}
+
+@media (min-width: 780px) {
+  .or-blocks__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .or-blocks__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.or-blocks__site {
+  margin-block-end: var(--sp-4);
+}

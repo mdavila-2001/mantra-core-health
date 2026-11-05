@@ -1,0 +1,41 @@
+{
+ "round": 2,
+ "sample": "literature-audit-r2-sample-ids.json (semilla 20261025, 45 fichas nuevas, ninguna de la primera muestra)",
+ "sentences": 217,
+ "fiel": 195,
+ "parcial": 22,
+ "infiel": 0,
+ "copiedStrict": 119,
+ "aspectWrong": 3,
+ "perAuditor": [
+  {
+   "auditor": "literature-audit-r2-1",
+   "sentences": 69,
+   "fiel": 60,
+   "parcial": 9,
+   "infiel": 0,
+   "copied": 28,
+   "aspectWrong": 1
+  },
+  {
+   "auditor": "literature-audit-r2-2",
+   "sentences": 67,
+   "fiel": 63,
+   "parcial": 4,
+   "infiel": 0,
+   "copied": 48,
+   "aspectWrong": 0
+  },
+  {
+   "auditor": "literature-audit-r2-3",
+   "sentences": 81,
+   "fiel": 72,
+   "parcial": 9,
+   "infiel": 0,
+   "copied": 43,
+   "aspectWrong": 2
+  }
+ ],
+ "copiedCriterion": "estricto (más exigente que la ronda 1): toda frase cuya cláusula principal traduce una oración del resumen, o que encadena oraciones del resumen en su orden, aunque agregue el marco de la muestra",
+ "note": "La tasa de copia de esta ronda no es comparable con la de la ronda 1 (22 %, criterio «traducción palabra por palabra de una oración»): el criterio se endureció."
+}

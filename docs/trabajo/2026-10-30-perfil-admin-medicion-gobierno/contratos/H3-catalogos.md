@@ -88,3 +88,33 @@ Specs nuevas, todas con `jest --runInBand`:
 - `eslint` (type-aware) sobre los 15 archivos tocados: sin hallazgos. `tsc` acotado a los archivos nuevos y su grafo: sin errores.
 
 **No cubierto:** persistencia real (insert/update con `row_version` de PostgreSQL, `version: true` incrementando de verdad, `ILIKE`/keyset sobre datos reales), arranque DI del módulo completo, auditoría escrita en `audit.audit_log`, y E2E con el front. Requieren PostgreSQL real: `BLOQUEADO` hasta tenerlo.
+
+## 7. Adenda 2026-10-31 — estado real en el checkout del API y `GET /admin/catalogs/services/scopes`
+
+> Esta adenda manda sobre las secciones 1 a 6 en lo que contradiga el código. Motivo: el árbol `mantra-core-health-api` de esta sesión **no trae** los archivos que describe §6 (rama `claude/stoic-johnson-4vl5bf` sin commit, perdida o en otra máquina). Se volvió a implementar Servicios; el resto no.
+
+| Catálogo | API (esta sesión) | Front |
+|---|---|---|
+| Servicios | **Implementado** en `src/modules/admin_catalogs/` (módulo nuevo, sin DDL): controlador, servicio, DTO, README. 51 pruebas en verde (`jest --runInBand src/modules/admin_catalogs`) con **dobles** (servicio y EntityManager en memoria): sin PostgreSQL real. | Pestaña «Servicios» contra este contrato. |
+| Glosario | **NO implementado.** §3 queda como contrato acordado; construirlo toca el motor de terminología (concepto, designaciones, propiedades jsonb, pertenencia al conjunto paraguas) y exige una base real para probarse. | Pestaña «Glosarios» cerrada contra un **doble** (`catalog-editor.handlers.ts`, regla 65). Contra la API real responderá 404 hasta que exista. |
+| Reporte contable | **NO implementado** (§4, decisión de negocio pendiente). | Pestaña que dice que no existe; no guarda nada. |
+
+### `GET /admin/catalogs/services/scopes` (nuevo, no estaba en §2)
+
+La pantalla necesita saber **qué tipos de organización, prácticas y monedas existen** sin conocer los uuid de los conceptos `PR_TYPE_*` ni de las monedas. Roles y alcance iguales a los demás verbos de Servicios (`SECURITY_ADMIN`/`SUPERADMIN`; sólo prácticas activas de la organización del token).
+
+```json
+{
+  "types":      [{ "conceptId": "uuid", "code": "PR_TYPE_CLINIC", "display": "Clinic practice type" }],
+  "practices":  [{ "id": "uuid", "name": "…", "typeConceptId": "uuid" }],
+  "currencies": [{ "conceptId": "uuid", "code": "BOB" }, { "conceptId": "uuid", "code": "USD" }]
+}
+```
+
+### Diferencias de implementación respecto de §2
+
+- La lista pagina por `(code, id)` con cursor opaco; `q` escapa `%` y `_` (son literales).
+- `POST` acepta `currencyConceptId` sólo BOB/USD (422 `SERVICE_CATALOG_CURRENCY_NOT_SUPPORTED` si no). `PATCH` sin ningún campo editable es 422 `SERVICE_CATALOG_EMPTY_UPDATE`.
+- `defaultPrice` se acepta **sólo como texto** (`"100.00"`); un `number` en el cuerpo es 400. Siempre se devuelve con dos decimales.
+- Los 409 de versión llevan `reason: SERVICE_CATALOG_VERSION_MISMATCH` y `details: { expected, actual }`.
+- `display` de los tipos sale tal cual del concepto (hoy en inglés técnico: «Clinic practice type»). Traducirlo es trabajo de terminología, no del editor.

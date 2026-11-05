@@ -1,0 +1,40 @@
+{
+ "round": 1,
+ "sample": "literature-audit-sample-ids.json (semilla 20261024, 45 de 884 fichas descritas = 5 %)",
+ "sentences": 198,
+ "fiel": 180,
+ "parcial": 15,
+ "infiel": 3,
+ "copied": 44,
+ "aspectWrong": 3,
+ "perAuditor": [
+  {
+   "auditor": "literature-audit-1",
+   "sentences": 65,
+   "fiel": 58,
+   "parcial": 7,
+   "infiel": 0,
+   "copied": 17,
+   "aspectWrong": 1
+  },
+  {
+   "auditor": "literature-audit-2",
+   "sentences": 66,
+   "fiel": 60,
+   "parcial": 4,
+   "infiel": 2,
+   "copied": 19,
+   "aspectWrong": 1
+  },
+  {
+   "auditor": "literature-audit-3",
+   "sentences": 67,
+   "fiel": 62,
+   "parcial": 4,
+   "infiel": 1,
+   "copied": 8,
+   "aspectWrong": 1
+  }
+ ],
+ "decision": "FALLA la regla «parafraseado, nunca copiado» (22 % de calcos) y hay 3 infieles: se revisan las 4 228 frases (20 agentes nuevos) y se audita una muestra nueva."
+}

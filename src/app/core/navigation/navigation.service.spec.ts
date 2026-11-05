@@ -102,10 +102,13 @@ describe('NavigationService', () => {
       expect(enGrupos).not.toContain('/notification-center');
     });
 
-    it('al médico le desaparece «Mi cuenta», porque se queda sin secciones', () => {
+    // The «Buzón de solicitudes» left the menu (owner, 04/11/2026): it is the
+    // «Solicitudes de vínculo» tab of «Mis solicitudes», in the top bar.
+    it('al médico Mi cuenta ya no conserva el Buzón de solicitudes', () => {
       abrirSesion(['PRACTITIONER'], ['t-1']);
 
-      expect(service.menu().map((g) => g.label)).not.toContain('Mi cuenta');
+      const rutas = service.menu().flatMap((g) => g.items.map((item) => item.route));
+      expect(rutas).not.toContain('/my-account/access-requests');
     });
 
     it('un destino fijo no nombra su grupo en la ruta de navegación', async () => {
@@ -337,18 +340,17 @@ describe('NavigationService', () => {
         'Formularios',
         'Mis servicios',
         'Cotizaciones',
-        // «Grupos médicos» entra el 25/10/2026 con el carril 21 (FT-21): la
-        // ficha pide la pantalla con sus tres pestañas y «Crear grupo médico»,
-        // y responder invitaciones o cargar las notas del ejercicio es un
-        // destino al que se vuelve, como «Cotizaciones». Decisión a confirmar
-        // por el propietario en el PR.
-        'Grupos médicos',
+        // «Grupos médicos» pasa a ser pestaña de «Grupos y foros» el 01/11/2026
+        // (pedido del propietario): se unifican las comunidades y los equipos médicos.
         // «Mi equipo» entra con el personal de apoyo (2026-10): es la única
         // puerta del doctor a quienes le ayudan con su agenda y sus mensajes —
         // aceptarlos una vez, decidir si responden en su nombre, aprobar el acceso
         // clínico temporal—. Decisión a confirmar por el propietario en el PR: la
         // lista cerrada pasa de once a doce.
         'Mi equipo',
+        // «Facturación» entra el 31/10/2026: el médico cobra y factura SUS
+        // consultas (la API acota el alcance en `billing-simulated.access.ts`).
+        'Facturación',
         'Contabilidad',
       ]);
     });
@@ -702,8 +704,6 @@ describe('NavigationService', () => {
         '/form-builder',
         '/my-services',
         '/my-quotations',
-        // Carril 21: los grupos médicos se arman sobre el mismo catálogo.
-        '/my-medical-groups',
       ]);
     });
 
@@ -833,9 +833,7 @@ describe('NavigationService', () => {
         '/administration/insurance-campaigns',
         '/administration/my-organization',
       ]);
-      // Un solo dominio: sin «General» (Directorios, Chats) ni «Mi cuenta»
-      // (el autoservicio del paciente), que es justo lo que la captura del
-      // pedido mostraba de más.
+      // The «Buzón de solicitudes» moved into «Mis solicitudes» (04/11/2026).
       expect(service.menu().map((grupo) => grupo.label)).toEqual(['Administración']);
       expect(service.menu()[0]?.blocks.map((bloque) => bloque.label)).toEqual([
         'Seguros',

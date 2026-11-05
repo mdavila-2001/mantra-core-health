@@ -167,3 +167,23 @@
   font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
+
+.alp__notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: var(--sp-3);
+  color: var(--st-warning-fg);
+  background: var(--st-warning-bg);
+  border-radius: var(--r-sm);
+}
+
+.alp__sum,
+.alp__showing,
+.alp__count-s {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

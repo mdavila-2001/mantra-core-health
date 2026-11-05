@@ -2,10 +2,11 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { PharmacyCategory } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { CsvExportService, toCsv, type CsvColumn } from '../../../shared/utils/csv-export/csv-export';
 import { PharmacyCategories } from './pharmacy-categories';
 import { afterAll, beforeAll } from 'vitest';
 import { environment } from '../../../../environments/environment';
@@ -187,5 +188,40 @@ describe('PharmacyCategories', () => {
 
     expectList([CATEGORIES[0]!]);
     expect(root().textContent).not.toContain('Bienestar');
+  });
+
+  describe('exportar y ordenar', () => {
+    const names = (): (string | undefined)[] =>
+      [...root().querySelectorAll('.categories__name')].map((name) => name.textContent?.trim());
+
+    it('«Exportar CSV» baja los nombres con el encabezado de la importación de categorías', () => {
+      mount();
+      const download = vi.spyOn(TestBed.inject(CsvExportService), 'download').mockImplementation(() => undefined);
+
+      (root().querySelector('[data-testid="categories-export"]') as HTMLButtonElement).click();
+
+      const [rows, columns, filename] = download.mock.calls[0]!;
+      expect(filename).toBe('categorias-de-la-farmacia.csv');
+      expect(toCsv(rows as readonly PharmacyCategory[], columns as readonly CsvColumn<PharmacyCategory>[])).toBe(
+        'nombre\r\nMedicamentos\r\nBienestar',
+      );
+    });
+
+    it('ordena por nombre y por cantidad de productos desde los encabezados', async () => {
+      mount();
+      const header = (key: string): HTMLButtonElement =>
+        root().querySelector(`[data-testid="tabla-ordenar"][data-columna="${key}"]`) as HTMLButtonElement;
+      expect(names()).toEqual(['Medicamentos', 'Bienestar']);
+
+      header('name').click();
+      await fixture.whenStable();
+      expect(names()).toEqual(['Bienestar', 'Medicamentos']);
+
+      header('count').click();
+      await fixture.whenStable();
+      header('count').click();
+      await fixture.whenStable();
+      expect(names()).toEqual(['Medicamentos', 'Bienestar']);
+    });
   });
 });

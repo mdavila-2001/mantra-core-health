@@ -28,6 +28,20 @@
   padding-left: var(--sp-5);
 }
 
+/* Buscar y la barra de guardar comparten renglón desde 780 px. */
+.inventory__tools {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 780px) {
+  .inventory__tools {
+    grid-template-columns: minmax(16rem, 1fr) auto;
+    align-items: center;
+    gap: var(--sp-4);
+  }
+}
+
 .inventory__bar {
   display: flex;
   flex-wrap: wrap;

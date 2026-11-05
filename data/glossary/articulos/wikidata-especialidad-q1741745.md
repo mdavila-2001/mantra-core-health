@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1741745
+image: wikidata-especialidad-q1741745.svg | La psiquiatría infantil y adolescente acompaña la salud mental a lo largo del desarrollo. | Tres figuras de tamaño creciente para la primera infancia, la edad escolar y la adolescencia, la lista de problemas frecuentes y tres recuadros con el niño, la familia y la escuela.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: prueba-de-tolerancia-a-la-glucosa
+image: prueba-de-tolerancia-a-la-glucosa.svg | Pasos de la prueba de tolerancia a la glucosa y curvas posibles | Cuatro pasos desde la extracción en ayunas hasta las extracciones posteriores, con dos curvas de glucosa, una que vuelve a bajar y otra que se mantiene alta
 ---
 
 ## [definition] Introducción

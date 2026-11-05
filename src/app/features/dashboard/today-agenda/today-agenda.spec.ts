@@ -277,7 +277,7 @@ describe('AgendaDeHoy', () => {
     expect(aviso).not.toBeNull();
     expect(aviso?.getAttribute('role')).toBe('alert');
     expect(aviso?.textContent).toContain(
-      'No se pudieron cargar las citas de Consultorio. (Código de soporte: corr-sede-2)',
+      'No se pudieron cargar las citas de Consultorio. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-sede-2)',
     );
   });
 
@@ -295,7 +295,7 @@ describe('AgendaDeHoy', () => {
 
     expect(estado().status).toBe('empty');
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(texto).not.toContain('Hoy no tiene ninguna consulta reservada.');
+    expect(texto).not.toContain('Hoy no tiene consultas reservadas.');
     expect(texto).toContain('en las agendas que se pudieron cargar');
     expect(texto).toContain('No se pudieron cargar las citas de Consultorio.');
   });

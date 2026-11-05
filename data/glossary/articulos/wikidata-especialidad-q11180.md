@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q11180
+image: wikidata-especialidad-q11180.svg | La medicina interna como visión de conjunto del adulto | Silueta adulta conectada a ocho sistemas del cuerpo, como corazón, pulmones, riñones y hormonas, con recuadros sobre los pacientes típicos y el papel del internista
 ---
 
 ## [definition] Introducción

@@ -23,11 +23,14 @@ import type {
   RegisterInstancePaymentInput,
   MyInvoiceItem,
   MyInvoicesView,
+  PaymentProof,
   RegisterPaymentInput,
   SimulatedCharge,
 } from '../../data-access/billing-simulated/billing-simulated.types';
-import { initialCharges, SIMULATED_ISSUERS, SIMULATED_REGISTRY } from '../billing-sim/simulated-data';
+import { PAYMENT_PROOF_MAX_BYTES, PAYMENT_PROOF_MIME_TYPES } from '../../data-access/billing-simulated/billing-simulated.types';
+import { cobroPendienteDeReserva, initialCharges, SIMULATED_ISSUERS, SIMULATED_REGISTRY } from '../billing-sim/simulated-data';
 import { PACIENTE } from '../fixtures/people';
+import { reservas } from '../fixtures/agenda';
 import { SimulatedInvoicing, type InvoicingError, type Result } from '../billing-sim/simulated-invoicing';
 import {
   conflict,
@@ -37,6 +40,7 @@ import {
   preconditionFailed,
   reply,
   unauthorized,
+  unprocessable,
   validation,
   type MockReply,
   type MockRequest,
@@ -45,6 +49,7 @@ import {
 import { TENANT_FARMACIA, type MockUser } from '../mock-session';
 import { cuerpo } from '../mock-store';
 import { SiatSimulatedAdapter } from '../siat-sim/siat-simulated.adapter';
+import { registrarPagoConfirmadoDeReserva } from './scheduling.handlers';
 
 export const ROLES_DE_FACTURACION: readonly string[] = ['BILLING', 'FINANCE', 'CASHIER', 'PAYMENTS_ADMIN', 'SUPERADMIN'];
 
@@ -173,6 +178,36 @@ function errorHttp(error: InvoicingError): MockReply {
   }
 }
 
+/**
+ * El comprobante del cuerpo, o el motivo por el que no sirve.
+ *
+ * Se valida en el servidor y no sólo en el formulario: la pantalla no es una
+ * barrera. `undefined` es válido —el aviso sin archivo sigue existiendo—.
+ */
+function comprobanteDelCuerpo(cuerpoDePeticion: { readonly proof?: unknown }): PaymentProof | undefined | { readonly problem: string } {
+  const crudo = cuerpoDePeticion.proof;
+  if (crudo === undefined || crudo === null) return undefined;
+  if (typeof crudo !== 'object') return { problem: 'El comprobante no tiene el formato esperado' };
+  const { fileName, mimeType, sizeBytes, dataUrl } = crudo as Partial<PaymentProof>;
+  if (typeof fileName !== 'string' || fileName.trim() === '' || typeof dataUrl !== 'string') {
+    return { problem: 'El comprobante no tiene el formato esperado' };
+  }
+  if (typeof mimeType !== 'string' || !(PAYMENT_PROOF_MIME_TYPES as readonly string[]).includes(mimeType)) {
+    return { problem: 'El comprobante tiene que ser una imagen JPG, PNG o WEBP, o un PDF' };
+  }
+  if (typeof sizeBytes !== 'number' || sizeBytes <= 0 || sizeBytes > PAYMENT_PROOF_MAX_BYTES || !dataUrl.startsWith(`data:${mimeType};base64,`)) {
+    return { problem: 'El comprobante pesa más de 3 MB o está dañado' };
+  }
+  return { fileName: fileName.trim().slice(0, 120), mimeType, sizeBytes, dataUrl };
+}
+
+/** Los ids con que un cobro puede apuntar a una reserva: la reserva misma o su cita clínica. */
+function referenciasDeReserva(bookingId: string | null): ReadonlySet<string> | null {
+  if (bookingId === null) return null;
+  const reserva = reservas.get(bookingId);
+  return new Set([bookingId, reserva?.appointmentId].filter((id): id is string => id !== null && id !== undefined));
+}
+
 export function registrarFacturacionSimulada(router: MockRouter, opciones: OpcionesDeFacturacionSimulada = {}): void {
   const activa = opciones.activa ?? (() => environment.billingSiatDemo);
   let motor: SimulatedInvoicing | null = null;
@@ -187,6 +222,76 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
     }
     return motor;
   };
+
+  const pacienteActivo = (request: MockRequest): string | MockReply => {
+    if (!environment.paymentDemo || !activa()) return notFound('Los pagos QR de demostración están apagados');
+    if (request.user === null) return unauthorized('Sin sesión');
+    if (!request.user.roles.includes('PATIENT') || request.user.patientProfileId === undefined) {
+      return forbidden('Esta pantalla es para pacientes');
+    }
+    return request.user.patientProfileId;
+  };
+
+  // El portal del paciente sólo accede a cobros propios. El QR no registra
+  // un pago: deja el comprobante como recibido y pendiente de revisión.
+  router.get('/billing/simulated/patient/charges', (request) => {
+    const paciente = pacienteActivo(request);
+    if (isMockReply(paciente)) return paciente;
+    const bookingId = request.query.get('bookingId');
+    const referencias = referenciasDeReserva(bookingId);
+    const propia = bookingId === null ? undefined : reservas.get(bookingId);
+    // Una cita propia siempre abre su pago: si no tenía cobro, se crea.
+    if (propia !== undefined && propia.patientProfileId === paciente) facturacion().asegurarCobro(cobroPendienteDeReserva(propia));
+    const items = facturacion().listCharges().filter((c) =>
+      c.source === 'CONSULTATION' && c.patientProfileId === paciente &&
+      (referencias === null || referencias.has(c.sourceRef) || c.plan?.instances.some((i) => i.bookingId === bookingId)),
+    );
+    return { items, count: items.length, simulated: true };
+  });
+
+  router.post('/billing/simulated/patient/charges/:chargeId/report', (request) => {
+    const paciente = pacienteActivo(request);
+    if (isMockReply(paciente)) return paciente;
+    const cobro = facturacion().charge(request.params['chargeId']!);
+    if (cobro === null || cobro.source !== 'CONSULTATION' || cobro.patientProfileId !== paciente) return notFound('El cobro no existe');
+    const comprobante = comprobanteDelCuerpo(cuerpo<{ proof: unknown }>(request));
+    if (comprobante !== undefined && 'problem' in comprobante) {
+      return unprocessable('El comprobante no es válido', [{ field: 'proof', problem: comprobante.problem }]);
+    }
+    return aRespuesta(facturacion().informarPagoDelPaciente(cobro.id, comprobante), 201);
+  });
+
+  // «Ver pagos» en la consulta: quien atiende ve los avisos recibidos y puede
+  // confirmarlos. La confirmación crea SimulatedPayment, que es lo que cuenta
+  // para facturación e ingresos.
+  router.get('/billing/simulated/payment-reports', (request) => {
+    if (request.user === null) return unauthorized('Sin sesión');
+    const profesional = request.user.practitionerProfileId;
+    const tieneAlcance = request.user.roles.some((rol) => ROLES_DE_FACTURACION.includes(rol)) ||
+      (profesional !== undefined && request.user.roles.some((rol) => ROLES_DEL_CONSULTORIO.includes(rol)));
+    if (!tieneAlcance) return forbidden('Su rol no permite revisar pagos');
+    const items = facturacion().listCharges().filter((c) =>
+      c.patientPaymentReport !== null && c.patientPaymentReport !== undefined &&
+      (request.user!.roles.some((rol) => ROLES_DE_FACTURACION.includes(rol)) || c.practitionerProfileId === profesional) &&
+      (request.query.get('patientProfileId') === null || c.patientProfileId === request.query.get('patientProfileId')),
+    );
+    return { items, count: items.length, simulated: true };
+  });
+
+  router.post('/billing/simulated/payment-reports/:chargeId/confirm', (request) => {
+    if (request.user === null) return unauthorized('Sin sesión');
+    const profesional = request.user.practitionerProfileId;
+    const tieneAlcance = request.user.roles.some((rol) => ROLES_DE_FACTURACION.includes(rol)) ||
+      (profesional !== undefined && request.user.roles.some((rol) => ROLES_DEL_CONSULTORIO.includes(rol)));
+    if (!tieneAlcance) return forbidden('Su rol no permite confirmar pagos');
+    const cobro = facturacion().charge(request.params['chargeId']!);
+    if (cobro === null || (profesional !== undefined && !request.user.roles.some((rol) => ROLES_DE_FACTURACION.includes(rol)) && cobro.practitionerProfileId !== profesional)) {
+      return notFound('El cobro no existe');
+    }
+    const resultado = facturacion().confirmarPagoInformado(cobro.id);
+    if (resultado.ok && cobro.source === 'CONSULTATION') registrarPagoConfirmadoDeReserva(cobro.sourceRef, cobro.total);
+    return aRespuesta(resultado);
+  });
 
   /**
    * Apagada → 404; sin sesión → 401; sin rol → 403. Con `consultorio`, quien
@@ -247,10 +352,19 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
     con(
       (request, m, alcance) => {
         const paciente = request.query.get('patientProfileId');
+        const bookingId = request.query.get('bookingId');
+        const referencias = referenciasDeReserva(bookingId);
+        // Quien atiende ve el cobro de la cita aunque nadie lo haya cargado todavía.
+        const cita = bookingId === null ? undefined : reservas.get(bookingId);
+        const pendiente = cita === undefined ? null : cobroPendienteDeReserva(cita);
+        if (pendiente !== null && (alcance.todo || pendiente.practitionerProfileId === alcance.profesional)) {
+          m.asegurarCobro(pendiente);
+        }
         const items = m
           .listCharges()
           .filter((c) => dentroDelAlcance(c, alcance))
-          .filter((c) => paciente === null || paciente === '' || c.patientProfileId === paciente);
+          .filter((c) => paciente === null || paciente === '' || c.patientProfileId === paciente)
+          .filter((c) => referencias === null || referencias.has(c.sourceRef) || (c.plan?.instances.some((i) => i.bookingId === bookingId) ?? false));
         return { items, count: items.length, simulated: true };
       },
       { consultorio: true },

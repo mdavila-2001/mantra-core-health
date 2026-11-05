@@ -62,6 +62,31 @@ export interface SimulatedPayment {
   readonly simulated: true;
 }
 
+/** Formatos y tope del comprobante que sube el paciente (la simulación lo guarda en línea). */
+export const PAYMENT_PROOF_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] as const;
+export const PAYMENT_PROOF_MAX_BYTES = 3 * 1024 * 1024;
+
+/** El archivo que el paciente adjunta como prueba de su pago. */
+export interface PaymentProof {
+  readonly fileName: string;
+  readonly mimeType: string;
+  readonly sizeBytes: number;
+  /** El contenido como `data:` URL: la CSP no deja abrir `blob:` ni URLs ajenas. */
+  readonly dataUrl: string;
+}
+
+/** Aviso del paciente: todavía no es un cobro confirmado ni un ingreso contable. */
+export interface PatientPaymentReport {
+  readonly id: string;
+  readonly status: 'PENDING_CONFIRMATION' | 'CONFIRMED';
+  readonly methodLabel: 'QR (demo)';
+  readonly amount: string;
+  readonly reportedAt: string;
+  readonly confirmedAt: string | null;
+  /** El comprobante adjunto; `null` si el aviso llegó sin archivo. */
+  readonly proof?: PaymentProof | null;
+}
+
 export interface SuggestedBuyer {
   readonly name: string;
   readonly documentTypeCode: number;
@@ -149,6 +174,8 @@ export interface SimulatedCharge {
   readonly currency: 'BOB';
   readonly createdAt: string;
   readonly payment: SimulatedPayment | null;
+  /** Pago que el paciente informó por QR y que quien atiende debe validar. */
+  readonly patientPaymentReport?: PatientPaymentReport | null;
   readonly suggestedBuyer: SuggestedBuyer;
   readonly latestInvoice: SimulatedInvoiceSummary | null;
   /** `null`: el servicio es de una sola instancia. */

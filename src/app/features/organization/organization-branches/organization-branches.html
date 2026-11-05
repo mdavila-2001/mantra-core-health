@@ -8,6 +8,12 @@
     <div class="branches__bar">
       <p class="branches__note">
         El código de cada sucursal no se edita: es cómo la reconoce el sistema.
+        @if (isPharmacy()) {
+          <span data-testid="branches-pharmacy-sites-note">
+            Las sedes de venta que suba en Catálogo → Importación → Sucursales no aparecen acá: son
+            las de «Horario y turnos» y «Dónde comprar», donde los pacientes las ven.
+          </span>
+        }
       </p>
       <div class="branches__actions">
         <button

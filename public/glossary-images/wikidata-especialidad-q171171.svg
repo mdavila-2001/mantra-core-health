@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Dermatología: la especialidad de la piel</title>
+  <desc id="d">A la izquierda, un corte de la piel con la epidermis, la dermis con vasos y la hipodermis con grasa, un folículo de pelo y una glándula sudorípara. A la derecha, las enfermedades que atiende la dermatología con frecuencia y sus herramientas: dermatoscopio, biopsia, láser y cirugía.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">La piel y sus anexos</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Qué atiende y cómo trabaja</text>
+<rect x="40" y="90" width="320" height="40" rx="4" fill="var(--skin)" stroke="var(--organ)"/>
+<rect x="40" y="130" width="320" height="110" rx="0" fill="var(--organ-l)"/>
+<rect x="40" y="240" width="320" height="90" rx="4" fill="var(--warn-l)"/>
+<circle cx="70" cy="270" r="14" fill="var(--yellow)" opacity=".5"/>
+<circle cx="110" cy="290" r="14" fill="var(--yellow)" opacity=".5"/>
+<circle cx="160" cy="268" r="14" fill="var(--yellow)" opacity=".5"/>
+<circle cx="230" cy="286" r="14" fill="var(--yellow)" opacity=".5"/>
+<circle cx="290" cy="272" r="14" fill="var(--yellow)" opacity=".5"/>
+<circle cx="330" cy="296" r="14" fill="var(--yellow)" opacity=".5"/>
+<path d="M120 60 L124 90 M124 90 C120 140 112 180 118 210" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="118" cy="214" rx="12" ry="18" fill="var(--skin)" stroke="var(--organ)" stroke-width="1.5"/>
+<text x="64" y="68" class="small">Pelo</text>
+<path d="M270 90 L270 150 C270 170 290 170 286 190 C282 210 262 200 266 220" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="280" y="120" class="small" style="fill:var(--accent)">Glándula</text>
+<text x="280" y="136" class="small" style="fill:var(--accent)">sudorípara</text>
+<path d="M150 150 C170 140 200 160 220 150" fill="none" stroke="var(--vessel)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M150 200 C170 190 200 210 220 200" fill="none" stroke="var(--vein)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="50" y="115" class="small">Epidermis</text>
+<text x="50" y="230" class="small">Dermis</text>
+<text x="50" y="320" class="small">Hipodermis (grasa)</text>
+<text x="200" y="364" text-anchor="middle" class="small">El órgano más extenso: barrera, temperatura</text>
+<text x="200" y="380" text-anchor="middle" class="small">y sensibilidad. Incluye pelo, uñas y mucosas.</text>
+<text x="416" y="76" class="h">Enfermedades frecuentes</text>
+<text x="416" y="102" class="small">• Acné y rosácea</text>
+<text x="416" y="124" class="small">• Dermatitis y psoriasis</text>
+<text x="416" y="146" class="small">• Infecciones por hongos</text>
+<text x="416" y="168" class="small">• Lunares y cáncer de piel</text>
+<text x="416" y="190" class="small">• Caída del pelo y uñas</text>
+<text x="416" y="230" class="h">Herramientas</text>
+<rect x="416" y="246" width="344" height="44" rx="8" fill="var(--tissue)" stroke="var(--line)"/>
+<rect x="416" y="246" width="8" height="44" rx="3" fill="var(--accent)"/>
+<text x="436" y="266" class="step">Dermatoscopio</text>
+<text x="436" y="283" class="small" style="fill:var(--muted)">aumenta los lunares</text>
+<rect x="416" y="300" width="344" height="44" rx="8" fill="var(--tissue)" stroke="var(--line)"/>
+<rect x="416" y="300" width="8" height="44" rx="3" fill="var(--vessel)"/>
+<text x="436" y="320" class="step">Biopsia</text>
+<text x="436" y="337" class="small" style="fill:var(--muted)">muestra de piel</text>
+<rect x="416" y="354" width="344" height="44" rx="8" fill="var(--tissue)" stroke="var(--line)"/>
+<rect x="416" y="354" width="8" height="44" rx="3" fill="var(--purple)"/>
+<text x="436" y="374" class="step">Láser y cirugía</text>
+<text x="436" y="391" class="small" style="fill:var(--muted)">procedimientos</text>
+<text x="416" y="424" class="small" style="fill:var(--muted)">Revisión anual de lunares si hay riesgo.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

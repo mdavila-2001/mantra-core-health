@@ -1,5 +1,6 @@
 ---
 slug: test-de-embarazo-en-orina
+image: test-de-embarazo-en-orina.svg | Cómo funciona y cómo se lee un test de embarazo en orina | Esquema de la producción de hCG que pasa a la orina, un vaso con la tira reactiva y dos ventanas de resultado, positivo con dos líneas y negativo con una
 ---
 
 ## [definition] Introducción

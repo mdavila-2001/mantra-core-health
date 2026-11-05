@@ -1,5 +1,6 @@
 ---
 slug: temblor-esencial
+image: temblor-esencial.svg | El temblor esencial aparece al sostener objetos o al moverse. | Mano que sostiene un vaso con líneas que indican temblor, una comparación con el temblor de reposo del Parkinson y una lista de medidas y tratamientos.
 ---
 
 ## [definition] Introducción

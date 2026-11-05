@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Digestión de la lactosa con y sin lactasa</title>
+  <desc id="d">Arriba, la lactasa del intestino delgado divide la lactosa en glucosa y galactosa, que se absorben. Abajo, sin lactasa suficiente la lactosa llega al colon, las bacterias la fermentan y producen gases, hinchazón, dolor y diarrea.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="760" height="190" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="400.0" y="50" text-anchor="middle" class="title">Con lactasa: digestión normal</text>
+<polygon points="83.9,118.0 70.0,126.0 56.1,118.0 56.1,102.0 70.0,94.0 83.9,102.0" fill="var(--beam)" stroke="var(--ink)" stroke-width="1.5"/>
+<polygon points="111.9,118.0 98.0,126.0 84.1,118.0 84.1,102.0 98.0,94.0 111.9,102.0" fill="var(--ok-l)" stroke="var(--ink)" stroke-width="1.5"/>
+<text x="84" y="150" text-anchor="middle" class="lab">Lactosa</text>
+<line x1="126" y1="110" x2="190" y2="110" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="196" y="82" width="170" height="56" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="281.0" y="106.5" text-anchor="middle" class="lab" style="fill:var(--on)">Lactasa en el</text>
+<text x="281.0" y="122.5" text-anchor="middle" class="lab" style="fill:var(--on)">intestino delgado</text>
+<line x1="370" y1="110" x2="430" y2="110" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<polygon points="473.9,118.0 460.0,126.0 446.1,118.0 446.1,102.0 460.0,94.0 473.9,102.0" fill="var(--beam)" stroke="var(--ink)" stroke-width="1.5"/>
+<text x="460" y="150" text-anchor="middle" class="small">Glucosa</text>
+<polygon points="543.9,118.0 530.0,126.0 516.1,118.0 516.1,102.0 530.0,94.0 543.9,102.0" fill="var(--ok-l)" stroke="var(--ink)" stroke-width="1.5"/>
+<text x="530" y="150" text-anchor="middle" class="small">Galactosa</text>
+<line x1="570" y1="110" x2="620" y2="110" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="626" y="82" width="134" height="56" rx="8" fill="var(--ok)" stroke-width="1"/>
+<text x="693.0" y="106.5" text-anchor="middle" class="lab" style="fill:var(--on)">Se absorben</text>
+<text x="693.0" y="122.5" text-anchor="middle" class="lab" style="fill:var(--on)">sin molestias</text>
+<rect x="20" y="226" width="760" height="214" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="400.0" y="256" text-anchor="middle" class="title">Sin suficiente lactasa</text>
+<polygon points="83.9,308.0 70.0,316.0 56.1,308.0 56.1,292.0 70.0,284.0 83.9,292.0" fill="var(--beam)" stroke="var(--ink)" stroke-width="1.5"/>
+<polygon points="111.9,308.0 98.0,316.0 84.1,308.0 84.1,292.0 98.0,284.0 111.9,292.0" fill="var(--ok-l)" stroke="var(--ink)" stroke-width="1.5"/>
+<text x="84" y="340" text-anchor="middle" class="lab">Lactosa</text>
+<line x1="126" y1="300" x2="190" y2="300" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="196" y="272" width="170" height="56" rx="8" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1"/>
+<text x="281.0" y="296.6" text-anchor="middle" class="lab" style="fill:var(--ink)">Llega sin digerir</text>
+<text x="281.0" y="312.6" text-anchor="middle" class="lab" style="fill:var(--ink)">al colon</text>
+<line x1="370" y1="300" x2="430" y2="300" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="436" y="272" width="170" height="56" rx="8" fill="var(--purple-l)" stroke-width="1"/>
+<text x="521.0" y="296.6" text-anchor="middle" class="lab" style="fill:var(--ink)">Las bacterias</text>
+<text x="521.0" y="312.6" text-anchor="middle" class="lab" style="fill:var(--ink)">la fermentan</text>
+<line x1="610" y1="300" x2="640" y2="300" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<text x="646" y="276" class="small">• Gases</text>
+<text x="646" y="296" class="small">• Hinchazón</text>
+<text x="646" y="316" class="small">• Dolor</text>
+<text x="646" y="336" class="small">• Diarrea</text>
+<text x="400" y="374" text-anchor="middle" class="lab">Los síntomas aparecen entre 30 minutos y 2 horas después de tomar lácteos.</text>
+<text x="400" y="400" text-anchor="middle" class="small" style="fill:var(--muted)">Manejo: reducir lactosa según tolerancia, lácteos sin lactosa o lactasa en comprimidos.</text>
+<text x="400" y="420" text-anchor="middle" class="small" style="fill:var(--muted)">No es una alergia a la leche: no daña el intestino ni causa reacciones graves.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

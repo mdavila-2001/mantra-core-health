@@ -26,7 +26,7 @@ import { emitirNotificacion } from './notifications.handlers';
 import { enlazarArchivo, pdfMinimo } from './files.handlers';
 import { FICHAS_ESTANDAR, type CampoDeFicha } from '../fixtures/standard-sheets.generated';
 import { representaA } from './profiles.handlers';
-import { accesoDeEmergenciaVigente, relacionDelProfesional } from './misc.handlers';
+import { hasCurrentEmergencyAccess, practitionerRelationshipState } from './authz.store';
 
 /* ============================================================================
     Expediente clínico: resumen, gráfico (notas, planes, documentos), y las
@@ -44,12 +44,12 @@ export function puedeLeer(request: MockRequest, patientProfileId: string): boole
   // un acceso de emergencia vigente, la historia responde 403.
   if (
     user.practitionerProfileId !== undefined &&
-    relacionDelProfesional(user.practitionerProfileId, patientProfileId) === 'REVOCADA' &&
-    !accesoDeEmergenciaVigente(user.id, patientProfileId)
+    practitionerRelationshipState(user.practitionerProfileId, patientProfileId) === 'REVOCADA' &&
+    !hasCurrentEmergencyAccess(user.id, patientProfileId)
   ) {
     return false;
   }
-  return user.practitionerProfileId !== undefined || user.roles.includes('SECURITY_ADMIN') || accesoDeEmergenciaVigente(user.id, patientProfileId);
+  return user.practitionerProfileId !== undefined || user.roles.includes('SECURITY_ADMIN') || hasCurrentEmergencyAccess(user.id, patientProfileId);
 }
 
 /* ---- el aviso de la ficha (proceso 2.6) ---------------------------------- */
@@ -307,7 +307,7 @@ export function registrarClinica(router: MockRouter): void {
       id: nuevoId('rx'),
       patientProfileId: datos.patientProfileId ?? '',
       medicationConceptId: datos.medicationConceptId ?? '',
-      statusConceptId: PRESCRIPTION_STATUS['MR_DRAFT']!,
+      statusConceptId: PRESCRIPTION_STATUS['clinical:MEDICATION_REQUEST_DRAFT']!,
       prescriberProfileId: datos.prescriberProfileId ?? request.user?.practitionerProfileId ?? MEDICAL.id,
       doseText: datos.doseText ?? '',
       frequencyText: datos.frequencyText ?? '',
@@ -366,7 +366,7 @@ export function registrarClinica(router: MockRouter): void {
   router.post('/clinical/medication-requests/:id/issue', ({ params }) => {
     const r = prescriptionList.get(params['id']!);
     if (r === undefined) return notFound();
-    return registroReceta(prescriptionList.actualizar(r.id, { issuedAt: ahora(), statusConceptId: PRESCRIPTION_STATUS['MR_ISSUED']! })!);
+    return registroReceta(prescriptionList.actualizar(r.id, { issuedAt: ahora(), statusConceptId: PRESCRIPTION_STATUS['clinical:MEDICATION_REQUEST_ISSUED']! })!);
   });
 
   /**
@@ -675,7 +675,7 @@ export function registrarClinica(router: MockRouter): void {
   /* ---- plantillas de expediente ------------------------------------------- */
 
   router.get('/charts/templates', ({ query }) => {
-    const esp = query.get('specialtyConceptId');
+    const esp = query.get('specialtyConceptId') ?? query.get('specialtyId');
     return plantillasVigentes().filter((t) => esp === null || esp === '' || t.specialtyConceptId === esp);
   });
   router.get('/charts/templates/:id', ({ params }) => plantillasVigentes().find((t) => t.id === params['id']) ?? notFound('Plantilla no encontrada'));
@@ -844,7 +844,7 @@ async function recetaEnPdf(r: SimulatedPrescription): Promise<ArrayBuffer> {
 }
 
 function registroReceta(r: SimulatedPrescription) {
-  return { id: r.id, patientProfileId: r.patientProfileId, status: r.statusConceptId === PRESCRIPTION_STATUS['MR_DRAFT'] ? 'DRAFT' : 'ACTIVE', replacesRequestId: null, replacedByRequestId: null, renewedFromRequestId: null, signedAt: r.signedAt, createdAt: r.createdAt };
+  return { id: r.id, patientProfileId: r.patientProfileId, status: r.statusConceptId === PRESCRIPTION_STATUS['clinical:MEDICATION_REQUEST_DRAFT'] ? 'DRAFT' : 'ACTIVE', replacesRequestId: null, replacedByRequestId: null, renewedFromRequestId: null, signedAt: r.signedAt, createdAt: r.createdAt };
 }
 
 /**

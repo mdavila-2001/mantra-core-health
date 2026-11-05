@@ -181,14 +181,27 @@ function anotarEnElRegistro(method: MockMethod, path: string, request: HttpReque
       path,
       query: request.params.toString(),
       ifMatch: request.headers.get('If-Match'),
+      // F2: los ejes operativos van con su propia versión.
+      ifMatchOps: request.headers.get('If-Match-Ops'),
       body: request.body,
       status: respuesta.status,
+      requestId: requestIdOf(respuesta.body),
+      // F4/F5: el cuerpo de la respuesta (con su `correlationId`), para que la
+      // evidencia muestre la cadena entera y no sólo el estado.
+      response: respuesta.body,
       at: new Date().toISOString(),
     });
     sessionStorage.setItem('mock:registro', JSON.stringify(lista));
   } catch {
     // Almacenamiento lleno o bloqueado: el registro es una ayuda, no un requisito.
   }
+}
+
+/** El `requestId` (o `correlationId`) de una respuesta, para la cadena de evidencia. */
+function requestIdOf(body: unknown): string | null {
+  if (typeof body !== 'object' || body === null) return null;
+  const b = body as { requestId?: unknown; correlationId?: unknown };
+  return typeof b.requestId === 'string' ? b.requestId : typeof b.correlationId === 'string' ? b.correlationId : null;
 }
 
 /**

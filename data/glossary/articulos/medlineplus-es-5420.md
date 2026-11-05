@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-5420
+image: medlineplus-es-5420.svg | La recuperación avanza por fases; moverse pronto y vigilar la herida ayudan. | Arriba, cuatro fases de la recuperación: sala de recuperación, planta del hospital, alta y recuperación en casa. Abajo, los cuidados que aceleran la recuperación y los signos que obligan a consultar.
 ---
 
 ## [definition] Introducción

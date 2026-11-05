@@ -450,7 +450,7 @@ describe('ChatStore', () => {
         );
 
       expect(store.enOrden()[0].bodyText).toBe('Original');
-      expect(store.error()).toBe('No pudimos editar el mensaje. Intente de nuevo. (Código de soporte: corr-500)');
+      expect(store.error()).toBe('No pudimos editar el mensaje. Intente de nuevo. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-500)');
       expect(store.error()).not.toContain('5 minutos');
     });
 
@@ -574,25 +574,10 @@ describe('ChatStore', () => {
       enviado.flush({ id: 'm-auto', conversationId: 'c-1', sentAt: new Date().toISOString() });
     });
 
-    it('con IA guardada en el servidor el navegador no contesta: la redacta el servidor y saldrían dos', () => {
+    it('con la configuración ya en el servidor, el navegador manda el mensaje fijo', () => {
       encender();
-      vi.spyOn(autoReply, 'iaDisponible').mockReturnValue(true);
-      autoReply.guardar({ activa: true, conIa: true, minutosDeInactividad: 1, texto: 'Vuelvo a las 18.' });
+      autoReply.guardar({ activa: true, minutosDeInactividad: 1, texto: 'Vuelvo a las 18.' });
       autoReply.enElServidor.set(true);
-      localStorage.setItem('alovida.chat-ultima-actividad', String(Date.now() - 2 * 3_600_000));
-
-      llega('pp-2');
-
-      http.expectNone(
-        (r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages',
-      );
-    });
-
-    it('con IA pero sin el servidor sabiéndolo, el navegador manda el respaldo', () => {
-      encender();
-      vi.spyOn(autoReply, 'iaDisponible').mockReturnValue(true);
-      autoReply.guardar({ activa: true, conIa: true, minutosDeInactividad: 1, texto: 'Vuelvo a las 18.' });
-      autoReply.enElServidor.set(false);
       localStorage.setItem('alovida.chat-ultima-actividad', String(Date.now() - 2 * 3_600_000));
 
       llega('pp-2');
@@ -762,7 +747,7 @@ describe('ChatStore', () => {
 
       expect(json).toBeNull();
       expect(store.exportando()).toBe(false);
-      expect(store.error()).toBe('No pudimos descargar la conversación. (Código de soporte: corr-exp)');
+      expect(store.error()).toBe('No pudimos descargar la conversación. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-exp)');
     });
   });
 
@@ -1096,7 +1081,7 @@ describe('ChatStore', () => {
 
     expect(store.bloqueados()).toEqual([]);
     expect(store.bloqueosFallaron()).toBe(true);
-    expect(store.error()).toBe('No pudimos leer las personas que bloqueó. (Código de soporte: corr-blk)');
+    expect(store.error()).toBe('No pudimos leer las personas que bloqueó. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-blk)');
   });
 
   it('un envío que falla dice por qué, y reintentar limpia el aviso', () => {

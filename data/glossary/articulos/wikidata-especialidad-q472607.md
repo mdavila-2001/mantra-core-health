@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q472607
+image: wikidata-especialidad-q472607.svg | La mastología estudia y trata las enfermedades benignas y malignas de la mama. | Mama de perfil con lobulillos, conductos, pezón y ganglios axilares, junto a una secuencia de consulta, imagen, biopsia, tratamiento y seguimiento.
 ---
 
 ## [definition] Introducción

@@ -25,15 +25,26 @@ interface CasoSimulado {
   readonly scheduledStartAt: string;
   readonly scheduledEndAt: string;
   readonly procedimiento: string;
+  /* F4 · quirófanos. Opcionales: los casos sembrados antes de F4 no los traen
+     y la sala los completa (`operating-rooms.handlers.ts`). */
+  readonly specialtyCode?: string | null;
+  readonly caseType?: 'ELECTIVE' | 'URGENT' | 'EMERGENCY';
+  readonly prepMinutes?: number | null;
+  readonly cleanupMinutes?: number | null;
+  readonly blockId?: string | null;
+  readonly checklistId?: string | null;
+  readonly encounterId?: string | null;
+  readonly urgencyReasonText?: string | null;
   readonly equipo: { id: string; practitionerProfileId: string; teamRoleConceptId: string; statusConceptId: string }[];
 }
 
 const CIRUJANO = PROFESSIONALS[4]!;
 const ANESTESISTA = PROFESSIONALS[13]!;
 
-function caso(indice: number, paciente: string, dias: number, hora: number, estado: keyof typeof ESTADO_CASO, procedimiento: string, cirujano = CIRUJANO.id): CasoSimulado {
+function caso(indice: number, paciente: string, dias: number, hora: number, estado: keyof typeof ESTADO_CASO, procedimiento: string, cirujano = CIRUJANO.id, specialtyCode: string | null = null): CasoSimulado {
   const id = uuid(`surgical-case-${indice}`);
   return {
+    specialtyCode,
     id,
     caseNumber: `CX-2026-${String(100 + indice).padStart(4, '0')}`,
     patientProfileId: paciente,
@@ -51,6 +62,25 @@ function caso(indice: number, paciente: string, dias: number, hora: number, esta
   };
 }
 
+/** `[índice, días, hora, paciente, cirujano, especialidad]` de los casos ya operados. */
+const HISTORICO: readonly (readonly [number, number, number, number, number, string])[] = [
+  // Índice par → Quirófano 1, impar → Quirófano 2 (regla de `caso`). Los pares
+  // del mismo día y la misma sala son los que miden el recambio.
+  [8, -9, 8, 11, 4, 'TRAUMATOLOGIA'],
+  [10, -9, 11, 12, 4, 'TRAUMATOLOGIA'],
+  [9, -8, 8, 14, 10, 'CIRUGIA_GENERAL'],
+  [11, -7, 8, 15, 10, 'CIRUGIA_GENERAL'],
+  [13, -7, 11, 16, 10, 'CIRUGIA_GENERAL'],
+  [12, -6, 9, 17, 4, 'TRAUMATOLOGIA'],
+  [14, -3, 8, 18, 4, 'TRAUMATOLOGIA'],
+  [16, -3, 11, 19, 4, 'TRAUMATOLOGIA'],
+  [15, -2, 9, 20, 10, 'CIRUGIA_GENERAL'],
+  [17, -1, 8, 21, 10, 'CIRUGIA_GENERAL'],
+];
+
+/** Los casos sembrados de antes de F4 que son de Traumatología (dueña del bloque de los lunes). */
+const TRAUMATOLOGIA_CASES = new Set(['CX-2026-0101', 'CX-2026-0104', 'CX-2026-0105']);
+
 const casos = new Coleccion<CasoSimulado>([
   caso(1, PATIENTS[9]!.id, -40, 8, 'COMPLETADO', PROCEDIMIENTO['PROC-ARTROSCOPIA']!),
   caso(2, PATIENTS[5]!.id, -12, 10, 'COMPLETADO', PROCEDIMIENTO['PROC-COLECISTECTOMIA']!, PROFESSIONALS[10]!.id),
@@ -59,7 +89,49 @@ const casos = new Coleccion<CasoSimulado>([
   caso(5, PATIENTS[3]!.id, 6, 11, 'PENDIENTE_EQUIPO', PROCEDIMIENTO['PROC-ARTROSCOPIA']!),
   caso(6, PATIENTS[2]!.id, 0, 14, 'EN_CURSO', PROCEDIMIENTO['PROC-CESAREA']!, PROFESSIONALS[2]!.id),
   caso(7, PATIENTS[10]!.id, -5, 8, 'CANCELADO', PROCEDIMIENTO['PROC-ENDOSCOPIA']!, PROFESSIONALS[10]!.id),
-]);
+  // F4: la última semana y media de actividad de los dos quirófanos, para que
+  // la utilización se calcule sobre casos reales del simulador.
+  ...HISTORICO.map(([indice, dias, hora, pac, cirujano, especialidad]) =>
+    caso(indice, PATIENTS[pac]!.id, dias, hora, 'COMPLETADO', PROCEDIMIENTO[especialidad === 'TRAUMATOLOGIA' ? 'PROC-ARTROSCOPIA' : 'PROC-COLECISTECTOMIA']!, PROFESSIONALS[cirujano]!.id, especialidad),
+  ),
+].map((c) => (c.specialtyCode === null && TRAUMATOLOGIA_CASES.has(c.caseNumber) ? { ...c, specialtyCode: 'TRAUMATOLOGIA' } : c)));
+
+/* ---- extensiones de F4 (las conecta `operating-rooms.handlers.ts`) --------- */
+
+type CaseView = ReturnType<typeof vista>;
+
+let caseExtension: (c: CasoSimulado) => Record<string, unknown> = () => ({});
+let detailExtension: (c: CasoSimulado) => Record<string, unknown> = () => ({});
+let caseVisible: (c: CasoSimulado, tenantId: string | null) => boolean = () => true;
+
+/**
+ * Lo que la sala le agrega a cada caso (quirófano resuelto, ventana reservada,
+ * bloque, check-list) y quién lo puede ver (tenant del quirófano, §0.2).
+ *
+ * Es un gancho y no un import para no cerrar un ciclo: la infraestructura de
+ * F1 ya importa este archivo para sus bloqueos de retiro.
+ */
+export function connectOperatingRooms(hooks: {
+  readonly view: (c: CasoSimulado) => Record<string, unknown>;
+  readonly detail: (c: CasoSimulado) => Record<string, unknown>;
+  readonly visible: (c: CasoSimulado, tenantId: string | null) => boolean;
+}): void {
+  caseExtension = hooks.view;
+  detailExtension = hooks.detail;
+  caseVisible = hooks.visible;
+}
+
+/** La tabla de casos, para la sala (F4). */
+export const periopCases = casos;
+export type SimulatedCase = CasoSimulado;
+export const CASE_STATUS = ESTADO_CASO;
+export const MEMBER_STATUS = ESTADO_MIEMBRO;
+export const TEAM_ROLE = ROL_EQUIPO;
+
+/** El caso visto por la API, con lo que agrega la sala. */
+export function caseView(c: CasoSimulado): CaseView & Record<string, unknown> {
+  return { ...vista(c), ...caseExtension(c) };
+}
 
 /**
  * Casos todavía por operar en un quirófano: bloquean su retiro.
@@ -116,7 +188,8 @@ const CATALOGO_DENTAL = {
 };
 
 export function registrarProcedimientos(router: MockRouter): void {
-  router.get('/procedure-cases', ({ query }) => {
+  router.get('/procedure-cases', ({ query, headers }) => {
+    const tenant = headers.get('X-Tenant-Id');
     const patient = texto(query, 'patientProfileId');
     const surgeon = texto(query, 'primarySurgeonProfileId');
     const room = texto(query, 'operatingRoomId');
@@ -127,21 +200,24 @@ export function registrarProcedimientos(router: MockRouter): void {
     const limit = Number(query.get('limit') ?? 50) || 50;
     const todos = casos
       .todos()
+      .filter((c) => caseVisible(c, tenant))
       .filter((c) => patient === null || c.patientProfileId === patient)
       .filter((c) => surgeon === null || c.primarySurgeonProfileId === surgeon || c.equipo.some((m) => m.practitionerProfileId === surgeon))
       .filter((c) => room === null || c.operatingRoomId === room)
       .filter((c) => status === null || c.statusConceptId === status)
       .filter((c) => (from === null || c.scheduledStartAt >= from) && (to === null || c.scheduledStartAt <= to))
       .sort((a, b) => b.scheduledStartAt.localeCompare(a.scheduledStartAt));
-    return { items: todos.slice(offset, offset + limit).map(vista), total: todos.length };
+    return { items: todos.slice(offset, offset + limit).map(caseView), total: todos.length };
   });
 
-  router.get('/procedure-cases/:id', ({ params }) => {
+  router.get('/procedure-cases/:id', ({ params, headers }) => {
     const c = casos.get(params['id']!);
-    if (c === undefined) return notFound('Caso no encontrado');
+    // Otro tenant responde igual que un caso inexistente (S6, §0.2).
+    if (c === undefined || !caseVisible(c, headers.get('X-Tenant-Id'))) return notFound('Caso no encontrado');
     const completado = c.statusConceptId === ESTADO_CASO.COMPLETADO;
     return {
-      case: vista(c),
+      ...detailExtension(c),
+      case: caseView(c),
       team: c.equipo,
       operativeSteps: completado
         ? [

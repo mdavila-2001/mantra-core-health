@@ -21,6 +21,9 @@ describe('PORTAL_RUTAS', () => {
       'systems/operations/:id',
       'processes/:code',
       'catalog/tables/:schema/:table',
+      'governance/policies/:id',
+      'data-quality/rules/:ruleId',
+      'governance/privacy-requests/:requestId',
     ]);
   });
 

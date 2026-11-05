@@ -1,5 +1,6 @@
 ---
 slug: conjuntivitis
+image: conjuntivitis.svg | El ojo con conjuntivitis y sus tres causas más frecuentes | Ojo visto de frente con el blanco enrojecido y vasos marcados, junto a tres recuadros que distinguen la conjuntivitis vírica, la bacteriana y la alérgica
 ---
 
 ## [definition] Introducción

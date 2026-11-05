@@ -1,18 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 
+import { SurveysCatalogClient, type SurveyCatalogEntry } from '../../core/data-access/surveys/surveys-catalog.client';
 import { SurveysClient } from '../../core/data-access/surveys/surveys.client';
-import type {
-  SurveyStatus,
-  SurveySummary,
-} from '../../core/data-access/surveys/surveys.types';
+import type { SurveyStatus } from '../../core/data-access/surveys/surveys.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { dataOf, empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
-import { Badge } from '../../shared/components/atoms/badge/badge';
-import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import type { BadgeVariant } from '../../shared/components/atoms/badge/badge.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
@@ -29,6 +24,7 @@ import { ToastService } from '../../shared/components/molecules/toast/toast.serv
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import { SurveyInsightsPanel } from './insights/survey-insights';
+import { SurveyCard, type SurveyCardData } from './survey-card/survey-card';
 import { encuestaRoute } from './questionnaires.routes';
 
 /** Largo máximo del título, el mismo que valida el backend. */
@@ -86,10 +82,7 @@ function normalizar(texto: string): string {
 }
 
 /** Una encuesta del profesional, lista para mostrarse. */
-interface EncuestaVisible extends SurveySummary {
-  readonly palabra: string;
-  readonly tono: BadgeVariant;
-  readonly ruta: string;
+interface EncuestaVisible extends SurveyCardData {
   /** Título y consigna ya normalizados: se calcula una vez, no por tecla. */
   readonly buscable: string;
 }
@@ -132,14 +125,12 @@ interface EncuestaVisible extends SurveySummary {
     AppButton,
     AppButtonLink,
     AppInput,
-    Badge,
     Card,
     EmptyState,
     FormField,
-    NavIcon,
     PageHeader,
+    SurveyCard,
     ReactiveFormsModule,
-    RouterLink,
     SearchField,
     SegmentedControl,
     Skeleton,
@@ -159,6 +150,7 @@ export class SurveysHome {
   readonly embedded = input(false);
 
   private readonly surveys = inject(SurveysClient);
+  private readonly catalog = inject(SurveysCatalogClient);
   private readonly toast = inject(ToastService);
   private readonly navigation = inject(NavigationService);
 
@@ -264,7 +256,7 @@ export class SurveysHome {
   /** Trae las encuestas del profesional de la sesión. */
   protected cargar(): void {
     this.estado.set(loading());
-    this.surveys.listSurveys().subscribe({
+    this.catalog.list().subscribe({
       next: (encuestas) => {
         if (encuestas.length === 0) {
           this.estado.set(
@@ -334,7 +326,7 @@ export class SurveysHome {
   }
 
   /** Proyecta el contrato de la API a lo que la plantilla necesita. */
-  private aVisible(encuesta: SurveySummary): EncuestaVisible {
+  private aVisible(encuesta: SurveyCatalogEntry): EncuestaVisible {
     const presentacion = PRESENTACION[encuesta.status];
     return {
       ...encuesta,

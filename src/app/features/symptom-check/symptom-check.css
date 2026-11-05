@@ -31,15 +31,14 @@
 }
 
 .sintomas__titulo {
-  margin: 0 0 var(--sp-2);
+  margin: 0 0 var(--sp-1);
   font-family: var(--font-display);
   font-size: var(--fs-h2);
   line-height: var(--lh-h2);
 }
 
 .sintomas__texto {
-  margin: 0 0 var(--sp-4);
-  max-inline-size: 60ch;
+  margin: 0 0 var(--sp-2);
   color: var(--text-secondary);
 }
 
@@ -49,7 +48,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--sp-2);
-  margin-block-end: var(--sp-4);
+  margin-block-end: var(--sp-2);
 }
 
 .sintomas__chips-rotulo {
@@ -64,13 +63,12 @@
 
 .sintomas__respuesta-ia {
   display: block;
-  margin-block: var(--sp-4);
-  padding: var(--sp-4);
+  margin-block: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--filete);
   border-inline-start: 3px solid var(--petroleo);
   border-radius: var(--r-menu);
   background: var(--sup-inset);
-  max-inline-size: 68ch;
 }
 
 .sintomas__respuesta-ia-rotulo {
@@ -89,7 +87,7 @@
 }
 
 .sintomas__subtitulo {
-  margin: var(--sp-5) 0 var(--sp-3);
+  margin: var(--sp-3) 0 var(--sp-2);
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
 }
@@ -129,28 +127,17 @@
   line-height: var(--lh-caption);
 }
 
-.sintomas__leyendo {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin: var(--sp-4) 0 0;
-  max-inline-size: 60ch;
-  color: var(--text-secondary);
-}
-
 .sintomas__sin-coincidencias {
-  margin: var(--sp-4) 0 0;
-  max-inline-size: 60ch;
+  margin: var(--sp-2) 0 0;
   color: var(--text-secondary);
 }
 
 /* El descargo no se esconde ni se achica hasta lo ilegible: en una aplicación
    de salud, «esto no es un diagnóstico» tiene que poder leerse. */
 .sintomas__descargo {
-  margin: var(--sp-5) 0 0;
-  padding-block-start: var(--sp-3);
+  margin: var(--sp-3) 0 0;
+  padding-block-start: var(--sp-2);
   border-block-start: 1px solid var(--border-default);
-  max-inline-size: 68ch;
   color: var(--text-secondary);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
@@ -171,7 +158,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--e2);
-  margin: var(--e4) 0 0;
+  margin: var(--e2) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -207,7 +194,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--e2);
-  margin-block-start: var(--e4);
+  margin-block-start: var(--e2);
 }
 
 /* El espacio lo pone el `gap` del contenedor, no el margen de la grilla. */
@@ -217,14 +204,15 @@
 
 .sintomas__silueta {
   display: block;
+  --body-map-ancho: 26rem; /* el cuerpo es lo principal: la figura más grande posible */
 }
 
-/* 21rem: el ancho de la figura (16rem) más el acolchado del escenario, y el
-   aire para que el selector «Frente · Espalda · Cara» entre sin cortarse. */
+/* 31rem: la figura (26rem) más el acolchado del escenario y el aire para que el
+   selector de vista y la barra de zoom entren sin cortarse. */
 @media (min-width: 48rem) {
   .sintomas__elegir {
-    grid-template-columns: 21rem minmax(0, 1fr);
-    gap: var(--e5);
+    grid-template-columns: 31rem minmax(0, 1fr);
+    gap: var(--e4);
     align-items: start;
   }
 }
@@ -253,7 +241,7 @@
 }
 
 .sintomas__lado-otros {
-  margin-block-start: var(--e4);
+  margin-block: var(--e3) 0;
 }
 
 /* Sin zona abierta, el rótulo es lo primero del panel: sin margen arriba. */
@@ -261,40 +249,11 @@
   margin-block-start: 0;
 }
 
-/* Al lado de la figura las tres pastillas llenan su columna (sin tope de
-   30 rem: pegadas a la izquierda dejaban media tarjeta en blanco). */
+/* Lo que no se señala en el cuerpo (piel, ánimo, general) pesa menos que la
+   figura: pastillas bajas, ícono al lado del rótulo, y llenan el ancho. */
 .sintomas__lado .sintomas__zonas {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-/* Escritorio y sin zona abierta: las tres zonas son una lista de filas anchas,
-   alineada arriba y de altura natural (icono a la izquierda, rótulo al lado), no
-   losas estiradas hasta la altura de la figura ni chips perdidos en un rincón. */
-@media (min-width: 64rem) {
-  .sintomas__lado:has(> .sintomas__lado-otros:first-child) > .sintomas__zonas {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--e2);
-  }
-
-  .sintomas__lado:has(> .sintomas__lado-otros:first-child) .sintomas__zona {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: var(--e4);
-    padding: var(--e4) var(--e5);
-    font-size: var(--fs-body);
-    text-align: start;
-  }
-
-  /* El chevron al final de la fila: dice «esto se abre» y llena el ancho. */
-  .sintomas__lado:has(> .sintomas__lado-otros:first-child) .sintomas__zona::after {
-    content: '';
-    margin-inline-start: auto;
-    inline-size: 0.5rem;
-    block-size: 0.5rem;
-    border-block-start: 2px solid var(--petroleo);
-    border-inline-end: 2px solid var(--petroleo);
-    transform: rotate(45deg);
-  }
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  margin-block-start: var(--e1, 0.25rem);
 }
 
 /* ─── El «cómo funciona» (rediseño del 22/10/2026) ──────────────────────────
@@ -303,9 +262,9 @@
    los síntomas de esa parte. */
 .sintomas__guia {
   display: grid;
-  gap: var(--e3);
+  gap: var(--e2);
   margin: 0;
-  padding: var(--e4) var(--e5);
+  padding: var(--e3) var(--e4);
   border-radius: var(--r-menu);
   background: var(--sup-inset);
   list-style: none;
@@ -316,18 +275,19 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: var(--e3);
+  gap: var(--e2);
 }
 
 .sintomas__guia-numero {
   display: grid;
   place-items: center;
-  inline-size: 2rem;
-  block-size: 2rem;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
   border-radius: 50%;
   background: var(--petroleo);
-  color: var(--text-inverse);
+  color: #fff;
   font-family: var(--f-titulo);
+  font-size: var(--fs-caption);
   font-weight: 700;
 }
 
@@ -357,11 +317,12 @@
 
 .sintomas__zona {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
   gap: var(--e2);
   inline-size: 100%;
-  padding: var(--e4) var(--e2);
+  padding: var(--e2) var(--e3);
   /* Tonal y sin trazo: la tarjeta de afuera ya es la caja. */
   border: 1px solid transparent;
   border-radius: var(--r-menu);
@@ -405,14 +366,15 @@
 }
 
 .sintomas__zona-icono svg {
-  inline-size: 30px;
-  block-size: 30px;
+  inline-size: 20px;
+  block-size: 20px;
 }
 
 /* FT-02-R03/R05 · el rótulo más largo («Piel y uñas», «Boca y dientes») no
    puede ensanchar su columna: con `minmax(0, 1fr)` arriba y el corte de palabra
    acá, la pastilla se queda dentro de su celda en 320 px en vez de desbordar. */
 .sintomas__zona-nombre {
+  font-weight: 600;
   line-height: 1.25;
   min-inline-size: 0;
   overflow-wrap: break-word;
@@ -425,7 +387,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--e2);
-  margin: var(--e3) 0 0;
+  margin: var(--e2) 0 0;
   padding: 0;
   list-style: none;
   animation: sintomas-entrar var(--mov-medio) var(--curva);
@@ -479,7 +441,7 @@
    mismo aire que el bloque de la figura. El rótulo, la ayuda y el ícono son de
    `app-form-field`; acá sólo se lo ubica. */
 .sintomas__escribir {
-  margin: var(--e4) 0 0;
+  margin: var(--e2) 0 0;
 }
 
 /* Dictar (P-02): una fila bajo el área de texto. El aviso ocupa la fila
@@ -501,7 +463,7 @@
 }
 
 .sintomas__dictado-aviso {
-  flex-basis: 100%;
+  flex: 1 1 20rem;
 }
 
 .sintomas__dictado-icono {
@@ -546,354 +508,15 @@
 /* ---- observaciones guardadas ------------------------------------------- */
 
 .sintomas__guardadas {
-  margin-block-start: var(--sp-4);
+  margin-block-start: var(--sp-3);
 }
 
 .sintomas__emergencia {
   margin-block-start: var(--sp-3);
 }
 
-/* ─── Especialidades recomendadas ─────────────────────────────────────────
-   La rejilla y la tarjeta son las de `shared/styles/card-grid.css`, las
-   mismas del buscador de especialidades de `/directory` (pedido del cliente,
-   27/10/2026). Acá sólo lo propio del chequeo: la marca de por cuál empezar y
-   la acción escrita, porque la tarjeta suma el porqué y no un recuento. */
-.sintomas__rejilla {
-  margin-block-start: var(--sp-3);
-}
-
-.sintomas__tarjeta-cabeza {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-}
-
-/* La primera es la recomendada: un borde de marca, además de la insignia con
-   palabras, para que no dependa sólo del color. */
-.sintomas__tarjeta--primera {
-  border-color: var(--brand-primary);
-}
-
-.sintomas__tarjeta-accion {
-  margin-block-start: auto;
-  padding-block-start: var(--sp-2);
-  color: var(--brand-primary);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  font-weight: 600;
-}
-
 .sintomas__volver {
   margin-block-end: var(--sp-3);
-}
-
-/* ─── Callout complementario en vista de especialistas ───────────────────── */
-.sintomas__meds-callout {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-4);
-  margin-block-start: var(--sp-4);
-  background: var(--sup-tarjeta);
-  border: 1px solid var(--filete);
-  border-inline-start: 4px solid var(--aguamarina);
-  border-radius: var(--r-tarjeta, 12px);
-  box-shadow: var(--sombra-1);
-}
-
-.sintomas__meds-callout-texto {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1 1 18rem;
-}
-
-.sintomas__meds-callout-titulo {
-  font-size: var(--fs-cuerpo-sm, 0.875rem);
-  font-weight: 600;
-  color: var(--tinta);
-}
-
-.sintomas__meds-callout-bajada {
-  font-size: var(--fs-caption, 0.8125rem);
-  color: var(--tinta-2);
-}
-
-/* ─── Sección y tarjetas de Medicamentos Sugeridos ───────────────────────── */
-.sintomas__medicamentos-seccion {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  margin-block-start: var(--sp-2);
-}
-
-.sintomas__meds-intro {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  padding-block-end: var(--sp-2);
-}
-
-.sintomas__meds-intro-texto {
-  flex: 1 1 18rem;
-}
-
-.sintomas__subtitulo--meds {
-  margin: 0 0 var(--sp-1);
-}
-
-.sintomas__meds-descripcion {
-  margin: 0;
-  font-size: var(--fs-cuerpo-sm, 0.875rem);
-  color: var(--tinta-2, #64748b);
-  max-inline-size: 68ch;
-}
-
-.sintomas__meds-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
-  gap: var(--sp-4);
-}
-
-.sintomas__med-card {
-  display: flex;
-  flex-direction: column;
-  background: var(--sup-tarjeta);
-  border: 1px solid var(--filete);
-  border-radius: var(--r-tarjeta, 14px);
-  padding: var(--sp-4);
-  box-shadow: var(--sombra-1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.sintomas__med-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--aguamarina);
-  box-shadow: 0 4px 16px rgba(11, 85, 126, 0.12);
-}
-
-.sintomas__med-header {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-3);
-  margin-block-end: var(--sp-3);
-}
-
-.sintomas__med-icon-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 10px;
-  background: rgba(79, 179, 169, 0.12);
-  color: var(--petroleo);
-  border: 1px solid rgba(79, 179, 169, 0.25);
-  flex-shrink: 0;
-}
-
-.sintomas__med-svg {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-.sintomas__med-main-info {
-  flex: 1;
-  min-inline-size: 0;
-}
-
-.sintomas__med-badges-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2, 6px);
-  margin-block-end: 4px;
-}
-
-.sintomas__med-tag-atc {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--sup-inset);
-  color: var(--tinta-2);
-  border: 1px solid var(--filete);
-}
-
-.sintomas__med-titulo {
-  margin: 0;
-  font-size: var(--fs-h4, 1.125rem);
-  font-weight: 700;
-  color: var(--tinta);
-  line-height: 1.3;
-}
-
-.sintomas__med-subtitulo {
-  margin: 2px 0 0;
-  font-size: var(--fs-caption, 0.8125rem);
-  color: var(--tinta-2);
-}
-
-.sintomas__med-indicacion-caja {
-  margin-block-end: var(--sp-3);
-}
-
-.sintomas__med-indicacion-texto {
-  margin: 0;
-  font-size: var(--fs-cuerpo-sm, 0.875rem);
-  color: var(--tinta);
-  line-height: 1.45;
-}
-
-/* ─── Bloque de Posología detallada ─────────────────────────────────────── */
-.sintomas__posologia-bloque {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-  background: var(--sup-inset);
-  border: 1px solid var(--filete);
-  border-radius: 10px;
-  margin-block-end: var(--sp-3);
-}
-
-.sintomas__posologia-encabezado {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  color: var(--petroleo);
-}
-
-.sintomas__posologia-icono {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
-}
-
-.sintomas__posologia-titulo {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
-.sintomas__posologia-grilla {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-  gap: var(--sp-2);
-}
-
-.sintomas__posologia-item {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.sintomas__posologia-etiqueta {
-  font-size: 0.6875rem;
-  color: var(--tinta-3);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-.sintomas__posologia-valor {
-  font-size: var(--fs-caption, 0.8125rem);
-  color: var(--tinta);
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.sintomas__posologia-pautas {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  margin: 4px 0 0;
-  padding-block-start: 6px;
-  border-block-start: 1px solid var(--filete-2);
-  font-size: var(--fs-caption, 0.8125rem);
-  color: var(--tinta-2);
-  line-height: 1.4;
-}
-
-.sintomas__posologia-pautas-icono {
-  flex-shrink: 0;
-}
-
-.sintomas__med-alerta {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-2);
-  padding: 8px 12px;
-  background: rgba(234, 179, 8, 0.12);
-  border: 1px solid rgba(234, 179, 8, 0.3);
-  border-radius: 8px;
-  font-size: var(--fs-caption, 0.8125rem);
-  color: var(--tinta);
-  line-height: 1.4;
-  margin-block-end: var(--sp-3);
-}
-
-.sintomas__med-alerta-icono {
-  flex-shrink: 0;
-}
-
-.sintomas__med-footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  margin-block-start: auto;
-  padding-block-start: var(--sp-3);
-  border-block-start: 1px solid var(--filete);
-}
-
-.sintomas__med-precio-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.sintomas__med-precio-label {
-  font-size: 0.6875rem;
-  color: var(--tinta-3);
-}
-
-.sintomas__med-precio-val {
-  font-size: var(--fs-caption, 0.8125rem);
-  font-weight: 600;
-  color: var(--ok-tinta, #27725C);
-}
-
-/* ─── Aviso clínico de responsabilidad al pie ────────────────────────────── */
-.sintomas__meds-disclaimer {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-4);
-  background: var(--sup-inset);
-  border: 1px solid var(--filete);
-  border-radius: var(--r-tarjeta, 10px);
-  color: var(--tinta-2);
-}
-
-.sintomas__meds-disclaimer-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  color: var(--petroleo);
-  flex-shrink: 0;
-  margin-block-start: 2px;
-}
-
-.sintomas__meds-disclaimer-texto {
-  font-size: var(--fs-caption, 0.8125rem);
-  line-height: 1.45;
 }
 
 /* ─── Cabecera y botón de ayuda en la parte superior ──────────────────────── */

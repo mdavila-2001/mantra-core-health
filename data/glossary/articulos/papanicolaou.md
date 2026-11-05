@@ -1,5 +1,6 @@
 ---
 slug: papanicolaou
+image: papanicolaou.svg | El Papanicolaou recoge células del cuello uterino para buscar cambios precoces. | Esquema del útero y el cuello uterino con un cepillo de toma de muestra, y comparación de células normales con células alteradas de núcleo grande.
 ---
 
 ## [definition] Introducción

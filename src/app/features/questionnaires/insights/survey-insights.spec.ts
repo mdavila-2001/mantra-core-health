@@ -470,7 +470,7 @@ describe('SurveyInsightsPanel · «Cómo le va»', () => {
       .expectOne((r) => r.url === '/surveys/insights')
       .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
-    expect(raiz().textContent).toContain('Algo salió mal');
+    expect(raiz().textContent).toContain('No pudimos completar la operación');
     const reintentar = Array.from(raiz().querySelectorAll('button')).find((b) => b.textContent!.includes('Reintentar'))!;
     reintentar.click();
     responderResumen(cuerpo());

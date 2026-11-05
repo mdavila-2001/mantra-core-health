@@ -1,5 +1,6 @@
 ---
 slug: cancer-de-mama
+image: cancer-de-mama.svg | La mayoría de los cánceres de mama se originan en los conductos o en los lóbulos. | Corte lateral de la mama con lóbulos, conductos y pezón, un tumor dentro de un conducto y ganglios de la axila, junto a la lista de signos de alarma y medidas de detección precoz.
 ---
 
 ## [definition] Introducción

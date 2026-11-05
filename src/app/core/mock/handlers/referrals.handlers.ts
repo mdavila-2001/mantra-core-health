@@ -4,7 +4,6 @@ import { CORPUS_LABORATORIES } from '../fixtures/bolivia-central-axis';
 import { PACIENTE, PROFESSIONALS, professionalById } from '../fixtures/people';
 import type { ProfesionalSimulado } from '../fixtures/people.types';
 import {
-  conflict,
   forbidden,
   reply,
   validation,
@@ -19,9 +18,9 @@ import {
   TENANT_LABORATORIO,
   TENANT_NAMES,
 } from '../mock-session';
-import { Coleccion, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
+import { Coleccion, iso, isoDia, texto, uuid } from '../mock-store';
 import { servicios, serviciosPublicadosDe } from './practice.handlers';
-import { mergeTransfer, transferProblem, type SimulatedTransfer } from './referral-transfer.rules';
+import type { SimulatedTransfer } from './referral-transfer.rules';
 
 /* ============================================================================
     Derivaciones (`/referrals`, módulo `clinical_ext` de la API).
@@ -35,12 +34,30 @@ import { mergeTransfer, transferProblem, type SimulatedTransfer } from './referr
     (`persistirEn`), así que sobrevive a un F5 y la mutación se puede
     demostrar de punta a punta: alta → respuesta → relectura → pantalla.
 
-    Reglas de la API que se copian: con `referralType` y sin servicio del
-    catálogo, destino ≥ 1 y servicio en texto + resumen clínico (400 con
-    `reason`); `informedConsentId` en el alta es 400
+    Todo `reason` va **arriba** del cuerpo de error, como en la API; los 422
+    lo repiten en `details.reason`. Buscar con menos de dos letras es 422
+    `REFERRAL_TARGET_QUERY_TOO_SHORT`; pedir servicios sin destino, 422
+    `REFERRAL_TARGET_REQUIRED`, y de uno que no existe, 404
+    `REFERRAL_TARGET_NOT_FOUND`.
+
+    Emitir (`POST /referrals`, en `referral-issue.handlers.ts`) copia
+    `referrals.service.ts#create` en su orden: con `referralType` y sin
+    servicio del catálogo, destino ≥ 1 y servicio en texto + resumen clínico
+    (400); sin ningún destino —ni servicio— 422 `REFERRAL_TARGET_REQUIRED` (un
+    alta con sólo `targetServiceCatalogId` vale); el tipo por omisión es
+    `CONSULTATION`; profesional inexistente 404 `REFERRAL_TARGET_NOT_FOUND`;
+    servicio inexistente 404 `REFERRAL_SERVICE_NOT_FOUND`, inactivo 422
+    `REFERRAL_SERVICE_INACTIVE` y ajeno al destino 422
+    `REFERRAL_SERVICE_TARGET_MISMATCH`; encuentro que no es de la persona 404
+    `REFERRAL_ENCOUNTER_NOT_FOUND`; 409 `REFERRAL_ALREADY_EXISTS` sólo con
+    encuentro y con servicio, o profesional y especialidad, o sólo una
+    organización, siempre con el tipo en la clave; sede inexistente 404. Con
+    encuentro avisa a la persona por un profesional o una organización (no a
+    un externo). `informedConsentId` en el alta es 400
     `REFERRAL_CONSENT_LINK_NOT_ALLOWED` (el vínculo lo escribe el
-    consentimiento, ver `linkReferralConsent`); responder exige organización
-    activa (422 `TENANT_REQUIRED`) y ser destino —quien no lo es recibe 404
+    consentimiento, ver `linkReferralConsent`). El ciclo de vida
+    (`referral-lifecycle.handlers.ts`): responder exige organización activa
+    (422 `TENANT_REQUIRED`) y ser destino —quien no lo es recibe 404
     `REFERRAL_NOT_FOUND`, como si no existiera—; motivo obligatorio al
     rechazar; contrarreferencia del destino sobre una aceptada, o de quien
     escribe la historia si el destino es sólo externo; anular una pendiente o
@@ -72,7 +89,7 @@ const STATUS_BY_CONCEPT: Readonly<Record<string, string>> = {
   [REFERRAL_STATUS['REF_CANCELLED']!]: 'CANCELLED',
 };
 
-const REFERRAL_TYPES = [
+export const REFERRAL_TYPES = [
   'TREATMENT',
   'CONSULTATION',
   'DIAGNOSTIC_STUDY',
@@ -84,7 +101,7 @@ const REFERRAL_TYPES = [
 ] as const;
 
 /** Las sedes del directorio simulado (`directory.handlers.ts`), con el nombre que se resuelve. */
-const BRANCHES: Readonly<Record<string, { readonly tenantId: string; readonly name: string }>> = {
+export const BRANCHES: Readonly<Record<string, { readonly tenantId: string; readonly name: string }>> = {
   [uuid('branch-olivos-central')]: { tenantId: TENANT_CLINICA, name: 'Sede Central' },
   [uuid('branch-olivos-equipetrol')]: { tenantId: TENANT_CLINICA, name: 'Consultorios Equipetrol' },
   [uuid('branch-sanlucas-central')]: { tenantId: TENANT_HOSPITAL, name: 'Hospital central' },
@@ -92,7 +109,7 @@ const BRANCHES: Readonly<Record<string, { readonly tenantId: string; readonly na
 };
 
 /** Las organizaciones médicas que pueden recibir una derivación, con lo que las distingue. */
-const ORGANIZATIONS: readonly { readonly id: string; readonly subtitle: string }[] = [
+export const ORGANIZATIONS: readonly { readonly id: string; readonly subtitle: string }[] = [
   { id: TENANT_HOSPITAL, subtitle: 'Hospital · Santa Cruz de la Sierra' },
   { id: TENANT_CLINICA, subtitle: 'Clínica · Santa Cruz de la Sierra' },
   { id: TENANT_CONSULTORIO, subtitle: 'Consultorio · Santa Cruz de la Sierra' },
@@ -101,7 +118,7 @@ const ORGANIZATIONS: readonly { readonly id: string; readonly subtitle: string }
   { id: TENANT_LABORATORIO, subtitle: 'Laboratorio · Santa Cruz de la Sierra' },
 ];
 
-interface SimulatedReferral {
+export interface SimulatedReferral {
   readonly id: string;
   readonly patientProfileId: string;
   readonly sourceEncounterId: string | null;
@@ -110,6 +127,7 @@ interface SimulatedReferral {
   readonly targetTenantId: string | null;
   readonly targetServiceCatalogId: string | null;
   readonly referralType: string | null;
+  readonly specialtyConceptId?: string | null;
   readonly reasonText: string | null;
   readonly priorityConceptId: string | null;
   readonly statusConceptId: string;
@@ -139,22 +157,24 @@ interface TargetService {
   readonly code: string;
   readonly name: string;
   readonly description: string | null;
-  readonly price: string | null;
+  /** Siempre número, como la API: `Number(defaultPrice ?? 0)`. */
+  readonly price: number;
   readonly currency: string | null;
   readonly tenantId: string | null;
   readonly practiceName: string | null;
 }
 
+/** La práctica de cada organización con catálogo propio en el simulador. */
+const PRACTICE_OF_TENANT: Readonly<Record<string, string>> = {
+  [TENANT_CLINICA]: PRACTICE_OLIVOS,
+  [TENANT_CONSULTORIO]: PRACTICE_CONSULTORIO,
+};
+
 /** Los servicios que una organización ofrece. Siempre los mismos para el mismo destino. */
-function servicesOfOrganization(tenantId: string | null): readonly TargetService[] {
+export function servicesOfOrganization(tenantId: string | null): readonly TargetService[] {
   const name = tenantId === null ? null : (TENANT_NAMES[tenantId] ?? null);
-  const practice =
-    tenantId === TENANT_CLINICA
-      ? PRACTICE_OLIVOS
-      : tenantId === TENANT_CONSULTORIO
-        ? PRACTICE_CONSULTORIO
-        : null;
-  if (practice !== null) {
+  const practice = tenantId === null ? undefined : PRACTICE_OF_TENANT[tenantId];
+  if (practice !== undefined) {
     return servicios
       .filtrar((s) => s.practiceId === practice && s.isActive)
       .map((s) => ({
@@ -162,7 +182,7 @@ function servicesOfOrganization(tenantId: string | null): readonly TargetService
         code: s.code,
         name: s.name,
         description: s.descriptionText ?? null,
-        price: s.defaultPrice,
+        price: Number(s.defaultPrice),
         currency: s.currencyCode,
         tenantId,
         practiceName: name,
@@ -174,7 +194,7 @@ function servicesOfOrganization(tenantId: string | null): readonly TargetService
       code: s.code,
       name: s.name,
       description: s.description,
-      price: s.price,
+      price: Number(s.price ?? 0),
       currency: s.currency,
       tenantId,
       practiceName: name,
@@ -182,6 +202,7 @@ function servicesOfOrganization(tenantId: string | null): readonly TargetService
   }
   return [];
 }
+
 
 function subtitleOf(p: ProfesionalSimulado): string {
   const specialty = p.especialidades[0];
@@ -344,7 +365,7 @@ export function filled(value: unknown): value is string {
 }
 
 /** El error con `reason`, con la forma del filtro global de la API. */
-function referralError(
+export function referralError(
   status: number,
   code: string,
   reason: string,
@@ -357,8 +378,16 @@ function referralError(
 export const invalid = (reason: string, message: string, fields: readonly string[]): MockReply =>
   referralError(400, 'VALIDATION_FAILED', reason, message, { fields });
 
+/** 422: el `reason` arriba y, como lo deja la API, también en `details`. */
 export const precondition = (reason: string, message: string, referralId: string): MockReply =>
-  referralError(422, 'PRECONDITION_FAILED', reason, message, { referralId });
+  referralError(422, 'PRECONDITION_FAILED', reason, message, { referralId, reason });
+
+/** 422 de `PreconditionFailedException`: el `reason` arriba y también en `details`. */
+export const preconditionInDetails = (reason: string, message: string, details: Record<string, unknown> = {}): MockReply =>
+  referralError(422, 'PRECONDITION_FAILED', reason, message, { ...details, reason });
+
+export const targetNotFound = (details: Record<string, unknown>): MockReply =>
+  referralError(404, 'NOT_FOUND', 'REFERRAL_TARGET_NOT_FOUND', 'Destino no encontrado', details);
 
 export const notFoundReferral = (referralId: string): MockReply =>
   referralError(404, 'NOT_FOUND', 'REFERRAL_NOT_FOUND', 'Referencia no encontrada', { referralId });
@@ -390,9 +419,7 @@ export function registerReferrals(router: MockRouter): void {
     if (!isClinician(request)) return forbidden();
     const q = texto(request.query, 'q');
     if (q === null || q.trim().length < 2) {
-      return validation('Escriba al menos dos letras para buscar.', [
-        { message: 'Escriba al menos dos letras para buscar.' },
-      ]);
+      return preconditionInDetails('REFERRAL_TARGET_QUERY_TOO_SHORT', 'Escriba al menos dos letras para buscar.');
     }
     const needle = normalize(q.trim());
     const kind = texto(request.query, 'kind') ?? 'PRACTITIONER';
@@ -431,14 +458,14 @@ export function registerReferrals(router: MockRouter): void {
     if (practitioner !== null) {
       // El profesional ofrece los servicios de la organización en la que atiende.
       const p = professionalById(practitioner);
-      return { items: servicesOfOrganization(p?.tenantId ?? null) };
+      if (p === undefined) return targetNotFound({ targetProfileId: practitioner });
+      return { items: servicesOfOrganization(p.tenantId) };
     }
     if (organization !== null) {
+      if (!ORGANIZATIONS.some((o) => o.id === organization)) return targetNotFound({ targetTenantId: organization });
       return { items: servicesOfOrganization(organization) };
     }
-    return validation('Indique un profesional o una organización.', [
-      { message: 'Indique un profesional o una organización.' },
-    ]);
+    return preconditionInDetails('REFERRAL_TARGET_REQUIRED', 'Indique un profesional o una organización.');
   });
 
   router.get('/referrals', (request) => {
@@ -451,140 +478,5 @@ export function registerReferrals(router: MockRouter): void {
       .filtrar((d) => d.patientProfileId === patientId)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .map(view);
-  });
-
-  router.post('/referrals', (request) => {
-    if (!isClinician(request)) return forbidden();
-    const body = cuerpo<{
-      patientProfileId: string;
-      sourceEncounterId: string;
-      targetProfileId: string;
-      targetTenantId: string;
-      targetBranchId: string;
-      targetExternalName: string;
-      targetExternalContact: string;
-      targetServiceCatalogId: string;
-      referralType: string;
-      reasonText: string;
-      validUntil: string;
-      priorityConceptId: string;
-      requestedServiceText: string;
-      diagnosisText: string;
-      clinicalSummary: string;
-      treatmentGivenText: string;
-      informedConsentId: string;
-      transfer: SimulatedTransfer;
-    }>(request);
-    if (body.patientProfileId === undefined) {
-      return validation('Falta el paciente.', [{ message: 'Falta el paciente.' }]);
-    }
-    // El vínculo nace del consentimiento, no del alta.
-    if (body.informedConsentId !== undefined) {
-      return invalid(
-        'REFERRAL_CONSENT_LINK_NOT_ALLOWED',
-        'El consentimiento se vincula registrándolo con targetType=REFERRAL sobre la derivación',
-        ['informedConsentId'],
-      );
-    }
-    if (body.referralType !== undefined && !(REFERRAL_TYPES as readonly string[]).includes(body.referralType)) {
-      return validation('Tipo de derivación desconocido.', [{ message: 'Tipo de derivación desconocido.' }]);
-    }
-    const hasTarget =
-      filled(body.targetProfileId) ||
-      filled(body.targetTenantId) ||
-      filled(body.targetBranchId) ||
-      filled(body.targetExternalName);
-    if (!hasTarget) {
-      return invalid('REFERRAL_TARGET_REQUIRED', 'La derivación necesita al menos un destino', [
-        'targetProfileId',
-        'targetTenantId',
-        'targetBranchId',
-        'targetExternalName',
-      ]);
-    }
-    // `assertTypedReferralRules`: con un servicio del catálogo ya está identificado.
-    if (body.referralType !== undefined && !filled(body.targetServiceCatalogId)) {
-      const missing = (['clinicalSummary', 'requestedServiceText'] as const).filter((f) => !filled(body[f]));
-      if (missing.length > 0) {
-        return invalid(
-          'REFERRAL_SERVICE_INFORMATION_INCOMPLETE',
-          'Falta el resumen clínico o el servicio pedido',
-          missing,
-        );
-      }
-    }
-    if ((body.reasonText ?? '').length > 1000) {
-      return validation('El motivo admite hasta 1000 caracteres.', [
-        { message: 'El motivo admite hasta 1000 caracteres.' },
-      ]);
-    }
-    const transfer = body.transfer === undefined ? null : mergeTransfer(null, body.transfer);
-    const transferError = transfer === null ? null : transferProblem(transfer);
-    if (transferError !== null) return transferError;
-    const branch = filled(body.targetBranchId) ? BRANCHES[body.targetBranchId] : undefined;
-    if (filled(body.targetBranchId) && branch === undefined) {
-      return referralError(404, 'NOT_FOUND', 'REFERRAL_TARGET_BRANCH_NOT_FOUND', 'Sede no encontrada', {
-        targetBranchId: body.targetBranchId,
-      });
-    }
-
-    // La API responde 409 ante una equivalente: mismo encuentro, mismo destino
-    // y mismo servicio. Sin encuentro no hay con qué compararla.
-    const equivalent = referralList.filtrar(
-      (d) =>
-        body.sourceEncounterId !== undefined &&
-        d.statusConceptId !== REFERRAL_STATUS['REF_CANCELLED'] &&
-        d.sourceEncounterId === body.sourceEncounterId &&
-        d.targetProfileId === (body.targetProfileId ?? null) &&
-        d.targetTenantId === (body.targetTenantId ?? branch?.tenantId ?? null) &&
-        (d.targetBranchId ?? null) === (body.targetBranchId ?? null) &&
-        (d.targetExternalName ?? null) === (body.targetExternalName ?? null) &&
-        d.targetServiceCatalogId === (body.targetServiceCatalogId ?? null) &&
-        (d.requestedServiceText ?? null) === (body.requestedServiceText ?? null),
-    );
-    if (equivalent.length > 0) {
-      return conflict('Ya existe una referencia equivalente');
-    }
-
-    const practitioner = body.targetProfileId === undefined ? undefined : professionalById(body.targetProfileId);
-    const targetTenantId = body.targetTenantId ?? branch?.tenantId ?? null;
-    const serviceTenantId = targetTenantId ?? practitioner?.tenantId ?? null;
-    const service =
-      body.targetServiceCatalogId === undefined
-        ? undefined
-        : servicesOfOrganization(serviceTenantId).find((s) => s.id === body.targetServiceCatalogId);
-
-    const created = referralList.agregar({
-      id: nuevoId('referral'),
-      patientProfileId: body.patientProfileId,
-      sourceEncounterId: body.sourceEncounterId ?? null,
-      referringProfileId: request.user?.practitionerProfileId ?? null,
-      targetProfileId: body.targetProfileId ?? null,
-      targetTenantId,
-      targetServiceCatalogId: body.targetServiceCatalogId ?? null,
-      referralType: body.referralType ?? null,
-      reasonText: body.reasonText ?? null,
-      priorityConceptId: body.priorityConceptId ?? null,
-      statusConceptId: REFERRAL_STATUS['REF_REQUESTED']!,
-      validUntil: body.validUntil === undefined ? null : `${body.validUntil}T00:00:00.000Z`,
-      respondedAt: null,
-      createdAt: new Date().toISOString(),
-      targetDisplayName:
-        practitioner?.displayName ??
-        (targetTenantId === null ? null : (TENANT_NAMES[targetTenantId] ?? null)) ??
-        body.targetExternalName ??
-        null,
-      targetServiceName: service?.name ?? null,
-      targetBranchId: body.targetBranchId ?? null,
-      targetExternalName: body.targetExternalName ?? null,
-      targetExternalContact: body.targetExternalContact ?? null,
-      requestedServiceText: body.requestedServiceText ?? null,
-      diagnosisText: body.diagnosisText ?? null,
-      clinicalSummary: body.clinicalSummary ?? null,
-      treatmentGivenText: body.treatmentGivenText ?? null,
-      transfer,
-    });
-
-    return { status: 201, body: view(created) };
   });
 }

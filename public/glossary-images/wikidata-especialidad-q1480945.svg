@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Sanidad militar: cadena de atención</title>
+  <desc id="d">Cinco escalones en fila: punto de lesión, puesto de socorro, hospital de campaña, hospital de referencia y rehabilitación, con la idea clave de controlar pronto las hemorragias. Abajo, qué abarca y sus aportes a la medicina civil.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="760" height="250" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="400.0" y="50" text-anchor="middle" class="title">Cadena de atención y evacuación</text>
+<rect x="40" y="70" width="124" height="66" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="102.0" y="99.7" text-anchor="middle" class="small" style="fill:var(--on)">Punto de</text>
+<text x="102.0" y="114.7" text-anchor="middle" class="small" style="fill:var(--on)">lesión</text>
+<line x1="165" y1="103.0" x2="186" y2="103.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="189" y="70" width="124" height="66" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="251.0" y="99.7" text-anchor="middle" class="small" style="fill:var(--on)">Puesto de</text>
+<text x="251.0" y="114.7" text-anchor="middle" class="small" style="fill:var(--on)">socorro</text>
+<line x1="314" y1="103.0" x2="335" y2="103.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="338" y="70" width="124" height="66" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="400.0" y="99.7" text-anchor="middle" class="small" style="fill:var(--on)">Hospital de</text>
+<text x="400.0" y="114.7" text-anchor="middle" class="small" style="fill:var(--on)">campaña</text>
+<line x1="463" y1="103.0" x2="484" y2="103.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="487" y="70" width="124" height="66" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="549.0" y="99.7" text-anchor="middle" class="small" style="fill:var(--on)">Hospital de</text>
+<text x="549.0" y="114.7" text-anchor="middle" class="small" style="fill:var(--on)">referencia</text>
+<line x1="612" y1="103.0" x2="633" y2="103.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="636" y="70" width="124" height="66" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="698.0" y="107.2" text-anchor="middle" class="small" style="fill:var(--on)">Rehabilitación</text>
+<text x="102" y="160" text-anchor="middle" class="small" style="fill:var(--muted)">primeros auxilios</text>
+<text x="251" y="160" text-anchor="middle" class="small" style="fill:var(--muted)">estabilizar</text>
+<text x="400" y="160" text-anchor="middle" class="small" style="fill:var(--muted)">cirugía urgente</text>
+<text x="549" y="160" text-anchor="middle" class="small" style="fill:var(--muted)">tratamiento definitivo</text>
+<text x="698" y="160" text-anchor="middle" class="small" style="fill:var(--muted)">recuperación</text>
+<rect x="40" y="186" width="720" height="40" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1"/>
+<text x="400" y="211" text-anchor="middle" class="lab">Controlar hemorragias graves pronto salva vidas.</text>
+<rect x="20" y="286" width="370" height="154" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="205.0" y="316" text-anchor="middle" class="title">Qué abarca</text>
+<text x="36" y="344" class="lab">• Prevención y aptitud del personal</text>
+<text x="36" y="368" class="lab">• Medicina y cirugía de combate</text>
+<text x="36" y="392" class="lab">• Salud mental y estrés operativo</text>
+<text x="36" y="416" class="lab">• Apoyo en catástrofes y misiones</text>
+<rect x="406" y="286" width="374" height="154" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="593.0" y="316" text-anchor="middle" class="title">Aportes a la medicina civil</text>
+<text x="422" y="344" class="lab">• Triaje de víctimas</text>
+<text x="422" y="368" class="lab">• Torniquetes y control de sangrado</text>
+<text x="422" y="392" class="lab">• Evacuación sanitaria rápida</text>
+<text x="422" y="416" class="lab">• Atención a traumatismos graves</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>
