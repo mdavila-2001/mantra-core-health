@@ -30,6 +30,28 @@ describe('reviewBranchCsv', () => {
     ]);
   });
 
+  it('lee el punto de las columnas latitud y longitud, y manda sobre el enlace', () => {
+    const review = reviewBranchCsv(
+      'nombre;latitud;longitud;url_ubicacion\n' +
+        // Excel en castellano escribe la coma decimal.
+        'Norte;-17,7690;-63,1960;\n' +
+        'Sur;-17.80;-63.10;https://www.google.com/maps?q=-1,-2\n',
+    );
+
+    expect(validDrafts(review).map((d) => d.coordinates)).toEqual([
+      { latitude: -17.769, longitude: -63.196 },
+      { latitude: -17.8, longitude: -63.1 },
+    ]);
+  });
+
+  it('marca la fila con sólo una de las dos coordenadas o fuera de rango', () => {
+    const review = reviewBranchCsv(
+      'nombre,latitud,longitud\nA,-17.7,\nB,95,10\nC,abc,10\nD,-17.7,-63.1\n',
+    );
+
+    expect(review.rows.map((row) => row.ok)).toEqual([false, false, false, true]);
+  });
+
   it('acepta el separador de Excel en castellano, encabezados con tildes y en inglés', () => {
     const review = reviewBranchCsv(
       'Name;Descripción;URL de ubicación;Dirección;Código\n' +
@@ -83,7 +105,7 @@ describe('reviewBranchCsv', () => {
   });
 
   it('rechaza dos encabezados que apuntan al mismo dato', () => {
-    expect(() => reviewBranchCsv('nombre,url,url_ubicacion\nA,https://a.bo,https://b.bo\n')).toThrow(
+    expect(() => reviewBranchCsv('nombre,lat,latitud\nA,-17.7,-17.8\n')).toThrow(
       /mismo dato/,
     );
   });

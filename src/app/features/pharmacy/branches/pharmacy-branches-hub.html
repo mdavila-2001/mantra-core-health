@@ -1,0 +1,25 @@
+<app-page-header
+  title="Sucursales"
+  subtitle="Sus sedes, su ubicación y su horario: qué sucursales abren las 24 horas y sus turnos de guardia, una por una o en todas a la vez."
+/>
+
+<!-- ONE tabbed card, full width and centered (`composition-rules.md` §5). -->
+<app-card padding="md" class="sucursales__card" data-testid="pharmacy-branches-card">
+  <app-tabs
+    appearance="browser"
+    [selectedIndex]="selected()"
+    (selectedIndexChange)="select($event)"
+    data-testid="pharmacy-branches-tabs"
+  >
+    <app-tab [label]="labels[tabs[0]]">
+      @if (selected() === 0) {
+        <app-organization-branches [embedded]="true" />
+      }
+    </app-tab>
+    <app-tab [label]="labels[tabs[1]]">
+      @if (selected() === 1) {
+        <app-pharmacy-opening-hours [embedded]="true" />
+      }
+    </app-tab>
+  </app-tabs>
+</app-card>

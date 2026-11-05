@@ -173,35 +173,34 @@ describe('LaboratoryOrders', () => {
     expect(internal().busyOrderId()).toBeNull();
   });
 
-  describe('cancelar y rechazar piden un motivo', () => {
+  describe('rechazar pide un motivo', () => {
     const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-    it('cancelar abre el diálogo y manda CANCEL con el motivo; después avisa y relee', async () => {
-      confirmWithReason.mockResolvedValue('Pedida por error');
-      create();
-      listOrders.mockClear();
-
-      internal().run('cancel', ORDERS[0]!);
-      await flush();
-
-      const [config, field] = confirmWithReason.mock.calls[0] as [{ title: string; destructive: boolean }, { minLength: number }];
-      expect(config.title).toBe('Cancelar la orden');
-      expect(config.destructive).toBe(true);
-      expect(field.minLength).toBeGreaterThanOrEqual(3);
-      expect(transitionOrder).toHaveBeenCalledExactlyOnceWith('a', 'CANCEL', 'Pedida por error');
-      expect(success).toHaveBeenCalledWith('Orden cancelada.');
-      expect(listOrders).toHaveBeenCalledTimes(1);
-    });
-
-    it('rechazar manda REJECT con el motivo', async () => {
+    it('rechazar abre el diálogo y manda REJECT con el motivo; después avisa y relee', async () => {
       confirmWithReason.mockResolvedValue('Muestra insuficiente');
       create();
+      listOrders.mockClear();
 
       internal().run('reject', ORDERS[1]!);
       await flush();
 
+      const [config, field] = confirmWithReason.mock.calls[0] as [{ title: string; destructive: boolean }, { minLength: number }];
+      expect(config.title).toBe('Rechazar la orden');
+      expect(config.destructive).toBe(true);
+      expect(field.minLength).toBeGreaterThanOrEqual(3);
       expect(transitionOrder).toHaveBeenCalledExactlyOnceWith('b', 'REJECT', 'Muestra insuficiente');
       expect(success).toHaveBeenCalledWith('Orden rechazada.');
+      expect(listOrders).toHaveBeenCalledTimes(1);
+    });
+
+    it('cancelar no existe: la API responde 422 a CANCEL, así que ni abre el diálogo ni manda nada', async () => {
+      create();
+
+      internal().run('cancel', ORDERS[0]!);
+      await flush();
+
+      expect(confirmWithReason).not.toHaveBeenCalled();
+      expect(transitionOrder).not.toHaveBeenCalled();
     });
 
     it('si se cierra el diálogo sin motivo no se manda nada', async () => {
@@ -234,7 +233,7 @@ describe('LaboratoryOrders', () => {
       create();
       listOrders.mockClear();
 
-      internal().run('cancel', ORDERS[2]!);
+      internal().run('reject', ORDERS[2]!);
       await flush();
       fixture.detectChanges();
 

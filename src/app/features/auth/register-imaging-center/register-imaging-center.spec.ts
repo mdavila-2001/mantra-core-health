@@ -104,6 +104,9 @@ describe('RegisterImagingCenter', () => {
     component.updateAttachment('seprecFile', [archivo('seprec.pdf', 'application/pdf', 10)]);
     component.updateAttachment('licenciaFile', [archivo('licencia.pdf', 'application/pdf', 10)]);
     component.updateAttachment('sedesFile', [archivo('sedes.pdf', 'application/pdf', 10)]);
+    // El poder del representante es obligatorio para toda organización, también
+    // una unipersonal (decisión del propietario del 05/11/2026).
+    component.updateAttachment('poderFile', [archivo('poder.pdf', 'application/pdf', 10)]);
     // El punto de la central es obligatorio (pedido del cliente del 26/10/2026).
     component.fijarGpsCentral(PUNTO_CENTRAL);
   }
@@ -199,7 +202,7 @@ describe('RegisterImagingCenter', () => {
     completarLoObligatorio();
 
     component.submit();
-    atenderElEnvio(4);
+    atenderElEnvio(5);
 
     expect(component.form.valid).toBe(true);
     expect(component.enviada()).toBe(true);
@@ -211,7 +214,7 @@ describe('RegisterImagingCenter', () => {
     completarLoObligatorio();
 
     component.submit();
-    const { cuerpo } = atenderElEnvio(4);
+    const { cuerpo } = atenderElEnvio(5);
 
     expect(cuerpo.organization).toMatchObject({
       tenantType: 'DIAGNOSTIC_CENTER',
@@ -253,7 +256,7 @@ describe('RegisterImagingCenter', () => {
     component.form.controls.tradeName.setValue('  Imágenes del Oriente  ');
 
     component.submit();
-    const { cuerpo } = atenderElEnvio(4);
+    const { cuerpo } = atenderElEnvio(5);
 
     expect(cuerpo.organization.tradeName).toBe('Imágenes del Oriente');
   });
@@ -281,7 +284,7 @@ describe('RegisterImagingCenter', () => {
     component.form.controls.modalidades.setValue([etiqueta]);
 
     component.submit();
-    const { cuerpo } = atenderElEnvio(4);
+    const { cuerpo } = atenderElEnvio(5);
 
     expect(cuerpo.organization.diagnosticUnit.modalityConceptIds).toEqual([
       idDeConcepto(
@@ -360,18 +363,39 @@ describe('RegisterImagingCenter', () => {
     },
   );
 
-  it.each(['constitucionFile', 'poderFile'] as const)(
-    '%s no frena: una unipersonal no tiene constitución ni poder',
-    (clave) => {
-      completarLoObligatorio();
-      component.form.controls[clave].setValue(null);
+  it('constitucionFile no frena: una unipersonal no tiene constitución', () => {
+    completarLoObligatorio();
+    component.form.controls.constitucionFile.setValue(null);
+
+    component.submit();
+    atenderElEnvio(5);
+
+    expect(component.enviada()).toBe(true);
+  });
+
+  it.each(['UNIPERSONAL', 'SRL'] as const)(
+    'sin el poder del representante no sale, ni siendo %s: es obligatorio para toda organización',
+    (tipo) => {
+      // Decisión del propietario (05/11/2026): el poder no distingue tipo societario.
+      completarLoObligatorio(tipo);
+      component.form.controls.poderFile.setValue(null);
 
       component.submit();
-      atenderElEnvio(4);
 
-      expect(component.enviada()).toBe(true);
+      expect(component.form.controls.poderFile.invalid).toBe(true);
+      expect(component.enviada()).toBe(false);
     },
   );
+
+  it('el poder se rotula obligatorio, nunca «(opcional)»', () => {
+    const poder = component.paginas
+      .flatMap((p) => p.campos)
+      .find((c) => c.key === 'poderFile');
+
+    expect(poder?.label).toBe('Poder del representante legal');
+    expect(poder?.label).not.toMatch(/opcional/);
+    expect(poder?.required).toBe(true);
+  });
 
   it('el poder se pide en la página del representante, no con la constitución', () => {
     const pagina = (clave: string) => component.paginas.find((p) => p.clave === clave);
@@ -408,7 +432,7 @@ describe('RegisterImagingCenter', () => {
     completarLoObligatorio();
 
     component.submit();
-    atenderElEnvio(4);
+    atenderElEnvio(5);
 
     // Ninguno de los nueve campos de gerencia se tocó, y el alta sale igual.
     expect(component.form.controls.generalManagerName.value.name).toBe('');
@@ -518,7 +542,7 @@ describe('RegisterImagingCenter', () => {
     completarLoObligatorio();
 
     component.submit();
-    atenderElEnvio(4);
+    atenderElEnvio(5);
     await fixture.whenStable();
     fixture.detectChanges();
 

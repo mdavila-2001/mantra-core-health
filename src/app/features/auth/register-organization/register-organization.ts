@@ -534,7 +534,7 @@ export class RegisterOrganization {
             key: 'legalRepresentativeIdNumber',
             label: 'Cédula de identidad',
             hint: 'Como figura en el carnet, con su extensión. Ej. 4872190 SC',
-            control: 'text' as const,
+            control: 'text' as const, fieldKind: 'identityDocumentWithComplement',
             required: true,
             testId: 'registro-organizacion-representante-ci',
             mensajeDeError: 'Escriba el número de cédula.',

@@ -34,6 +34,7 @@ import { AgendaSidebar } from './agenda-sidebar';
 import { AgendaTimeline } from './agenda-timeline';
 import { ALL_ORGS, clearAllFilters, parseUrlState, toQueryParams, withoutFilter, type AgendaUrlState } from './agenda-url';
 import { PatientFinder, type PickedPatient } from './patient-finder';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 const VISTAS: readonly SegmentedOption<AgendaViewKind>[] = [
   { value: 'DAY', label: 'Día' },
@@ -79,7 +80,7 @@ const MOVIL = '(max-width: 779px)';
  */
 @Component({
   selector: 'app-combined-agenda',
-  imports: [Alert, AgendaGrid, AgendaPanel, AgendaReserved, AgendaSidebar, AgendaTimeline, AppButton, Chip, PageHeader, PatientFinder, SegmentedControl, ViewStateHost],
+  imports: [DateStringPicker, Alert, AgendaGrid, AgendaPanel, AgendaReserved, AgendaSidebar, AgendaTimeline, AppButton, Chip, PageHeader, PatientFinder, SegmentedControl, ViewStateHost],
   templateUrl: './combined-agenda.html',
   styleUrl: './combined-agenda.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -390,8 +391,8 @@ export class CombinedAgenda implements OnInit {
     this.goTo(addDays(this.anchor(), direction * salto));
   }
 
-  protected onDateInput(event: Event): void {
-    const day = fromDayKey((event.target as HTMLInputElement).value);
+  protected onDateInput(value: string | number | null): void {
+    const day = fromDayKey(String(value ?? ''));
     if (day !== null) this.goTo(day);
   }
 

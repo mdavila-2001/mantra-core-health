@@ -15,12 +15,10 @@ export const PHARMACY_LABORATORY_SCREENS: Readonly<Record<string, () => Promise<
     import('./catalog/pharmacy-catalog-hub').then((m) => m.PharmacyCatalogHub),
   'administration/pharmacy': () =>
     import('./summary/pharmacy-summary').then((m) => m.PharmacySummaryPage),
-  'administration/pharmacy-hours': () =>
-    import('./opening-hours/pharmacy-opening-hours').then((m) => m.PharmacyOpeningHoursPage),
+  // "Horario y turnos" is a tab of Sucursales: its old route redirects
+  // (`SECCIONES_REDIRIGIDAS` in `app.routes.ts`).
   'administration/pharmacy-branches': () =>
-    import('../organization/organization-branches/organization-branches').then(
-      (m) => m.OrganizationBranches,
-    ),
+    import('./branches/pharmacy-branches-hub').then((m) => m.PharmacyBranchesHub),
   'administration/laboratory': () =>
     import('../laboratory/summary/laboratory-summary').then((m) => m.LaboratorySummaryPage),
   'administration/laboratory-orders': () =>

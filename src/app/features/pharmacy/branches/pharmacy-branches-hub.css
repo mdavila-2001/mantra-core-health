@@ -1,0 +1,6 @@
+/* No own max width: `.app-main__inner` sets it (`composition-rules.md` §5). */
+.sucursales__card {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}

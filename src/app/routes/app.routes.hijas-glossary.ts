@@ -15,7 +15,7 @@ export const PANTALLAS_HIJAS_GLOSSARY: Routes = [
     loadComponent: () =>
       import('../features/agenda/booking-new/booking-new')
         .then((m) => m.BookingNew)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/appointments/book/:slotId',
@@ -24,7 +24,7 @@ export const PANTALLAS_HIJAS_GLOSSARY: Routes = [
     loadComponent: () =>
       import('../features/agenda/booking-new/booking-new')
         .then((m) => m.BookingNew)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'glossary/anatomy-atlas',
@@ -33,7 +33,7 @@ export const PANTALLAS_HIJAS_GLOSSARY: Routes = [
     loadComponent: () =>
       import('../features/glossary/glossary-anatomy-atlas')
         .then((m) => m.GlossaryAnatomyAtlas)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'glossary/graph',
@@ -42,7 +42,7 @@ export const PANTALLAS_HIJAS_GLOSSARY: Routes = [
     loadComponent: () =>
       import('../features/glossary/glossary-graph')
         .then((m) => m.GlossaryGraph)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'glossary/network',
@@ -51,7 +51,7 @@ export const PANTALLAS_HIJAS_GLOSSARY: Routes = [
     loadComponent: () =>
       import('../features/glossary/glossary-network')
         .then((m) => m.GlossaryNetwork)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'glossary/compare',
@@ -60,7 +60,7 @@ export const PANTALLAS_HIJAS_GLOSSARY: Routes = [
     loadComponent: () =>
       import('../features/glossary/glossary-compare')
         .then((m) => m.GlossaryCompare)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'glossary/:conceptId',
@@ -69,6 +69,6 @@ export const PANTALLAS_HIJAS_GLOSSARY: Routes = [
     loadComponent: () =>
       import('../features/glossary/glossary-term')
         .then((m) => m.GlossaryTerm)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
 ];

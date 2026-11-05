@@ -89,7 +89,7 @@ describe('BranchBulkImport', () => {
     expect(emitted).toEqual([]);
   });
 
-  it('la plantilla trae las cinco columnas en orden', () => {
+  it('la plantilla trae las siete columnas en orden, con el punto en latitud y longitud', () => {
     internal().downloadTemplate();
 
     expect(download).toHaveBeenCalledTimes(1);
@@ -98,8 +98,10 @@ describe('BranchBulkImport', () => {
     expect((columns as { header: string }[]).map((c) => c.header)).toEqual([
       'nombre',
       'descripcion',
-      'url_ubicacion',
       'direccion',
+      'latitud',
+      'longitud',
+      'url_ubicacion',
       'codigo',
     ]);
     expect((rows as unknown[]).length).toBeGreaterThan(0);

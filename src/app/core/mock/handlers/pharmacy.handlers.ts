@@ -463,7 +463,6 @@ const categorias = new Coleccion<CategoriaSimulada>(
 
 /* ---- P34 · 24 h y turnos de guardia: `pharmacy-opening-hours.handlers.ts` -- */
 
-const HORARIO = horarioDeFarmacias(FARMACIAS);
 
 interface ActividadSimulada {
   readonly id: string;
@@ -604,6 +603,7 @@ const SEDES_ADICIONALES: readonly SedeAdicional[] = (() => {
 })();
 
 const SEDE_CENTRAL_ID = FARMACIAS[0]!.siteId;
+const HORARIO = horarioDeFarmacias([...FARMACIAS, ...SEDES_ADICIONALES.map((s) => ({ ...FARMACIAS[0]!, siteId: s.siteId, siteName: s.name, addressText: s.addressText, lat: s.lat, lng: s.lng }))]);
 
 /**
  * Las sucursales que la farmacia cargó en «Sucursales» (a mano o por CSV) y
