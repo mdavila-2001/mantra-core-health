@@ -3,8 +3,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { AdmissionsClient } from '@core/data-access/admissions/admissions.client';
 import { ATTESTATION_VERSION, type MyAdmission } from '@core/data-access/admissions/admissions.types';
+import { OwnAdmissionClient } from '@core/data-access/admissions/own-admission.client';
 import { readAdmissionError } from '@shared/admissions/admission-error';
 import {
   admissionStatusVariant,
@@ -47,7 +47,7 @@ type CardState = 'loading' | 'none' | 'ready' | 'error';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdmissionStatusCard {
-  private readonly client = inject(AdmissionsClient);
+  private readonly client = inject(OwnAdmissionClient);
   private readonly toast = inject(ToastService);
 
   /** En el panel de inicio, una solicitud ya verificada no ocupa lugar. */
