@@ -66,6 +66,10 @@ services:
         # (`mockBackend: true`): el front de `test` salía sin una sola llamada
         # a la API aunque el proxy la tuviera en pie.
         BUILD_CONFIGURATION: production-api
+        # Coolify la define en cada despliegue. Es el respaldo del commit que se
+        # estampa en el paquete cuando el contexto llega sin `.git`; sin ella
+        # los códigos de soporte salían `E-desconocido-NNN`.
+        SOURCE_COMMIT: '${SOURCE_COMMIT:-}'
     restart: always
     environment:
       PORT: '4000'

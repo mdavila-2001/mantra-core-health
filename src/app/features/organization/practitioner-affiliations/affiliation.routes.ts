@@ -9,7 +9,7 @@ export interface AffiliationRouteHelpers {
   /** La declaración que cierra una hija de «Mi perfil» a quien atiende (`soloDeQuienAtiende`). */
   readonly practitionerOnly: () => Pick<Route, 'canActivate' | 'data'>;
   /** El componente de recuperación cuando falla la descarga de un fragmento (`chunkFallido`). */
-  readonly chunkFailed: () => Type<unknown>;
+  readonly chunkFailed: (error?: unknown) => Type<unknown>;
 }
 
 /**
@@ -30,7 +30,7 @@ export function affiliationRoutes({ practitionerOnly, chunkFailed }: Affiliation
       loadComponent: () =>
         import('../../account/my-profile/affiliation-invitations/affiliation-invitations')
           .then((m) => m.AffiliationInvitations)
-          .catch(() => chunkFailed()),
+          .catch(chunkFailed),
     },
     {
       path: 'my-account/my-procedures',
@@ -39,7 +39,7 @@ export function affiliationRoutes({ practitionerOnly, chunkFailed }: Affiliation
       loadComponent: () =>
         import('../../account/my-profile/my-procedures/my-procedures')
           .then((m) => m.MyProcedures)
-          .catch(() => chunkFailed()),
+          .catch(chunkFailed),
     },
     {
       path: 'administration/my-organization/affiliations',
@@ -48,7 +48,7 @@ export function affiliationRoutes({ practitionerOnly, chunkFailed }: Affiliation
       loadComponent: () =>
         import('./practitioner-affiliations')
           .then((m) => m.PractitionerAffiliations)
-          .catch(() => chunkFailed()),
+          .catch(chunkFailed),
     },
   ];
 }

@@ -27,7 +27,7 @@ function redirigeTodo(destino: string): Routes {
  *
  * Recibe `chunkFallido` en vez de importarlo porque vive en `app.routes.ts` (mismo patrón que `insightsPortalRoute`).
  */
-export function mockRoutes(chunkFallido: () => Type<unknown>, encendida: boolean): Routes {
+export function mockRoutes(chunkFallido: (error?: unknown) => Type<unknown>, encendida: boolean): Routes {
   if (!encendida) {
     // Con hijas y no con `redirectTo` en la propia ruta: así `/reports/**` entero (no sólo `/reports`) redirige, y la
     // ruta vieja sigue delante del armazón como lo estaba la real.
@@ -42,7 +42,7 @@ export function mockRoutes(chunkFallido: () => Type<unknown>, encendida: boolean
     canActivate: [authGuard, seccionRolesGuard],
     data: { [ROLES_ROUTE_DATA]: [...ROLES_ADMINISTRACION, ...ROLES_REPORTERIA] },
     loadComponent: () =>
-      import('../portal-selector/portal-selector').then((m) => m.PortalSelector).catch(() => chunkFallido()),
+      import('../portal-selector/portal-selector').then((m) => m.PortalSelector).catch(chunkFallido),
   };
   const reportes: Route = {
     path: 'reports',
@@ -51,7 +51,7 @@ export function mockRoutes(chunkFallido: () => Type<unknown>, encendida: boolean
     loadChildren: () =>
       import('./reporting.routes')
         .then((m) => m.REPORTING_ROUTES)
-        .catch((): Routes => [{ path: '**', component: chunkFallido() }]),
+        .catch((error: unknown): Routes => [{ path: '**', component: chunkFallido(error) }]),
   };
   return [selector, reportes];
 }

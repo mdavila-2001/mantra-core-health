@@ -1,0 +1,137 @@
+{
+  "A": "01dedd1e4|2026-11-05T01:41:03.780Z",
+  "out": [
+    {
+      "nombre": "control-sin-arreglo",
+      "chunks404": [
+        "chunk-K7654BBJ.js"
+      ],
+      "errores": [
+        "[E-01dedd1e4-001] Failed to fetch dynamically imported module: http://127.0.0.1:4302/chunk-K7654BBJ.js · 0.1.0 · /my-account/appointments"
+      ],
+      "cargasCompletas": [],
+      "urlFinal": "/my-account/appointments",
+      "titulo": "AloVida - Mis citas",
+      "pantallaDeError": true,
+      "huellaGuardada": "01dedd1e4|2026-11-05T01:41:03.780Z",
+      "sesionIniciada": true,
+      "mainEnUso": "http://127.0.0.1:4302/main.js"
+    },
+    {
+      "nombre": "capa1-recuperacion",
+      "chunks404": [
+        "chunk-K7654BBJ.js"
+      ],
+      "errores": [
+        "[E-01dedd1e4-001] Failed to fetch dynamically imported module: http://127.0.0.1:4302/chunk-K7654BBJ.js · 0.1.0 · /my-account/appointments"
+      ],
+      "cargasCompletas": [
+        "/my-account/appointments"
+      ],
+      "urlFinal": "/my-account/appointments",
+      "titulo": "AloVida - Mis citas",
+      "pantallaDeError": false,
+      "huellaGuardada": "01dedd1e4|2026-11-05T01:41:03.780Z",
+      "sesionIniciada": true,
+      "mainEnUso": "http://127.0.0.1:4302/main.js"
+    },
+    {
+      "nombre": "capa2-vigilante",
+      "chunks404": [],
+      "errores": [],
+      "cargasCompletas": [
+        "/my-account/appointments"
+      ],
+      "urlFinal": "/my-account/appointments",
+      "titulo": "AloVida - Mis citas",
+      "pantallaDeError": false,
+      "huellaGuardada": null,
+      "sesionIniciada": true,
+      "mainEnUso": "http://127.0.0.1:4302/main.js"
+    },
+    {
+      "nombre": "defer-control-sin-arreglo",
+      "chunks404": [
+        "chunk-ZWTBPIHB.js",
+        "chunk-HR4VDO7G.js",
+        "chunk-JB4BJMYP.js",
+        "chunk-AYVHFIVS.js"
+      ],
+      "errores": [
+        "[E-01dedd1e4-001] NG0750 · 0.1.0 · /dashboard",
+        "[E-01dedd1e4-002] NG0750 · 0.1.0 · /dashboard",
+        "[E-01dedd1e4-003] NG0750 · 0.1.0 · /dashboard",
+        "[E-01dedd1e4-004] NG0750 · 0.1.0 · /dashboard"
+      ],
+      "cargasCompletas": [],
+      "urlFinal": "/dashboard",
+      "titulo": "AloVida - Panel",
+      "pantallaDeError": false,
+      "huellaGuardada": "01dedd1e4|2026-11-05T01:41:03.780Z",
+      "sesionIniciada": true,
+      "mainEnUso": "http://127.0.0.1:4302/main.js"
+    },
+    {
+      "nombre": "defer-capa1-recuperacion",
+      "chunks404": [
+        "chunk-ZWTBPIHB.js",
+        "chunk-HR4VDO7G.js"
+      ],
+      "errores": [
+        "[E-01dedd1e4-001] NG0750 · 0.1.0 · /dashboard",
+        "[E-01dedd1e4-002] NG0750 · 0.1.0 · /dashboard"
+      ],
+      "cargasCompletas": [
+        "/dashboard"
+      ],
+      "urlFinal": "/dashboard",
+      "titulo": "AloVida - Panel",
+      "pantallaDeError": false,
+      "huellaGuardada": "01dedd1e4|2026-11-05T01:41:03.780Z",
+      "sesionIniciada": true,
+      "mainEnUso": "http://127.0.0.1:4302/main.js"
+    },
+    {
+      "nombre": "defer-sin-confirmacion-no-recarga",
+      "chunks404": [
+        "chunk-ZWTBPIHB.js",
+        "chunk-HR4VDO7G.js",
+        "chunk-JB4BJMYP.js",
+        "chunk-AYVHFIVS.js"
+      ],
+      "errores": [
+        "[E-01dedd1e4-001] NG0750 · 0.1.0 · /dashboard",
+        "[E-01dedd1e4-002] NG0750 · 0.1.0 · /dashboard",
+        "[E-01dedd1e4-003] NG0750 · 0.1.0 · /dashboard",
+        "[E-01dedd1e4-004] NG0750 · 0.1.0 · /dashboard"
+      ],
+      "cargasCompletas": [],
+      "urlFinal": "/dashboard",
+      "titulo": "AloVida - Panel",
+      "pantallaDeError": false,
+      "huellaGuardada": null,
+      "sesionIniciada": true,
+      "mainEnUso": "http://127.0.0.1:4302/main.js"
+    },
+    {
+      "nombre": "guarda-trozo-roto-de-verdad",
+      "chunks404": [
+        "chunk-K7654BBJ.js",
+        "chunk-K7654BBJ.js"
+      ],
+      "errores": [
+        "[E-01dedd1e4-001] Failed to fetch dynamically imported module: http://127.0.0.1:4302/chunk-K7654BBJ.js · 0.1.0 · /my-account/appointments",
+        "[E-01dedd1e4-001] Failed to fetch dynamically imported module: http://127.0.0.1:4302/chunk-K7654BBJ.js · 0.1.0 · /my-account/appointments"
+      ],
+      "cargasCompletas": [
+        "/my-account/appointments"
+      ],
+      "urlFinal": "/my-account/appointments",
+      "titulo": "AloVida - Mis citas",
+      "pantallaDeError": true,
+      "huellaGuardada": "01dedd1e4|2026-11-05T01:41:03.780Z",
+      "sesionIniciada": true,
+      "mainEnUso": "http://127.0.0.1:4302/main.js"
+    }
+  ]
+}
