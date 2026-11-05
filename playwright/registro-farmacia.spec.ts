@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
+import { chooseOption, optionLabels } from './helpers/combobox';
 import { pdfDePrueba } from './helpers/documentos-legales';
 import { centroDelPin, tocar } from './helpers/mapa';
 
@@ -14,10 +15,11 @@ import { centroDelPin, tocar } from './helpers/mapa';
  *
  * Comportamiento en el navegador contra el backend simulado
  * (`mock-backend.interceptor`, `environment.mockBackend`): la tarjeta
- * «Farmacia» en `/auth/register`, que lo obligatorio de D2 (razón social,
- * tipo de sociedad, NIT, dirección de la central, nombre y correo del
- * representante, correo de acceso y contraseña) alcanza para terminar el
- * alta, que los seis papeles/el mapa/las sucursales/las tres gerencias son
+ * «Farmacia» en `/auth/register`, que lo obligatorio (razón social, tipo de
+ * sociedad, NIT, el punto de la central en el mapa —la calle sale de él desde
+ * el 26/10/2026—, nombre, cédula, correo y poder del representante —el poder
+ * es obligatorio desde el 05/11/2026— y contraseña) alcanza para terminar el
+ * alta, que los otros cinco papeles, las sucursales y las tres gerencias son
  * opcionales, y que el `POST` a `/iam/auth/register-organization` con
  * `tenantType: 'PHARMACY'` responde 201 → pantalla «¡Bienvenido a AloVida!».
  *
@@ -47,7 +49,7 @@ async function abrirElAlta(page: Page): Promise<void> {
 /** Página 1 «La empresa»: lo único que frena de verdad (razón social, tipo, NIT). */
 async function completarLaEmpresa(page: Page, razonSocial = 'Farmacia San Martín S.R.L.'): Promise<void> {
   await page.getByTestId('registro-farmacia-razon-social').fill(razonSocial);
-  await page.getByLabel('Tipo de sociedad').selectOption({ label: 'S.R.L.' });
+  await chooseOption(page.getByLabel('Tipo de sociedad'), 'S.R.L.');
   await page.getByTestId('registro-farmacia-nit').fill('1023456789');
   await page.getByTestId('paginated-form-continuar').click();
 }
@@ -58,10 +60,18 @@ async function saltarLosPapeles(page: Page): Promise<void> {
   await page.getByTestId('paginated-form-continuar').click();
 }
 
-/** Página «Dónde está la central»: sólo la dirección, sin marcar el mapa. */
-async function completarCentralSinMapa(page: Page): Promise<void> {
+/**
+ * Página «Dónde está la central»: the HQ pin is required and the street is
+ * derived from it (no address field since 26/10/2026). Uses the context's
+ * geolocation, granted in `test.use` below.
+ */
+async function completarCentral(page: Page): Promise<void> {
   await expect(page.locator('.paginated-form__titulo')).toContainText('Dónde está la central');
-  await page.getByTestId('registro-farmacia-direccion').fill('Av. Cañoto esq. Ballivián 234');
+  await page.getByTestId('registro-farmacia-central-location-use').click();
+  const mapa = page.getByTestId('registro-farmacia-central-map');
+  await centroDelPin(mapa);
+  await page.getByTestId('registro-farmacia-central-location-confirm').click();
+  await expect(page.getByTestId('registro-farmacia-central-location-confirmed')).toBeAttached();
   await page.getByTestId('paginated-form-continuar').click();
 }
 
@@ -80,11 +90,23 @@ async function escribirNombre(page: Page, prefijo: string, nombre: string, apell
   await page.getByTestId(`${prefijo}-apellido-paterno`).fill(apellido);
 }
 
-/** Página «Representante legal»: el nombre, obligatorio. */
+/** Página «Representante legal»: nombre, cédula y poder; el correo va en «Su acceso». */
 async function completarRepresentante(page: Page): Promise<void> {
   await expect(page.locator('.paginated-form__titulo')).toContainText('Representante legal');
   await escribirNombre(page, 'registro-farmacia-representante', 'Mariana', 'Siles');
+  await page.getByTestId('registro-farmacia-representante-documento').fill('4567890');
+  await adjuntarPoder(page);
   await page.getByTestId('paginated-form-continuar').click();
+}
+
+/** The notarised power is required for every organisation (owner, 05/11/2026). */
+async function adjuntarPoder(page: Page): Promise<void> {
+  await page
+    .getByTestId('registro-farmacia-doc-powerOfAttorneyFileId')
+    .setInputFiles(pdfDePrueba('powerOfAttorneyFileId'));
+  await expect(page.getByTestId('registro-farmacia-doc-powerOfAttorneyFileId-quitar')).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 /** Las tres páginas de gerencias (todas opcionales): seguir de largo. */
@@ -109,6 +131,7 @@ async function completarAccesoYEnviar(
 
 test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
   test.describe.configure({ mode: 'serial' });
+  test.use({ geolocation: { latitude: -17.7833, longitude: -63.1821 }, permissions: ['geolocation'] });
 
   test('la tarjeta «Farmacia» está en «Registre su organización», junto a las otras tres', async ({ page }) => {
     await page.goto(RUTA_TIPOS, { waitUntil: 'domcontentloaded' });
@@ -127,12 +150,9 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
   test('ofrece las 8 figuras bolivianas del registro de procesos', async ({ page }) => {
     await abrirElAlta(page);
 
-    const opciones = await page
-      .getByLabel('Tipo de sociedad')
-      .locator('option:not([hidden])')
-      .allTextContents();
+    const opciones = await optionLabels(page.getByLabel('Tipo de sociedad'));
 
-    expect(opciones.map((texto) => texto.trim())).toEqual([
+    expect(opciones).toEqual([
       'Unipersonal',
       'S.R.L.',
       'Ltda.',
@@ -153,18 +173,18 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await expect(page.locator('.paginated-form__titulo')).toHaveText('La empresa');
   });
 
-  test('kill-test mínimo: sólo lo obligatorio de D2 alcanza para terminar el alta', async ({ page }) => {
+  test('kill-test mínimo: sólo lo obligatorio alcanza para terminar el alta', async ({ page }) => {
     await abrirElAlta(page);
     await completarLaEmpresa(page, 'Farmacia Mínima S.R.L.');
     await saltarLosPapeles(page);
-    await completarCentralSinMapa(page);
+    await completarCentral(page);
     await saltarSucursales(page);
     await completarRepresentante(page);
     await saltarGerencias(page);
     await completarAccesoYEnviar(page, 'legal@farmacia-minima.test');
 
     await expect(page.getByTestId('registro-farmacia-exito')).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText('Ya puede conectarse con el correo del representante legal')).toBeVisible();
+    await expect(page.getByText('Ya puede ingresar con su cuenta')).toBeVisible();
     await capturar(page, 'exito-minimo');
 
     await page.getByTestId('registro-farmacia-ir-login').click();
@@ -175,7 +195,7 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await abrirElAlta(page);
     await completarLaEmpresa(page, 'Farmacia Correo Repetido S.R.L.');
     await saltarLosPapeles(page);
-    await completarCentralSinMapa(page);
+    await completarCentral(page);
     await saltarSucursales(page);
     // La cuenta de demostración del paciente ya existe en el simulador.
     await completarRepresentante(page);
@@ -190,11 +210,7 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
 
   test('kill-test completo: los seis papeles, el mapa de la central, una sucursal y las tres gerencias viajan juntos', async ({
     page,
-    context,
   }) => {
-    await context.grantPermissions(['geolocation']);
-    await context.setGeolocation({ latitude: -17.7833, longitude: -63.1821 });
-
     await abrirElAlta(page);
     await completarLaEmpresa(page, 'Farmacia Completa S.R.L.');
 
@@ -223,7 +239,6 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
 
     // La central, con GPS.
     await expect(page.locator('.paginated-form__titulo')).toContainText('Dónde está la central');
-    await page.getByTestId('registro-farmacia-direccion').fill('Av. Cañoto esq. Ballivián 234');
     await page.getByTestId('registro-farmacia-central-location-use').click();
     const mapaCentral = page.getByTestId('registro-farmacia-central-map');
     await expect(mapaCentral.locator('.leaflet-marker-icon').first()).toBeVisible({ timeout: 15_000 });
@@ -236,9 +251,7 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await expect(page.locator('.paginated-form__titulo')).toContainText('Sus sucursales');
     await page.getByTestId('registro-farmacia-agregar-sucursal').click();
     await page.getByTestId('registro-farmacia-sucursal-1-nombre').fill('Sucursal Equipetrol');
-    await page.getByTestId('registro-farmacia-sucursal-1-direccion').fill('Av. San Martín 456');
     const mapaSucursal = page.getByTestId('registro-farmacia-sucursal-1-map');
-    await page.getByTestId('registro-farmacia-sucursal-1-location-pick').click();
     await expect(mapaSucursal).toBeVisible();
     await tocar(page, mapaSucursal, -30, -10);
     await centroDelPin(mapaSucursal);
@@ -250,12 +263,8 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     // El representante, con su poder notarial: el sexto papel.
     await expect(page.locator('.paginated-form__titulo')).toContainText('Representante legal');
     await escribirNombre(page, 'registro-farmacia-representante', 'Mariana', 'Siles');
-    await page
-      .getByTestId('registro-farmacia-doc-powerOfAttorneyFileId')
-      .setInputFiles(pdfDePrueba('powerOfAttorneyFileId'));
-    await expect(page.getByTestId('registro-farmacia-doc-powerOfAttorneyFileId-quitar')).toBeVisible({
-      timeout: 15_000,
-    });
+    await page.getByTestId('registro-farmacia-representante-documento').fill('4567890');
+    await adjuntarPoder(page);
     await page.getByTestId('paginated-form-continuar').click();
 
     // Las tres gerencias, completas.
@@ -303,7 +312,9 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await abrirElAlta(page);
 
-    await expect(page.locator('html[data-theme="dark"], html:not([data-theme="light"])')).toBeVisible();
+    // The theme starts light whatever the OS says (`ThemeService`): pick dark explicitly.
+    await page.getByRole('button', { name: 'Oscuro', exact: true }).click();
+    await expect(page.locator('html[data-theme="dark"]')).toBeAttached();
     const desborde = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
     );
@@ -312,7 +323,7 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
 
     await completarLaEmpresa(page, 'Farmacia Oscura S.R.L.');
     await saltarLosPapeles(page);
-    await completarCentralSinMapa(page);
+    await completarCentral(page);
     await saltarSucursales(page);
     await completarRepresentante(page);
     await saltarGerencias(page);
