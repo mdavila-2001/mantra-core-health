@@ -62,9 +62,11 @@ export function requestedTab(params: ParamMap): number | null {
  *
  * The router's `anchorScrolling` jumps as soon as the navigation ends, and the
  * editor draws its sections only after the profile arrives: the jump fell into
- * the void (same story as «Sedes y horarios» in the public profile). Coming
- * back to the tab lands on the section again — it is where the link pointed.
- * Only after render: on the server there is nothing to scroll.
+ * the void (same story as «Sedes y horarios» in the public profile). It
+ * scrolls once, after the section's first render: `app-tab` projects its
+ * content once and `afterNextRender` runs once, so leaving the tab and coming
+ * back does not jump to the section again. Only after render: on the server
+ * there is nothing to scroll.
  */
 @Directive({
   selector: '[appEditorSection]',
