@@ -1,0 +1,64 @@
+<section class="figura" aria-labelledby="figura-titulo" data-testid="reserva-figura">
+  <header class="figura__cabecera">
+    <h2 class="figura__titulo" id="figura-titulo">¿Dónde le pasa?</h2>
+    <p class="figura__ayuda">
+      @if (editable()) {
+        Toque una parte del cuerpo y elija lo que siente: se suma al motivo. Lo que escriba también
+        se marca en la figura.
+      } @else {
+        Las partes del cuerpo que nombra el motivo.
+      }
+    </p>
+  </header>
+
+  <app-body-map
+    [zonas]="zonas"
+    [value]="zonaAbierta()"
+    [marcadas]="zonasMarcadas()"
+    [sexo]="sexo()"
+    testId="reserva-figura"
+    (valueChange)="elegirZona($event)"
+  />
+
+  @if (alarmas().length > 0) {
+    <app-alert
+      tone="error"
+      title="Esto no puede esperar a un turno"
+      data-testid="reserva-figura-alarma"
+    >
+      Por lo que escribió ({{ alarmas()[0].nombre }}), vaya ya a una guardia o llame a emergencias.
+    </app-alert>
+  }
+
+  @if (editable() && nombreDeLaZonaAbierta(); as zona) {
+    <div class="figura__zona">
+      <h3 class="figura__zona-titulo">{{ zona }}: ¿qué siente?</h3>
+      <ul class="figura__opciones" data-testid="reserva-figura-opciones">
+        @for (sintoma of sintomasDeLaZona(); track sintoma.id) {
+          <li>
+            <button
+              class="figura__opcion"
+              type="button"
+              [class.is-elegido]="estaEnElMotivo(sintoma)"
+              [attr.aria-pressed]="estaEnElMotivo(sintoma)"
+              (click)="agregar(sintoma)"
+            >
+              {{ sintoma.nombre }}
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <div class="figura__leido" aria-live="polite" data-testid="reserva-figura-reconocidos">
+    @if (sintomas().length > 0) {
+      <p class="figura__rotulo">En el motivo reconocemos</p>
+      <ul class="figura__reconocidos">
+        @for (sintoma of sintomas(); track sintoma.id) {
+          <li class="figura__reconocido">{{ sintoma.nombre }}</li>
+        }
+      </ul>
+    }
+  </div>
+</section>

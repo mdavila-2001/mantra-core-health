@@ -13,7 +13,7 @@
       </app-card>
 
       <!-- Sólo se dibuja para un profesional; la API decide si procede. -->
-      <app-solicitar-pertenecer [nombre]="perfil.displayName" />
+      <app-solicitar-pertenecer [nombre]="perfil.displayName" [practiceId]="perfil.practiceId" />
     }
   </app-view-state-host>
 

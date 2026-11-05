@@ -4,6 +4,12 @@
   [breadcrumbs]="breadcrumbs()"
 />
 
+<!-- The verification request (admission): its state, or «Enviar a verificación»
+     when there is none. It reads on its own, with its own loading and error
+     states, so a slow or failed read never covers the roadmap below. When the
+     API says the profile is no longer pending, the summary is read again. -->
+<app-admission-status-card class="verif__admission" allowSubmit (profileChanged)="cargar()" />
+
 <!-- UNA tarjeta con pestañas, a lo ancho y centrada (composition-rules.md §5). -->
 <app-card padding="lg" class="verif__tarjeta">
   <app-view-state-host [state]="state()" (retry)="cargar()">

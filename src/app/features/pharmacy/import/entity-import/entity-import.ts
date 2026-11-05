@@ -78,8 +78,8 @@ const COPY: Readonly<Record<ImportEntity, EntityCopy>> = {
   sites: {
     title: 'Suba su archivo de sucursales',
     keyHeader: 'Código',
-    note: 'Se crean como sedes de venta de su farmacia: aparecen en «Horario y turnos» y en «Dónde comprar», no en la pantalla «Sucursales» de su organización.',
-    done: { label: 'Ver horario y turnos', url: '/administration/pharmacy-hours' },
+    note: 'Se crean como sedes de venta de su farmacia: aparecen en Sucursales → «Horario y turnos» y en «Dónde comprar», no en la lista de sucursales de su organización.',
+    done: { label: 'Ver horario y turnos', url: '/administration/pharmacy-branches?tab=horario' },
   },
 };
 

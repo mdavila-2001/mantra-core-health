@@ -167,8 +167,8 @@
                         [required]="true"
                         [errorMessage]="errorDe('loadedAt')"
                       >
-                        <app-input
-                          type="date"
+                        <app-date-string-picker
+                          
                           [value]="fechaDeCarga()"
                           (valueChange)="escribir('loadedAt', $event)"
                           [hasError]="errorDe('loadedAt') !== null"

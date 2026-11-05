@@ -89,7 +89,7 @@ describe('OrgAssignmentForm', () => {
   it('lo elegido viaja con sus claves exactas y las fechas en ISO', () => {
     completarMembresia({ pharmacyId: SUPERVISOR, supervisorUserId: SUPERVISOR });
     interno<{ patchValue: (v: object) => void }>('form').patchValue({
-      role: 'NURSE',
+      role: 'UNIT_HEAD',
       accessScope: 'UNIT',
       validTo: new Date('2026-12-31T23:59:00.000Z'),
     });
@@ -98,7 +98,7 @@ describe('OrgAssignmentForm', () => {
 
     const req = http.expectOne(`/org/${MEMBRESIA}/user-assignments`);
     expect(req.request.body).toEqual({
-      role: 'NURSE',
+      role: 'UNIT_HEAD',
       accessScope: 'UNIT',
       pharmacyId: SUPERVISOR,
       supervisorUserId: SUPERVISOR,

@@ -96,12 +96,12 @@ describe('EntityImport', () => {
     expect((columns as { value: (row: string[]) => string }[])[5]!.value(first)).toBe('si');
   });
 
-  it('sucursales: avisa que se crean como sedes de venta y no en «Sucursales»', () => {
+  it('sucursales: avisa que se crean como sedes de venta y no en la lista de sucursales', () => {
     mount('sites');
 
     expect(textOf('entity-import-note')).toContain('sedes de venta');
     expect(textOf('entity-import-note')).toContain('Horario y turnos');
-    expect(textOf('entity-import-note')).toContain('no en la pantalla «Sucursales»');
+    expect(textOf('entity-import-note')).toContain('no en la lista de sucursales de su organización');
   });
 
   it('subir el archivo pide la vista previa con dryRun y muestra el resultado y el motivo de cada fila', async () => {

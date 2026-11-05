@@ -12,7 +12,7 @@ import { environment } from '../environments/environment';
     paquete.
     ========================================================================== */
 
-export function simulatorRoutes(chunkFailed: () => Type<unknown>): Routes {
+export function simulatorRoutes(chunkFailed: (error?: unknown) => Type<unknown>): Routes {
   return [
     {
       /* El stock de componentes: la lista de todo lo que existe, sacada del
@@ -32,7 +32,7 @@ export function simulatorRoutes(chunkFailed: () => Type<unknown>): Routes {
       loadComponent: () =>
         import('./features/component-stock/component-stock')
           .then((m) => m.ComponentStock)
-          .catch(() => chunkFailed()),
+          .catch(chunkFailed),
       title: 'AloVida - Stock de componentes',
     },
     {
@@ -45,7 +45,7 @@ export function simulatorRoutes(chunkFailed: () => Type<unknown>): Routes {
       loadComponent: () =>
         import('./features/component-stock/component-stock')
           .then((m) => m.ComponentStock)
-          .catch(() => chunkFailed()),
+          .catch(chunkFailed),
       title: 'AloVida - Stock de componentes',
     },
   ];

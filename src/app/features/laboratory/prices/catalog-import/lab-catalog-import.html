@@ -1,0 +1,84 @@
+<app-page-header
+  title="Agregar del catálogo"
+  subtitle="Los análisis del catálogo con el que ordenan los médicos (LOINC), con sus componentes y el precio sugerido de cada uno."
+>
+  <a page-actions [routerLink]="[pricesRoute]">Volver a Precios</a>
+</app-page-header>
+
+<!-- Batch bar: what gets added and the primary action, full width. -->
+<section class="catalog__bar" aria-label="Análisis elegidos">
+  <p class="catalog__rule">
+    @if (priceRule(); as rule) {
+      Precio sugerido: {{ rule }} Lo puede cambiar después en Precios.
+    }
+  </p>
+  <div class="catalog__actions">
+    <button
+      app-button
+      variant="outline"
+      type="button"
+      data-testid="lab-catalog-select-shown"
+      [disabled]="!hasFilter() || importing()"
+      (clicked)="selectShown()"
+    >
+      Elegir los que se ven
+    </button>
+    <button
+      app-button
+      type="button"
+      data-testid="lab-catalog-add"
+      [isLoading]="importing()"
+      [disabled]="selected().size === 0 || importing()"
+      (clicked)="add()"
+    >
+      {{ addLabel() }}
+    </button>
+  </div>
+</section>
+
+@if (summary(); as done) {
+  <app-alert
+    [tone]="done.added > 0 ? 'success' : 'warning'"
+    [title]="done.added > 0 ? 'Análisis agregados' : 'No se agregó nada'"
+    [dismissible]="true"
+    data-testid="lab-catalog-result"
+    (dismissed)="result.set(null)"
+  >
+    {{ done.text }}
+    @if (done.rejections.length > 0) {
+      <ul class="catalog__list">
+        @for (reason of done.rejections; track reason) {
+          <li>{{ reason }}</li>
+        }
+      </ul>
+    }
+    <div alert-actions>
+      <a [routerLink]="[pricesRoute]">Revisar los precios</a>
+    </div>
+  </app-alert>
+}
+
+@if (failure(); as message) {
+  <app-alert tone="error" title="No se agregaron los análisis" data-testid="lab-catalog-error">{{
+    message
+  }}</app-alert>
+}
+
+<app-specialty-browser
+  [state]="catalog()"
+  [groups]="groups()"
+  [filters]="filters()"
+  [collapsible]="true"
+  [expandAll]="hasFilter()"
+  searchLabel="Buscar un análisis por nombre, código, LOINC o componente"
+  noMatchesText="Ningún análisis del catálogo coincide. Pruebe con otra palabra o quite la sección."
+  (retry)="load()"
+>
+  <ng-template let-item>
+    <app-lab-catalog-item
+      [item]="item"
+      [selected]="selected().has(item.conceptId)"
+      (toggled)="toggle(item)"
+    />
+  </ng-template>
+</app-specialty-browser>

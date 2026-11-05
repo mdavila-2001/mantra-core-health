@@ -20,6 +20,7 @@ import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { NotificationPreferences } from '../account/notification-preferences/notification-preferences';
+import { AgendaPreferences } from './agenda-preferences/agenda-preferences';
 import { ChatPreferences } from './chat-preferences/chat-preferences';
 import { MyDevices } from './my-devices/my-devices';
 
@@ -87,7 +88,7 @@ const BROWSER_PERMISSIONS: readonly {
  */
 @Component({
   selector: 'app-settings',
-  imports: [AlovidaThemeToggleDirective, AppButtonLink, ChatPreferences, MyDevices, NavIcon, NotificationPreferences, PageHeader, RouterLink, Switch, Tab, Tabs],
+  imports: [AgendaPreferences, AlovidaThemeToggleDirective, AppButtonLink, ChatPreferences, MyDevices, NavIcon, NotificationPreferences, PageHeader, RouterLink, Switch, Tab, Tabs],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -115,6 +116,12 @@ export class Settings {
 
   /** La verificación de identidad sólo se ofrece si el producto la ofrece. */
   protected readonly verificationOffered = OFFERED_IDENTITY_VERIFICATION;
+
+  /**
+   * The Agenda tab is for whoever attends patients: the session carries a
+   * practitioner profile. Hiding it is not security; the API decides.
+   */
+  protected readonly attendsPatients = computed(() => this.session.practitionerProfileId() !== null);
 
   protected stateOf(permission: PermisoDelNavegador): EstadoPermiso {
     return this.permissions.estado()[permission];

@@ -8,7 +8,6 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
-import { soloLetrasDeNombre } from '../../../shared/forms/input-filters';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Subject, catchError, map, of, switchMap, timeout } from 'rxjs';
 import {
@@ -607,8 +606,6 @@ interface BorradorLocal {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPatient {
-  /** Nombres y apellidos no admiten dígitos. Ver `Input.inputFilter`. */
-  protected readonly soloLetras = soloLetrasDeNombre;
 
   private readonly platformId = inject(PLATFORM_ID);
   private readonly auth = inject(AuthService);
@@ -1439,8 +1436,7 @@ export class RegisterPatient {
           key: 'lastName',
           label: 'Apellido paterno',
           description: 'El apellido de su papá, como figura en su documento.',
-          control: 'text',
-          soloLetras: true,
+          control: 'text', fieldKind: 'personName',
           required: true,
           autocomplete: 'family-name',
           placeholder: 'Mamani',
@@ -1454,8 +1450,7 @@ export class RegisterPatient {
           label: 'Apellido materno',
           hint: 'Si no lleva, déjelo vacío.',
           description: 'El apellido de su mamá, tal como aparece en su documento.',
-          control: 'text',
-          soloLetras: true,
+          control: 'text', fieldKind: 'personName',
           autocomplete: 'family-name',
           placeholder: 'Quispe',
           testId: 'registro-apellido-materno',
@@ -1474,10 +1469,10 @@ export class RegisterPatient {
           autocomplete: 'username',
           placeholder: '1234567',
           testId: 'registro-documento',
-          soloAlfanumerico: true,
+          fieldKind: 'identityDocument',
           icono: 'patients',
           ancho: 'mitad',
-          mensajeDeError: 'Ingrese su documento: solo letras y números, sin espacios.',
+          mensajeDeError: 'Ingrese su documento: letras, números, punto y guion, sin espacios.',
         },
         this.campoDepartamentoEmisor('registro-departamento-ci'),
         {
@@ -1572,8 +1567,7 @@ export class RegisterPatient {
           label: 'Contacto de emergencia (opcional)',
           hint: 'A quién llamamos si pasa algo, o quién le acompaña si es menor.',
           description: 'A quién llamamos si le pasa algo y no puede responder usted.',
-          control: 'text',
-          soloLetras: true,
+          control: 'text', fieldKind: 'personName',
           placeholder: 'Rosa Quispe',
           testId: 'registro-tutor-nombre',
           icono: 'people',
@@ -1696,7 +1690,7 @@ export class RegisterPatient {
           hint: 'Sólo el número.',
           description:
             'Lo usamos cuando hay que emitir una factura. Si no lo tiene a mano, déjelo vacío.',
-          control: 'text',
+          control: 'text', fieldKind: 'digits',
           placeholder: '1023456789',
           testId: 'registro-nit',
           icono: 'billing',

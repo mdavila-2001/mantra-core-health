@@ -89,4 +89,29 @@ describe('invitaciones de organizaciones', () => {
     // Aceptarla ya no se puede: el mismo 404.
     expect(llamar(ana, 'POST', `/tenants/me/membership-invitations/${creada.body.id}/accept`).status).toBe(404);
   });
+
+  it('invitar a quien ya tiene una invitación pendiente es un 409 con el id de esa membresía; a un miembro, otro 409', () => {
+    const ruta = `/tenants/${TENANT_HOSPITAL_PILOTO}/memberships`;
+    const primera = llamar<{ id: string }>(org, 'POST', ruta, { userId: ana.id, role: 'STAFF' });
+    expect(primera.status).toBe(201);
+
+    const repetida = llamar<{ message: string; details: { membershipId: string } }>(org, 'POST', ruta, { userId: ana.id, role: 'STAFF' });
+    expect(repetida.status).toBe(409);
+    expect(repetida.body.message).toContain('ya tiene una invitación pendiente');
+    expect(repetida.body.details.membershipId).toBe(primera.body.id);
+    expect(pendientes(ana)).toHaveLength(1);
+
+    llamar(ana, 'POST', `/tenants/me/membership-invitations/${primera.body.id}/accept`);
+    const miembro = llamar<{ message: string }>(org, 'POST', ruta, { userId: ana.id, role: 'ADMIN' });
+    expect(miembro.status).toBe(409);
+    expect(miembro.body.message).toContain('ya es miembro');
+  });
+
+  it('quien rechazó una invitación puede ser invitado de nuevo', () => {
+    const ruta = `/tenants/${TENANT_HOSPITAL_PILOTO}/memberships`;
+    const otra = buscarUsuario('marcos')!;
+    const primera = llamar<{ id: string }>(org, 'POST', ruta, { userId: otra.id, role: 'STAFF' });
+    llamar(otra, 'POST', `/tenants/me/membership-invitations/${primera.body.id}/decline`);
+    expect(llamar(org, 'POST', ruta, { userId: otra.id, role: 'STAFF' }).status).toBe(201);
+  });
 });

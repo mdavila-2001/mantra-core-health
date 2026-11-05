@@ -43,8 +43,6 @@ export interface SecurityHeadersOptions {
    * otro, y viene de `PUBLIC_API_BASE_URL`.
    */
   readonly apiBaseUrl?: string;
-  /** Raíz del servicio de IA cuando vive en otro dominio. */
-  readonly aiBaseUrl?: string;
   /**
    * Hashes `sha256-…` de los scripts en línea que hay que autorizar.
    *
@@ -220,8 +218,7 @@ export const NOMINATIM_ORIGIN = 'https://nominatim.openstreetmap.org';
  */
 export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): string {
   const apiOrigin = originOf(options.apiBaseUrl);
-  const aiOrigin = originOf(options.aiBaseUrl);
-  const connectOrigins = [apiOrigin, aiOrigin].filter(
+  const connectOrigins = [apiOrigin].filter(
     (origin, index, origins): origin is string => origin !== null && origins.indexOf(origin) === index,
   );
   const scriptHashes = options.inlineScriptHashes ?? [];

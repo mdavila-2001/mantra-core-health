@@ -2,29 +2,26 @@
 
 ## Catálogo de farmacia: «Importar CSV» arriba y acciones por fila · 2026-11-05
 
-Rama `claude/gifted-meitner-n7fpia`. Maqueta (`ng serve --configuration development,demo`), Chromium,
-cuenta `farmacia@alovida.mock`. Guion `playwright/catalogo-acciones-por-fila.mjs`, capturas y
-`veredictos.json` en `evidencias/2026-11-05-catalogo-acciones-por-fila/`.
+Rama `claude/gifted-meitner-n7fpia` con `dev` mergeado. Maqueta (`yarn start:demo`, :4200), Chromium,
+cuenta `farmacia@alovida.mock`. Spec `playwright/catalogo-acciones-por-fila.spec.ts` (5 pruebas en verde),
+capturas en `evidencias/2026-11-05-catalogo-acciones-por-fila/`.
 
 | Qué se midió | Resultado |
 |---|---|
 | Pestañas | Cinco (Productos, Categorías, Precios, Inventario, Integración); sin «Importación» |
-| «Importar CSV» | En el membrete; desde Categorías abre el modal en Categorías; Esc lo cierra y la URL vuelve a `?tab=categories` |
-| Enlace viejo `?tab=import&target=prices` | Abre el modal |
+| «Importar CSV» | En el membrete; desde Categorías abre el modal en Categorías; Esc lo cierra y la URL vuelve a `?tab=categories`; `?tab=import&target=prices` lo abre |
 | Precios › Editar | Modal con Guardar / Cancelar → 19,75 → simulador `price: 19.75` → recarga → la fila dice 19.75 |
 | Precios › Quitar precio | Confirmación → simulador `price: null` → recarga → «Sin precio» |
-| Inventario › Editar | Modal → existencias 7, umbral 3 → simulador 7 / 3 → recarga → la fila dice 7 / 3 |
+| Inventario › Editar | Modal → existencias 7, umbral 3 → simulador 7 → recarga → la fila dice 7 / 3 |
 | Inventario › Vaciar | Confirmación → simulador `stock: 0` → recarga → «Sin stock» |
-| Categorías › Editar | Modal con Guardar / Cancelar |
-| Desborde | 0 px: modal de importar a 390 y 768, Precios a 768 |
-| Errores de página | Ninguno |
+| Inventario «Hay / no hay» | «No lo tengo» → simulador `sinStock: true` → recarga → «No hay» y sólo «Editar» |
+| Desborde | 0 px en Precios y en el modal de importar a 390, 768 y 1440, claro y oscuro |
 
-21/21 verificaciones. Pruebas: `ng test` sobre `features/pharmacy/**` y `organization-branches/**` → 29
-archivos, 446 en verde; `features/organization/**`, `app.routes.pharmacy.spec.ts` y `core/navigation/**`
-→ 35 archivos, 605 en verde. La suite completa no corrió: esbuild se traba (deadlock) al armar el paquete
-entero en este entorno. La vista «Hay / no hay» y el bloqueo de cierre durante una carga sólo tienen
-pruebas TestBed, no navegador. Contra la API real no se ejecutó. Revisión independiente
-(`frontend-reviewer`): NO APROBADO en la primera pasada (3 HIGH), APROBADO en la segunda.
+Pruebas: `ng test` sobre `features/pharmacy/**` y `organization-branches/**` → 446 en verde;
+`features/organization/**`, `app.routes.pharmacy.spec.ts` y `core/navigation/**` → 605 en verde. La suite
+completa no corrió: esbuild se traba (deadlock) al armar el paquete entero en este entorno. El bloqueo de
+cierre del modal durante una carga sólo tiene prueba TestBed. Contra la API real no se ejecutó. Revisión
+independiente (`frontend-reviewer`): NO APROBADO en la primera pasada (3 HIGH), APROBADO en la segunda.
 
 ## Portada del médico y «Mis verificaciones» · 2026-11-01
 

@@ -13,7 +13,7 @@ import type { Routes } from '@angular/router';
     El `canMatch` de esas rutas sigue siendo la segunda barrera.
     ========================================================================== */
 
-export function simulatorRoutes(chunkFailed: () => Type<unknown>): Routes {
+export function simulatorRoutes(chunkFailed: (error?: unknown) => Type<unknown>): Routes {
   void chunkFailed;
   return [];
 }

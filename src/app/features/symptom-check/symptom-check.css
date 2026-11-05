@@ -127,14 +127,6 @@
   line-height: var(--lh-caption);
 }
 
-.sintomas__leyendo {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin: var(--sp-2) 0 0;
-  color: var(--text-secondary);
-}
-
 .sintomas__sin-coincidencias {
   margin: var(--sp-2) 0 0;
   color: var(--text-secondary);

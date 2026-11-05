@@ -421,6 +421,34 @@ describe('IdentityVerification', () => {
     expect(interno<() => string | null>('organizacionId')()).toBe('t-1');
   });
 
+  it('un médico solo ve el trámite profesional y arranca en él', () => {
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], hpid: 'pp-1' }),
+      refreshToken: 'r',
+    });
+    fixture.detectChanges();
+
+    const opciones = valoresDelSelector();
+    expect(opciones).not.toContain('patient');
+    expect(opciones).toEqual(expect.arrayContaining(['practitioner', 'license']));
+    expect(interno<() => string>('tramite')()).toBe('practitioner');
+  });
+
+  it('un paciente no ve los trámites del profesional', () => {
+    fixture.detectChanges();
+
+    const opciones = valoresDelSelector();
+    expect(opciones).toContain('patient');
+    expect(opciones).not.toContain('practitioner');
+    expect(opciones).not.toContain('license');
+    expect(interno<() => string>('tramite')()).toBe('patient');
+  });
+
+  function valoresDelSelector(): (string | null)[] {
+    const radios: Element[] = [...fixture.nativeElement.querySelectorAll('app-radio')];
+    return radios.map((radio) => radio.getAttribute('value'));
+  }
+
   it('el selector solo acepta trámites reales', () => {
     elegirTramite('license');
     expect(interno<() => string>('tramite')()).toBe('license');

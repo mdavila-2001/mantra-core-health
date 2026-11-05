@@ -1,0 +1,49 @@
+:host {
+  display: block;
+}
+
+/* Same row shape as «Quién ve mi historia»: bordered, roomy, full width. */
+.request {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.request__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.request__who {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  margin-inline-end: auto;
+}
+
+.request__detail,
+.request__specialties {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.request__decision {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  justify-items: start;
+  padding-block-start: var(--sp-2);
+}
+
+/* The specialties list takes the row; the toggle and the button keep their size. */
+.request__decision app-form-field {
+  justify-self: stretch;
+}
+
+.request__revoke {
+  justify-self: end;
+}

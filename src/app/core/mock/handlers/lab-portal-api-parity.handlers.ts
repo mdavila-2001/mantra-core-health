@@ -1,5 +1,16 @@
-import { reply, validationPipeRejected, type MockHandler, type MockRequest, type MockRouter } from '../mock-router';
+import {
+  isMockReply,
+  notFound,
+  preconditionFailed,
+  reply,
+  validationPipeRejected,
+  type MockHandler,
+  type MockRequest,
+  type MockRouter,
+} from '../mock-router';
 import { UNIDADES } from './diagnostics.handlers';
+import { estadosDeOrden } from './lab-orders.handlers';
+import { categoriasDeLaboratorio, laboratorioDe } from './lab-portal.handlers';
 
 /* ============================================================================
     Real-API parity for the lab portal simulator (04/11/2026).
@@ -12,8 +23,11 @@ import { UNIDADES } from './diagnostics.handlers';
       `POST /result-files/search` with the same filters in the body.
     - An upload is tied to an order, weighs at most 10 MB and is one of the
       allowed document/image types; anything else is a 422.
+    - A service pointing at a category of another lab is a 422 (`La categoría no existe.`),
+      and `LabSummary.byCategory` rows carry their `categoryId` (`null` for «Sin categoría»).
+    - Booking an order the lab cancelled or rejected is a 404 «Orden no encontrada» (cancelling an
+      existing appointment is not affected).
     - `notified` is always `false`: the API does not notify yet.
-    - `CANCEL` is not supported, and `REJECT` needs a specimen (labs only).
     ========================================================================== */
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -46,11 +60,6 @@ function withoutNotification(result: unknown): unknown {
 function isCenterStaff(request: MockRequest): boolean {
   const tenants = request.user?.tenants ?? [];
   return UNIDADES.some((u) => tenants.includes(u.tenantId));
-}
-
-function isImagingStaff(request: MockRequest): boolean {
-  const tenants = request.user?.tenants ?? [];
-  return UNIDADES.some((u) => u.kind === 'IMAGING' && tenants.includes(u.tenantId));
 }
 
 export function registerLabPortalApiParity(router: MockRouter): void {
@@ -98,16 +107,41 @@ export function registerLabPortalApiParity(router: MockRouter): void {
       : done;
   });
 
-  router.wrap('POST', '/diagnostics/lab/orders/:orderId/transitions', (request, next) => {
-    const action = (request.body as { action?: unknown } | null)?.action;
-    if (action === 'CANCEL' || (action === 'REJECT' && isImagingStaff(request))) {
-      return unprocessableWithCode(
-        'DIAGNOSTICS_LAB_ORDER_ACTION_UNSUPPORTED',
-        action === 'CANCEL'
-          ? 'Todavía no se puede cancelar una orden desde el centro.'
-          : 'Una orden sin muestra no se puede rechazar.',
-      );
-    }
-    return next(request);
+  // The simulator answers a foreign category with a 400; the API answers 422.
+  for (const [method, path] of [
+    ['POST', '/diagnostics/lab/services'],
+    ['PATCH', '/diagnostics/lab/services/:id'],
+  ] as const) {
+    router.wrap(method, path, (request, next) => {
+      const result = next(request);
+      const body = isMockReply(result) ? (result.body as { message?: unknown } | null) : null;
+      return isMockReply(result) && result.status === 400 && body?.message === 'La categoría no existe.'
+        ? preconditionFailed('La categoría no existe.')
+        : result;
+    });
+  }
+
+  router.wrap('GET', '/diagnostics/lab/summary', (request, next) => {
+    const result = next(request);
+    const tenantId = laboratorioDe(request);
+    if (tenantId === null || result === null || typeof result !== 'object' || isMockReply(result)) return result;
+    const summary = result as { byCategory?: readonly { category: string; count: number }[] };
+    return {
+      ...summary,
+      byCategory: (summary.byCategory ?? []).map((row) => ({
+        ...row,
+        categoryId: categoriasDeLaboratorio.filtrar((c) => c.tenantId === tenantId && c.name === row.category)[0]?.id ?? null,
+      })),
+    };
   });
+
+  for (const [method, path] of [
+    ['GET', '/diagnostic-results/me/orders/:orderId/booking-options'],
+    ['POST', '/diagnostic-results/me/orders/:orderId/booking'],
+  ] as const) {
+    router.wrap(method, path, (request, next) => {
+      const status = estadosDeOrden.get(request.params['orderId'] ?? '')?.status;
+      return status === 'CANCELLED' || status === 'REJECTED' ? notFound('Orden no encontrada') : next(request);
+    });
+  }
 }

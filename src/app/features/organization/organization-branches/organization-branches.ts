@@ -1,9 +1,12 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   inject,
+  input,
   signal,
   untracked,
   viewChild,
@@ -50,19 +53,7 @@ import {
   createBranchesInSeries,
   type BranchRejection,
 } from './create-branches-in-series';
-
-/** Lo que se escribe en el diálogo, todavía como texto. */
-interface BranchForm {
-  readonly name: string;
-  readonly code: string;
-  readonly description: string;
-  readonly locationUrl: string;
-}
-
-const EMPTY_FORM: BranchForm = { name: '', code: '', description: '', locationUrl: '' };
-
-/** El diálogo está cerrado, crea una sucursal nueva o edita una existente. */
-type Editing = { readonly mode: 'create' } | { readonly mode: 'edit'; readonly branch: BranchListItem };
+import { EMPTY_FORM, type BranchForm, type Editing } from './organization-branches.types';
 
 /**
  * **Sucursales** de la organización activa: la pestaña del portal de la
@@ -92,6 +83,7 @@ type Editing = { readonly mode: 'create' } | { readonly mode: 'edit'; readonly b
     FormField,
     Input,
     Link,
+    NgTemplateOutlet,
     PageHeader,
     Textarea,
   ],
@@ -100,6 +92,9 @@ type Editing = { readonly mode: 'create' } | { readonly mode: 'edit'; readonly b
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationBranches {
+  /** Mounted as a tab of the pharmacy Branches hub: no own header or card. */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
   private readonly session = inject(SessionStore);
   private readonly directory = inject(DirectoryClient);
   private readonly toasts = inject(ToastService);

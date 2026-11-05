@@ -125,12 +125,8 @@ export class IamClient {
         : { motherLastName: registration.motherLastName }),
       ...(registration.email === undefined ? {} : { email: registration.email }),
       ...(registration.birthDate === undefined ? {} : { birthDate: registration.birthDate }),
-      // El cuerpo se re-proyecta campo por campo y no con un `...registration`
-      // a propósito: `forbidNonWhitelisted` del backend rechaza toda propiedad
-      // que el DTO no declare, así que lo que viaja es exactamente lo acordado
-      // y no lo que alguien haya dejado colgando del objeto de dominio. El
-      // precio es éste: un campo nuevo en `PatientRegistration` no llega solo,
-      // hay que listarlo acá.
+      // Field by field on purpose: the backend's `forbidNonWhitelisted` rejects
+      // undeclared keys, so a new `PatientRegistration` field must be listed here.
       ...(registration.issuerAdministrativeAreaConceptId === undefined
         ? {}
         : {
@@ -475,6 +471,7 @@ export class IamClient {
       organization: {
         code: registration.code,
         legalName: registration.legalName,
+        ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
         taxIdentifier: registration.taxIdentifier,
         legalEntityType: registration.legalEntityType,
         tenantType: 'PHARMACY',
@@ -540,8 +537,10 @@ export class IamClient {
       organization: {
         code: registration.code,
         legalName: registration.legalName,
+        ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
         legalEntityType: registration.legalEntityType,
         tenantType: 'DIAGNOSTIC_CENTER',
+        taxIdentifier: registration.taxIdentifier,
         countryConceptId: registration.countryConceptId,
         jurisdictionConceptId: registration.jurisdictionConceptId,
         diagnosticUnit: {

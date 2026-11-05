@@ -38,7 +38,7 @@ describe('GET /diagnostic-units/me/bookings (simulador)', () => {
     const starts = page.items!.map((b) => b.startsAt);
     expect([...starts].sort()).toEqual(starts);
     expect(Object.keys(page.items![0]!).sort()).toEqual(
-      ['bookingId', 'endsAt', 'orderId', 'patientName', 'siteName', 'startsAt', 'status', 'studyName'].sort(),
+      ['bookingId', 'endsAt', 'equipmentId', 'orderId', 'patientName', 'siteName', 'startsAt', 'status', 'studyName'].sort(),
     );
   });
 

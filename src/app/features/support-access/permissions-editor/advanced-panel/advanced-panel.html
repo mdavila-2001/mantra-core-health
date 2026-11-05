@@ -92,8 +92,8 @@
       <div class="av__vigencia">
         <span>Vence el</span>
         @for (version of [vigenciaVersion()]; track version) {
-          <app-input
-            type="date"
+          <app-date-string-picker
+            
             [value]="validToDate()"
             (valueChange)="onValidTo($event)"
             ariaLabel="Fecha de vencimiento del permiso"
