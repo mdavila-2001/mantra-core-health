@@ -17,7 +17,7 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/clinical-record/patient-chart/patient-chart')
         .then((m) => m.PatientChart)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'medical-records/:profileId/consultation',
@@ -26,7 +26,7 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/clinical-record/consultation/consultation')
         .then((m) => m.Consultation)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'medical-records/:profileId/request-access',
@@ -35,7 +35,7 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/clinical-record/request-access/request-access')
         .then((m) => m.RequestAccess)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/patients/new',
@@ -44,7 +44,7 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/admin/patients/patient-new/patient-new')
         .then((m) => m.PatientNew)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-quotations/new',
@@ -53,7 +53,7 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/quotations/quotation-form/quotation-form')
         .then((m) => m.QuotationForm)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-medical-groups/new',
@@ -62,7 +62,7 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/medical-groups/medical-group-form/medical-group-form')
         .then((m) => m.MedicalGroupForm)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-medical-groups/:id',
@@ -71,7 +71,7 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/medical-groups/medical-group-detail/medical-group-detail')
         .then((m) => m.MedicalGroupDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/patients/merge',
@@ -80,7 +80,7 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/admin/patients/patient-merge/patient-merge')
         .then((m) => m.PatientMerge)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/patients/assisted-registration',
@@ -88,7 +88,7 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/admin/assisted-registration/assisted-registration')
         .then((m) => m.AssistedRegistration)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   PRACTITIONER_ASSISTED_ROUTE,
   {
@@ -98,7 +98,7 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/admin/patients/patient-detail/patient-detail')
         .then((m) => m.PatientDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/identity/cases',
@@ -132,7 +132,7 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/directory/practitioner-detail/practitioner-detail')
         .then((m) => m.PractitionerDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'laboratory-directory/:unitId',
@@ -140,7 +140,7 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/laboratory-directory/laboratory-detail/laboratory-detail')
         .then((m) => m.LaboratoryDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'clinics-directory/:slug',
@@ -148,7 +148,7 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/public-directories/clinic-detail/clinic-detail')
         .then((m) => m.ClinicDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'insurers-directory/:slug',
@@ -156,7 +156,7 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/public-directories/insurer-detail/insurer-detail')
         .then((m) => m.InsurerDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'pharmacies-directory/:slug',
@@ -164,6 +164,6 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
     loadComponent: () =>
       import('../features/public-directories/pharmacy-detail/pharmacy-detail')
         .then((m) => m.PharmacyDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
 ];
