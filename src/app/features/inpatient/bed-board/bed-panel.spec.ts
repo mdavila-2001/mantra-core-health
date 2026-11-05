@@ -119,8 +119,8 @@ describe('BedPanel', () => {
     maqueta.responderTodo(http, () => fixture.detectChanges());
   });
 
-  it('Limpieza ve el estado sin paciente y sin acciones clínicas', () => {
-    montar('limpieza');
+  it('la plataforma ve el estado sin paciente y sin acciones clínicas', () => {
+    montar('superadmin');
     const ocupada = celdas().find((c) => c.occupancy.code === 'OCC_OCCUPIED')!;
     fixture.componentRef.setInput('cellId', ocupada.id);
     fixture.detectChanges();

@@ -34,14 +34,10 @@ const ROLES: readonly SelectOption<OrgAssignmentRole>[] = [
   { value: 'STAFF', label: 'Staff' },
   { value: 'SECRETARY', label: 'Secretaría' },
   { value: 'ASSISTANT', label: 'Asistente' },
-  { value: 'NURSE', label: 'Enfermería' },
   { value: 'BILLING', label: 'Facturación' },
   // F5g · roles de la infraestructura hospitalaria (`CONTRATO-F2-F5.md` §0.3).
-  { value: 'NURSE_SUPERVISOR', label: 'Supervisión de enfermería' },
-  { value: 'ADMISSION', label: 'Admisión' },
-  { value: 'HOUSEKEEPING', label: 'Limpieza' },
-  { value: 'HOUSEKEEPING_SUPERVISOR', label: 'Supervisión de limpieza' },
-  { value: 'MAINTENANCE', label: 'Mantenimiento (incluye biomédica)' },
+  // The operative roles (nursing, admission, cleaning, maintenance) were removed
+  // on 2026-11-05: the organization account operates the whole hospital.
   { value: 'OR_MANAGER', label: 'Jefatura de quirófano' },
   { value: 'INFECTION_CONTROL', label: 'Control de infecciones' },
   { value: 'UNIT_HEAD', label: 'Jefatura de servicio' },

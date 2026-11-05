@@ -212,7 +212,7 @@ export class MoveDialog {
     if (this.mode() === 'transfer' && c !== null && c.violations.length > 0 && this.override() === null) {
       const o = this.canOverride() ? await askOverride(this.dialogs, c.violations) : null;
       if (o === null) {
-        if (!this.canOverride()) this.failure.set({ status: 'forbidden', message: 'Forzar la compatibilidad exige el rol de supervisión de enfermería.' });
+        if (!this.canOverride()) this.failure.set({ status: 'forbidden', message: 'Forzar la compatibilidad exige administrar la organización o la sede.' });
         return;
       }
       if (this.target() !== destino) return;

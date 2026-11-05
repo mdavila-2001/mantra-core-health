@@ -1,5 +1,7 @@
 import type { BedBoardCell, V2Code } from '../../core/data-access/infrastructure-ops/infrastructure-ops.types';
 import { ageLabel, opsLabel, sexLabel, V2_LABEL } from '../../core/data-access/infrastructure-ops/ops-labels';
+import { forbidden } from '../../core/view-state/view-state';
+import type { ViewState } from '../../core/view-state/view-state.types';
 import type { BedTileTone, BedTileView } from '../../shared/components/molecules/bed-tile/bed-tile.types';
 
 /* ============================================================================
@@ -134,4 +136,23 @@ export function siteMidnight(date: string, timeZone: string = DEFAULT_TIME_ZONE)
 /** `AAAA-MM-DD` ± días. */
 export function shiftDateKey(date: string, days: number): string {
   return new Date(Date.parse(`${date}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** Where an organization account creates its first site (`administration/medical-center-setup`). */
+export const SITE_SETUP_ROUTE = '/administration/medical-center-setup';
+
+/**
+ * S5 for the inpatient screens when the API returns no site the person can use.
+ *
+ * Operative roles (nursing, admission, cleaning, maintenance) no longer exist:
+ * the organization account operates the whole hospital, so the usual cause is an
+ * organization without a site yet, or a person who does not administer it.
+ *
+ * @param what - What the screen shows, e.g. `el tablero de camas`.
+ */
+export function noSiteAccess(what: string): ViewState<string> {
+  return forbidden({
+    message: `Su cuenta no administra ningún establecimiento de esta organización, así que no puede ver ${what}. Si la organización todavía no tiene sede, créela en «Configurar práctica».`,
+    nextAction: { label: 'Configurar práctica', route: SITE_SETUP_ROUTE },
+  });
 }

@@ -46,12 +46,13 @@ describe('BedBoard', () => {
     expect(tableros(http)).toHaveLength(0);
   });
 
-  it('S5: sin rol operativo en ninguna sede, lo dice y no pide nada', async () => {
+  it('S5: sin ninguna sede que administre, lo dice, ofrece «Configurar práctica» y no pide nada', async () => {
     const { harness, http, acceso, raiz } = await montar();
     await harness.navigateByUrl('/inpatient/bed-board');
     acceso.listo({ userId: 'x', tenantId: 't', sites: [] });
     harness.detectChanges();
-    expect(raiz().textContent).toContain('no tiene un rol operativo');
+    expect(raiz().textContent).toContain('no administra ningún establecimiento');
+    expect(raiz().textContent).toContain('Configurar práctica');
     expect(tableros(http)).toHaveLength(0);
     acceso.state.set(forbidden({ message: 'Sin acceso' }));
     harness.detectChanges();
@@ -159,8 +160,8 @@ describe('BedBoard', () => {
     expect(tableros(http)).toHaveLength(0);
   });
 
-  it('Limpieza ve el tablero sin un solo dato de paciente, ni en pantalla ni en la respuesta', async () => {
-    const { harness, http, acceso, maqueta, site, raiz } = await montar('limpieza');
+  it('la plataforma ve el tablero sin un solo dato de paciente, ni en pantalla ni en la respuesta', async () => {
+    const { harness, http, acceso, maqueta, site, raiz } = await montar('superadmin');
     await harness.navigateByUrl('/inpatient/bed-board?view=list');
     acceso.listo(maqueta.acceso());
     harness.detectChanges();
