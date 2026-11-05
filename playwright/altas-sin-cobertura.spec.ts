@@ -5,6 +5,7 @@ import {
   PASOS_DEL_ALTA,
   completarContacto,
   elegirLocalidadDeResidencia,
+  elegirOpcion,
   marcarYConfirmarCasa,
   empezarElAlta,
 } from './support/registro-paciente';
@@ -66,6 +67,18 @@ async function subir(page: Page, testId: string, nombre: string): Promise<void> 
     `input[type="file"][data-testid="${testId}"], [data-testid="${testId}"] input[type="file"]`,
   );
   await destino.first().setInputFiles(pdfDePrueba(nombre));
+}
+
+/**
+ * Marks the headquarters pin and confirms it: the street, municipality and zone come from the
+ * point (client request, 26/10/2026), so there is no address to type.
+ */
+async function marcarYConfirmarCentral(page: Page, prefijo: string): Promise<void> {
+  const mapa = page.getByTestId(`${prefijo}-map`);
+  await expect(mapa.locator('.leaflet-container')).toBeVisible({ timeout: 15_000 });
+  await mapa.locator('.leaflet-container').click();
+  await page.getByTestId(`${prefijo}-location-confirm`).click();
+  await expect(page.getByTestId(`${prefijo}-location-confirmed`)).toBeAttached();
 }
 
 test.describe('dónde se elige el tipo de alta', () => {
@@ -139,15 +152,20 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
     await enLaPagina(page, 'La empresa');
 
     await page.getByTestId('registro-lab-razon-social').fill('Laboratorio Andino S.R.L.');
-    await page.getByLabel('Tipo de sociedad').selectOption({ label: 'S.R.L.' });
+    await elegirOpcion(page, 'registro-lab-tipo-sociedad', { label: 'S.R.L.' });
     await page.getByTestId('registro-lab-nit').fill('1023456789');
     await continuar(page);
 
     await continuarHasta(page, 'Dónde está la central');
-    await page.getByTestId('registro-lab-direccion').fill('Av. Cañoto esq. Ballivián 234');
+    await marcarYConfirmarCentral(page, 'registro-lab-central');
     await continuarHasta(page, 'Representante legal');
 
     await escribirNombre(page, 'registro-lab-representante', 'Mariana', 'Siles');
+    await page.getByTestId('registro-lab-representante-documento').fill('4872190');
+    // The notarized power is required for every organization (owner, 05/11/2026).
+    await subir(page, 'registro-lab-doc-powerOfAttorneyFileId', 'poder');
+    // The page does not advance while the upload is in flight.
+    await expect(page.getByText('Quitar', { exact: true })).toBeVisible({ timeout: 15_000 });
     await continuarHasta(page, 'Su acceso');
 
     await page.getByTestId('registro-lab-representante-correo').fill(`legal-${Date.now()}@lab-andino.test`);
@@ -162,14 +180,14 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
     await expect(page).toHaveURL(/\/auth$/);
   });
 
-  test('imagenología: modalidades y los tres papeles obligatorios alcanzan para terminar el alta', async ({
+  test('imagenología: modalidades y los papeles obligatorios alcanzan para terminar el alta', async ({
     page,
   }) => {
     await page.goto('/auth/register/imaging-center', { waitUntil: 'domcontentloaded' });
     await enLaPagina(page, 'La empresa');
 
     await page.getByTestId('registro-imagen-razon-social').fill('Imagen Oriente S.R.L.');
-    await page.getByLabel('Tipo de sociedad').selectOption({ label: 'S.R.L.' });
+    await elegirOpcion(page, 'registro-imagen-tipo-sociedad', { label: 'S.R.L.' });
     await page.getByTestId('registro-imagen-nit').fill('1023456789');
     await continuar(page);
 
@@ -181,16 +199,22 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
     await continuar(page);
 
     await enLaPagina(page, 'Los papeles de la empresa');
-    for (const clave of ['seprecFile', 'licenciaFile', 'sedesFile']) {
+    for (const clave of ['seprecFile', 'licenciaFile', 'sedesFile', 'nitFile']) {
       await subir(page, `registro-imagen-adjunto-${clave}`, clave);
       await expect(page.getByTestId(`registro-imagen-quitar-${clave}`)).toBeVisible({ timeout: 15_000 });
     }
+    await continuarHasta(page, 'Constitución de la empresa');
+    await subir(page, 'registro-imagen-adjunto-constitucionFile', 'constitucionFile');
+    await expect(page.getByTestId('registro-imagen-quitar-constitucionFile')).toBeVisible({ timeout: 15_000 });
     await continuarHasta(page, 'Dónde está la central');
 
-    await page.getByTestId('registro-imagen-direccion').fill('Calle Sucre 120');
+    await marcarYConfirmarCentral(page, 'registro-imagen-central');
     await continuarHasta(page, 'Representante legal');
 
     await escribirNombre(page, 'registro-imagen-representante', 'Rodrigo', 'Vaca');
+    await page.getByTestId('registro-imagen-representante-documento').fill('4872190');
+    await subir(page, 'registro-imagen-adjunto-poderFile', 'poderFile');
+    await expect(page.getByTestId('registro-imagen-quitar-poderFile')).toBeVisible({ timeout: 15_000 });
     await continuarHasta(page, 'Su acceso');
 
     await page
