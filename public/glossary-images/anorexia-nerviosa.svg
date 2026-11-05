@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">El ciclo de la anorexia nerviosa</title>
+  <desc id="d">Ciclo de cuatro elementos que se refuerzan: miedo intenso a engordar, restricción de la comida, bajo peso e imagen corporal distorsionada. A la derecha, los efectos sobre el cuerpo, como el corazón lento o los huesos frágiles, y el tratamiento por un equipo multidisciplinario.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Anorexia nerviosa: un ciclo que se refuerza</text>
+  <rect x="20" y="60" width="420" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230.0" y="88" text-anchor="middle" class="title">El círculo del trastorno</text>
+  <rect x="158.0" y="112.0" width="144" height="56" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="230.0" y="137.0" text-anchor="middle" class="lab b">Miedo intenso</text>
+  <text x="230.0" y="154.0" text-anchor="middle" class="small muted">a engordar</text>
+  <rect x="273.0" y="227.0" width="144" height="56" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="345.0" y="252.0" text-anchor="middle" class="lab b">Restricción</text>
+  <text x="345.0" y="269.0" text-anchor="middle" class="small muted">de la comida</text>
+  <rect x="158.0" y="342.0" width="144" height="56" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="230.0" y="375.0" text-anchor="middle" class="lab">Bajo peso</text>
+  <rect x="43.0" y="227.0" width="144" height="56" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="115.0" y="252.0" text-anchor="middle" class="lab b">Imagen corporal</text>
+  <text x="115.0" y="269.0" text-anchor="middle" class="small muted">distorsionada</text>
+  <path d="M280 151 A115 115 0 0 1 334 205" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <path d="M334 305 A115 115 0 0 1 280 359" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <path d="M180 359 A115 115 0 0 1 126 305" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <path d="M126 205 A115 115 0 0 1 180 151" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="230" y="260" text-anchor="middle" class="small muted">Se refuerza</text>
+  <rect x="456" y="60" width="324" height="220" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="88" text-anchor="middle" class="h">Efectos en el cuerpo</text>
+  <text x="474" y="112" class="lab">• Corazón lento, presión baja</text>
+  <text x="474" y="142" class="lab">• Pérdida de la menstruación</text>
+  <text x="474" y="172" class="lab">• Huesos frágiles</text>
+  <text x="474" y="202" class="lab">• Frío, cansancio, mareo</text>
+  <text x="474" y="232" class="lab">• Alteración de sales en sangre</text>
+  <rect x="456" y="296" width="324" height="144" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="324" text-anchor="middle" class="h">Tiene tratamiento</text>
+  <text x="474" y="356" class="small">• Equipo: médico, psicología,</text>
+  <text x="485" y="378" class="small">nutrición y familia</text>
+  <text x="474" y="400" class="small">• Recuperar el peso con seguridad</text>
+  <text x="474" y="422" class="small">• Cuanto antes, mejor pronóstico</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -2,8 +2,6 @@ import { DOCUMENT, inject, Injectable, PLATFORM_ID, signal } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 
 import { CommunityClient } from '../data-access/community/community.client';
-import { CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS } from '../data-access/community/community.types';
-import { simulatorAvailable, withSimulatorExtensions } from '../data-access/simulator-only';
 
 /** Dónde se guarda la configuración, en este navegador. */
 const CLAVE = 'alovida.chat-respuesta-automatica';
@@ -53,12 +51,6 @@ export interface RespuestaAutomatica {
    */
   readonly texto: string;
   /**
-   * Si la respuesta la redacta la IA de AloVida en vez de mandar siempre
-   * `texto`. La IA tiene instrucciones fijas: no diagnostica, no indica
-   * medicamentos ni dosis y ante signos de alarma deriva a Emergencia.
-   */
-  readonly conIa: boolean;
-  /**
    * Cuántas horas espera antes de volver a contestarle a la **misma persona**.
    *
    * Sin esto, cinco mensajes seguidos de alguien que no obtiene respuesta se
@@ -82,7 +74,6 @@ export const CONFIGURACION_POR_DEFECTO: RespuestaAutomatica = {
   activa: false,
   minutosDeInactividad: 30,
   texto: RESPUESTA_POR_DEFECTO,
-  conIa: false,
   horasEntreAvisos: 4,
   soloFueraDeHorario: false,
   horarioDesde: '08:00',
@@ -162,18 +153,6 @@ export class ChatAutoReply {
   private guardados = 0;
 
   /**
-   * Si se puede elegir «Responder con IA».
-   *
-   * Hoy sólo en la maqueta: guardar el modo en el servidor pide una columna
-   * nueva en `community.chat_auto_replies` (cambio del modelo canónico), y la
-   * API real rechaza con 400 una clave que su DTO no declara. Contra la API
-   * real la opción se ve, apagada y con el motivo.
-   */
-  iaDisponible(): boolean {
-    return simulatorAvailable();
-  }
-
-  /**
    * Trae la configuración del servidor y la adopta.
    *
    * Lo que hay en el servidor **gana** sobre la copia local: es lo que se está
@@ -212,7 +191,7 @@ export class ChatAutoReply {
           }
           return;
         }
-        this.configuracion.set(sanear(desdeElServidor(remota), this.iaDisponible()));
+        this.configuracion.set(sanear(desdeElServidor(remota)));
         this.escribir(CLAVE, JSON.stringify(this.configuracion()));
         this.escribir(CLAVE_DUENO, profileId);
       },
@@ -241,7 +220,7 @@ export class ChatAutoReply {
     alTerminar?: (llego: boolean) => void,
   ): void {
     this.guardados += 1;
-    const siguiente = sanear({ ...this.configuracion(), ...cambios }, this.iaDisponible());
+    const siguiente = sanear({ ...this.configuracion(), ...cambios });
     this.configuracion.set(siguiente);
     this.escribir(CLAVE, JSON.stringify(siguiente));
     if (profileId === null) {
@@ -256,23 +235,19 @@ export class ChatAutoReply {
   private subir(profileId: string, alTerminar?: (llego: boolean) => void): void {
     const config = this.configuracion();
     this.sincronizando.set(true);
-    const cuerpo = withSimulatorExtensions(
-      {
-        isActive: config.activa,
-        inactivityMinutes: config.minutosDeInactividad,
-        bodyText: config.texto,
-        cooldownHours: config.horasEntreAvisos,
-        onlyOutsideBusinessHours: config.soloFueraDeHorario,
-        ...(config.soloFueraDeHorario
-          ? {
-              businessHoursFrom: config.horarioDesde,
-              businessHoursTo: config.horarioHasta,
-            }
-          : {}),
-        replyMode: config.conIa ? ('AI' as const) : ('FIXED' as const),
-      },
-      CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS,
-    );
+    const cuerpo = {
+      isActive: config.activa,
+      inactivityMinutes: config.minutosDeInactividad,
+      bodyText: config.texto,
+      cooldownHours: config.horasEntreAvisos,
+      onlyOutsideBusinessHours: config.soloFueraDeHorario,
+      ...(config.soloFueraDeHorario
+        ? {
+            businessHoursFrom: config.horarioDesde,
+            businessHoursTo: config.horarioHasta,
+          }
+        : {}),
+    };
     this.community
       .upsertAutoReply(profileId, cuerpo)
       .subscribe({
@@ -408,7 +383,7 @@ export class ChatAutoReply {
       if (typeof guardado !== 'object' || guardado === null) {
         return CONFIGURACION_POR_DEFECTO;
       }
-      return sanear({ ...CONFIGURACION_POR_DEFECTO, ...guardado }, this.iaDisponible());
+      return sanear({ ...CONFIGURACION_POR_DEFECTO, ...guardado });
     } catch {
       // Un valor corrupto no puede dejar a nadie sin chat.
       return CONFIGURACION_POR_DEFECTO;
@@ -422,11 +397,8 @@ export class ChatAutoReply {
  * Vale tanto para lo que escribe la pantalla como para lo que se lee del
  * almacenamiento: los dos pueden traer basura —el segundo, editado a mano— y
  * una espera de cero minutos convertiría la respuesta automática en un eco.
- *
- * @param iaDisponible - Si se puede responder con IA acá. Donde no, el modo
- *   no se sostiene aunque venga guardado (ver `ChatAutoReply.iaDisponible`).
  */
-function sanear(config: RespuestaAutomatica, iaDisponible: boolean): RespuestaAutomatica {
+function sanear(config: RespuestaAutomatica): RespuestaAutomatica {
   const texto = config.texto.trim().slice(0, LARGO_MAXIMO);
   return {
     activa: config.activa === true && texto !== '',
@@ -437,9 +409,6 @@ function sanear(config: RespuestaAutomatica, iaDisponible: boolean): RespuestaAu
       CONFIGURACION_POR_DEFECTO.minutosDeInactividad,
     ),
     texto: texto === '' ? RESPUESTA_POR_DEFECTO : texto,
-    // Donde la IA no está disponible el modo no se sostiene: una copia local
-    // con «IA» dejaría al navegador sin contestar y al servidor sin saberlo.
-    conIa: config.conIa === true && iaDisponible,
     horasEntreAvisos: acotar(
       config.horasEntreAvisos,
       HORAS_MINIMO,
@@ -461,13 +430,11 @@ function desdeElServidor(remota: {
   readonly onlyOutsideBusinessHours: boolean;
   readonly businessHoursFrom?: string;
   readonly businessHoursTo?: string;
-  readonly replyMode?: 'FIXED' | 'AI';
 }): RespuestaAutomatica {
   return {
     activa: remota.isActive,
     minutosDeInactividad: remota.inactivityMinutes,
     texto: remota.bodyText,
-    conIa: remota.replyMode === 'AI',
     horasEntreAvisos: remota.cooldownHours,
     soloFueraDeHorario: remota.onlyOutsideBusinessHours,
     // Postgres devuelve `time` con segundos; la pantalla usa `HH:MM`.

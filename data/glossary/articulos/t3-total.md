@@ -1,5 +1,6 @@
 ---
 slug: t3-total
+image: t3-total.svg | Producción de T3 por la tiroides y su forma en la sangre | Glándula tiroides delante de la tráquea que libera T4 y T3, junto a un esquema de la T3 unida a proteínas y libre en la sangre y los pasos del análisis
 ---
 
 ## [definition] Introducción

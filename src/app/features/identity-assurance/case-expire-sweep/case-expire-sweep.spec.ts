@@ -61,7 +61,7 @@ describe('CaseExpireSweep', () => {
     expect(interno<() => { expiredCount: number } | null>('resultado')()?.expiredCount).toBe(2);
   });
 
-  it('un fallo se cuenta con el mensaje del backend para poder reportarlo', async () => {
+  it('un fallo se cuenta con el código de soporte, sin repetir el mensaje interno del backend', async () => {
     await interno<() => Promise<void>>('ejecutar')();
 
     http.expectOne('/identity/verification-cases/expire-sweep').flush(
@@ -69,6 +69,12 @@ describe('CaseExpireSweep', () => {
       { status: 500, statusText: 'Internal Server Error' },
     );
 
-    expect(interno<() => string | null>('errorMessage')()).toContain('barrido en curso');
+    // El `message` de un 500 no se repite en pantalla (la API ya lo censura y el
+    // front no confía en que siempre lo haga): se dice qué pasó y el código de
+    // soporte, que es lo que permite encontrar el detalle en el registro.
+    const mensaje = interno<() => string | null>('errorMessage')();
+    expect(mensaje).not.toContain('barrido en curso');
+    expect(mensaje).toContain('El servidor encontró un problema inesperado');
+    expect(mensaje).toContain('req-7');
   });
 });

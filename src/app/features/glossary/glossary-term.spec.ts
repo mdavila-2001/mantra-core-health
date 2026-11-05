@@ -360,6 +360,7 @@ describe('GlossaryTerm', () => {
   it('con imagen, la muestra con su fuente, licencia y alt — nunca sin atribución', async () => {
     peticion().flush({
       ...FICHA,
+      properties: { ...FICHA.properties, image_review_status: 'approved' },
       image: {
         source: 'https://ejemplo.org/hipertension.png',
         license: 'CC BY 4.0',
@@ -471,7 +472,7 @@ describe('GlossaryTerm', () => {
   };
 
   it('con imagen, muestra la miniatura con atribución, licencia y enlace a la fuente, siempre visibles', async () => {
-    peticion().flush({ ...FICHA, image: IMAGEN });
+    peticion().flush({ ...FICHA, properties: { ...FICHA.properties, image_review_status: 'approved' }, image: IMAGEN });
     await harness.fixture.whenStable();
 
     const img = html().querySelector<HTMLImageElement>('.termino__imagen img');
@@ -483,8 +484,16 @@ describe('GlossaryTerm', () => {
     expect(credito?.querySelector('a')?.getAttribute('rel')).toContain('noopener');
   });
 
-  it('«Ampliar» abre la imagen entera en un modal, también con su crédito', async () => {
+  it('una imagen con licencia y crédito, pero sin aprobación de pertinencia, no se muestra', async () => {
     peticion().flush({ ...FICHA, image: IMAGEN });
+    await harness.fixture.whenStable();
+
+    expect(html().querySelector('.termino__imagen img')).toBeNull();
+    expect(html().querySelector('.termino__imagen-boton')).toBeNull();
+  });
+
+  it('«Ampliar» abre la imagen entera en un modal, también con su crédito', async () => {
+    peticion().flush({ ...FICHA, properties: { ...FICHA.properties, image_review_status: 'approved' }, image: IMAGEN });
     await harness.fixture.whenStable();
     expect(html().querySelector('app-content-dialog')).toBeNull();
 
@@ -585,6 +594,34 @@ describe('GlossaryTerm', () => {
 
     expect(html().querySelector('.termino__fuentes-editoriales')).toBeNull();
     expect(html().textContent).toContain('Este término no declara su fuente');
+  });
+
+  it('«Cómo citar» arma la cita con la fuente declarada, y sin fuente no hay cita', async () => {
+    peticion().flush({
+      ...FICHA,
+      properties: {
+        source: 'medlineplus-es',
+        source_retrieved_at: '2026-09-29T10:00:00Z',
+        source_license: 'Dominio público',
+      },
+    });
+    await harness.fixture.whenStable();
+    await abrirPestana('Fuente y código');
+
+    const cita = html().querySelector('[data-testid="termino-cita"]')?.textContent ?? '';
+    expect(cita).toContain('MedlinePlus en español (NLM).');
+    expect(cita).toContain(`«${FICHA.display}»`);
+    expect(cita).toContain('En: Alovida, Glosario médico.');
+    expect(cita).toContain('29/09/2026');
+    expect(cita).toContain('Condición de uso: Dominio público.');
+  });
+
+  it('sin fuente declarada no hay «Cómo citar»: no se atribuye a la plataforma lo que no escribió', async () => {
+    peticion().flush({ ...FICHA, properties: {} });
+    await harness.fixture.whenStable();
+    await abrirPestana('Fuente y código');
+
+    expect(html().querySelector('[data-testid="termino-cita"]')).toBeNull();
   });
 
   const CIMA = {

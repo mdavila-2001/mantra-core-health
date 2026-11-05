@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-5574
+image: medlineplus-es-5574.svg | Partes de una prótesis transtibial y etapas de adaptación. | Prótesis por debajo de la rodilla con muñón, liner, encaje, pilón y pie protésico señalados, junto a los tipos de prótesis y los pasos de la adaptación.
 ---
 
 ## [definition] Introducción

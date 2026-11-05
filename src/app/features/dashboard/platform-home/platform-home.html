@@ -11,7 +11,13 @@
 <div class="portada__areas" data-testid="platform-home-portales">
   @for (portal of portales(); track portal.id) {
     <app-card variant="outlined" padding="lg">
-      <h2 class="portada__titulo">{{ portal.titulo }}</h2>
+      <h2 class="portada__titulo">
+        @if (portal.ruta; as ruta) {
+          <a app-link [routerLink]="ruta" data-testid="portal-observabilidad">{{ portal.titulo }}</a>
+        } @else {
+          {{ portal.titulo }}
+        }
+      </h2>
       <p class="portada__texto">{{ portal.descripcion }}</p>
       @for (area of portal.areas; track area.titulo) {
         <section class="centro__area" [attr.aria-label]="area.titulo">
@@ -80,11 +86,16 @@
     <app-view-state-host [state]="herramientas()" (retry)="cargar()">
       @if (herramientas(); as h) {
         @if (h.status === 'ready') {
+          <!-- La API real puede responder sin `summary` (sólo `items`): se dice, no se rompe el resto de la portada ni se inventa un 0. -->
+          @if (h.data.summary) {
           <dl class="centro__cifras">
             <div><dt>Herramientas caídas</dt><dd data-testid="centro-herramientas-caidas">{{ entero(h.data.summary.down) }}</dd></div>
             <div><dt>Críticas</dt><dd>{{ entero(h.data.summary.critical) }} de {{ entero(h.data.summary.total) }}</dd></div>
             <div><dt>Sin chequeo en vivo</dt><dd>{{ entero(h.data.summary.noProbe) }}</dd></div>
           </dl>
+          } @else {
+            <p class="centro__nota" data-testid="center-tools-no-summary">Resumen de herramientas no disponible: la API no lo informó.</p>
+          }
         }
       }
     </app-view-state-host>

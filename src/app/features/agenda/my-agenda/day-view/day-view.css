@@ -143,22 +143,6 @@
   }
 }
 
-.dia__vacio {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  align-items: center;
-  padding: var(--sp-8) var(--sp-4);
-  border: 1px dashed var(--border-default);
-  border-radius: var(--r-lg);
-  color: var(--text-secondary);
-  text-align: center;
-}
-
-.dia__vacio p {
-  margin: 0;
-}
-
 /* -- La línea de horas ----------------------------------------------------- */
 
 .dia__linea {

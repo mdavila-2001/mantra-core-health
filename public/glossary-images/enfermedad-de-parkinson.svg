@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Enfermedad de Parkinson</title>
+  <desc id="d">A la izquierda, un cerebro con la sustancia negra señalada en su parte profunda, cuyas neuronas producen dopamina y se pierden en la enfermedad. A la derecha, los síntomas motores principales, temblor en reposo, lentitud, rigidez e inestabilidad, y otros síntomas no motores.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Dónde empieza</text>
+  <path d="M74.00000000000001 184.0 C60.0 100.0 144.0 58.0 214.0 72.0 C298.0 72.0 340.0 128.0 326.0 198.0 C317.6 240.0 270.0 248.39999999999998 228.0 240.0 C200 254.0 158.0 248.39999999999998 130.0 237.2 C88.0 231.6 76.80000000000001 212.0 74.00000000000001 184.0 Z" fill="var(--organ)" stroke="var(--line)" stroke-width="1.5"/>
+  <path d="M130.0 114.0 q28.0 28.0 7.0 56.0 M200 86.0 q28.0 35.0 -7.0 70.0 M263.0 107.0 q-21.0 42.0 14.0 77.0" fill="none" stroke="var(--line)" stroke-width="2"/>
+  <ellipse cx="206" cy="210" rx="20" ry="9" fill="var(--ink)" opacity=".8"/>
+  <path d="M206 210 C230 190 250 160 260 150" fill="none" stroke="var(--nerve)" stroke-width="3" marker-end="url(#ar)"/>
+  <text x="80" y="300" class="step">Sustancia negra</text>
+  <path d="M150 290 L196 216" fill="none" stroke="var(--muted)" stroke-width="1"/>
+  <text x="270" y="140" class="small" style="fill:var(--nerve)">Dopamina</text>
+  <rect x="40" y="326" width="160" height="34" rx="8" fill="var(--ok)"/>
+  <text x="120.0" y="347.32" text-anchor="middle" class="small" style="fill:var(--on)">Neuronas sanas</text>
+  <rect x="220" y="326" width="160" height="34" rx="8" fill="var(--warn)"/>
+  <text x="300.0" y="347.32" text-anchor="middle" class="small" style="fill:var(--on)">Se pierden</text>
+  <text x="200" y="392" text-anchor="middle" class="lab">Al faltar dopamina, el movimiento</text>
+  <text x="200" y="412" text-anchor="middle" class="lab">se vuelve lento y rígido</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Síntomas principales</text>
+  <rect x="436" y="62" width="324" height="50" rx="10" fill="var(--tissue)"/>
+  <text x="452" y="84" class="step">Temblor en reposo</text>
+  <text x="452" y="103" class="small muted">suele empezar en una mano</text>
+  <rect x="436" y="122" width="324" height="50" rx="10" fill="var(--tissue)"/>
+  <text x="452" y="144" class="step">Lentitud</text>
+  <text x="452" y="163" class="small muted">movimientos pequeños y lentos</text>
+  <rect x="436" y="182" width="324" height="50" rx="10" fill="var(--tissue)"/>
+  <text x="452" y="204" class="step">Rigidez</text>
+  <text x="452" y="223" class="small muted">músculos tensos</text>
+  <rect x="436" y="242" width="324" height="50" rx="10" fill="var(--tissue)"/>
+  <text x="452" y="264" class="step">Inestabilidad</text>
+  <text x="452" y="283" class="small muted">pasos cortos, caídas</text>
+  <text x="436" y="330" class="step">También sin movimiento</text>
+  <text x="440" y="356" class="small">• Pérdida de olfato, estreñimiento</text>
+  <text x="440" y="378" class="small">• Ánimo bajo, sueño alterado</text>
+  <text x="598" y="420" text-anchor="middle" class="small muted">Los fármacos reponen la dopamina</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,0 +1,99 @@
+<!-- La portada del médico: saludo, atajos del día y su perfil, en UNA pieza a lo
+     ancho. Va antes que la jornada porque es lo primero que se lee al entrar;
+     la jornada sigue justo debajo, sin otra tarjeta en el medio. -->
+<section class="welcome" data-testid="practitioner-welcome" aria-labelledby="welcome-title">
+  <div class="welcome__main">
+    @if (today(); as date) {
+      <p class="welcome__date">
+        <app-nav-icon name="calendar" aria-hidden="true" />
+        <span>{{ date | date: "EEEE d 'de' MMMM" }}</span>
+      </p>
+    }
+
+    <h1 class="welcome__title" id="welcome-title" appTutorialTarget="panel-titulo">
+      @if (firstName() === '') {
+        Su consultorio
+      } @else {
+        {{ greeting() }}, <span class="welcome__name">{{ firstName() }}</span>
+      }
+    </h1>
+    <p class="welcome__lead">
+      Su agenda, las historias clínicas y sus recetas, a un clic. Menos trámite y más tiempo
+      para cada paciente.
+    </p>
+
+    @if (shortcuts().length > 0) {
+      <h2 class="welcome__question">¿Qué necesita hacer ahora?</h2>
+      <ul class="welcome__shortcuts">
+        @for (atajo of shortcuts(); track atajo.testId) {
+          <li>
+            <a class="shortcut" [routerLink]="atajo.route" [attr.data-testid]="atajo.testId">
+              <span class="shortcut__icon" aria-hidden="true">
+                <app-nav-icon [name]="atajo.icon" />
+              </span>
+              <span class="shortcut__body">
+                <span class="shortcut__title">{{ atajo.title }}</span>
+                <span class="shortcut__text">{{ atajo.text }}</span>
+              </span>
+              <app-nav-icon class="shortcut__arrow" name="arrow-right" aria-hidden="true" />
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <aside class="welcome__aside" aria-label="Su perfil profesional">
+    @if (onboarding(); as avance) {
+      <!-- El alta a medias es lo único que le impide recibir pacientes: se dice
+           con su avance y un solo botón, sin el tono de error de un aviso. -->
+      <div class="profile" data-testid="welcome-onboarding">
+        <div
+          class="profile__ring"
+          role="img"
+          [style.--welcome-pct]="percent()"
+          [attr.aria-label]="avance.completed + ' de ' + avance.total + ' pasos completos'"
+        >
+          <span class="profile__ring-value">{{ avance.completed }}<small>/{{ avance.total }}</small></span>
+        </div>
+        <h2 class="profile__title">Complete su perfil para recibir pacientes</h2>
+        <p class="profile__text">
+          Lleva {{ avance.completed }} de {{ avance.total }} pasos.
+          {{ remaining() === 1 ? 'Le falta uno' : 'Le faltan ' + remaining() }}: un perfil
+          completo es lo que ven los pacientes antes de reservar con usted.
+        </p>
+        <a app-button variant="primary" size="sm" routerLink="/onboarding" data-testid="welcome-onboarding-go">
+          Completar mi perfil
+          <app-nav-icon name="arrow-right" />
+        </a>
+      </div>
+    } @else {
+      <!-- Sin alta pendiente, el sello de AloVida: la marca tal cual es, como en
+           la portada del paciente. Decorativo. -->
+      <div class="seal" aria-hidden="true">
+        <span class="seal__ring"></span>
+        <span class="seal__ring seal__ring--late"></span>
+        <span class="seal__badge">
+          <img src="/alovida/imagenes/alovida-logo.svg" alt="" width="88" height="64" />
+        </span>
+      </div>
+    }
+
+    @if (showVerifications()) {
+      <div
+        *appVisible="ui.myVerificationsShortcut"
+        class="verifications"
+        data-testid="dashboard-my-verifications"
+      >
+        <p class="verifications__text">
+          <app-nav-icon name="shield" aria-hidden="true" />
+          <span>Siga su sello de verificación y las respuestas de instituciones y aseguradoras.</span>
+        </p>
+        <a app-button variant="secondary" size="sm" routerLink="/my-account/verifications">
+          <app-nav-icon name="check-circle" />
+          Mis verificaciones
+        </a>
+      </div>
+    }
+  </aside>
+</section>

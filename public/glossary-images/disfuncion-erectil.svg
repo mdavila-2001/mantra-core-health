@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Disfunción eréctil</title>
+  <desc id="d">A la izquierda, la secuencia de la erección: estímulo, señal nerviosa, liberación de óxido nítrico, dilatación de las arterias y llenado del tejido eréctil, con un corte transversal esquemático de los cuerpos cavernosos. A la derecha, los factores que pueden interferir: vasculares, nerviosos, hormonales, psicológicos y farmacológicos.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="420" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230.0" y="50" text-anchor="middle" class="title">Cómo se produce la erección</text>
+  <rect x="50" y="60" width="180" height="52" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="140" y="82" text-anchor="middle" class="step">Estímulo</text>
+  <text x="140" y="100" text-anchor="middle" class="small">Sexual o sensorial</text>
+  <path d="M140 114 L140 130" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="50" y="132" width="180" height="52" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="140" y="154" text-anchor="middle" class="step">Nervios</text>
+  <text x="140" y="172" text-anchor="middle" class="small">Envían la señal</text>
+  <path d="M140 186 L140 202" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="50" y="204" width="180" height="52" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="140" y="226" text-anchor="middle" class="step">Óxido nítrico</text>
+  <text x="140" y="244" text-anchor="middle" class="small">Relaja el músculo liso</text>
+  <path d="M140 258 L140 274" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="50" y="276" width="180" height="52" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="140" y="298" text-anchor="middle" class="step">Arterias</text>
+  <text x="140" y="316" text-anchor="middle" class="small">Se dilatan, entra sangre</text>
+  <path d="M140 330 L140 346" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="50" y="348" width="180" height="52" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="140" y="370" text-anchor="middle" class="step">Tejido eréctil</text>
+  <text x="140" y="388" text-anchor="middle" class="small">Se llena y se mantiene</text>
+  <circle cx="335" cy="200" r="70" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+  <circle cx="308" cy="185" r="28" fill="var(--organ)"/><circle cx="362" cy="185" r="28" fill="var(--organ)"/><circle cx="335" cy="240" r="16" fill="var(--organ)" opacity=".6"/>
+  <circle cx="308" cy="185" r="4" fill="var(--vessel)"/><circle cx="362" cy="185" r="4" fill="var(--vessel)"/><circle cx="335" cy="240" r="4" fill="var(--beam)"/>
+  <text x="335" y="100" text-anchor="middle" class="small muted">Corte transversal</text>
+  <text x="335" y="296" text-anchor="middle" class="small">Cuerpos cavernosos</text>
+  <text x="335" y="312" text-anchor="middle" class="small">con su arteria central</text>
+  <text x="335" y="336" text-anchor="middle" class="small muted">Uretra abajo</text>
+  <rect x="460" y="20" width="320" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="620.0" y="50" text-anchor="middle" class="title">Qué puede interferir</text>
+  <rect x="480" y="60" width="280" height="54" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="496" y="83" class="step">Vascular</text>
+  <text x="496" y="102" class="small">Diabetes, tensión, tabaco</text>
+  <rect x="480" y="126" width="280" height="54" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="496" y="149" class="step">Nervioso</text>
+  <text x="496" y="168" class="small">Cirugía pélvica, lesiones</text>
+  <rect x="480" y="192" width="280" height="54" rx="10" fill="var(--purple-l)" stroke="var(--line)"/>
+  <text x="496" y="215" class="step">Hormonal</text>
+  <text x="496" y="234" class="small">Testosterona baja</text>
+  <rect x="480" y="258" width="280" height="54" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="496" y="281" class="step">Psicológico</text>
+  <text x="496" y="300" class="small">Estrés, ansiedad</text>
+  <rect x="480" y="324" width="280" height="54" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="496" y="347" class="step">Fármacos</text>
+  <text x="496" y="366" class="small">Algunos tratamientos</text>
+  <text x="620" y="410" text-anchor="middle" class="small muted">Puede ser una señal temprana</text>
+  <text x="620" y="428" text-anchor="middle" class="small muted">de enfermedad cardiovascular</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

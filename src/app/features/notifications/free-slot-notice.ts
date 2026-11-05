@@ -39,10 +39,13 @@ const NOT_AUTO_DISMISSED = null;
 /** Lo que distingue este aviso de los demás de su categoría. Ver `released-slot.ts`. */
 const NOTICE_CLASS = 'SLOT_RELEASED';
 
+/** Where the already-shown notices are remembered, so a reload does not raise them again. */
+const SHOWN_KEY = 'mock.avisos-de-hueco.mostrados';
+
 /**
  * Vigila la campana y levanta un toast cuando se libera un horario.
  *
- * ## Por qué está en `features/` y no en `core/mock/`
+ * ## Por qué está en `features/` y no en el simulador (`mock/`)
  *
  * Porque necesita el `ToastService`, que vive en `shared/`, y `core/` no puede
  * importar de `shared/` —la dirección de las capas es `features → shared →
@@ -70,7 +73,7 @@ export class FreeGapNotice {
    * notificación sigue sin leer hasta que alguien la abra, así que «no leída»
    * no alcanza como criterio de novedad.
    */
-  private readonly shownAlready = new Set<string>();
+  private readonly shownAlready = new Set<string>(readShown());
 
   private clock: ReturnType<typeof setInterval> | null = null;
 
@@ -93,7 +96,13 @@ export class FreeGapNotice {
     // aplicación entera, así que también corre en el login y en lo público.
     if (!this.auth.isAuthenticated()) return;
     this.notifications.listMine({ unread: true, limit: 20 }).subscribe({
-      next: (pagina) => pagina.items.filter(isFreeGap).forEach((aviso) => this.show(aviso)),
+      next: (pagina) => {
+        // Several at once raise a single toast — the newest — and every one is remembered.
+        const fresh = pagina.items.filter(isFreeGap).filter((a) => !this.shownAlready.has(a.id));
+        const [newest] = [...fresh].sort((a, b) => String(b.availableAt).localeCompare(String(a.availableAt)));
+        if (newest !== undefined) this.show(newest);
+        for (const other of fresh) this.remember(other.id);
+      },
       // Un sondeo que falla no dice nada: es una comodidad de la maqueta, no
       // una lectura que alguien esté esperando. La campana sigue mostrando lo
       // que haya cuando se la abra.
@@ -111,9 +120,18 @@ export class FreeGapNotice {
    * uno de ellos inventado acá, sería la clase de duplicado que esta maqueta ya
    * corrigió en los directorios.
    */
+  private remember(id: string): void {
+    this.shownAlready.add(id);
+    try {
+      sessionStorage.setItem(SHOWN_KEY, JSON.stringify([...this.shownAlready]));
+    } catch {
+      // Storage unavailable (private mode, SSR): the in-memory set still dedupes this session.
+    }
+  }
+
   private show(aviso: InAppNotification): void {
     if (this.shownAlready.has(aviso.id)) return;
-    this.shownAlready.add(aviso.id);
+    this.remember(aviso.id);
     this.toasts.show({
       type: 'info',
       title: aviso.subject ?? 'Se liberó un horario',
@@ -129,6 +147,16 @@ export class FreeGapNotice {
  * Mira `payloadJson.kind` y no el asunto: el asunto es prosa, se reescribe, y
  * una condición no se cuelga de una frase.
  */
+function readShown(): string[] {
+  try {
+    const raw = sessionStorage.getItem(SHOWN_KEY);
+    const list: unknown = raw === null ? [] : JSON.parse(raw);
+    return Array.isArray(list) ? list.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
 function isFreeGap(aviso: InAppNotification): boolean {
   const payload = aviso.payloadJson;
   return (

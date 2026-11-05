@@ -1,0 +1,122 @@
+[
+ {
+  "ancho": 1920,
+  "semana": "por-dia",
+  "modo": "table-row",
+  "tabla": 1328,
+  "caja": 1328,
+  "desborde": 0,
+  "cortados": [],
+  "pagina": 0,
+  "pesoDiaActivo": "600",
+  "pesoDiaApagado": "400"
+ },
+ {
+  "ancho": 1920,
+  "semana": "flexible",
+  "modo": "table-row",
+  "tabla": 1328,
+  "caja": 1328,
+  "desborde": 0,
+  "cortados": [],
+  "pagina": 0,
+  "pesoDiaActivo": "600",
+  "pesoDiaApagado": "400"
+ },
+ {
+  "ancho": 1440,
+  "semana": "por-dia",
+  "modo": "table-row",
+  "tabla": 1088,
+  "caja": 1088,
+  "desborde": 0,
+  "cortados": [],
+  "pagina": 0,
+  "pesoDiaActivo": "600",
+  "pesoDiaApagado": "400"
+ },
+ {
+  "ancho": 1440,
+  "semana": "flexible",
+  "modo": "table-row",
+  "tabla": 1088,
+  "caja": 1088,
+  "desborde": 0,
+  "cortados": [],
+  "pagina": 0,
+  "pesoDiaActivo": "600",
+  "pesoDiaApagado": "400"
+ },
+ {
+  "ancho": 1280,
+  "semana": "por-dia",
+  "modo": "grid",
+  "tabla": 944,
+  "caja": 944,
+  "desborde": 0,
+  "cortados": [],
+  "pagina": 0,
+  "pesoDiaActivo": "600",
+  "pesoDiaApagado": "400"
+ },
+ {
+  "ancho": 1280,
+  "semana": "flexible",
+  "modo": "table-row",
+  "tabla": 944,
+  "caja": 944,
+  "desborde": 0,
+  "cortados": [],
+  "pagina": 0,
+  "pesoDiaActivo": "600",
+  "pesoDiaApagado": "400"
+ },
+ {
+  "ancho": 1024,
+  "semana": "por-dia",
+  "modo": "grid",
+  "tabla": 712,
+  "caja": 712,
+  "desborde": 0,
+  "cortados": [],
+  "pagina": 0,
+  "pesoDiaActivo": "600",
+  "pesoDiaApagado": "400"
+ },
+ {
+  "ancho": 1024,
+  "semana": "flexible",
+  "modo": "table-row",
+  "tabla": 712,
+  "caja": 712,
+  "desborde": 0,
+  "cortados": [],
+  "pagina": 0,
+  "pesoDiaActivo": "600",
+  "pesoDiaApagado": "400"
+ },
+ {
+  "ancho": 390,
+  "semana": "por-dia",
+  "modo": "grid",
+  "tabla": 334,
+  "caja": 334,
+  "desborde": 0,
+  "cortados": [],
+  "pagina": 0,
+  "pesoDiaActivo": "600",
+  "pesoDiaApagado": "400"
+ },
+ {
+  "ancho": 390,
+  "semana": "flexible",
+  "modo": "grid",
+  "tabla": 334,
+  "caja": 334,
+  "desborde": 0,
+  "cortados": [],
+  "pagina": 0,
+  "pesoDiaActivo": "600",
+  "pesoDiaApagado": "400"
+ }
+]

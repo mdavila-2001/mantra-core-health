@@ -8,6 +8,7 @@
   position: relative;
   overflow: auto;
   max-block-size: min(72vh, 52rem);
+  max-block-size: min(72dvh, 52rem);
   min-block-size: 14rem;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
@@ -210,4 +211,24 @@
   border-inline-start: 2px solid var(--st-error-fg);
   z-index: 4;
   pointer-events: none;
+}
+
+/* Celular: la columna de rótulos es pegajosa y a 13 rem se comía casi la mitad de los 390 px, con las barras de cita
+   escondidas detrás. Se angosta, y el nombre y la ocupación se parten en renglones en vez de cortarse. */
+@media (max-width: 779px) {
+  :host {
+    --rotulo: 8.5rem;
+  }
+
+  .linea__nombre,
+  .linea__detalle {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .linea__ocupacion {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-1);
+  }
 }

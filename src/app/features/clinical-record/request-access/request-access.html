@@ -16,6 +16,28 @@
       <app-alert tone="error" title="No se pudo enviar">{{ error() }}</app-alert>
     }
 
+    @switch (conflicto()) {
+      @case ('activo') {
+        <app-alert tone="info" title="Ya tiene un vínculo activo con este paciente">
+          No hace falta pedirlo de nuevo. Puede abrir su expediente desde la
+          agenda o desde su consulta.
+        </app-alert>
+      }
+      @case ('pendiente') {
+        <app-alert tone="info" title="Ya pidió la vinculación">
+          El paciente todavía no respondió. Espere su decisión: no hace falta
+          volver a pedirla.
+        </app-alert>
+      }
+      @case ('desconocido') {
+        <app-alert tone="info" title="Ya hay un pedido con este paciente">
+          Ya existe una solicitud pendiente o un vínculo activo con este paciente.
+          Si todavía no respondió, espere su decisión; si ya aceptó, puede abrir su
+          expediente desde la agenda o desde su consulta.
+        </app-alert>
+      }
+    }
+
     @if (sinOrganizacion()) {
       <app-alert tone="warning" title="Elija una organización">
         El pedido se hace a nombre de la organización con la que está trabajando.
@@ -24,10 +46,52 @@
     }
 
     <app-alert tone="info">
-      Pedir NO le da acceso todavía: el paciente recibe un aviso y elige qué
-      especialidades autorizarle. Puede seguir buscando mientras espera su
-      decisión.
+      Pedir NO le da acceso todavía: el paciente recibe un aviso y decide.
+      @switch (scope()) {
+        @case ('CABECERA') {
+          Si acepta, usted queda como su médico de cabecera.
+        }
+        @case ('GRANULAR') {
+          Puede autorizarle todas las especialidades que pide o sólo algunas.
+        }
+      }
+      Puede seguir buscando mientras espera su decisión.
     </app-alert>
+
+    <div class="solicitar-acceso__alcance">
+      <p class="solicitar-acceso__pregunta" aria-hidden="true">Qué le pide al paciente</p>
+      <app-segmented-control
+        data-testid="request-access-scope"
+        ariaLabel="Qué le pide al paciente"
+        size="md"
+        [options]="scopes"
+        [value]="scope()"
+        (valueChange)="scope.set($event)"
+      />
+    </div>
+
+    @if (scope() === 'GRANULAR') {
+      @if (specialtiesError(); as message) {
+        <app-alert tone="error" data-testid="request-access-specialties-error">
+          {{ message }}
+          <button alert-actions app-button type="button" variant="outline" size="sm" (clicked)="loadSpecialties()">
+            Volver a intentar
+          </button>
+        </app-alert>
+      }
+      <app-form-field
+        label="Especialidades que pide"
+        hint="El paciente ve esta lista y decide cuáles le autoriza."
+        class="solicitar-acceso__especialidades"
+      >
+        <app-checkbox-group
+          data-testid="request-access-specialties"
+          [options]="specialtyOptions()"
+          [value]="chosenSpecialties()"
+          (valueChange)="chosenSpecialties.set($event)"
+        />
+      </app-form-field>
+    }
 
     <app-form-field icon="note" label="Motivo (opcional)" hint="El paciente va a ver este texto en el aviso.">
       <app-textarea

@@ -21,7 +21,7 @@
   }
 
   @if (scope.pharmacyId() !== null) {
-    <app-card class="import" padding="lg" data-testid="import-card">
+    <div class="import" data-testid="import-card">
       <div class="import__panel">
         <app-stepper [steps]="steps()" label="Pasos de la importación" />
 
@@ -57,7 +57,8 @@
                       accept=".csv"
                       [maxSizeBytes]="maxBytes"
                       [maxFiles]="1"
-                      [disabled]="analyzing()"
+                      [uploading]="analyzing()"
+                      uploadingLabel="Revisando el archivo…"
                       [files]="files()"
                       (filesChange)="onFilesChange($event)"
                       (rejected)="showRejection($event)"
@@ -74,9 +75,6 @@
                   }
                 }
 
-                @if (analyzing()) {
-                  <p class="import__secondary" role="status">Revisando el archivo…</p>
-                }
                 @if (fileError(); as error) {
                   <app-alert tone="error" title="No se puede usar este archivo" data-testid="import-file-error">
                     {{ error }}
@@ -280,7 +278,8 @@
               <h2 id="import-server-title" class="import__subtitle">Vista previa del servidor</h2>
               @switch (serverPreview().status) {
                 @case ('loading') {
-                  <p class="import__secondary" role="status">
+                  <p class="import__secondary import__busy" role="status">
+                    <app-spinner size="sm" decorative />
                     Consultando al servidor qué pasaría con cada fila lista. Todavía no se guarda nada.
                   </p>
                 }
@@ -299,6 +298,13 @@
                     <p><strong>{{ previewCounts().unchanged }}</strong> sin cambios</p>
                     <p><strong>{{ previewCounts().rejected }}</strong> rechazadas por el servidor</p>
                   </div>
+                  @if (previewWarned() > 0) {
+                    <app-alert tone="warning" data-testid="import-preview-warned">
+                      {{ previewWarned() }} {{ previewWarned() === 1 ? 'fila se cargaría' : 'filas se cargarían' }}
+                      con un aviso: un producto que pide receta sin medicamento vinculado no aparece en
+                      ninguna receta. Agregue la columna «medicamento» o vincúlelo después desde su ficha.
+                    </app-alert>
+                  }
                   @if (previewCounts().rejected > 0) {
                     <app-data-table
                       caption="Filas que el servidor rechazaría, con el motivo"
@@ -356,7 +362,11 @@
               <button
                 app-button
                 type="button"
-                [disabled]="readyRows().length === 0 || serverPreview().status === 'loading'"
+                [disabled]="
+                  readyRows().length === 0 ||
+                  serverPreview().status === 'loading' ||
+                  serverPreview().status === 'failed'
+                "
                 (clicked)="publish()"
                 data-testid="import-publish"
               >
@@ -461,7 +471,7 @@
           }
         }
       </div>
-    </app-card>
+    </div>
   }
 </app-view-state-host>
 

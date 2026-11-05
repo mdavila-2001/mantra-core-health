@@ -84,7 +84,7 @@ function itemsOf(resourceType: ShareResourceType, resourceId: string): Simulated
 /** Emitido y con `valid_to` futuro: lo que cuenta como receta vigente (S-2). */
 function isActive(item: SimulatedPrescription, now: number): boolean {
   return (
-    item.statusConceptId === PRESCRIPTION_STATUS['MR_ISSUED'] &&
+    item.statusConceptId === PRESCRIPTION_STATUS['clinical:MEDICATION_REQUEST_ISSUED'] &&
     item.issuedAt !== null &&
     endOfValidity(item) > now
   );

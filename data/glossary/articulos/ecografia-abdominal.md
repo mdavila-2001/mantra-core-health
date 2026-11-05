@@ -1,5 +1,6 @@
 ---
 slug: ecografia-abdominal
+image: ecografia-abdominal.svg | Órganos que explora la ecografía abdominal y cómo se hace | Vista frontal del abdomen con hígado, vesícula, bazo, páncreas, riñones y aorta, junto a una sonda de ultrasonidos y los pasos de la prueba
 ---
 
 ## [definition] Introducción

@@ -98,3 +98,39 @@ describe('toMedicationCard', () => {
     expect(details.find((fila) => fila.label === 'Venta')?.value).toBe('Venta libre');
   });
 });
+
+describe('toMedicationCard · para qué sirve', () => {
+  it('muestra el uso que encontró la búsqueda, o el grupo más específico', () => {
+    const porUso = toMedicationCard(
+      medicamento({ uses: ['Presión alta'], matchedBy: 'use', matchedUse: 'Presión alta' }),
+    );
+    expect(porUso.card.atributos[0]).toMatchObject({
+      clave: 'grupo',
+      texto: 'Sirve para: Presión alta',
+    });
+    expect(porUso.details).toContainEqual(expect.objectContaining({ value: 'Presión alta' }));
+
+    const sinUso = toMedicationCard(medicamento());
+    expect(sinUso.card.atributos.some((a) => a.clave === 'grupo')).toBe(false);
+  });
+});
+
+describe('toMedicationCard · sin farmacia que lo publique', () => {
+  it('no inventa precio y dice que ninguna farmacia lo publica', () => {
+    const tarjeta = toMedicationCard(
+      medicamento({
+        priceFrom: null,
+        priceTo: null,
+        currency: null,
+        pharmacyCount: 0,
+        nearestKm: null,
+        uses: ['Dolor abdominal y cólicos'],
+      }),
+    );
+    expect(tarjeta.card.atributos.map((a) => a.texto)).toEqual([
+      'Sirve para: Dolor abdominal y cólicos',
+      'Ninguna farmacia de la red lo publica todavía',
+    ]);
+    expect(hasPriceRange(tarjeta.medication)).toBe(false);
+  });
+});

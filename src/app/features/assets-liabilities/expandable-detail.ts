@@ -14,7 +14,7 @@ export class ExpandableDetail<T> {
   readonly state = signal<ViewState<T>>(loading());
 
   constructor(
-    private readonly fetch: (id: string) => Observable<T>,
+    private readonly request: (id: string) => Observable<T>,
     private readonly toState: (data: T) => ViewState<T>,
   ) {}
 
@@ -34,7 +34,7 @@ export class ExpandableDetail<T> {
 
   private load(id: string): void {
     this.state.set(loading());
-    this.fetch(id).subscribe({
+    this.request(id).subscribe({
       next: (data) => this.state.set(this.toState(data)),
       error: (error: unknown) => this.state.set(errorToViewState<T>(error)),
     });

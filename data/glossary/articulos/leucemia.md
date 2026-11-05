@@ -1,5 +1,6 @@
 ---
 slug: leucemia
+image: leucemia.svg | Las células inmaduras de la leucemia desplazan a las sanas en la médula ósea. | Hueso con la médula ósea llena de blastos inmaduros que desplazan a las células sanas, con sus consecuencias: anemia, sangrado por falta de plaquetas e infecciones. A la derecha, los cuatro tipos principales: mieloide o linfoide, aguda o crónica.
 ---
 
 ## [definition] Introducción

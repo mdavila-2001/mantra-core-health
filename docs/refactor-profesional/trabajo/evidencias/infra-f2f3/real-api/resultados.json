@@ -1,0 +1,481 @@
+{
+  "corridas": [
+    {
+      "fecha": "2026-10-31T11:28:42.610Z",
+      "registro": [
+        {
+          "que": "marcar sucia · request/response",
+          "datos": {
+            "method": "POST",
+            "url": "/care-spaces/0d25aed4-57e7-4110-a075-eb6d3573795f/hygiene",
+            "ifMatch": null,
+            "ifMatchOps": "1",
+            "body": {
+              "action": "mark-dirty",
+              "reasonText": "Derrame de suero en la cabecera"
+            },
+            "status": 200,
+            "response": {
+              "cell": {
+                "id": "0d25aed4-57e7-4110-a075-eb6d3573795f",
+                "code": "CE6G9-A",
+                "name": "Cama A",
+                "path": [
+                  {
+                    "id": "bf1dadba-cf4e-445f-be32-0aadb18b1f6b",
+                    "code": "ED-WMVWBE6G9",
+                    "name": "Edificio central",
+                    "form": "LOC_FORM_BUILDING"
+                  },
+                  {
+                    "id": "f44eb871-3317-4476-95d5-1150af701371",
+                    "code": "H1-WMVWBE6G9",
+                    "name": "Habitación 1",
+                    "form": "LOC_FORM_ROOM"
+                  }
+                ],
+                "form": "LOC_FORM_BED",
+                "function": "SPACE_FN_BED_STANDARD",
+                "lifecycle": "ACTIVE",
+                "availability": {
+                  "code": "SPACE_OP_AVAILABLE",
+                  "reasonCode": null,
+                  "reasonText": null,
+                  "expectedUntil": null,
+                  "since": null
+                },
+                "hygiene": {
+                  "code": "HYG_DIRTY",
+                  "since": "2026-10-31T11:28:41.860Z",
+                  "terminalRequired": false
+                },
+                "isolation": {
+                  "code": "ISO_NONE",
+                  "organism": null,
+                  "since": null
+                },
+                "occupancy": {
+                  "code": "OCC_FREE",
+                  "since": null,
+                  "encounterId": null,
+                  "encounterLocationId": null
+                },
+                "v2Code": "H",
+                "assignable": false,
+                "openCleaningOrderId": "aae695e6-6376-4489-b052-229f25d82946",
+                "lastEventAt": "2026-10-31T11:28:41.860Z",
+                "opsVersion": 2,
+                "unitId": "4565da47-f25a-49a0-8f9c-0937b81cacbb",
+                "actions": []
+              },
+              "cleaningOrderId": "aae695e6-6376-4489-b052-229f25d82946",
+              "requestId": "0e114eb3-f90f-41e0-95cf-25b7d37feaf2"
+            },
+            "requestId": "0e114eb3-f90f-41e0-95cf-25b7d37feaf2"
+          }
+        },
+        {
+          "que": "marcar sucia · SELECT",
+          "datos": {
+            "care_spaces": [
+              [
+                "practice:HYG_DIRTY",
+                "2"
+              ]
+            ],
+            "cleaning_orders": [
+              [
+                "aae695e6-6376-4489-b052-229f25d82946",
+                "practice:CLN_PENDING"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "fecha": "2026-10-31T11:38:58.606Z",
+      "registro": [
+        {
+          "que": "marcar sucia · request/response",
+          "datos": {
+            "method": "POST",
+            "url": "/care-spaces/b10f1225-5518-43d9-9084-3540ef380774/hygiene",
+            "ifMatch": null,
+            "ifMatchOps": "1",
+            "body": {
+              "action": "mark-dirty",
+              "reasonText": "Derrame de suero en la cabecera"
+            },
+            "status": 200,
+            "response": {
+              "cell": {
+                "id": "b10f1225-5518-43d9-9084-3540ef380774",
+                "code": "CE6G9-B",
+                "name": "Cama B",
+                "path": [
+                  {
+                    "id": "bf1dadba-cf4e-445f-be32-0aadb18b1f6b",
+                    "code": "ED-WMVWBE6G9",
+                    "name": "Edificio central",
+                    "form": "LOC_FORM_BUILDING"
+                  },
+                  {
+                    "id": "f44eb871-3317-4476-95d5-1150af701371",
+                    "code": "H1-WMVWBE6G9",
+                    "name": "Habitación 1",
+                    "form": "LOC_FORM_ROOM"
+                  }
+                ],
+                "form": "LOC_FORM_BED",
+                "function": "SPACE_FN_BED_STANDARD",
+                "lifecycle": "ACTIVE",
+                "availability": {
+                  "code": "SPACE_OP_AVAILABLE",
+                  "reasonCode": null,
+                  "reasonText": null,
+                  "expectedUntil": null,
+                  "since": null
+                },
+                "hygiene": {
+                  "code": "HYG_DIRTY",
+                  "since": "2026-10-31T11:29:04.106Z",
+                  "terminalRequired": false
+                },
+                "isolation": {
+                  "code": "ISO_NONE",
+                  "organism": null,
+                  "since": null
+                },
+                "occupancy": {
+                  "code": "OCC_FREE",
+                  "since": null,
+                  "encounterId": null,
+                  "encounterLocationId": null
+                },
+                "v2Code": "H",
+                "assignable": false,
+                "openCleaningOrderId": "62a7c776-657e-40dd-a40e-e67a045ac224",
+                "lastEventAt": "2026-10-31T11:29:04.106Z",
+                "opsVersion": 2,
+                "unitId": "4565da47-f25a-49a0-8f9c-0937b81cacbb",
+                "actions": []
+              },
+              "cleaningOrderId": "62a7c776-657e-40dd-a40e-e67a045ac224",
+              "requestId": "bf625a11-9f83-461f-96f7-f37262f3a7a8"
+            },
+            "requestId": "bf625a11-9f83-461f-96f7-f37262f3a7a8"
+          }
+        },
+        {
+          "que": "marcar sucia · SELECT",
+          "datos": {
+            "care_spaces": [
+              [
+                "HYG_DIRTY",
+                "2"
+              ]
+            ],
+            "cleaning_orders": [
+              [
+                "62a7c776-657e-40dd-a40e-e67a045ac224",
+                "CLN_PENDING"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "fecha": "2026-10-31T11:40:07.342Z",
+      "registro": [
+        {
+          "que": "marcar sucia · request/response",
+          "datos": {
+            "method": "POST",
+            "url": "/care-spaces/a4fb85c0-bb1a-47ad-ae78-dfb38234a507/hygiene",
+            "ifMatch": null,
+            "ifMatchOps": "1",
+            "body": {
+              "action": "mark-dirty",
+              "reasonText": "Derrame de suero en la cabecera"
+            },
+            "status": 200,
+            "response": {
+              "cell": {
+                "id": "a4fb85c0-bb1a-47ad-ae78-dfb38234a507",
+                "code": "CE6G9-C",
+                "name": "Cama C",
+                "path": [
+                  {
+                    "id": "bf1dadba-cf4e-445f-be32-0aadb18b1f6b",
+                    "code": "ED-WMVWBE6G9",
+                    "name": "Edificio central",
+                    "form": "LOC_FORM_BUILDING"
+                  },
+                  {
+                    "id": "f44eb871-3317-4476-95d5-1150af701371",
+                    "code": "H1-WMVWBE6G9",
+                    "name": "Habitación 1",
+                    "form": "LOC_FORM_ROOM"
+                  }
+                ],
+                "form": "LOC_FORM_BED",
+                "function": "SPACE_FN_BED_STANDARD",
+                "lifecycle": "ACTIVE",
+                "availability": {
+                  "code": "SPACE_OP_AVAILABLE",
+                  "reasonCode": null,
+                  "reasonText": null,
+                  "expectedUntil": null,
+                  "since": null
+                },
+                "hygiene": {
+                  "code": "HYG_DIRTY",
+                  "since": "2026-10-31T11:39:51.465Z",
+                  "terminalRequired": false
+                },
+                "isolation": {
+                  "code": "ISO_NONE",
+                  "organism": null,
+                  "since": null
+                },
+                "occupancy": {
+                  "code": "OCC_FREE",
+                  "since": null,
+                  "encounterId": null,
+                  "encounterLocationId": null
+                },
+                "v2Code": "H",
+                "assignable": false,
+                "openCleaningOrderId": "6ff0de82-6713-417f-b841-8ddd26cd5391",
+                "lastEventAt": "2026-10-31T11:39:51.465Z",
+                "opsVersion": 2,
+                "unitId": "4565da47-f25a-49a0-8f9c-0937b81cacbb",
+                "actions": []
+              },
+              "cleaningOrderId": "6ff0de82-6713-417f-b841-8ddd26cd5391",
+              "requestId": "ea88f0cb-6c3c-4a78-b621-695f74aade56"
+            },
+            "requestId": "ea88f0cb-6c3c-4a78-b621-695f74aade56"
+          }
+        },
+        {
+          "que": "marcar sucia · SELECT",
+          "datos": {
+            "care_spaces": [
+              [
+                "HYG_DIRTY",
+                "2"
+              ]
+            ],
+            "cleaning_orders": [
+              [
+                "6ff0de82-6713-417f-b841-8ddd26cd5391",
+                "CLN_PENDING"
+              ]
+            ]
+          }
+        },
+        {
+          "que": "limpieza · payload del tablero sin patient/encounterId/encounterLocationId",
+          "datos": [
+            {
+              "code": "OCC_FREE",
+              "since": null,
+              "encounterId": null,
+              "encounterLocationId": null
+            },
+            {
+              "code": "OCC_FREE",
+              "since": null,
+              "encounterId": null,
+              "encounterLocationId": null
+            },
+            {
+              "code": "OCC_FREE",
+              "since": null,
+              "encounterId": null,
+              "encounterLocationId": null
+            }
+          ]
+        },
+        {
+          "que": "limpieza · empezar y terminar",
+          "datos": [
+            {
+              "method": "POST",
+              "url": "/cleaning-orders/6ff0de82-6713-417f-b841-8ddd26cd5391/start",
+              "ifMatch": "1",
+              "ifMatchOps": null,
+              "body": {},
+              "status": 200,
+              "response": {
+                "id": "6ff0de82-6713-417f-b841-8ddd26cd5391",
+                "careSpaceId": "a4fb85c0-bb1a-47ad-ae78-dfb38234a507",
+                "careSpaceCode": "CE6G9-C",
+                "careSpaceName": "Cama C",
+                "clinicalUnitId": null,
+                "typeCode": "CLEAN_ROUTINE",
+                "triggerCode": "CLN_TRG_MANUAL",
+                "priorityCode": "CLN_PRIO_ROUTINE",
+                "statusCode": "CLN_IN_PROGRESS",
+                "requestedAt": "2026-10-31T11:39:51.453Z",
+                "dueAt": null,
+                "assignedUserId": "5f7f0490-05b9-46fb-b4c1-0afaa1405583",
+                "startedAt": "2026-10-31T11:39:58.132Z",
+                "finishedAt": null,
+                "finishedByUserId": null,
+                "inspectedAt": null,
+                "inspectionResult": null,
+                "rejectionReason": null,
+                "previousOrderId": null,
+                "ageMinutes": 0,
+                "rowVersion": 2,
+                "allowedTransitions": [
+                  "assign",
+                  "finish",
+                  "cancel"
+                ],
+                "inspectionRequired": false,
+                "requestId": "847d1025-166f-405c-b3c4-170cc52f2acd"
+              },
+              "requestId": "847d1025-166f-405c-b3c4-170cc52f2acd"
+            },
+            {
+              "method": "POST",
+              "url": "/cleaning-orders/6ff0de82-6713-417f-b841-8ddd26cd5391/finish",
+              "ifMatch": "2",
+              "ifMatchOps": null,
+              "body": {},
+              "status": 200,
+              "response": {
+                "id": "6ff0de82-6713-417f-b841-8ddd26cd5391",
+                "careSpaceId": "a4fb85c0-bb1a-47ad-ae78-dfb38234a507",
+                "careSpaceCode": "CE6G9-C",
+                "careSpaceName": "Cama C",
+                "clinicalUnitId": null,
+                "typeCode": "CLEAN_ROUTINE",
+                "triggerCode": "CLN_TRG_MANUAL",
+                "priorityCode": "CLN_PRIO_ROUTINE",
+                "statusCode": "CLN_DONE",
+                "requestedAt": "2026-10-31T11:39:51.453Z",
+                "dueAt": null,
+                "assignedUserId": "5f7f0490-05b9-46fb-b4c1-0afaa1405583",
+                "startedAt": "2026-10-31T11:39:58.132Z",
+                "finishedAt": "2026-10-31T11:39:59.312Z",
+                "finishedByUserId": "5f7f0490-05b9-46fb-b4c1-0afaa1405583",
+                "inspectedAt": null,
+                "inspectionResult": null,
+                "rejectionReason": null,
+                "previousOrderId": null,
+                "ageMinutes": 0,
+                "rowVersion": 3,
+                "allowedTransitions": [
+                  "cancel"
+                ],
+                "inspectionRequired": false,
+                "requestId": "f52b3e44-4a29-45e7-8b5a-4e6e4a00fd8b"
+              },
+              "requestId": "f52b3e44-4a29-45e7-8b5a-4e6e4a00fd8b"
+            }
+          ]
+        },
+        {
+          "que": "limpieza · SELECT",
+          "datos": [
+            [
+              "CLN_DONE",
+              "5f7f0490-05b9-46fb-b4c1-0afaa1405583"
+            ]
+          ]
+        },
+        {
+          "que": "inspección · request/response",
+          "datos": {
+            "method": "POST",
+            "url": "/cleaning-orders/6ff0de82-6713-417f-b841-8ddd26cd5391/inspect",
+            "ifMatch": "3",
+            "ifMatchOps": null,
+            "body": {
+              "result": "PASS"
+            },
+            "status": 200,
+            "response": {
+              "order": {
+                "id": "6ff0de82-6713-417f-b841-8ddd26cd5391",
+                "careSpaceId": "a4fb85c0-bb1a-47ad-ae78-dfb38234a507",
+                "careSpaceCode": "CE6G9-C",
+                "careSpaceName": "Cama C",
+                "clinicalUnitId": null,
+                "typeCode": "CLEAN_ROUTINE",
+                "triggerCode": "CLN_TRG_MANUAL",
+                "priorityCode": "CLN_PRIO_ROUTINE",
+                "statusCode": "CLN_INSPECTED",
+                "requestedAt": "2026-10-31T11:39:51.453Z",
+                "dueAt": null,
+                "assignedUserId": "5f7f0490-05b9-46fb-b4c1-0afaa1405583",
+                "startedAt": "2026-10-31T11:39:58.132Z",
+                "finishedAt": "2026-10-31T11:39:59.312Z",
+                "finishedByUserId": "5f7f0490-05b9-46fb-b4c1-0afaa1405583",
+                "inspectedAt": "2026-10-31T11:40:05.166Z",
+                "inspectionResult": "PASS",
+                "rejectionReason": null,
+                "previousOrderId": null,
+                "ageMinutes": 0,
+                "rowVersion": 4,
+                "allowedTransitions": [],
+                "inspectionRequired": false
+              },
+              "nextOrderId": null,
+              "requestId": "2393ef4d-f0c0-4e22-9f09-ccde8662ffd6"
+            },
+            "requestId": "2393ef4d-f0c0-4e22-9f09-ccde8662ffd6"
+          }
+        },
+        {
+          "que": "inspección · SELECT",
+          "datos": {
+            "orden": [
+              [
+                "CLN_INSPECTED",
+                "edd7957f-80b9-446f-8cc3-c7e5f16568d4"
+              ]
+            ],
+            "higiene": [
+              [
+                "HYG_INSPECTED"
+              ]
+            ],
+            "a20": [
+              [
+                "AXIS_HYGIENE",
+                "HYG_DIRTY",
+                "ea88f0cb-6c3c-4a78-b621-695f74aade56"
+              ],
+              [
+                "AXIS_HYGIENE",
+                "HYG_CLEANING",
+                "847d1025-166f-405c-b3c4-170cc52f2acd"
+              ],
+              [
+                "AXIS_HYGIENE",
+                "HYG_CLEAN",
+                "f52b3e44-4a29-45e7-8b5a-4e6e4a00fd8b"
+              ],
+              [
+                "AXIS_HYGIENE",
+                "HYG_INSPECTED",
+                "2393ef4d-f0c0-4e22-9f09-ccde8662ffd6"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "fecha": "2026-10-31T11:45:41.484Z",
+      "registro": []
+    }
+  ]
+}

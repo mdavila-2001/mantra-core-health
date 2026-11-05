@@ -1,0 +1,141 @@
+@if (labelsFailed()) {
+  <app-alert tone="warning" data-testid="verif-etiquetas-error">
+    No pudimos leer el estado de su perfil, su matrícula y sus títulos: por eso dicen «Sin dato».
+    <button
+      app-button
+      type="button"
+      variant="secondary"
+      size="sm"
+      data-testid="verif-etiquetas-reintentar"
+      (clicked)="retry.emit()"
+    >
+      <app-nav-icon name="refresh" />
+      Reintentar
+    </button>
+  </app-alert>
+}
+
+<div class="ruta">
+  <!-- ─── Hero: progress + the ONE next action ──────────────────────────── -->
+  <section class="ruta__hero" [class.is-completa]="requiredDone()" data-testid="verif-resumen">
+    <div class="ruta__anillo" aria-hidden="true">
+      <svg viewBox="0 0 36 36">
+        <circle class="ruta__anillo-fondo" cx="18" cy="18" r="15.5" pathLength="100" />
+        <circle
+          class="ruta__anillo-avance"
+          cx="18"
+          cy="18"
+          r="15.5"
+          pathLength="100"
+          [attr.stroke-dasharray]="percent() + ' 100'"
+        />
+      </svg>
+      <span class="ruta__anillo-cifra">
+        <span
+          >{{ approved() }}<small>/{{ steps().length }}</small></span
+        >
+      </span>
+    </div>
+
+    <div class="ruta__hero-texto">
+      <p class="ruta__sobretitulo">
+        <strong>{{ approved() }} de {{ steps().length }}</strong> etapas con sello ·
+        {{ requiredApproved() }} de {{ required().length }} obligatorias
+      </p>
+      @if (next(); as paso) {
+        <h2 class="ruta__titular">Siguiente paso: {{ paso.title }}</h2>
+        <p class="ruta__bajada">{{ paso.detail }}</p>
+      } @else if (requiredDone()) {
+        <h2 class="ruta__titular">Su perfil tiene todos los sellos obligatorios</h2>
+        <p class="ruta__bajada">
+          Sus pacientes ya ven que AloVida confirmó sus datos. Sume instituciones y aseguradoras
+          para mostrar dónde atiende.
+        </p>
+      } @else {
+        <h2 class="ruta__titular">Su verificación está en marcha</h2>
+        <p class="ruta__bajada">
+          No tiene nada por hacer ahora: le avisamos cuando haya novedades.
+        </p>
+      }
+      @if (pending() > 0) {
+        <p class="ruta__espera">
+          <app-nav-icon name="mail" />
+          Tiene {{ pending() }}
+          {{
+            pending() === 1 ? 'solicitud esperando respuesta' : 'solicitudes esperando respuesta'
+          }}.
+        </p>
+      }
+      <div class="ruta__acciones">
+        @if (next()?.action; as accion) {
+          <a app-button variant="primary" data-testid="verif-siguiente" [routerLink]="accion.route">
+            {{ accion.label }}
+            <app-nav-icon name="arrow-right" />
+          </a>
+        }
+        @if (pending() > 0) {
+          <button
+            app-button
+            type="button"
+            variant="secondary"
+            data-testid="verif-ir-bandeja"
+            (clicked)="openRequests.emit()"
+          >
+            Ver solicitudes
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── The steps, required apart from optional ──────────────────────── -->
+  <div class="ruta__etapas">
+    <h3 class="ruta__grupo">Obligatorias para mostrar su sello</h3>
+    <ol class="ruta__lista" aria-label="Etapas de su verificación">
+      @for (s of required(); track s.step.key) {
+        <ng-container *ngTemplateOutlet="tramo; context: { $implicit: s }" />
+      }
+    </ol>
+
+    <h3 class="ruta__grupo">Opcionales: suman confianza</h3>
+    <ol class="ruta__lista" aria-label="Etapas opcionales">
+      @for (s of optional(); track s.step.key) {
+        <ng-container *ngTemplateOutlet="tramo; context: { $implicit: s }" />
+      }
+    </ol>
+  </div>
+
+  <!-- Why it matters: the seal as patients see it. -->
+  <app-seal-preview class="ruta__lado" [status]="badgeStatus()" />
+</div>
+
+<ng-template #tramo let-s>
+  <li
+    class="tramo tramo--{{ s.step.state }}"
+    [class.is-siguiente]="s.step === next()"
+    [attr.data-testid]="'verif-tramo-' + s.step.key"
+  >
+    <span class="tramo__marca" aria-hidden="true"><app-nav-icon [name]="s.step.icon" /></span>
+    <div class="tramo__cuerpo">
+      <h4 class="tramo__titulo">
+        <span class="sr-only">Etapa {{ s.n }}: </span>{{ s.step.title }}
+        @if (s.step === next()) {
+          <span class="tramo__siguiente">Siguiente</span>
+        }
+      </h4>
+      <p class="tramo__detalle">{{ s.step.detail }}</p>
+    </div>
+    <div class="tramo__estado">
+      <app-status-seal
+        [variant]="s.step.state === 'not-started' ? 'unknown' : s.step.state"
+        [label]="s.step.stateLabel"
+      />
+      @if (s.step.action && s.step !== next()) {
+        <a app-button variant="ghost" size="sm" [routerLink]="s.step.action.route">
+          {{ s.step.action.label }}
+          <app-nav-icon name="arrow-right" />
+        </a>
+      }
+    </div>
+  </li>
+</ng-template>

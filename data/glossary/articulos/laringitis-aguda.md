@@ -1,5 +1,6 @@
 ---
 slug: laringitis-aguda
+image: laringitis-aguda.svg | En la laringitis se hinchan las cuerdas vocales y la voz se vuelve ronca. | Vista superior de la laringe con cuerdas vocales normales y otras inflamadas y engrosadas, junto a las causas de laringitis, los cuidados y los motivos de consulta.
 ---
 
 ## [definition] Introducción

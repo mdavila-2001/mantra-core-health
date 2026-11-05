@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Anatomía patológica</title>
+  <desc id="d">Secuencia de seis pasos del trabajo del patólogo: biopsia de tejido, fijación en formol, inclusión en un bloque de parafina, cortes muy finos, tinción y examen al microscopio, que lleva a un informe que confirma o descarta un cáncer. Debajo, las muestras que estudia y las técnicas modernas que emplea.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="270" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="50" text-anchor="middle" class="title">Del tejido al diagnóstico</text>
+  <rect x="40" y="76" width="108" height="130" rx="12" fill="var(--tissue)"/>
+  <text x="94" y="180" text-anchor="middle" class="step">Biopsia</text>
+  <text x="94" y="198" text-anchor="middle" class="small muted">tejido</text>
+  <line x1="150" y1="141" x2="162" y2="141" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="164" y="76" width="108" height="130" rx="12" fill="var(--tissue)"/>
+  <text x="218" y="180" text-anchor="middle" class="step">Fijación</text>
+  <text x="218" y="198" text-anchor="middle" class="small muted">en formol</text>
+  <line x1="274" y1="141" x2="286" y2="141" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="288" y="76" width="108" height="130" rx="12" fill="var(--tissue)"/>
+  <text x="342" y="180" text-anchor="middle" class="step">Bloque</text>
+  <text x="342" y="198" text-anchor="middle" class="small muted">en parafina</text>
+  <line x1="398" y1="141" x2="410" y2="141" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="412" y="76" width="108" height="130" rx="12" fill="var(--tissue)"/>
+  <text x="466" y="180" text-anchor="middle" class="step">Cortes</text>
+  <text x="466" y="198" text-anchor="middle" class="small muted">muy finos</text>
+  <line x1="522" y1="141" x2="534" y2="141" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="536" y="76" width="108" height="130" rx="12" fill="var(--tissue)"/>
+  <text x="590" y="180" text-anchor="middle" class="step">Tinción</text>
+  <text x="590" y="198" text-anchor="middle" class="small muted">colorear</text>
+  <line x1="646" y1="141" x2="658" y2="141" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="660" y="76" width="108" height="130" rx="12" fill="var(--tissue)"/>
+  <text x="714" y="180" text-anchor="middle" class="step">Microscopio</text>
+  <text x="714" y="198" text-anchor="middle" class="small muted">el patólogo</text>
+  <ellipse cx="94" cy="126" rx="26" ry="18" fill="var(--organ)"/>
+  <rect x="198" y="100" width="28" height="54" rx="4" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <rect x="202" y="120" width="20" height="30" rx="2" fill="var(--beam)"/>
+  <ellipse cx="212" cy="136" rx="7" ry="5" fill="var(--organ)"/>
+  <rect x="326" y="110" width="44" height="40" rx="4" fill="var(--beam)" stroke="var(--line)"/>
+  <ellipse cx="348" cy="130" rx="10" ry="7" fill="var(--organ)"/>
+  <rect x="448" y="112" width="48" height="28" rx="2" fill="var(--panel)" stroke="var(--line)"/>
+  <ellipse cx="472" cy="126" rx="12" ry="6" fill="var(--organ)" opacity=".5"/>
+  <rect x="572" y="112" width="48" height="28" rx="2" fill="var(--panel)" stroke="var(--line)"/>
+  <ellipse cx="596" cy="126" rx="12" ry="6" fill="var(--purple)"/>
+  <rect x="712" y="96" width="12" height="56" rx="4" fill="var(--ink)"/>
+  <circle cx="718" cy="156" r="10" fill="var(--ink)"/>
+  <rect x="698" y="150" width="40" height="8" rx="2" fill="var(--muted)"/>
+  <text x="400" y="250" text-anchor="middle" class="lab">El informe confirma o descarta un cáncer y define su tipo exacto</text>
+  <rect x="20" y="306" width="370" height="140" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="205.0" y="336" text-anchor="middle" class="title">Qué estudia</text>
+  <text x="40" y="360" class="lab">• Biopsias y piezas quirúrgicas</text>
+  <text x="40" y="384" class="lab">• Citologías (células sueltas)</text>
+  <text x="40" y="408" class="lab">• Autopsias clínicas</text>
+  <rect x="410" y="306" width="370" height="140" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="595.0" y="336" text-anchor="middle" class="title">Técnicas modernas</text>
+  <text x="430" y="360" class="lab">• Inmunohistoquímica</text>
+  <text x="430" y="384" class="lab">• Estudios moleculares</text>
+  <text x="430" y="408" class="lab">• Patología digital</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

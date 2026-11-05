@@ -1,5 +1,6 @@
 ---
 slug: glucosa-en-sangre
+image: glucosa-en-sangre.svg | La insulina permite que la glucosa de la sangre entre en las células. | Esquema de la glucosa desde los alimentos a la sangre y a las células con la insulina del páncreas, y lista de formas de medirla con tubo de sangre y gota capilar.
 ---
 
 ## [definition] Introducción

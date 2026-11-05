@@ -127,6 +127,10 @@ function columnByRelation(type: GlossaryRelationType, direction: RouteGroupRef['
       return outgoing ? 'specialties' : 'diseases';
     case 'DISEASE':
       return 'diseases';
+    case 'INCLUDES':
+    case 'PERFORMS':
+    case 'SENDS_DATA_TO':
+      return 'equipment';
     case 'DIAGNOSTIC_CRITERION':
     case 'REQUIRED_TEST':
     case 'REFERRAL_CRITERION':

@@ -1,0 +1,11 @@
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.medication-link__note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

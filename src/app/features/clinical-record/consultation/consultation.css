@@ -253,6 +253,20 @@ app-content-dialog {
   color: var(--text-primary);
 }
 
+/* Sin cifra todavía (o sin lectura): el mismo lugar, sin negrita de dato. */
+.consulta__casilla-cantidad--pendiente {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* La lectura falló: tono de aviso, con su borde para no depender sólo del color. */
+.consulta__casilla-cantidad--fallida {
+  font-weight: 500;
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  box-shadow: inset 0 0 0 1px var(--st-warning-bd);
+}
+
 .consulta__casilla-cantidad-rotulo {
   font-weight: 500;
   color: var(--text-secondary);

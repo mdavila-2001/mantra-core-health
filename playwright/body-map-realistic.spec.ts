@@ -156,13 +156,14 @@ test.describe('Mapa corporal · maniquí 3D', () => {
     await page.goto(RUTA);
     await esperarRender(page, 'neutral', 'front');
 
-    await page.getByTestId('body-map-pecho').hover();
-    await expect(mapa(page).locator('.body-map__pista')).toHaveText('Pecho y respiración');
+    await page.getByTestId('body-map-pecho-der').hover();
+    await expect(mapa(page).locator('.body-map__pista')).toHaveText('Pecho, lado derecho');
     await mapa(page).screenshot({ path: join(EVIDENCE, 'state-hover.png') });
 
-    await page.getByTestId('body-map-estomago').click({ force: true });
-    await expect(page.getByTestId('body-map-estomago')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByTestId('body-map-elegida')).toContainText('Estómago');
+    await page.getByTestId('body-map-epigastrio').click({ force: true });
+    await expect(page.getByTestId('body-map-epigastrio')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('body-map-elegida')).toContainText('Boca del estómago');
+    await expect(page.getByTestId('body-map-rotulo')).toHaveText('Boca del estómago');
     await page.mouse.move(0, 0);
     await mapa(page).screenshot({ path: join(EVIDENCE, 'state-selected.png') });
 
@@ -181,15 +182,15 @@ test.describe('Mapa corporal · maniquí 3D', () => {
     await page.keyboard.press('Tab');
     await expect(page.getByTestId('body-map-cabeza')).toBeFocused();
     await page.keyboard.press('Tab');
-    await expect(page.getByTestId('body-map-garganta')).toBeFocused();
+    await expect(page.getByTestId('body-map-cuello-der')).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(page.getByTestId('body-map-garganta')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('body-map-cuello-der')).toHaveAttribute('aria-pressed', 'true');
 
     await page.keyboard.press('Tab');
-    await expect(page.getByTestId('body-map-hombros')).toBeFocused();
+    await expect(page.getByTestId('body-map-garganta')).toBeFocused();
     const antes = await page.evaluate(() => window.scrollY);
     await page.keyboard.press('Space');
-    await expect(page.getByTestId('body-map-hombros')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('body-map-garganta')).toHaveAttribute('aria-pressed', 'true');
     expect(await page.evaluate(() => window.scrollY)).toBe(antes);
     await mapa(page).screenshot({ path: join(EVIDENCE, 'keyboard-focus.png') });
     expect(nuevos(errores)).toEqual([]);

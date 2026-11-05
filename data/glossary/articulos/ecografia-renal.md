@@ -1,5 +1,6 @@
 ---
 slug: ecografia-renal
+image: ecografia-renal.svg | La ecografía renal muestra los riñones con ultrasonido, sin radiación. | Espalda con los dos riñones a ambos lados de la columna y los uréteres, con una sonda de ecografía en el costado, junto a los hallazgos que puede detectar, como cálculos o quistes.
 ---
 
 ## [definition] Introducción

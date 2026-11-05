@@ -1,0 +1,817 @@
+{
+ "auditor": "literature-audit-r2-2",
+ "items": [
+  {
+   "id": "FMA:37699",
+   "sentence": 1,
+   "es": "En 11 pacientes estimulados durante la cirugía, la respuesta máxima de la cabeza larga se obtuvo sobre todo desde las divisiones posteriores de los troncos medio e inferior del plexo braquial (6 y 5 casos).",
+   "cites": [
+    "PMID:21953911"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'maximal amplitude of CMAP from LTB was induced mainly by stimulation of the PDMT and PDLT (6 out of 11 and 5 out of 11)'; sigue la construccion. Matiz: se estimularon 17 pacientes (lado donante sano), LTB informado en 11."
+  },
+  {
+   "id": "FMA:37699",
+   "sentence": 2,
+   "es": "En el estudio anatómico de una técnica de transposición, su nervio midió de media 5,5 cm y daba 3-4 ramas terminales.",
+   "cites": [
+    "PMID:10641328"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'mean length of the nerve of the long head ... 5.5 cm, the number of terminal branches was 3-4': traduccion directa."
+  },
+  {
+   "id": "FMA:37699",
+   "sentence": 3,
+   "es": "En ese estudio, el 70 % del aporte vascular procedía de la arteria braquial, y en el 33 % había un segundo hilio neurovascular 2-3 cm distal al principal.",
+   "cites": [
+    "PMID:10641328"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'70% of the vascular supply was from the brachial artery ... In 33% there was an additional neurovascular hilus 2-3 cm distally': traduccion directa."
+  },
+  {
+   "id": "FMA:37699",
+   "sentence": 4,
+   "es": "En 10 especímenes de miembro superior, su brazo de momento fue de 2,3 cm y su cambio de longitud equivalió al 28 % de la longitud óptima.",
+   "cites": [
+    "PMID:10828324"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'10 upper extremity specimens'; 'long head of triceps (length change=28% of optimal length) ... moment arm 2.3cm'. Cifras correctas."
+  },
+  {
+   "id": "FMA:37699",
+   "sentence": 5,
+   "es": "Su transposición pediculada se ha descrito para restablecer la flexión del codo en lesiones antiguas del plexo braquial.",
+   "cites": [
+    "PMID:10641328"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'A new technique of restored flexion in the elbow joint in an inveterate injury of the brachial plexus is described'; parafraseo."
+  },
+  {
+   "id": "FMA:37699",
+   "sentence": 6,
+   "es": "En una disección se describió un músculo axilopectoral (de Langer) que iba de la apófisis coracoides hasta la cabeza larga del tríceps.",
+   "cites": [
+    "PMID:15768417"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'a muscle originating from the coracoid process ... extending to the long head of triceps brachii was observed' (Langer's/axillopectoral) traducido oracion a oracion."
+  },
+  {
+   "id": "FMA:46019",
+   "sentence": 1,
+   "es": "En 14 especímenes de cadáver sometidos a liberación lateral con una sola incisión para el hallux valgus, el tendón de la cabeza oblicua se lesionó de forma inadvertida en un caso.",
+   "cites": [
+    "PMID:30326351"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'fourteen fresh frozen cadaveric specimens'; 'One case of iatrogenic injury to the oblique head of adductor hallucis tendon'."
+  },
+  {
+   "id": "FMA:8070",
+   "sentence": 1,
+   "es": "De los 96 cartílagos costales de cadáver estudiados con morfometría geométrica, el quinto fue el de trazado más recto.",
+   "cites": [
+    "PMID:29195250"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'A total of 96 cadaveric costal cartilages were analyzed through geometric morphometric analysis. The fifth costal cartilage was determined to have the straightest shape': sigue ambas oraciones."
+  },
+  {
+   "id": "FMA:8070",
+   "sentence": 2,
+   "es": "Esa rectitud lo haría, según los autores, particularmente adecuado como injerto de aposición sobre el dorso nasal en la rinoplastia.",
+   "cites": [
+    "PMID:29195250"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'would therefore be particularly suitable for nasal dorsum onlay grafting': traduccion directa."
+  },
+  {
+   "id": "FMA:8070",
+   "sentence": 3,
+   "es": "En tres casos de estenosis subglótica o traqueal alta se usó un injerto de quinto cartílago costal pediculado sobre los vasos torácicos internos e intercostales, sin formación de tejido de granulación.",
+   "cites": [
+    "PMID:15616924"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'vascular pedicled fifth costal cartilage graft ... internal thoracic artery and vein and intercostal artery and vein'; '3 cases'; 'No granulation tissue was observed'."
+  },
+  {
+   "id": "UBERON:0001051",
+   "sentence": 1,
+   "es": "Pese a los progresos de la cirugía y de los tratamientos no quirúrgicos, la supervivencia del carcinoma de hipofaringe no ha mejorado, y aun con terapia multimodal, en el mejor de los casos, dos tercios de los pacientes obtienen paliación en lugar de curación.",
+   "cites": [
+    "PMID:15062363"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'Despite advances in surgical and nonsurgical treatment, overall survival ... have not improved ... at best, two thirds of patients are palliated rather than cured': traduccion directa."
+  },
+  {
+   "id": "UBERON:0001051",
+   "sentence": 2,
+   "es": "En 2550 pacientes con carcinoma escamoso de laringe o hipofaringe, las metástasis tardías y a distancia fueron más frecuentes en los tumores hipofaríngeos, con una incidencia tres veces mayor que en los laríngeos.",
+   "cites": [
+    "PMID:11404625"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'Highest incidence of delayed and distant metastases occurred in hypopharyngeal tumors and was three times greater than in laryngeal cancers': traduccion directa; n=2550 correcto."
+  },
+  {
+   "id": "UBERON:0001051",
+   "sentence": 3,
+   "es": "Entre 2001 y 2016, la incidencia del carcinoma escamoso basaloide de hipofaringe fue de 0,0161 por 100 000 personas, y la mayoría de los 213 casos registrados se diagnosticó en estadio IV.",
+   "cites": [
+    "PMID:34319483"
+   ],
+   "verdict": "parcial",
+   "copied": false,
+   "aspectOk": true,
+   "note": "Cifras correctas (0.0161/100000, 213 casos, estadio IV 65.38%), pero la incidencia es la del registro SEER (EE. UU.); la frase la presenta sin ese alcance poblacional."
+  },
+  {
+   "id": "UBERON:0001051",
+   "sentence": 4,
+   "es": "La tomografía computarizada y la resonancia complementan a la endoscopia en el estudio previo al tratamiento del cáncer de hipofaringe y ayudan a detectar recidivas.",
+   "cites": [
+    "PMID:9747193"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'CT and MR imaging plays an indispensable complementary role to endoscopy in the pretherapeutic work-up ... valuable for the detection of tumor recurrence': sigue la oracion."
+  },
+  {
+   "id": "UBERON:0001051",
+   "sentence": 5,
+   "es": "Los liposarcomas de laringe e hipofaringe suelen analizarse juntos y constituyen el 10-15 % de los liposarcomas de cabeza y cuello.",
+   "cites": [
+    "PMID:11998522"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'All the literature considers laryngeal and hypopharyngeal liposarcomas together, and they represent 10-15% of all LS of the head and neck': traduccion directa."
+  },
+  {
+   "id": "UBERON:0001355",
+   "sentence": 1,
+   "es": "Rama más voluminosa de la arteria femoral, la femoral profunda se encarga de irrigar los músculos del muslo.",
+   "cites": [
+    "PMID:26780216"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'The DFA is the largest branch of the FA and is responsible for vascularization of the thigh muscles': traduccion directa."
+  },
+  {
+   "id": "UBERON:0001355",
+   "sentence": 2,
+   "es": "Un metaanálisis de 25 estudios con 2502 miembros inferiores identificó seis patrones de origen, el más común de ellos posterior (38,8 %).",
+   "cites": [
+    "PMID:26780216"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'25 articles (n = 2,502 lower limbs) ... Six different patterns ... most common type being a posterior origin (38.8%)': sigue las oraciones."
+  },
+  {
+   "id": "UBERON:0001355",
+   "sentence": 3,
+   "es": "En ese metaanálisis, la distancia media agrupada entre su origen y el punto medio inguinal fue de 41,15 mm.",
+   "cites": [
+    "PMID:26780216"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'pooled mean distance ... to the mid-inguinal point was 41.15 mm': traduccion directa."
+  },
+  {
+   "id": "UBERON:0001355",
+   "sentence": 4,
+   "es": "En la disección de 100 miembros, la arteria nacía a una distancia mediana de 4,4 cm del ligamento inguinal y daba origen a la circunfleja femoral medial en el 63 % de los casos.",
+   "cites": [
+    "PMID:3842043"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'dissected 100 legs'; 'median distance of 4.4 cm from the inguinal ligament'; 'medial circumflex ... from the deep femoral in 63%'."
+  },
+  {
+   "id": "UBERON:0001355",
+   "sentence": 5,
+   "es": "Una rama circunfleja femoral lateral de la vena femoral superficial cruza por delante de la arteria femoral profunda entre 1 y 2 cm por debajo de la bifurcación femoral, lo que ayuda a localizarla en una ingle con cicatrices.",
+   "cites": [
+    "PMID:7404298"
+   ],
+   "verdict": "parcial",
+   "copied": false,
+   "aspectOk": true,
+   "note": "Fiel a 'lateral femoral circumflex branch of the superficial femoral vein which crosses directly over the DFA 1 to 2 cm distal to the bifurcation', pero en castellano anatomico una vena recibe tributarias/afluentes, no 'ramas'; 'cruza por delante' por 'directly over' aceptable."
+  },
+  {
+   "id": "UBERON:0001355",
+   "sentence": 6,
+   "es": "Cuando se obstruye el eje principal, la angiografía muestra anastomosis entre la femoral profunda y el eje femoropoplíteo a través de las arterias perforantes y de las circunflejas femorales.",
+   "cites": [
+    "PMID:7326450"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'anastomoses ... clearly visible in angiographic studies when there is an obstruction of the main arterial axis ... perforating ... lateral circumflex ... medial circumflex': sigue ambas oraciones."
+  },
+  {
+   "id": "UBERON:0001773",
+   "sentence": 1,
+   "es": "La cubierta más externa del globo ocular corresponde a este tejido conectivo denso y fibroso, de comportamiento viscoelástico.",
+   "cites": [
+    "PMID:16202407"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'dense, fibrous, viscoelastic connective tissue that forms the outer coat of the eye': traduccion directa reordenada."
+  },
+  {
+   "id": "UBERON:0001773",
+   "sentence": 2,
+   "es": "Los fibroblastos esclerales, alojados entre láminas de fibrillas colágenas dispuestas sin orden regular, producen la matriz que los rodea.",
+   "cites": [
+    "PMID:16202407"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'irregularly arranged lamellae of collagen fibrils'; 'Scleral fibroblasts are located between scleral lamellae, and are responsible for synthesizing the ECM in which they reside': traduccion directa."
+  },
+  {
+   "id": "UBERON:0001773",
+   "sentence": 3,
+   "es": "En 55 ojos de banco fijados, el grosor medio fue de 0,53 ± 0,14 mm en el limbo, de 0,39 ± 0,17 mm cerca del ecuador y de 0,9 a 1,0 mm junto al nervio óptico.",
+   "cites": [
+    "PMID:9467451"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'Fifty-five formalin-fixed eye bank eyes'; '0.53 +/- 0.14 mm at the limbus ... 0.39 +/- 0.17 mm near the equator ... 0.9 to 1.0 mm near the optic nerve': sigue la oracion de resultados."
+  },
+  {
+   "id": "UBERON:0001773",
+   "sentence": 4,
+   "es": "Un estudio con tomografía de coherencia óptica en 95 participantes halló la esclera anterior más delgada en la región superior y más gruesa en la inferior (475,3 ± 19,0 frente a 605,9 ± 18,6 µm).",
+   "cites": [
+    "PMID:32271887"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'95 participants'; swept-source OCT; 'anterior sclera was thinnest in the superior and thickest in the inferior region (475.3 ± 19.0 vs. 605.9 ± 18.6 µm)': traduccion directa."
+  },
+  {
+   "id": "UBERON:0001773",
+   "sentence": 5,
+   "es": "No es un envoltorio estático: remodela su matriz extracelular según el entorno visual y así interviene en el tamaño del ojo y en la refracción.",
+   "cites": [
+    "PMID:16202407"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'the sclera is not a static container of the eye ... altering ECM composition ... in response to changes in the visual environment to regulate ocular size and refraction': sigue la oracion."
+  },
+  {
+   "id": "UBERON:0001773",
+   "sentence": 6,
+   "es": "En la miopía alta la esclera se adelgaza y su segmento posterior puede formar una ectasia localizada.",
+   "cites": [
+    "PMID:16202407"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'High myopia is characterized by scleral thinning and localized ectasia of the posterior sclera': traduccion directa."
+  },
+  {
+   "id": "UBERON:0002022",
+   "sentence": 1,
+   "es": "Oculta en lo profundo del surco lateral se encuentra la corteza insular, también llamada ínsula de Reil.",
+   "cites": [
+    "PMID:28644199"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'The insular cortex, or Island of Reil, is hidden deep within the lateral sulcus': traduccion directa."
+  },
+  {
+   "id": "UBERON:0002022",
+   "sentence": 2,
+   "es": "El número de subdivisiones descritas oscila entre 2 y 13, según se parcele por citoarquitectura, por referencias de los surcos o por conectividad.",
+   "cites": [
+    "PMID:28644199"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'Subdivisions ... cytoarchitectonics, sulcal landmarks, and connectivity. Depending on the parcellation technique ... between 2 and 13': fusiona y reordena dos oraciones."
+  },
+  {
+   "id": "UBERON:0002022",
+   "sentence": 3,
+   "es": "Al agrupar 1768 experimentos de neuroimagen, un metaanálisis separó cuatro regiones: la anterodorsal respondía a tareas cognitivas, la anteroventral a socioemocionales, la central a estímulos olfativos y gustativos y la mediposterior a tareas sensitivomotoras.",
+   "cites": [
+    "PMID:20512376"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'ALE meta-analyses of 1,768 functional neuroimaging experiments ... four functionally distinct regions'; mapeo anterodorsal-cognitivo, anteroventral-socioemocional, central-olfatogustativo, mediposterior-sensitivomotor correcto."
+  },
+  {
+   "id": "UBERON:0002022",
+   "sentence": 4,
+   "es": "Un modelo de redes propone que la ínsula anterior, junto con la corteza cingulada anterior, constituye una red de saliencia encargada de seleccionar, entre los estímulos internos y los del entorno, los que deben guiar la conducta.",
+   "cites": [
+    "PMID:20512370"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'The anterior insula and the ACC form a salience network that functions to segregate the most relevant among internal and extrapersonal stimuli in order to guide behavior': traduccion directa."
+  },
+  {
+   "id": "UBERON:0002022",
+   "sentence": 5,
+   "es": "Se ha propuesto que la corteza insular anterior, donde se encuentran las neuronas de von Economo, sustente los sentimientos subjetivos mediante la re-representación de la interocepción y que podría ser un correlato neural de la conciencia.",
+   "cites": [
+    "PMID:19096369"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'re-representation of interoception offers one possible basis for its involvement in all subjective feelings'; 'AIC (and the von Economo neurons it contains) ... potential neural correlate of consciousness'. Hedge conservado con 'se ha propuesto'; 'sustente' algo mas fuerte que 'one possible basis' pero aceptable."
+  },
+  {
+   "id": "UBERON:0002022",
+   "sentence": 6,
+   "es": "En 138 pacientes con fibromialgia, el volumen de la ínsula anterior derecha disminuía a medida que aumentaba el número de regiones dolorosas.",
+   "cites": [
+    "PMID:34433774"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'138 patients with FM'; 'decreasing trend in the volumes of the rAIC across the 3 subgroups that had an increased number of pain areas'."
+  },
+  {
+   "id": "UBERON:0002288",
+   "sentence": 1,
+   "es": "El papiloma del plexo coroideo del tercer ventrículo es infrecuente: un informe de caso lo sumaba a otros 27 recogidos en la literatura médica.",
+   "cites": [
+    "PMID:6463833"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'add a case to 27 cases of papilloma of the choroid plexus of third ventricle reported in the medical literature'."
+  },
+  {
+   "id": "UBERON:0002288",
+   "sentence": 2,
+   "es": "En ese caso, un lactante de 4 meses, el tumor se manifestó con hidrocefalia supratentorial y su volumen se multiplicó por cuatro o cinco en menos de 4 meses tras una derivación.",
+   "cites": [
+    "PMID:6463833"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'4-month-old male child'; 'supratentorial hydrocephalus'; 'four- to fivefold increase in volume ... in less than 4 months' tras el shunt."
+  },
+  {
+   "id": "UBERON:0002403",
+   "sentence": 1,
+   "es": "En 70 fetos humanos, el ramo inferior del primer nervio intercostal se distribuyó en el estrato del músculo intercostal interno.",
+   "cites": [
+    "PMID:31658338"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'70 specimens of fetuses'; 'the inferior one [branch of the I IN] - in the stratum of the internal intercostal muscle': traduccion directa."
+  },
+  {
+   "id": "UBERON:0002403",
+   "sentence": 2,
+   "es": "Un estudio en 20 pacientes sometidos a toracotomía concluyó que existe un espacio anatómico potencial entre la pleura costal y el músculo intercostal interno, por donde difunde el anestésico de un bloqueo intercostal.",
+   "cites": [
+    "PMID:1510260"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'Twenty patients undergoing elective thoracotomy'; 'a potential anatomic space exists between the costal pleura and the internal intercostal muscle': traduccion de la conclusion."
+  },
+  {
+   "id": "UBERON:0002403",
+   "sentence": 3,
+   "es": "En un cadáver adulto, los músculos intercostales externo e interno se adelgazaban hacia delante hasta convertirse en una capa membranosa en la pared torácica anterior.",
+   "cites": [
+    "PMID:32521300"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'Using an adult cadaver'; 'much thinner external and internal intercostal muscle components as they transitioned to a membranous layer anteriorly': sigue la oracion."
+  },
+  {
+   "id": "UBERON:0002403",
+   "sentence": 4,
+   "es": "En biopsias de 22 pacientes operados del tórax, la atrofia de fibras fue más marcada en el intercostal interno y se relacionó con el grado de obstrucción de la vía aérea.",
+   "cites": [
+    "PMID:7447152"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'Twenty-two patients undergoing thoracotomy'; 'Fiber atrophy was more marked in the internal intercostal muscle and was significantly related to the degree of airway obstruction': traduccion directa."
+  },
+  {
+   "id": "UBERON:0003689",
+   "sentence": 1,
+   "es": "En tomografías de 113 niños, la longitud media de la silla turca fue de 6,81 ± 1,57 mm y su diámetro de 8,52 ± 2,05 mm.",
+   "cites": [
+    "PMID:40180625"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'113 children'; 'STL, STD ... 6.81 ± 1.57 mm, 8.52 ± 2.05 mm'."
+  },
+  {
+   "id": "UBERON:0003689",
+   "sentence": 2,
+   "es": "Según la clasificación de Camp, su forma fue redonda en el 54,90 % de esos niños, oval en el 34,50 % y aplanada en el 10,60 %.",
+   "cites": [
+    "PMID:40180625"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'According to Camp classification ... oval 34.50%, round 54.90%, flattened 10.60%': sigue la oracion (reordenada)."
+  },
+  {
+   "id": "UBERON:0003689",
+   "sentence": 3,
+   "es": "En un seguimiento cefalométrico de 72 noruegos de 6 a 21 años, su longitud se mantuvo casi constante, mientras que su profundidad y su diámetro crecieron con la edad.",
+   "cites": [
+    "PMID:15650069"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'35 males and 37 females' (72) 6-21 anos, Oslo; 'length ... almost constant ... depth and diameter increased with age': traduccion directa."
+  },
+  {
+   "id": "UBERON:0003689",
+   "sentence": 4,
+   "es": "Ese estudio describió cinco variantes morfológicas: pared anterior oblicua, puente selar, doble contorno del suelo, muesca posterior del dorso y dorso piramidal.",
+   "cites": [
+    "PMID:15650069"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'five different morphological aberration types: oblique anterior wall, sella turcica bridging, double contour of the floor, irregularity (notching) ... dorsum sellae, pyramidal shape': enumeracion traducida."
+  },
+  {
+   "id": "UBERON:0003689",
+   "sentence": 5,
+   "es": "En 180 sujetos saudíes de 11 a 26 años, presentó morfología normal en el 67 %.",
+   "cites": [
+    "PMID:17693429"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'180 individuals ... 11-26 years'; 'normal morphology in the majority of subjects (67 per cent)': traduccion directa."
+  },
+  {
+   "id": "UBERON:0003689",
+   "sentence": 6,
+   "es": "Los tumores neuroendocrinos hipofisarios ectópicos, aunque muy raros, deben considerarse en el diagnóstico diferencial de las masas que la rodean.",
+   "cites": [
+    "PMID:38454561"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'Although ectopic PitNETs are exceedingly rare, they should be considered as a differential diagnosis for masses around the sella turcica': traduccion directa."
+  },
+  {
+   "id": "UBERON:0006718",
+   "sentence": 1,
+   "es": "En 179 cadáveres frescos estudiados por disección y resonancia, mostró una estructura peniforme de siete capas musculares y aponeuróticas alternas.",
+   "cites": [
+    "PMID:17318284"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'179 fresh cadavers using anatomical dissection and MRI'; 'typical penniform structure made up of seven alternating muscular/aponeurotic layers': traduccion directa."
+  },
+  {
+   "id": "UBERON:0006718",
+   "sentence": 2,
+   "es": "En un estudio en varones japoneses, sus haces de origen se fijaban, según el tipo, mediante un tendón a la lámina pterigoidea medial o a la pared posterior del maxilar, o directamente al periostio de la cara interna de la lámina lateral.",
+   "cites": [
+    "PMID:9566137"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "Tres tipos: 'inner surface of the medial pterygoid plate with a strong tendon', 'posterior maxilla wall with a strong tendon', 'directly to the periosteum of the inner surface of the lateral plate': enumeracion traducida. Aspecto 'situation' aceptable (origen)."
+  },
+  {
+   "id": "UBERON:0006718",
+   "sentence": 3,
+   "es": "Según su patrón de inervación, en 24 hemicabezas el músculo se dividió en una parte principal anteromedial y otra posterolateral.",
+   "cites": [
+    "PMID:14574465"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'24 head halves'; 'The innervation pattern indicated that the medial pterygoid muscle consists of the anteromedial and the posterolateral main parts'."
+  },
+  {
+   "id": "UBERON:0006718",
+   "sentence": 4,
+   "es": "En diez de esos lados, el nervio lingual lo atravesaba y separaba un fascículo accesorio, a menudo unido al milohioideo.",
+   "cites": [
+    "PMID:14574465"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'In ten sides ... the lingual nerve pierced the medial pterygoid ... separated as an accessory muscle bundle. The accessory bundle was frequently attached to the mylohyoid': traduccion directa."
+  },
+  {
+   "id": "UBERON:0006718",
+   "sentence": 5,
+   "es": "En 83 pacientes tratados con quimiorradioterapia, la dosis media en el pterigoideo medial homolateral predijo el trismo, con un punto de corte óptimo de 58 Gy.",
+   "cites": [
+    "PMID:30652390"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'83 patients treated with chemoradiation'; 'Optimal cutoffs were 58 Gy (mean dose iMPM)'; predictivo de trismo."
+  },
+  {
+   "id": "UBERON:0006718",
+   "sentence": 6,
+   "es": "Hay pocos casos publicados de miositis osificante traumática en los músculos masticadores, y en ellos el hallazgo dominante es que la movilidad de la mandíbula se va limitando.",
+   "cites": [
+    "PMID:24624256"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'Myositis ossificans traumatica of masticatory muscles is not frequently reported ... most common clinical finding being a progressive limitation of motion in the mandible': traduccion directa."
+  },
+  {
+   "id": "UBERON:0008592",
+   "sentence": 1,
+   "es": "Según 40 disecciones en cadáveres adultos coreanos, tiene dos capas: una que desciende por encima del elevador del labio superior y otra que queda por debajo de él.",
+   "cites": [
+    "PMID:20512646"
+   ],
+   "verdict": "parcial",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'40 specimens of embalmed Korean adult cadavers'; 'superficial layer ... descended on the LLS, and the deep layer was located deep in the LLS'. 'por encima/por debajo' es impreciso en castellano anatomico (sugiere superior/inferior); corresponde 'superficial/profunda al elevador del labio superior'."
+  },
+  {
+   "id": "UBERON:0008592",
+   "sentence": 2,
+   "es": "Con origen doble —en la capa superficial y en la apófisis frontal del maxilar—, la capa profunda iba a terminar, en esa serie, entre los músculos orbicular de la boca y elevador del ángulo de la boca.",
+   "cites": [
+    "PMID:20512646"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'deep layer of LLSAN originated from the superficial layer of LLSAN and the frontal process of the maxilla. It inserted between the levator anguli oris and the orbicularis oris': traduccion de ambas oraciones ('iba a terminar' = se insertaba)."
+  },
+  {
+   "id": "UBERON:0008592",
+   "sentence": 3,
+   "es": "Tres de cada cuatro especímenes de un grupo de 44 cadáveres coreanos (33 casos) mostraban fibras musculares o aponeurosis finas que unían el depresor de la ceja con este músculo o con las fibras inferiores del orbicular del ojo.",
+   "cites": [
+    "PMID:35231048"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'DS connected to the LLSAN or the OOc INF by muscle fibers or thin aponeuroses in 33 (75.0%) of the 44 specimens'."
+  },
+  {
+   "id": "UBERON:0008592",
+   "sentence": 4,
+   "es": "La zona comprendida entre la capa superficial del prócer y el depresor de la ceja recibía fibras de origen medial de este músculo en el 13,5 % de 53 caras de cadáveres coreanos.",
+   "cites": [
+    "PMID:28132092"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'Some medial originating fibers of the LLSAN extended superomedially to blend in the area between the superficial layer of the procerus and the depressor supercilii (13.5%)'; 53 caras coreanas."
+  },
+  {
+   "id": "UBERON:0008592",
+   "sentence": 5,
+   "es": "Un estudio en cadáveres frescos halló que el pedículo vascular del colgajo pediculado de este músculo procede de la arteria labial superior y se ubica a menos de 1 cm, en sentido lateral e inferior, del umbral nasal.",
+   "cites": [
+    "PMID:30473167"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'fresh cadavers'; 'vascular pedicle ... arises from the superior labial artery and is reliably located within 1 cm lateral and inferior of the nasal sill': traduccion directa."
+  },
+  {
+   "id": "UBERON:0011512",
+   "sentence": 1,
+   "es": "En 17 nulíparas asintomáticas estudiadas con ecografía tridimensional, el puborrectal ocupaba el tramo proximal del conducto anal (18 ± 1 mm) y el esfínter externo, el distal.",
+   "cites": [
+    "PMID:16606349"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'Seventeen asymptomatic nulliparous women ... 3D ultrasound'; 'EAS was located in the distal ... and PRM in the proximal part (length 18 +/- 1 mm)': sigue la oracion."
+  },
+  {
+   "id": "UBERON:0011512",
+   "sentence": 2,
+   "es": "La manometría atribuyó al puborrectal parte de la presión de contracción voluntaria del tramo proximal del conducto anal, aporte que podría importar para la continencia.",
+   "cites": [
+    "PMID:16606349"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'(1) PRM contributes to the squeeze pressure in the proximal part of the anal canal ... (2) PRM squeeze-related increase ... might be important in the anal continence mechanism': traduccion de las conclusiones."
+  },
+  {
+   "id": "UBERON:0011512",
+   "sentence": 3,
+   "es": "En radiografías laterales de siete recién nacidos disecados, el músculo seguía una línea trazada desde el pubis hasta el punto más bajo del isquion.",
+   "cites": [
+    "PMID:6854498"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'seven newborns'; 'lateral x-rays showed the normal radiologic position ... along a line drawn from pubis to the lowest point of the ischium': traduccion directa."
+  },
+  {
+   "id": "UBERON:0011512",
+   "sentence": 4,
+   "es": "Se le atribuye un papel en la continencia que en el pasado se infravaloró por la dificultad técnica de estudiar su función.",
+   "cites": [
+    "PMID:15836457"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'The role of the levator ani and puborectalis muscle in preserving continence has been underestimated in the past, due predominantly to technical difficulties': traduccion directa."
+  },
+  {
+   "id": "UBERON:0011512",
+   "sentence": 5,
+   "es": "En 254 gestantes nulíparas seguidas con ecografía transperineal, la deformación global del puborrectal no varió en el embarazo, pero disminuyó tras el parto vaginal espontáneo o con ventosa y no tras la cesárea.",
+   "cites": [
+    "PMID:28397366"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'254 datasets'; 'did not change during pregnancy, but after spontaneous or operative vaginal delivery the global strain diminished ... No significant change ... after Cesarean': sigue las oraciones. (280 reclutadas, 254 analizadas.)"
+  },
+  {
+   "id": "UBERON:0011512",
+   "sentence": 6,
+   "es": "En 156 mujeres revisadas dos años después de una colporrafia anterior, la avulsión completa del puborrectal se asoció a recidiva anatómica del cistocele (OR 2,4).",
+   "cites": [
+    "PMID:21822712"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'156 agreed to the follow-up visit'; 'complete avulsion of puborectalis muscle (OR, 2.4)' como factor de recidiva anatomica tras colporrafia anterior."
+  },
+  {
+   "id": "UBERON:0013761",
+   "sentence": 1,
+   "es": "En un caso de embarazo cervicoístmico llevado a término, los autores explican que el istmo se incorpora a la cavidad cervical al adelgazarse y desplegarse progresivamente hasta el orificio interno.",
+   "cites": [
+    "PMID:7393518"
+   ],
+   "verdict": "parcial",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'explained by successive thinning and unfolding of the isthmus ... up to the closed, resisting anatomic internal os. The isthmus is thus incorporated into the cervical cavity': traduccion directa, pero el presente generico ('se incorpora') pierde que es la explicacion propuesta solo para esos casos raros de embarazo cervicoistmico."
+  },
+  {
+   "id": "UBERON:0013761",
+   "sentence": 2,
+   "es": "En 29 mujeres, la instilación de solución fisiológica en la cavidad cervical mediante un catéter permitió realizar una endohisterosonografía transvaginal.",
+   "cites": [
+    "PMID:8737623"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'Twenty-nine women ... underwent transvaginal hysterosonography insertion of a physiological solution into the cervical cavity by means of a catheter': traduccion directa."
+  },
+  {
+   "id": "UBERON:0035386",
+   "sentence": 1,
+   "es": "Se sitúa justo al lado de la lámina limitante externa del parénquima hepático.",
+   "cites": [
+    "PMID:7818092"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'the space of Mall, directly adjacent to the outer limiting plate of the parenchyma': traduccion directa."
+  },
+  {
+   "id": "UBERON:0035386",
+   "sentence": 2,
+   "es": "Junto con el espacio perisinusoidal de Disse y el de Comparini, se lo considera un espacio prelinfático donde podría originarse la linfa hepática.",
+   "cites": [
+    "PMID:7818092"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'the perisinusoidal space of Disse, the space of Mall ... and the space of Comparini ... can be regarded as prelymphatic spaces from which the hepatic lymph could originate': traduccion directa."
+  },
+  {
+   "id": "UBERON:0035386",
+   "sentence": 3,
+   "es": "En la microscopía electrónica de la biopsia de un paciente con hipoplasia ductular hepática sindrómica, gruesos haces de colágeno se extendían desde los espacios porta hacia los lobulillos y obliteraban el espacio de Mall.",
+   "cites": [
+    "PMID:7238269"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "'Electron microscopy of one of the liver biopsies revealed extension of thick bundles of collagen from portal areas into hepatic lobules with obliteration of the space of Mall': traduccion directa."
+  }
+ ],
+ "summary": {
+  "sentences": 67,
+  "fiel": 63,
+  "parcial": 4,
+  "infiel": 0,
+  "copied": 48,
+  "aspectWrong": 0
+ }
+}

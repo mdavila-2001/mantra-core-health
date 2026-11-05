@@ -1,5 +1,6 @@
 ---
 slug: cirrosis-hepatica
+image: cirrosis-hepatica.svg | En la cirrosis la cicatriz y los nódulos sustituyen al tejido sano del hígado. | Comparación de un hígado sano y liso con un hígado cirrótico nodular, y una lista de las consecuencias de la cirrosis.
 ---
 
 ## [definition] Introducción

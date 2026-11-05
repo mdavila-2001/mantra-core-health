@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Psiquiatría</title>
+  <desc id="d">A la izquierda, tres círculos superpuestos del modelo biopsicosocial: biológico, psicológico y social, con la persona en el centro. A la derecha, los trastornos mentales frecuentes, como la depresión, la ansiedad, el trastorno bipolar, la esquizofrenia, las adicciones y los trastornos alimentarios, los tratamientos y el aviso de pedir ayuda urgente ante ideas de suicidio.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="440" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="240.0" y="50" text-anchor="middle" class="title">Modelo biopsicosocial</text>
+  <circle cx="180" cy="190" r="90" fill="var(--accent)" opacity=".25"/><circle cx="300" cy="190" r="90" fill="var(--purple)" opacity=".25"/><circle cx="240" cy="290" r="90" fill="var(--ok)" opacity=".25"/>
+  <text x="150" y="170" text-anchor="middle" class="step">Biológico</text>
+  <text x="150" y="190" text-anchor="middle" class="small">genes, cerebro</text>
+  <text x="330" y="170" text-anchor="middle" class="step">Psicológico</text>
+  <text x="330" y="190" text-anchor="middle" class="small">emociones, ideas</text>
+  <text x="240" y="330" text-anchor="middle" class="step">Social</text>
+  <text x="240" y="350" text-anchor="middle" class="small">familia, trabajo</text>
+  <text x="240" y="236" text-anchor="middle" class="small">Persona</text>
+  <text x="240" y="420" text-anchor="middle" class="small muted">Los trastornos surgen de la combinación</text>
+  <rect x="480" y="20" width="300" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="630.0" y="50" text-anchor="middle" class="title">Claves</text>
+  <text x="500" y="74" class="step">Trastornos frecuentes</text>
+  <rect x="500" y="88" width="126" height="34" rx="10" fill="var(--purple-l)" stroke="var(--line)"/>
+  <text x="563.0" y="110.0" text-anchor="middle" class="small">Depresión</text>
+  <rect x="634" y="88" width="126" height="34" rx="10" fill="var(--purple-l)" stroke="var(--line)"/>
+  <text x="697.0" y="110.0" text-anchor="middle" class="small">Ansiedad</text>
+  <rect x="500" y="130" width="126" height="34" rx="10" fill="var(--purple-l)" stroke="var(--line)"/>
+  <text x="563.0" y="152.0" text-anchor="middle" class="small">Trastorno bipolar</text>
+  <rect x="634" y="130" width="126" height="34" rx="10" fill="var(--purple-l)" stroke="var(--line)"/>
+  <text x="697.0" y="152.0" text-anchor="middle" class="small">Esquizofrenia</text>
+  <rect x="500" y="172" width="126" height="34" rx="10" fill="var(--purple-l)" stroke="var(--line)"/>
+  <text x="563.0" y="194.0" text-anchor="middle" class="small">Adicciones</text>
+  <rect x="634" y="172" width="126" height="34" rx="10" fill="var(--purple-l)" stroke="var(--line)"/>
+  <text x="697.0" y="194.0" text-anchor="middle" class="small">Alimentarios</text>
+  <text x="500" y="248" class="step">Tratamientos</text>
+  <text x="500" y="272" class="small">• Psicoterapia</text>
+  <text x="500" y="294" class="small">• Medicamentos</text>
+  <text x="500" y="316" class="small">• Rehabilitación y apoyo</text>
+  <rect x="500" y="350" width="260" height="70" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="630" y="374" text-anchor="middle" class="step">Ideas de suicidio:</text>
+  <text x="630" y="394" text-anchor="middle" class="small">pedir ayuda urgente</text>
+  <text x="630" y="410" text-anchor="middle" class="small">a emergencias</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

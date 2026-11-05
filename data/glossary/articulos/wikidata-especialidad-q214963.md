@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q214963
+image: wikidata-especialidad-q214963.svg | En medicina nuclear un trazador radiactivo muestra cómo funciona un órgano. | Silueta humana con un radiofármaco que se concentra en un órgano y emite radiación hacia una gammacámara que forma una imagen funcional, junto a los estudios y tratamientos de la especialidad.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,66 @@
+[
+  {
+    "nombre": "inicio-de-sesion",
+    "segundo": 0.4
+  },
+  {
+    "nombre": "registro-aseguradora",
+    "segundo": 6.3
+  },
+  {
+    "nombre": "documentos-legales",
+    "segundo": 17.94
+  },
+  {
+    "nombre": "representante-legal",
+    "segundo": 32.78
+  },
+  {
+    "nombre": "directorio-ejecutivo",
+    "segundo": 42.97
+  },
+  {
+    "nombre": "cuenta-del-dueno",
+    "segundo": 58.13
+  },
+  {
+    "nombre": "alta-confirmada",
+    "segundo": 64.32
+  },
+  {
+    "nombre": "login",
+    "segundo": 68.44
+  },
+  {
+    "nombre": "mi-perfil",
+    "segundo": 84.6
+  },
+  {
+    "nombre": "mis-productos",
+    "segundo": 92.78
+  },
+  {
+    "nombre": "solicitudes-recibidas",
+    "segundo": 125.75
+  },
+  {
+    "nombre": "aprobar",
+    "segundo": 130.63
+  },
+  {
+    "nombre": "rechazar",
+    "segundo": 145.82
+  },
+  {
+    "nombre": "siniestralidad-por-persona",
+    "segundo": 167.12
+  },
+  {
+    "nombre": "directorio",
+    "segundo": 175.92
+  },
+  {
+    "nombre": "fin",
+    "segundo": 186.36
+  }
+]

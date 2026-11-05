@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-labelledby="t d">
+  <title id="t">Por qué falta hierro y qué provoca</title>
+  <desc id="d">Diagrama de tres entradas que convergen. Entra poco hierro: dieta pobre en hierro o mala absorción. Se pierde hierro: menstruaciones abundantes, hemorragias del parto, parásitos intestinales. Se necesita más hierro: crecimiento, embarazo, lactancia. Las tres llevan a poco hierro y poca hemoglobina, con menos oxígeno llegando a los tejidos: cansancio, mareo, manos y pies fríos, dolor de cabeza y falta de aire.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#1f6fb2; --a-l:#d6e6f5; --b:#c0392b; --b-l:#f6d5cf; --c:#b7791f; --c-l:#f7e4bf; --out:#5a6878; --out-l:#e9edf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#6aa7e8; --a-l:#1f3347; --b:#ef7467; --b-l:#4a2a27; --c:#e0b25a; --c-l:#4a3b1f; --out:#9fb0c1; --out-l:#2a3541; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .hd { font-size: 14px; font-weight: 700; }
+  </style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="440" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="400" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="52" text-anchor="middle" class="title">Anemia por falta de hierro: tres caminos, una consecuencia</text>
+
+  <rect x="40" y="80" width="250" height="84" rx="10" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="165" y="106" text-anchor="middle" class="hd" style="fill:var(--a)">Entra poco hierro</text>
+  <text x="165" y="130" text-anchor="middle" class="lab">Dieta pobre en hierro</text>
+  <text x="165" y="148" text-anchor="middle" class="lab">o mala absorción</text>
+
+  <rect x="40" y="178" width="250" height="84" rx="10" fill="var(--b-l)" stroke="var(--b)" stroke-width="2"/>
+  <text x="165" y="204" text-anchor="middle" class="hd" style="fill:var(--b)">Se pierde hierro</text>
+  <text x="165" y="228" text-anchor="middle" class="lab">Menstruaciones abundantes,</text>
+  <text x="165" y="246" text-anchor="middle" class="lab">parto, parásitos intestinales</text>
+
+  <rect x="40" y="276" width="250" height="84" rx="10" fill="var(--c-l)" stroke="var(--c)" stroke-width="2"/>
+  <text x="165" y="302" text-anchor="middle" class="hd" style="fill:var(--c)">Se necesita más hierro</text>
+  <text x="165" y="326" text-anchor="middle" class="lab">Crecimiento, embarazo,</text>
+  <text x="165" y="344" text-anchor="middle" class="lab">lactancia</text>
+
+  <path d="M290 122 L 350 200" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <path d="M290 220 L 350 220" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <path d="M290 318 L 350 240" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#a)"/>
+
+  <rect x="355" y="170" width="170" height="100" rx="10" fill="var(--out-l)" stroke="var(--out)" stroke-width="2"/>
+  <text x="440" y="204" text-anchor="middle" class="hd">Poco hierro</text>
+  <text x="440" y="226" text-anchor="middle" class="lab">Menos hemoglobina</text>
+  <text x="440" y="244" text-anchor="middle" class="lab">Menos oxígeno</text>
+  <text x="440" y="260" text-anchor="middle" class="lab">en los tejidos</text>
+
+  <path d="M525 220 L 570 220" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#a)"/>
+
+  <rect x="575" y="120" width="185" height="200" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="667" y="148" text-anchor="middle" class="hd">Lo que se siente</text>
+  <text x="667" y="178" text-anchor="middle" class="lab">Cansancio</text>
+  <text x="667" y="200" text-anchor="middle" class="lab">Mareo</text>
+  <text x="667" y="222" text-anchor="middle" class="lab">Manos y pies fríos</text>
+  <text x="667" y="244" text-anchor="middle" class="lab">Dolor de cabeza</text>
+  <text x="667" y="266" text-anchor="middle" class="lab">Falta de aire al esfuerzo</text>
+  <text x="667" y="296" text-anchor="middle" class="small muted">Palidez si es grave</text>
+
+  <text x="400" y="392" text-anchor="middle" class="small muted">El tratamiento depende de la causa: se confirma con análisis de sangre y lo indica un profesional</text>
+</svg>

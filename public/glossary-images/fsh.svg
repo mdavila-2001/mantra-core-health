@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Hormona foliculoestimulante (FSH)</title>
+  <desc id="d">A la izquierda, el eje hormonal: el hipotálamo libera GnRH, la hipófisis libera FSH y LH, y estas actúan sobre el ovario, donde maduran los folículos, y sobre el testículo, donde estimulan la producción de espermatozoides; flechas discontinuas muestran el freno de vuelta. A la derecha, un tubo de sangre y lo que ayuda a evaluar el análisis: fertilidad, menopausia, trastornos de la regla, pubertad y función de la hipófisis.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="460" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="250.0" y="50" text-anchor="middle" class="title">Eje hormonal de la FSH</text>
+  <rect x="160" y="50" width="180" height="46" rx="10" fill="var(--purple-l)" stroke="var(--line)"/>
+  <text x="250" y="70" text-anchor="middle" class="step">Hipotálamo</text>
+  <text x="250" y="88" text-anchor="middle" class="small">libera GnRH</text>
+  <path d="M250 98 L250 128" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="160" y="130" width="180" height="46" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="250" y="150" text-anchor="middle" class="step">Hipófisis</text>
+  <text x="250" y="168" text-anchor="middle" class="small">libera FSH y LH</text>
+  <path d="M220 178 L120 230" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <path d="M280 178 L380 230" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <ellipse cx="110" cy="270" rx="44" ry="30" fill="var(--organ)" opacity=".7"/>
+  <circle cx="92" cy="262" r="9" fill="var(--panel)" stroke="var(--warn)"/>
+  <circle cx="120" cy="276" r="12" fill="var(--panel)" stroke="var(--warn)"/>
+  <circle cx="102" cy="284" r="6" fill="var(--panel)" stroke="var(--warn)"/>
+  <circle cx="130" cy="258" r="6" fill="var(--panel)" stroke="var(--warn)"/>
+  <text x="110" y="320" text-anchor="middle" class="step">Ovario</text>
+  <text x="110" y="338" text-anchor="middle" class="small">madura folículos</text>
+  <text x="110" y="354" text-anchor="middle" class="small">produce estrógenos</text>
+  <ellipse cx="390" cy="270" rx="30" ry="40" fill="var(--organ)" opacity=".7"/>
+  <path d="M376 250 q14 10 0 20 q14 10 0 20 M396 250 q14 10 0 20 q14 10 0 20" fill="none" stroke="var(--panel)" stroke-width="2"/>
+  <text x="390" y="330" text-anchor="middle" class="step">Testículo</text>
+  <text x="390" y="348" text-anchor="middle" class="small">estimula la</text>
+  <text x="390" y="364" text-anchor="middle" class="small">espermatogénesis</text>
+  <path d="M60 270 C30 200 80 120 156 150" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+  <path d="M440 270 C470 200 420 120 344 150" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+  <text x="250" y="410" text-anchor="middle" class="small muted">Las hormonas de las gónadas frenan la</text>
+  <text x="250" y="428" text-anchor="middle" class="small muted">hipófisis (línea discontinua)</text>
+  <rect x="500" y="20" width="280" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="640.0" y="50" text-anchor="middle" class="title">El análisis</text>
+  <rect x="560" y="70" width="26" height="70" rx="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+  <rect x="563" y="96" width="20" height="41" rx="9" fill="var(--vessel)"/>
+  <rect x="557" y="62" width="32" height="14" rx="4" fill="var(--accent)"/>
+  <path d="M600 105 L650 105" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <text x="690" y="100" text-anchor="middle" class="small">Se mide la</text>
+  <text x="690" y="116" text-anchor="middle" class="small">FSH en sangre</text>
+  <text x="520" y="200" class="step">Ayuda a evaluar</text>
+  <rect x="520" y="214" width="240" height="34" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="640.0" y="236.0" text-anchor="middle" class="small">Fertilidad e infertilidad</text>
+  <rect x="520" y="258" width="240" height="34" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="640.0" y="280.0" text-anchor="middle" class="small">Menopausia</text>
+  <rect x="520" y="302" width="240" height="34" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="640.0" y="324.0" text-anchor="middle" class="small">Trastornos de la regla</text>
+  <rect x="520" y="346" width="240" height="34" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="640.0" y="368.0" text-anchor="middle" class="small">Pubertad adelantada o tardía</text>
+  <rect x="520" y="390" width="240" height="34" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="640.0" y="412.0" text-anchor="middle" class="small">Función de la hipófisis</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

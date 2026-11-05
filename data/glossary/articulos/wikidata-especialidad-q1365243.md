@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1365243
+image: wikidata-especialidad-q1365243.svg | Las enfermedades tropicales se transmiten sobre todo por vectores, agua, suelo y alimentos. | Mapa esquemático con la franja tropical y cuatro vías de transmisión: mosquitos, chinches y moscas, agua y suelo, y alimentos, con ejemplos de enfermedades. Abajo, qué abarca la especialidad y consejos antes y después de viajar.
 ---
 
 ## [definition] Introducción

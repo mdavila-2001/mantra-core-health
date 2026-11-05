@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Gripe</title>
+  <desc id="d">A la izquierda, el virus de la influenza con su envoltura, las proteínas hemaglutinina y neuraminidasa en la superficie y su material genético en el interior. A la derecha, una tabla que compara la gripe con el resfriado y los grupos con más riesgo de complicaciones.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Virus de la influenza</text>
+  <circle cx="200" cy="170" r="70" fill="var(--violet-l)" stroke="var(--violet)" stroke-width="2"/>
+  <line x1="270.0" y1="170.0" x2="288.0" y2="170.0" stroke="var(--warn)" stroke-width="3"/>
+  <rect x="284.0" y="166.0" width="8" height="8" rx="0" fill="var(--warn)" stroke="none" stroke-width="2"/>
+  <line x1="264.7" y1="196.8" x2="281.3" y2="203.7" stroke="var(--accent)" stroke-width="3"/>
+  <circle cx="281.3" cy="203.7" r="4" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <line x1="249.5" y1="219.5" x2="262.2" y2="232.2" stroke="var(--warn)" stroke-width="3"/>
+  <rect x="258.2" y="228.2" width="8" height="8" rx="0" fill="var(--warn)" stroke="none" stroke-width="2"/>
+  <line x1="226.8" y1="234.7" x2="233.7" y2="251.3" stroke="var(--accent)" stroke-width="3"/>
+  <circle cx="233.7" cy="251.3" r="4" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <line x1="200.0" y1="240.0" x2="200.0" y2="258.0" stroke="var(--warn)" stroke-width="3"/>
+  <rect x="196.0" y="254.0" width="8" height="8" rx="0" fill="var(--warn)" stroke="none" stroke-width="2"/>
+  <line x1="173.2" y1="234.7" x2="166.3" y2="251.3" stroke="var(--accent)" stroke-width="3"/>
+  <circle cx="166.3" cy="251.3" r="4" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <line x1="150.5" y1="219.5" x2="137.8" y2="232.2" stroke="var(--warn)" stroke-width="3"/>
+  <rect x="133.8" y="228.2" width="8" height="8" rx="0" fill="var(--warn)" stroke="none" stroke-width="2"/>
+  <line x1="135.3" y1="196.8" x2="118.7" y2="203.7" stroke="var(--accent)" stroke-width="3"/>
+  <circle cx="118.7" cy="203.7" r="4" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <line x1="130.0" y1="170.0" x2="112.0" y2="170.0" stroke="var(--warn)" stroke-width="3"/>
+  <rect x="108.0" y="166.0" width="8" height="8" rx="0" fill="var(--warn)" stroke="none" stroke-width="2"/>
+  <line x1="135.3" y1="143.2" x2="118.7" y2="136.3" stroke="var(--accent)" stroke-width="3"/>
+  <circle cx="118.7" cy="136.3" r="4" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <line x1="150.5" y1="120.5" x2="137.8" y2="107.8" stroke="var(--warn)" stroke-width="3"/>
+  <rect x="133.8" y="103.8" width="8" height="8" rx="0" fill="var(--warn)" stroke="none" stroke-width="2"/>
+  <line x1="173.2" y1="105.3" x2="166.3" y2="88.7" stroke="var(--accent)" stroke-width="3"/>
+  <circle cx="166.3" cy="88.7" r="4" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <line x1="200.0" y1="100.0" x2="200.0" y2="82.0" stroke="var(--warn)" stroke-width="3"/>
+  <rect x="196.0" y="78.0" width="8" height="8" rx="0" fill="var(--warn)" stroke="none" stroke-width="2"/>
+  <line x1="226.8" y1="105.3" x2="233.7" y2="88.7" stroke="var(--accent)" stroke-width="3"/>
+  <circle cx="233.7" cy="88.7" r="4" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <line x1="249.5" y1="120.5" x2="262.2" y2="107.8" stroke="var(--warn)" stroke-width="3"/>
+  <rect x="258.2" y="103.8" width="8" height="8" rx="0" fill="var(--warn)" stroke="none" stroke-width="2"/>
+  <line x1="264.7" y1="143.2" x2="281.3" y2="136.3" stroke="var(--accent)" stroke-width="3"/>
+  <circle cx="281.3" cy="136.3" r="4" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <path d="M160 140 q8 15 0 30 q-8 15 0 30" fill="none" stroke="var(--violet)" stroke-width="3"/>
+  <path d="M182 140 q8 15 0 30 q-8 15 0 30" fill="none" stroke="var(--violet)" stroke-width="3"/>
+  <path d="M204 140 q8 15 0 30 q-8 15 0 30" fill="none" stroke="var(--violet)" stroke-width="3"/>
+  <path d="M226 140 q8 15 0 30 q-8 15 0 30" fill="none" stroke="var(--violet)" stroke-width="3"/>
+  <text x="200" y="286" text-anchor="middle" class="small" style="fill:var(--warn)">Hemaglutinina</text>
+  <text x="200" y="304" text-anchor="middle" class="small" style="fill:var(--accent)">y neuraminidasa en su superficie</text>
+  <text x="200" y="340" text-anchor="middle" class="small">Cambia cada año: por eso la vacuna</text>
+  <text x="200" y="358" text-anchor="middle" class="small">se actualiza en cada temporada</text>
+  <text x="200" y="400" text-anchor="middle" class="small" style="fill:var(--muted)">Se contagia por gotas al toser</text>
+  <text x="200" y="418" text-anchor="middle" class="small" style="fill:var(--muted)">o estornudar y por las manos</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Gripe frente a resfriado</text>
+  <text x="530" y="78" text-anchor="middle" class="step" style="fill:var(--vessel)">Gripe</text>
+  <text x="690" y="78" text-anchor="middle" class="step" style="fill:var(--accent)">Resfriado</text>
+  <rect x="436" y="92" width="324" height="30" rx="6" fill="var(--tissue)" stroke="none" stroke-width="0"/>
+  <text x="530" y="112" text-anchor="middle" class="small">Inicio brusco</text>
+  <text x="690" y="112" text-anchor="middle" class="small">Inicio gradual</text>
+  <rect x="436" y="126" width="324" height="30" rx="6" fill="var(--panel)" stroke="none" stroke-width="0"/>
+  <text x="530" y="146" text-anchor="middle" class="small">Fiebre alta</text>
+  <text x="690" y="146" text-anchor="middle" class="small">Fiebre rara</text>
+  <rect x="436" y="160" width="324" height="30" rx="6" fill="var(--tissue)" stroke="none" stroke-width="0"/>
+  <text x="530" y="180" text-anchor="middle" class="small">Dolor muscular fuerte</text>
+  <text x="690" y="180" text-anchor="middle" class="small">Dolor leve</text>
+  <rect x="436" y="194" width="324" height="30" rx="6" fill="var(--panel)" stroke="none" stroke-width="0"/>
+  <text x="530" y="214" text-anchor="middle" class="small">Agotamiento</text>
+  <text x="690" y="214" text-anchor="middle" class="small">Cansancio leve</text>
+  <rect x="436" y="228" width="324" height="30" rx="6" fill="var(--tissue)" stroke="none" stroke-width="0"/>
+  <text x="530" y="248" text-anchor="middle" class="small">Moco y estornudos a veces</text>
+  <text x="690" y="248" text-anchor="middle" class="small">Moco y estornudos</text>
+  <line x1="610" y1="92" x2="610" y2="262" stroke="var(--line)" stroke-width="1"/>
+  <rect x="436" y="280" width="324" height="142" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+  <text x="452" y="306" class="step" style="fill:var(--warn)">Más riesgo de complicaciones</text>
+  <text x="460" y="330" class="small">• Mayores de 65 años y bebés</text>
+  <text x="460" y="350" class="small">• Embarazo</text>
+  <text x="460" y="370" class="small">• Enfermedades crónicas</text>
+  <text x="460" y="390" class="small">• Vacunarse cada año protege</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

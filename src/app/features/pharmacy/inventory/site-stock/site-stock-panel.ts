@@ -173,6 +173,11 @@ export class SiteStockPanel {
     this.load(this.siteId());
   }
 
+  /** Vuelve a leer el stock de la sede (después de una subida por CSV, por ejemplo). */
+  refresh(): void {
+    this.load(this.siteId());
+  }
+
   private load(siteId: string): void {
     this.stock.set(loading());
     this.client.getSiteStock(siteId).subscribe({

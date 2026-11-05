@@ -29,7 +29,7 @@
     ```
 
     `patron` casa por subcadena contra la ruta —no contra la URL entera— y
-    `modo` elige cuál de los nueve estados del M34 se quiere mirar. Se lee en
+    `modo` elige el estado de error que se quiere mirar. Se lee en
     **cada** petición, así que encenderlo y apagarlo no exige recargar.
 
     ## Tres decisiones deliberadas
@@ -52,11 +52,11 @@ const KEY = 'mock:fallos';
 /**
  * Qué clase de fallo se quiere provocar.
  *
- * Los cinco que una escritura puede encontrarse, en los términos del M34:
- * `red` es S8 —la petición no llegó—, y los otros cuatro son los estados HTTP
- * que el modelo de error del backend declara.
+ * Los estados que una escritura puede encontrarse, en los términos del M34:
+ * `red` es S8 —la petición no llegó—; los modos HTTP siguen el modelo de error
+ * del backend. `validation` incluye un error estructurado por campo.
  */
-export const FAILURE_MODES = ['red', 'forbidden', 'not-found', 'conflict', 'error'] as const;
+export const FAILURE_MODES = ['red', 'forbidden', 'not-found', 'conflict', 'error', 'validation'] as const;
 export type FailureMode = (typeof FAILURE_MODES)[number];
 
 /** Un fallo declarado: a qué rutas alcanza y de qué clase es. */
@@ -105,6 +105,24 @@ export function failureFor(method: string, path: string): SimulatedFailure | nul
 export function failureBody(fallo: SimulatedFailure, path: string): { status: number; body: unknown } {
   const base = { timestamp: new Date().toISOString(), path, correlationId: 'mock-fallo' };
   switch (fallo.modo) {
+    case 'validation':
+      return {
+        status: 422,
+        body: {
+          ...base,
+          code: 'VALIDATION_FAILED',
+          message: 'Error de validación.',
+          details: {
+            fields: [
+              {
+                field: 'medicationConceptId',
+                constraints: ['isNotEmpty'],
+                messages: ['Elija un medicamento del catálogo.'],
+              },
+            ],
+          },
+        },
+      };
     case 'forbidden':
       return { status: 403, body: { ...base, code: 'FORBIDDEN', message: '' } };
     case 'not-found':

@@ -14,8 +14,10 @@ import {
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { explanationOf } from '../../../../core/http/error-explanation';
 import { Alert } from '../../molecules/alert/alert';
 import { AppButton } from '../../atoms/button/button';
+import { SupportCode } from '../../molecules/support-code/support-code';
 import { EmptyState } from '../../molecules/empty-state/empty-state';
 import { Link } from '../../atoms/link/link';
 import { Router, RouterLink, type UrlTree } from '@angular/router';
@@ -47,7 +49,7 @@ import { Spinner } from '../../atoms/spinner/spinner';
  */
 @Component({
   selector: 'app-view-state-host',
-  imports: [Alert, AppButton, DatePipe, EmptyState, Link, RouterLink, Skeleton, Spinner],
+  imports: [Alert, AppButton, DatePipe, EmptyState, Link, RouterLink, Skeleton, Spinner, SupportCode],
   templateUrl: './view-state-host.html',
   styleUrl: './view-state-host.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -149,6 +151,12 @@ export class ViewStateHost<T> {
   protected readonly errorState = computed(() => {
     const state = this.state();
     return state.status === 'error' ? state : null;
+  });
+
+  /** S8: sin red o tiempo agotado, cada uno con su explicación fija. */
+  protected readonly offlineText = computed(() => {
+    const state = this.state();
+    return explanationOf(state.status === 'offline' && state.timedOut === true ? 'timeout' : 'offline');
   });
 
   protected readonly errorRequestId = computed(() => this.errorState()?.requestId ?? '');

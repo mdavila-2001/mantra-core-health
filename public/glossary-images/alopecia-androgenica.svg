@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Alopecia androgénica</title>
+  <desc id="d">A la izquierda, dos cabezas vistas desde arriba: el patrón masculino con entradas y pérdida en la coronilla, y el patrón femenino con adelgazamiento a lo largo de la raya central. A la derecha, tres folículos cada vez más pequeños que producen pelos más finos por la acción de los andrógenos y la predisposición genética.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="370" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="205.0" y="50" text-anchor="middle" class="title">Patrones de pérdida</text>
+  <ellipse cx="115" cy="190" rx="70" ry="88" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+  <ellipse cx="115" cy="190" rx="62" ry="80" fill="var(--ink)" opacity=".75"/>
+  <path d="M75 124 Q95 160 115 140 Q135 160 155 124 Q115 98 75 124 Z" fill="var(--skin)"/>
+  <circle cx="115" cy="218" r="26" fill="var(--skin)"/>
+  <ellipse cx="295" cy="190" rx="70" ry="88" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+  <ellipse cx="295" cy="190" rx="62" ry="80" fill="var(--ink)" opacity=".75"/>
+  <path d="M291 112 L299 112 L311 230 L279 230 Z" fill="var(--skin)" opacity=".9"/>
+  <ellipse cx="295" cy="180" rx="30" ry="56" fill="var(--skin)" opacity=".45"/>
+  <text x="115" y="62" text-anchor="middle" class="small muted">Frente</text>
+  <text x="295" y="62" text-anchor="middle" class="small muted">Frente</text>
+  <text x="115" y="310" text-anchor="middle" class="step">Masculino</text>
+  <text x="115" y="330" text-anchor="middle" class="small">Entradas y coronilla</text>
+  <text x="295" y="310" text-anchor="middle" class="step">Femenino</text>
+  <text x="295" y="330" text-anchor="middle" class="small">Raya central más ancha</text>
+  <text x="44" y="372" class="small">• Vista desde arriba de la cabeza</text>
+  <text x="44" y="394" class="small">• Avanza de forma lenta y progresiva</text>
+  <text x="44" y="416" class="small">• Suele respetar la nuca y los lados</text>
+  <rect x="410" y="20" width="370" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="595.0" y="50" text-anchor="middle" class="title">Miniaturización del folículo</text>
+  <ellipse cx="500" cy="290" rx="19.8" ry="17.6" fill="var(--organ)"/>
+  <rect x="494.5" y="140" width="11.0" height="150" rx="5.5" fill="var(--ink)"/>
+  <text x="500" y="320" text-anchor="middle" class="step">Normal</text>
+  <path d="M530 220 L572 220" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <ellipse cx="610" cy="290" rx="12.6" ry="11.200000000000001" fill="var(--organ)"/>
+  <rect x="606.5" y="185" width="7.0" height="105" rx="3.5" fill="var(--ink)"/>
+  <text x="610" y="320" text-anchor="middle" class="step">Más fino</text>
+  <path d="M640 220 L682 220" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <ellipse cx="720" cy="290" rx="6.3" ry="5.6000000000000005" fill="var(--organ)"/>
+  <rect x="718.25" y="230" width="3.5" height="60" rx="1.75" fill="var(--ink)"/>
+  <text x="720" y="320" text-anchor="middle" class="step">Vello</text>
+  <rect x="430" y="170" width="330" height="8" fill="var(--skin)"/>
+  <text x="430" y="162" class="small muted">Superficie del cuero cabelludo</text>
+  <rect x="430" y="346" width="330" height="40" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="595.0" y="371.0" text-anchor="middle" class="lab">Andrógenos (DHT) + predisposición genética</text>
+  <text x="595" y="412" text-anchor="middle" class="small muted">Cada ciclo el pelo nace más corto y fino</text>
+  <text x="595" y="432" text-anchor="middle" class="small muted">hasta que casi no se ve</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

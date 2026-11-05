@@ -12,6 +12,49 @@
     </button>
   </div>
 
+  @if (notice(); as message) {
+    <app-alert tone="error" data-testid="integration-mappings-notice">{{ message }}</app-alert>
+  }
+
+  @if (ambiguous().length > 0) {
+    <app-alert tone="warning" title="Códigos ambiguos" data-testid="integration-ambiguous">
+      <p class="mappings__secondary">
+        Estos códigos están vinculados a más de un producto, así que la sincronización no los aplica. Deshaga los
+        vínculos que sobran y deje uno solo.
+      </p>
+      <ul class="mappings__ambiguous">
+        @for (entry of ambiguous(); track entry.code) {
+          <li data-testid="integration-ambiguous-code">
+            <span class="mappings__ambiguous-code">
+              <code class="mappings__code">{{ entry.code }}</code>
+              <span class="mappings__secondary">{{ entry.name }}</span>
+              <app-badge variant="warning">Ambiguo</app-badge>
+            </span>
+            <ul class="mappings__ambiguous-products">
+              @for (mapping of entry.mappings; track mapping.id) {
+                <li>
+                  <span class="mappings__main">{{ mapping.productName }}</span>
+                  <button
+                    app-button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    [disabled]="removing() !== null"
+                    [attr.aria-label]="'Deshacer el vínculo de ' + entry.code + ' con ' + mapping.productName"
+                    (clicked)="undo(mapping)"
+                    data-testid="integration-ambiguous-undo"
+                  >
+                    Deshacer
+                  </button>
+                </li>
+              }
+            </ul>
+          </li>
+        }
+      </ul>
+    </app-alert>
+  }
+
   <app-data-table
     caption="Productos vinculados con el sistema de la farmacia"
     [state]="mappings()"
@@ -27,8 +70,12 @@
 
 @if (dialogOpen()) {
   <app-content-dialog
-    heading="Vincular producto"
-    description="Elija el producto de su catálogo y el código con que lo nombra el sistema de la farmacia."
+    [heading]="editing() === null ? 'Vincular producto' : 'Corregir el vínculo'"
+    [description]="
+      editing() === null
+        ? 'Elija el producto de su catálogo y el código con que lo nombra el sistema de la farmacia.'
+        : 'Cambie el producto, el código o la unidad. El vínculo vuelve a quedar sin verificar.'
+    "
     size="md"
     [dismissible]="!saving()"
     data-testid="integration-link-dialog"
@@ -36,7 +83,22 @@
   >
     <div class="mappings__form">
       @if (dialogError(); as message) {
-        <app-alert tone="error" data-testid="integration-link-error">{{ message }}</app-alert>
+        <app-alert tone="error" data-testid="integration-link-error">
+          {{ message }}
+          @if (takenMapping() !== null) {
+            <button
+              app-button
+              type="button"
+              size="sm"
+              variant="outline"
+              class="mappings__taken"
+              (clicked)="editTaken()"
+              data-testid="integration-link-edit-taken"
+            >
+              Corregir ese vínculo
+            </button>
+          }
+        </app-alert>
       }
       @if (externalsError(); as message) {
         <app-alert tone="warning" data-testid="integration-externals-error">{{ message }}</app-alert>
@@ -63,12 +125,24 @@
         <app-select
           [options]="externalOptions()"
           [value]="externalCode()"
-          (valueChange)="externalCode.set($event)"
+          (valueChange)="chooseExternal($event)"
           [disabled]="externals().status !== 'ready' || externalOptions().length === 0"
           [placeholder]="externals().status === 'loading' ? 'Leyendo el sistema de la farmacia…' : 'Elija un código'"
           [searchable]="true"
           [multilineValue]="true"
           data-testid="integration-link-external"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Unidad en el sistema de la farmacia"
+        hint="La que equivale a una unidad del producto (por ejemplo, caja o tableta). Viene del catálogo del sistema; déjela vacía si no cuenta en unidades."
+      >
+        <app-input
+          [value]="unit()"
+          (valueChange)="chooseUnit($event)"
+          placeholder="Sin unidad"
+          testId="integration-link-unit"
         />
       </app-form-field>
     </div>
@@ -85,7 +159,7 @@
       (clicked)="save()"
       data-testid="integration-link-save"
     >
-      Vincular
+      {{ editing() === null ? 'Vincular' : 'Guardar la corrección' }}
     </button>
   </app-content-dialog>
 }
@@ -96,7 +170,27 @@
     @if (externalName(mapping.externalProductCode); as name) {
       <span class="mappings__secondary">{{ name }}</span>
     }
+    @if (isAmbiguous(mapping.externalProductCode)) {
+      <app-badge variant="warning">Ambiguo</app-badge>
+    }
   </span>
+</ng-template>
+
+<ng-template #unitCell let-mapping>
+  @if (mapping.externalUnitCode) {
+    <code class="mappings__code">{{ mapping.externalUnitCode }}</code>
+  } @else {
+    <span class="mappings__secondary">Sin unidad</span>
+  }
+</ng-template>
+
+<ng-template #actionsCell let-mapping>
+  <app-row-actions
+    [actions]="rowActions"
+    [fila]="mapping.externalProductCode"
+    (actionSelected)="runAction(mapping, $event)"
+    data-testid="integration-mapping-actions"
+  />
 </ng-template>
 
 <ng-template #productCell let-mapping>

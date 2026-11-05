@@ -44,7 +44,7 @@ export const Header = {
 
   /** Afirma si aparece el selector de organización (solo con más de una). */
   esperarSelectorDeOrganizacion(hay: boolean): void {
-    cy.porTestId('header-organizacion').should(hay ? 'exist' : 'not.exist');
+    cy.porTestId('header-organization').should(hay ? 'exist' : 'not.exist');
   },
 
   /** Cierra el menú de cuenta con Escape, que es como lo cierra el teclado. */

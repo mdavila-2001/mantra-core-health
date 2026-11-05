@@ -776,7 +776,7 @@ export class MedicalRecord {
           next: (dataUrl) => {
             this.descargas.trigger(dataUrl, fileName ?? `receta-${receta.id}.pdf`);
             this.descargandoReceta.set(null);
-            this.toasts.success('Descarga iniciada exitosamente', 'Receta oficial');
+            this.toasts.success('Su receta se está descargando.', 'Receta oficial');
           },
           error: () => this.fallaAlDescargarReceta(),
         });

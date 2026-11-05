@@ -1,4 +1,5 @@
 import type { ViewState } from '../../core/view-state/view-state.types';
+import { TIMEOUT_MESSAGE } from '../../core/http/api-failure';
 
 /**
  * Cómo se llama, en palabras, lo que la escritura no pudo hacer.
@@ -58,11 +59,15 @@ export function writeFailureMessage(
       return textos.yaNoExiste ?? 'El expediente ya no existe. Recargue la pantalla.';
     case 'offline':
       // No falló el servidor: la petición no llegó, así que reintentar sirve.
-      return 'No pudimos conectarnos. Revise su conexión y reintente.';
+      // Con el límite de espera es distinto: pudo haberse guardado igual.
+      return estado.timedOut === true
+        ? TIMEOUT_MESSAGE
+        : 'No pudimos conectarnos. Revise su conexión y reintente.';
     case 'error':
       // El identificador de petición es obligatorio en S9: sin él, quien
       // reporta el problema y quien lo busca en los registros no se encuentran.
-      return `${estado.message || 'Ocurrió un error inesperado.'} (${estado.requestId})`;
+      // La pista (qué hacer) es texto fijo del catálogo, nunca del servidor.
+      return `${unexpectedErrorText(estado.message, estado.hint)} (${estado.requestId})`;
     default:
       // `ready`, `loading` y los demás no son fallos. `stale` y `empty` no
       // aplican a una escritura: no hay dato viejo que refrescar ni lista
@@ -92,4 +97,33 @@ export function writeMessage(
     return estado.issues[0]?.message ?? `No pudimos ${textos.accion}.`;
   }
   return writeFailureMessage(estado, textos);
+}
+
+/** El texto de S9 sin el código: el del servidor, o el de respaldo, sumando la pista si existe. */
+function unexpectedErrorText(message: string | undefined, hint?: string): string {
+  const base = message || 'Ocurrió un error inesperado.';
+  return [base, hint].filter(Boolean).join(' ');
+}
+
+/** {@link writeFailureMessage} con el código de soporte aparte, para pintarlo con `app-support-code`. */
+export interface FailureParts {
+  readonly text: string;
+  /** El `requestId` de S4, S5 o S9 cuando la API lo mandó; `null` si no. */
+  readonly code: string | null;
+}
+
+/**
+ * Lo mismo que {@link writeFailureMessage} —los mismos textos de respaldo—,
+ * pero con el código de soporte separado del texto en vez de pegado al final.
+ * Para S4 (validación) no hay texto acá: lo decide quien llama.
+ *
+ * @returns Las partes, o `null` si el estado no es un fallo de escritura.
+ */
+export function writeFailureParts(estado: ViewState<null>, textos: FailureTexts): FailureParts | null {
+  if (estado.status === 'error') {
+    return { text: unexpectedErrorText(estado.message, estado.hint), code: estado.requestId };
+  }
+  const text = writeFailureMessage(estado, textos);
+  if (text === null) return null;
+  return { text, code: estado.status === 'forbidden' ? (estado.requestId ?? null) : null };
 }

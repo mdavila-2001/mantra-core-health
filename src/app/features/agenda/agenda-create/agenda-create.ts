@@ -7,6 +7,8 @@ import {
   LOCALE_ID,
   signal,
 } from '@angular/core';
+import { INFRA_INTEGRATION_FLAGS } from '../../../core/data-access/infra-flags';
+import { ConsultingRoomSelect } from './consulting-room-select/consulting-room-select';
 import { formatDate, TitleCasePipe } from '@angular/common';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -24,7 +26,8 @@ import type {
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { AGENDA_ROUTE } from '../agenda.routes';
 import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
-import { agendaResourcesMy } from '../my-resource';
+import { agendaResourcesMy, agendaWithLiveSchedule, liveTemplateOf } from '../my-resource';
+import { opcEntero, opcFecha, opcTexto } from './optional-fields';
 import { ScheduleGrid } from '../my-agenda/schedule-grid/schedule-grid';
 import { OrganizationField } from '../organization-field/organization-field';
 import { calculateSlots, type Calculation, type CalculatedDay } from './agenda-slots';
@@ -166,6 +169,7 @@ interface DiaVisible {
 @Component({
   selector: 'app-agenda-create',
   imports: [
+    ConsultingRoomSelect,
     ReactiveFormsModule,
     AnnounceOnAppear,
     AccordionPanel,
@@ -251,6 +255,11 @@ export class AgendaCreate {
    * todavía no hay dónde: primero hay que poder crear el otro lado.
    */
   protected readonly agendaNueva = signal(false);
+
+  /** F5d: el consultorio de la agenda; `null` = sin consultorio. */
+  protected readonly careSpaceId = signal<string | null>(null);
+  /** F5d: apagado mientras la API no acepte `careSpaceId` (400 con `forbidNonWhitelisted`). */
+  protected readonly roomsEnabled = inject(INFRA_INTEGRATION_FLAGS).consultingRoomTemplates;
 
   /** Cómo se va a llamar la agenda nueva. «Consultorio en la Caja», «Sábados». */
   protected readonly nombreNuevo = signal('');
@@ -415,10 +424,9 @@ export class AgendaCreate {
     this.scheduling.listTemplates(resourceId, this.place.scope()).subscribe({
       next: (pagina) => {
         if (resourceId !== this.resourceId()) return;
-        // La primera es la que gobierna: el servidor las devuelve de la más reciente a la
-        // más vieja, y es el mismo criterio que usa «Mi agenda» para decir qué horario tenés.
-        const vigente = pagina.items[0];
-        if (vigente === undefined) return;
+        // Newest first from the server: the first one not retired is the schedule in force.
+        const vigente = liveTemplateOf(pagina);
+        if (vigente === null) return;
         this.vigente.set(vigente);
         this.cargarSemanaDesde(vigente);
       },
@@ -833,11 +841,14 @@ export class AgendaCreate {
         // Si ya se pidió empezar una agenda nueva, la lectura no vuelve a
         // apuntar a la vieja: pisarla acá haría que publicar edite la de
         // siempre sin que nadie lo note.
-        if (this.agendaNueva()) return;
-        const recurso = recursos[0];
-        if (recurso === undefined) return;
-        this.resourceId.set(recurso.id);
-        this.loadCurrentTemplate(recurso.id);
+        if (this.agendaNueva() || recursos[0] === undefined) return;
+        this.resourceId.set(recursos[0].id);
+        agendaWithLiveSchedule(this.scheduling, recursos, this.place.scope()).subscribe((found) => {
+          if (found === null || tenantId !== this.place.tenantId() || this.agendaNueva()) return;
+          this.resourceId.set(found.resource.id);
+          this.vigente.set(found.template);
+          this.cargarSemanaDesde(found.template);
+        });
       },
       error: () => undefined,
     });
@@ -1255,12 +1266,25 @@ export class AgendaCreate {
       this.crearPlantilla(resourceId, policyId);
       return;
     }
+    void this.confirmReplace().then((yes) =>
+      yes ? this.retireAndCreate(anterior.id, resourceId, policyId) : this.estado.set(ready(null)),
+    );
+  }
 
-    // Con citas vivas en el horario que se reemplaza, `BlockCancellations`
-    // pregunta antes qué hacer con ellas: cancelarlas y avisar a cada
-    // paciente, o conservarlas (etapa C, 24/10/2026). Si la persona vuelve
-    // atrás, no se publica nada y el formulario queda como estaba.
-    this.cancellations.retireTemplate(anterior.id, this.attempt.scope()).subscribe({
+  /** Replacing is not undoable: the person confirms it before the current schedule is retired. */
+  private confirmReplace(): Promise<boolean> {
+    return this.dialogs.confirm({
+      title: 'Reemplazar su horario actual',
+      message: 'El horario que tiene publicado deja de regir y queda este en su lugar. ¿Desea reemplazarlo?',
+      confirmLabel: 'Reemplazar mi horario',
+      cancelLabel: 'Volver',
+    });
+  }
+
+  private retireAndCreate(templateId: string, resourceId: string, policyId: string | null): void {
+    // With live bookings, `BlockCancellations` asks whether to cancel them (notifying each
+    // patient) or keep them. Backing out publishes nothing and leaves the form as it was.
+    this.cancellations.retireTemplate(templateId, this.attempt.scope()).subscribe({
       next: (retiro) => {
         if (retiro === null) {
           this.estado.set(ready(null));
@@ -1324,6 +1348,7 @@ export class AgendaCreate {
       ...(allFlexible ? { flexibleHours: true } : {}),
       ...(policyId === null ? {} : { bookingPolicyId: policyId }),
       ...opcFecha('validTo', this.fechaDeFin()),
+      ...(this.roomsEnabled && this.careSpaceId() ? { careSpaceId: this.careSpaceId()! } : {}),
     };
     this.scheduling.createTemplate(resourceId, template, this.attempt.scope()).subscribe({
       next: (plantilla) => {
@@ -1349,6 +1374,7 @@ export class AgendaCreate {
     this.scheduling.generateSlots(templateId, range, this.attempt.scope()).subscribe({
       next: (resultado) => {
         this.cuposCreados.set(resultado.created);
+        this.attempt.activateIn(this.auth);
         this.compararConLoGenerado(resultado.created);
         this.estado.set(ready(null));
         this.publicado.set(true);
@@ -1527,21 +1553,4 @@ function codigoDe(nombre: string): string {
     .slice(0, 60)
     .replace(/^-|-$/g, '');
   return base === '' ? 'AGENDA' : base;
-}
-
-/** El campo de texto, o nada: `''` no viaja, y en `undefined` sería un 400. */
-function opcTexto<K extends string>(key: K, value: string): Partial<Record<K, string>> {
-  const texto = value.trim();
-  return texto === '' ? {} : ({ [key]: texto } as Record<K, string>);
-}
-
-/** El campo entero, o nada. Vacío se omite; con valor va como número. */
-function opcEntero<K extends string>(key: K, value: string): Partial<Record<K, number>> {
-  const texto = value.trim();
-  return texto === '' ? {} : ({ [key]: Number(texto) } as Record<K, number>);
-}
-
-/** La fecha en ISO, o nada. */
-function opcFecha<K extends string>(key: K, value: Date | null): Partial<Record<K, string>> {
-  return value === null ? {} : ({ [key]: value.toISOString() } as Record<K, string>);
 }

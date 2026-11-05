@@ -31,6 +31,7 @@ describe('iconoDeEspecialidad', () => {
       'Nutrición',
       'Fisioterapia',
       'Anestesiología',
+      'Cirugía General',
     ];
 
     const iconos = catalogo.map(iconoDeEspecialidad);
@@ -44,7 +45,7 @@ describe('iconoDeEspecialidad', () => {
   it('cae al genérico cuando el catálogo trae una que el set no dibuja', () => {
     // No es un error: es lo que tiene que pasar con una especialidad nueva de
     // terminología. Un hueco sería peor que el estetoscopio.
-    expect(iconoDeEspecialidad('Cirugía maxilofacial')).toBe('general');
+    expect(iconoDeEspecialidad('Genética médica')).toBe('general');
     expect(iconoDeEspecialidad('Medicina general')).toBe('general');
   });
 

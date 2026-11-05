@@ -7,6 +7,21 @@
   display: block;
 }
 
+.grupos-medicos__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-4);
+}
+
+.grupos-medicos__bajada {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-body);
+}
+
 .grupos {
   margin-block-start: var(--sp-6);
 }

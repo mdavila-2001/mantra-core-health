@@ -1,7 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 
 import { ImportTargetPicker } from './import-target';
 
@@ -57,5 +58,50 @@ describe('ImportTargetPicker', () => {
     );
     fixture.detectChanges();
     expect(root().querySelector(`[data-testid="entity-import-${entity}"]`)).not.toBeNull();
+  });
+
+  describe('«Qué va a importar» en la URL', () => {
+    let harness: RouterTestingHarness;
+
+    beforeEach(async () => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([{ path: 'catalog', component: ImportTargetPicker }]),
+        ],
+      });
+      http = TestBed.inject(HttpTestingController);
+      harness = await RouterTestingHarness.create();
+    });
+
+    const harnessRoot = (): HTMLElement => harness.routeNativeElement as HTMLElement;
+
+    it('`?target=prices` abre directo la importación de precios', async () => {
+      await harness.navigateByUrl('/catalog?tab=import&target=prices', ImportTargetPicker);
+      harness.detectChanges();
+
+      expect(harnessRoot().querySelector('app-pharmacy-import')).toBeNull();
+      expect(harnessRoot().querySelector('app-entity-import')?.getAttribute('entity')).toBe('prices');
+    });
+
+    it('con un valor desconocido abre productos', async () => {
+      await harness.navigateByUrl('/catalog?target=nada', ImportTargetPicker);
+      harness.detectChanges();
+
+      expect(harnessRoot().querySelector('app-pharmacy-import')).not.toBeNull();
+    });
+
+    it('elegir una opción la escribe en la URL sin perder la pestaña', async () => {
+      await harness.navigateByUrl('/catalog?tab=import', ImportTargetPicker);
+      harness.detectChanges();
+
+      const radios = [...harnessRoot().querySelectorAll<HTMLButtonElement>('[data-testid="import-target"] [role="radio"]')];
+      radios[1]!.click();
+      await harness.fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).toBe('/catalog?tab=import&target=categories');
+    });
   });
 });

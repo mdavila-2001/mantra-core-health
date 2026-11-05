@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q628764
+image: wikidata-especialidad-q628764.svg | La medicina del trabajo previene los daños a la salud que causan las condiciones laborales. | Lista de cinco tipos de riesgo laboral con iconos de letras y una pirámide invertida con la jerarquía de medidas de prevención, de eliminar el peligro a los equipos de protección.
 ---
 
 ## [definition] Introducción

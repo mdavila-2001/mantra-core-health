@@ -236,6 +236,16 @@
                   </p>
                 }
                 <div class="turnos__acciones">
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    data-testid="mis-citas-ver-pago"
+                    (clicked)="alternarSesion(turno.id)"
+                  >
+                    {{ seleccionado() === turno.id ? 'Cerrar sesión' : 'Abrir sesión y ver pago' }}
+                  </button>
                   @if (esCancelable(turno)) {
                     <button
                       app-button
@@ -248,6 +258,9 @@
                     </button>
                   }
                 </div>
+                @if (seleccionado() === turno.id) {
+                  <app-session-payment [bookingId]="turno.id" />
+                }
                 <app-booking-payment-receipts [bookingId]="turno.id" [statusCode]="turno.codigo" [knownPaymentState]="turno.payment" />
               </article>
             }
@@ -341,6 +354,21 @@
                         }
                         @if (turno.motivo !== '') {
                           <p class="turnos__motivo">{{ turno.motivo }}</p>
+                        }
+                        <div class="turnos__acciones">
+                          <button
+                            app-button
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            data-testid="mis-citas-ver-pago"
+                            (clicked)="alternarSesion(turno.id)"
+                          >
+                            {{ seleccionado() === turno.id ? 'Cerrar sesión' : 'Abrir sesión y ver pago' }}
+                          </button>
+                        </div>
+                        @if (seleccionado() === turno.id) {
+                          <app-session-payment [bookingId]="turno.id" />
                         }
                         @if (turno.avisoDelCambio !== '') {
                           <!-- El motivo del último cambio (corrección #14): antes la cita
@@ -439,89 +467,42 @@
            programa sin entrar al orden de tabulación. -->
       <h2 id="pedir-turno" class="turnos__titulo" tabindex="-1">Agendar una cita</h2>
 
-      @if (organizacion() === null) {
-        <app-alert tone="warning" title="Elija una organización">
-          <!-- El selector vive en el encabezado: decir sólo «elegí una» sin decir
-               dónde dejaba a la persona buscando un control que acá no está. -->
-          Elija una organización desde el selector del encabezado para ver los horarios disponibles.
-        </app-alert>
-      } @else {
-        <!-- J2 · con quién se pide el turno. Va ANTES del buscador porque decide
-             qué lista se busca: elegirlo después sería buscar en el conjunto
-             equivocado. Dos opciones y no un desplegable — son dos, y un
-             desplegable de dos esconde la mitad. -->
-        <div class="turnos__tipo" role="group" aria-label="Con quién quiere la cita">
-          <button
-            app-button
-            [variant]="esLaboratorio() ? 'ghost' : 'primary'"
-            size="sm"
-            data-testid="turnos-tipo-profesional"
-            [attr.aria-pressed]="!esLaboratorio()"
-            (clicked)="cambiarTipoDeRecurso('PRACTITIONER')"
-          >
-            Con un profesional
-          </button>
-          <button
-            app-button
-            [variant]="esLaboratorio() ? 'primary' : 'ghost'"
-            size="sm"
-            data-testid="turnos-tipo-laboratorio"
-            [attr.aria-pressed]="esLaboratorio()"
-            (clicked)="cambiarTipoDeRecurso('ROOM')"
-          >
-            En un laboratorio
-          </button>
-        </div>
-      }
-
-      @if (organizacion() !== null && sinRecursos()) {
-        @if (esLaboratorio()) {
-          <app-alert tone="info" title="Todavía no hay laboratorios con horarios">
-            Ningún laboratorio de esta organización publicó horarios todavía. Puede llevar su orden al
-            mostrador mientras tanto.
-          </app-alert>
-        } @else {
-          <app-alert tone="info" title="Todavía no hay profesionales con horarios">
-            <!-- Antes decía «no hay agendas publicadas», que es la jerga interna:
-                 para quien pide un turno, lo que falta son profesionales entre los
-                 cuales elegir. -->
-            Ningún profesional de esta organización publicó horarios todavía. Vuelva a probar más
-            adelante.
-          </app-alert>
-        }
-      } @else if (organizacion() !== null) {
-        <!-- Buscador y no desplegable: con una guía larga había que recorrerla
-             entera hasta dar con el profesional propio (F-13). Se escribe el
-             nombre y la lista se acota sola; en blanco los ofrece a todos. -->
-        <app-form-field
-          [label]="esLaboratorio() ? '¿En qué laboratorio?' : '¿Con quién se quiere atender?'"
-          [hint]="
-            esLaboratorio()
-              ? 'Escriba el nombre del laboratorio para encontrarlo más rápido.'
-              : 'Escriba su nombre para encontrarlo más rápido.'
-          "
-          class="turnos__filtro"
+      <!-- J2 · con quién se pide el turno. Va ANTES del buscador porque decide
+           qué lista se busca: elegirlo después sería buscar en el conjunto
+           equivocado. Dos opciones y no un desplegable — son dos, y un
+           desplegable de dos esconde la mitad. -->
+      <div class="turnos__tipo" role="group" aria-label="Con quién quiere la cita">
+        <button
+          app-button
+          [variant]="esLaboratorio() ? 'ghost' : 'primary'"
+          size="sm"
+          data-testid="turnos-tipo-profesional"
+          [attr.aria-pressed]="!esLaboratorio()"
+          (clicked)="cambiarTipoDeRecurso('PRACTITIONER')"
         >
-          <!-- FX-1 · F-24: «Ningún profesional coincide» hacía pensar que la
-               persona no existe. La lista sólo tiene a quienes YA publicaron
-               horarios, así que la causa más común de no encontrar a alguien es
-               que todavía no publicó. Se dicen las dos posibilidades en vez de
-               afirmar la que no sabemos. -->
-          <app-reference-combobox
-            [selected]="recursoSeleccionado()"
-            [options]="opcionesBuscadas()"
-            [minQueryLength]="0"
-            [placeholder]="esLaboratorio() ? 'Busque por nombre del laboratorio' : 'Busque por nombre'"
-            [emptyMessage]="
-              esLaboratorio()
-                ? 'No encontramos ese laboratorio entre los que publicaron horarios. Puede que todavía no los haya publicado.'
-                : 'No encontramos ese profesional entre los que publicaron horarios. Puede que todavía no los haya publicado.'
-            "
-            (searched)="busquedaDeRecurso.set($event)"
-            (selectionChange)="elegirAgenda($event?.value ?? null)"
-          />
-        </app-form-field>
+          Con un profesional
+        </button>
+        <button
+          app-button
+          [variant]="esLaboratorio() ? 'primary' : 'ghost'"
+          size="sm"
+          data-testid="turnos-tipo-laboratorio"
+          [attr.aria-pressed]="esLaboratorio()"
+          (clicked)="cambiarTipoDeRecurso('ROOM')"
+        >
+          En un laboratorio
+        </button>
+      </div>
 
+      <!-- Who to book with, from every organization (paged on the server). The
+           organization comes with the person: the patient never picks one. -->
+      <app-professional-picker
+        class="turnos__filtro"
+        [resourceType]="tipoDeRecurso()"
+        (picked)="elegirProfesional($event)"
+      />
+
+      @if (organizacion() !== null) {
         <!-- FX-6 · F-23: un profesional con más de un consultorio. La pregunta
              sólo aparece cuando hay algo que elegir; con un solo lugar —hoy,
              casi todos— la pantalla no cambia en nada. «Cualquier lugar» viene
@@ -691,9 +672,7 @@
             </ul>
           }
           @case ('empty') {
-            <app-alert tone="info" title="Sin horarios para mostrar">
-              {{ mensajeDeHorariosVacios() }}
-            </app-alert>
+            <app-view-state-host [state]="horariosVista()" />
           }
           @default {
             <app-alert tone="error" title="No pudimos traer los horarios">

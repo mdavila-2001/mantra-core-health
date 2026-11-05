@@ -1,0 +1,30 @@
+<div class="catalogo" data-testid="catalog-audit">
+  <p class="catalogo__ayuda">
+    Cada alta, edición, desactivación y reactivación queda sellada por la API con quién la hizo y cuándo. Esta lista sólo lee ese
+    registro; no se edita. La versión de cada registro está en su pestaña.
+  </p>
+
+  <div class="catalogo__barra">
+    <app-segmented-control
+      ariaLabel="Catálogo auditado"
+      [options]="opciones"
+      [value]="catalogo()"
+      (valueChange)="elegir($event)"
+      data-testid="catalog-audit-catalog"
+    />
+  </div>
+
+  <app-data-table
+    [state]="lista()"
+    [columns]="columnas()"
+    [trackBy]="porId"
+    [rowLabel]="nombreDeFila"
+    stackedOnMobile
+    fitContainer
+    caption="Cambios registrados en el catálogo elegido"
+    [cursor]="paginador.cursor()"
+    data-testid="catalog-audit-table"
+    (cursorChanged)="mover($event)"
+    (retry)="recargar()"
+  />
+</div>

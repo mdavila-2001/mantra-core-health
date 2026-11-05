@@ -63,10 +63,28 @@
     margin-block-start: var(--sp-3);
 }
 
+/* `collapsible` (opt-in): en teléfono, plegados detrás de «Filtros». */
+.filter-bar__toggle {
+    align-self: flex-start;
+}
+
+:host(.filter-bar--folded) .filter-bar__filter {
+    display: none;
+}
+
 @media (min-width: 780px) {
     .filter-bar__controls {
         flex-direction: row;
         align-items: flex-start;
+    }
+
+    /* Desde tablet los filtros se ven siempre: el botón sobra. */
+    .filter-bar__toggle {
+        display: none;
+    }
+
+    :host(.filter-bar--folded) .filter-bar__filter {
+        display: block;
     }
 
     .filter-bar__search {

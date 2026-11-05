@@ -227,6 +227,12 @@
     --chart-5: #e87ba4; --chart-6: #008300; --chart-7: #6250d6; --chart-8: #e34948;
     --chart-seq-1: #cde2fb; --chart-seq-2: #86b6ef; --chart-seq-3: #3987e5;
     --chart-seq-4: #1c5cab; --chart-seq-5: #0d366b;
+    /* ordinal (4 pasos = seq-2..5) y divergente: validados con check-chart-palette.mjs */
+    --chart-ord-1: var(--chart-seq-2); --chart-ord-2: var(--chart-seq-3);
+    --chart-ord-3: var(--chart-seq-4); --chart-ord-4: var(--chart-seq-5);
+    --chart-div-neg: var(--chart-1); --chart-div-neg-soft: var(--chart-seq-2);
+    --chart-div-mid: var(--bg-surface-alt); --chart-div-pos-soft: #ee9a98;
+    --chart-div-pos: var(--chart-8);
 
     /* ================= tokens semánticos — modo claro ===================== */
     --surface-white: #FFFFFF;
@@ -331,9 +337,14 @@
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme='light']) {
         --chart-1: #3987e5; --chart-2: #d95926; --chart-3: #199e70; --chart-4: #c98500;
-        --chart-5: #d55181; --chart-6: #008300; --chart-7: #9085e9; --chart-8: #e66767;
+        --chart-5: #d55181; --chart-6: #0c960c; --chart-7: #9085e9; --chart-8: #e66767;
         --chart-seq-1: #184f95; --chart-seq-2: #1c5cab; --chart-seq-3: #3987e5;
         --chart-seq-4: #6da7ec; --chart-seq-5: #9ec5f4;
+        --chart-ord-1: var(--chart-seq-2); --chart-ord-2: var(--chart-seq-3);
+        --chart-ord-3: var(--chart-seq-4); --chart-ord-4: var(--chart-seq-5);
+        --chart-div-neg: var(--chart-1); --chart-div-neg-soft: var(--chart-seq-2);
+        --chart-div-mid: var(--bg-surface-alt); --chart-div-pos-soft: #a33c3c;
+        --chart-div-pos: var(--chart-8);
         --bg-base: var(--c-petrol-900);
         --bg-surface: var(--c-petrol-800);
         --bg-surface-alt: var(--c-petrol-700);
@@ -404,9 +415,14 @@
    (bajo SSR se estampa tras afterNextRender, nunca en la ruta de render) */
 :root[data-theme='dark'] {
     --chart-1: #3987e5; --chart-2: #d95926; --chart-3: #199e70; --chart-4: #c98500;
-    --chart-5: #d55181; --chart-6: #008300; --chart-7: #9085e9; --chart-8: #e66767;
+    --chart-5: #d55181; --chart-6: #0c960c; --chart-7: #9085e9; --chart-8: #e66767;
     --chart-seq-1: #184f95; --chart-seq-2: #1c5cab; --chart-seq-3: #3987e5;
     --chart-seq-4: #6da7ec; --chart-seq-5: #9ec5f4;
+    --chart-ord-1: var(--chart-seq-2); --chart-ord-2: var(--chart-seq-3);
+    --chart-ord-3: var(--chart-seq-4); --chart-ord-4: var(--chart-seq-5);
+    --chart-div-neg: var(--chart-1); --chart-div-neg-soft: var(--chart-seq-2);
+    --chart-div-mid: var(--bg-surface-alt); --chart-div-pos-soft: #a33c3c;
+    --chart-div-pos: var(--chart-8);
     --bg-base: var(--c-petrol-900);
     --bg-surface: var(--c-petrol-800);
     --bg-surface-alt: var(--c-petrol-700);

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1480945
+image: wikidata-especialidad-q1480945.svg | La atención sanitaria militar se organiza en escalones desde el lugar de la lesión hasta el hospital. | Cinco escalones en fila: punto de lesión, puesto de socorro, hospital de campaña, hospital de referencia y rehabilitación, con la idea clave de controlar pronto las hemorragias. Abajo, qué abarca y sus aportes a la medicina civil.
 ---
 
 ## [definition] Introducción

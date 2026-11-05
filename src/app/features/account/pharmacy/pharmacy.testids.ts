@@ -32,5 +32,7 @@ export const PHARMACY_TESTIDS = {
   cartConflictDialog: 'pharmacy-cart-conflict-dialog',
   prescriptionsList: 'pharmacy-prescriptions-list',
   prescriptionSearch: 'pharmacy-prescription-search',
+  prescriptionStatus: 'pharmacy-prescription-status',
+  prescriptionNotOrderable: 'pharmacy-prescription-not-orderable',
   whereToBuyAddToCart: 'where-to-buy-add-to-cart',
 } as const;

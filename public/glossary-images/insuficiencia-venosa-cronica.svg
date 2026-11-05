@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Insuficiencia venosa crónica</title>
+  <desc id="d">A la izquierda, una vena sana con válvulas cerradas que ayudan a que la sangre suba hacia el corazón, y una vena enferma y dilatada con válvulas que no cierran, por lo que la sangre vuelve hacia abajo y se estanca. A la derecha, los síntomas, como piernas pesadas, hinchazón y varices, y los cuidados recomendados.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Válvulas de las venas</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Síntomas y cuidados</text>
+<text x="120" y="78" text-anchor="middle" class="step" style="fill:var(--ok)">Vena sana</text>
+<rect x="100.0" y="92" width="40" height="250" rx="12" fill="var(--accent-l)" stroke="var(--vein)"/>
+<path d="M102 140 L120 122 L138 140" fill="none" stroke="var(--vein)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M102 220 L120 202 L138 220" fill="none" stroke="var(--vein)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M102 300 L120 282 L138 300" fill="none" stroke="var(--vein)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="120" y1="330" x2="120" y2="110" stroke="var(--accent)" stroke-width="2.5" marker-end="url(#ar)"/>
+<text x="290" y="78" text-anchor="middle" class="step" style="fill:var(--bad)">Vena enferma</text>
+<rect x="258.0" y="92" width="64" height="250" rx="12" fill="var(--accent-l)" stroke="var(--vein)"/>
+<path d="M260 140 L274 130 M320 140 L306 130" fill="none" stroke="var(--vein)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M260 220 L274 210 M320 220 L306 210" fill="none" stroke="var(--vein)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M260 300 L274 290 M320 300 L306 290" fill="none" stroke="var(--vein)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="290" y1="120" x2="290" y2="320" stroke="var(--bad)" stroke-width="2.5" marker-end="url(#ar)"/>
+<text x="120" y="364" text-anchor="middle" class="small" style="fill:var(--muted)">Sangre sube</text>
+<text x="290" y="364" text-anchor="middle" class="small" style="fill:var(--muted)">Sangre se estanca</text>
+<text x="200" y="400" text-anchor="middle" class="small">Las válvulas que fallan dejan que la sangre</text>
+<text x="200" y="416" text-anchor="middle" class="small">vuelva hacia abajo y se acumule en las piernas.</text>
+<text x="416" y="76" class="h">Síntomas</text>
+<text x="416" y="102" class="lab">• Piernas pesadas y cansadas</text>
+<text x="416" y="126" class="lab">• Hinchazón al final del día</text>
+<text x="416" y="150" class="lab">• Varices</text>
+<text x="416" y="174" class="lab">• Calambres y picor</text>
+<text x="416" y="198" class="lab">• Manchas y úlceras si avanza</text>
+<text x="416" y="246" class="h" style="fill:var(--ok)">Cuidados</text>
+<text x="416" y="272" class="lab">• Caminar y mover los tobillos</text>
+<text x="416" y="296" class="lab">• Elevar las piernas</text>
+<text x="416" y="320" class="lab">• Medias de compresión</text>
+<text x="416" y="344" class="lab">• Evitar estar de pie mucho rato</text>
+<text x="416" y="386" class="small" style="fill:var(--muted)">Opciones médicas: escleroterapia, láser</text>
+<text x="416" y="402" class="small" style="fill:var(--muted)">o cirugía de las venas afectadas.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, forkJoin, map, of, type Observable } from 'rxjs';
+import { catchError, forkJoin, map, of } from 'rxjs';
 
 import { SessionStore } from '../../../../core/auth/session.store';
 import { DirectoryClient } from '../../../../core/data-access/directory/directory.client';
@@ -33,11 +33,8 @@ import type {
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { rolesAlcanzan } from '../../../../core/navigation/navigation.types';
-import { empty, loading, ready } from '../../../../core/view-state/view-state';
-import type {
-  ViewState,
-  ViewStateNextAction,
-} from '../../../../core/view-state/view-state.types';
+import { loading, ready } from '../../../../core/view-state/view-state';
+import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../../shared/components/atoms/badge/badge.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
@@ -64,6 +61,8 @@ import {
   organizationVerifyRoute,
 } from '../organizations.routes';
 import { BranchAssignmentDialog } from './branch-assignment-dialog/branch-assignment-dialog';
+import { isManageable, isPendingInvitation, visibleRoster } from './membership-roster';
+import { conAccionPosible, conFallo, esFallo, estadoDeLista } from './organization-detail.rules';
 
 /** Filas por página. El backend aplica 50 por omisión y admite hasta 200. */
 const TAMANO_DE_PAGINA = 25;
@@ -91,6 +90,7 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
   DIR_BRANCH_ACTIVE: 'success',
   DIR_BRANCH_CLOSED: 'secondary',
   DIR_MEMBERSHIP_ACTIVE: 'success',
+  DIR_MEMBERSHIP_INVITED: 'warning',
   DIR_MEMBERSHIP_PENDING_ACCEPTANCE: 'warning',
   DIR_MEMBERSHIP_ENDED: 'secondary',
   DIR_MEMBERSHIP_SUSPENDED: 'error',
@@ -283,7 +283,7 @@ export class OrganizationDetail {
     conAccionPosible(this.sucursales(), this.puedeAdministrar()),
   );
   protected readonly vistaDeMembresias = computed(() =>
-    conAccionPosible(this.membresias(), this.puedeAdministrar()),
+    conAccionPosible(visibleRoster(this.membresias(), (id) => this.etiquetaDe(id)?.code, this.tenantId()), this.puedeAdministrar()),
   );
   protected readonly vistaDeHijas = computed(() =>
     conAccionPosible(this.hijas(), this.puedeCrearHijas()),
@@ -475,7 +475,12 @@ export class OrganizationDetail {
    * de aceptación**, «sumar a alguien» es **invitar**: hasta que acepte no cuenta para su token ni sus políticas.
    */
   protected esInvitacionPendiente(membresia: MembershipListItem): boolean {
-    return this.etiquetaDe(membresia.statusConceptId)?.code === 'DIR_MEMBERSHIP_PENDING_ACCEPTANCE';
+    return isPendingInvitation(this.etiquetaDe(membresia.statusConceptId)?.code);
+  }
+
+  /** Pending and support rows take no member actions (assign branch, change role, offboard). */
+  protected esGestionable(membresia: MembershipListItem): boolean {
+    return isManageable(this.etiquetaDe(membresia.statusConceptId)?.code, this.etiquetaDe(membresia.tenantRoleConceptId)?.code);
   }
 
   protected readonly retirando = signal<string | null>(null);
@@ -697,39 +702,7 @@ export class OrganizationDetail {
   }
 }
 
-/** Una rama del `forkJoin` que se resolvió con fallo en vez de con datos. */
-interface Fallo {
-  readonly error: unknown;
-}
-
-function conFallo<T extends object>(fuente: Observable<T>): Observable<T | Fallo> {
-  return fuente.pipe(catchError((error: unknown) => of<Fallo>({ error })));
-}
-
-function esFallo(valor: object): valor is Fallo {
-  return 'error' in valor;
-}
-
-function conAccionPosible<T>(estado: ViewState<T>, puede: boolean): ViewState<T> {
-  return estado.status === 'empty' && !puede
-    ? { ...estado, nextAction: { label: 'Pídaselo a quien administra la organización' } }
-    : estado;
-}
-
 function indiceDePestana(nombre: string | null): number {
   const indice = PESTANAS_DE_LA_FICHA.indexOf(nombre as (typeof PESTANAS_DE_LA_FICHA)[number]);
   return indice === -1 ? 0 : indice;
-}
-
-/**
- * De la lista al estado. El vacío lleva su propio texto y su propia salida:
- * «no hay sucursales» y «no hay sub-organizaciones» son situaciones distintas,
- * y la tercera —una organización sin sub-organizaciones— es lo normal.
- */
-function estadoDeLista<T>(
-  items: readonly T[],
-  accion: ViewStateNextAction,
-  mensaje: string,
-): ViewState<readonly T[]> {
-  return items.length === 0 ? empty(accion, mensaje) : ready(items);
 }

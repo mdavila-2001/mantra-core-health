@@ -10,10 +10,11 @@ import { catchError, switchMap, throwError } from 'rxjs';
 
 import { isAccessTokenExpired } from '../auth/access-token';
 import { RefreshTokenStorage } from '../auth/refresh-token.storage';
+import { safeReturnUrl } from '../auth/return-url';
 import { SessionStore } from '../auth/session.store';
 import { TENANT_SELECTION_ROUTE } from '../auth/tenant-selection-route';
 import { readApiError } from './api-error';
-import { API_BASE_URL } from '../data-access/api';
+import { API_BASE_URL, REFRESH_COOKIE_MODE } from '../data-access/api';
 import { TokenRefreshService } from './token-refresh.service';
 import { isTransientFailure } from './transient-failure';
 
@@ -93,16 +94,23 @@ const OPTIONAL_AUTH_PREFIXES: readonly string[] = ['/terminology/value-sets'];
  * peticiones y deja la interfaz colgada sin decir nada.
  */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
-  if (isPublic(request.url)) {
-    return next(request);
-  }
-
   // La credencial es de esta API: a una dirección de otro origen (una URL
   // firmada de un almacenamiento de objetos, un servicio de terceros) no viaja
   // ni el `Authorization` ni el tenant. Además, una cabecera de más suele
   // invalidar una URL firmada.
   if (!isOwnOrigin(request.url, inject(API_BASE_URL), inject(DOCUMENT).location?.origin ?? null)) {
     return next(request);
+  }
+
+  // La cookie HttpOnly tiene que viajar también en login y refresh, aunque esas
+  // rutas sean públicas para el manejo del token. Hace falta para APIs en otro
+  // origen; en el mismo origen el navegador ya la manda por defecto.
+  const requestToApi = inject(REFRESH_COOKIE_MODE)
+    ? request.clone({ withCredentials: true })
+    : request;
+
+  if (isPublic(requestToApi.url)) {
+    return next(requestToApi);
   }
 
   const session = inject(SessionStore);
@@ -124,20 +132,28 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const claims = session.claims();
   if (claims !== null && isAccessTokenExpired(claims) && session.canRefresh()) {
     return refresher.refresh().pipe(
-      switchMap(() => next(withCredentials(request, session))),
+      switchMap(() => next(withCredentials(requestToApi, session))),
       catchError((refreshError: unknown) =>
         failedRefresh(session, storage, router, refreshError),
       ),
     );
   }
 
-  return next(withCredentials(request, session)).pipe(
+  return next(withCredentials(requestToApi, session)).pipe(
     catchError((error: unknown) => {
       // Falta elegir organización: no es un muro, es una puerta. La API lo dice
       // con `details.reason` sin cambiar el status (403 o 422), y la respuesta es
       // abrir el selector, no pintar «sin permiso».
+      // Con alcance de plataforma no se navega: la pantalla que pidió el dato lo dice (S5 «Elegir organización») y
+      // evita el bucle /dashboard <-> /auth/organization. Quien no lo tiene sigue eligiendo, y vuelve adonde estaba.
       if (isTenantRequired(error) && session.tenants().length > 1) {
-        void router.navigateByUrl(TENANT_SELECTION_ROUTE);
+        if (!session.hasPlatformScope()) {
+          const actual = safeReturnUrl(router.url);
+          const destino = actual === null || actual === '/' || actual.startsWith('/auth/')
+            ? TENANT_SELECTION_ROUTE
+            : `${TENANT_SELECTION_ROUTE}?returnUrl=${encodeURIComponent(actual)}`;
+          void router.navigateByUrl(destino);
+        }
         return throwError(() => error);
       }
 
@@ -171,7 +187,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
       }
 
       return refresher.refresh().pipe(
-        switchMap(() => next(withCredentials(request, session))),
+        switchMap(() => next(withCredentials(requestToApi, session))),
         catchError((refreshError: unknown) =>
           failedRefresh(session, storage, router, refreshError),
         ),
@@ -247,7 +263,7 @@ function failedRefresh(
 
 /** `details.reason` de la API cuando hay que elegir organización. */
 function isTenantRequired(error: unknown): boolean {
-  if (!(error instanceof HttpErrorResponse) || ![403, 422].includes(error.status)) {
+  if (!(error instanceof HttpErrorResponse) || ![403, 412, 422].includes(error.status)) {
     return false;
   }
   const reason = readApiError(error)?.details?.['reason'];

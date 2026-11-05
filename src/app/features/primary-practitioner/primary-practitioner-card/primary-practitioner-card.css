@@ -50,3 +50,10 @@
   color: var(--text-muted);
   font-size: var(--fs-caption);
 }
+
+.mi-cabecera__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}

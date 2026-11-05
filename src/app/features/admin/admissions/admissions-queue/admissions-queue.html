@@ -63,7 +63,12 @@
           (rowActivated)="open($event)"
           (cursorChanged)="goTo($event)"
         />
-        <p class="cola__pagina" aria-live="polite" data-testid="admissions-page">Página {{ pageNumber() }}</p>
+        <div class="cola__pagina">
+          @if (fetching()) {
+            <app-spinner size="sm" label="Cargando página" data-testid="admissions-page-loading" />
+          }
+          <p aria-live="polite" data-testid="admissions-page">Página {{ pageNumber() }}</p>
+        </div>
       }
     }
   </app-view-state-host>

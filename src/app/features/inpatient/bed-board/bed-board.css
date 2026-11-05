@@ -1,0 +1,88 @@
+:host { display: block; }
+
+.board__freshness {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.board__header-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+
+/* Regla del 09/09/2026: centrada y a lo ancho, sin tope propio. */
+.board {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+  margin-block-start: var(--sp-4);
+}
+
+.board__panel { display: grid; gap: var(--sp-4); padding-block-start: var(--sp-4); min-inline-size: 0; }
+
+.board__counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.board__count {
+  display: grid;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface-alt);
+}
+
+.board__count dt { font-size: var(--fs-caption); color: var(--text-secondary); }
+.board__count dd { margin: 0; font-size: var(--fs-h3); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.board__count--zero dd { color: var(--text-muted); }
+
+.board__toolbar { display: flex; justify-content: flex-end; }
+
+.board__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.board__empty, .board__muted { margin: 0; color: var(--text-muted); font-size: var(--fs-caption); }
+.board__muted { display: block; }
+
+.board__legend { padding-block-start: var(--sp-3); border-block-start: 1px solid var(--border-default); }
+.board__legend-title { margin: 0 0 var(--sp-2); font-size: var(--fs-body); }
+.board__legend ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--sp-2) var(--sp-4); margin: 0; padding: 0; list-style: none; font-size: var(--fs-caption); color: var(--text-secondary); }
+
+.board__legend-mark {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 22px;
+  block-size: 22px;
+  border-radius: var(--r-xs);
+  font-weight: 800;
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+}
+.board__legend-mark--U { background: var(--st-success-bg); color: var(--st-success-fg); }
+.board__legend-mark--O { background: var(--st-primary-bg); color: var(--st-primary-fg); }
+.board__legend-mark--R { background: var(--st-info-bg); color: var(--st-info-fg); }
+.board__legend-mark--H { background: var(--st-warning-bg); color: var(--st-warning-fg); }
+.board__legend-mark--I { background: var(--st-tertiary-bg); color: var(--st-tertiary-fg); }
+.board__legend-mark--K { background: var(--st-error-bg); color: var(--st-error-fg); }
+
+@media (max-width: 649px) {
+  .board__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .board__toolbar { justify-content: flex-start; }
+}
+
+/* El control segmentado no se encoge hasta cortar «Grilla». */
+.board__toolbar app-segmented-control { flex: 0 0 auto; }

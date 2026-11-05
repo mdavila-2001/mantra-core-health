@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Anticuerpos IgM contra la hepatitis A</title>
+  <desc id="d">Arriba, tres pasos: muestra de sangre, detección de anticuerpos IgM contra el virus de la hepatitis A e indicación de infección reciente. Abajo a la izquierda, curvas en el tiempo: la IgM sube pronto, coincidiendo con los síntomas, y luego desaparece, mientras la IgG sube después y se mantiene como protección. Abajo a la derecha, el hígado y las vías de contagio fecal-oral.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="30" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="52" cy="54" r="13" fill="var(--accent)"/>
+  <text x="52" y="59" text-anchor="middle" class="step on">1</text>
+  <text x="72" y="59" class="step">Muestra</text>
+  <text x="46" y="84" class="small">Sangre de una vena</text>
+  <text x="46" y="103" class="small">del brazo</text>
+  <path d="M260 78.0 L283 78.0" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="287" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="309" cy="54" r="13" fill="var(--accent)"/>
+  <text x="309" y="59" text-anchor="middle" class="step on">2</text>
+  <text x="329" y="59" class="step">Se detecta</text>
+  <text x="303" y="84" class="small">Anticuerpos IgM contra</text>
+  <text x="303" y="103" class="small">el virus de la hepatitis A</text>
+  <path d="M517 78.0 L540 78.0" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="544" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="566" cy="54" r="13" fill="var(--accent)"/>
+  <text x="566" y="59" text-anchor="middle" class="step on">3</text>
+  <text x="586" y="59" class="step">Indica</text>
+  <text x="560" y="84" class="small">Infección reciente</text>
+  <text x="560" y="103" class="small">o en curso</text>
+  <rect x="30" y="150" width="470" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="265.0" y="180" text-anchor="middle" class="title">Anticuerpos a lo largo del tiempo</text>
+  <path d="M70 400 H470 M70 400 V200" stroke="var(--muted)" stroke-width="1.5"/>
+  <path d="M70 398 C110 398 120 230 170 230 C230 230 250 380 330 396 H470" fill="none" stroke="var(--bad)" stroke-width="3"/>
+  <path d="M70 398 C150 398 170 330 220 270 C260 230 320 222 470 220" fill="none" stroke="var(--accent)" stroke-width="3"/>
+  <rect x="96" y="200" width="70" height="200" fill="var(--warn)" opacity=".15"/>
+  <text x="131" y="216" text-anchor="middle" class="small">Síntomas</text>
+  <text x="180" y="222" class="step" style="fill:var(--bad)">IgM</text>
+  <text x="466" y="210" text-anchor="end" class="step" style="fill:var(--accent)">IgG (protección)</text>
+  <text x="270" y="424" text-anchor="middle" class="small muted">Semanas y meses tras el contagio</text>
+  <text x="74" y="196" class="small muted">Nivel</text>
+  <rect x="520" y="150" width="250" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="645.0" y="180" text-anchor="middle" class="title">El virus</text>
+  <path d="M600 210 C620 190 700 190 720 215 C720 250 680 270 610 262 C596 250 594 228 600 210 Z" fill="var(--organ)"/>
+  <text x="660" y="236" text-anchor="middle" class="step">Hígado</text>
+  <text x="540" y="300" class="step">Contagio fecal-oral:</text>
+  <text x="540" y="324" class="small">• Agua o alimentos</text>
+  <text x="540" y="346" class="small">• contaminados</text>
+  <text x="540" y="368" class="small">• Contacto estrecho</text>
+  <text x="540" y="402" class="small">Prevención: vacuna</text>
+  <text x="540" y="420" class="small">y lavado de manos</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

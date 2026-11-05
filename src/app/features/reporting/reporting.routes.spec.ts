@@ -13,6 +13,8 @@ import { SessionStore } from '../../core/auth/session.store';
 import { seccionRolesGuard } from '../../core/navigation/section-roles.guard';
 import { ROLES_ROUTE_DATA } from '../../core/navigation/navigation.types';
 import { ROLES_ADMINISTRACION, ROLES_REPORTERIA } from './reporting-access';
+import { SectionPlaceholder } from '../section-placeholder/section-placeholder';
+import { mockRoutes } from './reporting-mock.routes';
 import { DEFAULT_TAB, validTabGuard, REPORTING_ROUTES } from './reporting.routes';
 
 function token(roles: readonly string[]): string {
@@ -30,8 +32,12 @@ function token(roles: readonly string[]): string {
 }
 
 describe('cableado de los portales en app.routes', () => {
-  const selector = routes.find((r) => r.path === 'portal-selector');
-  const reporting = routes.find((r) => r.path === 'reports');
+  // Las rutas reales con la bandera ENCENDIDA (apagada son sólo redirecciones: ver `app.routes.spec.ts`).
+  const encendidas = mockRoutes(() => SectionPlaceholder, true);
+  const selector = encendidas.find((r) => r.path === 'portal-selector');
+  const reporting = encendidas.find((r) => r.path === 'reports');
+  // Las de `routes` (bandera apagada por defecto) conservan el lugar: delante del armazón.
+  const enRoutes = (path: string) => routes.find((r) => r.path === path);
 
   it('el selector y la reportería existen como rutas de primer nivel, fuera del armazón', () => {
     expect(selector).toBeDefined();
@@ -58,8 +64,8 @@ describe('cableado de los portales en app.routes', () => {
 
   it('van delante del armazón comodín de administración', () => {
     const armazon = routes.findIndex((r) => r.path === '' && r.component !== undefined);
-    expect(routes.indexOf(selector!)).toBeLessThan(armazon);
-    expect(routes.indexOf(reporting!)).toBeLessThan(armazon);
+    expect(routes.indexOf(enRoutes('portal-selector')!)).toBeLessThan(armazon);
+    expect(routes.indexOf(enRoutes('reports')!)).toBeLessThan(armazon);
   });
 });
 

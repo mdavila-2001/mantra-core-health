@@ -9,7 +9,7 @@
       <app-form-field label="Qué está buscando" class="tienda__busqueda">
         <app-search-field
           [attr.data-testid]="testids.searchTerm"
-          placeholder="Paracetamol, ibuprofeno, Farmacorp…"
+          placeholder="Paracetamol, Farmacorp, dolor abdominal…"
           [value]="termino()"
           [loading]="buscando()"
           (searched)="buscar($event)"
@@ -104,6 +104,13 @@
         </p>
       } @else {
         <app-view-state-host [state]="estado()" (retry)="reintentar()">
+          @if (corregido(); as corregido) {
+            <app-search-correction
+              [original]="termino()"
+              [corrected]="corregido"
+              (literalRequested)="buscar($event, true)"
+            />
+          }
           @if (modo() === 'products') {
             <app-product-results
               [items]="filasDeProducto()"
@@ -113,6 +120,9 @@
             <app-store-results [items]="filasDeSede()" [sinOrigen]="sinOrigenEnResultados()" />
           }
         </app-view-state-host>
+        @if (modo() === 'products' && !buscando() && filasDeProducto().length === 0) {
+          <app-catalog-matches [term]="termino()" [exact]="exacto()" />
+        }
       }
     }
 

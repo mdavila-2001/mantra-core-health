@@ -11,10 +11,7 @@ import {
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
 
-import {
-  FORM_CONTROL_CONTEXT,
-  nextControlId,
-} from '@shared/forms/form-control.context';
+import { FORM_CONTROL_CONTEXT, nextControlId } from '@shared/forms/form-control.context';
 import { createValueAccessorBridge } from '@shared/forms/value-accessor';
 import type { InputComboboxAria, InputType } from './input.types';
 
@@ -147,9 +144,7 @@ export class Input implements ControlValueAccessor {
   );
 
   /** El error puede venir del propio control o del campo que lo envuelve. */
-  protected readonly invalid = computed(
-    () => this.hasError() || this.field?.invalid() === true,
-  );
+  protected readonly invalid = computed(() => this.hasError() || this.field?.invalid() === true);
 
   /** El tipo real del `<input>`: `password` alterna a `text` al revelarse. */
   protected readonly effectiveType = computed(() => {
@@ -218,9 +213,11 @@ export class Input implements ControlValueAccessor {
         const limpio = filtro(target.value);
         if (limpio !== target.value) {
           const quitados = target.value.length - limpio.length;
-          const cursor = Math.max(0, (target.selectionStart ?? limpio.length) - quitados);
+          // `type="email"` has no selection API: selectionStart is null and setSelectionRange throws.
+          const inicio = target.selectionStart;
+          const cursor = Math.max(0, (inicio ?? limpio.length) - quitados);
           target.value = limpio;
-          target.setSelectionRange(cursor, cursor);
+          if (inicio !== null) target.setSelectionRange(cursor, cursor);
         }
       }
       this.commit(target.value);

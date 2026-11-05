@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
@@ -249,5 +249,22 @@ describe('PracticeSitesClient', () => {
         createdAt: new Date('2026-01-01T12:00:00.000Z'),
       });
     });
+  });
+
+  it('un error de transporte no se transforma en ausencia de vinculaciones', () => {
+    let received = false;
+    let failure: unknown;
+    client.listMyRoleAssignments().subscribe({ next: () => { received = true; }, error: (error: unknown) => { failure = error; } });
+    http.expectOne('/practitioners/me/role-assignments').error(new ProgressEvent('error'));
+    expect(received).toBe(false);
+    expect(failure).toBeInstanceOf(HttpErrorResponse);
+    expect(failure).toMatchObject({ status: 0 });
+  });
+
+  it('un 404 conserva el contrato existente de lista vacía', () => {
+    let result: readonly MyRoleAssignment[] | undefined;
+    client.listMyRoleAssignments().subscribe((items) => { result = items; });
+    http.expectOne('/practitioners/me/role-assignments').flush(null, { status: 404, statusText: 'Not found' });
+    expect(result).toEqual([]);
   });
 });

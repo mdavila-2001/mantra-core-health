@@ -222,7 +222,7 @@ describe('Loyalty', () => {
       });
 
       expect(porTestId('movimientos-error')?.textContent).toContain(
-        'No pudimos traer sus movimientos. (Código de soporte: corr-mov)',
+        'No pudimos traer sus movimientos. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-mov)',
       );
       expect(porTestId('movimientos-vacio')).toBeNull();
 

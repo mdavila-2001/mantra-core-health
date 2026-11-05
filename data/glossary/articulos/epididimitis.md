@@ -1,5 +1,6 @@
 ---
 slug: epididimitis
+image: epididimitis.svg | Inflamación del epidídimo, causas y tratamiento | Corte esquemático del escroto con el epidídimo hinchado y bacterias que suben por el conducto, junto a las causas, los síntomas y el aviso de urgencia por torsión
 ---
 
 ## [definition] Introducción

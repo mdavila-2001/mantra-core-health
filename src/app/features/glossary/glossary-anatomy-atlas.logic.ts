@@ -3,6 +3,7 @@ import type {
   AnatomyIndexEntry,
   AnatomyLayer,
   AnatomyPart,
+  AnatomyReference,
   AnatomySex,
   AnatomyStructure,
 } from '../../core/data-access/anatomy-atlas/anatomy-atlas.types';
@@ -34,9 +35,9 @@ export function ontologyUrl(id: string): string | null {
   return null;
 }
 
-/** ¿La pieza se dibuja con este sexo? «Mujer» sólo quita lo exclusivo del cuerpo masculino. */
+/** ¿La pieza se dibuja con este sexo? Las compartidas siempre; las de un cuerpo, sólo en ese. */
 export function partVisibleFor(part: AnatomyPart, sex: AnatomySex): boolean {
-  return !(sex === 'female' && part.sex === 'male');
+  return part.sex === 'shared' || part.sex === sex;
 }
 
 /**
@@ -210,4 +211,77 @@ export function pageRelationGroups(groups: readonly RelationGroup[], page: numbe
   const porGrupo = new Map<string, RelatedItem[]>();
   for (const { name, item } of visibles) porGrupo.set(name, [...(porGrupo.get(name) ?? []), item]);
   return [...porGrupo].map(([name, items]) => ({ name, items }));
+}
+
+/* ---- «Mujer» ----------------------------------------------------------- */
+
+/**
+ * Lo que se ve sólo en «Mujer», para elegirlo sin tocar el lienzo: las
+ * estructuras de las piezas femeninas, los órganos que ellas forman (útero,
+ * mama) y las estructuras exclusivamente femeninas con pieza. Las clases
+ * genéricas que también quedan formadas sólo por piezas femeninas
+ * («conducto», «tubérculo») no ayudan a elegir: los órganos de HuBMAP que
+ * UBERON no trae (la mama izquierda) son `FMA:`.
+ */
+export function femaleModelEntries(
+  parts: readonly AnatomyPart[],
+  composites: AnatomyComposites,
+  femaleOnlyIds: readonly string[],
+  porId: ReadonlyMap<string, AnatomyIndexEntry>,
+): AnatomyIndexEntry[] {
+  const femeninas = new Set(parts.filter((p) => p.sex === 'female').map((p) => p.structureId));
+  const exclusivas = new Set(femaleOnlyIds);
+  const organos = Object.entries(composites)
+    .filter(([id, miembros]) => (exclusivas.has(id) || id.startsWith('FMA:')) && miembros.every((m) => femeninas.has(m)))
+    .map(([id]) => id);
+  const conPieza = femaleOnlyIds.filter((id) => porId.get(id)?.[3] === 1);
+  return entriesOf([...femeninas, ...organos, ...conPieza], porId);
+}
+
+/** Las estructuras exclusivamente femeninas que ninguna malla libre dibuja (la vagina, la vulva). */
+export function femaleMissingEntries(
+  femaleOnlyIds: readonly string[],
+  porId: ReadonlyMap<string, AnatomyIndexEntry>,
+): AnatomyIndexEntry[] {
+  return entriesOf(femaleOnlyIds.filter((id) => porId.get(id)?.[3] === 0), porId);
+}
+
+/** Las filas del índice de estos ids, sin repetir y en orden alfabético castellano. */
+function entriesOf(ids: readonly string[], porId: ReadonlyMap<string, AnatomyIndexEntry>): AnatomyIndexEntry[] {
+  return [...new Set(ids)]
+    .map((id) => porId.get(id))
+    .filter((e): e is AnatomyIndexEntry => e !== undefined)
+    .sort((a, b) => displayName(a[1], a[2], a[0]).localeCompare(displayName(b[1], b[2], b[0]), 'es'));
+}
+
+/* ---- referencias ------------------------------------------------------ */
+
+/** El enlace de una referencia, si es de un tipo que se puede abrir. */
+export function referenceUrl(ref: AnatomyReference): string | null {
+  switch (ref.kind) {
+    case 'pmid':
+      return `https://pubmed.ncbi.nlm.nih.gov/${ref.value}/`;
+    case 'doi':
+      return `https://doi.org/${ref.value}`;
+    case 'wikipedia':
+      return `https://en.wikipedia.org/wiki/${encodeURIComponent(ref.value)}`;
+    case 'url':
+    case 'curator':
+      return ref.value;
+    default:
+      return null;
+  }
+}
+
+export function referenceLabel(ref: AnatomyReference): string {
+  const nombres: Record<AnatomyReference['kind'], string> = {
+    pmid: 'PubMed',
+    doi: 'DOI',
+    isbn: 'ISBN',
+    wikipedia: 'Wikipedia (en)',
+    url: 'Enlace',
+    curator: 'Curador (ORCID)',
+    xref: 'Referencia cruzada',
+  };
+  return `${nombres[ref.kind]}: ${ref.value}`;
 }

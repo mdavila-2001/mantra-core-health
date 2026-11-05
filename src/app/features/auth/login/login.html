@@ -3,11 +3,7 @@
   claim="Su salud, conectada"
   tagline="Entre y encuentre su historia clínica, sus citas y sus estudios en un solo lugar."
 >
-  <!-- `appPointerScene` acá además del de la escena: la tarjeta necesita la
-       posición del puntero medida contra SU rectángulo, no contra la pantalla,
-       o el reflejo aparece corrido media ventana. Las variables se heredan, así
-       que basta con volver a publicarlas en este nodo. -->
-  <div class="login" appPointerScene>
+  <div class="login">
     <!-- Sin sello de marca. La columna de al lado ya lleva el logo a tamaño de
          marca y la barra superior lleva la píldora: un tercer AloVida encima
          del título era la marca pidiendo turno en su propia pantalla, y lo que
@@ -137,8 +133,8 @@
 
       <!-- Los dos accesos de alta van con su glifo: son dos caminos distintos y
            el ícono es lo que los distingue de un vistazo, antes de leerlos. -->
-      <a class="login__anexo" routerLink="/auth/register" data-testid="login-registro">
-        <app-nav-icon name="patients" class="login__anexo-icono" />
+      <a class="login__anexo" routerLink="/auth/register" data-testid="login-registro" data-icon-play>
+        <span class="login__anexo-icono" aria-hidden="true"><app-account-icon name="patient" /></span>
         <span class="login__anexo-texto">
           <span class="login__anexo-titulo">Cree su cuenta</span>
           <span class="login__anexo-detalle">Paciente o profesional</span>
@@ -162,8 +158,9 @@
         class="login__anexo"
         routerLink="/auth/register/organization-type"
         data-testid="login-registro-organizacion"
+        data-icon-play
       >
-        <app-nav-icon name="umbrella" class="login__anexo-icono" />
+        <span class="login__anexo-icono" aria-hidden="true"><app-account-icon name="insurer" /></span>
         <span class="login__anexo-texto">
           <span class="login__anexo-titulo">Registre su organización</span>
           <span class="login__anexo-detalle">Aseguradoras</span>

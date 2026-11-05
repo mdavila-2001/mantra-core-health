@@ -60,8 +60,18 @@ describe('handlers de servicios con duración dinámica', () => {
   const horarios = (id: string, quien = paciente): Respuesta<Horarios> =>
     llamar<Horarios>('GET', '/scheduling/service-availability', quien, {}, query(id));
 
-  /** El primer horario de un miércoles: la mañana MIXTA, donde conviven consultas y servicios. */
-  const unMiercoles = (items: Horarios['items']) => items.find((i) => new Date(i.startAt).getDay() === 3);
+  /**
+   * El primer horario de un miércoles: la mañana MIXTA, donde conviven consultas y servicios.
+   * Siempre de un miércoles **posterior a hoy**: si hoy es miércoles, la mañana de hoy ya pasó (o
+   * se corre a mitad de ella) y no tiene consultas que pisar, y la prueba dependería del día.
+   */
+  const unMiercoles = (items: Horarios['items']) => {
+    const finDeHoy = new Date();
+    finDeHoy.setHours(23, 59, 59, 999);
+    return items.find(
+      (i) => new Date(i.startAt).getDay() === 3 && new Date(i.startAt).getTime() > finDeHoy.getTime(),
+    );
+  };
 
   /**
    * Las tablas del simulador son singletons de módulo: lo que un test escribe lo ve

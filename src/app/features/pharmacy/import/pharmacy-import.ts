@@ -14,15 +14,15 @@ import {
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { catchError, map, of, type Subscription } from 'rxjs';
+import { catchError, map, of, takeLast, type Subscription } from 'rxjs';
 
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Progress } from '../../../shared/components/atoms/progress/progress';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import { Spinner } from '../../../shared/components/atoms/spinner/spinner';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
 import {
   FileInput,
   type RejectedFile,
@@ -36,20 +36,17 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { CsvExportService, type CsvColumn } from '../../../shared/utils/csv-export/csv-export';
-
 import { PharmacyBulkClient } from '../../../core/data-access/pharmacy/pharmacy-bulk.client';
 import { PharmacyClient } from '../../../core/data-access/pharmacy/pharmacy.client';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-
 import {
   ArchivoInvalido,
   FILE_MAX_BYTES,
   CATEGORIES,
   CSV_COLUMNS,
   FIELD_LABELS,
-  EXAMPLE_ROWS,
   MAX_ROWS_BY_LOAD,
   decodificarCsv,
   readCsv,
@@ -61,7 +58,8 @@ import {
   type CsvReading,
   type LoadMode,
 } from '../catalog-rules/catalog.rules';
-import { PharmacyScope } from '../pharmacy-scope';
+import { EXAMPLE_ROWS } from '../catalog-rules/catalog-example-rows';
+import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import {
   OUTCOME_BADGE,
   bulkFailureMessage,
@@ -153,7 +151,6 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
     Alert,
     AppButton,
     Badge,
-    Card,
     DataTable,
     DecimalPipe,
     FileInput,
@@ -161,10 +158,11 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
     PageHeader,
     Progress,
     Select,
+    Spinner,
     Stepper,
     ViewStateHost,
   ],
-  providers: [PharmacyScope],
+  providers: [providePharmacyScope()],
   templateUrl: './pharmacy-import.html',
   styleUrl: './pharmacy-import.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -357,6 +355,13 @@ export class PharmacyImport {
     const rejected = preview.status === 'ready' ? preview.results.filter((r) => r.outcome === 'REJECTED') : [];
     const rows = productResultRows(this.reviewed(), rejected).filter((row) => row.outcome === 'REJECTED');
     return rows.length === 0 ? empty({ label: 'Cargar' }) : ready(rows);
+  });
+  /** Cuántas filas se cargarían con un aviso (p. ej. «pide receta y no tiene medicamento»). */
+  protected readonly previewWarned = computed(() => {
+    const preview = this.serverPreview();
+    return preview.status === 'ready'
+      ? preview.results.filter((r) => r.outcome !== 'REJECTED' && r.message !== '').length
+      : 0;
   });
 
   protected readonly steps = computed<readonly StepperStep[]>(() => {
@@ -619,6 +624,10 @@ export class PharmacyImport {
   /**
    * Pide al servidor qué pasaría con cada fila lista (`dryRun`: no escribe
    * nada). Se repite al cambiar el modo; una vista previa vieja se descarta.
+   *
+   * Va en lotes, y la vista previa queda lista sólo con **todos** los lotes
+   * contestados y una respuesta por fila: con el primero de tres, «Cargar»
+   * publicaría filas que el servidor todavía no revisó.
    */
   protected requestPreview(): void {
     const pharmacyId = this.scope.pharmacyId();
@@ -630,8 +639,14 @@ export class PharmacyImport {
     }
     this.serverPreview.set({ status: 'loading' });
     this.previewRequest = sendProducts(this.bulk, pharmacyId, this.mode(), rows, { dryRun: true })
+      .pipe(takeLast(1))
       .subscribe({
-        next: (results) => this.serverPreview.set({ status: 'ready', results }),
+        next: (results) =>
+          this.serverPreview.set(
+            results.length === rows.length
+              ? { status: 'ready', results }
+              : { status: 'failed', message: 'La revisión del servidor llegó incompleta. Pruebe de nuevo.' },
+          ),
         error: (error: unknown) =>
           this.serverPreview.set({ status: 'failed', message: bulkFailureMessage(error) }),
       });
@@ -709,7 +724,7 @@ export class PharmacyImport {
     const columns: CsvColumn<{ campos: ProductFields; problema: string }>[] = [
       ...CSV_COLUMNS.map((column) => ({
         header: column.encabezado,
-        value: (row: { campos: ProductFields }) => row.campos[column.campo],
+        value: (row: { campos: ProductFields }) => row.campos[column.campo] ?? '',
       })),
       { header: 'problema', value: (row) => row.problema },
     ];
@@ -752,6 +767,6 @@ export class PharmacyImport {
 function templateColumns(): CsvColumn<ProductFields>[] {
   return CSV_COLUMNS.map((column) => ({
     header: column.encabezado,
-    value: (row: ProductFields) => row[column.campo],
+    value: (row: ProductFields) => row[column.campo] ?? '',
   }));
 }

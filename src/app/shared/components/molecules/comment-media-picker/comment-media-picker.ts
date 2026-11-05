@@ -41,6 +41,7 @@ import {
 import { FilesClient } from '@core/data-access/files/files.client';
 import type { NewCommentMedia } from '@core/data-access/community/community.types';
 import { AppButton } from '../../atoms/button/button';
+import { Spinner } from '../../atoms/spinner/spinner';
 import { Alert } from '../alert/alert';
 import {
   COMMENT_MEDIA_MAX,
@@ -52,7 +53,7 @@ import {
 
 @Component({
   selector: 'app-comment-media-picker',
-  imports: [FileDropTarget, AppButton, Alert],
+  imports: [FileDropTarget, AppButton, Alert, Spinner],
   templateUrl: './comment-media-picker.html',
   styleUrl: './comment-media-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

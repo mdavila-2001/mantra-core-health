@@ -273,4 +273,21 @@ describe('MembershipNew', () => {
     expect(mensaje).toContain('No encontramos esta organización');
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('No encontramos esta organización');
   });
+
+  it('un 409 (ya es miembro, o ya tiene una invitación pendiente) se dice con el mensaje de la API y no crea nada más', () => {
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    elegirPersona();
+    interno<() => void>('submit')();
+
+    http
+      .expectOne(`/tenants/${TENANT_ID}/memberships`)
+      .flush(
+        { statusCode: 409, code: 'CONFLICT', message: 'Esa persona ya tiene una invitación pendiente.', details: { membershipId: MEMBRESIA_ID } },
+        { status: 409, statusText: 'Conflict' },
+      );
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Esa persona ya tiene una invitación pendiente.');
+    expect(navegar).not.toHaveBeenCalled();
+  });
 });

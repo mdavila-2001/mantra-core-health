@@ -1,3 +1,5 @@
+import { By } from '@angular/platform-browser';
+import { Badge } from '../../shared/components/atoms/badge/badge';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
@@ -167,6 +169,28 @@ describe('Groups', () => {
     fixture.detectChanges();
   });
 
+  it('the next page requests the cursor and keeps the loaded rows on screen meanwhile', () => {
+    montar();
+    responderTemas();
+    responderPerfil();
+    http
+      .expectOne((r) => r.url === '/community/groups')
+      .flush({ ...paginaVacia, items: [grupo('g-1', 'Cardiología')], count: 1, nextCursor: 'c-2' });
+    fixture.detectChanges();
+
+    const componente = fixture.componentInstance as unknown as {
+      cambiarCursor(cursor: string): void;
+      stateOfHistorico(): { status: string };
+    };
+    componente.cambiarCursor('c-2');
+    const req = http.expectOne((r) => r.url === '/community/groups');
+    expect(req.request.params.get('cursor')).toBe('c-2');
+    // Rows stay visible; the table's own cursor button shows the spinner.
+    expect(componente.stateOfHistorico().status).toBe('ready');
+    req.flush({ ...paginaVacia, items: [grupo('g-2', 'Pediatría')], count: 1 });
+    expect(componente.stateOfHistorico().status).toBe('ready');
+  });
+
   it('el tema se alterna: volver a tocarlo lo quita', () => {
     montar();
     responderTemas();
@@ -313,5 +337,18 @@ describe('Groups', () => {
     expect(texto()).not.toContain('Pídaselo a quien administra su organización');
     expect(texto()).toContain('Cree su vitrina pública');
     expect(texto()).not.toContain('Configurar mi perfil público');
+  });
+
+  it('tema y privacidad conservan etiquetas con variantes declaradas del sistema', async () => {
+    montar(); responderTemas(); responderPerfil();
+    http.expectOne((r) => r.url === '/community/groups').flush({ ...paginaVacia, count: 2, items: [
+      { ...grupo('g-public', 'Publico'), topicId: 'top-1' },
+      { ...grupo('g-private', 'Privado'), visibilityConceptId: 'c-privado' },
+    ] });
+    fixture.detectChanges(); await fixture.whenStable(); fixture.detectChanges();
+    const badges = fixture.debugElement.queryAll(By.directive(Badge)).map((node) => node.injector.get(Badge));
+    expect(badges.find((badge) => badge.value() === 'Cardiología')?.variant()).toBe('secondary');
+    expect(badges.find((badge) => badge.value() === 'Público')?.variant()).toBe('info');
+    expect(badges.find((badge) => badge.value() === 'Privado')?.variant()).toBe('secondary');
   });
 });

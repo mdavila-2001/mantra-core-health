@@ -1,5 +1,6 @@
 ---
 slug: prolactina
+image: prolactina.svg | La hipófisis produce prolactina, que estimula la producción de leche. | Esquema del cerebro con hipotálamo e hipófisis que libera prolactina hacia la mama, junto a un tubo de sangre, motivos para pedir la prueba y causas de prolactina alta.
 ---
 
 ## [definition] Introducción

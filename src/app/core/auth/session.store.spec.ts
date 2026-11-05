@@ -85,6 +85,67 @@ describe('SessionStore', () => {
     });
   });
 
+  describe('alcance de plataforma (H1)', () => {
+    const plataforma = (roles: string[], extra: Record<string, unknown> = {}): string =>
+      makeToken({ sub: 'u-1', sid: 's-1', roles, tenants: ['t-1', 't-2', 't-3'], ...extra });
+
+    it.each(['SUPERADMIN', 'PLATFORM_ADMIN', 'DATA_PLATFORM_ADMIN', 'GOVERNANCE_ADMIN'])(
+      '%s con 3 organizaciones no tiene que elegir y entra «a toda la plataforma»',
+      (rol) => {
+        store.start({ accessToken: plataforma([rol]), refreshToken: 'r-1' });
+
+        expect(store.hasPlatformScope()).toBe(true);
+        expect(store.needsTenantSelection()).toBe(false);
+        expect(store.activeTenantId()).toBeNull(); // no se adivina: no viaja X-Tenant-Id
+        expect(store.platformWide()).toBe(true);
+      },
+    );
+
+    it('al fijar una organización deja de ser «toda la plataforma» y vuelve al soltarla', () => {
+      store.start({ accessToken: plataforma(['PLATFORM_ADMIN']), refreshToken: 'r-1' });
+      store.selectTenant('t-2');
+      expect(store.activeTenantId()).toBe('t-2');
+      expect(store.platformWide()).toBe(false);
+
+      store.clearTenant();
+      expect(store.activeTenantId()).toBeNull();
+      expect(store.platformWide()).toBe(true);
+    });
+
+    it('NEGATIVO: SECURITY_ADMIN con 3 organizaciones sigue eligiendo', () => {
+      store.start({ accessToken: plataforma(['SECURITY_ADMIN']), refreshToken: 'r-1' });
+      expect(store.hasPlatformScope()).toBe(false);
+      expect(store.needsTenantSelection()).toBe(true);
+      expect(store.platformWide()).toBe(false);
+    });
+
+    it('NEGATIVO: PLATFORM_ADMIN con ámbito de organización (scopedRoles) sigue eligiendo', () => {
+      const token = plataforma(['PLATFORM_ADMIN'], { scopedRoles: { 't-1': ['PLATFORM_ADMIN'] } });
+      store.start({ accessToken: token, refreshToken: 'r-1' });
+      expect(store.hasPlatformScope()).toBe(false);
+      expect(store.needsTenantSelection()).toBe(true);
+    });
+
+    it('NEGATIVO: una médica con 3 organizaciones sigue eligiendo', () => {
+      store.start({ accessToken: plataforma(['PRACTITIONER']), refreshToken: 'r-1' });
+      expect(store.needsTenantSelection()).toBe(true);
+    });
+
+    it('límite: con una sola organización se resuelve sola y sigue sin ser «toda la plataforma» sólo por rol', () => {
+      store.start({
+        accessToken: makeToken({ sub: 'u-1', sid: 's-1', roles: ['PLATFORM_ADMIN'], tenants: ['t-1'] }),
+        refreshToken: 'r-1',
+      });
+      expect(store.activeTenantId()).toBe('t-1');
+      expect(store.needsTenantSelection()).toBe(false);
+    });
+
+    it('sin sesión no hay alcance', () => {
+      expect(store.hasPlatformScope()).toBe(false);
+      expect(store.platformWide()).toBe(false);
+    });
+  });
+
   describe('organización activa', () => {
     it('con un solo tenant se resuelve sola', () => {
       store.start({ accessToken: UNO, refreshToken: 'r-1' });

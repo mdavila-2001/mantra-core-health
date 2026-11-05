@@ -146,6 +146,21 @@ app-content-dialog .historial__formulario {
 
 /* El aviso del trámite. Sólo aparece cuando hay algo que decir, así que puede
    ocupar su propia línea sin competir con el resto de la ficha. */
+/* «¿Atiende acá?»: el paso de la trayectoria a «Dónde atiendo». En la lista
+   de la ficha ocupa su propio renglón (`flex-basis: 100%`) para no competir
+   con el período; en la celda de la tabla queda debajo del aviso. */
+.historial__donde-atiende {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  margin: var(--sp-2) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
 .historial__vinculo {
   margin: var(--sp-2) 0 0;
   font-size: var(--fs-caption);

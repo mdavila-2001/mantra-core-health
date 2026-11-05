@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Colecistitis aguda</title>
+  <desc id="d">A la izquierda, el hígado con la vesícula biliar inflamada debajo y un cálculo que obstruye su salida, de modo que la bilis queda atrapada. A la derecha, una silueta con el dolor marcado arriba a la derecha del abdomen, los síntomas, el diagnóstico con ecografía y el tratamiento.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Qué ocurre</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Síntomas y manejo</text>
+<path d="M60 120 C60 80 150 66 250 72 C320 76 350 100 350 128 C350 160 300 180 240 196 C180 210 100 206 76 186 C64 174 60 150 60 120 Z" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="150" y="116" text-anchor="middle" class="lab">Hígado</text>
+<path d="M210 196 C200 230 210 290 250 300 C290 306 304 270 290 230 C282 206 260 192 236 190 Z" fill="var(--warn-l)" stroke="var(--bad)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="310" y="270" class="small">Vesícula</text>
+<text x="310" y="286" class="small" style="fill:var(--bad)">inflamada</text>
+<circle cx="230" cy="214" r="9" fill="var(--yellow)" stroke="var(--warn)" stroke-width="2"/>
+<circle cx="246" cy="246" r="8" fill="var(--yellow)" stroke="var(--warn)" stroke-width="2"/>
+<circle cx="262" cy="274" r="7" fill="var(--yellow)" stroke="var(--warn)" stroke-width="2"/>
+<path d="M226 194 C220 176 210 160 196 150" fill="none" stroke="var(--ok)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="214" cy="176" r="7" fill="var(--yellow)" stroke="var(--warn)" stroke-width="2"/>
+<text x="40" y="240" class="small">Cálculo que</text>
+<text x="40" y="256" class="small">tapa la salida</text>
+<line x1="104" y1="236" x2="206" y2="178" stroke="var(--muted)" stroke-width="1"/>
+<text x="200" y="336" text-anchor="middle" class="lab">La bilis queda atrapada, la pared se</text>
+<text x="200" y="356" text-anchor="middle" class="lab">inflama y a veces se infecta.</text>
+<text x="200" y="392" text-anchor="middle" class="small" style="fill:var(--muted)">Casi siempre se debe a cálculos biliares.</text>
+<circle cx="470" cy="93.6" r="13.6" fill="var(--skin)" stroke="var(--line)"/>
+<path d="M462.6 106.0 L439.0 114.7 C432.8 117.2 431.6 123.4 430.9 129.6 L425.4 185.4 L434.0 186.6 L441.5 137.0 L442.7 179.2 L441.5 266.0 L461.3 266.0 L467.5 191.6 L472.5 191.6 L478.7 266.0 L498.5 266.0 L497.3 179.2 L498.5 137.0 L506.0 186.6 L514.6 185.4 L509.1 129.6 C508.4 123.4 507.2 117.2 501.0 114.7 L477.4 106.0 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5" stroke-linejoin="round"/>
+<circle cx="456" cy="162" r="14" fill="var(--bad)" opacity=".55"/>
+<text x="520" y="96" class="h">Síntomas</text>
+<text x="520" y="122" class="lab">• Dolor intenso arriba</text>
+<text x="531" y="144" class="lab">a la derecha del abdomen</text>
+<text x="520" y="166" class="lab">• Fiebre</text>
+<text x="520" y="188" class="lab">• Náuseas y vómitos</text>
+<text x="520" y="210" class="lab">• Dolor al palpar</text>
+<text x="531" y="232" class="lab">bajo las costillas</text>
+<text x="416" y="300" class="h">Diagnóstico</text>
+<text x="416" y="324" class="lab">Exploración, análisis y ecografía.</text>
+<text x="416" y="360" class="h">Tratamiento</text>
+<text x="416" y="384" class="lab">Ayuno, líquidos, antibióticos y, en la</text>
+<text x="416" y="402" class="lab">mayoría, extirpar la vesícula.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1430816
+image: wikidata-especialidad-q1430816.svg | La cirugía pediátrica opera a niños desde antes de nacer hasta la adolescencia. | Silueta infantil con marcas en los lugares de problemas quirúrgicos frecuentes y recuadros con el equipo de trabajo y las técnicas de la cirugía pediátrica.
 ---
 
 ## [definition] Introducción

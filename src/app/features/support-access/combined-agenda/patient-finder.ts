@@ -13,23 +13,11 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { patientFailureMessage } from './patient-failure';
+import type { PickedPatient } from './picked-patient';
 import { PatientRegister } from './patient-register';
 import { SEARCH_HELP, SEARCH_MODES, validateExactSearch, type SearchMode } from './patient-search';
 
-/** El paciente elegido y, si es menor, quién actúa por él. */
-export interface PickedPatient {
-  readonly patient: SupportPatientMatch;
-  readonly representative: PatientRepresentative | null;
-  /**
-   * Solo si se lo acaba de **registrar** en el mostrador: la identidad nace sin verificar y, con
-   * un menor, el representante queda anotado como contacto pendiente de verificación (no como
-   * representante legal). Quien lo eligió de una búsqueda no trae esto.
-   */
-  readonly registration?: {
-    readonly identityVerified: false;
-    readonly guardianPending: boolean;
-  };
-}
+export type { PickedPatient } from './picked-patient';
 
 const MODOS: readonly SegmentedOption<SearchMode>[] = SEARCH_MODES.map((m) => ({ value: m.value, label: m.label }));
 

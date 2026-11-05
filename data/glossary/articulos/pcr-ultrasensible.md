@@ -1,5 +1,6 @@
 ---
 slug: pcr-ultrasensible
+image: pcr-ultrasensible.svg | La PCR ultrasensible mide niveles bajos de inflamación ligados al riesgo cardiovascular. | Placa inflamada en una arteria que envía señales al hígado, que produce proteína C reactiva medida en un tubo de sangre, junto a su uso en el riesgo cardiovascular y otras causas que la elevan.
 ---
 
 ## [definition] Introducción

@@ -64,6 +64,8 @@ import {
 import { InlineNameFields } from '../shared-registration/inline-name-fields/inline-name-fields';
 import { nameGroup, completeName } from '../shared-registration/name-fields/person-name';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
+import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
 
 /* ============================================================================
     Alta del centro de imagenología — «MODULO ANALISIS MEDICOS (RAYOS X,
@@ -433,7 +435,7 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
  */
 @Component({
   selector: 'app-register-imaging-center',
-  imports: [RegistrationBadge, 
+  imports: [RegistrationBadge, AccountExistsDialog, 
     BranchBulkImport,
     FileInput,
     NgTemplateOutlet,
@@ -462,6 +464,7 @@ export class RegisterImagingCenter {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly draftService = inject(OnboardingDraftService);
   private readonly router = inject(Router);
+  private readonly cuentaExistente = inject(AccountExistsCheck);
   private readonly iam = inject(IamClient);
   private readonly alta = inject(DiagnosisCenterEnrollment);
 
@@ -707,6 +710,7 @@ export class RegisterImagingCenter {
       campos: [
         {
           key: 'legalName',
+          alSalir: (valor: string) => this.cuentaExistente.verificar('ORG_NAME', valor),
           label: 'Nombre o razón social',
           control: 'text' as const,
           required: true,

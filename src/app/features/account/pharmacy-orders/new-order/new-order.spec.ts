@@ -253,6 +253,20 @@ describe('NewOrder', () => {
     http.expectNone('/pharmacy/orders');
   });
 
+  it('lo que la sede elegida no tiene se muestra, pero no bloquea: la línea no viaja', () => {
+    configurar([{ provide: RUTA_DEL_CHECKOUT, useValue: RUTA_DE_PRUEBA }]);
+    client.prepararBorrador({
+      ...BORRADOR,
+      lineas: [BORRADOR.lineas[0], { ...BORRADOR.lineas[1], missingAtSite: true }],
+    });
+    montar();
+
+    expect(texto()).toContain('Paracetamol');
+    expect(texto()).not.toContain('No hay un producto publicado');
+    expect(uno('pedido-continuar')?.getAttribute('aria-disabled')).not.toBe('true');
+    http.expectNone('/pharmacy/orders');
+  });
+
   /* ── Desde E no se crea ningún pedido (D-FARMOCK-T-E1-01) ──────────────── */
 
   describe('ninguna acción de la pantalla crea el pedido', () => {
@@ -658,7 +672,8 @@ describe('NewOrder', () => {
       client.prepararBorrador(BORRADOR_COMPLETO);
       montar();
 
-      expect(texto()).toContain('Algo salió mal');
+      // A plain `Error` is a browser-side failure, explained as such (not as a server one).
+      expect(texto()).toContain('Esta pantalla tuvo un problema');
       expect(uno('pedido-confirmacion')).toBeNull();
 
       const reintentar = Array.from(raiz().querySelectorAll<HTMLButtonElement>('button')).find(

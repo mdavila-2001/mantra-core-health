@@ -105,6 +105,12 @@ export class OrganizationBranches {
   private readonly toasts = inject(ToastService);
 
   protected readonly tenantId = this.session.activeTenantId;
+  /**
+   * En una farmacia hay dos «sucursales» que no son la misma lista: éstas, de la
+   * organización, y las sedes de venta que se cargan en «Importación» y salen en
+   * «Horario y turnos» y en «Dónde comprar». La pantalla lo dice.
+   */
+  protected readonly isPharmacy = computed(() => this.session.activeTenantType() === 'PHARMACY');
   protected readonly branches = signal<ViewState<readonly BranchListItem[]>>(loading());
 
   protected readonly nameMax = BRANCH_NAME_MAX_LENGTH;

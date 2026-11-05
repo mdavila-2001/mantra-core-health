@@ -15,7 +15,8 @@ import type {
 } from '../../../core/data-access/pharmacy/pharmacy-integration.types';
 import type { PharmacyProduct } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { IntegrationMappings } from './integration-mappings/integration-mappings';
-import { PharmacyIntegration } from './pharmacy-integration';
+import { Select } from '../../../shared/components/atoms/select/select';
+import { MISSING_SYSTEM_TEXT, PharmacyIntegration } from './pharmacy-integration';
 
 /**
  * Pestaña «Integración» (FAR-07): sin conexión ofrece conectarla; con conexión
@@ -138,7 +139,13 @@ describe('PharmacyIntegration', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    try {
+      http.verify();
+    } finally {
+      TestBed.resetTestingModule();
+    }
+  });
 
   describe('sin conexión', () => {
     it('ofrece «Conectar el sistema de la farmacia» y no pide nada de una conexión', () => {
@@ -322,17 +329,24 @@ describe('PharmacyIntegration', () => {
       expectOne('GET', `${CONN}/product-mappings`).flush({ items: [] });
       fixture.detectChanges();
 
-      expect(text('integration-not-configured')).toContain('no está configurada');
+      // Con la conexión dada de alta, el aviso dice qué falta sin negar que está activa.
+      expect(text('integration-not-configured')).toContain(MISSING_SYSTEM_TEXT);
       expect(disabled('integration-sync-button')).toBe(true);
       http.expectNone(`${CONN}/external-products`);
     });
 
-    it('con varias conexiones se elige cuál mirar; sin elegir, la activa', () => {
+    it('con varias conexiones exige elección explícita antes de montar el configurador', () => {
       const other: IntegrationConnection = { ...CONNECTION, id: 'c-2', status: 'INACTIVE', siteName: 'Sucursal Norte' };
       mount([other, CONNECTION]);
-      answerConnection();
-
       expect(byTestId('integration-connection-chooser')).not.toBeNull();
+      expect(byTestId('integration-system')).toBeNull();
+      expect(byTestId('integration-sync')).toBeNull();
+      expect(text('integration-choose-connection')).toContain('Elija una conexión');
+      http.expectNone((r) => r.url.endsWith('/sync-batches') || r.url.endsWith('/product-mappings'));
+      fixture.debugElement.query(By.css('app-select[data-testid="integration-connection-chooser"]'))
+        .injector.get(Select).value.set(CONNECTION.id);
+      fixture.detectChanges();
+      answerConnection();
       expect(text('integration-connection')).toContain('Casa central');
     });
   });
@@ -442,5 +456,86 @@ describe('PharmacyIntegration', () => {
       expect(text('integration-externals-error')).toContain('No pudimos hablar con el sistema de la farmacia');
       expect(disabled('integration-link-save')).toBe(true);
     });
+  });
+
+  it('«Vincular» sobre un código sin vínculo del resultado abre el alta con ese código y su unidad', () => {
+    mount([CONNECTION]);
+    answerConnection();
+
+    button('integration-sync-button').click();
+    expectOne('POST', `${CONN}/sync`).flush({
+      ...RESULT,
+      unmapped: [{ externalCode: 'ERP-0003', name: 'Amoxicilina 500 mg', reason: 'NO_MAPPING', productIds: [] }],
+    });
+    fixture.detectChanges();
+    expectOne('GET', `${CONN}/sync-batches`).flush({ items: [BATCH] });
+    fixture.detectChanges();
+
+    button('integration-sync-link').click();
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/pharmacy/products')).flush({ items: [], limit: 500, truncated: false });
+    expectOne('GET', `${CONN}/external-products`).flush({ items: EXTERNALS });
+    fixture.detectChanges();
+
+    expect(byTestId('integration-link-dialog')).not.toBeNull();
+    const mappings = fixture.debugElement.query(By.directive(IntegrationMappings)).componentInstance as unknown as {
+      externalCode: () => string | null;
+    };
+    expect(mappings.externalCode()).toBe('ERP-0003');
+    expect((root().querySelector('input[data-testid="integration-link-unit"]') as HTMLInputElement).value).toBe('BOX');
+  });
+
+  describe('sistema de la farmacia (FAR-C9 · C9-4)', () => {
+    it('la sección está en la pestaña y, al guardar, la conexión se relee de la API', () => {
+      const withSystem: IntegrationConnection = {
+        ...CONNECTION,
+        system: {
+          format: 'ALOVIDA_STANDARD',
+          baseUrl: 'https://api.farmacia.bo/alovida-standard',
+          externalPharmacyCode: 'FC',
+          apiKeyConfigured: true,
+          configuredAt: '2026-11-01T04:19:57.180Z',
+        },
+      };
+      mount([withSystem]);
+      answerConnection();
+
+      expect(text('integration-system')).toContain('https://api.farmacia.bo/alovida-standard');
+
+      button('integration-system-edit').click();
+      fixture.detectChanges();
+      const key = root().querySelector('input[data-testid="integration-system-key"]') as HTMLInputElement;
+      key.value = 'otra-clave';
+      key.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      button('integration-system-save').click();
+      expectOne('PUT', `${CONN}/external-system`).flush({ system: withSystem.system, probe: 'OK' });
+      fixture.detectChanges();
+
+      // `changed` → la pestaña relee la lista: lo que se ve sale de la API.
+      expectOne('GET', BASE).flush({ providerConfigured: true, items: [withSystem] });
+      fixture.detectChanges();
+      http.expectNone((r) => r.url.endsWith('/sync-batches') || r.url.endsWith('/product-mappings'));
+      expect(byTestId('integration-system-form')).toBeNull();
+    });
+  });
+
+  it('checked relee lastCheck sin remontar el formulario ni pisar un borrador nuevo', () => {
+    const system = { format: 'ALOVIDA_STANDARD' as const, baseUrl: 'https://saved.example.test', externalPharmacyCode: 'SAVED', apiKeyConfigured: true, configuredAt: '2026-11-01T10:00:00Z' };
+    const saved = { ...CONNECTION, system };
+    mount([saved]); answerConnection();
+    const panel = byTestId('integration-system');
+    button('integration-system-probe').click();
+    expectOne('POST', CONN + '/external-system/test').flush({ status: 'OK', source: 'PHARMACY' });
+    const reload = expectOne('GET', BASE);
+    button('integration-system-edit').click(); fixture.detectChanges();
+    const code = root().querySelector('input[data-testid="integration-system-code"]') as HTMLInputElement;
+    code.value = 'DRAFT'; code.dispatchEvent(new Event('input')); fixture.detectChanges();
+    reload.flush({ providerConfigured: true, items: [{ ...saved, system: { ...system, lastCheck: { status: 'ACTIVE', errorReason: null, checkedAt: '2026-11-01T14:37:00Z' } } }] });
+    fixture.detectChanges();
+    expect(byTestId('integration-system')).toBe(panel);
+    expect((root().querySelector('input[data-testid="integration-system-code"]') as HTMLInputElement).value).toBe('DRAFT');
+    expect(text('integration-system-last-check')).toContain('Activa');
+    http.expectNone((r) => r.url.endsWith('/sync-batches') || r.url.endsWith('/product-mappings'));
   });
 });

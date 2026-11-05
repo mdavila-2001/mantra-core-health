@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Campo de la neurootología</title>
+  <desc id="d">Oído interno con la cóclea, encargada de la audición, y los canales semicirculares, encargados del equilibrio, unidos por el nervio auditivo y vestibular al cerebro. A la derecha, los trastornos que atiende la neurootología y las pruebas habituales.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Neurootología: oído interno, audición y equilibrio</text>
+  <rect x="20" y="60" width="420" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230.0" y="88" text-anchor="middle" class="title">Del oído interno al cerebro</text>
+  <path d="M120 300 C120 250 180 236 200 260 C220 284 196 316 176 310 C158 304 160 278 178 276 C190 274 194 290 184 292" fill="none" stroke="var(--pur)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M210 250 C210 170 290 150 300 210 C306 250 260 260 230 250" fill="none" stroke="var(--accent)" stroke-width="8" opacity=".8"/>
+  <path d="M220 240 C190 170 230 130 270 140" fill="none" stroke="var(--ok)" stroke-width="8" opacity=".7"/>
+  <path d="M200 300 C260 320 320 300 380 240" fill="none" stroke="var(--warn)" stroke-width="5"/>
+  <path d="M380 240 C390 200 410 180 420 170" fill="none" stroke="var(--warn)" stroke-width="5"/>
+  <rect x="340" y="120" width="80" height="50" rx="20" fill="var(--organ)" stroke="var(--red)"/>
+  <text x="380" y="150" text-anchor="middle" class="small b">Cerebro</text>
+  <text x="150" y="340" text-anchor="middle" class="small b">Cóclea</text>
+  <text x="150" y="356" text-anchor="middle" class="small">audición</text>
+  <text x="260" y="120" text-anchor="middle" class="small b">Canales</text>
+  <text x="260" y="136" text-anchor="middle" class="small">equilibrio</text>
+  <text x="320" y="330" text-anchor="middle" class="small b">Nervio auditivo</text>
+  <text x="320" y="346" text-anchor="middle" class="small">y vestibular</text>
+  <text x="230" y="410" text-anchor="middle" class="small muted">Comparten órgano y nervio</text>
+  <rect x="456" y="60" width="324" height="200" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="88" text-anchor="middle" class="h">Qué atiende</text>
+  <text x="474" y="108" class="small">• Sordera neurosensorial</text>
+  <text x="474" y="132" class="small">• Vértigo y mareo crónico</text>
+  <text x="474" y="156" class="small">• Enfermedad de Ménière</text>
+  <text x="474" y="180" class="small">• Acúfenos</text>
+  <text x="474" y="204" class="small">• Tumores del nervio auditivo</text>
+  <text x="474" y="228" class="small">• Implantes cocleares</text>
+  <rect x="456" y="276" width="324" height="164" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="304" text-anchor="middle" class="h">Pruebas habituales</text>
+  <text x="474" y="322" class="small">• Audiometría</text>
+  <text x="474" y="348" class="small">• Pruebas vestibulares</text>
+  <text x="474" y="374" class="small">• Potenciales evocados</text>
+  <text x="474" y="400" class="small">• Resonancia del oído interno</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo de la especialidad. Ilustración original de AloVida.</text>
+</svg>

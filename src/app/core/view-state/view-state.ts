@@ -35,11 +35,21 @@ export function loading(): LoadingViewState {
   return { status: 'loading' };
 }
 
-/** **S3** — sin resultados. La próxima acción es obligatoria por contrato. */
-export function empty(nextAction: ViewStateNextAction, message?: string): EmptyViewState {
-  return message === undefined
-    ? { status: 'empty', nextAction }
-    : { status: 'empty', nextAction, message };
+/**
+ * **S3** — sin resultados. La próxima acción es obligatoria por contrato.
+ * `title` names this particular emptiness; omit it to get the host's generic one.
+ */
+export function empty(
+  nextAction: ViewStateNextAction,
+  message?: string,
+  title?: string,
+): EmptyViewState {
+  return {
+    status: 'empty',
+    nextAction,
+    ...(message === undefined ? {} : { message }),
+    ...(title === undefined ? {} : { title }),
+  };
 }
 
 /** Camino feliz: datos frescos. */
@@ -99,10 +109,12 @@ export function stale<T>(data: T, asOf: Date): StaleViewState<T> {
 }
 
 /** **S8** — la petición no llegó a destino; reintentar es una salida válida. */
-export function offline(lastAttemptAt?: Date): OfflineViewState {
-  return lastAttemptAt === undefined
-    ? { status: 'offline' }
-    : { status: 'offline', lastAttemptAt };
+export function offline(lastAttemptAt?: Date, options?: { readonly timedOut?: boolean }): OfflineViewState {
+  return {
+    status: 'offline',
+    ...(lastAttemptAt === undefined ? {} : { lastAttemptAt }),
+    ...(options?.timedOut === true ? { timedOut: true as const } : {}),
+  };
 }
 
 /**
@@ -110,10 +122,18 @@ export function offline(lastAttemptAt?: Date): OfflineViewState {
  * porque es lo único que conecta el reporte de la persona con los registros del
  * servidor; si la respuesta no lo trae, quien la traduzca debe generarlo.
  */
-export function unexpectedError(requestId: string, message?: string): UnexpectedErrorViewState {
-  return message === undefined
-    ? { status: 'error', requestId }
-    : { status: 'error', requestId, message };
+export function unexpectedError(
+  requestId: string,
+  message?: string,
+  explanation?: { readonly title?: string; readonly hint?: string },
+): UnexpectedErrorViewState {
+  return {
+    status: 'error',
+    requestId,
+    ...(message === undefined ? {} : { message }),
+    ...(explanation?.title === undefined ? {} : { title: explanation.title }),
+    ...(explanation?.hint === undefined ? {} : { hint: explanation.hint }),
+  };
 }
 
 /**

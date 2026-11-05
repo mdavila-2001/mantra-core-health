@@ -1,5 +1,6 @@
 ---
 slug: celulitis-infecciosa
+image: celulitis-infecciosa.svg | Las bacterias entran por una herida y se extienden por la dermis. | Corte de la piel con bacterias que entran por una herida y se extienden por la dermis y el tejido subcutáneo, con los signos locales y las señales de alarma.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,380 @@
+:host {
+  display: block;
+}
+
+/* Centrado y a lo ancho del área de contenido (regla §6 del front). */
+.grafo {
+  display: grid;
+  inline-size: 100%;
+  margin-inline: auto;
+  padding-block: var(--sp-4) var(--sp-12);
+}
+
+/* Una sola tarjeta con todo adentro. */
+.grafo__tarjeta {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xl);
+  background: var(--bg-surface);
+  min-inline-size: 0;
+}
+
+.grafo__buscador {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* ─── Herramientas ──────────────────────────────────────────────────────── */
+
+.grafo__herramientas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+}
+
+.grafo__zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.grafo__zoom-valor {
+  min-inline-size: 3.5rem;
+  text-align: center;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.grafo__compartir {
+  margin-inline-start: auto;
+}
+
+.grafo__resumen,
+.grafo__leyenda {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* ─── Lienzo y ficha ────────────────────────────────────────────────────── */
+
+/* Mobile-first: el lienzo arriba y la ficha debajo; a lo ancho, lado a lado.
+   Se mide el espacio **de la tarjeta**, no el de la ventana: con el menú lateral
+   abierto, una ventana de 1024 px deja la tarjeta en poco más de 600. */
+.grafo__tarjeta {
+  container-type: inline-size;
+}
+
+.grafo__cuerpo {
+  display: grid;
+  gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+@container (min-width: 56rem) {
+  .grafo__cuerpo {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    align-items: start;
+  }
+}
+
+.grafo__lienzo-caja {
+  min-inline-size: 0;
+  border-radius: var(--r-lg);
+  background: var(--bg-surface-alt);
+  overflow: hidden;
+}
+
+.grafo__lienzo-caja[hidden] {
+  display: none;
+}
+
+.grafo__lienzo {
+  display: block;
+  inline-size: 100%;
+  block-size: clamp(24rem, 72dvh, 52rem);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.grafo__lienzo:active {
+  cursor: grabbing;
+}
+
+.grafo__enlace {
+  fill: none;
+  stroke: var(--border-default);
+  stroke-width: 1.5;
+}
+
+/* ─── Nodos ─────────────────────────────────────────────────────────────────
+   Cada nodo toma su color de `--tono`; el relleno es apenas un tinte, y el
+   estado (abierto, elegido) se dice también con trazo y con la marca +/−. */
+
+.grafo__nodo {
+  --tono: var(--c-neutral-600);
+  cursor: pointer;
+  outline: none;
+}
+
+.grafo__nodo--aqua {
+  --tono: var(--c-aqua-600);
+}
+
+.grafo__nodo--petrol {
+  --tono: var(--c-petrol-600);
+}
+
+.grafo__nodo--mint {
+  --tono: var(--c-mint-600);
+}
+
+.grafo__nodo--sage {
+  --tono: var(--c-sage-600);
+}
+
+.grafo__nodo--neutral {
+  --tono: var(--c-neutral-600);
+}
+
+.grafo__nodo--group {
+  cursor: default;
+}
+
+.grafo__caja {
+  fill: color-mix(in srgb, var(--tono) 10%, var(--bg-surface));
+  stroke: var(--tono);
+  stroke-width: 1.4;
+  transition: stroke-width var(--dur-fast) var(--ease-out);
+}
+
+.grafo__nodo--group .grafo__caja {
+  fill: color-mix(in srgb, var(--tono) 22%, var(--bg-surface));
+}
+
+.grafo__nodo--more .grafo__caja {
+  fill: var(--bg-surface);
+  stroke-dasharray: 4 3;
+}
+
+.grafo__nodo--abierto .grafo__caja {
+  stroke-width: 2.2;
+}
+
+.grafo__nodo--elegido .grafo__caja {
+  stroke: var(--brand-primary-active);
+  stroke-width: 3;
+}
+
+.grafo__nodo:hover .grafo__caja {
+  stroke-width: 2.2;
+}
+
+.grafo__nodo:focus-visible .grafo__caja {
+  stroke: var(--focus-ring);
+  stroke-width: 3.5;
+}
+
+.grafo__texto {
+  fill: var(--text-primary);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.grafo__texto--label {
+  font-weight: 600;
+}
+
+.grafo__texto--sub,
+.grafo__texto--definition {
+  font-size: 10.5px;
+}
+
+.grafo__texto--sub {
+  fill: var(--text-secondary);
+}
+
+.grafo__raya {
+  stroke: var(--tono);
+  stroke-opacity: 0.45;
+}
+
+.grafo__marca {
+  fill: var(--tono);
+  font-size: 16px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+/* ─── Ficha del término elegido ──────────────────────────────────────────── */
+
+.grafo__ficha {
+  display: grid;
+  gap: var(--sp-2);
+  align-content: start;
+  min-inline-size: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  font-size: var(--fs-body-sm, var(--fs-caption));
+  line-height: 1.5;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.grafo__ficha p {
+  margin: 0;
+}
+
+.grafo__ficha-titulo {
+  margin: 0;
+  font-size: var(--fs-h4, 1.125rem);
+  line-height: 1.3;
+}
+
+.grafo__ficha-categoria,
+.grafo__ficha-vacia {
+  color: var(--text-secondary);
+}
+
+.grafo__ficha-subtitulo {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: none;
+}
+
+.grafo__sinonimos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grafo__sinonimos li {
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--bg-surface-alt);
+  font-size: var(--fs-caption);
+}
+
+.grafo__ficha-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-2);
+}
+
+/* ─── La lista ──────────────────────────────────────────────────────────── */
+
+.grafo__lista {
+  min-inline-size: 0;
+  padding: var(--sp-2);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface-alt);
+  max-block-size: 72dvh;
+  overflow: auto;
+}
+
+.grafo__rama {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grafo__rama .grafo__rama {
+  margin-inline-start: var(--sp-4);
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 1px solid var(--border-default);
+}
+
+.grafo__item,
+.grafo__mas {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.grafo__item:hover,
+.grafo__mas:hover {
+  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
+}
+
+.grafo__item:focus-visible,
+.grafo__mas:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.grafo__item--elegido {
+  background: color-mix(in srgb, var(--brand-primary) 16%, transparent);
+}
+
+.grafo__mas {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.grafo__item-marca {
+  flex: none;
+  inline-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--brand-primary-active);
+}
+
+.grafo__item-texto {
+  display: grid;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.grafo__item-sub {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.grafo__item-def {
+  font-size: var(--fs-caption);
+  line-height: 1.45;
+}
+
+.grafo__grupo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-1) var(--sp-3);
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grafo__caja {
+    transition: none;
+  }
+}

@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-3137
+image: medlineplus-es-3137.svg | Principales tipos de tecnología de apoyo | Seis recuadros con iconos de productos de apoyo para la movilidad, la visión, la audición, la comunicación, el cuidado personal y la memoria
 ---
 
 ## [definition] Introducción

@@ -10,10 +10,7 @@ import {
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
 
 import { LabPortalClient } from '../../../core/data-access/lab-portal/lab-portal.client';
-import type {
-  LabService,
-  LabServiceChanges,
-} from '../../../core/data-access/lab-portal/lab-portal.types';
+import type { LabService } from '../../../core/data-access/lab-portal/lab-portal.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { withDisplayCurrency } from '../../../core/money/display-currency';
 import { dataOf, empty, loading, mapData, ready } from '../../../core/view-state/view-state';
@@ -21,6 +18,7 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
+import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
@@ -31,17 +29,11 @@ import type {
   CursorState,
 } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { changesOf, discountText, type PriceEdit, parseAmount, parseDiscount, reasonOf } from './laboratory-prices.rules';
+import { LabServicesImport } from './services-import/lab-services-import';
 
 /** Filas por página. */
 const PAGE_SIZE = 10;
-/** El mismo tope que el catálogo de la farmacia: atrapa un cero de más. */
-const PRICE_MAX = 1_000_000;
-
-/** Lo que la persona escribió en una fila, todavía como texto. */
-interface PriceEdit {
-  readonly price: string;
-  readonly discount: string;
-}
 
 /** Un servicio que no se pudo guardar, con su motivo. */
 interface PriceRejection {
@@ -63,10 +55,25 @@ interface PriceRejection {
  * `PATCH /diagnostics/lab/services/:id` (P52, sólo simulador). Una que falla no
  * frena a las demás: al final se dice cuáles no entraron y por qué. Los
  * retirados no aparecen.
+ *
+ * «Importar análisis (CSV)» carga o actualiza el catálogo entero desde la
+ * planilla del laboratorio (registro de procesos 4.2), con
+ * `POST /diagnostics/lab/services/import`; ver `services-import/`.
  */
 @Component({
   selector: 'app-laboratory-prices',
-  imports: [Alert, AppButton, Badge, Card, DataTable, Input, PageHeader, SearchField],
+  imports: [
+    Alert,
+    AppButton,
+    Badge,
+    Card,
+    DataTable,
+    Input,
+    LabServicesImport,
+    PageHeader,
+    SearchField,
+    Switch,
+  ],
   templateUrl: './laboratory-prices.html',
   styleUrl: './laboratory-prices.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -83,6 +90,13 @@ export class LaboratoryPrices {
   protected readonly rejected = signal<readonly PriceRejection[]>([]);
   protected readonly saving = signal(false);
   protected readonly offset = signal(0);
+  /** El diálogo «Importar análisis (CSV)». */
+  protected readonly importOpen = signal(false);
+
+  /** The service whose «Disponible hoy» switch is saving. */
+  protected readonly togglingId = signal<string | null>(null);
+  /** What the switches show while their PATCH is in flight; removing the entry reverts a failed one. */
+  private readonly pendingAvailability = signal<Readonly<Record<string, boolean>>>({});
 
   protected readonly dirtyCount = computed(() => Object.keys(this.edits()).length);
 
@@ -123,6 +137,8 @@ export class LaboratoryPrices {
   private readonly alovidaCell =
     viewChild.required<TemplateRef<{ $implicit: LabService }>>('alovidaCell');
   private readonly statusCell = viewChild.required<TemplateRef<{ $implicit: LabService }>>('statusCell');
+  private readonly availableCell =
+    viewChild.required<TemplateRef<{ $implicit: LabService }>>('availableCell');
 
   protected readonly columns = computed<readonly ColumnDef<LabService>[]>(() => [
     { key: 'name', header: 'Servicio', priority: 1, cell: this.nameCell() },
@@ -130,6 +146,7 @@ export class LaboratoryPrices {
     { key: 'discount', header: 'Descuento AloVida (%)', priority: 2, cell: this.discountCell() },
     { key: 'alovida', header: 'Precio AloVida', priority: 2, cell: this.alovidaCell() },
     { key: 'status', header: 'En la vitrina', priority: 3, cell: this.statusCell() },
+    { key: 'available', header: 'Disponible hoy', priority: 2, cell: this.availableCell() },
   ]);
 
   protected readonly rowId = (service: LabService): string => service.id;
@@ -156,6 +173,18 @@ export class LaboratoryPrices {
       },
       error: (error: unknown) => this.services.set(errorToViewState<readonly LabService[]>(error)),
     });
+  }
+
+  /**
+   * Al cerrar la importación se relee la lista si la API llegó a cargar algo:
+   * los análisis nuevos aparecen con su precio. Lo escrito y sin guardar se
+   * conserva, porque la relectura no lo toca.
+   */
+  protected importClosed(imported: boolean): void {
+    this.importOpen.set(false);
+    if (imported) {
+      this.reload();
+    }
   }
 
   protected goToCursor(cursor: string): void {
@@ -224,36 +253,48 @@ export class LaboratoryPrices {
     this.errors.set([]);
   }
 
+  /**
+   * «Disponible hoy» saves on its own, with its PATCH: it is not a price, so it
+   * does not wait for «Guardar cambios» and does not touch what was typed.
+   */
+  protected toggleAvailable(service: LabService, available: boolean): void {
+    this.togglingId.set(service.id);
+    this.rejected.set([]);
+    this.setPending(service.id, available);
+    this.lab.updateService(service.id, { available }).subscribe({
+      next: (updated) => {
+        this.togglingId.set(null);
+        this.services.update((state) =>
+          mapData(state, (list) => list.map((row) => (row.id === updated.id ? updated : row))),
+        );
+        this.setPending(service.id, null);
+        this.toasts.success(
+          available ? `«${service.name}» vuelve a estar disponible hoy.` : `«${service.name}» no se ofrece hoy.`,
+        );
+      },
+      error: (error: unknown) => {
+        this.togglingId.set(null);
+        this.setPending(service.id, null);
+        this.rejected.set([{ name: service.name, reason: reasonOf(error) }]);
+      },
+    });
+  }
+
+  protected availableOf(service: LabService): boolean {
+    return this.pendingAvailability()[service.id] ?? service.available;
+  }
+
+  private setPending(id: string, value: boolean | null): void {
+    this.pendingAvailability.update(({ [id]: _old, ...rest }) => (value === null ? rest : { ...rest, [id]: value }));
+  }
+
   /* ─── Guardar ─────────────────────────────────────────────────────────── */
 
   protected save(): void {
     if (this.saving() || this.dirtyCount() === 0) {
       return;
     }
-    const changes: { service: LabService; changes: LabServiceChanges }[] = [];
-    const problems: string[] = [];
-    for (const service of dataOf(this.services()) ?? []) {
-      const edit = this.edits()[service.id];
-      if (edit === undefined) {
-        continue;
-      }
-      const price = parseAmount(edit.price);
-      const discount = parseDiscount(edit.discount);
-      if (price === 'invalid') {
-        problems.push(
-          `«${service.name}»: el precio va en bolivianos, de 0 a ${PRICE_MAX.toLocaleString('es-BO')}, con hasta dos decimales.`,
-        );
-        continue;
-      }
-      if (discount === 'invalid') {
-        problems.push(`«${service.name}»: el descuento es un número de 0 a 100, o vacío si no hay.`);
-        continue;
-      }
-      changes.push({
-        service,
-        changes: { price: price.toFixed(2), alovidaDiscountPercent: discount },
-      });
-    }
+    const { changes, problems } = changesOf(dataOf(this.services()) ?? [], this.edits());
     this.errors.set(problems);
     this.rejected.set([]);
     if (problems.length > 0) {
@@ -285,45 +326,4 @@ export class LaboratoryPrices {
         this.reload();
       });
   }
-}
-
-function discountText(service: LabService): string {
-  return service.alovidaDiscountPercent === null ? '' : String(service.alovidaDiscountPercent);
-}
-
-/** Un monto en bolivianos de 0 a {@link PRICE_MAX}, con punto o coma y hasta dos decimales. */
-function parseAmount(text: string): number | 'invalid' {
-  const clean = text.trim().replace(/^bs\.?\s*/i, '');
-  if (!/^\d+([.,]\d{1,2})?$/.test(clean)) {
-    return 'invalid';
-  }
-  const value = Number(clean.replace(',', '.'));
-  return value <= PRICE_MAX ? value : 'invalid';
-}
-
-/** Un porcentaje de 0 a 100; vacío es «sin descuento» (`null`). */
-function parseDiscount(text: string): number | null | 'invalid' {
-  const clean = text.trim().replace(/%$/, '').trim();
-  if (clean === '') {
-    return null;
-  }
-  if (!/^\d+([.,]\d{1,2})?$/.test(clean)) {
-    return 'invalid';
-  }
-  const value = Number(clean.replace(',', '.'));
-  return value <= 100 ? value : 'invalid';
-}
-
-/** El motivo de la API para un servicio rechazado, o uno genérico. */
-function reasonOf(error: unknown): string {
-  const state = errorToViewState<never>(error);
-  if (state.status === 'validation') {
-    const messages = state.issues.map((issue) => issue.message).filter((m) => m !== '');
-    if (messages.length > 0) {
-      return messages.join(' ');
-    }
-  }
-  return 'message' in state && typeof state.message === 'string' && state.message !== ''
-    ? state.message
-    : 'No se pudo guardar el precio.';
 }

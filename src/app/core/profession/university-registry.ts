@@ -254,4 +254,7 @@ export class UniversitiesRegistry {
 }
 
 /** Una sola referencia para «sin ciudades», por lo mismo que las opciones armadas. */
+const _SIN_CIUDADES: readonly string[] = [];
+
+/** Una sola referencia para «sin ciudades», por lo mismo que las opciones armadas. */
 const WITHOUT_CITIES: readonly string[] = [];

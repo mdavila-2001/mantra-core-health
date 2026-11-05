@@ -1,5 +1,6 @@
 ---
 slug: embarazo-normal
+image: embarazo-normal.svg | El embarazo se divide en tres trimestres de unas trece semanas cada uno. | Tres úteros con un feto de tamaño creciente para el primer, segundo y tercer trimestre, junto a los controles prenatales recomendados y las señales de alarma para consultar.
 ---
 
 ## [definition] Introducción

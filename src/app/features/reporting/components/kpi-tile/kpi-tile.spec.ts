@@ -234,4 +234,44 @@ describe('hasTrend', () => {
     expect(hasTrend([null, null, 3])).toBe(false);
     expect(hasTrend([1, null, 3])).toBe(true);
   });
+
+  describe('estado, cifra héroe y modo plano', () => {
+    it('el veredicto se dice con icono Y palabra (el color sólo refuerza)', async () => {
+      const { text, root } = await mount(kpi({ estado: 'critico' }));
+      expect(text('kpi-estado')).toBe('✖Crítico');
+      expect(root.querySelector('[data-testid="kpi-estado"] [aria-hidden="true"]')?.textContent).toBe('✖');
+      expect(root.querySelector('[data-testid="kpi-estado"]')?.getAttribute('data-estado')).toBe('error');
+    });
+
+    it('sin estado no dibuja ninguna insignia', async () => {
+      const { text } = await mount(kpi());
+      expect(text('kpi-estado')).toBeNull();
+    });
+
+    it('la variante héroe y el modo plano son clases del tile', async () => {
+      TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+      const fixture = TestBed.createComponent(KpiTile);
+      fixture.componentRef.setInput('kpi', kpi({ variante: 'hero' }));
+      fixture.componentRef.setInput('plano', true);
+      await fixture.whenStable();
+      const art = (fixture.nativeElement as HTMLElement).querySelector('article');
+      expect(art?.classList.contains('kpi--hero')).toBe(true);
+      expect(art?.classList.contains('kpi--plano')).toBe(true);
+    });
+
+    it('una duración se lee en ms o s', async () => {
+      const ok = await mount(kpi({ valor: 1234, unidad: { tipo: 'duracion' } }));
+      expect(ok.text('kpi-value')).toBe('1,2 s');
+    });
+
+    it('una cota se escribe con su prefijo («≥ 10 s») y null sigue siendo «Sin dato», sin prefijo', async () => {
+      const cota = await mount(kpi({ valor: 10000, prefijo: '≥ ', unidad: { tipo: 'duracion' } }));
+      expect(cota.text('kpi-value')).toBe('≥ 10 s');
+    });
+
+    it('sin dato no lleva prefijo', async () => {
+      const sin = await mount(kpi({ valor: null, prefijo: '≥ ', unidad: { tipo: 'duracion' } }));
+      expect(sin.text('kpi-value')).toBe(NO_DATA);
+    });
+  });
 });

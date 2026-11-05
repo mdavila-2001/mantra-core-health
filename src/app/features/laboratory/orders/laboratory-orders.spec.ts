@@ -11,6 +11,7 @@ import type {
   LabOrderAction,
   LabOrderStatus,
 } from '../../../core/data-access/lab-portal/lab-portal.types';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { ResultUploadQueue, type UploadItem } from '../results/result-upload-queue';
 import { LaboratoryOrders } from './laboratory-orders';
@@ -62,6 +63,7 @@ describe('LaboratoryOrders', () => {
   let listOrders: ReturnType<typeof vi.fn>;
   let transitionOrder: ReturnType<typeof vi.fn>;
   const success = vi.fn();
+  const confirmWithReason = vi.fn();
 
   const internal = (): Internal => fixture.componentInstance as unknown as Internal;
   const host = (): HTMLElement => fixture.nativeElement as HTMLElement;
@@ -73,6 +75,7 @@ describe('LaboratoryOrders', () => {
 
   beforeEach(() => {
     success.mockReset();
+    confirmWithReason.mockReset();
     listOrders = vi.fn(() => of({ items: ORDERS, count: ORDERS.length }));
     transitionOrder = vi.fn((_id: string, _action: LabOrderAction) => of(ORDERS[0]));
 
@@ -81,6 +84,7 @@ describe('LaboratoryOrders', () => {
         provideRouter([]),
         { provide: LabPortalClient, useValue: { listOrders, transitionOrder } },
         { provide: ToastService, useValue: { success } },
+        { provide: DialogService, useValue: { confirmWithReason } },
       ],
     });
   });
@@ -169,6 +173,78 @@ describe('LaboratoryOrders', () => {
     expect(internal().busyOrderId()).toBeNull();
   });
 
+  describe('cancelar y rechazar piden un motivo', () => {
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    it('cancelar abre el diálogo y manda CANCEL con el motivo; después avisa y relee', async () => {
+      confirmWithReason.mockResolvedValue('Pedida por error');
+      create();
+      listOrders.mockClear();
+
+      internal().run('cancel', ORDERS[0]!);
+      await flush();
+
+      const [config, field] = confirmWithReason.mock.calls[0] as [{ title: string; destructive: boolean }, { minLength: number }];
+      expect(config.title).toBe('Cancelar la orden');
+      expect(config.destructive).toBe(true);
+      expect(field.minLength).toBeGreaterThanOrEqual(3);
+      expect(transitionOrder).toHaveBeenCalledExactlyOnceWith('a', 'CANCEL', 'Pedida por error');
+      expect(success).toHaveBeenCalledWith('Orden cancelada.');
+      expect(listOrders).toHaveBeenCalledTimes(1);
+    });
+
+    it('rechazar manda REJECT con el motivo', async () => {
+      confirmWithReason.mockResolvedValue('Muestra insuficiente');
+      create();
+
+      internal().run('reject', ORDERS[1]!);
+      await flush();
+
+      expect(transitionOrder).toHaveBeenCalledExactlyOnceWith('b', 'REJECT', 'Muestra insuficiente');
+      expect(success).toHaveBeenCalledWith('Orden rechazada.');
+    });
+
+    it('si se cierra el diálogo sin motivo no se manda nada', async () => {
+      confirmWithReason.mockResolvedValue(null);
+      create();
+
+      internal().run('reject', ORDERS[1]!);
+      await flush();
+
+      expect(transitionOrder).not.toHaveBeenCalled();
+      expect(internal().actionError()).toBeNull();
+    });
+
+    it('un 4xx de la API (400 sin motivo, 409 de estado) se muestra con su mensaje y relee la lista', async () => {
+      confirmWithReason.mockResolvedValue('Pedida por error');
+      transitionOrder.mockReturnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 409,
+              error: {
+                statusCode: 409,
+                code: 'CONFLICT',
+                message: 'La orden no está en un estado que admita ese paso.',
+                details: { currentStatus: 'PROCESSED' },
+              },
+            }),
+        ),
+      );
+      create();
+      listOrders.mockClear();
+
+      internal().run('cancel', ORDERS[2]!);
+      await flush();
+      fixture.detectChanges();
+
+      expect(internal().actionError()).toBe('La orden no está en un estado que admita ese paso.');
+      expect(host().querySelector('[data-testid="lab-orders-error"]')?.textContent).toContain('no está en un estado');
+      expect(success).not.toHaveBeenCalled();
+      expect(listOrders).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('no manda una segunda acción mientras la primera está en vuelo', () => {
     let finish: (() => void) | undefined;
     transitionOrder.mockReturnValue({
@@ -213,6 +289,26 @@ describe('LaboratoryOrders', () => {
     expect(internal().table().status).not.toBe('ready');
     expect(internal().table().status).not.toBe('loading');
   });
+  it('un archivo que la API rechazaría no se sube: la pantalla dice cuál y por qué', () => {
+    create();
+    internal().run('upload', ORDERS[2]!);
+    const input = host().querySelector<HTMLInputElement>('[data-testid="lab-orders-file-input"]')!;
+    const grande = new File(['x'], 'informe.pdf');
+    Object.defineProperty(grande, 'size', { value: 11 * 1024 * 1024 });
+    Object.defineProperty(input, 'files', {
+      configurable: true,
+      value: [new File(['x'], 'eco.mp4', { type: 'video/mp4' }), grande],
+    });
+
+    input.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    const error = host().querySelector('[data-testid="lab-orders-error"]')!.textContent!;
+    expect(error).toContain('eco.mp4: formato no admitido');
+    expect(error).toContain('informe.pdf: pesa 11,0 MB y supera el máximo de 10 MB.');
+    expect(host().querySelector('[data-testid="lab-orders-uploads"]')).toBeNull();
+  });
+
   it('mientras se sube, el panel dice a qué orden va y muestra el avance; al terminar cambia el título', () => {
     const items = signal<readonly UploadItem[]>([
       {

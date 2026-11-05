@@ -1,7 +1,7 @@
 import { ORGANIZATION_TYPE, STATUS } from './concepts';
 import { IDS, TENANT_CESPEDES, TENANT_HOSPITAL_PILOTO, TENANT_LABORATORIO } from '../mock-session';
 import { iso, isoDia, uuid } from '../mock-store';
-import type { TenantSimulado } from '../handlers/directory.handlers';
+import type { TenantSimulado } from './directory.types';
 
 /**
  * Lo que el directorio simulado tiene por el **personal de apoyo y la sesión**: el hospital piloto y el consultorio de la Dra.

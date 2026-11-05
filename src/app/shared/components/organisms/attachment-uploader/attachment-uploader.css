@@ -143,6 +143,9 @@
     line-height: var(--lh-caption);
     font-weight: 600;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
 }
 
 @media (min-width: 40rem) {

@@ -1,4 +1,4 @@
-"""Genera `body-zones.geometry.ts` y las imágenes del maniquí a partir del render.
+"""Genera las zonas gruesas y las imágenes del maniquí a partir del render.
 
 Uso:  python scripts/gen-body-zones.py --render <carpeta del render> [--overlay <carpeta>]
 
@@ -6,11 +6,13 @@ Uso:  python scripts/gen-body-zones.py --render <carpeta del render> [--overlay 
 un PNG RGBA por sexo y vista más `landmarks.json`. Este script escribe:
 
 - `public/body-map/<sexo>-<vista>.webp`: el maniquí, reducido y comprimido;
-- `src/app/shared/components/organisms/body-map/body-zones.geometry.ts`: la
-  silueta y las zonas pulsables de cada vista, en el mismo `viewBox` que la
+- `scripts/body-map-base/zonas-gruesas.ts.txt`: la silueta y las zonas pulsables de cada vista, en el mismo `viewBox` que la
   imagen, para que cada zona calce con el cuerpo que se ve;
 - con `--overlay`, un PNG por vista con las zonas delineadas sobre el render
   (la prueba de calce).
+
+Después se corre `scripts/split-body-zones.py`, que parte estas zonas gruesas en
+las finas (lado y segmento) y escribe `body-zones.generated.ts`.
 
 Requiere `pillow`, `shapely` y `scikit-image`. No corre en el build: lo que
 escribe se versiona y este script queda para poder rehacerlo.
@@ -58,7 +60,7 @@ from shapely.ops import unary_union
 from skimage import measure
 
 RAIZ = Path(__file__).resolve().parent.parent
-DESTINO = RAIZ / "src/app/shared/components/organisms/body-map/body-zones.geometry.ts"
+DESTINO = RAIZ / "scripts/body-map-base/zonas-gruesas.ts.txt"
 IMAGENES = RAIZ / "public/body-map"
 URL_IMAGENES = "/body-map"
 
@@ -67,9 +69,12 @@ SEXOS = {"neutro": "neutral", "masculino": "male", "femenino": "female"}
 VISTAS = {"frente": "front", "espalda": "back", "cara": "face"}
 NOMBRE_VISTA = {"frente": "Frente", "espalda": "Espalda", "cara": "Cara"}
 
-# Píxeles por unidad del viewBox en el WebP publicado: a 3× de densidad la
-# figura entera (16rem) y la cara (19rem) siguen nítidas.
-DENSIDAD_WEBP = {"frente": 3.5, "espalda": 3.5, "cara": 4.5}
+# Píxeles por unidad del viewBox en el WebP publicado. Desde 2026-10-29 son
+# «ultra HD»: el render sale a 10 px/unidad (cuerpo) y 16 (cara) y se publica
+# a 8 y 10, es decir 1920×3520 y 2000×2400. La figura entera (20rem) sigue
+# nítida a 3× de densidad y el acercamiento 5× del organismo muestra píxeles
+# reales hasta ~2× (antes se veía a 840×1540 y se desenfocaba a 1,5×).
+DENSIDAD_WEBP = {"frente": 8.0, "espalda": 8.0, "cara": 10.0}
 CALIDAD_WEBP = 82
 
 INF = 1000.0

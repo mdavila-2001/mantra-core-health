@@ -1,0 +1,21 @@
+<div class="obs-tab" data-testid="obs-tab-resumen">
+  <section class="obs-seccion" aria-labelledby="obs-res-t">
+    <h2 class="obs-seccion__titulo" id="obs-res-t">Cómo está el sistema</h2>
+    <app-view-state-host [state]="resumen.state()" (retry)="cargar()" (refresh)="cargar()">
+      <div class="obs-tiles" data-testid="obs-tiles" [attr.aria-busy]="resumen.refrescando() ? 'true' : null">
+        @for (k of kpis(); track k.id) {
+          <app-kpi-tile [kpi]="k" [plano]="true" [class.obs-tiles__hero]="k.variante === 'hero'" [attr.data-testid]="'obs-kpi-' + k.id" />
+        }
+      </div>
+    </app-view-state-host>
+  </section>
+
+  <section class="obs-seccion" aria-labelledby="obs-ser-t">
+    <h2 class="obs-seccion__titulo" id="obs-ser-t">Qué pasó en el tiempo</h2>
+    <app-view-state-host [state]="serie.state()" (retry)="cargar()" (refresh)="cargar()">
+      @if (specSerie(); as spec) {
+        <app-chart-panel [spec]="spec" [plano]="true" [refrescando]="serie.refrescando()" />
+      }
+    </app-view-state-host>
+  </section>
+</div>

@@ -1,5 +1,6 @@
 ---
 slug: ulcera-peptica
+image: ulcera-peptica.svg | La úlcera péptica es una herida en la mucosa del estómago o del duodeno. | Estómago y duodeno con úlceras marcadas en rojo, junto a las causas principales, los síntomas y las señales de alarma de la úlcera péptica.
 ---
 
 ## [definition] Introducción

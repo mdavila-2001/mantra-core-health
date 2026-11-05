@@ -1,5 +1,6 @@
 ---
 slug: apnea-obstructiva-del-sueno
+image: apnea-obstructiva-del-sueno.svg | Durante el sueño la garganta se cierra y la respiración se interrumpe una y otra vez. | Dos cortes esquemáticos de la vía aérea, abierta en vigilia y cerrada durante una apnea, junto a listas de síntomas nocturnos y diurnos, consecuencias y tratamientos.
 ---
 
 ## [definition] Introducción

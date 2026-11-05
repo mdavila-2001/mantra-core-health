@@ -234,6 +234,33 @@ describe('PatientNew', () => {
     expect(interno<() => boolean>('codigoEnConflicto')()).toBe(true);
   });
 
+  it('un homónimo avisa en vez de señalar el código, y confirmar reenvía con allowHomonym', () => {
+    vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    completar({});
+    enviar();
+
+    http
+      .expectOne('/profiles/patients')
+      .flush(
+        {
+          code: 'CONFLICT',
+          message: 'Ya hay un paciente registrado con ese nombre',
+          reason: 'POSSIBLE_DUPLICATE_PATIENT',
+        },
+        { status: 409, statusText: 'Conflict' },
+      );
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="alta-homonimo"]')).not.toBeNull();
+    expect(interno<() => boolean>('codigoEnConflicto')()).toBe(false);
+
+    html.querySelector<HTMLButtonElement>('[data-testid="alta-homonimo-confirmar"]')?.click();
+    const req = http.expectOne('/profiles/patients');
+    expect(req.request.body.allowHomonym).toBe(true);
+    req.flush(RESPUESTA);
+  });
+
   it('no se envía dos veces mientras la primera está en vuelo', () => {
     completar({});
     enviar();
