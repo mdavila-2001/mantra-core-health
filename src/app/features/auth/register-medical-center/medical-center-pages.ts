@@ -5,7 +5,6 @@ import type {
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { executivesPages } from '../shared-registration/executives';
-import { tradeNameField } from '../shared-registration/trade-name';
 import { MESSAGE_SHORT_PASSWORD, MIN_CHARACTERS_PASSWORD } from '../shared-registration/password-policy';
 import { MAX_LEGAL_NAME } from './medical-center-form';
 
@@ -20,7 +19,7 @@ export interface PaginasDeAlta {
   readonly tiposSocietarios: readonly SelectOption<string>[];
   /** Los cinco papeles de la empresa, con los que el tipo societario omite marcados «(opcional)». */
   readonly camposDeDocumentos: readonly CampoDeFormulario[];
-  /** El poder del representante, opcional sólo para una unipersonal. */
+  /** El poder del representante, obligatorio para toda organización. */
   readonly campoDePoder: CampoDeFormulario;
   /** Si ya hay algo escrito en las gerencias: entonces las tres van completas y sus campos llevan asterisco. */
   readonly gerenciasEnUso: boolean;
@@ -43,8 +42,8 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       clave: 'organizacion',
       icon: 'building' as const,
       hint: 'Qué tipo de institución es, cómo se llama y qué figura jurídica tiene.',
-      // Four short fields, two per row from 672 px (`composition-rules.md` §5):
-      // three columns left the fourth one alone with two empty thirds beside it.
+      // Cuatro campos cortos, de a dos desde 672 px (`composition-rules.md` §5):
+      // sin casillas kilométricas.
       disposicion: 'dos-columnas' as const,
       campos: [
         {
@@ -68,7 +67,14 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           // motor con su número, que es lo que la persona necesita leer.
           mensajeSiFalta: 'Escriba la razón social de la organización.',
         },
-        tradeNameField(`${TEST_ID}-trade-name`, 'Clínica Norte'),
+        {
+          key: 'tradeName',
+          label: 'Nombre comercial (opcional)',
+          hint: 'Con el que la conocen sus pacientes. Es el que se ve en el directorio.',
+          control: 'text' as const,
+          testId: `${TEST_ID}-trade-name`,
+          mensajeDeError: `El nombre comercial no puede pasar de ${MAX_LEGAL_NAME} caracteres.`,
+        },
         {
           key: 'legalEntityType',
           label: 'Tipo societario',
@@ -95,7 +101,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           key: 'taxId',
           label: 'Número de NIT',
           hint: 'Sólo números, con o sin guiones. Es el que sale en las facturas.',
-          control: 'text' as const,
+          control: 'text' as const, fieldKind: 'taxId',
           required: true,
           icono: 'billing' as const,
           placeholder: '1023456789',
@@ -227,7 +233,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           key: 'legalRepIdNumber',
           label: 'Documento de identidad del representante',
           hint: 'Cédula de identidad o documento equivalente.',
-          control: 'text' as const,
+          control: 'text' as const, fieldKind: 'identityDocumentWithComplement',
           required: true,
           icono: 'people' as const,
           testId: `${TEST_ID}-legal-rep-id`,
@@ -249,7 +255,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       titulo: 'Poder del representante legal',
       clave: 'poder',
       icon: 'folder' as const,
-      hint: 'Solo PDF. Una empresa unipersonal no lo necesita: el titular se representa a sí mismo.',
+      hint: 'Solo PDF. Es obligatorio para toda organización, cualquiera sea su tipo de sociedad.',
       campos: [ctx.campoDePoder],
     },
     ...executivesPages(TEST_ID, ctx.gerenciasEnUso),

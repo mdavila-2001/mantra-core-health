@@ -28,8 +28,8 @@
       label="Rige desde"
       hint="Quienes ya trabajan reciben un plazo; la fecha marca desde cuándo se exige."
     >
-      <app-input
-        type="date"
+      <app-date-string-picker
+        
         [value]="desde()"
         (valueChange)="desde.set('' + ($event ?? ''))"
         ariaLabel="La exigencia de ingreso rige desde"

@@ -1324,3 +1324,66 @@ describe('PaginatedForm · el foco al campo con error', () => {
     expect(campo.hasAttribute('data-foco-por-error')).toBe(false);
   });
 });
+
+describe('PaginatedForm y el tipo de dato de cada casilla', () => {
+  let fixture: ComponentFixture<Host>;
+  let host: Host;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [Host] });
+    fixture = TestBed.createComponent(Host);
+    host = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  function campo(key: string): HTMLInputElement {
+    return fixture.debugElement.query(By.css(`[data-testid="campo-${key}"]`))
+      .nativeElement as HTMLInputElement;
+  }
+
+  function teclear(input: HTMLInputElement, texto: string): void {
+    input.value = texto;
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  }
+
+  it('un campo con `fieldKind` filtra lo tecleado y valida la forma sin que la pantalla lo declare', () => {
+    host.paginas.set([
+      {
+        titulo: 'Identidad',
+        campos: [
+          { key: 'documento', label: 'Documento', control: 'text', fieldKind: 'identityDocument' },
+        ],
+      },
+    ]);
+    fixture.detectChanges();
+
+    teclear(campo('documento'), '541984844*///*/*/');
+    expect(campo('documento').value).toBe('541984844');
+    expect(host.form.controls.documento.value).toBe('541984844');
+
+    // What the filter cannot catch, the validator reports with the catalog message.
+    host.form.controls.documento.setValue('4872190 SC');
+    expect(host.form.controls.documento.hasError('fieldKind')).toBe(true);
+  });
+
+  it('un campo `email` es de tipo correo sin declararlo: filtra, valida y abre el teclado de correo', () => {
+    host.paginas.set([
+      { titulo: 'Acceso', campos: [{ key: 'correo', label: 'Correo', control: 'email' }] },
+    ]);
+    fixture.detectChanges();
+
+    expect(campo('correo').getAttribute('inputmode')).toBe('email');
+
+    teclear(campo('correo'), 'ana paz(1)+@x.com');
+    expect(campo('correo').value).toBe('anapaz1@x.com');
+
+    host.form.controls.correo.setValue('ana@x');
+    host.form.controls.correo.markAsTouched();
+    fixture.detectChanges();
+    expect(host.form.controls.correo.hasError('fieldKind')).toBe(true);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Escriba un correo válido, como nombre@dominio.com.',
+    );
+  });
+});

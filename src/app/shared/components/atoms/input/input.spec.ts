@@ -1,6 +1,17 @@
+import { Component } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
+import { fieldKindMessage } from '@shared/forms/field-kinds';
 import { Input } from './input';
+
+@Component({
+  imports: [Input, ReactiveFormsModule],
+  template: `<app-input [formControl]="correo" fieldKind="email" />`,
+})
+class AnfitrionConFormulario {
+  readonly correo = new FormControl('', { nonNullable: true });
+}
 
 describe('Input', () => {
   let fixture: ComponentFixture<Input>;
@@ -152,6 +163,48 @@ describe('Input', () => {
     });
   });
 
+  describe('fieldKind: el tipo de dato de la casilla', () => {
+    it('filtra en el <input> mismo lo que el tipo no admite', async () => {
+      await setInputs({ fieldKind: 'personName' });
+
+      await escribir('holaLTAD1*');
+
+      expect(native().value).toBe('holaLTAD');
+      expect(fixture.componentInstance.value()).toBe('holaLTAD');
+    });
+
+    it('abre el teclado del tipo, salvo que `inputMode` diga otro', async () => {
+      await setInputs({ fieldKind: 'digits' });
+      expect(native().getAttribute('inputmode')).toBe('numeric');
+
+      await setInputs({ inputMode: 'decimal' });
+      expect(native().getAttribute('inputmode')).toBe('decimal');
+    });
+
+    it('`inputFilter` declarado a mano le gana al del tipo', async () => {
+      await setInputs({ fieldKind: 'digits', inputFilter: (v: string) => v.toUpperCase() });
+
+      await escribir('ab1');
+
+      expect(native().value).toBe('AB1');
+    });
+
+    it('al salir del campo, un nombre pierde el separador colgado', async () => {
+      await setInputs({ fieldKind: 'personName' });
+
+      await escribir('Quispe-');
+      await desenfocar();
+
+      expect(fixture.componentInstance.value()).toBe('Quispe');
+    });
+
+    it('sin tipo no filtra nada', async () => {
+      await escribir('holaLTAD1*');
+
+      expect(native().value).toBe('holaLTAD1*');
+    });
+  });
+
   describe('accesibilidad', () => {
     it('suelto, el input igual tiene id propio', () => {
       expect(native().id).not.toBe('');
@@ -164,5 +217,23 @@ describe('Input', () => {
 
       expect(native().getAttribute('aria-invalid')).toBe('true');
     });
+  });
+});
+
+describe('Input con fieldKind dentro de un formulario', () => {
+  it('se cuelga del control como un validador nativo y deja el mensaje del catálogo', async () => {
+    await TestBed.configureTestingModule({ imports: [AnfitrionConFormulario] }).compileComponents();
+    const fixture = TestBed.createComponent(AnfitrionConFormulario);
+    await fixture.whenStable();
+    const { correo } = fixture.componentInstance;
+
+    correo.setValue('sin-arroba');
+    expect(correo.errors).toEqual({ fieldKind: { kind: 'email', message: fieldKindMessage('email') } });
+
+    correo.setValue('ana@dominio.com');
+    expect(correo.valid).toBe(true);
+
+    correo.setValue('');
+    expect(correo.valid).toBe(true);
   });
 });

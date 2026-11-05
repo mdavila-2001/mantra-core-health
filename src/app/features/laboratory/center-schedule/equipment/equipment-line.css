@@ -1,0 +1,97 @@
+/* One device as a production line: data and status, its shift, today's queue. */
+
+:host {
+  display: block;
+}
+
+.linea {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.linea__cabecera,
+.linea__acciones,
+.linea__turno {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  align-items: center;
+}
+
+.linea__cabecera {
+  justify-content: space-between;
+  align-items: start;
+}
+
+.linea__datos {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.linea__datos p,
+.linea__ayuda {
+  margin: 0;
+}
+
+.linea__nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.linea__ayuda,
+.linea__rotulo {
+  color: var(--text-secondary);
+}
+
+.linea__turno app-segmented-control {
+  /* Same rule as the modality's: grows and never shrinks, or at 390 px the
+     options get base 0 and the labels are cut («N.»). */
+  flex: 1 0 auto;
+  min-inline-size: 8rem;
+}
+
+.linea__estado {
+  min-inline-size: 12rem;
+}
+
+.cola {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.cola__titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}
+
+.cola__lista {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+}
+
+.cola__turno {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+}
+
+.linea__mapa {
+  color: var(--text-link);
+  font-size: var(--fs-caption);
+}
+
+.linea__mapa summary {
+  cursor: pointer;
+}
+
+.linea__mapa app-glossary-data-flow {
+  margin-block-start: var(--sp-2);
+  font-size: var(--fs-body);
+}

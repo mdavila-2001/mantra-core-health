@@ -86,7 +86,7 @@ export const AYUDA_ALTA_MEDICA: Readonly<Record<string, readonly HelpCard[]>> = 
       icono: 'folder',
       titulo: 'El poder va con quien lo firma',
       texto:
-        'Es el documento que acredita al representante. Una empresa unipersonal no lo necesita; el resto de las sociedades sí.',
+        'Es el documento que acredita al representante. Lo necesita toda organización, cualquiera sea su tipo de sociedad.',
     },
   ],
   'gerencia-general': [

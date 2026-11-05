@@ -245,23 +245,6 @@ describe('RegisterMedicalCenter', () => {
     req.flush({ tenantId: 't-1', code: 'X', ownerUserId: 'u-1', status: 'p', emailVerificationSent: false });
   });
 
-  it('el nombre comercial es opcional y viaja sólo si se escribió', () => {
-    // "Mi perfil" and the directory show the trade name, so the sign-up must ask for it.
-    completar();
-    fixture.componentInstance.submit();
-
-    const sinNombre = http.expectOne(RUTA_ALTA);
-    expect('tradeName' in sinNombre.request.body.organization).toBe(false);
-    sinNombre.flush({ tenantId: 't-1', code: 'X', ownerUserId: 'u-1', status: 'p', emailVerificationSent: false });
-
-    fixture.componentInstance.form.controls.tradeName.setValue('  Clínica Norte  ');
-    fixture.componentInstance.submit();
-
-    const conNombre = http.expectOne(RUTA_ALTA);
-    expect(conNombre.request.body.organization.tradeName).toBe('Clínica Norte');
-    conNombre.flush({ tenantId: 't-1', code: 'X', ownerUserId: 'u-1', status: 'p', emailVerificationSent: false });
-  });
-
   it('ofrece los cinco tipos médicos del catálogo, en orden, y ninguno ajeno', () => {
     expect(opcionesDeTipo().map((o) => o.value)).toEqual([...MEDICAL_ORGANIZATION_TYPES]);
   });
@@ -424,7 +407,6 @@ describe('RegisterMedicalCenter', () => {
 
     expect(tipo.control).toBe('select');
     expect(tipo.opcionesEn).toBeUndefined();
-    // Two even rows: three columns left the fourth field alone (client rule 6).
     expect(organizacion.disposicion).toBe('dos-columnas');
   });
 
@@ -690,11 +672,10 @@ describe('RegisterMedicalCenter', () => {
       expect(control().generalManagerEmail.invalid).toBe(true);
     });
 
-    it('una unipersonal se registra sin constitución ni poder, y no los envía', () => {
+    it('una unipersonal se registra sin constitución, y no la envía', () => {
       completar();
       control().legalEntityType.setValue('UNIPERSONAL');
       control().constitutionFileId.setValue('');
-      control().powerOfAttorneyFileId.setValue('');
       enviar();
 
       const req = http.expectOne(RUTA_ALTA);
@@ -704,8 +685,19 @@ describe('RegisterMedicalCenter', () => {
         operatingLicenseFileId: 'f-licencia',
         healthAuthorityCertificateFileId: 'f-sedes',
       });
-      expect('powerOfAttorneyFileId' in req.request.body.organization.legalRepresentative).toBe(false);
+      expect(req.request.body.organization.legalRepresentative.powerOfAttorneyFileId).toBe(PODER);
       req.flush(RESPUESTA_ALTA);
+    });
+
+    it('una unipersonal sin el poder del representante tampoco sale: es obligatorio para toda organización', () => {
+      // Decisión del propietario (05/11/2026), por encima de la excepción BR-09 de la API.
+      completar();
+      control().legalEntityType.setValue('UNIPERSONAL');
+      control().powerOfAttorneyFileId.setValue('');
+      enviar();
+
+      http.expectNone(RUTA_ALTA);
+      expect(control().powerOfAttorneyFileId.invalid).toBe(true);
     });
 
     it('una S.R.L. sin el poder del representante no sale a la red', () => {
@@ -717,14 +709,14 @@ describe('RegisterMedicalCenter', () => {
       expect(control().powerOfAttorneyFileId.invalid).toBe(true);
     });
 
-    it('un profesional independiente sigue necesitando el poder (sólo una unipersonal lo omite)', () => {
+    it('un profesional independiente también necesita el poder', () => {
       completar();
       control().legalEntityType.setValue('PROFESIONAL_INDEPENDIENTE');
       control().powerOfAttorneyFileId.setValue('');
       expect(control().powerOfAttorneyFileId.invalid).toBe(true);
     });
 
-    it('el poder se rotula «(opcional)» sólo para una unipersonal', () => {
+    it('el poder se rotula obligatorio para todo tipo societario, nunca «(opcional)»', () => {
       const poder = () =>
         interno()
           .paginas()
@@ -734,8 +726,8 @@ describe('RegisterMedicalCenter', () => {
       expect(poder().label).not.toMatch(/opcional/);
       expect(poder().required).toBe(true);
       control().legalEntityType.setValue('UNIPERSONAL');
-      expect(poder().label).toMatch(/\(opcional\)$/);
-      expect(poder().required).toBeUndefined();
+      expect(poder().label).not.toMatch(/opcional/);
+      expect(poder().required).toBe(true);
     });
 
     it.each([

@@ -16,11 +16,11 @@
   <div class="actividad__fechas">
     <div class="actividad__fecha">
       <span class="actividad__rotulo">Desde</span>
-      <app-input type="date" [value]="desde()" (valueChange)="cambiarFecha('desde', $event)" ariaLabel="Actividad desde el día" testId="actividad-desde" />
+      <app-date-string-picker  [value]="desde()" (valueChange)="cambiarFecha('desde', $event)" ariaLabel="Actividad desde el día" testId="actividad-desde" />
     </div>
     <div class="actividad__fecha">
       <span class="actividad__rotulo">Hasta</span>
-      <app-input type="date" [value]="hasta()" (valueChange)="cambiarFecha('hasta', $event)" ariaLabel="Actividad hasta el día" testId="actividad-hasta" />
+      <app-date-string-picker  [value]="hasta()" (valueChange)="cambiarFecha('hasta', $event)" ariaLabel="Actividad hasta el día" testId="actividad-hasta" />
     </div>
   </div>
 

@@ -41,28 +41,27 @@ const habilitadas = (o: LabOrder) =>
     .map((a) => a.code);
 
 describe('órdenes del laboratorio: acciones por estado', () => {
-  it('ofrece las cuatro del camino y, al final, Cancelar y Rechazar', () => {
-    expect(actionsOf(order('DRAFT')).map((a) => a.code)).toEqual([
-      'receive',
-      'process',
-      'upload',
-      'download',
-      'cancel',
-      'reject',
-    ]);
+  it('ofrece las cuatro del camino y, sólo si la API lo permite, Rechazar al final', () => {
+    expect(actionsOf(order('DRAFT')).map((a) => a.code)).toEqual(['receive', 'process', 'upload', 'download']);
     expect(actionsOf(order('DRAFT')).map((a) => a.label)).toEqual([
       'Recibir',
       'Marcar como procesada',
       'Subir resultados',
       'Descargar',
-      'Cancelar',
-      'Rechazar',
+    ]);
+    expect(actionsOf({ ...order('RECEIVED'), canReject: true }).map((a) => a.code)).toEqual([
+      'receive',
+      'process',
+      'upload',
+      'download',
+      'reject',
     ]);
   });
 
-  it('en cada estado sólo está habilitado el paso que le toca, y las salidas donde la API las admite', () => {
-    expect(habilitadas(order('DRAFT'))).toEqual(['receive', 'cancel']);
-    expect(habilitadas(order('RECEIVED'))).toEqual(['process', 'cancel', 'reject']);
+  it('en cada estado sólo está habilitado el paso que le toca, y el rechazo donde la API lo admite', () => {
+    expect(habilitadas(order('DRAFT'))).toEqual(['receive']);
+    expect(habilitadas(order('RECEIVED'))).toEqual(['process']);
+    expect(habilitadas({ ...order('RECEIVED'), canReject: true })).toEqual(['process', 'reject']);
     expect(habilitadas(order('PROCESSED'))).toEqual(['upload']);
     expect(habilitadas(order('UPLOADED', 2))).toEqual(['upload', 'download']);
   });
@@ -71,21 +70,38 @@ describe('órdenes del laboratorio: acciones por estado', () => {
     expect(habilitadas(order('UPLOADED', 0))).toEqual(['upload']);
   });
 
-  it('laboratorio e imagenología tienen el mismo menú: Cancelar y Rechazar valen para las dos', () => {
-    const imaging = (status: LabOrderStatus) => ({ ...order(status, 1), studyName: 'Ecografía abdominal' });
+  it('Cancelar nunca se ofrece (la API responde 422 a CANCEL) y imagenología, sin muestra, tampoco ofrece Rechazar', () => {
+    const imaging = (status: LabOrderStatus, canReject?: boolean) => ({
+      ...order(status, 1),
+      studyName: 'Ecografía abdominal',
+      ...(canReject === undefined ? {} : { canReject }),
+    });
     for (const status of ['DRAFT', 'RECEIVED', 'PROCESSED', 'UPLOADED'] as const) {
-      expect(actionsOf(imaging(status))).toEqual(actionsOf(order(status, 1)));
+      for (const canReject of [undefined, false, true]) {
+        expect(actionsOf(imaging(status, canReject)).some((a) => a.code === ('cancel' as string))).toBe(false);
+      }
+      expect(actionsOf(imaging(status)).some((a) => a.code === 'reject')).toBe(false);
+      expect(actionsOf(imaging(status, false)).some((a) => a.code === 'reject')).toBe(false);
     }
-    expect(habilitadas(imaging('RECEIVED'))).toEqual(['process', 'cancel', 'reject']);
   });
 
-  it('Cancelar y Rechazar son acciones que anulan y llevan su paso y su motivo mínimo', () => {
-    const exits = actionsOf(order('RECEIVED')).filter((a) => a.code === 'cancel' || a.code === 'reject');
+  it('Rechazar es una acción destructiva que lleva su paso REJECT y su motivo mínimo; es la única salida', () => {
+    const recibida = { ...order('RECEIVED'), canReject: true };
+    const exits = actionsOf(recibida).filter((a) => a.code === 'reject');
+    expect(exits).toHaveLength(1);
     expect(exits.every((a) => a.destructive === true)).toBe(true);
-    expect(REASON_STEPS.cancel.action).toBe('CANCEL');
+    expect(Object.keys(REASON_STEPS)).toEqual(['reject']);
     expect(REASON_STEPS.reject.action).toBe('REJECT');
     expect(REASON_FIELD.minLength).toBeGreaterThanOrEqual(3);
     expect(REASON_STEPS.reject.dialog(order('RECEIVED')).message).toContain('Hemograma completo');
+  });
+
+  it('Rechazar aparece sólo cuando la API dice canReject (orden recibida con su muestra)', () => {
+    const recibida = { ...order('RECEIVED'), canReject: true };
+    expect(habilitadas(recibida)).toEqual(['process', 'reject']);
+    const rechazar = actionsOf(recibida).find((a) => a.code === 'reject');
+    expect(rechazar).toMatchObject({ label: 'Rechazar', destructive: true });
+    expect(actionsOf(order('RECEIVED')).some((a) => a.code === 'reject')).toBe(false);
   });
 
   it('una orden cancelada o rechazada no tiene acciones', () => {

@@ -144,7 +144,7 @@ describe('registrationErrorToViewState — catálogo de errores del alta', () =>
   });
 
   describe('422 · reglas de negocio', () => {
-    it('poder notariado faltante: dice qué falta, quién puede omitirlo y en qué paso cargarlo', () => {
+    it('poder notariado faltante: dice qué falta, que es obligatorio para todas y en qué paso cargarlo', () => {
       // Respuesta real de la API de test del 03/10/2026.
       const estado = traducir(
         respuesta(
@@ -155,7 +155,7 @@ describe('registrationErrorToViewState — catálogo de errores del alta', () =>
         ),
       );
       expect(textoDe(estado)).toBe(
-        'Falta el poder notariado del representante legal. Sólo una empresa unipersonal puede registrarse sin él. Adjúntelo en el paso «Representante legal» (PDF, hasta 10 MB) y vuelva a enviar.',
+        'Falta el poder notariado del representante legal. Es obligatorio para toda organización. Adjúntelo en el paso «Representante legal» (PDF, hasta 10 MB) y vuelva a enviar.',
       );
     });
 

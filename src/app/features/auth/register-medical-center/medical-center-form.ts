@@ -7,7 +7,6 @@ import {
   PROFESSIONAL_LICENSE_MIN,
 } from '../../../core/data-access/iam/medical-facility.rules';
 import { executivesControls } from '../shared-registration/executives';
-import { tradeNameControl } from '../shared-registration/trade-name';
 import type { Coordinates } from '../shared-registration/map-location-picker/map-location-picker';
 import { nameGroup } from '../shared-registration/name-fields/person-name';
 import { passwordValidators } from '../shared-registration/password-policy';
@@ -53,8 +52,9 @@ export function createMedicalCenterForm(tipoOfrecido: ValidatorFn) {
       nonNullable: true,
       validators: [Validators.required, noSoloEspacios, Validators.maxLength(MAX_LEGAL_NAME)],
     }),
-    tradeName: tradeNameControl(),
     legalEntityType: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    // Optional: the name patients know it by (same cap as the legal name).
+    tradeName: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(MAX_LEGAL_NAME)] }),
     taxId: new FormControl('', { nonNullable: true, validators: [Validators.required, nitValido] }),
     // --- el establecimiento y su director médico -----------------------------
     healthFacilityRegistrationNumber: new FormControl('', {
@@ -80,7 +80,7 @@ export function createMedicalCenterForm(tipoOfrecido: ValidatorFn) {
     // --- los papeles: guardan el `fileId` de la pre-carga, no el archivo -----
     // Los cinco de la empresa son obligatorios; la escritura y la matrícula
     // dejan de serlo según el tipo societario (ver `exigirDocumentos`). El
-    // poder, igual: sólo una unipersonal lo omite.
+    // poder del representante no se relaja nunca: lo exige toda organización.
     constitutionFileId: papel(),
     taxIdentifierFileId: papel(),
     commerceRegistryFileId: papel(),

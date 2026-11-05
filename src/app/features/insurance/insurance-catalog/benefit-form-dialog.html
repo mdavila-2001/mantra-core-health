@@ -43,7 +43,7 @@
       </app-form-field>
       <div class="insurance-form__columns">
         <app-form-field label="Vigente desde">
-          <app-input formControlName="effectiveFrom" type="date" testId="benefit-effective-from" />
+          <app-date-string-picker formControlName="effectiveFrom"  testId="benefit-effective-from" />
         </app-form-field>
         <app-form-field
           label="Vigente hasta"
@@ -53,7 +53,7 @@
               : ''
           "
         >
-          <app-input formControlName="effectiveTo" type="date" testId="benefit-effective-to" />
+          <app-date-string-picker formControlName="effectiveTo"  testId="benefit-effective-to" />
         </app-form-field>
       </div>
     } @else if (benefit(); as current) {

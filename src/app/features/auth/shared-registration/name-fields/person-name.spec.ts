@@ -1,4 +1,4 @@
-import { nameGroup, nameParts, completeName, type NameValue } from './person-name';
+import { nameGroup, nameParts, completeName, nameExtraControl, type NameValue } from './person-name';
 
 function valor(parcial: Partial<NameValue>): NameValue {
   return {
@@ -82,5 +82,25 @@ describe('nameGroup(obligatorio, viajaEnPartes)', () => {
     grupo.patchValue({ middleName: 'a'.repeat(49), thirdName: 'b'.repeat(50) });
     expect(grupo.valid).toBe(true);
     expect(nameParts(grupo.getRawValue() as NameValue).middleName).toHaveLength(100);
+  });
+});
+
+describe('cada parte es un nombre de persona', () => {
+  it('rechaza dígitos y símbolos en cualquier parte, también en las agregadas', () => {
+    const grupo = nameGroup(true);
+    grupo.patchValue({ name: 'holaLTAD1', lastName: 'Paz', motherLastName: 'Rojas*' });
+    expect(grupo.controls.name.hasError('fieldKind')).toBe(true);
+    expect(grupo.controls.motherLastName.hasError('fieldKind')).toBe(true);
+    expect(grupo.controls.lastName.valid).toBe(true);
+
+    const extra = nameExtraControl();
+    extra.setValue('Isabel2');
+    expect(extra.hasError('fieldKind')).toBe(true);
+  });
+
+  it('acepta los apellidos de más de una palabra, con guion o con apóstrofo', () => {
+    const grupo = nameGroup(true);
+    grupo.patchValue({ name: 'María José', lastName: 'De la Quintana', motherLastName: "D'Angelo-Rojas" });
+    expect(grupo.valid).toBe(true);
   });
 });

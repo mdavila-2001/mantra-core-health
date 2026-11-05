@@ -1,8 +1,12 @@
 import type { CenterBooking } from '../../data-access/diagnostic-units/center-schedule.types';
+import { asignarALineas } from '../../data-access/diagnostic-units/equipment-lines.rules';
+import type { ModalityCode } from '../../data-access/diagnostic-units/modalidades';
 import { ESTUDIO, displayOf } from '../fixtures/concepts';
 import { turnosDeOrdenes } from '../fixtures/centros';
 import { patientById } from '../fixtures/people';
 import { notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { equiposDe } from './center-equipment.handlers';
+import { horarioDe } from './centros.handlers';
 import { destinoDeOrden } from './lab-portal.handlers';
 import { labInboxOrders, sitioDe, UNIDADES, type UnidadSimulada } from './diagnostics.handlers';
 
@@ -86,12 +90,21 @@ export function registerCenterBookings(router: MockRouter): void {
     const u = centerOf(request);
     if (u === undefined) return notFound('Su organización no tiene un centro de diagnóstico con agenda.');
     const now = new Date();
-    const items = [...bookedFromOrders(u, now), ...demoWalkIns(u, now)]
+    const listed = [...bookedFromOrders(u, now), ...demoWalkIns(u, now)]
       .filter((b) => {
         const at = Date.parse(b.startsAt);
         return at >= from && at < to;
       })
       .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+    // Like the API: each booking says which line (device) attends it.
+    const modalityOf = (b: CenterBooking): ModalityCode | null =>
+      turnosDeOrdenes.get(b.orderId ?? '')?.modalityCode ?? (u.kind === 'LABORATORY' ? 'LAB' : null);
+    const lines = asignarALineas(
+      horarioDe(u),
+      equiposDe(u),
+      listed.map((b) => ({ id: b.bookingId, inicio: new Date(b.startsAt), fin: new Date(b.endsAt), modalityCode: modalityOf(b) })),
+    );
+    const items = listed.map((b) => ({ ...b, equipmentId: lines.get(b.bookingId) ?? null }));
     return { items, count: items.length };
   });
 }

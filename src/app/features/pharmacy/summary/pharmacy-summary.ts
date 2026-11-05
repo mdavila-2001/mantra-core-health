@@ -13,7 +13,6 @@ import { RouterLink } from '@angular/router';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 
 import { PharmacyClient } from '../../../core/data-access/pharmacy/pharmacy.client';
@@ -23,6 +22,7 @@ import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 
 import { PharmacyScope } from '../pharmacy-scope';
+import { PharmacyWelcome } from './welcome/pharmacy-welcome';
 
 /** Un atajo del resumen: adónde lleva y con qué filtro. */
 interface Shortcut {
@@ -67,7 +67,7 @@ const SHORTCUTS: readonly Shortcut[] = [
  */
 @Component({
   selector: 'app-pharmacy-summary',
-  imports: [Card, DatePipe, DecimalPipe, FormField, PageHeader, RouterLink, Select, ViewStateHost],
+  imports: [Card, DatePipe, DecimalPipe, FormField, PharmacyWelcome, RouterLink, Select, ViewStateHost],
   providers: [PharmacyScope],
   templateUrl: './pharmacy-summary.html',
   styleUrl: './pharmacy-summary.css',
