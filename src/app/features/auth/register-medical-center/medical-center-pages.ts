@@ -42,9 +42,9 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       clave: 'organizacion',
       icon: 'building' as const,
       hint: 'Qué tipo de institución es, cómo se llama y qué figura jurídica tiene.',
-      // Tres campos cortos en un renglón desde 1120 px, de a dos desde 672 px
-      // (`composition-rules.md` §5): sin casillas kilométricas.
-      disposicion: 'tres-columnas' as const,
+      // Cuatro campos cortos, de a dos desde 672 px (`composition-rules.md` §5):
+      // sin casillas kilométricas.
+      disposicion: 'dos-columnas' as const,
       campos: [
         {
           key: 'tenantType',
@@ -66,6 +66,14 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           // Sólo el vacío lleva mensaje propio: el tope de 300 lo dice el
           // motor con su número, que es lo que la persona necesita leer.
           mensajeSiFalta: 'Escriba la razón social de la organización.',
+        },
+        {
+          key: 'tradeName',
+          label: 'Nombre comercial (opcional)',
+          hint: 'Con el que la conocen sus pacientes. Es el que se ve en el directorio.',
+          control: 'text' as const,
+          testId: `${TEST_ID}-trade-name`,
+          mensajeDeError: `El nombre comercial no puede pasar de ${MAX_LEGAL_NAME} caracteres.`,
         },
         {
           key: 'legalEntityType',

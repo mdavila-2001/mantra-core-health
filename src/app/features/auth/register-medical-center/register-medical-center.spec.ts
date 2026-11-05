@@ -376,7 +376,7 @@ describe('RegisterMedicalCenter', () => {
       'Su acceso',
     ]);
     expect(paginas.map((p) => p.campos.map((c) => c.key))).toEqual([
-      ['tenantType', 'legalName', 'legalEntityType'],
+      ['tenantType', 'legalName', 'tradeName', 'legalEntityType'],
       ['taxId', 'healthFacilityRegistrationNumber'],
       ['medicalDirectorName', 'medicalDirectorLicense', 'medicalDirectorEmail', 'medicalDirectorPhone'],
       [
@@ -401,13 +401,13 @@ describe('RegisterMedicalCenter', () => {
     expect(Math.max(...paginas.filter((p) => !p.sinPartir).map((p) => p.campos.length))).toBeLessThanOrEqual(4);
   });
 
-  it('el tipo de institución es un desplegable y la primera página reparte sus tres campos en columnas', () => {
+  it('el tipo de institución es un desplegable y la primera página reparte sus cuatro campos de a dos', () => {
     const organizacion = interno().paginas()[0]!;
     const tipo = organizacion.campos.find((c) => c.key === 'tenantType')!;
 
     expect(tipo.control).toBe('select');
     expect(tipo.opcionesEn).toBeUndefined();
-    expect(organizacion.disposicion).toBe('tres-columnas');
+    expect(organizacion.disposicion).toBe('dos-columnas');
   });
 
   it('cada página con varios campos cortos declara sus columnas (regla 6 del cliente: sin casillas kilométricas)', () => {
@@ -416,7 +416,7 @@ describe('RegisterMedicalCenter', () => {
 
     // La disposición de TODAS las páginas, no sólo de la primera.
     expect(disposicion).toStrictEqual({
-      organizacion: 'tres-columnas',
+      organizacion: 'dos-columnas',
       establecimiento: 'dos-columnas',
       director: 'tres-columnas',
       'documentos-legales': undefined,

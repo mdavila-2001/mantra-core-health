@@ -1,6 +1,6 @@
 <div class="nombres" [formGroup]="grupo()">
   <app-form-field
-    class="nombres__campo nombres__campo--tercio"
+    class="nombres__campo nombres__campo--mitad"
     label="Primer nombre"
     [required]="obligatorio()"
     [errorMessage]="errorOf('name')"
@@ -14,7 +14,7 @@
     />
   </app-form-field>
 
-  <app-form-field class="nombres__campo nombres__campo--tercio" label="Segundo nombre (opcional)">
+  <app-form-field class="nombres__campo nombres__campo--mitad" label="Segundo nombre (opcional)">
     <app-input
       type="text"
       formControlName="middleName"
@@ -23,7 +23,7 @@
     />
   </app-form-field>
 
-  <app-form-field class="nombres__campo nombres__campo--tercio" label="Tercer nombre (opcional)">
+  <app-form-field class="nombres__campo nombres__campo--mitad" label="Tercer nombre (opcional)">
     <app-input
       type="text"
       formControlName="thirdName"
@@ -32,7 +32,7 @@
   </app-form-field>
 
   @for (extra of extra(); track extra; let i = $index) {
-    <app-form-field class="nombres__campo nombres__campo--tercio" [label]="'Nombre ' + (i + 4)"
+    <app-form-field class="nombres__campo nombres__campo--mitad" [label]="'Nombre ' + (i + 4)"
       [errorMessage]="extra.invalid && (extra.dirty || extra.touched) ? 'El nombre no puede pasar de 100 caracteres.' : ''">
       <div class="nombres__extra">
         <app-input
