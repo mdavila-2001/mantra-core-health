@@ -6,18 +6,16 @@ import { hasPlatformScope } from './platform-scope';
 import { decodeAccessToken, type AccessTokenClaims } from './access-token';
 
 /**
- * Tipos de organización que tienen cuenta propia en el portal. Sin el claim
- * `accountKind`, una sesión sin perfil de paciente ni profesional cuya
- * organización activa es de estos tipos se trata como cuenta de organización.
- *
- * `PROVIDER`/`HOSPITAL` no están: una clínica o «Mi consultorio» la usan
- * personas (quien atiende), así que ahí la cuenta sigue siendo la persona.
+ * Tipos de organización con cuenta propia. Sin el claim `accountKind`, una sesión sin perfil de
+ * paciente ni profesional cuya organización activa es de estos tipos es una cuenta de organización.
  */
-const ORGANIZATION_ACCOUNT_TENANT_TYPES: readonly string[] = [
-  'PHARMACY',
-  'DIAGNOSTIC_CENTER',
-  'PAYER',
-];
+const ORGANIZATION_ACCOUNT_TENANT_TYPES: readonly string[] = ['PHARMACY', 'DIAGNOSTIC_CENTER', 'PAYER'];
+
+/**
+ * Organizaciones médicas: sólo su cuenta dueña (nada más que `USER`) es la de la organización; quien
+ * entra con un rol de trabajo es una persona.
+ */
+const MEDICAL_TENANT_TYPES: readonly string[] = ['CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER'];
 
 /** Qué se sabe de la obligación de dar de alta el segundo paso. */
 export type MfaEnrollmentState = 'unknown' | 'required' | 'done';
@@ -210,12 +208,9 @@ export class SessionStore {
       return claims.accountKind === 'ORGANIZATION' && !this.holdsPersonalRole(claims);
     }
     const type = this.activeTenantType();
-    return (
-      type !== null &&
-      ORGANIZATION_ACCOUNT_TENANT_TYPES.includes(type) &&
-      claims.pid === undefined &&
-      claims.hpid === undefined
-    );
+    const sinPerfil = claims.pid === undefined && claims.hpid === undefined;
+    const soloDueno = MEDICAL_TENANT_TYPES.includes(type ?? '') && claims.roles.every((rol) => rol === 'USER');
+    return type !== null && sinPerfil && (ORGANIZATION_ACCOUNT_TENANT_TYPES.includes(type) || soloDueno);
   });
 
   /** ¿Entra con un rol propio de una persona que trabaja ahí (personal de apoyo o doctor)? */
