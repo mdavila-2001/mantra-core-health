@@ -78,7 +78,7 @@
   text-align: left;
   border-start-start-radius: inherit;
   border-start-end-radius: inherit;
-  transition: background-color 150ms ease;
+  transition: background-color var(--dur-fast) var(--ease-standard);
 }
 
 .semana__boton:hover {
@@ -229,8 +229,8 @@
   opacity: 0;
   transform: translateY(-2px);
   transition:
-    opacity 120ms ease,
-    transform 120ms ease;
+    opacity var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
 }
 
 .semana__cita:hover .semana__globo,

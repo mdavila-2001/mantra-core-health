@@ -1,5 +1,6 @@
 ---
 slug: sindrome-de-ovario-poliquistico
+image: sindrome-de-ovario-poliquistico.svg | En el síndrome de ovario poliquístico se combinan exceso de andrógenos y ovulación irregular. | Ovario habitual con un folículo maduro junto a un ovario con muchos folículos pequeños en corona, y tres recuadros con exceso de andrógenos, ovulación irregular y resistencia a la insulina.
 ---
 
 ## [definition] Introducción

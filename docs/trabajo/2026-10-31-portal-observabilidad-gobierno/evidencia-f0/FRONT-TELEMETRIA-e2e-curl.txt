@@ -1,0 +1,25 @@
+# FRONT-TELEMETRIA · lote real contra la API del entorno F0 (31/10/2026)
+# QUÉ ES: curl con el cuerpo que produce el SDK (mismas claves, ids deterministas, 'pestana' como propiedad, sin userId/sessionId/tenantId).
+# QUÉ NO ES: no pasó por el navegador ni por el servicio Angular (no se ejecutó una sesión de navegador). El SDK real está probado
+#   con Vitest (ux-analytics.service.spec.ts). Las claves de idempotencia salieron vacías porque 'uuidgen' no existe en la caja; la API las aceptó.
+# API: http://127.0.0.1:3010 (dist/ compilado al montar el entorno; ver ENTORNO.md). Cuenta: admin@alovidasalud.com.
+
+## 1. GET /telemetry/tracking-consents/me?purposeDefinitionId=9889b3b6-… (antes)
+{"status":"NONE","purposeDefinitionId":"9889b3b6-4293-5266-bba2-b27fa26bec2e"}
+
+## 2. POST /telemetry/tracking-consents {purposeDefinitionId, consentVersion:"ux-heatmap-2026-10"}  -> HTTP 201
+{"id":"432b1a43-027f-40d3-92e9-213d1adc5c49","userId":"7bc62907-…","purposeDefinitionId":"9889b3b6-…","decisionConceptId":"2af7b784-…","grantedAt":"2026-10-31T08:27:41.484Z"}
+
+## 3. GET …/me (después)
+{"status":"GRANTED","consentId":"432b1a43-027f-40d3-92e9-213d1adc5c49","purposeDefinitionId":"9889b3b6-4293-5266-bba2-b27fa26bec2e"}
+
+## 4. POST /telemetry/activity-events (3 eventos: pagina_vista v2, clic v2, pagina_vista anónima)  -> HTTP 201
+{"inserted":3,"skipped":0,"eventIds":["74bcc589-…","d0b7cacf-…","7f63f931-…"],"sessionJourneyId":"828862f5-33dc-48e5-92c9-87ecc0b7c7aa"}
+
+## 5. Negativo: el mismo evento con "userId" en el cuerpo (cuerpo VIEJO del SDK)  -> HTTP 400
+{"code":"VALIDATION_FAILED",…,"details":{"violations":["events.0.property userId should not exist"]},"reason":"VALIDATION_PIPE_REJECTED"}
+
+## 6. Postgres (telemetry.user_activity_events, más recientes primero): event_name | route_template | user_id puesto | session_id puesto | nº propiedades
+pagina_vista|/superadmin/measurement|f|f|0     <- anónima: sin usuario, sin sesión, sin propiedades
+clic|/superadmin/measurement|t|t|15           <- v2: usuario y sesión puestos POR LA API desde el token
+pagina_vista|/superadmin/measurement|t|t|5

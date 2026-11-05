@@ -21,6 +21,9 @@ Las mallas son obra derivada de BodyParts3D, (c) The Database Center for Life
 Science, CC-BY-SA 2.1 JP. Los GLB heredan esa licencia y la llevan en
 `asset.copyright` y en el manifiesto.
 
+Después de esta, `build_female_parts.py` agrega las piezas femeninas de HuBMAP
+a `skeleton.glb` y `organs.glb`: esta reescribe esos GLB y las borra.
+
 Uso (con un venv que tenga trimesh, numpy y fast-simplification):
     python -I tools/anatomy-atlas-3d/build_models.py --bp3d /ruta/BodyParts3D_data
 """
@@ -59,6 +62,10 @@ CAPAS = [
 ]
 GENITAL = "FMA7160"
 EXCLUIDAS = {"FMA7163"}
+# Cuelgan del sistema genital en la partonomía de BodyParts3D, pero existen en
+# los dos sexos: el esfínter anal externo y los pubococcígeos (suelo pélvico).
+# Marcarlos `male` los escondía en la vista «Mujer».
+COMPARTIDAS_DEL_PERINE = {"FMA21930", "FMA45854", "FMA45855"}
 TRIANGULOS_TOTALES = 320_000
 MINIMO, MAXIMO = 240, 9_000
 COPYRIGHT = (
@@ -169,7 +176,7 @@ def main() -> None:
         # BodyParts3D es un único cuerpo masculino: todo lo que cuelga del
         # sistema genital es exclusivo de ese sexo. Lo demás es la referencia
         # compartida, con la forma (pelvis, proporciones) de ese mismo cuerpo.
-        sexo[ident] = "male" if GENITAL in anc else "shared"
+        sexo[ident] = "male" if GENITAL in anc and ident not in COMPARTIDAS_DEL_PERINE else "shared"
 
     mallas = {}
     for capa, ids in asignadas.items():

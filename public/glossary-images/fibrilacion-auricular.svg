@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Qué ocurre en la fibrilación auricular</title>
+  <desc id="d">Corazón con actividad eléctrica caótica en las aurículas, ventrículos que laten de forma irregular y la orejuela donde puede formarse un coágulo. A la derecha, un electrocardiograma normal frente a uno con fibrilación auricular, y los riesgos y pilares del tratamiento.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Fibrilación auricular: las aurículas tiemblan sin coordinación</text>
+  <rect x="20" y="60" width="340" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="190.0" y="88" text-anchor="middle" class="h">Corazón</text>
+  <path d="M80 200 C70 140 120 110 170 120 C220 110 280 140 270 200 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
+  <path d="M80 210 L270 210 C270 300 220 360 175 410 C130 360 80 300 80 210 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
+  <path d="M100 170 l10 -14 l8 18 l10 -20 l8 22 l10 -18 l8 16 l10 -20 l8 22 l10 -16 l8 14 l10 -18 l8 16" fill="none" stroke="var(--warn)" stroke-width="2"/>
+  <text x="175" y="145" text-anchor="middle" class="lab b">Aurículas</text>
+  <text x="175" y="290" text-anchor="middle" class="lab b">Ventrículos</text>
+  <text x="175" y="308" text-anchor="middle" class="small">laten irregular</text>
+  <path d="M262 150 C290 140 300 160 286 172 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
+  <circle cx="287" cy="158" r="4" fill="var(--red)" stroke="none"/>
+  <line x1="292" y1="162" x2="300" y2="214" stroke="var(--muted)" stroke-width="1"/>
+  <text x="290" y="230" class="small">Orejuela:</text>
+  <text x="290" y="246" class="small">posible</text>
+  <text x="290" y="262" class="small">coágulo</text>
+  <rect x="376" y="60" width="404" height="186" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="578.0" y="88" text-anchor="middle" class="title">Electrocardiograma</text>
+  <text x="392" y="140" class="small b">Normal</text>
+  <path d="M460 142 l12 0 l4 -6 l4 6 l8 0 l4 8 l4 -40 l4 44 l4 -12 l14 0 l6 -8 l6 8 l10 0 l12 0 l4 -6 l4 6 l8 0 l4 8 l4 -40 l4 44 l4 -12 l14 0 l6 -8 l6 8 l10 0 l12 0 l4 -6 l4 6 l8 0 l4 8 l4 -40 l4 44 l4 -12 l14 0 l6 -8 l6 8 l10 0" fill="none" stroke="var(--ok)" stroke-width="2"/>
+  <text x="392" y="210" class="small b">FA</text>
+  <path d="M460 212 l14 0 l4 -38 l4 42 l4 -4 l6 2 l6 -3 l6 3 l5 -2 l4 -38 l4 42 l4 -4 l4 2 l6 -3 l6 3 l4 -2 l6 2 l6 -3 l6 3 l5 -2 l4 -38 l4 42 l4 -4 l4 2 l6 -3 l4 -38 l4 42 l4 -4 l6 2 l6 -3 l6 3 l5 -2 l6 2 l6 -3 l4 -38 l4 42 l4 -4 l6 2" fill="none" stroke="var(--red)" stroke-width="2"/>
+  <text x="578" y="232" text-anchor="middle" class="small muted">Sin onda P y latidos a intervalos irregulares</text>
+  <rect x="376" y="262" width="404" height="178" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="578.0" y="290" text-anchor="middle" class="title">Riesgos y tratamiento</text>
+  <text x="394" y="312" class="small">• Ictus por coágulos</text>
+  <text x="394" y="338" class="small">• Insuficiencia cardíaca</text>
+  <text x="394" y="364" class="small">• Palpitaciones, cansancio</text>
+  <text x="594" y="312" class="small">• Anticoagulantes</text>
+  <text x="594" y="338" class="small">• Controlar frecuencia</text>
+  <text x="594" y="364" class="small">• Recuperar el ritmo</text>
+  <text x="578" y="420" text-anchor="middle" class="small b" style="fill:var(--red)">Consultar ya si hay debilidad o habla torpe</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

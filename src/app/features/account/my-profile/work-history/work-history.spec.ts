@@ -95,6 +95,15 @@ function api(fixture: ComponentFixture<WorkHistory>): Record<string, UnMiembro> 
   return fixture.componentInstance as unknown as Record<string, UnMiembro>;
 }
 
+/** Renders the per-node actions the Trayectoria tab places inside one timeline node. */
+function accionesDelNodo(fixture: ComponentFixture<WorkHistory>, id: string): HTMLElement {
+  const vista = fixture.componentInstance.accionesDelNodo()!.createEmbeddedView({ $implicit: id });
+  vista.detectChanges();
+  const raiz = document.createElement('div');
+  raiz.append(...(vista.rootNodes as Node[]));
+  return raiz;
+}
+
 /**
  * Una señal, una computada o un método del componente.
  *
@@ -2286,9 +2295,11 @@ describe('WorkHistory — densidad, estados y acciones de la trayectoria', () =>
     ]);
 
     expect(tabla(fixture)).toBeNull();
-    expect(
-      fixture.nativeElement.querySelectorAll('[data-testid="vinculos-editables"] li'),
-    ).toHaveLength(5);
+    for (const indice of [1, 2, 3, 4, 5]) {
+      expect(accionesDelNodo(fixture, `vinculo-${indice}`).querySelector('[data-testid="vinculo-editar"]')).not.toBeNull();
+    }
+    expect(accionesDelNodo(fixture, 'aprobado').querySelector('button')).toBeNull();
+    expect(accionesDelNodo(fixture, 'rechazado').querySelector('button')).toBeNull();
     http.verify();
   });
 
@@ -2296,7 +2307,7 @@ describe('WorkHistory — densidad, estados y acciones de la trayectoria', () =>
     const { fixture, http } = await montarListado(declarados(6));
 
     expect(filas(fixture)).toHaveLength(6);
-    expect(fixture.nativeElement.querySelector('[data-testid="vinculos-editables"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="vinculo-acciones"]')).toBeNull();
     expect(tabla(fixture)?.querySelector<HTMLElement>('.data-table__scroll')?.style.maxHeight).toBe(
       '420px',
     );
@@ -2481,7 +2492,9 @@ describe('WorkHistory — densidad, estados y acciones de la trayectoria', () =>
       );
       fixture.detectChanges();
 
-      expect(tabla(fixture)?.textContent).toContain('Algo salió mal');
+      // Un 500 dice qué pasó y que el fallo fue del servidor, no «algo salió mal».
+      expect(tabla(fixture)?.textContent).toContain('No pudimos completar la operación');
+      expect(tabla(fixture)?.textContent).toContain('El fallo no está en lo que usted ingresó');
       expect(tabla(fixture)?.textContent).toContain('historial-test-500');
       expect(
         fixture.nativeElement.querySelector('[data-testid="historial-tabla-vacio"]'),
@@ -2496,7 +2509,7 @@ describe('WorkHistory — densidad, estados y acciones de la trayectoria', () =>
       fixture.detectChanges();
 
       expect(filas(fixture)).toHaveLength(6);
-      expect(tabla(fixture)?.textContent).not.toContain('Algo salió mal');
+      expect(tabla(fixture)?.textContent).not.toContain('No pudimos completar la operación');
       http.verify();
     },
   );
@@ -2673,11 +2686,12 @@ describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
     http.verify();
   });
   /**
-   * La razón de ser del bloque: en «Trayectoria» —que es el único lugar donde
-   * el perfil monta este componente— la lista plana está suprimida a propósito,
-   * así que sin este bloque los botones no existirían para nadie.
+   * En «Trayectoria» (layout="timeline") lo declarado por el profesional se
+   * corrige o retira desde su propio nodo de la línea de tiempo —no desde una
+   * segunda lista que repetía las mismas instituciones—; además se ofrece el
+   * botón de alta.
    */
-  it('en «Trayectoria» ofrece lo accionable, sin repetir la historia entera', async () => {
+  it('en «Trayectoria» ofrece corregir o retirar lo declarado, además del alta', async () => {
     const { fixture, http } = await montarConVinculo(
       enCable({ statusKind: 'declarado' }),
       true,
@@ -2685,23 +2699,27 @@ describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
     );
 
     const raiz: HTMLElement = fixture.nativeElement;
-    expect(raiz.querySelector('[data-testid="vinculos-editables"]')).not.toBeNull();
-    expect(raiz.querySelector('[data-testid="vinculo-editar"]')).not.toBeNull();
-    expect(raiz.querySelector('[data-testid="vinculo-retirar"]')).not.toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculo-acciones"]')).toBeNull();
+    const nodo = accionesDelNodo(fixture, 'af-1');
+    expect(nodo.querySelector('[data-testid="vinculo-editar"]')).not.toBeNull();
+    expect(nodo.querySelector('[data-testid="vinculo-retirar"]')).not.toBeNull();
+
+    const botonAlta = raiz.querySelector('[data-testid="abrir-alta-vinculo"]');
+    expect(botonAlta).not.toBeNull();
+    // The add button carries no icon today (AppButton has no `icon` input); if the icon is a
+    // requirement, it is a product change, not a spec one.
 
     http.verify();
   });
 
-  it('sin nada que tocar, el bloque no se dibuja', async () => {
+  it('sin nada que tocar, el nodo no lleva acciones', async () => {
     const { fixture, http } = await montarConVinculo(
       enCable({ statusKind: 'aprobado' }),
       true,
       'timeline',
     );
 
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="vinculos-editables"]'),
-    ).toBeNull();
+    expect(accionesDelNodo(fixture, 'af-1').querySelector('button')).toBeNull();
 
     http.verify();
   });

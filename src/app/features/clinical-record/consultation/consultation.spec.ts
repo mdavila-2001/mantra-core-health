@@ -20,9 +20,10 @@ import { CONSULTATION_FORBIDDEN_MESSAGE } from './consultation-forbidden';
  *
  * Lo que fijan estas pruebas:
  *
- * 1. **Están las ocho posibilidades** —sin Medición ni Internación,
- *    retiradas el 25/09/2026, ni Nota médica ni Documento, que absorbió el
- *    formulario médico el 26/09/2026—, en orden y con cantidades leídas.
+ * 1. **Están las nueve posibilidades** —sin Medición, retirada el 25/09/2026,
+ *    ni Nota médica ni Documento, que absorbió el formulario médico el
+ *    26/09/2026; con Internación, que volvió el 04/11/2026 junto a Derivar—,
+ *    en orden y con cantidades leídas.
  *    Órdenes, reconsulta y Pagos no agregan lecturas para ofrecer una cifra.
  * 2. **Cada casilla abre su formulario en modal**, y uno solo a la vez.
  * 3. **El check-in manda lo que el contrato pide y nada más.** Un motivo en
@@ -67,6 +68,8 @@ const CLAVES = [
   // «Derivar» entró el 24/10/2026 por pedido del propietario: recomendar a otro
   // profesional, con aviso a la persona. Va junto a la reconsulta.
   'derivacion',
+  // «Internación» vuelve el 04/11/2026 (propietario), al lado de «Derivar».
+  'internacion',
   'pagos',
 ];
 const TITULOS = [
@@ -77,6 +80,7 @@ const TITULOS = [
   'Plan de cuidados',
   'Reconsulta',
   'Derivar',
+  'Internación',
   'Pagos',
 ];
 
@@ -155,7 +159,7 @@ describe('Consultation', () => {
     componente = await harness.navigateByUrl('/medical-records/p-1/consultation', Consultation);
   });
 
-  it('ofrece las ocho posibilidades en la rejilla, con su cantidad', async () => {
+  it('ofrece las nueve posibilidades en la rejilla, con su cantidad', async () => {
     await responderLectura();
 
     const casillas =
@@ -174,11 +178,25 @@ describe('Consultation', () => {
     // expediente, y un número pedido acá podría discrepar del que muestra el
     // propio bloque al abrirse.
     expect(casillas.find((c) => c.clave === 'pagos')?.cantidad).toBeNull();
+    // Internación cuenta los episodios del resumen ya leído.
+    expect(casillas.find((c) => c.clave === 'internacion')?.cantidad).toBe(0);
 
     const botones = harness.routeNativeElement!.querySelectorAll(
       '[data-testid^="consulta-casilla-"]',
     );
-    expect(botones).toHaveLength(8);
+    expect(botones).toHaveLength(9);
+  });
+
+  it('«Internación» abre el bloque de internación, con la persona de la ficha', async () => {
+    await responderLectura();
+
+    (componente as unknown as { abrir(clave: string): void }).abrir('internacion');
+    harness.detectChanges();
+
+    expect(interno<() => string>('tituloDelModal')()).toBe('Internar a la persona');
+    expect(harness.routeNativeElement!.querySelector('app-admission-block')).not.toBeNull();
+    // Whatever the block asks for is answered empty: this test is about the tile.
+    http.match(() => true).forEach((req) => req.flush([]));
   });
 
   it('«Derivar» abre su bloque en el modal, con el encabezado y la bajada propios', async () => {

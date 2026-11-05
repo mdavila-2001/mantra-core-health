@@ -107,9 +107,11 @@ describe('InviteSupport', () => {
     avisos = [];
   });
 
-  it('cerrado solo ofrece «Invitar a una secretaria» y no pide nada a la API', () => {
+  it('cerrado ofrece invitar registrada o crear secretaria sin pedir nada a la API', () => {
     montar();
-    expect(byId('invitar-abrir')!.textContent).toContain('Invitar a una secretaria');
+    expect(byId('invitar-abrir')!.textContent?.trim()).toBe('Invitar secretaria registrada');
+    expect(byId('invitar-crear')!.textContent).toContain('Crear y vincular secretaria');
+    expect(inviteSupportStaff).not.toHaveBeenCalled();
     expect(byId('invitar-form')).toBeNull();
     expect(listMyRoleAssignments).not.toHaveBeenCalled();
   });
@@ -293,6 +295,13 @@ describe('InviteSupport', () => {
     expect(host().textContent).toContain('Sin conexión');
     expect(byId('invitar-enviar')).toBeNull();
     expect(byId('invitar-cancelar-sin-datos')).not.toBeNull();
+    listMyRoleAssignments.mockReturnValue(of([vinculacion('ra-1')]));
+    const retry = Array.from(host().querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Reintentar');
+    expect(retry).not.toBeUndefined();
+    retry?.click(); refrescar();
+    expect(listMyRoleAssignments).toHaveBeenCalledTimes(2);
+    expect(byId('invitar-enviar')).not.toBeNull();
+    expect(inviteSupportStaff).not.toHaveBeenCalled();
   });
 
   it('cancelar cierra el formulario sin enviar nada', () => {

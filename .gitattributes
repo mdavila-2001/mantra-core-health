@@ -7,3 +7,6 @@
 # `.githooks/` y de nada más. Normalizar el repositorio entero reescribiría
 # todos los archivos y produciría un diff que nadie puede revisar.
 .githooks/** text eol=lf
+
+# Cada carril añade su bloque al final; con union Git conserva ambos lados en vez de marcar conflicto.
+docs/progress/DECISIONS.md merge=union

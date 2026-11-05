@@ -2,7 +2,7 @@
     Indicadores hospitalarios OPS (F3.3): la fórmula que acompaña a cada
     número en la pantalla. Los números los calcula la API
     (`clinical/domain/inpatient/census.ts`); la copia de la maqueta vive en
-    `core/mock/rules/inpatient-indicators.ts` (M6).
+    `mock/rules/inpatient-indicators.ts` del simulador (M6).
     ========================================================================== */
 
 /** Cómo se calcula cada indicador, para la ayuda de la tarjeta. */

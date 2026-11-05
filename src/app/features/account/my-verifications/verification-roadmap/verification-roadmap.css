@@ -1,0 +1,294 @@
+/* Two columns when the CARD is wide (container query, not viewport):
+   steps on the left, «why it matters» on the right. Stacked otherwise. */
+:host {
+  display: block;
+  container-type: inline-size;
+}
+
+.ruta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--e5);
+}
+
+@container (min-width: 880px) {
+  .ruta {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+    grid-template-areas:
+      'hero hero'
+      'etapas lado';
+    align-items: start;
+  }
+  .ruta__hero {
+    grid-area: hero;
+  }
+  .ruta__etapas {
+    grid-area: etapas;
+  }
+  .ruta__lado {
+    grid-area: lado;
+    position: sticky;
+    inset-block-start: var(--e4);
+  }
+}
+
+/* ─── Hero ──────────────────────────────────────────────────────────────── */
+
+.ruta__hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e5);
+  padding: var(--e5);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-card);
+  background: linear-gradient(135deg, var(--info-bg), var(--sup-tarjeta) 70%);
+}
+
+.ruta__hero.is-completa {
+  background: linear-gradient(135deg, var(--ok-bg), var(--sup-tarjeta) 70%);
+}
+
+.ruta__anillo {
+  position: relative;
+  flex: none;
+  inline-size: 7rem;
+  block-size: 7rem;
+}
+
+.ruta__anillo svg {
+  inline-size: 100%;
+  block-size: 100%;
+  transform: rotate(-90deg);
+}
+
+.ruta__anillo circle {
+  fill: none;
+  stroke-width: 3.5;
+}
+
+.ruta__anillo-fondo {
+  stroke: var(--filete);
+}
+
+.ruta__anillo-avance {
+  stroke: var(--ok-tinta);
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--dur-slow) var(--ease-standard);
+}
+
+.ruta__anillo-cifra {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  font-family: var(--f-titulo);
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ruta__anillo-cifra small {
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.ruta__hero-texto {
+  display: grid;
+  gap: var(--e2);
+  flex: 1 1 20rem;
+  min-inline-size: 0;
+}
+
+.ruta__sobretitulo {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.ruta__titular {
+  margin: 0;
+  font-family: var(--f-titulo);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+
+.ruta__bajada {
+  margin: 0;
+  max-inline-size: 60ch;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--text-secondary);
+}
+
+.ruta__espera {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--aviso-tinta);
+}
+
+.ruta__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e3);
+  margin-block-start: var(--e2);
+}
+
+/* ─── Steps ─────────────────────────────────────────────────────────────── */
+
+.ruta__etapas {
+  display: grid;
+  gap: var(--e3);
+  min-inline-size: 0;
+}
+
+.ruta__grupo {
+  margin: var(--e3) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ruta__grupo:first-child {
+  margin-block-start: 0;
+}
+
+.ruta__lista {
+  display: grid;
+  gap: var(--e2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tramo {
+  display: grid;
+  grid-template-columns: var(--e9) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--e2) var(--e3);
+  padding: var(--e3) var(--e4);
+  border: 1px solid var(--filete);
+  border-inline-start-width: 4px;
+  border-radius: var(--r-ctrl);
+  background: var(--sup-tarjeta);
+}
+
+@container (min-width: 560px) {
+  .tramo {
+    grid-template-columns: var(--e9) minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
+.tramo__estado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--e2);
+  grid-column: 2;
+  justify-self: start;
+}
+
+@container (min-width: 560px) {
+  .tramo__estado {
+    grid-column: 3;
+    justify-self: end;
+  }
+}
+
+.tramo--approved {
+  border-inline-start-color: var(--ok-tinta);
+}
+
+.tramo--pending,
+.tramo--in-review {
+  border-inline-start-color: var(--aviso-tinta);
+}
+
+.tramo--rejected,
+.tramo--expired {
+  border-inline-start-color: var(--error-tinta);
+}
+
+.tramo.is-siguiente {
+  border-color: var(--brand-primary);
+  box-shadow: var(--sombra-1);
+}
+
+.tramo__marca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--e9);
+  block-size: var(--e9);
+  border-radius: var(--r-pill);
+  background: var(--neutro-bg);
+  color: var(--tinta-3);
+}
+
+.tramo--approved .tramo__marca {
+  background: var(--ok-bg);
+  color: var(--ok-tinta);
+}
+
+.tramo--pending .tramo__marca,
+.tramo--in-review .tramo__marca {
+  background: var(--aviso-bg);
+  color: var(--aviso-tinta);
+}
+
+.tramo--rejected .tramo__marca,
+.tramo--expired .tramo__marca {
+  background: var(--error-bg);
+  color: var(--error-tinta);
+}
+
+.tramo__cuerpo {
+  display: grid;
+  gap: var(--e1);
+  min-inline-size: 0;
+}
+
+.tramo__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tramo__siguiente {
+  display: inline-block;
+  margin-inline-start: var(--e2);
+  padding: 0 var(--e2);
+  border-radius: var(--r-pill);
+  background: var(--brand-primary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  color: var(--text-inverse);
+  vertical-align: middle;
+}
+
+.tramo__detalle {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}

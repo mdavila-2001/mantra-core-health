@@ -1,0 +1,37 @@
+<div class="catalogo" data-testid="catalog-concepts">
+  <app-view-state-host [state]="catalogos()" (retry)="ngOnInit()">
+    @if (catalogos().status === 'ready') {
+      <p class="catalogo__ayuda">
+        Los conceptos de cada catálogo alimentan los selectores del sistema. Aquí se cambia la imagen de cada uno
+        (las especialidades las muestran en el directorio) o se retira del catálogo.
+      </p>
+      <div class="catalogo__filtros">
+        <app-select data-testid="catalog-concepts-set" [value]="catalogo()" (valueChange)="elegir($event)" [options]="opciones()" />
+      </div>
+      @if (aviso(); as nota) {
+        <app-alert [tone]="nota.tono" [dismissible]="true" (dismissed)="aviso.set(null)" data-testid="catalog-concepts-notice">{{ nota.texto }}</app-alert>
+      }
+      <app-data-table
+        [state]="lista()"
+        [columns]="columnas()"
+        [trackBy]="porId"
+        [rowLabel]="nombreDeFila"
+        stackedOnMobile
+        fitContainer
+        caption="Conceptos del catálogo"
+        (retry)="recargar()"
+      />
+    }
+  </app-view-state-host>
+</div>
+
+@if (dialogo(); as abierto) {
+  <app-concept-image-dialog [concept]="abierto" (saved)="guardada()" (closed)="dialogo.set(null)" />
+}
+
+<ng-template #celdaImagen let-c>
+  <img class="concepto-miniatura" [src]="imagenDe(c)" alt="" loading="lazy" />
+</ng-template>
+<ng-template #celdaAcciones let-c>
+  <app-row-actions [actions]="acciones" [fila]="c.display" [inline]="true" (actionSelected)="ejecutar(c, $event)" />
+</ng-template>

@@ -1,5 +1,6 @@
 ---
 slug: clamidia
+image: clamidia.svg | Cómo asciende la infección por clamidia y sus claves | Esquema del útero y las trompas con bacterias en el cuello uterino y flechas hacia arriba, junto a las zonas afectadas, las complicaciones y el tratamiento
 ---
 
 ## [definition] Introducción

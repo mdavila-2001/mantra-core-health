@@ -1,5 +1,6 @@
 ---
 slug: enfermedad-mano-pie-boca
+image: enfermedad-mano-pie-boca.svg | Llagas en la boca y ampollitas en manos y pies, causadas por enterovirus. | Silueta de un niño con lesiones marcadas en la boca, las palmas de las manos y las plantas de los pies. A la derecha, el virus causante, cómo se contagia y los signos que obligan a consultar.
 ---
 
 ## [definition] Introducción

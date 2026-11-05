@@ -85,6 +85,7 @@
 
 .vinculacion__principal {
   font-weight: 600;
+  margin-inline-end: var(--sp-2);
 }
 
 .vinculacion__sin-dato {

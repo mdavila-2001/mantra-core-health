@@ -2,6 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 
 import { REFRESH_COOKIE_MODE } from '../data-access/api';
 import type { DeniedTenant } from '../data-access/iam/tenant-denial';
+import { hasPlatformScope } from './platform-scope';
 import { decodeAccessToken, type AccessTokenClaims } from './access-token';
 
 /**
@@ -223,9 +224,18 @@ export class SessionStore {
     return personal(claims.roles) || Object.values(claims.scopedRoles ?? {}).some(personal);
   }
 
-  /** Si hay que pedirle a la persona que elija organización. */
+  /**
+   * Si la sesión tiene alcance de plataforma (rol global de `PLATFORM_SCOPE_ROLES`): no se le pide elegir organización.
+   * Presentación, no autoriza: ver `platform-scope.ts`.
+   */
+  readonly hasPlatformScope = computed(() => hasPlatformScope(this.claims()));
+
+  /** Alcance de plataforma sin organización fijada: el armazón rotula «Toda la plataforma» y no viaja `X-Tenant-Id`. */
+  readonly platformWide = computed(() => this.hasPlatformScope() && this.selectedTenantId() === null);
+
+  /** Si hay que pedirle a la persona que elija organización. Quien tiene alcance de plataforma no elige. */
   readonly needsTenantSelection = computed(
-    () => this.tenants().length > 1 && this.selectedTenantId() === null,
+    () => this.tenants().length > 1 && this.selectedTenantId() === null && !this.hasPlatformScope(),
   );
 
   /**
@@ -261,6 +271,11 @@ export class SessionStore {
     if (this.tenants().includes(tenantId)) {
       this.selectedTenantId.set(tenantId);
     }
+  }
+
+  /** Suelta la organización elegida (vuelve a «toda la plataforma» para quien tiene ese alcance). */
+  clearTenant(): void {
+    this.selectedTenantId.set(null);
   }
 
   clear(): void {

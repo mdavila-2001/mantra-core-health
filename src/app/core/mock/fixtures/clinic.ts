@@ -713,6 +713,10 @@ export interface SimulatedOrder {
    */
   readonly previousDiagnosticReportId?: string;
   readonly duplicateOverrideReason?: string;
+  /** Quién ejecuta el procedimiento, según el médico (CONTRATO §3, centros médicos). */
+  readonly performerSelectionConceptId?: string;
+  readonly performerPractitionerProfileId?: string;
+  readonly suggestedPracticeSiteId?: string;
   /** P40 (C2): las notas médicas que motivan la orden, en el orden citado. */
   readonly basedOnNoteIds?: readonly string[];
 }

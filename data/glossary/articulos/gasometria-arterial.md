@@ -1,5 +1,6 @@
 ---
 slug: gasometria-arterial
+image: gasometria-arterial.svg | La gasometría arterial valora oxígeno, dióxido de carbono y acidez de la sangre. | Antebrazo con la arteria radial marcada y una jeringa que toma sangre arterial, junto a tres tarjetas que explican lo que mide la prueba: oxígeno, dióxido de carbono y pH.
 ---
 
 ## [definition] Introducción

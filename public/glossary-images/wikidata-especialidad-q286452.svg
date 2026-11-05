@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Campo de la cirugía de la mano</title>
+  <desc id="d">Palma de una mano con los tendones flexores de los dedos, el túnel carpiano en la muñeca y el nervio mediano que pasa por él. A la derecha, las afecciones que atiende la cirugía de la mano, como el túnel carpiano o el dedo en gatillo, y cómo trabaja el especialista.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Cirugía de la mano: huesos, tendones y nervios</text>
+  <rect x="20" y="60" width="400" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="88" text-anchor="middle" class="title">Palma de la mano derecha</text>
+  <path d="M140 420 L140 300 C120 280 100 240 96 210 C94 196 112 192 120 206 L146 250 L150 150 C150 136 170 136 170 150 L174 240 L180 120 C180 106 200 106 200 120 L204 236 L212 132 C212 118 232 118 232 132 L234 244 L246 166 C246 152 264 154 264 168 L258 300 C256 330 250 380 250 420 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M160 400 L160 260 L160 160 M190 400 L190 250 L190 130 M222 400 L222 256 L222 142 M250 400 L250 280 L254 176" fill="none" stroke="var(--panel)" stroke-width="3" opacity=".9"/>
+  <rect x="150" y="330" width="110" height="40" rx="6" fill="var(--accent-l)" stroke="var(--accent)" opacity=".85"/>
+  <path d="M200 430 L200 300 L196 270" fill="none" stroke="var(--warn)" stroke-width="4"/>
+  <line x1="166" y1="220" x2="80" y2="170" stroke="var(--muted)" stroke-width="1"/>
+  <text x="40" y="160" class="small b">Tendones</text>
+  <text x="40" y="176" class="small">flexores</text>
+  <line x1="260" y1="350" x2="300" y2="340" stroke="var(--muted)" stroke-width="1"/>
+  <text x="304" y="336" class="small b">Túnel</text>
+  <text x="304" y="352" class="small">carpiano</text>
+  <line x1="204" y1="300" x2="300" y2="290" stroke="var(--muted)" stroke-width="1"/>
+  <text x="304" y="290" class="small b">Nervio</text>
+  <text x="304" y="306" class="small">mediano</text>
+  <line x1="120" y1="230" x2="80" y2="260" stroke="var(--muted)" stroke-width="1"/>
+  <text x="40" y="270" class="small">Pulgar</text>
+  <rect x="436" y="60" width="344" height="200" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="88" text-anchor="middle" class="h">Qué atiende</text>
+  <text x="454" y="108" class="small">• Síndrome del túnel carpiano</text>
+  <text x="454" y="132" class="small">• Dedo en gatillo</text>
+  <text x="454" y="156" class="small">• Fracturas de muñeca y dedos</text>
+  <text x="454" y="180" class="small">• Lesiones de tendones y nervios</text>
+  <text x="454" y="204" class="small">• Contractura de Dupuytren</text>
+  <text x="454" y="228" class="small">• Malformaciones congénitas</text>
+  <rect x="436" y="276" width="344" height="164" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="304" text-anchor="middle" class="h">Cómo trabaja</text>
+  <text x="454" y="322" class="small">• Exploración de fuerza y sensibilidad</text>
+  <text x="454" y="346" class="small">• Radiografía, ecografía, electromiografía</text>
+  <text x="454" y="370" class="small">• Férulas, infiltraciones, microcirugía</text>
+  <text x="454" y="394" class="small">• Terapia de mano tras operar</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo de la especialidad. Ilustración original de AloVida.</text>
+</svg>

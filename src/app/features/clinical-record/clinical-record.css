@@ -56,6 +56,13 @@
   color: var(--text-primary);
 }
 
+/* A homonym without an own account: the request would not reach it. */
+.archivo__sin-cuenta {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
 .archivo__sin-dato {
   display: block;
   color: var(--text-muted);

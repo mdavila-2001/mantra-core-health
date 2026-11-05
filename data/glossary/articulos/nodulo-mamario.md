@@ -1,5 +1,6 @@
 ---
 slug: nodulo-mamario
+image: nodulo-mamario.svg | La mayoría de los nódulos mamarios son benignos, pero todos deben estudiarse. | Secuencia de cinco pasos para estudiar un nódulo mamario y una comparación entre un nódulo liso y móvil con rasgos benignos y uno irregular y fijo que requiere estudio rápido.
 ---
 
 ## [definition] Introducción

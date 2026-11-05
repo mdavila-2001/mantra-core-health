@@ -1,5 +1,6 @@
 ---
 slug: convulsion-febril
+image: convulsion-febril.svg | Qué es una convulsión febril, qué hacer y cuándo pedir ayuda urgente. | Cara de un niño junto a un termómetro con fiebre, una explicación breve de la convulsión febril, los pasos a seguir durante la crisis y una lista de signos de alarma.
 ---
 
 ## [definition] Introducción

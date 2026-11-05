@@ -146,6 +146,23 @@ describe('DocumentBlock', () => {
     req.flush(RESPUESTA);
   });
 
+  // The dropzone shows its spinner while the files are in flight, and drops it on failure.
+  it('shows the upload spinner on the file input while uploading', () => {
+    dibujar();
+    señal<string | number | null>('titulo').set('Laboratorio completo');
+    señal<readonly File[]>('archivos').set([archivo('informe.pdf')]);
+    const spinner = () => fixture.nativeElement.querySelector('[data-testid="file-input-uploading"]');
+    expect(spinner()).toBeNull();
+
+    interno<() => void>('registrar')();
+    fixture.detectChanges();
+    expect(spinner()).not.toBeNull();
+
+    http.expectOne('/common/files/upload').error(new ProgressEvent('error'));
+    fixture.detectChanges();
+    expect(spinner()).toBeNull();
+  });
+
   /**
    * Un documento titulado «Laboratorio completo» sin el laboratorio adentro es
    * peor que no tenerlo, y arreglarlo después exigiría una ruta que no existe.

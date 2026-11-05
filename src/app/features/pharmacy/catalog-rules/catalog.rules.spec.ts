@@ -3,7 +3,6 @@ import {
   EMPTY_FIELDS,
   CATEGORIES,
   CSV_COLUMNS,
-  EXAMPLE_ROWS,
   FIELD_LABELS,
   draftChanges,
   decodificarCsv,
@@ -14,6 +13,7 @@ import {
   reviewProduct,
   type ProductFields,
 } from './catalog.rules';
+import { EXAMPLE_ROWS } from './catalog-example-rows';
 
 function campos(parciales: Partial<ProductFields>): ProductFields {
   return { ...EMPTY_FIELDS, ...parciales };

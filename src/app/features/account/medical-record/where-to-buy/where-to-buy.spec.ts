@@ -1140,7 +1140,9 @@ describe('WhereToBuy', () => {
       );
     harness.detectChanges();
 
-    expect(textOf()).toContain('Un servicio no está disponible');
+    http.expectNone((request) => request.url === '/pharmacy-inventory/availability');
+    expect(textOf()).toContain('El servicio no está disponible en este momento');
+    expect(textOf()).toContain('Intente de nuevo en unos minutos');
     expect(textOf()).toContain('Reintentar');
     expect(textOf()).not.toContain('Sin producto publicado');
     expect(TestBed.inject(PharmacyOrdersClient).borradorPreparado()).toBeNull();
@@ -1654,7 +1656,8 @@ describe('WhereToBuy', () => {
       );
     harness.detectChanges();
 
-    expect(textOf()).toContain('Un servicio no está disponible');
+    expect(textOf()).toContain('El servicio no está disponible en este momento');
+    expect(textOf()).toContain('Intente de nuevo en unos minutos');
     expect(queryAll('.purchase__branch')).toHaveLength(0);
     const retryButton = (queryAll('button') as HTMLButtonElement[]).find((targetButton) =>
       targetButton.textContent?.includes('Reintentar'),
@@ -2048,6 +2051,35 @@ describe('el pedido lleva la receta (carril 43 · H5.S2)', () => {
 function byTestId(id: string): string {
   return `[data-testid="${id}"]`;
 }
+
+describe('pendingImagingStudies', () => {
+  const concept = (conceptId: string, code: string, display: string) =>
+    [conceptId, { conceptId, code, display, codeSystemVersionId: 'v1' }] as const;
+  const labels = new Map([
+    concept('c-eco', 'STUDY-ECO-ABD', 'Ecografía abdominal'),
+    concept('c-glu', 'STUDY-GLUCOSA', 'Glucosa'),
+  ]);
+  const sortOrder = (id: string, codeConceptId: string) => ({
+    id,
+    codeConceptId,
+    statusConceptId: 's-1',
+    createdAt: new Date('2026-10-01T10:00:00Z'),
+    hasReleasedResult: false,
+  });
+
+  it('sin categoría, un análisis de laboratorio no cuenta como imagen', () => {
+    expect(pendingImagingStudies([sortOrder('o-1', 'c-eco'), sortOrder('o-2', 'c-glu')], labels)).toEqual([
+      { conceptId: 'c-eco', name: 'Ecografía abdominal' },
+    ]);
+  });
+});
+
+describe('partialCountLabel', () => {
+  it('concuerda en singular y en plural', () => {
+    expect(partialCountLabel(1, 'la', 'las')).toBe('Ver la que tiene una parte');
+    expect(partialCountLabel(3, 'los', 'los')).toBe('Ver los 3 que tienen una parte');
+  });
+});
 
 describe('pendingImagingStudies con los códigos de la API', () => {
   const concept = (conceptId: string, code: string, display: string) =>

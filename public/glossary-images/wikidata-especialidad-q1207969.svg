@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Campo de la diabetología</title>
+  <desc id="d">Esquema de la regulación de la glucosa: la comida aporta glucosa a la sangre y la insulina del páncreas permite que entre en las células. Abajo, los tipos de diabetes que atiende. A la derecha, los órganos que se vigilan por las complicaciones: ojos, riñones, nervios y pies, y corazón.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Diabetología: la glucosa y las complicaciones de la diabetes</text>
+  <rect x="20" y="60" width="400" height="230" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="88" text-anchor="middle" class="title">Cómo se regula la glucosa</text>
+  <rect x="40" y="110" width="110" height="56" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="95.0" y="135.0" text-anchor="middle" class="lab b">Comida</text>
+  <text x="95.0" y="152.0" text-anchor="middle" class="small muted">glucosa</text>
+  <rect x="170" y="110" width="110" height="56" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="225.0" y="135.0" text-anchor="middle" class="lab b">Sangre</text>
+  <text x="225.0" y="152.0" text-anchor="middle" class="small muted">glucemia</text>
+  <rect x="300" y="110" width="104" height="56" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
+  <text x="352.0" y="135.0" text-anchor="middle" class="lab b">Células</text>
+  <text x="352.0" y="152.0" text-anchor="middle" class="small muted">energía</text>
+  <line x1="152" y1="138" x2="168" y2="138" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="282" y1="138" x2="298" y2="138" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="170" y="200" width="110" height="56" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="225.0" y="225.0" text-anchor="middle" class="lab b">Páncreas</text>
+  <text x="225.0" y="242.0" text-anchor="middle" class="small muted">insulina</text>
+  <path d="M282 228 C320 228 350 200 350 170" fill="none" stroke="var(--pur)" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="306" y="256" class="small">La insulina abre</text>
+  <text x="306" y="272" class="small">la puerta</text>
+  <rect x="20" y="306" width="400" height="134" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="334" text-anchor="middle" class="title">Qué atiende</text>
+  <text x="38" y="352" class="small">• Diabetes tipo 1, tipo 2 y gestacional</text>
+  <text x="38" y="376" class="small">• Prediabetes y formas menos comunes</text>
+  <text x="38" y="400" class="small">• Insulina, bombas y sensores</text>
+  <rect x="436" y="60" width="344" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="88" text-anchor="middle" class="h">Órganos que se vigilan</text>
+  <circle cx="470" cy="135" r="8" fill="var(--accent)" stroke="none"/>
+  <text x="488" y="140" class="lab b">Ojos</text>
+  <text x="620" y="140" class="small muted">fondo de ojo anual</text>
+  <circle cx="470" cy="195" r="8" fill="var(--accent)" stroke="none"/>
+  <text x="488" y="200" class="lab b">Riñones</text>
+  <text x="620" y="200" class="small muted">orina y función renal</text>
+  <circle cx="470" cy="255" r="8" fill="var(--accent)" stroke="none"/>
+  <text x="488" y="260" class="lab b">Nervios y pies</text>
+  <text x="620" y="260" class="small muted">sensibilidad, heridas</text>
+  <circle cx="470" cy="315" r="8" fill="var(--accent)" stroke="none"/>
+  <text x="488" y="320" class="lab b">Corazón y vasos</text>
+  <text x="620" y="320" class="small muted">presión y lípidos</text>
+  <text x="608" y="400" text-anchor="middle" class="small">Educación y autocontrol son parte del tratamiento</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo de la especialidad. Ilustración original de AloVida.</text>
+</svg>

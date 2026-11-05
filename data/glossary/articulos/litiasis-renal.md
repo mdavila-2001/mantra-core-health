@@ -1,5 +1,6 @@
 ---
 slug: litiasis-renal
+image: litiasis-renal.svg | Recorrido de un cálculo renal y claves del cólico | Aparato urinario con los riñones, los uréteres y la vejiga y un cálculo que baja por el uréter, con el dolor que va del costado a la ingle y las claves de diagnóstico y prevención
 ---
 
 ## [definition] Introducción

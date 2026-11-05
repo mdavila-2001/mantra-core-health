@@ -28,7 +28,7 @@ import { PaginatedForm } from '../../../shared/components/organisms/paginated-fo
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
-const SCOPES: readonly OrgAccessScope[] = ['TENANT', 'PRACTICE', 'SITE', 'UNIT'];
+const SCOPES: readonly OrgAccessScope[] = ['TENANT', 'PRACTICE', 'SITE', 'UNIT', 'SPACE'];
 
 const ROLES: readonly SelectOption<OrgAssignmentRole>[] = [
   { value: 'STAFF', label: 'Staff' },
@@ -36,6 +36,15 @@ const ROLES: readonly SelectOption<OrgAssignmentRole>[] = [
   { value: 'ASSISTANT', label: 'Asistente' },
   { value: 'NURSE', label: 'Enfermería' },
   { value: 'BILLING', label: 'Facturación' },
+  // F5g · roles de la infraestructura hospitalaria (`CONTRATO-F2-F5.md` §0.3).
+  { value: 'NURSE_SUPERVISOR', label: 'Supervisión de enfermería' },
+  { value: 'ADMISSION', label: 'Admisión' },
+  { value: 'HOUSEKEEPING', label: 'Limpieza' },
+  { value: 'HOUSEKEEPING_SUPERVISOR', label: 'Supervisión de limpieza' },
+  { value: 'MAINTENANCE', label: 'Mantenimiento (incluye biomédica)' },
+  { value: 'OR_MANAGER', label: 'Jefatura de quirófano' },
+  { value: 'INFECTION_CONTROL', label: 'Control de infecciones' },
+  { value: 'UNIT_HEAD', label: 'Jefatura de servicio' },
 ];
 
 const UUID_OPCIONAL = Validators.pattern(UUID_PATTERN);
@@ -213,6 +222,7 @@ export class OrgAssignmentForm {
             { value: 'PRACTICE', label: 'Práctica' },
             { value: 'SITE', label: 'Sede' },
             { value: 'UNIT', label: 'Unidad' },
+            { value: 'SPACE', label: 'Espacio' },
           ],
         },
       ],

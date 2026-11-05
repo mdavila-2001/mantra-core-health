@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-labelledby="t d">
+  <title id="t">Bronquio sano y bronquio durante una crisis de asma</title>
+  <desc id="d">Dos cortes transversales de un bronquio. A la izquierda, el bronquio sano: la luz es amplia, el músculo liso está relajado y la pared es delgada. A la derecha, durante una crisis de asma: el músculo liso se contrae, la mucosa se inflama y se engrosa, y el moco ocupa la luz, que queda reducida a una rendija.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --lumen:#eaf3fb; --mucosa:#f3b8a8; --muscle:#c0392b; --mucus:#e7c85a; --wall:#d9a08f; --ok:#1f8a5b; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --lumen:#0f1720; --mucosa:#8a4a40; --muscle:#ef7467; --mucus:#b39a35; --wall:#6d3a32; --ok:#4cc38a; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <rect width="800" height="440" fill="var(--bg)"/>
+
+  <!-- Bronquio sano -->
+  <rect x="20" y="20" width="370" height="400" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="205" y="52" text-anchor="middle" class="title">Bronquio sano</text>
+  <circle cx="205" cy="210" r="112" fill="var(--wall)"/>
+  <circle cx="205" cy="210" r="96" fill="var(--muscle)" opacity="0.55"/>
+  <circle cx="205" cy="210" r="82" fill="var(--mucosa)"/>
+  <circle cx="205" cy="210" r="70" fill="var(--lumen)" stroke="var(--line)"/>
+  <text x="205" y="215" text-anchor="middle" class="lab">Luz amplia</text>
+  <text x="205" y="388" text-anchor="middle" class="lab">Músculo relajado · pared delgada</text>
+  <text x="205" y="408" text-anchor="middle" class="small muted">El aire pasa sin dificultad</text>
+
+  <!-- Bronquio en crisis -->
+  <rect x="410" y="20" width="370" height="400" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="595" y="52" text-anchor="middle" class="title">Crisis de asma</text>
+  <circle cx="595" cy="210" r="112" fill="var(--wall)"/>
+  <circle cx="595" cy="210" r="100" fill="var(--muscle)"/>
+  <circle cx="595" cy="210" r="68" fill="var(--mucosa)"/>
+  <circle cx="595" cy="210" r="40" fill="var(--mucus)"/>
+  <ellipse cx="595" cy="210" rx="30" ry="6" fill="var(--lumen)" stroke="var(--line)"/>
+  <text x="595" y="388" text-anchor="middle" class="lab">Músculo contraído · mucosa inflamada · moco</text>
+  <text x="595" y="408" text-anchor="middle" class="small muted">La luz queda reducida a una rendija</text>
+
+  <!-- Leyenda -->
+  <g class="small">
+    <rect x="50" y="64" width="12" height="12" fill="var(--mucosa)"/><text x="68" y="75">Mucosa</text>
+    <rect x="130" y="64" width="12" height="12" fill="var(--muscle)"/><text x="148" y="75">Músculo liso</text>
+    <rect x="240" y="64" width="12" height="12" fill="var(--mucus)"/><text x="258" y="75">Moco</text>
+  </g>
+</svg>

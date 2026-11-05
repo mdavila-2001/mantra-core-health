@@ -1,5 +1,6 @@
 ---
 slug: prediabetes
+image: prediabetes.svg | La glucosa está por encima de lo normal sin llegar a diabetes, y los hábitos pueden revertirla. | Una barra de tres zonas, de glucosa normal a prediabetes y a diabetes tipo 2, con las pruebas que la detectan. Abajo, los factores de riesgo y los cambios de hábitos que pueden revertirla.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: sodio
+image: sodio.svg | El sodio controla el reparto de agua entre el interior y el exterior de las células. | Tres células con poco, normal y mucho sodio a su alrededor que se hinchan o se encogen, junto a los riñones y la hormona antidiurética, un tubo de sangre y las causas de sodio bajo y alto.
 ---
 
 ## [definition] Introducción

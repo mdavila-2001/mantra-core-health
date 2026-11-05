@@ -26,7 +26,9 @@ describe('describeOrderSendFailure', () => {
   });
 
   it('lo demás cae en el texto de la pantalla', () => {
-    expect(describeOrderSendFailure(apiError(500, 'INTERNAL', 'boom'))).toBe(ORDER_SEND_FAILED);
+    expect(describeOrderSendFailure(apiError(500, 'INTERNAL', 'boom'))).toBe(
+      `${ORDER_SEND_FAILED} El problema fue del servidor, no de lo que usted ingresó.`,
+    );
     expect(describeOrderSendFailure(new Error('x'))).toBe(ORDER_SEND_FAILED);
   });
 });

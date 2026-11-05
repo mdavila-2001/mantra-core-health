@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Alvéolos sanos y alvéolos con neumonía</title>
+  <desc id="d">Comparación de dos racimos de alvéolos. Los sanos están llenos de aire y el oxígeno pasa fácilmente al capilar. En la neumonía, los alvéolos se llenan de líquido, células de defensa y microbios, y llega menos oxígeno a la sangre.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --warn:#c0392b; --ok:#1f8a5b; --beam:#f2c46d; --violet:#7b5ea7; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --warn:#ef7467; --ok:#4cc38a; --beam:#8a6f2f; --violet:#b39ddb; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="370" height="400" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="205" y="50" text-anchor="middle" class="title" style="fill:var(--ok)">Alvéolos sanos</text>
+  <path d="M205 70 V130" stroke="var(--accent)" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="160" cy="180" r="44" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+  <circle cx="250" cy="180" r="44" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+  <circle cx="205" cy="255" r="44" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+  <path d="M100 300 C150 330 260 330 310 300" fill="none" stroke="var(--warn)" stroke-width="6" opacity=".7"/>
+  <text x="205" y="182" text-anchor="middle" class="small">Aire</text>
+  <text x="205" y="350" text-anchor="middle" class="lab">Paredes finas: el oxígeno pasa</text>
+  <text x="205" y="370" text-anchor="middle" class="lab">con facilidad a la sangre</text>
+  <text x="205" y="400" text-anchor="middle" class="small muted">Capilar sanguíneo junto al alvéolo</text>
+  <rect x="410" y="20" width="370" height="400" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="595" y="50" text-anchor="middle" class="title" style="fill:var(--warn)">Alvéolos con neumonía</text>
+  <path d="M595 70 V130" stroke="var(--accent)" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="550" cy="180" r="44" fill="var(--beam)" stroke="var(--warn)" stroke-width="3"/>
+  <circle cx="640" cy="180" r="44" fill="var(--beam)" stroke="var(--warn)" stroke-width="3"/>
+  <circle cx="595" cy="255" r="44" fill="var(--accent-l)" stroke="var(--warn)" stroke-width="3"/>
+  <path d="M551 255 A44 44 0 0 0 639 255 Z" fill="var(--beam)"/>
+  <circle cx="535" cy="170" r="7" fill="var(--panel)" stroke="var(--violet)" stroke-width="2"/>
+  <circle cx="560" cy="195" r="7" fill="var(--panel)" stroke="var(--violet)" stroke-width="2"/>
+  <circle cx="650" cy="168" r="7" fill="var(--panel)" stroke="var(--violet)" stroke-width="2"/>
+  <rect x="625" y="190" width="14" height="6" rx="3" fill="var(--warn)"/>
+  <rect x="548" y="162" width="14" height="6" rx="3" fill="var(--warn)"/>
+  <path d="M490 300 C540 330 650 330 700 300" fill="none" stroke="var(--warn)" stroke-width="6" opacity=".7"/>
+  <text x="595" y="350" text-anchor="middle" class="lab">Líquido, defensas y microbios</text>
+  <text x="595" y="370" text-anchor="middle" class="lab">ocupan el espacio del aire</text>
+  <text x="595" y="400" text-anchor="middle" class="small muted">Menos oxígeno llega a la sangre</text>
+  <circle cx="440" cy="446" r="6" fill="var(--panel)" stroke="var(--violet)" stroke-width="2"/>
+  <text x="452" y="450" class="small">Célula de defensa</text>
+  <rect x="580" y="443" width="14" height="6" rx="3" fill="var(--warn)"/>
+  <text x="600" y="450" class="small">Bacteria o virus</text>
+  <text x="40" y="450" class="small muted">Esquema ilustrativo, sin escala.</text>
+</svg>

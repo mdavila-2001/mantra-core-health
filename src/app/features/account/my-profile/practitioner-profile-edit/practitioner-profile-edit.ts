@@ -2460,9 +2460,6 @@ export class PractitionerProfileEdit {
     if (!original.acceptsNewPatients) {
       cambios.acceptsNewPatients = true;
     }
-    if (this.telemedicina() !== original.telehealthAvailable) {
-      cambios.telehealthAvailable = this.telemedicina();
-    }
     // Los personales viajan igual que los otros: sólo si cambiaron. Una cadena
     // vacía SÍ viaja —es cómo se borra un segundo nombre— y por eso se compara
     // contra el original en vez de descartar los vacíos.
@@ -2514,9 +2511,9 @@ export class PractitionerProfileEdit {
       delete cambios[clave as keyof typeof cambios];
     }
 
-    // Lo que el alta exige no se puede dejar vacío al corregirlo: se mira el
-    // valor actual, haya cambiado o no.
-    const faltante = this.firstMissingRequiredField(pestana);
+    // Required fields guard the profile PATCH only, never the logo/signature/seal.
+    const faltante =
+      Object.keys(cambios).length > 0 ? this.firstMissingRequiredField(pestana) : undefined;
     if (faltante !== undefined) {
       this.toasts.error(faltante.mensajeDeError || 'Complete el campo obligatorio.', 'Perfil');
       return;

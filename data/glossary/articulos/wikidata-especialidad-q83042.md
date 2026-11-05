@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q83042
+image: wikidata-especialidad-q83042.svg | Encéfalo, médula, nervios y músculo, territorio de la neurología. | Sistema nervioso con encéfalo, cerebelo, médula espinal, nervios y músculo señalados, junto a las enfermedades que atiende la neurología y sus pruebas principales.
 ---
 
 ## [definition] Introducción

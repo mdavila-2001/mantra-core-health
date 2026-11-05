@@ -78,6 +78,13 @@ describe('mensajeDeFalloDeEscritura', () => {
     expect(writeFailureMessage(unexpectedError('req-42', ''), textos)).toBe(
       'Ocurrió un error inesperado. (req-42)',
     );
+    // The what-to-do hint comes from the error catalog, never from the server.
+    expect(
+      writeFailureMessage(
+        unexpectedError('req-42', '', { hint: 'Intente de nuevo en unos segundos.' }),
+        textos,
+      ),
+    ).toBe('Ocurrió un error inesperado. Intente de nuevo en unos segundos. (req-42)');
   });
 
   /**

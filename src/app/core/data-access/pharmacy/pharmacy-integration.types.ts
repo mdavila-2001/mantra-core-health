@@ -1,3 +1,10 @@
+import type { ExternalSystemSummary } from './pharmacy-external-system.types';
+export { EXTERNAL_SYSTEM_FORMATS } from './pharmacy-external-system.types';
+export type {
+  ExternalSystemFormat, ExternalSystemSummary, ExternalSystemDraft,
+  ExternalSystemSaved, ExternalSystemProbe,
+} from './pharmacy-external-system.types';
+
 /**
  * Contratos de la integración con el sistema de la farmacia (FAR-07).
  *
@@ -23,8 +30,17 @@ export interface IntegrationConnection {
   readonly integrationMode: IntegrationMode;
   readonly supportsStockQuery: boolean;
   readonly status: IntegrationConnectionStatus;
-  /** Si la API sabe dónde está el sistema de la farmacia. */
+  /**
+   * Si hay con quién sincronizar: el sistema propio de la farmacia o, si no
+   * tiene, el que configura el servidor.
+   */
   readonly providerConfigured: boolean;
+  /**
+   * El sistema propio de la farmacia (FAR-C9 · C9-3), sin la clave; `null` si
+   * la conexión usa el del servidor o trabaja en manual. Opcional: una API
+   * anterior a C9-3 no lo manda.
+   */
+  readonly system?: ExternalSystemSummary | null;
   readonly createdAt: string;
 }
 
@@ -242,6 +258,8 @@ export const INTEGRATION_ERROR_REASONS = [
   'PHARMACY_INTEGRATION_NOT_CONFIGURED',
   'PHARMACY_INTEGRATION_CONNECTION_INACTIVE',
   'PHARMACY_INTEGRATION_UNAVAILABLE',
+  'PHARMACY_INTEGRATION_HOST_NOT_ALLOWED',
+  'PHARMACY_INTEGRATION_URL_INVALID',
   'EXTERNAL_MAPPING_NOT_AVAILABLE',
   'EXTERNAL_MAPPING_PRODUCT_TAKEN',
   'EXTERNAL_MAPPING_EMPTY_UPDATE',

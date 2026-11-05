@@ -38,7 +38,7 @@ import {
   type OnInit,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-
+import { Spinner } from '@shared/components/atoms/spinner/spinner';
 import { SessionStore } from '@core/auth/session.store';
 import { CommunityClient } from '@core/data-access/community/community.client';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
@@ -81,7 +81,7 @@ export function comentarioDestacado(
 
 @Component({
   selector: 'app-public-post-comments',
-  imports: [DatePipe, NgTemplateOutlet, RouterLink],
+  imports: [DatePipe, NgTemplateOutlet, RouterLink, Spinner],
   templateUrl: './public-post-comments.html',
   styleUrl: './public-post-comments.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -3,6 +3,7 @@ import {
   forbidden,
   notFound,
   validation,
+  validationPipeRejected,
   type MockRequest,
   type MockRouter,
 } from '../mock-router';
@@ -145,7 +146,13 @@ export function registrarOrdenesDeLaboratorio(
       .sort(
         (a, b) => b.requestedAt.localeCompare(a.requestedAt) || a.orderId.localeCompare(b.orderId),
       );
-    return { items, count: items.length };
+    // Same shape as the API: `count` is the lab's total, `limit` defaults to 100
+    // (max 500) and `cursor` is the offset of the next page.
+    const limit = Math.min(Math.max(Number(request.query.get('limit')) || 100, 1), 500);
+    const from = Math.max(Number(request.query.get('cursor')) || 0, 0);
+    const page = items.slice(from, from + limit);
+    const nextCursor = from + limit < items.length ? String(from + limit) : undefined;
+    return { items: page, count: items.length, ...(nextCursor === undefined ? {} : { nextCursor }) };
   });
 
   router.post('/diagnostics/lab/orders/:orderId/transitions', (request) => {
@@ -161,13 +168,17 @@ export function registrarOrdenesDeLaboratorio(
       return validation('Ese paso no existe.');
     }
     const paso = TRANSICIONES[action];
+    // CANCEL and REJECT work for every order (imaging included) and need a reason: 400, before the 409.
+    const motivo = (reason ?? '').trim();
+    if ((action === 'CANCEL' || action === 'REJECT') && motivo === '') {
+      return validationPipeRejected('reason should not be empty');
+    }
     const actual = ordenDeRespuesta(orderId, deps)!;
     if (!paso.desde.includes(actual.status === 'UPLOADED' ? 'PROCESSED' : actual.status)) {
       return conflict('La orden no está en un estado que admita ese paso.', {
         currentStatus: actual.status,
       });
     }
-    const motivo = (reason ?? '').trim();
     estadosDeOrden.agregar({
       id: orderId,
       status: paso.a,

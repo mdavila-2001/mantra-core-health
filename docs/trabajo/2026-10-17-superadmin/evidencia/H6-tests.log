@@ -1,0 +1,7 @@
+$ yarn ng test (dirigido a H6 + navegación) — corrida final, con las pruebas de axe
+     × reparte el registro entero: ninguna sección se queda sin bloque por descuido 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   mantra-core-health  src/app/core/navigation/navigation.subgroups.spec.ts > NAV_SUBGROUPS > reparte el registro entero: ninguna sección se queda sin bloque por descuido
+AssertionError: expected [ 'psychological-help' ] to deeply equal []
+ Test Files  1 failed | 61 passed (62)
+      Tests  1 failed | 878 passed (879)

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, ElementRef, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
@@ -47,7 +48,7 @@ export class SavedViews {
     this.error.set(null);
     this.client.putSavedView(id, { name, url: this.router.url }).subscribe({
       next: (r) => { this.views.set([...this.views().filter((v) => v.id !== r.data.id), r.data]); this.draft.set(''); },
-      error: (e: { status?: number }) => this.error.set(e.status === 409 ? 'Ya tiene una vista con ese nombre.' : 'No se pudo guardar la vista.'),
+      error: (e: unknown) => this.error.set(e instanceof HttpErrorResponse && e.status === 409 ? 'Ya tiene una vista con ese nombre.' : 'No se pudo guardar la vista.'),
     });
   }
 

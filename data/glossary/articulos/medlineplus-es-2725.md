@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-2725
+image: medlineplus-es-2725.svg | Varios haces se cruzan en el tumor y dañan el ADN de sus células. | Corte del cuerpo con un tumor donde convergen haces de radiación desde varios ángulos, junto al mecanismo de daño del ADN y las modalidades externa y braquiterapia.
 ---
 
 ## [definition] Introducción

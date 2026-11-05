@@ -93,7 +93,8 @@ RUN yarn install --immutable
 
 COPY . .
 
-# Vacío por defecto = rutas relativas = mismo origen. Ver la nota de arriba.
+# La API usa rutas relativas por defecto y queda pública en el paquete del
+# navegador. La variable no lleva secretos.
 ARG PUBLIC_API_BASE_URL=""
 ENV PUBLIC_API_BASE_URL=$PUBLIC_API_BASE_URL
 

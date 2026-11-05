@@ -428,6 +428,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     // Personal de apoyo (2026-10): las cuatro del hospital como cuenta de
     // organización y las dos de la persona de apoyo, que existen solo en las
     // organizaciones médicas (`onlyForAccountKind` las separa por clase de cuenta).
+    // F2/F3 (31/10/2026): las cuatro de internación, sólo en un hospital.
     expect(flagged.map((s) => s.path)).toEqual([
       'inpatient/bed-board',
       'inpatient/cleaning',
@@ -456,6 +457,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       'administration/laboratory',
       'administration/laboratory-orders',
       'administration/laboratory-prices',
+      'administration/center-schedule',
       'administration/laboratory-branches',
     ]);
     for (const section of flagged) {
@@ -744,8 +746,8 @@ describe('secciones del personal de apoyo', () => {
     expect(visibles(['USER'], 'HOSPITAL', 'PERSON')).toContain('my-account/appointments');
   });
 
-  it('el personal de apoyo (persona, rol USER) ve «Mis accesos» y la agenda, y nada de la organización', () => {
-    const lista = visibles(['USER'], 'HOSPITAL', 'PERSON');
+  it('el personal de apoyo (persona, rol SUPPORT_STAFF) ve «Mis accesos» y la agenda, y nada de la organización', () => {
+    const lista = visibles(['USER', 'SUPPORT_STAFF'], 'HOSPITAL', 'PERSON');
     expect(lista).toEqual(expect.arrayContaining(DE_LA_PERSONA));
     for (const ruta of DE_LA_ORGANIZACION) expect(lista).not.toContain(ruta);
   });
@@ -759,9 +761,9 @@ describe('secciones del personal de apoyo', () => {
   });
 
   it('Rosa, en un consultorio privado, ve lo suyo; farmacia, aseguradora y laboratorio no ven nada de esto', () => {
-    expect(visibles(['USER'], 'MEDICAL_OFFICE', 'PERSON')).toEqual(expect.arrayContaining(DE_LA_PERSONA));
+    expect(visibles(['USER', 'SUPPORT_STAFF'], 'MEDICAL_OFFICE', 'PERSON')).toEqual(expect.arrayContaining(DE_LA_PERSONA));
     for (const tipo of ['PHARMACY', 'PAYER', 'DIAGNOSTIC_CENTER']) {
-      const lista = visibles(['USER'], tipo, 'PERSON');
+      const lista = visibles(['USER', 'SUPPORT_STAFF'], tipo, 'PERSON');
       for (const ruta of [...DE_LA_PERSONA, ...DE_LA_ORGANIZACION]) expect(lista).not.toContain(ruta);
     }
   });
@@ -774,9 +776,11 @@ describe('secciones del personal de apoyo', () => {
     for (const ruta of [...DE_LA_ORGANIZACION, ...DE_LA_PERSONA.filter((r) => r !== 'my-support')]) expect(lista).not.toContain(ruta);
   });
 
-  it('el paciente no ve ninguna de las siete', () => {
-    const lista = visibles(['PATIENT'], 'PROVIDER', 'PERSON');
-    for (const ruta of [...DE_LA_ORGANIZACION, ...DE_LA_PERSONA, 'my-team']) expect(lista).not.toContain(ruta);
+  it('el paciente no ve ninguna de las de apoyo ni con rol USER adicional', () => {
+    for (const roles of [['PATIENT'], ['USER', 'PATIENT']]) {
+      const lista = visibles(roles, 'HOSPITAL', 'PERSON');
+      for (const ruta of [...DE_LA_ORGANIZACION, ...DE_LA_PERSONA, 'my-team']) expect(lista).not.toContain(ruta);
+    }
   });
 
   it('el comodín SUPERADMIN no abre las de la organización: la clase de cuenta no es un permiso', () => {

@@ -538,6 +538,8 @@ export const EMPLOYER = define('VS_BO_EMPLOYER', [
   ['employer:bo:CRE', 'CRE (Cooperativa Rural de Electrificación)'],
   ['employer:bo:BANCO_UNION', 'Banco Unión'],
   ['employer:bo:ENTEL', 'Entel (Empresa Nacional de Telecomunicaciones)'],
+  ['employer:bo:ALOVIDA', 'AloVida'],
+  ['employer:bo:SALTORE', 'Saltore'],
   ['employer:bo:INDEPENDIENTE', 'Trabajo por mi cuenta (independiente)'],
   ['employer:bo:NEGOCIO_PROPIO', 'Tengo mi propio negocio'],
   ['employer:bo:SIN_EMPLEADOR', 'No estoy trabajando'],

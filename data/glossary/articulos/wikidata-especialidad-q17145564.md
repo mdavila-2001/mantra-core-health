@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q17145564
+image: wikidata-especialidad-q17145564.svg | Las hormonas del eje hipotálamo, hipófisis y ovario regulan la fertilidad. | Eje hormonal vertical de hipotálamo, hipófisis, ovario y útero, con un folículo que crece y ovula. A la derecha, las causas frecuentes de infertilidad y una escalera de técnicas de menor a mayor complejidad.
 ---
 
 ## [definition] Introducción

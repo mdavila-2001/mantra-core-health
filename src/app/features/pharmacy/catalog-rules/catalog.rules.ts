@@ -733,5 +733,3 @@ export const FIELD_LABELS: Readonly<Record<keyof ProductFields, string>> = {
   descripcion: 'Descripción',
   disponible: 'Disponibilidad',
 };
-
-export { EXAMPLE_ROWS } from './catalog-example-rows';

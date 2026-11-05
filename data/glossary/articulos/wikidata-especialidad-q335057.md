@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q335057
+image: wikidata-especialidad-q335057.svg | Órganos reproductores masculinos que estudia la andrología. | Esquema de próstata, vesícula seminal, conducto deferente, epidídimo, testículo y pene, junto a las afecciones que atiende la andrología y sus pruebas principales.
 ---
 
 ## [definition] Introducción

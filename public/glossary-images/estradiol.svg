@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Análisis de estradiol</title>
+  <desc id="d">Silueta humana con los ovarios como fuente principal de estradiol y otras fuentes menores, y un tubo de sangre donde se mide la hormona. A la derecha, para qué se pide y por qué se interpreta según la fase del ciclo.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="220.0" y="50" text-anchor="middle" class="title">Dónde se produce</text>
+<path d="M102.0,134.4 Q66.0,136.8 61.2,174.0 L49.2,312.0 Q54.0,326.4 66.0,314.4 L75.6,192.0 L78.0,336.0 Q78.0,374.4 97.2,386.4 L202.8,386.4 Q222.0,374.4 222.0,336.0 L224.4,192.0 L234.0,314.4 Q246.0,326.4 250.8,312.0 L238.8,174.0 Q234.0,136.8 198.0,134.4 L164.4,129.6 L164.4,115.2 L135.6,115.2 L135.6,129.6 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="150" cy="88.8" r="28.8" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+<ellipse cx="120" cy="330" rx="10" ry="7" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<ellipse cx="180" cy="330" rx="10" ry="7" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<text x="36" y="348" class="step">Ovarios:</text>
+<text x="36" y="366" class="small">fuente principal</text>
+<line x1="80" y1="340" x2="112" y2="332" stroke="var(--muted)" stroke-width="1.5"/>
+<text x="250" y="110" class="small">Placenta en</text>
+<text x="250" y="128" class="small">el embarazo</text>
+<text x="250" y="146" class="small">Testículos y</text>
+<text x="250" y="164" class="small">grasa: menor</text>
+<text x="250" y="182" class="small">cantidad</text>
+<rect x="330" y="264" width="30" height="96" rx="12" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>
+<rect x="333" y="299.5" width="24" height="57.50000000000001" rx="10" fill="var(--vessel)" stroke-width="1" opacity=".8"/>
+<rect x="327" y="250" width="36" height="18" rx="4" fill="var(--vessel)" stroke-width="1"/>
+<text x="345" y="380" text-anchor="middle" class="lab">Sangre</text>
+<line x1="200" y1="300" x2="320" y2="300" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<text x="345" y="404" text-anchor="middle" class="small" style="fill:var(--muted)">Se mide la hormona</text>
+<text x="345" y="420" text-anchor="middle" class="small" style="fill:var(--muted)">estradiol (E2)</text>
+<rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="608.0" y="50" text-anchor="middle" class="title">Para qué se pide</text>
+<text x="456" y="72" class="lab">• Estudiar el ciclo y la ovulación</text>
+<text x="456" y="98" class="lab">• Evaluar fertilidad y seguir la FIV</text>
+<text x="456" y="124" class="lab">• Pubertad adelantada o retrasada</text>
+<text x="456" y="150" class="lab">• Síntomas de menopausia</text>
+<text x="456" y="176" class="lab">• Tumores que producen hormonas</text>
+<text x="456" y="202" class="lab">• Ginecomastia en varones</text>
+<rect x="456" y="248" width="304" height="92" rx="10" fill="var(--accent-l)" stroke-width="1"/>
+<text x="470" y="274" class="step">Importante</text>
+<text x="470" y="298" class="lab">El valor cambia con la fase del ciclo,</text>
+<text x="470" y="318" class="lab">la edad y el embarazo.</text>
+<text x="456" y="372" class="lab">Se interpreta junto con FSH, LH y</text>
+<text x="456" y="392" class="lab">progesterona, no de forma aislada.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -943,7 +943,7 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
 
     expect(operacion<() => string>('errorDeVitrina')()).toBe(
       'Su perfil público sigue mostrando la foto anterior. Puede volver a intentarlo desde aquí. ' +
-        '(Código de soporte: corr-vit-1)',
+        'El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-vit-1)',
     );
     responderLoQueDibujoLaFicha();
   });

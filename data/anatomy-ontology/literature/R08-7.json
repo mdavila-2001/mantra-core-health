@@ -1,0 +1,2060 @@
+{
+  "UBERON:0002623": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Según la tractografía de 43 voluntarios sanos, en el pedúnculo cerebral el contingente corticoespinal de la pierna queda lateral al de la mano, que ocupa la zona media.",
+        "cites": [
+          "PMID:21903908"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En nueve sujetos diestros sanos estudiados por tractografía, el haz corticoespinal se ordenaba en el pedúnculo en dirección horizontal, y las fibras del pie solían quedar laterales a las de la mano.",
+        "cites": [
+          "PMID:18525220"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 52 niños con ictus isquémico arterial unilateral, cuanto mayor era la asimetría de área entre ambos pedúnculos cerebrales en resonancia T2, usada como medida de degeneración walleriana, más grave era el déficit motor (correlación moderada, r = 0,582).",
+        "cites": [
+          "PMID:31607421"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 146 pacientes con diagnóstico confirmado por autopsia, el ángulo de los pedúnculos cerebrales en resonancia no permitió distinguir la parálisis supranuclear progresiva de la degeneración corticobasal, la atrofia multisistémica ni la enfermedad por cuerpos de Lewy.",
+        "cites": [
+          "PMID:27553513"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Siete niños con astrocitomas benignos del pedúnculo cerebral fueron operados por vía subtemporal y seguidos sin radioterapia; en el seguimiento solo uno recidivó.",
+        "cites": [
+          "PMID:12042921"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002651": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En 45 traumatismos craneales leves con amnesia postraumática, la FLAIR mostró, sobre todo cuando la amnesia superaba las dos horas, hallazgos que la tomografía y la resonancia convencional no captaban; uno de sus tres patrones se situaba junto al asta anterior del ventrículo lateral, y en los pacientes reestudiados al mes habían desaparecido.",
+        "cites": [
+          "PMID:9834493"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002655": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Para anticipar la hidrocefalia tras reparar un mielomeningocele, un estudio prospectivo de 89 pacientes con espina bífida propuso como umbral ecográfico preoperatorio un diámetro transversal máximo del cuerpo del ventrículo lateral mayor de 26 mm.",
+        "cites": [
+          "PMID:14704812"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Tras fenestrar por endoscopia quistes aracnoideos del cuerpo y el trígono del ventrículo lateral en diez niños, todos se achicaron; las imágenes postoperatorias apuntaron a un origen en la cisterna del velum interpositum en ocho y en la cuadrigeminal en dos.",
+        "cites": [
+          "PMID:27492334"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie ecográfica de 1151 recién nacidos a término o casi a término, 97 presentaron una dilatación leve que abarcaba desde el cuerpo hasta el asta posterior del ventrículo lateral, patrón asociado con el parto por cesárea.",
+        "cites": [
+          "PMID:27432287"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002661": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Según tractografía en 10 adultos sanos validada con 10 disecciones, la circunvolución frontal superior se une con la frontal inferior por el tracto frontal oblicuo, con el cuneus, la lingual y el lobulillo parietal superior por el fascículo fronto-occipital inferior, con el precuneus y la parahipocampal por el cíngulo, y con su homóloga contralateral por fibras callosas.",
+        "cites": [
+          "PMID:31749198"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Mediante disección de ocho hemisferios y tractografía en 53 pacientes se describió un haz de asociación entre el área de Broca y la parte lateral de la circunvolución frontal superior, más extenso en el hemisferio izquierdo.",
+        "cites": [
+          "PMID:22077454"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En ocho pacientes con lesiones prefrontales izquierdas limitadas a esta circunvolución se observó un déficit de memoria de trabajo que aumentaba con la complejidad de la tarea, sobre todo por afectación de su porción lateral y posterior.",
+        "cites": [
+          "PMID:16984899"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 114 adultos jóvenes, una mayor activación de la circunvolución frontal superior derecha al anticipar un conflicto se asoció con una inhibición de respuesta más eficaz.",
+        "cites": [
+          "PMID:27974616"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un estudio de resonancia en 26 niños con trastorno por déficit de atención e hiperactividad y 24 controles halló una corteza más delgada en la circunvolución frontal superior derecha del grupo clínico.",
+        "cites": [
+          "PMID:35815438"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002686": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "La circunvolución angular forma el extremo posterior del lobulillo parietal inferior.",
+        "cites": [
+          "PMID:22547530"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Con mapas citoarquitectónicos probabilísticos se distinguen en ella una subregión anterior (PGa) y otra posterior (PGp), con perfiles de conectividad funcional distintos.",
+        "cites": [
+          "PMID:20154013"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En reposo, la PGa se acoplaba más con los ganglios basales y la corteza premotora ventral, y la PGp con nodos de la red por defecto como el cíngulo posterior, la prefrontal ventromedial y el hipocampo.",
+        "cites": [
+          "PMID:20154013"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Una revisión de la neuroimagen funcional la presenta como un centro de integración multimodal que interviene en el procesamiento semántico, la lectura, el cálculo, la recuperación de recuerdos y la red neuronal por defecto.",
+        "cites": [
+          "PMID:22547530"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un mismo grupo de adultos, interferir con estimulación magnética repetitiva la circunvolución angular izquierda perturbó a la vez el acceso al esquema de los dedos y el procesamiento de la magnitud numérica.",
+        "cites": [
+          "PMID:16009243"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio con tomografía por emisión de positrones, la circunvolución angular izquierda mostró durante la lectura de palabras acoplamiento funcional con regiones occipitales y temporales extraestriadas en varones sin dislexia, acoplamiento que faltaba en varones con dislexia del desarrollo.",
+        "cites": [
+          "PMID:9671783"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002688": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Una resonancia funcional en 85 participantes sanos distinguió en la circunvolución supramarginal izquierda cuatro subregiones con funciones diferentes en el procesamiento de palabras, dos ventrales y dos dorsales.",
+        "cites": [
+          "PMID:27600852"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En esa serie, la memoria auditiva a corto plazo se localizó en la parte ventral posterior y la secuenciación articulatoria en la ventral anterior.",
+        "cites": [
+          "PMID:27600852"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En voluntarios sanos, la estimulación magnética repetitiva de la supramarginal izquierda enlenteció solo los juicios sobre dónde apoyar pulgar e índice al usar un objeto, no los referidos a sus atributos.",
+        "cites": [
+          "PMID:29094500"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En diez sujetos sanos, pulsos únicos de estimulación magnética sobre esta circunvolución demoraron la preparación de agarres orientados a un objetivo, sin alterar luego la ejecución del movimiento.",
+        "cites": [
+          "PMID:19118175"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un estudio de resonancia funcional con 12 voluntarios sanos, la propiocepción de la muñeca activó la circunvolución supramarginal con predominio del hemisferio derecho.",
+        "cites": [
+          "PMID:26696951"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 28 mujeres mayores de 75 años estudiadas tras la autopsia, la pérdida neuronal en la circunvolución supramarginal se relacionó con la densidad de ovillos neurofibrilares y predominó en las capas II y III.",
+        "cites": [
+          "PMID:9560018"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002702": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Lejos de ser una unidad homogénea, puede parcelarse en una región caudal y otra rostral, subdividida a su vez en sectores anterior, medio y posterior.",
+        "cites": [
+          "PMID:20822884"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Junto con la circunvolución frontal superior forma la mayor parte de la corteza prefrontal dorsolateral, y su sector rostral medio incluye el área 46 de Brodmann.",
+        "cites": [
+          "PMID:20822884"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Mediante el fascículo longitudinal superior se comunica con partes del lobulillo parietal inferior, del lóbulo temporal posterior y de la corteza occipital lateral, según tractografía en 10 adultos sanos validada en 10 disecciones.",
+        "cites": [
+          "PMID:33744423"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Ese mismo estudio halló que el fascículo fronto-occipital inferior la une con la circunvolución lingual y el cúneo, además de fibras cortas en U.",
+        "cites": [
+          "PMID:33744423"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La literatura que resume ese trabajo la sitúa en tareas de atención, memoria de trabajo y procesamiento lingüístico.",
+        "cites": [
+          "PMID:33744423"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 20 pacientes con esquizofrenia crónica, la reducción de sustancia gris de esta circunvolución se limitó al sector rostral medio.",
+        "cites": [
+          "PMID:20822884"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002703": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Según resonancia funcional cotejada con piezas cadavéricas, el segmento precentral que con más frecuencia alberga la función motora de la mano es un saliente con forma de omega o épsilon en cortes axiales y de gancho en los sagitales.",
+        "cites": [
+          "PMID:9055804"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Ese «nudo precentral» coincide con la rodilla media del surco central, junto al cruce de este con el surco precentral, y resultó un hito fiable para identificar la circunvolución.",
+        "cites": [
+          "PMID:9055804"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En cerebros fijados estudiados con tomografía, la relación constante entre los extremos posteriores de los surcos frontal superior y precentral permitió identificar el borde anterior de la circunvolución precentral.",
+        "cites": [
+          "PMID:7367629"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Una revisión neuroquirúrgica describe un sector medio de la circunvolución, situado entre las representaciones dorsal de la mano y ventral orofacial, que participa en el control laríngeo y en la planificación motora del habla.",
+        "cites": [
+          "PMID:36351829"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 44 fetos con resonancia normal, la circunvolución precentral se reconoció por primera vez a las 25 semanas como una banda hiperintensa en difusión y, desde la semana 28, se vio en ambos hemisferios en todos los casos.",
+        "cites": [
+          "PMID:22341636"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 28 pacientes con esclerosis lateral amiotrófica, el análisis de forma mostró atrofia sobre todo en la porción dorsolateral de la circunvolución precentral, vinculada con la escala funcional ALSFRS-r.",
+        "cites": [
+          "PMID:28591490"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002751": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En la tractografía de 10 adultos sanos, la circunvolución temporal inferior mostró, sin asimetría entre hemisferios, fibras en U y conexiones por los fascículos longitudinal inferior, occipital vertical, arqueado y uncinado.",
+        "cites": [
+          "PMID:32798785"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Comparte con la circunvolución temporal media funciones de lenguaje y memoria semántica, percepción visual e integración multisensorial.",
+        "cites": [
+          "PMID:15337650"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Resecar parte de esta circunvolución por una craneotomía de trépano abrió un corredor al lóbulo temporal mesial en 201 pacientes con epilepsia temporal seguidos al menos dos años, con 1,5 % de complicaciones y 78 % libres de crisis (Engel I).",
+        "cites": [
+          "PMID:18728594"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un estudio de resonancia de primeros episodios psicóticos halló menor volumen de sustancia gris en la porción posterior de ambas circunvoluciones temporales inferiores tanto en la esquizofrenia como en la psicosis afectiva.",
+        "cites": [
+          "PMID:17151161"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002766": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Integra la vía visual ventral del reconocimiento de objetos y tiende un puente topográfico entre la corteza estriada y el lóbulo temporal inferior.",
+        "cites": [
+          "PMID:27132874"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Con tensor de difusión se la ha dividido según sus patrones de conectividad en tres regiones: medial, lateral y anterior.",
+        "cites": [
+          "PMID:27132874"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "El análisis citoarquitectónico de 10 cerebros post mortem delimitó en su porción media dos áreas, FG3 y FG4, cuyo límite coincide de forma constante con el surco mediofusiforme.",
+        "cites": [
+          "PMID:26464475"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Percepción de rostros, reconocimiento de objetos y lectura figuran entre las funciones de visión de alto nivel en las que se la considera clave.",
+        "cites": [
+          "PMID:26119921"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La resonancia funcional de alta resolución mostró en ella dos regiones vecinas pero distintas, una selectiva para rostros y otra para cuerpos.",
+        "cites": [
+          "PMID:16306418"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 311 pacientes operados de epilepsia con dominancia izquierda del lenguaje, la resección de la parte posterior de la circunvolución fusiforme dominante se asoció con peor denominación a los seis meses cuando la epilepsia había comenzado después de los 5 años.",
+        "cites": [
+          "PMID:36002957"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002771": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Según su conectividad anatómica, la circunvolución temporal media se ha dividido en cuatro subregiones: anterior, media, posterior y del surco.",
+        "cites": [
+          "PMID:26689815"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La tractografía en 10 adultos sanos, validada con 10 disecciones, mostró que de ella parten los fascículos longitudinales inferior y superior, además de una hilera de fibras cortas en U.",
+        "cites": [
+          "PMID:33929019"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En ese esquema, la subregión anterior se relaciona con la red neuronal por defecto y la recuperación semántica, y la posterior forma parte del área sensorial clásica del lenguaje.",
+        "cites": [
+          "PMID:26689815"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La estimulación magnética transcraneal de su porción posterior izquierda en voluntarios alteró la recuperación semántica controlada, es decir, los juicios entre conceptos débilmente asociados.",
+        "cites": [
+          "PMID:26586812"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Según disecciones de fibras en tres hemisferios, el abordaje por la circunvolución temporal media para la amigdalohipocampectomía expone el fascículo fronto-occipital inferior, la extensión temporal de la comisura anterior, el asa de Meyer y el fascículo uncinado.",
+        "cites": [
+          "PMID:34619404"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se la describe como especialmente vulnerable al comienzo de la enfermedad de Alzheimer.",
+        "cites": [
+          "PMID:36544231"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002795": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Coincide en buena medida con el área 10 de Brodmann y constituye el extremo más rostral de la corteza cerebral.",
+        "cites": [
+          "PMID:17929054"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Tomando como límite posterior el corte coronal en que acaba por delante el surco olfatorio, la segmentación manual en 20 voluntarios sanos dio volúmenes fiables de 8,421 cm³ a la derecha y 8,039 cm³ a la izquierda.",
+        "cites": [
+          "PMID:17929054"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "El estudio citoarquitectónico de 10 cerebros distinguió dos áreas frontopolares: una lateral (Fp1) y otra medial (Fp2).",
+        "cites": [
+          "PMID:23702412"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Usados como semillas de un metaanálisis, esos mapas mostraron que Fp2 se integra en redes afectivas y de cognición social, mientras que Fp1 lo hace en las de cognición, memoria de trabajo y percepción.",
+        "cites": [
+          "PMID:23702412"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Por sus patrones de conexión en tensor de difusión, el polo frontal se dividió en tres subregiones: la medial, ligada al cíngulo anterior y la prefrontal medial; la lateral, a la prefrontal dorsolateral; y la orbitaria, a la corteza orbitofrontal, el polo temporal y la amígdala.",
+        "cites": [
+          "PMID:23595737"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 27 pacientes con lesiones frontales focales, el daño de la región prefrontal rostrolateral izquierda, o de algunas de sus conexiones largas, alteró de forma específica el razonamiento por analogía.",
+        "cites": [
+          "PMID:27076181"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002806": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "De 26 hemisferios disecados, todos tenían un surco transverso en el tercio inferior de la cara lateral del lóbulo occipital, y 24 (92 %) mostraban surcos de trayecto claramente transversal.",
+        "cites": [
+          "PMID:12244393"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa serie, el surco transverso del tercio superior apareció en el 69 % de los casos, y 16 hemisferios (61 %) tenían surcos longitudinales marcados.",
+        "cites": [
+          "PMID:12244393"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Con forma de media luna, el asta occipital del ventrículo lateral tenía la pared medial formada por el calcar avis y el techo, el suelo y la pared lateral por fibras del tapetum; en el 53 % de las piezas ya se encontraba a la altura del límite anterior del lóbulo.",
+        "cites": [
+          "PMID:12244393"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La resonancia funcional describe en el lóbulo occipital una secuencia de etapas del procesamiento de objetos, desde las áreas retinotópicas V1 a V3 hasta el complejo occipital lateral, en gran medida no retinotópico.",
+        "cites": [
+          "PMID:9704268"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una revisión señala que los lóbulos occipital y parietal tienen límites anatómicos arbitrarios y que entre los síntomas de las epilepsias de ambos figuran fenómenos visuales como amaurosis, alucinaciones o ilusiones, aunque pueden reflejar la propagación de la descarga más que su foco de origen.",
+        "cites": [
+          "PMID:8504783"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie retrospectiva de 42 resecciones por epilepsia parietal u occipital, la histopatología coincidió con la caracterización de la resonancia en 36 lesiones (86 %).",
+        "cites": [
+          "PMID:17560810"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002807": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "De 26 hemisferios disecados, todos tenían un surco transverso en el tercio inferior de la cara lateral del lóbulo occipital, y 24 (92 %) mostraban surcos de trayecto claramente transversal.",
+        "cites": [
+          "PMID:12244393"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa serie, el surco transverso del tercio superior apareció en el 69 % de los casos, y 16 hemisferios (61 %) tenían surcos longitudinales marcados.",
+        "cites": [
+          "PMID:12244393"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Con forma de media luna, el asta occipital del ventrículo lateral tenía la pared medial formada por el calcar avis y el techo, el suelo y la pared lateral por fibras del tapetum; en el 53 % de las piezas ya se encontraba a la altura del límite anterior del lóbulo.",
+        "cites": [
+          "PMID:12244393"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La resonancia funcional describe en el lóbulo occipital una secuencia de etapas del procesamiento de objetos, desde las áreas retinotópicas V1 a V3 hasta el complejo occipital lateral, en gran medida no retinotópico.",
+        "cites": [
+          "PMID:9704268"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una revisión señala que los lóbulos occipital y parietal tienen límites anatómicos arbitrarios y que entre los síntomas de las epilepsias de ambos figuran fenómenos visuales como amaurosis, alucinaciones o ilusiones, aunque pueden reflejar la propagación de la descarga más que su foco de origen.",
+        "cites": [
+          "PMID:8504783"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie retrospectiva de 42 resecciones por epilepsia parietal u occipital, la histopatología coincidió con la caracterización de la resonancia en 36 lesiones (86 %).",
+        "cites": [
+          "PMID:17560810"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002902": {
+    "sentences": [
+      {
+        "aspect": "irrigation",
+        "es": "Aunque la corteza visual depende sobre todo de las arterias cerebrales posteriores, la zona de visión central del polo occipital puede contar con un aporte doble gracias a anastomosis con la rama temporo-occipital superior de la cerebral media.",
+        "cites": [
+          "PMID:23733119"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 55 pacientes evaluados para cirugía de epilepsia, la asimetría del área del polo occipital medida en resonancia 10 mm por encima de la tienda del cerebelo se relacionó con el hemisferio dominante para el lenguaje según la prueba de Wada.",
+        "cites": [
+          "PMID:9128446"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de ocho gliomas del polo occipital resecados mediante lobectomía por mínimo acceso, la mediana de extensión de la resección fue del 96 % y no hubo complicaciones permanentes.",
+        "cites": [
+          "PMID:28705703"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002967": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Perteneciente al sistema límbico, la circunvolución del cíngulo queda por encima del cuerpo calloso.",
+        "cites": [
+          "PMID:30100562"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Frente a las dos divisiones de Brodmann, los estudios citoarquitectónicos recientes respaldan un modelo de cuatro regiones con subregiones, definido por sus conexiones y funciones.",
+        "cites": [
+          "PMID:15995724"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "El área 25 de Brodmann y parte de las áreas 24 y 32 integran su sector subcalloso, ventral al cuerpo calloso.",
+        "cites": [
+          "PMID:21145043"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La porción posterior del cíngulo mantiene una conexión estrecha con la región hipocampal y entorrinal del circuito de memoria temporal medial.",
+        "cites": [
+          "PMID:25147118"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La corteza cingular interviene tanto en la red cerebral del dolor agudo como en la de la emoción, con patrones de activación que no se superponen sin más.",
+        "cites": [
+          "PMID:15995724"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la depresión se ha descrito una actividad metabólica anómala de la porción subcallosa que diversos tratamientos revierten, lo que la perfila como posible diana de estimulación cerebral profunda.",
+        "cites": [
+          "PMID:21145043"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002973": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "A lo largo de la cara ventromedial de la corteza temporal, la circunvolución parahipocampal constituye buena parte del lóbulo límbico.",
+        "cites": [
+          "PMID:10911879"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Por delante limita con la ínsula anterior y por detrás con la circunvolución del cíngulo y el lóbulo occipital; su borde lateral con la corteza temporal exige examen citoarquitectónico, porque el surco rinal falta o es rudimentario en el ser humano.",
+        "cites": [
+          "PMID:10911879"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La tractografía de 10 adultos sanos identificó dos conexiones de esta circunvolución, el fascículo longitudinal inferior y el cíngulo, este último con lateralización.",
+        "cites": [
+          "PMID:33412321"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En reposo actúa como principal nodo de la red neuronal por defecto dentro del lóbulo temporal medial e intermedia la conectividad entre el hipocampo y el cíngulo posterior.",
+        "cites": [
+          "PMID:23404748"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las áreas entorrinal y perirrinal que la integran son a la vez el punto de inicio de la enfermedad de Alzheimer y las regiones corticales más castigadas por ella.",
+        "cites": [
+          "PMID:10911879"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 39 adultos seguidos durante 12 años, solo el volumen de la porción posterior de la circunvolución parahipocampal se asoció con el declive de memoria relacionado con la edad.",
+        "cites": [
+          "PMID:19879667"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002981": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El pulvinar es uno de los núcleos principales del tálamo y abarca el territorio más extenso del tálamo humano.",
+        "cites": [
+          "PMID:17615131",
+          "PMID:28965504"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Un estudio de resonancia funcional mostró en la porción ventral del pulvinar humano una representación visual bilateral que responde a los estímulos del hemicampo contralateral.",
+        "cites": [
+          "PMID:17615131"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La atención visual, la elección de objetivos visuales y la percepción visual con carga afectiva figuran entre las funciones que se le atribuyen.",
+        "cites": [
+          "PMID:28059471"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En el estudio post mortem de 8 casos de demencia con cuerpos de Lewy, la patología de Lewy predominó en el pulvinar medial y la pérdida neuronal se observó en el pulvinar lateral.",
+        "cites": [
+          "PMID:28059471"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 26 pacientes con hemorragia de los ganglios basales, el mapeo de lesiones vinculó la disartria al ingreso con la afectación del pulvinar del tálamo izquierdo.",
+        "cites": [
+          "PMID:28687237"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003012": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El lobulillo X del cerebelo forma parte del lóbulo floculonodular.",
+        "cites": [
+          "PMID:24586223"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 101 fetos de 15 a 28 semanas, la fracción de la superficie externa del cerebelo que corresponde al lóbulo floculonodular disminuyó a medida que crecía la del lóbulo anterior.",
+        "cites": [
+          "PMID:24831768"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 23 pacientes con enfermedad de Parkinson, un menor volumen del lóbulo floculonodular se asoció con puntuaciones motoras más altas en la escala UPDRS-III (r = -0,467).",
+        "cites": [
+          "PMID:38622454"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un megaanálisis de 4215 adultos halló menor volumen del lobulillo X, entre otras subregiones cerebelosas, en las personas con trastorno de estrés postraumático.",
+        "cites": [
+          "PMID:38195980"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003029": {
+    "sentences": []
+  },
+  "UBERON:0003126": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "La tráquea tiene un tramo cervical y otro torácico y discurre próxima a grandes vasos.",
+        "cites": [
+          "PMID:24338486"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Su irrigación es variable, rasgo que complica su reconstrucción quirúrgica.",
+        "cites": [
+          "PMID:24338486"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Además de conducir el aire en la inspiración y la espiración, participa en la fonación y, mediante su escalera mucociliar, en el aclaramiento de la vía aérea y la defensa del pulmón.",
+        "cites": [
+          "PMID:39515887"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Para reconstruirla, las resecciones cortas suelen resolverse con anastomosis primaria o colgajos locales, y las extensas con un colgajo libre radial de antebrazo reforzado con injertos de cartílago, opción que se ha mostrado viable.",
+        "cites": [
+          "PMID:24338486"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los ensayos con prótesis traqueales sintéticas, macizas o porosas, decepcionaron: la infección, el desplazamiento, la migración y la obstrucción no fueron raros.",
+        "cites": [
+          "PMID:24338486"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003604": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En cultivo, los condrocitos aislados del cartílago traqueal de donantes de pulmón mantuvieron una proliferación estable y expresaron colágeno de tipo II.",
+        "cites": [
+          "PMID:12895608"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 52 pacientes con cáncer diferenciado de tiroides sometidos a tiroidectomía total, 37 de los 80 restos tiroideos detectados por SPECT/TC se situaban junto al cartílago traqueal.",
+        "cites": [
+          "PMID:33964885"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003672": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "La dentición, junto con la mandíbula y las articulaciones temporomandibulares, forma el conjunto de tejidos duros que intervienen en la respiración, la masticación, la deglución y el habla.",
+        "cites": [
+          "PMID:36244721"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 20 adultos con encías sanas (edad media de 27,7 años), el cénit gingival de los incisivos centrales superiores quedó en promedio 1 mm distal al eje del diente, el de los laterales se desvió en promedio 0,4 mm y el de los caninos se mantuvo centrado en el 97,5 % de los casos.",
+        "cites": [
+          "PMID:19368601"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Un estudio de 449 dientes de 89 cráneos polinesios confirmó que las medidas dentarias diferencian con claridad grupos de población distintos.",
+        "cites": [
+          "PMID:18196760"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los defectos del desarrollo del esmalte son muy frecuentes en la dentición temporal, y el esmalte hipoplásico, más fino y menos resistente al ácido, eleva el riesgo de caries temprana y desgaste.",
+        "cites": [
+          "PMID:23713631"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 19 pacientes con displasia cleidocraneal, la dentición temporal se formó y erupcionó con normalidad, pero todos salvo uno tenían dientes permanentes supernumerarios y la maduración de los permanentes se retrasaba de 1 a 4 años.",
+        "cites": [
+          "PMID:2341976"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 201 modelos de yeso de jóvenes asiático-estadounidenses, las predicciones de Tanaka y Johnston para la dentición mixta difirieron de forma significativa de las medidas reales.",
+        "cites": [
+          "PMID:9517721"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003673": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 21 columnas lumbares normales estudiadas con resonancia, el ligamento amarillo midió en promedio 3,1 mm de grosor en el punto medio de su longitud.",
+        "cites": [
+          "PMID:20884749"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Con hipertrofia facetaria y altura discal L4-L5 conservada, el grosor llegaba en promedio a 4,9 mm, por lo que los autores atribuyeron el engrosamiento a la degeneración de las facetas, con independencia del disco.",
+        "cites": [
+          "PMID:20884749"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Bajo una carga axial equivalente a la mitad del peso corporal, la resonancia de 24 pacientes mostró que el conducto lumbar se estrechaba sobre todo por el abombamiento del ligamento amarillo, responsable del 50 al 85 % de esa reducción.",
+        "cites": [
+          "PMID:19277726"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La fibrosis ocupa el centro de la hipertrofia del ligamento amarillo, un mecanismo frecuente de estenosis del conducto lumbar.",
+        "cites": [
+          "PMID:39456209"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una población de 1736 voluntarios estudiados con resonancia de toda la columna, la osificación del ligamento amarillo apareció en el 3,8 %, sobre todo en la columna torácica baja y en un solo nivel en el 68,2 % de los casos.",
+        "cites": [
+          "PMID:20042956"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 993 tomografías de tórax de personas atendidas por síntomas torácicos, la prevalencia estandarizada de osificación torácica del ligamento fue del 63,9 %, con los valores más altos en T10-T11 (44,0 %) y T11-T12 (41,6 %).",
+        "cites": [
+          "PMID:22983651"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003694": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En ocho piezas cadavéricas, el primer nervio cervical cruzaba entre el arco posterior del atlas y la arteria vertebral, mientras que el segundo, situado por detrás de esa arteria, pasaba entre los arcos posteriores del atlas y del axis.",
+        "cites": [
+          "PMID:22519231"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En esa misma serie, la arteria vertebral recorrió el segmento atlantoaxial describiendo cuatro curvas, de las cuales la segunda y la cuarta se alejaban del hueso.",
+        "cites": [
+          "PMID:22519231"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La resonancia de 28 voluntarios sanos situó el eje instantáneo de la rotación atlantoaxial dentro de la apófisis odontoides, con una rotación total de 45 a 88,5 grados (media de 69,25).",
+        "cites": [
+          "PMID:11977941"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En los extremos de la rotación fisiológica se pierde de forma llamativa, aunque incompleta, el contacto entre las carillas del atlas y del axis, imagen que puede confundirse con una subluxación.",
+        "cites": [
+          "PMID:11977941"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En cinco voluntarios asintomáticos, la distensión de la articulación atlantoaxial lateral con contraste provocó dolor referido con un patrón constante, lo que confirma su capacidad nociceptiva.",
+        "cites": [
+          "PMID:8059267"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 30 pacientes con subluxación atlantoaxial por artritis reumatoide tratados con tornillos transarticulares C1-C2, la articulación se fusionó al año en 14 casos (46,7 %), con más frecuencia cuando había destrucción del hueso subcondral.",
+        "cites": [
+          "PMID:21038107"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003703": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Cuando el colangiocarcinoma extrahepático es resecable, su localización decide la operación: duodenopancreatectomía si es distal, y resección hepática en bloque con la vía biliar extrahepática si es perihiliar.",
+        "cites": [
+          "PMID:36257799"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 1475 pacientes con cáncer de la vía biliar extrahepática operados con intención curativa, la radioterapia adyuvante, con o sin quimioterapia, se asoció con una mejor supervivencia global (hazard ratio de 0,74).",
+        "cites": [
+          "PMID:34474218"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los tumores carcinoides de la vía biliar extrahepática son raros, representan entre el 0,2 y el 2 % de los carcinoides gastrointestinales y, en los 30 casos revisados, asentaron sobre todo en el colédoco (58 %).",
+        "cites": [
+          "PMID:10570419"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003709": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Este anillo de anastomosis arteriales en la base del encéfalo ofrece vías colaterales que protegen frente a la isquemia.",
+        "cites": [
+          "PMID:32713011"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Entre 150 voluntarios estudiados con angiorresonancia, solo el 42 % tenía el polígono completo; su mitad anterior lo estaba en el 74 % y la posterior en el 52 %.",
+        "cites": [
+          "PMID:9530305"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 513 adultos sin manifestaciones de enfermedad cerebrovascular, el diámetro medio del segmento A1 fue de 2,04 mm a la derecha y 2,06 mm a la izquierda, y el de la arteria comunicante anterior, de 1,16 mm.",
+        "cites": [
+          "PMID:30311936"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 50 cerebros cadavéricos, del segmento P1 de la arteria cerebral posterior salieron en promedio cuatro ramas perforantes y de la arteria comunicante posterior, siete.",
+        "cites": [
+          "PMID:845644"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un metaanálisis de 33 trabajos estimó que el 68,22 ± 14,32 % de la población presenta alguna variante del polígono, con hipoplasia o aplasia de la comunicante posterior unilateral en el 19,45 % y bilateral en el 22,83 %.",
+        "cites": [
+          "PMID:32713011"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio con 270 pacientes con migraña y 159 controles, las variantes anatómicas del polígono aparecieron en el 40 % de los migrañosos frente al 21,4 % de los controles.",
+        "cites": [
+          "PMID:21515511"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003711": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Aunque raras, las anomalías de número o de trayecto de esta vena importan cuando se prevé colocar un catéter venoso central o un marcapasos por el lado afectado.",
+        "cites": [
+          "PMID:40485207"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "De ocho venas braquiocefálicas izquierdas en posición anómala vistas en tomografía, seis llegaban a la vena cava superior tras descender por fuera del arco aórtico y por debajo de él.",
+        "cites": [
+          "PMID:1430437"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 2457 pacientes con cardiopatía congénita estudiados con ecocardiografía, 24 (0,98 %) tenían la vena braquiocefálica en posición subaórtica, anomalía más común en la tetralogía de Fallot y en la comunicación interventricular con atresia pulmonar.",
+        "cites": [
+          "PMID:2271346"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 142 canalizaciones en prematuros, el abordaje supraclavicular de la vena braquiocefálica guiado por ecografía tuvo un éxito final del 94 %.",
+        "cites": [
+          "PMID:28906265"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003713": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Cuando una duodenopancreatectomía reseca el confluente esplenomesentérico-portal, ligar sin más la vena esplénica se ha vinculado a largo plazo con hipertensión portal izquierda, hemorragia digestiva e hiperesplenismo.",
+        "cites": [
+          "PMID:27651335"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Esplenomegalia con función hepática normal y sangrado de varices gástricas aisladas componen el cuadro típico de la trombosis aislada de la vena esplénica, que suele deberse a una enfermedad pancreática.",
+        "cites": [
+          "PMID:3707347"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un metaanálisis estimó una incidencia media de trombosis esplénica inducida por pancreatitis del 14,1 %, con varices en el 53,0 % de los casos y hemorragia digestiva en el 12,3 %.",
+        "cites": [
+          "PMID:22081918"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 187 pacientes con pancreatitis crónica, el 19,8 % presentaba trombosis de la vena esplénica, asociada con el tabaquismo y los seudoquistes.",
+        "cites": [
+          "PMID:31041207"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 25 niños con hipertensión portal prehepática, un segmento de vena esplénica obtenido por esplenectomía parcial sirvió como injerto para la derivación meso-Rex, con una permeabilidad acumulada del 91 % (20 de 22 derivaciones).",
+        "cites": [
+          "PMID:25384413"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003720": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 127 tomografías de niños sanos, la base anterior del cráneo era sobre todo cartilaginosa al nacer y estaba completamente osificada a los 3 años y 10 meses en todos los casos.",
+        "cites": [
+          "PMID:20413607"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Tumores benignos o malignos de la órbita, la nariz, la nasofaringe y los senos frontal, etmoidal o esfenoidal pueden extenderse hasta invadirla.",
+        "cites": [
+          "PMID:6666961"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En ocho malformaciones arteriovenosas durales de esta fosa, la arteria etmoidal anterior participaba siempre en el aporte, en general junto con otras aferencias menores, y una vena cortical drenaba al seno sagital superior.",
+        "cites": [
+          "PMID:2324794"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Esas lesiones debutaron sobre todo con una hemorragia intracerebral súbita y masiva, rasgo que las distingue de las de otras localizaciones.",
+        "cites": [
+          "PMID:2324794"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 40 pacientes con fístulas arteriovenosas durales de la fosa anterior tratados por embolización transarterial, la oclusión completa inmediata se logró en el 82,5 %, sobre todo a través de la arteria meníngea media o la oftálmica.",
+        "cites": [
+          "PMID:37438103"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003722": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Su desarrollo está ligado al de los lóbulos temporales, el tercio medio facial y la mandíbula, con los que interactúa durante el crecimiento.",
+        "cites": [
+          "PMID:18213701"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Ampliado, el abordaje por la fosa media llega al conducto auditivo interno y el ángulo pontocerebeloso, al vértice petroso y la carótida petrosa, al cavum de Meckel y el seno cavernoso, y al clivus medio y superior.",
+        "cites": [
+          "PMID:29957681"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los defectos de su suelo asientan con más frecuencia en el tegmen tympani y la eminencia arcuata.",
+        "cites": [
+          "PMID:36174947"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La fractura del suelo de la fosa media con protrusión del cóndilo mandibular en su interior es excepcional, con solo 56 pacientes publicados en inglés.",
+        "cites": [
+          "PMID:29543680"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En diez pacientes con quistes aracnoideos de la fosa media, el volumen cerebral fue igual en ambos lados, mientras que el hemicráneo afectado era mayor.",
+        "cites": [
+          "PMID:6663308"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003724": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En un estudio anatómico, el tronco principal del nervio musculocutáneo penetró en el músculo coracobraquial a una distancia de la apófisis coracoides de 31 a 82 mm (media 56 mm).",
+        "cites": [
+          "PMID:2743658"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esa serie, los ramos finos para el coracobraquial entraron en el músculo a solo 17 mm de la coracoides en algún caso, y el 29 % de los troncos lo hizo a menos de 5 cm.",
+        "cites": [
+          "PMID:2743658"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 54 pacientes estudiados con resonancia tras un bloqueo axilar, el punto donde el nervio abandonaba la vaina axilar fue muy variable, y en 37 se situaba por delante y por fuera de la arteria axilar.",
+        "cites": [
+          "PMID:26584952"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Su terminación sensitiva distal es el nervio cutáneo lateral del antebrazo, que puede comprimirse por debajo de la aponeurosis bicipital.",
+        "cites": [
+          "PMID:9658350"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 56 miembros superiores disecados, el nervio se comunicaba con el nervio mediano en el 53,6 %, no atravesaba el coracobraquial en 6 de 54 casos y faltaba en 2.",
+        "cites": [
+          "PMID:19637305"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 66 pacientes con avulsión del plexo braquial, la transferencia de nervios intercostales al musculocutáneo para recuperar la flexión del codo logró fuerza de grado 4 o más en el 67 %.",
+        "cites": [
+          "PMID:1401789"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003725": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Las ramas anteriores de C1 a C4, al comunicarse entre sí, constituyen la mayor parte del plexo cervical.",
+        "cites": [
+          "PMID:30860749"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Aporta funciones motoras y sensitivas de peso en la región de la cabeza y el cuello.",
+        "cites": [
+          "PMID:30860749"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003726": {
+    "sentences": []
+  },
+  "UBERON:0003727": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Según cortes de autopsia del espacio intercostal posterior, el nervio intercostal no suele ser un tronco único sino un conjunto de fascículos pequeños sin vaina fascial que los envuelva.",
+        "cites": [
+          "PMID:7370141"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Esos fascículos se alojaban en un triángulo delimitado por la costilla, la membrana intercostal posterior y el intercostal íntimo; a 7 cm de la línea media, la pleura distaba en promedio 8 mm de la cara posterior de la costilla.",
+        "cites": [
+          "PMID:7370141"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 30 sujetos sanos, la conducción de los nervios intercostales inferiores se registró con electrodos sobre el músculo recto del abdomen, donde se delimitaron los puntos motores de cada nervio.",
+        "cites": [
+          "PMID:2526200"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En ese estudio de autopsia, 3 ml de tinta inyectados se difundieron a los espacios intercostales vecinos y hacia el espacio paravertebral, rodeando la cadena simpática.",
+        "cites": [
+          "PMID:7370141"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La colocación de un tubo torácico por punción puede seccionar el nervio intercostal, y su bloqueo intraneural antes de cerrar una toracotomía se ha asociado con hipotensión.",
+        "cites": [
+          "PMID:7114383"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 66 pacientes con avulsión del plexo braquial, la transferencia de nervios intercostales al nervio musculocutáneo restituyó la flexión del codo con fuerza de grado 4 o superior en el 67 %.",
+        "cites": [
+          "PMID:1401789"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003885": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Al cotejar disecciones laparoscópicas y cadavéricas con resonancia, la lámina portadora de los vasos y ganglios linfáticos uterinos se identificó como el mesometrio lateral.",
+        "cites": [
+          "PMID:18486092"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Bajo la serosa de su cara anterior se describe un músculo liso mesometrial, formado por haces delgados de alrededor de 1 mm paralelos a la trompa, que continúa la capa externa del miometrio y termina en el suelo pélvico.",
+        "cites": [
+          "PMID:17805565"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Su porción ligamentosa tiene dos partes: una rectouterina o rectovaginal, anclada al mesorrecto anterolateral, y otra sacrouterina que envuelve el mesorrecto y se fija a la fascia pélvica.",
+        "cites": [
+          "PMID:28154838"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "La linfa del cuello uterino posterior viaja por una red situada en la cara lateral de la parte sacrouterina, dorsomedial al plexo hipogástrico inferior, hacia los ganglios ilíacos internos profundos, presacros y preciáticos.",
+        "cites": [
+          "PMID:28154838"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La resección mesometrial total es una histerectomía radical para el cáncer de cuello uterino que extirpa al máximo el mesometrio respetando el sistema nervioso autónomo pélvico.",
+        "cites": [
+          "PMID:11449616"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En seis leiomiomas retroperitoneales de mujeres se hallaron en la periferia capas de músculo liso con receptores hormonales, lo que apoya su origen en el músculo liso mesometrial.",
+        "cites": [
+          "PMID:17805565"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003959": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "El adenocarcinoma de la red testicular es un tumor raro y agresivo; en una serie de 18 casos la mediana de edad fue de 54 años y seis pacientes murieron en el segundo año tras el diagnóstico.",
+        "cites": [
+          "PMID:39628356"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En esa serie se observó la transición entre epitelio benigno y maligno de la red en 7 de los 18 casos (38,9 %).",
+        "cites": [
+          "PMID:39628356"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En el análisis molecular de ocho adenocarcinomas de la red testicular predominó la inactivación de genes del ciclo celular, y CDKN2A fue el único gen alterado de forma recurrente (3 de 8).",
+        "cites": [
+          "PMID:35395117"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Esta displasia quística, tumor benigno poco común que se ve sobre todo en niños, se apoya en la ecografía tanto para el diagnóstico como para rastrear lesiones renales asociadas.",
+        "cites": [
+          "PMID:18405733"
+        ]
+      }
+    ]
+  },
+  "UBERON:0004533": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El testículo está compartimentado: en los túbulos seminíferos las células germinales se dividen en contacto estrecho con las células de Sertoli, y en el espacio intersticial se encuentran las células de Leydig.",
+        "cites": [
+          "PMID:26656623"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "La barrera hematotesticular, de las más herméticas entre sangre y tejido en los mamíferos, reparte el epitelio seminífero entre un compartimento basal y otro apical o adluminal.",
+        "cites": [
+          "PMID:22039149"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Además de producir gametos, el testículo es la principal fuente de andrógenos circulantes, que las células de Leydig sintetizan para completar la espermatogénesis y mantener los caracteres sexuales masculinos.",
+        "cites": [
+          "PMID:26656623"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Entre el 2 y el 5 % de los varones nacidos a término en países occidentales tienen un testículo no descendido, proporción que a los 3 meses se reduce de forma espontánea al 1-2 %.",
+        "cites": [
+          "PMID:10640886"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los antecedentes de criptorquidia se asocian con mayor riesgo de cáncer testicular y con fertilidad reducida.",
+        "cites": [
+          "PMID:10640886"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Clasificado en seminoma y no seminoma, el cáncer de testículo se presenta con más frecuencia como un nódulo, y para la mayoría de los pacientes se recomienda la orquiectomía radical inguinal.",
+        "cites": [
+          "PMID:17916870"
+        ]
+      }
+    ]
+  },
+  "UBERON:0004534": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El testículo está compartimentado: en los túbulos seminíferos las células germinales se dividen en contacto estrecho con las células de Sertoli, y en el espacio intersticial se encuentran las células de Leydig.",
+        "cites": [
+          "PMID:26656623"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "La barrera hematotesticular, de las más herméticas entre sangre y tejido en los mamíferos, reparte el epitelio seminífero entre un compartimento basal y otro apical o adluminal.",
+        "cites": [
+          "PMID:22039149"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Además de producir gametos, el testículo es la principal fuente de andrógenos circulantes, que las células de Leydig sintetizan para completar la espermatogénesis y mantener los caracteres sexuales masculinos.",
+        "cites": [
+          "PMID:26656623"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Entre el 2 y el 5 % de los varones nacidos a término en países occidentales tienen un testículo no descendido, proporción que a los 3 meses se reduce de forma espontánea al 1-2 %.",
+        "cites": [
+          "PMID:10640886"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los antecedentes de criptorquidia se asocian con mayor riesgo de cáncer testicular y con fertilidad reducida.",
+        "cites": [
+          "PMID:10640886"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Clasificado en seminoma y no seminoma, el cáncer de testículo se presenta con más frecuencia como un nódulo, y para la mayoría de los pacientes se recomienda la orquiectomía radical inguinal.",
+        "cites": [
+          "PMID:17916870"
+        ]
+      }
+    ]
+  },
+  "UBERON:0004670": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El epéndimo es el revestimiento celular de los ventrículos cerebrales.",
+        "cites": [
+          "PMID:7615341"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "El epitelio de los plexos coroideos está formado por células ependimarias especializadas que se continúan con el epéndimo en una zona de transición; a diferencia de los plexos, el epéndimo carece de lámina basal y de propiedades de barrera.",
+        "cites": [
+          "PMID:37975746"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En estas células, la acuaporina 4 se concentra sobre todo en el polo basolateral de la membrana.",
+        "cites": [
+          "PMID:37975746"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Dotadas de la maquinaria estructural y enzimática para captar y neutralizar múltiples sustancias del líquido cefalorraquídeo, las células ependimarias del cerebro maduro de mamífero actúan como barrera metabólica en su interfaz con el encéfalo.",
+        "cites": [
+          "PMID:7615341"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En la médula espinal, el epéndimo se perfila como posible reservorio latente de células madre neurales.",
+        "cites": [
+          "PMID:29204829"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En el espacio subaracnoideo, los quistes con revestimiento ependimario son raros y abarcan lesiones de histología diversa.",
+        "cites": [
+          "PMID:14606587"
+        ]
+      }
+    ]
+  },
+  "UBERON:0004703": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Las neuronas talamocorticales del tálamo dorsal son el blanco principal de la inhibición GABAérgica que ejercen las neuronas del núcleo reticular.",
+        "cites": [
+          "PMID:15927688"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Esa inhibición reticular sobre las neuronas talamocorticales interviene en la generación de los husos del sueño y, durante las crisis de punta-onda, en la pérdida de conciencia de las ausencias.",
+        "cites": [
+          "PMID:15927688"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una paciente de 77 años con un infarto mediodorsal izquierdo previo y silente empezó a confabular de forma espontánea al sumarse un infarto en el núcleo mediodorsal derecho, ambos en la región parvocelular; la tractografía identificó la radiación talámica anterior como la vía que unía esas zonas con la corteza frontal.",
+        "cites": [
+          "PMID:27812504"
+        ]
+      }
+    ]
+  },
+  "UBERON:0004713": {
+    "sentences": [
+      {
+        "aspect": "irrigation",
+        "es": "Según moldes vasculares por corrosión de penes humanos, el cuerpo cavernoso recibe la arteria profunda del pene, cuyas ramas se reparten por su interior o van directamente al cuerpo esponjoso.",
+        "cites": [
+          "PMID:2769885"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Dentro del cuerpo cavernoso, unas arteriolas terminan en capilares que confluyen en un plexo venular bajo la túnica albugínea y otras drenan directamente en los sinusoides cavernosos, de modo que existen dos circuitos circulatorios.",
+        "cites": [
+          "PMID:2769885"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En biopsias de ocho adultos con función eréctil conservada, el 74,9 % de los núcleos de las células estromales y endoteliales del cuerpo cavernoso expresaba receptores de andrógenos y el 11 %, receptores de estrógenos alfa.",
+        "cites": [
+          "PMID:14586547"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 35 voluntarios sanos estudiados con elastografía por ondas de cizalla en estado flácido, la rigidez medida del cuerpo cavernoso disminuyó con la edad (r = -0,584).",
+        "cites": [
+          "PMID:29803373"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En cultivos de endotelio cavernoso obtenido de 13 pacientes, solo las formulaciones con papaverina, y no la prostaglandina E1, mermaron de forma dependiente de la dosis las células viables y su actividad metabólica.",
+        "cites": [
+          "PMID:15351616"
+        ]
+      }
+    ]
+  },
+  "UBERON:0004714": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Como el septo pelúcido, el cuerpo calloso y el sistema límbico comparten origen embrionario, los procesos del desarrollo o adquiridos tienden a comprometerlos a la vez, en grado variable.",
+        "cites": [
+          "PMID:2505543"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su escaso tamaño hace raro que una lesión adquirida se origine en él, aunque casi cualquier proceso adquirido puede alcanzarlo de forma secundaria; su falta congénita, en cambio, señala una displasia que abarca también el cuerpo calloso y el sistema límbico.",
+        "cites": [
+          "PMID:2505543"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 47 fetos con sospecha de agenesia del septo pelúcido, los 14 casos aislados nacidos vivos tuvieron un desarrollo normal, mientras que con malformaciones asociadas del sistema nervioso el riesgo de desarrollo anómalo fue de al menos el 50 %.",
+        "cites": [
+          "PMID:32037567"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La prevalencia de cavum del septo pelúcido en la población general varía mucho entre estudios, del 2 % al 85 %.",
+        "cites": [
+          "PMID:25970145"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 17 exjugadores profesionales de fútbol americano con traumatismos craneales repetidos atendidos en una clínica de memoria, 16 presentaban un cavum de grado 2 o mayor, frente a 3 de 17 pacientes de control sin antecedentes de traumatismo.",
+        "cites": [
+          "PMID:25970145"
+        ]
+      }
+    ]
+  },
+  "UBERON:0004720": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "La zona corticonuclear medial del cerebelo está constituida por el vermis y el núcleo fastigio.",
+        "cites": [
+          "PMID:21911381"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Esa zona medial se ocupa clásicamente de la postura de todo el cuerpo y de la locomoción.",
+        "cites": [
+          "PMID:21911381"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En el feto, la fisura primaria y el punto fastigial sirven como marcadores del desarrollo normal del vermis, cuyo crecimiento se valora con biometría y con la relación entre sus lóbulos superior e inferior.",
+        "cites": [
+          "PMID:17805192"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 43 fetos con defectos del vermis, el microarray cromosómico halló alteraciones relevantes en el 23,3 %, y su combinación con la secuenciación del exoma permitió un diagnóstico genético en el 42 %.",
+        "cites": [
+          "PMID:32386258"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 18 pacientes coreanos con síndrome CHARGE, 5 de 17 (29,4 %) tenían hipoplasia del vermis sin signos de disfunción cerebelosa.",
+        "cites": [
+          "PMID:26538304"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio de resonancia con 8 niños autistas de alto funcionamiento y 21 controles, el área de los lobulillos VIII a X del vermis fue menor en el grupo con autismo, aunque el cociente intelectual actuó como factor de confusión.",
+        "cites": [
+          "PMID:10390721"
+        ]
+      }
+    ]
+  },
+  "UBERON:0004882": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Llamado también cutícula, el eponiquio parte del pliegue ungueal proximal y queda adherido a la cara superficial del tramo proximal de la lámina ungueal.",
+        "cites": [
+          "PMID:24079579"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Medida por punción de los capilares del eponiquio del cuarto dedo, la presión capilar media fue de 20,5 ± 3,7 mmHg en 16 de 19 varones sanos.",
+        "cites": [
+          "PMID:11969304"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En los capilares del eponiquio del dedo gordo del pie de voluntarios sanos, la presión sistólica pasó de 39 a 71 mmHg al cambiar de decúbito supino a sedestación, un aumento menor que el de la presión arterial del dedo.",
+        "cites": [
+          "PMID:12871963"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 19 dedos con secuelas ungueales postraumáticas, un colgajo rectangular de eponiquio aumentó la longitud visible de la uña en 3,44 mm de promedio sin complicaciones graves.",
+        "cites": [
+          "PMID:40496400"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 44 dedos quemados, la liberación del eponiquio cicatricial con el colgajo de Yang reconstruyó el pliegue ungueal en un solo tiempo, con necrosis del colgajo en solo dos dedos.",
+        "cites": [
+          "PMID:36325084"
+        ]
+      }
+    ]
+  },
+  "UBERON:0005171": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 73 muestras cadavéricas, la formación del conducto hepático derecho por sus ramas segmentarias anterior y posterior fue típica en el 65,75 % y atípica en el 34,25 %.",
+        "cites": [
+          "PMID:23056946"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Entre las variantes de esa serie, el conducto anterior derecho drenaba de forma ectópica en el conducto hepático común en el 15,07 %, hubo confluencia triple en el 9,59 % y el conducto posterior derecho desembocaba en el conducto hepático izquierdo en el 4,11 %.",
+        "cites": [
+          "PMID:23056946"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los conductos hepáticos accesorios son anomalías biliares relativamente raras; en la ecografía pueden aparecer como una estructura tubular fina entre el hilio hepático y el colédoco.",
+        "cites": [
+          "PMID:12173365"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 151 pacientes con obstrucción biliar hiliar maligna de tipos II y III, la endoprótesis en el conducto hepático derecho o en el izquierdo dio resultados similares de drenaje, complicaciones y supervivencia.",
+        "cites": [
+          "PMID:2482169"
+        ]
+      }
+    ]
+  },
+  "UBERON:0005283": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Por consenso de uso, el término nombra el sector liso y delgado que forma el techo de los ventrículos tercero y cuarto.",
+        "cites": [
+          "PMID:38567933"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Ese sector consta de un epitelio de revestimiento apoyado en un estroma de origen pial con escasa vascularización.",
+        "cites": [
+          "PMID:38567933"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "La tela coroidea del ventrículo lateral recibe la arteria coroidea anterior y varias coroideas posteriores, procedentes de los sistemas carotídeo y vertebrobasilar, que se anastomosan entre sí.",
+        "cites": [
+          "PMID:3604568"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Su drenaje se realiza por venas coroideas que desembocan en las venas cerebrales internas o en las venas basales.",
+        "cites": [
+          "PMID:3604568"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En fetos autopsiados con malformación de Dandy-Walker, la tela coroidea del cuarto ventrículo estaba engrosada, mientras que en los controles era fina, con una única capa meníngea que se desdoblaba en dos membranas.",
+        "cites": [
+          "PMID:41874629"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Dado que buena parte de los tumores de la fosa posterior nace de la tela y el plexo coroideos del cuarto ventrículo, un realce de esa zona, poco habitual en niños, puede delatar un tumor en sus inicios.",
+        "cites": [
+          "PMID:25839397"
+        ]
+      }
+    ]
+  },
+  "UBERON:0005303": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Por su trayecto predecible y por ser la parte más superficial e identificable del plexo hipogástrico inferior, el nervio hipogástrico sirve de guía para conservar la inervación autónoma pelviana durante la cirugía.",
+        "cites": [
+          "PMID:31386912"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Desde las 20 semanas de gestación, cortes seriados de nueve fetos mostraron el nervio hipogástrico emparedado entre la fascia presacra, por detrás, y una fascia ventral que parece corresponder a la mesorrectal.",
+        "cites": [
+          "PMID:18567017"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la cirugía del cáncer de recto con ligadura alta de la arteria mesentérica inferior, identificar y conservar el nervio hipogástrico busca prevenir la disfunción eyaculatoria.",
+        "cites": [
+          "PMID:10333426"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 23 pacientes con cáncer de cuello uterino operadas con una histerectomía radical que preserva el nervio hipogástrico, solo dos (9 %) necesitaron autosondaje al alta.",
+        "cites": [
+          "PMID:15099938"
+        ]
+      }
+    ]
+  },
+  "UBERON:0005304": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En biopsias rectales de 27 adultos con estreñimiento de tránsito lento y 23 controles, el plexo submucoso no mostró diferencias importantes, salvo nervios algo más gruesos (30,8 frente a 25,5 µm) y más células ganglionares heterotópicas en los pacientes.",
+        "cites": [
+          "PMID:10929902"
+        ]
+      }
+    ]
+  },
+  "UBERON:0005351": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 42 cerebelos humanos, el paraflóculo accesorio tenía en promedio 4,2 ± 0,2 folias y 2,0 ± 0,2 subfolias.",
+        "cites": [
+          "PMID:6736632"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Su variabilidad duplicaba con creces la del flóculo, con formas que iban desde una única laminilla aplanada hasta un racimo de folias parecido al flóculo.",
+        "cites": [
+          "PMID:6736632"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En personas con síndrome de deleción 22q11.2 se ha descrito una reducción local del paraflóculo y del flóculo.",
+        "cites": [
+          "PMID:39638997"
+        ]
+      }
+    ]
+  },
+  "UBERON:0005430": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 106 cadáveres, el asa cervical se formó a partir de combinaciones de los segmentos C1 a C4, con el patrón C1-C3 como el más frecuente (87,5 %), y fue simétrica en ambos lados en más del 60 %.",
+        "cites": [
+          "PMID:18402086"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esa serie predominó su posición medial a la vena yugular interna (63 %) sobre la lateral (33,7 %).",
+        "cites": [
+          "PMID:18402086"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Aporta la inervación motora de los músculos infrahioideos con axones que proceden en su mayoría de los tres primeros nervios cervicales; el tirohioideo, aunque infrahioideo, parece depender en cambio del hipogloso.",
+        "cites": [
+          "PMID:15211214"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En nervios hipoglosos humanos, el componente C1 del asa se une al hipogloso, y por esa vía parecen incorporarse a él fibras sensitivas y simpáticas.",
+        "cites": [
+          "PMID:41565945"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 237 pacientes con parálisis unilateral de cuerda vocal tras cirugía tiroidea, la anastomosis de la rama principal del asa cervical con el nervio laríngeo recurrente reinervó la musculatura laríngea y mejoró la voz.",
+        "cites": [
+          "PMID:21559458"
+        ]
+      }
+    ]
+  },
+  "UBERON:0005431": {
+    "sentences": [
+      {
+        "aspect": "irrigation",
+        "es": "Tras inyectar colorante en 51 cadáveres, en ninguno se encontró una interrupción de la arteria espinal anterior a lo largo de la médula espinal.",
+        "cites": [
+          "PMID:15052221"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Gracias a esa continuidad, reúne en una sola vía las arterias vertebrales, la radicular magna y las intercostales posteriores y lumbares.",
+        "cites": [
+          "PMID:15052221"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En la misma serie, la arteria radicular magna se originó entre T9 y L5, nació de una arteria lumbar en el 70,5 % y fue izquierda en el 62,7 %.",
+        "cites": [
+          "PMID:15052221"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En tres pacientes con síndrome de la arteria espinal anterior, el cuadro consistió en paraparesia con pérdida sensitiva disociada y disfunción de esfínteres.",
+        "cites": [
+          "PMID:8163309"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un caso autopsiado de este síndrome tras una disección aórtica, el infarto afectó la porción anterior de la médula toracolumbar y respetó los cordones posteriores.",
+        "cites": [
+          "PMID:1690114"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 21 pacientes con luxación facetaria cervical estudiados con angiotomografía, ninguno presentó oclusión de la arteria espinal anterior, aunque la arteria vertebral se ocluyó en el 24 %.",
+        "cites": [
+          "PMID:39043672"
+        ]
+      }
+    ]
+  },
+  "UBERON:0005436": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En un estudio de 5002 pacientes con tomografía y angiografía, la arteria hepática común se definió como el tronco que contiene al menos una arteria hepática segmentaria y la arteria gastroduodenal.",
+        "cites": [
+          "PMID:20308464"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En una serie tomográfica de 600 pacientes, la arteria hepática común nació del tronco celíaco en el 95,83 % y dio origen a la arteria gastroduodenal en el 97,6 %.",
+        "cites": [
+          "PMID:24347852"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esa misma serie, el trayecto habitual, por encima del páncreas y por delante de la vena porta, se observó en el 97,78 % de los casos.",
+        "cites": [
+          "PMID:24347852"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 5002 pacientes, la arteria hepática común faltó en 55 por origen separado de las arterias hepáticas y la gastroduodenal, y 148 nacían de la arteria mesentérica superior con relaciones variables con el páncreas y el eje portal.",
+        "cites": [
+          "PMID:20308464"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Entre 788 candidatos a donante hepático, el trayecto transpancreático de la arteria hepática común apareció en el 0,38 %, a menudo junto con un tronco hepatomesentérico y estenosis celíaca.",
+        "cites": [
+          "PMID:28726321"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 78 pacientes con cáncer gástrico sometidos a linfadenectomía D2, la metástasis en los ganglios anteriores de la arteria hepática común (grupo 8a) se halló en el 28,2 % y se asoció con menor supervivencia.",
+        "cites": [
+          "PMID:37365328"
+        ]
+      }
+    ]
+  },
+  "UBERON:0005457": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Medido por ecografía en 212 recién nacidos a término, el lóbulo derecho del timo resultó más corto y más delgado que el izquierdo.",
+        "cites": [
+          "PMID:21442251"
+        ]
+      }
+    ]
+  },
+  "UBERON:0005461": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Situado en el suelo del triángulo cervical posterior, el elevador de la escápula enlaza el esqueleto axial con el de la cintura escapular.",
+        "cites": [
+          "PMID:26074045"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Lo habitual es que nazca de las apófisis transversas de C1 a C4 y termine en el borde superomedial de la escápula.",
+        "cites": [
+          "PMID:26074045"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Como indica su nombre, eleva la escápula.",
+        "cites": [
+          "PMID:26074045"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 37 cuellos cadavéricos, el músculo recibió en promedio 1,92 ramos del plexo cervical (C3 y C4), mientras que el nervio dorsal de la escápula lo penetró o le dio ramos solo en 11 de 35 especímenes.",
+        "cites": [
+          "PMID:9419097"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Sus variantes no son raras: una serie de 300 disecciones halló fascículos adicionales en el 13,1 %, y un estudio de resonancia, variantes en 16 de 37 personas (43 %).",
+        "cites": [
+          "PMID:42345217"
+        ]
+      }
+    ]
+  },
+  "UBERON:0005464": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "La arteria sacra media es un vaso pequeño que nace de la parte posterior y terminal de la aorta infrarrenal y desciende por la cara anterior del sacro.",
+        "cites": [
+          "PMID:28875294",
+          "PMID:40501157"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Su paso por delante de la confluencia iliocava es excepcional: en la mayoría de los casos queda por detrás de ella.",
+        "cites": [
+          "PMID:28875294"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 54 cadáveres, su punto de aparición se situó a la altura del cuerpo de L5 en el 94,4 %, y desde allí recorría el tercio medio de la cara anterior de la unión lumbosacra a lo largo de 2,73 ± 0,97 cm hasta el promontorio.",
+        "cites": [
+          "PMID:25366230"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Su territorio comprende las vértebras lumbares y sacras y, a veces, parte del recto.",
+        "cites": [
+          "PMID:40501157"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En 19 cadáveres inyectados, la arteria se identificó en 16, alcanzó y penetró la pared posterior del recto en 9 (47,4 %) y tuvo un diámetro medio de 1,98 ± 0,12 mm.",
+        "cites": [
+          "PMID:32319711"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un metaanálisis de 1007 arterias halló un origen directo en la aorta en el 89,98 % y un origen común con una arteria lumbar, casi siempre la cuarta, en el 8,27 %.",
+        "cites": [
+          "PMID:40501157"
+        ]
+      }
+    ]
+  }
+}

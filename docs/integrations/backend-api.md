@@ -518,7 +518,7 @@ extensibilidad (`extension_target_policies.maximumFields`) dice cuántos campos
 propios admite ese target, y la pantalla lo consulta para no ofrecer un alta que
 el backend va a rechazar.
 
-### `AuthzClient` — 5 operaciones
+### `AuthzClient` — 8 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -526,7 +526,10 @@ el backend va a rechazar.
 | `GET` | `/authz/legal-representations` | — |
 | `POST` | `/authz/care-relationships/:id/respond` | `AccessRequests` y 2 pantallas más | No |
 | `POST` | `/authz/care-relationships/request` | `AccessRequests` y 2 pantallas más | No |
-| `GET` | `/authz/care-relationships/requests/mine` | `AccessRequests` y 2 pantallas más | No |
+| `GET` | `/authz/me/access-requests` | `AccessRequests` (paciente) | No |
+| `GET` | `/authz/practitioners/me/access-requests` | `AccessRequests` (profesional), `ChartAccessScope` | No |
+| `POST` | `/authz/me/primary-practitioner-requests` | — (la ficha del médico todavía no expone su organización) | No |
+| `POST` | `/authz/practitioners/me/care-relationships/:id/respond` | `AccessRequests` (profesional) | No |
 
 No son permisos: son el **motivo** por el que alguien puede mirar la historia de
 otra persona. El PDP los consume; la interfaz sólo los muestra.
@@ -840,6 +843,33 @@ Laboratorios e imagenología (M52).
 > job `verificar` en rojo para todo el mundo: `check-api-contract-drift` no
 > distingue «lo agregó otro» de «lo agregué yo». Si algún consumidor de arriba
 > quedó mal atribuido, corregilo — se dedujo de quién importa cada cliente.
+
+### `CenterScheduleClient` — 8 operaciones · maqueta (06/10/2026)
+
+Horarios y equipos de un centro de diagnóstico, y la reserva **desde la orden**
+del paciente. Hoy sólo los responde la maqueta (`core/mock/handlers/centros.handlers.ts`);
+el pedido al backend está en `PENDIENTES-BACKEND.md` (P-CENTRO-HORARIOS).
+
+- El horario se resuelve **estudio → modalidad → general**: lo que no tiene
+  horario propio usa el general, que entonces se llama «Resto de servicios».
+- El cupo de cada turno es la cantidad de equipos **operativos** de la
+  modalidad (`diagnostic_equipment.operational_status` en el modelo).
+- La reserva no lleva motivo ni descripción: la orden ya dice qué estudio es.
+  Un turno ocupado responde `409` con `details.slotTaken`.
+- Las tres operaciones de la orden cuelgan de `/diagnostic-results/me/orders`,
+  que es donde el paciente ya lee sus órdenes, y por eso no piden un prefijo
+  de proxy nuevo.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/diagnostic-units/me/schedule` | `CenterSchedulePage` |
+| `GET` | `/diagnostic-units/:unitId/schedule` | `CenterSchedulePage` |
+| `PUT` | `/diagnostic-units/:unitId/schedule` | `CenterSchedulePage` (`422` validación · `409` con `affectedBookings`) |
+| `PATCH` | `/diagnostic-units/:unitId/equipment/:equipmentId` | `CenterSchedulePage` (estado del equipo) |
+| `GET` | `/diagnostic-units/:unitId/study-availability` | `OrderBooking` |
+| `GET` | `/diagnostic-results/me/orders/:orderId/booking-options` | `OrderBooking` (centros, precio, distancia) |
+| `POST` | `/diagnostic-results/me/orders/:orderId/booking` | `OrderBooking` |
+| `DELETE` | `/diagnostic-results/me/orders/:orderId/booking` | `DiagnosticOrders` (cancelar turno) |
 
 ### `DiagnosticsLabClient` — 9 operaciones
 
@@ -1292,6 +1322,58 @@ Entradas sueltas que amplían clientes ya documentados más arriba.
 
 ---
 
+### Infraestructura hospitalaria F4/F5 (`infra-f4f5-web`) — 33 operaciones
+
+Formas verificadas contra la API (`origin/claude/trusting-hawking-q3p12v`,
+`periop-or.controller.ts`, `billing-space-charges.controller.ts`,
+`accounting-space.controller.ts`, `space-assets.controller.ts`,
+`diagnostic-equipment.controller.ts`) y fijadas por las specs
+`*.contract.spec.ts` de cada cliente. Lo que la API todavía no tiene se marca
+**Pedida**: la web la trata como opcional o la deja detrás de una bandera.
+
+| Método | Ruta | Cliente | Estado en la API |
+|---|---|---|---|
+| `GET` | `/practice/infrastructure-access/me` | `SiteAccessClient` | Pedida (W-F2F3); sin ella, 404 → consola de la organización |
+| `GET` | `/sites/:siteId/operating-rooms` | `OperatingRoomsClient` | Sí |
+| `GET` | `/sites/:siteId/or-blocks` | `OperatingRoomsClient` | Sí (`owner` sin rótulo, `cases` como ids) |
+| `POST` | `/sites/:siteId/or-blocks` | `OperatingRoomsClient` | Sí (`specialtyConceptId`) |
+| `POST` | `/or-blocks/:id/release` | `OperatingRoomsClient` | Sí (`If-Match` pedido; hoy se ignora) |
+| `POST` | `/or-blocks/:id/cancel` | `OperatingRoomsClient` | Sí (ídem) |
+| `GET` | `/sites/:siteId/or-utilization` | `OperatingRoomsClient` | Sí (`rooms[]`; `asOf`/`totals` pedidos, el cliente suma) |
+| `POST` | `/procedure-cases` | `ProceduresClient` | Sí |
+| `POST` | `/procedure-cases/:caseId/safety-checklists` | `ProceduresClient` | Sí (201/200, idempotente) |
+| `GET` | `/procedure-cases/:caseId/safety-checklists/:checklistId` | `ProceduresClient` | Sí (`response.status` es concepto) |
+| `POST` | `/procedure-cases/:caseId/safety-checklists/:checklistId/responses` | `ProceduresClient` | Sí |
+| `POST` | `/procedure-cases/:caseId/room-events` | `ProceduresClient` | Sí (`cleaningOrderId` en la salida) |
+| `GET` | `/sites/:siteId/diagnostic-equipment` | `EquipmentLocationClient` | Sí |
+| `GET` | `/care-spaces/:careSpaceId/equipment` | `EquipmentLocationClient` | Sí |
+| `GET` | `/diagnostic-equipment/:id` | `EquipmentLocationClient` | Sí (F5a, `e46739aaa`) |
+| `PATCH` | `/diagnostic-equipment/:id` | `EquipmentLocationClient` | Sí (respuesta plana: la ficha relee) |
+| `POST` | `/diagnostic-equipment/:id/resource` | `EquipmentLocationClient` | Sí (`{equipmentId, resourceId}`) |
+| `GET` | `/diagnostic-equipment/:id/mwl-station` | `EquipmentLocationClient` | Sí |
+| `GET` | `/care-spaces/:careSpaceId/stock` | `InventoryLocationsClient` | Sí |
+| `POST` | `/pharmacy/:pharmacySiteId/inventory-locations` | `InventoryLocationsClient` | Sí (`{id}`) |
+| `POST` | `/pharmacy/inventory-locations/:id/relocate` | `InventoryLocationsClient` | Sí (`{id, careSpaceId, previousCareSpaceId}`) |
+| `GET` | `/sites/:siteId/sample-collection-points` | `SampleCollectionClient` | Pedida (A-F5b); detrás de `collectionPoints` |
+| `GET` | `/billing/space-tariffs` | `SpaceBillingClient` | Sí (`tariffView`) |
+| `POST` | `/billing/space-tariffs` | `SpaceBillingClient` | Sí (`tariffKind`, `currencyConceptId`) |
+| `POST` | `/billing/space-tariffs/:id/close` | `SpaceBillingClient` | Sí |
+| `GET` | `/billing/encounters/:encounterId/pending-charges` | `SpaceBillingClient` | Sí (arreglo de `chargeView`) |
+| `POST` | `/billing/encounters/:encounterId/bed-day-charges/run` | `SpaceBillingClient` | Sí (`{created[], skipped}`) |
+| `POST` | `/billing/charge-captures/:id/void` | `SpaceBillingClient` | Sí |
+| `GET` | `/sites/:siteId/inpatients` | `SpaceBillingClient` | Sí (F3; de ahí se elige el encuentro) |
+| `GET` | `/accounting/infrastructure-items` | `InfrastructureItemsClient` | Sí |
+| `PATCH` | `/accounting/infrastructure-items/:id` | `InfrastructureItemsClient` | Sí (`If-Match`) |
+| `GET` | `/accounting/cost-centers` | `InfrastructureItemsClient` | Sí |
+| `POST` | `/accounting/cost-centers/:id/unit-link` | `InfrastructureItemsClient` | Sí |
+
+Las órdenes de recambio usan `POST /cleaning-orders/:id/{start,finish,inspect}`
+de F2 (`If-Match` obligatorio). Claves pedidas y **no enviadas** mientras su
+bandera esté apagada (`INFRA_INTEGRATION_FLAGS`): `suggestedCareSpaceId` en
+`POST /clinical/service-requests`, `collectionCareSpaceId` en
+`GET /diagnostics/work-orders` y `careSpaceId` en
+`POST /scheduling/resources/:id/templates`.
+
 ## Modelo de error
 
 Copiado de `src/common/errors/error-codes.ts` del backend, que los declara parte
@@ -1507,9 +1589,9 @@ Carga masiva del catálogo, con vista previa (`dryRun`); `:entity` es `categorie
 | `GET` | `/pharmacy/products` | `InboxOrder` y 3 pantallas más | No |
 | `POST` | `/pharmacies/:pharmacyId/products` | `PharmacyCatalog` | No |
 
-### `PharmacyIntegrationClient` — 7 operaciones
+### `PharmacyIntegrationClient` — 10 operaciones
 
-La pestaña Integración del catálogo: la conexión con el sistema de la farmacia, sus vínculos de productos y «Sincronizar ahora». `422 PHARMACY_INTEGRATION_NOT_CONFIGURED` y `502 PHARMACY_INTEGRATION_UNAVAILABLE` se dicen en pantalla por su `reason`.
+La pestaña Integración del catálogo: la conexión con el sistema de la farmacia, el sistema propio de cada conexión (FAR-C9: formato, dirección, código y clave; la clave viaja solo en el cuerpo del `PUT` y nunca vuelve), sus vínculos de productos y «Sincronizar ahora». `422 PHARMACY_INTEGRATION_NOT_CONFIGURED`, `422 PHARMACY_INTEGRATION_HOST_NOT_ALLOWED`, `400 PHARMACY_INTEGRATION_URL_INVALID` y `502 PHARMACY_INTEGRATION_UNAVAILABLE` se dicen en pantalla por su `reason`.
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
@@ -1520,6 +1602,9 @@ La pestaña Integración del catálogo: la conexión con el sistema de la farmac
 | `GET` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/external-products` | `IntegrationMappings` | No |
 | `GET` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/sync-batches` | `IntegrationSync` | No |
 | `POST` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/sync` | `IntegrationSync` | No |
+| `PUT` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/external-system` | `IntegrationSystem` | No |
+| `POST` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/external-system/test` | `IntegrationSystem` | No |
+| `DELETE` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/external-system` | `IntegrationSystem` | No |
 
 ### `PharmacyOrdersClient` — 4 operaciones
 
@@ -1731,6 +1816,9 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `GET` | `/consent/me/hipaa-authorizations` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/consent/me/objections` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/consent/me/treatment-informed-consents` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/consent/practitioner-access-requests` | [`PractitionerAccessClient`](../../src/app/core/data-access/consent/practitioner-access.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/consent/practitioner-access-requests/:id/decision` | [`PractitionerAccessClient`](../../src/app/core/data-access/consent/practitioner-access.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/consent/practitioner-access-requests/:id/revoke` | [`PractitionerAccessClient`](../../src/app/core/data-access/consent/practitioner-access.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/diagnostic-results/me/:reportId/files/:fileId/content` | [`DiagnosticsClient`](../../src/app/core/data-access/diagnostics/diagnostics.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/diagnostics/lab/categories` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/diagnostics/lab/categories` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |

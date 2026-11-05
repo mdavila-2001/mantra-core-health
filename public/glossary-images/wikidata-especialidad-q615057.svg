@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Anestesiología</title>
+  <desc id="d">Arriba, las tres etapas del trabajo del anestesiólogo: antes de la operación valora el riesgo y planifica, durante administra la anestesia y vigila corazón y respiración, y después asegura un despertar seguro y controla el dolor. Abajo, los tipos de anestesia, general, regional, local y sedación, y un monitor de constantes.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="220" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="50" text-anchor="middle" class="title">Antes, durante y después de la operación</text>
+  <rect x="40" y="66" width="220" height="36" rx="8" fill="var(--accent)"/>
+  <text x="150.0" y="89.04" text-anchor="middle" class="step" style="fill:var(--on)">Antes</text>
+  <text x="50" y="132" class="lab">• Valorar el riesgo</text>
+  <text x="50" y="158" class="lab">• Revisar medicación</text>
+  <text x="50" y="184" class="lab">• Planificar la anestesia</text>
+  <rect x="290" y="66" width="220" height="36" rx="8" fill="var(--purple)"/>
+  <text x="400.0" y="89.04" text-anchor="middle" class="step" style="fill:var(--on)">Durante</text>
+  <text x="300" y="132" class="lab">• Anestesia y sedación</text>
+  <text x="300" y="158" class="lab">• Vigilar corazón y pulmón</text>
+  <text x="300" y="184" class="lab">• Controlar el dolor</text>
+  <rect x="540" y="66" width="220" height="36" rx="8" fill="var(--ok)"/>
+  <text x="650.0" y="89.04" text-anchor="middle" class="step" style="fill:var(--on)">Después</text>
+  <text x="550" y="132" class="lab">• Despertar seguro</text>
+  <text x="550" y="158" class="lab">• Dolor y náuseas</text>
+  <text x="550" y="184" class="lab">• Cuidados intensivos</text>
+  <line x1="262" y1="84" x2="286" y2="84" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="512" y1="84" x2="536" y2="84" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="20" y="256" width="450" height="190" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="245.0" y="286" text-anchor="middle" class="title">Tipos de anestesia</text>
+  <rect x="40" y="302" width="110" height="28" rx="8" fill="var(--accent-l)"/>
+  <text x="95.0" y="320.32" text-anchor="middle" class="small" style="fill:var(--ink)">General</text>
+  <text x="164" y="321" class="lab">inconsciente, sin dolor</text>
+  <rect x="40" y="334" width="110" height="28" rx="8" fill="var(--accent-l)"/>
+  <text x="95.0" y="352.32" text-anchor="middle" class="small" style="fill:var(--ink)">Regional</text>
+  <text x="164" y="353" class="lab">raquídea, epidural, bloqueos</text>
+  <rect x="40" y="366" width="110" height="28" rx="8" fill="var(--accent-l)"/>
+  <text x="95.0" y="384.32" text-anchor="middle" class="small" style="fill:var(--ink)">Local</text>
+  <text x="164" y="385" class="lab">solo una zona pequeña</text>
+  <rect x="40" y="398" width="110" height="28" rx="8" fill="var(--accent-l)"/>
+  <text x="95.0" y="416.32" text-anchor="middle" class="small" style="fill:var(--ink)">Sedación</text>
+  <text x="164" y="417" class="lab">relajado, a veces despierto</text>
+  <rect x="486" y="256" width="294" height="190" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="633.0" y="286" text-anchor="middle" class="title">El monitor</text>
+  <rect x="506" y="296" width="254" height="130" rx="10" fill="var(--ink)" opacity=".9"/>
+  <path d="M516 336 h30 l6 -18 l6 30 l6 -12 h40 l6 -18 l6 30 l6 -12 h40 l6 -18 l6 30 l6 -12 h30" fill="none" stroke="var(--ok)" stroke-width="2"/>
+  <path d="M516 380 q20 -20 40 0 t40 0 t40 0 t40 0 t40 0" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <text x="516" y="414" class="small" style="fill:var(--on)">Pulso, presión, oxígeno, CO₂</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

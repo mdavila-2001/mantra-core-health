@@ -8,15 +8,27 @@
       </p>
     </div>
     @if (!abierto()) {
-      <button
-        app-button
-        type="button"
-        class="invitar__abrir"
-        (clicked)="abrir()"
-        data-testid="invitar-abrir"
-      >
-        Invitar a una secretaria
-      </button>
+      <div class="invitar__botones-abrir">
+        <button
+          app-button
+          type="button"
+          class="invitar__abrir"
+          (clicked)="abrir('invitar')"
+          data-testid="invitar-abrir"
+        >
+          Invitar secretaria registrada
+        </button>
+        <button
+          app-button
+          variant="outline"
+          type="button"
+          class="invitar__crear"
+          (clicked)="abrir('crear')"
+          data-testid="invitar-crear"
+        >
+          Crear y vincular secretaria
+        </button>
+      </div>
     }
   </header>
 
@@ -33,6 +45,12 @@
         </button>
       </div>
     </app-alert>
+  } @else if (abierto() && modo() === 'crear') {
+    <app-create-secretary-form
+      [roleAssignmentId]="vinculacionId() ?? opciones()[0]?.value ?? ''"
+      (created)="onSecretariaCreada($event)"
+      (cancelled)="cerrar()"
+    />
   } @else if (abierto()) {
     <form
       class="invitar__form"

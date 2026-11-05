@@ -442,7 +442,7 @@ export class TodayAgenda {
             this.status.set(
               empty(
                 { label: 'Publicar mi horario', route: AGENDA_CREATE_ROUTE },
-                'Todavía no tiene una agenda publicada, así que nadie puede reservarle hora.',
+                'Publique su horario y sus pacientes podrán reservarle consulta en línea.',
               ),
             );
             return;
@@ -480,7 +480,7 @@ export class TodayAgenda {
                 // Con una sede sin leer, «ninguna» sería afirmar lo que no se sabe.
                 fallidas.length > 0
                   ? 'No tiene consultas reservadas hoy en las agendas que se pudieron cargar.'
-                  : 'Hoy no tiene ninguna consulta reservada.',
+                  : 'Hoy no tiene consultas reservadas. Buen momento para ponerse al día o abrir más horarios.',
               ),
             );
             return;

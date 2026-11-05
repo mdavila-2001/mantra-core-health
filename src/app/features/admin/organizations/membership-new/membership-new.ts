@@ -30,10 +30,12 @@ import type { BreadcrumbItem } from '../../../../shared/components/molecules/bre
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { unavailableMessageOf } from '../../../../core/data-access/simulator-only';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
 import { crearBuscadorDePersonas } from '../people-search';
 import { errorMessageOf } from '../../../../shared/forms/form-support';
@@ -92,6 +94,7 @@ const ETIQUETAS_DE_ALCANCE: Readonly<Record<AccessScopeCode, string>> = {
     FormActions,
     FormField,
     FormSection,
+    BackLink,
     PageHeader,
     ReferenceCombobox,
     Select,
@@ -105,6 +108,20 @@ export class MembershipNew {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+
+  /** Si ya se avisó que la búsqueda de personas no está en la API. */
+  private busquedaNoDisponibleAvisada = false;
+
+  /**
+   * «Sin resultados» mentiría si la búsqueda no existe en la API (informe B,
+   * §2): se dice qué falta, una sola vez y no en cada tecla.
+   */
+  private avisarBusquedaNoDisponible(error: unknown): void {
+    const aviso = unavailableMessageOf(error);
+    if (aviso === null || this.busquedaNoDisponibleAvisada) return;
+    this.busquedaNoDisponibleAvisada = true;
+    this.toast.warning(aviso);
+  }
 
   /**
    * La organización a la que se suma la persona, del segmento `:tenantId`.
@@ -316,6 +333,9 @@ export class MembershipNew {
     this.toast.success(`Invitación enviada a ${nombre}: queda pendiente de aceptación. Hasta que la acepte, no cuenta en la organización.`, 'Invitación enviada');
     void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));
   }
+
+  /** A dónde sale el botón «Volver». */
+  protected readonly rutaVolver = computed(() => organizationDetailRoute(this.tenantId()));
 
   protected cancelar(): void {
     void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));

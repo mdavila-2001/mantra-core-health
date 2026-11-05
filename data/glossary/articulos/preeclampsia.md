@@ -1,5 +1,6 @@
 ---
 slug: preeclampsia
+image: preeclampsia.svg | La preeclampsia nace en la placenta y afecta a varios órganos. | Flujo que va de la placenta con vasos mal formados a la presión alta y al daño de órganos, con el control prenatal y las señales de alarma durante el embarazo.
 ---
 
 ## [definition] Introducción

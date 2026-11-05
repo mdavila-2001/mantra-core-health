@@ -1,6 +1,6 @@
 @if (visible()) {
   <app-card class="verificacion" variant="outlined" padding="lg" data-testid="admission-status-card">
-    <h2 class="verificacion__titulo">Estado de su verificación</h2>
+    <h2 class="verificacion__titulo"><app-nav-icon name="shield" aria-hidden="true" /> Estado de su verificación</h2>
 
     @switch (state()) {
       @case ('loading') {
@@ -11,7 +11,7 @@
       @case ('error') {
         <p class="verificacion__error" role="status" data-testid="admission-card-error">
           No pudimos cargar el estado de su verificación.
-          <button app-button type="button" variant="secondary" size="sm" (clicked)="load()">Reintentar</button>
+          <button app-button type="button" variant="secondary" size="sm" (clicked)="load()"><app-nav-icon name="refresh" /> Reintentar</button>
         </p>
       }
       @case ('ready') {
@@ -94,6 +94,7 @@
                 data-testid="admission-card-resubmit"
                 (clicked)="resubmit()"
               >
+                <app-nav-icon name="share" />
                 Corregir y reenviar
               </button>
             </section>

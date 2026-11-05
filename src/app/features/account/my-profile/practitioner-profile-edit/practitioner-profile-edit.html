@@ -175,9 +175,9 @@
               </app-form-field>
 
               <!-- «Acepto pacientes nuevos» ya no se pregunta (propietario,
-                   13/09/2026): siempre está habilitado. El alta tampoco lo
-                   pregunta; ver `guardarPresentacion`. -->
-              <app-switch [(checked)]="telemedicina" label="Atiendo por telemedicina" />
+                   13/09/2026): siempre está habilitado.
+                   Telemedicina tampoco se activa desde el perfil (01/11/2026):
+                   sólo se activa por franja horaria anexada a una fecha en la agenda. -->
             </form>
 
             <!-- El logo del consultorio: se carga y se cambia SÓLO desde acá. La misma
@@ -200,7 +200,7 @@
               </p>
 
               <div class="edicion__logo-cuerpo">
-                <app-practice-logo data-testid="edicion-logo-vista" [src]="logoVisible()" />
+                <app-practice-logo data-testid="edicion-logo-vista" [src]="logoVisible()" [uploading]="subiendoLogo()" />
 
                 <div class="edicion__logo-acciones">
                   <app-file-input
@@ -212,7 +212,7 @@
                     [accept]="formatosDelLogo"
                     [maxSizeBytes]="maxBytesDelLogo"
                     [maxFiles]="1"
-                    [disabled]="subiendoLogo()"
+                    [uploading]="subiendoLogo()" uploadingLabel="Subiendo el logo…"
                     [showList]="false"
                     [showFeedback]="false"
                     [label]="logoVisible() ? 'Cambiar logo' : 'Subir logo'"
@@ -229,9 +229,6 @@
                     >
                       Quitar logo
                     </button>
-                  }
-                  @if (subiendoLogo()) {
-                    <p class="edicion__logo-estado" role="status">Subiendo el logo…</p>
                   }
                   @if (errorDelLogo()) {
                     <p class="edicion__logo-error" role="alert" data-testid="edicion-logo-error">
@@ -260,7 +257,7 @@
                 <app-signature-or-seal
                   tipo="firma"
                   data-testid="edicion-firma-vista"
-                  [src]="firma.visible()"
+                  [src]="firma.visible()" [uploading]="firma.uploading()"
                 />
 
                 <div class="edicion__logo-acciones">
@@ -273,7 +270,7 @@
                     [accept]="formatosDeFirma"
                     [maxSizeBytes]="maxBytesDeFirma"
                     [maxFiles]="1"
-                    [disabled]="firma.uploading()"
+                    [uploading]="firma.uploading()" uploadingLabel="Subiendo firma…"
                     [showList]="false"
                     [showFeedback]="false"
                     [label]="firma.visible() ? 'Cambiar firma' : 'Subir firma'"
@@ -291,9 +288,6 @@
                       Quitar firma
                     </button>
                   }
-                  @if (firma.uploading()) {
-                    <p class="edicion__logo-estado" role="status">Subiendo firma…</p>
-                  }
                   @if (firma.error()) {
                     <p class="edicion__logo-error" role="alert" data-testid="edicion-firma-error">
                       {{ firma.error() }}
@@ -306,7 +300,7 @@
                 <app-signature-or-seal
                   tipo="sello"
                   data-testid="edicion-sello-vista"
-                  [src]="sello.visible()"
+                  [src]="sello.visible()" [uploading]="sello.uploading()"
                 />
 
                 <div class="edicion__logo-acciones">
@@ -319,7 +313,7 @@
                     [accept]="formatosDeFirma"
                     [maxSizeBytes]="maxBytesDeFirma"
                     [maxFiles]="1"
-                    [disabled]="sello.uploading()"
+                    [uploading]="sello.uploading()" uploadingLabel="Subiendo sello…"
                     [showList]="false"
                     [showFeedback]="false"
                     [label]="sello.visible() ? 'Cambiar sello' : 'Subir sello'"
@@ -336,9 +330,6 @@
                     >
                       Quitar sello
                     </button>
-                  }
-                  @if (sello.uploading()) {
-                    <p class="edicion__logo-estado" role="status">Subiendo sello…</p>
                   }
                   @if (sello.error()) {
                     <p class="edicion__logo-error" role="alert" data-testid="edicion-sello-error">

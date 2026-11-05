@@ -6,6 +6,9 @@ import { API_BASE_URL, apiUrl } from '../api';
 import {
   SYNC_BATCH_LIMIT_MAX,
   type ExternalProductList,
+  type ExternalSystemDraft,
+  type ExternalSystemProbe,
+  type ExternalSystemSaved,
   type IntegrationConnectionCreated,
   type IntegrationConnectionDraft,
   type IntegrationConnectionList,
@@ -112,6 +115,30 @@ export class PharmacyIntegrationClient {
     return this.http.get<SyncBatchList>(`${this.connectionUrl(pharmacyId, connectionId)}/sync-batches`, {
       params: new HttpParams().set('limit', String(bounded)),
     });
+  }
+
+  /**
+   * `PUT …/:connectionId/external-system` (FAR-C9 · C9-3): guarda el sistema
+   * de la farmacia. La API lo prueba antes: 502 si no responde con esa clave,
+   * 422/400 si la dirección no se puede llamar. La clave va solo en el cuerpo.
+   */
+  saveSystem(pharmacyId: string, connectionId: string, draft: ExternalSystemDraft): Observable<ExternalSystemSaved> {
+    return this.http.put<ExternalSystemSaved>(`${this.connectionUrl(pharmacyId, connectionId)}/external-system`, {
+      format: draft.format,
+      baseUrl: draft.baseUrl.trim(),
+      externalPharmacyCode: draft.externalPharmacyCode.trim(),
+      apiKey: draft.apiKey,
+    });
+  }
+
+  /** `POST …/:connectionId/external-system/test` — prueba el sistema que usa hoy la conexión. */
+  probeSystem(pharmacyId: string, connectionId: string): Observable<ExternalSystemProbe> {
+    return this.http.post<ExternalSystemProbe>(`${this.connectionUrl(pharmacyId, connectionId)}/external-system/test`, {});
+  }
+
+  /** `DELETE …/:connectionId/external-system` — 204; la conexión vuelve al sistema del servidor o a manual. */
+  removeSystem(pharmacyId: string, connectionId: string): Observable<void> {
+    return this.http.delete<void>(`${this.connectionUrl(pharmacyId, connectionId)}/external-system`);
   }
 
   /** `POST …/:connectionId/sync` — 200 con el resumen de lo recibido y lo aplicado. */

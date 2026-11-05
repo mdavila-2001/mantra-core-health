@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q7218
+image: wikidata-especialidad-q7218.svg | La toxicología estudia cómo entran, actúan y se eliminan las sustancias dañinas. | Silueta humana con flechas de las vías de entrada de un tóxico y el hígado y el riñón señalados, junto a una curva de dosis y efecto sin escala.
 ---
 
 ## [definition] Introducción

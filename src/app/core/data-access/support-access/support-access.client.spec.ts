@@ -2,6 +2,7 @@ import { provideHttpClient, type HttpErrorResponse } from '@angular/common/http'
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { environment } from '../../../../environments/environment';
 import { SupportAccessClient } from './support-access.client';
 import type { SupportAgenda } from './support-agenda.types';
 import type { SupportInvitationCreated } from './support-invite.types';
@@ -12,6 +13,12 @@ import type { SupportInvitationCreated } from './support-invite.types';
  * (ronda «personal de apoyo»); las tres marcadas «propuesta» en el cliente se
  * prueban igual, porque la pantalla depende de ellas.
  */
+// Estas pruebas fijan el contrato con la API real, no con el simulador: en la rama
+// de la maqueta `mockBackend` viene encendido y el cliente lee de otra fuente.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: false }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
+
 describe('SupportAccessClient', () => {
   let client: SupportAccessClient;
   let http: HttpTestingController;

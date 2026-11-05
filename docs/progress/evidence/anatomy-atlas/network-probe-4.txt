@@ -1,0 +1,15 @@
+# network-probe-4 — entorno alovida — 2026-10-24T22:25:22Z
+# Comando literal del PASO 0; salida literal:
+https://eutils.ncbi.nlm.nih.gov/entrez/eutils/einfo.fcgi 200
+https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=femur&format=json 200
+https://api.openalex.org/works?search=femur 429
+https://api.crossref.org/works/10.1111/joa.12345 200
+https://commons.wikimedia.org/w/api.php?action=query&format=json 429
+https://upload.wikimedia.org/ 301
+https://www.ebi.ac.uk/ols4/api/ontologies/uberon 200
+https://ta2viewer.openanatomy.org/ 200
+https://purl.obolibrary.org/obo/UBERON_0000981 303
+
+# Diagnóstico complementario (cuerpos de los 429):
+# OpenAlex 429: 'Insufficient budget. This request has no API key, so it counts against the free daily budget shared by everyone on your network's IP address, and that budget is used up ($0 remaining; resets at midnight UTC).'
+# Commons 429 (3 intentos con User-Agent identificado, 15 s entre intentos): 'You are making too many requests to the API.' — límite de tasa sobre la IP de salida compartida.

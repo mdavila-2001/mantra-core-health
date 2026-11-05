@@ -4,6 +4,7 @@ import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-ver
 import { ANY_ROLE } from './navigation.types';
 import { SECCIONES_DE_LABORATORIO } from './navigation.laboratory';
 import { INSIGHTS_SECTIONS } from './navigation.insights';
+import { ACCESS_REQUESTS_SECTIONS } from './navigation.access-requests';
 import { SECCIONES_DE_PLATAFORMA } from './navigation.platform';
 import { SECCIONES_DE_APOYO } from './navigation.support';
 import type { AppSection } from './navigation.types';
@@ -535,7 +536,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Intervenciones',
     group: 'Atención',
     icon: 'scalpel',
-    roles: ['SURGEON', 'ANESTHESIOLOGIST', 'PERIOP_NURSE', 'SURGERY_SCHEDULER', 'PERIOP_ADMIN'],
+    // F4 (`CONTRATO-F2-F5.md` §F4.3): Facturación y la administración leen la
+    // agenda de quirófanos y la utilización. La API decide cada acción.
+    roles: ['SURGEON', 'ANESTHESIOLOGIST', 'PERIOP_NURSE', 'SURGERY_SCHEDULER', 'PERIOP_ADMIN', 'BILLING', 'SECURITY_ADMIN'],
     availability: 'disponible',
     summary: 'Mire las intervenciones programadas y confirme su participación.',
     module: 'M53 procedures_perioperative',
@@ -743,15 +746,11 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
-    // FT-21 (carril 21). El equipo de un servicio de salud: cargos, pago
-    // acordado por cargo y un expediente que se cierra una semana después de
-    // realizado. Renglón propio por el mismo criterio que «Cotizaciones»: es
-    // un destino al que se vuelve —responder invitaciones, cargar las notas
-    // del ejercicio—, no un paso que se hace una vez.
-    //
-    // La ruta es `my-medical-groups` y no `medical-groups`: ese es el prefijo
-    // del módulo en la API y el proxy compara por inicio de ruta.
+    // FT-21. Pestaña de «Grupos y foros» (`GroupsHub`, 01/11/2026): se unifican
+    // comunidades y equipos médicos. `/my-medical-groups` sigue abriendo.
+    // La ruta es `my-medical-groups` y no `medical-groups` por el proxy de API.
     path: 'my-medical-groups',
+    fueraDelMenuPara: ['PRACTITIONER', 'CLINICIAN'],
     label: 'Grupos médicos',
     group: 'Atención',
     icon: 'people',
@@ -1168,7 +1167,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Catálogo de servicios',
     group: 'Administración',
     icon: 'tag',
-    roles: ['SECURITY_ADMIN'],
+    // F5e: Facturación carga las tarifas de espacios y revisa el día-cama.
+    roles: ['SECURITY_ADMIN', 'BILLING'],
     availability: 'disponible',
     summary: 'Mantenga la lista fija de servicios sobre la que se arman los presupuestos.',
     module: 'M17 billing',
@@ -1391,13 +1391,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M07 consent',
   },
   {
-    // BR-20 · CV-19: quién ve la historia del paciente y la revocación. Reemplaza
-    // a las maquetas estáticas de `features/alovida/accesos`, que quedan fuera de
-    // este menú (DECISIONES.md, BR-20).
     path: 'my-account/clinical-access',
-    // Sin renglón propio desde el 27/10/2026: es la vista `?ver=historia` de
-    // «Mi privacidad». La ruta redirige (`SECCIONES_REDIRIGIDAS`) y la sección
-    // queda registrada para que los enlaces guardados sigan resolviendo.
     fueraDelMenuPara: [ANY_ROLE],
     label: 'Quién ve mi historia',
     group: 'Mi cuenta',
@@ -1407,12 +1401,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Quién ve su historia clínica, y revóquelo.',
     module: 'M06 authz',
   },
+  ...ACCESS_REQUESTS_SECTIONS,
   {
-    // ID-24 / CV-22: cambiar la contraseña y ver o cerrar las sesiones. De
-    // cualquier persona con sesión (`ANY_ROLE`); la API no exige rol y resuelve
-    // todo por el `id` del token. Fuera del menú lateral —al médico le
-    // desaparece «Mi cuenta» a propósito, y una entrada más lo traería de
-    // vuelta—: se entra por el menú de la cuenta, en el encabezado.
+    // ID-24 / CV-22: cambiar la contraseña y ver o cerrar las sesiones.
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/security',
     label: 'Seguridad',

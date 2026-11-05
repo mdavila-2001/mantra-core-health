@@ -1,0 +1,18 @@
+/* The tints the volume is multiplied by: soft turquoise for the chosen zone,
+   paler for what was told. Tokens only (both themes read them as is). */
+.body-map-pintura__tinta--elegida { flood-color: var(--c-aqua-400); }
+.body-map-pintura__tinta--marcada { flood-color: var(--c-aqua-100); }
+.body-map-pintura__capa--marcada { opacity: 0.85; }
+
+.body-map-pintura__capa {
+  pointer-events: none;
+  animation: body-map-pintura-entra var(--dur-base) var(--ease-out);
+}
+
+@keyframes body-map-pintura-entra {
+  from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .body-map-pintura__capa { animation: none; }
+}

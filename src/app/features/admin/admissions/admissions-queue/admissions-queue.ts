@@ -31,6 +31,7 @@ import {
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Link } from '@shared/components/atoms/link/link';
+import { Spinner } from '@shared/components/atoms/spinner/spinner';
 import { Card } from '@shared/components/molecules/card/card';
 import { DataTable } from '@shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '@shared/components/organisms/data-table/data-table.types';
@@ -129,18 +130,7 @@ const FILTERS: readonly FilterDef[] = [
  */
 @Component({
   selector: 'app-admissions-queue',
-  imports: [
-    AppButton,
-    Badge,
-    Card,
-    DataTable,
-    DatePipe,
-    FilterBar,
-    Link,
-    PageHeader,
-    RouterLink,
-    ViewStateHost,
-  ],
+  imports: [AppButton, Badge, Card, DataTable, DatePipe, FilterBar, Link, PageHeader, RouterLink, Spinner, ViewStateHost],
   templateUrl: './admissions-queue.html',
   styleUrl: './admissions-queue.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -181,6 +171,8 @@ export class AdmissionsQueue {
   protected readonly state = signal<ViewState<AdmissionPage>>(loading());
   private lastGood: { page: AdmissionPage; at: Date } | null = null;
   private requestSeq = 0;
+  /** True while a page request is in flight; the table keeps the previous rows meanwhile. */
+  protected readonly fetching = signal(false);
 
   protected readonly hasFilters = computed(
     () => this.status() !== '' || this.type() !== '' || this.assigned() !== '' || this.overdue() || this.committedSearch() !== '',
@@ -282,6 +274,7 @@ export class AdmissionsQueue {
 
   private load(cursor: string): void {
     const seq = ++this.requestSeq;
+    this.fetching.set(true);
     if (this.lastGood === null) this.state.set(loading());
     const assigned = this.assigned() === 'me' ? (this.session.userId() ?? '') : this.assigned();
     this.client
@@ -299,6 +292,7 @@ export class AdmissionsQueue {
         next: (page) => {
           // Una respuesta vieja no pisa a una más nueva.
           if (seq !== this.requestSeq) return;
+          this.fetching.set(false);
           this.lastGood = { page, at: new Date() };
           const total = Object.values(page.counts).reduce((s, n) => s + n, 0);
           this.state.set(
@@ -309,6 +303,7 @@ export class AdmissionsQueue {
         },
         error: (error: unknown) => {
           if (seq !== this.requestSeq) return;
+          this.fetching.set(false);
           const problema = readAdmissionError(error);
           if (problema.kind === 'role') {
             this.state.set(forbidden({ message: problema.message, ...(problema.requestId === null ? {} : { requestId: problema.requestId }) }));

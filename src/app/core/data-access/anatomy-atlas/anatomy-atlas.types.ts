@@ -3,7 +3,8 @@
 
     Son la forma de los JSON que escribe `scripts/gen-anatomy-ontology-fixture.mjs`
     en `public/anatomy-atlas-3d/catalog/`. No es un recurso de la API: es
-    contenido de referencia abierto (UBERON, FMA, BodyParts3D) que viaja con el
+    contenido de referencia abierto (UBERON, FMA, BodyParts3D y el Human
+    Reference Atlas de HuBMAP) que viaja con el
     frontend, igual que las mallas. Por eso se lee igual en la maqueta y contra
     la API real.
     ========================================================================== */
@@ -11,22 +12,34 @@
 /** Las capas del modelo, una por GLB. */
 export type AnatomyLayer = 'skeleton' | 'muscles' | 'vessels' | 'nervous' | 'organs';
 
-/** El cuerpo que se muestra. Ver `AnatomyAtlasPage` sobre lo que significa «female». */
+/** El cuerpo que se muestra. Ver `GlossaryAnatomyAtlas` sobre lo que significa «female». */
 export type AnatomySex = 'male' | 'female';
 
 /** Una malla del modelo y la estructura que representa. */
 export interface AnatomyPart {
-  /** Nombre del nodo en el GLB: el id de BodyParts3D (`FMA24474`, `BP24`). */
+  /**
+   * Nombre del nodo en el GLB: el id de BodyParts3D (`FMA24474`, `BP24`) o el
+   * nodo del Human Reference Atlas (`VH_F_cervix`).
+   */
   readonly meshId: string;
   readonly layer: AnatomyLayer;
-  /** `male` si la pieza es exclusiva del cuerpo masculino de referencia. */
-  readonly sex: 'male' | 'shared';
+  /**
+   * En qué cuerpo se dibuja: `shared` en los dos; `male` sólo en «Hombre»
+   * (los genitales masculinos y la pelvis masculina de BodyParts3D); `female`
+   * sólo en «Mujer» (la pelvis, el útero, las trompas, los ovarios y las mamas
+   * del Visible Human Female, vía HuBMAP).
+   */
+  readonly sex: 'male' | 'female' | 'shared';
   readonly structureId: string;
   readonly shard: number;
   readonly side: 'right' | 'left' | null;
   readonly labelEn: string;
-  /** Cómo se cruzó la malla con UBERON; `fma_only` si no se cruzó. */
-  readonly match: 'fma_exact' | 'fma_parent' | 'fma_only';
+  /**
+   * Cómo se cruzó la malla con UBERON; `fma_only` si no se cruzó. Las piezas
+   * de HuBMAP usan su tabla de cruce: `hra_exact` (UBERON directo), `hra_fma`
+   * (por su FMA) o `hra_only` (sin UBERON en el catálogo).
+   */
+  readonly match: 'fma_exact' | 'fma_parent' | 'fma_only' | 'hra_exact' | 'hra_fma' | 'hra_only';
 }
 
 /** Una referencia de la definición, ya clasificada. */

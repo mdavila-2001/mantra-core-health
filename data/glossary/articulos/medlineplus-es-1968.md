@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-1968
+image: medlineplus-es-1968.svg | Según el caso se extirpa solo el útero o también el cuello, las trompas y los ovarios. | Cuatro dibujos del útero, las trompas y los ovarios con las partes extirpadas en línea discontinua en las histerectomías subtotal, total, con anexos y radical, y las vías de acceso.
 ---
 
 ## [definition] Introducción

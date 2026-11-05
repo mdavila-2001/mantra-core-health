@@ -17,7 +17,7 @@ import {
   sortByDistance,
   sortByPrice,
 } from './pharmacy-search.service';
-import type { ProductHit } from './pharmacy-search.types';
+import type { ProductHit, SearchResult } from './pharmacy-search.types';
 
 /**
  * Datos sintéticos declarados, fieles a los tipos de `pharmacy.types.ts`. Dos
@@ -316,6 +316,27 @@ describe('PharmacySearchService', () => {
       // El orden es el que llegó del backend, tal cual.
       expect(resultado!.items.map((fila) => fila.siteId)).toEqual([IDS.sedeSur, IDS.sedeCentro]);
       expect(resultado!.sinOrigen).toBe(true);
+    });
+
+    it('trae la corrección de la API, y con exact pide lo escrito tal cual', () => {
+      let resultado: SearchResult<ProductHit> | undefined;
+      service.searchProducts('ibopofeno', CASA, 'price').subscribe((r) => (resultado = r));
+      const corregida = http.expectOne((r) => r.url === '/pharmacy/products');
+      expect(corregida.request.params.has('exact')).toBe(false);
+      corregida.flush({ ...CATALOGO, correctedQuery: 'ibuprofeno' });
+      http
+        .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+        .flush(
+          disponibilidad([
+            sedeDisponible(IDS.sedeCentro, 'Centro', 1.2, [{ id: IDS.ibuprofeno, amount: '14.00' }]),
+          ]),
+        );
+      expect(resultado?.correctedQuery).toBe('ibuprofeno');
+
+      service.searchProducts('ibopofeno', CASA, 'price', true).subscribe();
+      const literal = http.expectOne((r) => r.url === '/pharmacy/products');
+      expect(literal.request.params.get('exact')).toBe('true');
+      literal.flush(SIN_CATALOGO);
     });
 
     it('con menos de dos letras no consulta nada', () => {

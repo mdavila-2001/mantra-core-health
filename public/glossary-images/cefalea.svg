@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Tipos de dolor de cabeza y señales de alarma</title>
+  <desc id="d">Tres perfiles de cabeza: en la cefalea tensional el dolor rodea la cabeza como una banda; en la migraña ocupa con frecuencia un lado; en la cefalea en racimos se concentra alrededor de un ojo. Debajo, un recuadro con las señales de alarma que requieren atención urgente.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --skin:#e9edf2; --pain:#d9534f; --warn:#c0392b; --warn-l:#fbe3e1; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --skin:#2a3541; --pain:#ef7467; --warn:#ef7467; --warn-l:#3a2427; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <defs>
+    <g id="head">
+      <path d="M-50 40 C-62 -10 -50 -70 0 -72 C50 -72 64 -20 56 20 L66 40 L54 46 L54 70 C40 80 20 78 10 76 L8 100 L-40 100 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+      <circle cx="30" cy="-6" r="4" fill="var(--muted)"/>
+    </g>
+  </defs>
+
+  <rect x="20" y="20" width="760" height="270" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="50" text-anchor="middle" class="title">Dónde suele doler</text>
+
+  <g transform="translate(150 160)">
+    <use href="#head"/>
+    <ellipse cx="2" cy="-36" rx="60" ry="14" fill="none" stroke="var(--pain)" stroke-width="7" opacity=".75"/>
+  </g>
+  <text x="150" y="284" text-anchor="middle" class="h" transform="translate(0 -20)">Tensional</text>
+  <text x="150" y="282" text-anchor="middle" class="small muted">Presión en banda, ambos lados</text>
+
+  <g transform="translate(400 160)">
+    <use href="#head"/>
+    <path d="M-10 -70 C30 -72 56 -40 54 -6 C30 -10 0 -30 -10 -70 Z" fill="var(--pain)" opacity=".6"/>
+  </g>
+  <text x="400" y="264" text-anchor="middle" class="h">Migraña</text>
+  <text x="400" y="282" text-anchor="middle" class="small muted">Pulsátil, a menudo de un lado</text>
+
+  <g transform="translate(650 160)">
+    <use href="#head"/>
+    <circle cx="30" cy="-8" r="18" fill="var(--pain)" opacity=".6"/>
+  </g>
+  <text x="650" y="264" text-anchor="middle" class="h">En racimos</text>
+  <text x="650" y="282" text-anchor="middle" class="small muted">Muy intensa, alrededor de un ojo</text>
+
+  <rect x="20" y="304" width="760" height="156" rx="14" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="400" y="332" text-anchor="middle" class="h" style="fill:var(--warn)">Señales de alarma: pida atención urgente</text>
+  <g class="lab">
+    <text x="50" y="362">• Dolor súbito y explosivo, «el peor de mi vida»</text>
+    <text x="50" y="386">• Con fiebre y rigidez de cuello</text>
+    <text x="50" y="410">• Tras un golpe en la cabeza</text>
+    <text x="50" y="434">• Con convulsiones o pérdida de conciencia</text>
+    <text x="420" y="362">• Debilidad o adormecimiento de un lado</text>
+    <text x="420" y="386">• Dificultad para hablar o cara torcida</text>
+    <text x="420" y="410">• Pérdida de visión o visión doble</text>
+    <text x="420" y="434">• Confusión o somnolencia marcada</text>
+  </g>
+</svg>

@@ -1,5 +1,6 @@
 ---
 slug: desnutricion
+image: desnutricion.svg | La desnutrición puede manifestarse como bajo peso, talla baja o carencias de micronutrientes. | Tres recuadros con los tipos de desnutrición y pequeñas siluetas de distinto tamaño, junto a listas de causas, señales y formas de evaluación.
 ---
 
 ## [definition] Introducción

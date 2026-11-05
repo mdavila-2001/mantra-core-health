@@ -124,7 +124,14 @@ describe('VitrinaMinima', () => {
 
     const subida = http.expectOne((r) => r.url.endsWith('/common/files/upload'));
     expect(subida.request.method).toBe('POST');
+    // While the upload is pending the dropzone shows its spinner.
+    fixture.detectChanges();
+    const zona = (): Element | null =>
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="file-input-uploading"]');
+    expect(zona()?.textContent).toContain('Subiendo imagen');
     subida.flush({ id: 'file-9' });
+    fixture.detectChanges();
+    expect(zona()).toBeNull();
 
     const req = http.expectOne('/community/profiles/me');
     expect(req.request.body).toMatchObject({ avatarFileId: 'file-9', visibility: 'PUBLIC' });

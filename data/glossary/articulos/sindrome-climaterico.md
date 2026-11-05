@@ -1,5 +1,6 @@
 ---
 slug: sindrome-climaterico
+image: sindrome-climaterico.svg | Los estrógenos descienden a lo largo del climaterio. | Curva de estrógenos que baja de la etapa fértil a la posmenopausia con la menopausia marcada, junto a los síntomas frecuentes del climaterio y las medidas que ayudan.
 ---
 
 ## [definition] Introducción

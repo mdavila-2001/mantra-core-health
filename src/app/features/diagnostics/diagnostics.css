@@ -61,3 +61,8 @@
 .laboratorio__completada {
   color: var(--st-success-fg);
 }
+
+/* F5b: el filtro por punto de toma. */
+.laboratorio__filtro {
+  inline-size: min(100%, 22rem);
+}

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q6806614
+image: wikidata-especialidad-q6806614.svg | La toxicología médica diagnostica y trata los daños causados por sustancias tóxicas. | Secuencia vertical de cinco pasos en la atención a una intoxicación, desde la exposición hasta el antídoto, junto a las situaciones que atiende y un recuadro con qué hacer ante una intoxicación.
 ---
 
 ## [definition] Introducción

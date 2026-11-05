@@ -5,7 +5,7 @@
  * `pharmacy.types.ts`, así que sus consumidores no cambian de import.
  */
 
-import type { GeoPoint, PharmacyConcept } from './pharmacy.types';
+import type { GeoPoint, PharmacyConcept } from './pharmacy-base.types';
 
 /** El precio vigente con que una sede ofrece un producto disponible. */
 export interface AvailabilityPrice {

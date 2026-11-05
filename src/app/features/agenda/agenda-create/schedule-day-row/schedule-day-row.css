@@ -122,13 +122,15 @@
   }
 
   /* La cuenta de horarios, arriba a la derecha del día, y no sola en un
-     renglón más: es el resumen de la fila. */
+     renglón más: es el resumen de la fila. Sólo cuando la fila NO es flexible
+     (en fila flexible no hay cuenta de horarios y «Desde» quedaba absorbido
+     arriba a la derecha). */
   @container horario (min-width: 600px) {
-    :host(.schedule-day-row--active:not(.schedule-day-row--week-flexible)) > .schedule-day-row__day {
+    :host(.schedule-day-row--active:not(.schedule-day-row--flexible)) > .schedule-day-row__day {
       grid-column: 1 / -2;
     }
 
-    :host(:not(.schedule-day-row--week-flexible)) > .schedule-day-row__slots {
+    :host(:not(.schedule-day-row--flexible)) > .schedule-day-row__slots {
       grid-row: 1;
       grid-column: -2 / -1;
       text-align: right;

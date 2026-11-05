@@ -47,6 +47,9 @@ const PAST_SATURDAYS = 'Sábados (temporada pasada)';
 /** El jueves de la tabla (`DIAS`, de lunes a domingo). */
 const THURSDAY_INDEX = 3;
 
+/** Replacing the schedule in force is confirmed first. */
+const REPLACE_TITLE = 'Reemplazar su horario actual';
+
 /** El aviso del retiro cuando hay alguien ya recibido: confirmarlo retira conservando las citas. */
 const PATIENT_PRESENT_TITLE = 'Hay un paciente ya recibido';
 
@@ -109,7 +112,7 @@ describe('AgendaCreate · cambiar «Mañanas en la clínica» contra el simulado
   const dialogs = {
     confirm: (config: { readonly title: string }) => {
       asked.push(config.title);
-      return Promise.resolve(config.title === PATIENT_PRESENT_TITLE);
+      return Promise.resolve(config.title === PATIENT_PRESENT_TITLE || config.title === REPLACE_TITLE);
     },
   };
 
@@ -240,6 +243,7 @@ describe('AgendaCreate · cambiar «Mañanas en la clínica» contra el simulado
     await settle();
 
     expect(screen.publicado()).toBe(true);
+    expect(asked[0]).toBe(REPLACE_TITLE);
     expect(asked.at(-1)).toBe('Listo, su horario quedó cambiado');
     // Se retira exactamente el horario que se estaba cambiando.
     expect(served.filter((line) => line.startsWith('DELETE '))).toEqual([

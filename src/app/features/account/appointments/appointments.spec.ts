@@ -11,6 +11,10 @@ import { of, throwError } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { SessionStore } from '../../../core/auth/session.store';
 import { FilesClient } from '../../../core/data-access/files/files.client';
+import {
+  BookableResourcesClient,
+  type BookableResource,
+} from '../../../core/data-access/scheduling/bookable-resources.client';
 import { PaymentReceiptsClient } from '../../../core/data-access/scheduling/payment-receipts.client';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type { AgendaResource, AgendaSlot } from '../../../core/data-access/scheduling/scheduling.types';
@@ -86,7 +90,19 @@ describe('Appointments', () => {
     session = TestBed.inject(SessionStore);
   });
 
-  afterEach(() => http.verify());
+  // The practitioner picker reads its own list whenever «Agendar» is on screen;
+  // tests that are not about it get an empty page so `verify` stays strict.
+  function responderBuscadorDeProfesionales(): void {
+    http
+      .match((r) => r.url === '/scheduling/bookable-resources')
+      .filter((req) => !req.cancelled)
+      .forEach((req) => req.flush({ items: [], count: 0, total: 0 }));
+  }
+
+  afterEach(() => {
+    responderBuscadorDeProfesionales();
+    http.verify();
+  });
 
   /**
    * Abre la sesión y monta. `pid` ausente = cuenta que no es de un paciente.
@@ -114,6 +130,7 @@ describe('Appointments', () => {
 
     if (pid !== undefined) {
       http.expectOne((r) => r.url === '/scheduling/waitlist').flush({ items: esperas ?? [] });
+      responderBuscadorDeProfesionales();
       fixture.detectChanges();
     }
   }
@@ -459,6 +476,39 @@ describe('Appointments', () => {
       expect(document.activeElement?.id).toBe('pedir-turno');
     });
 
+    it('con un laboratorio disponible, el vacío de horarios lleva el título del host y pide un laboratorio', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?seccion=pedir&resource=lab');
+      montar();
+      http
+        .expectOne((r) => r.url === '/scheduling/bookings')
+        .flush({ items: [], count: 0, limit: 50, truncated: false });
+      http
+        .expectOne((r) => r.url === '/scheduling/resources')
+        .flush({ items: [{ id: 'lab-1', name: 'Laboratorio Central', capacity: 1 }], count: 1 });
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const vacio: HTMLElement | null = fixture.nativeElement.querySelector('app-view-state-host');
+      expect(vacio?.textContent).toContain('Primero elija un laboratorio');
+      expect(vacio?.textContent).not.toContain('Primero elija con quién');
+    });
+
+    it('con un profesional disponible, el mismo vacío pide con quién y el título lo dice', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?seccion=pedir');
+      montar();
+      http
+        .expectOne((r) => r.url === '/scheduling/bookings')
+        .flush({ items: [], count: 0, limit: 50, truncated: false });
+      http
+        .expectOne((r) => r.url === '/scheduling/resources')
+        .flush({ items: [{ id: 'r-1', name: 'Consultorio Cardiología', capacity: 1 }], count: 1 });
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const vacio: HTMLElement | null = fixture.nativeElement.querySelector('app-view-state-host');
+      expect(vacio?.textContent).toContain('Primero elija con quién');
+    });
+
     /**
      * Tarea 4 · M-06: el widget de beneficios del seguro lleva acá con
      * `?campaign=<código>`. La pantalla sólo dice por qué se está agendando; no
@@ -661,6 +711,8 @@ describe('Appointments', () => {
       interno<(tipo: string) => void>('cambiarTipoDeRecurso')('ROOM');
       fixture.detectChanges();
       http.expectOne((r) => r.url === '/scheduling/resources').flush({ items: [], count: 0 });
+      // No laboratory anywhere: the picker's own list comes back empty.
+      responderBuscadorDeProfesionales();
       fixture.detectChanges();
 
       const texto: string = fixture.nativeElement.textContent;
@@ -803,8 +855,9 @@ describe('Appointments', () => {
     fixture.detectChanges();
 
     // El `http.verify()` del afterEach falla si se pidieron cupos.
-    const estado = interno<() => { status: string }>('horarios')();
+    const estado = interno<() => { status: string; title?: string }>('horarios')();
     expect(estado.status).toBe('empty');
+    expect(estado.title).toBe('Primero elija con quién');
   });
 
   /* ---- elegir el día en el calendario (F-10) ------------------------------ */
@@ -851,31 +904,22 @@ describe('Appointments', () => {
 
   /* ---- buscar al profesional en vez de recorrer la lista (F-13) ----------- */
 
-  it('el buscador de profesional filtra por nombre, sin tildes ni mayúsculas', () => {
+  it('el buscador de profesional pregunta al servidor, de todas las organizaciones y paginado', async () => {
     montar();
     responderArranque([]);
 
-    crudo<{ set: (v: unknown) => void }>('recursos').set([
-      { id: 'r-1', name: 'Agenda 1', practitionerName: 'Dra. Ana Muñoz' },
-      { id: 'r-2', name: 'Agenda 2', practitionerName: 'Dr. Beto Peña' },
-    ]);
+    interno<(s: string) => void>('elegirSeccion')('pedir');
+    await fixture.whenStable();
+    fixture.detectChanges();
 
-    const buscar = crudo<{ set: (v: string) => void }>('busquedaDeRecurso');
-    const opciones = interno<() => readonly { value: string; label: string }[]>('opcionesBuscadas');
-
-    expect(opciones()).toHaveLength(2);
-
-    buscar.set('munoz');
-    expect(opciones()).toHaveLength(1);
-    // El valor es la clave de la agenda AGRUPADA (F-23), no el id del recurso:
-    // sin referencia a un perfil, cada recurso es su propio grupo.
-    expect(opciones()[0].value).toBe('recurso:r-1');
-
-    buscar.set('PEÑA');
-    expect(opciones()[0].value).toBe('recurso:r-2');
-
-    buscar.set('');
-    expect(opciones()).toHaveLength(2);
+    // Search, accents and pages are the server's job now (`bookable-resources`):
+    // the list no longer fits in memory once it spans every organization.
+    const pedido = http.expectOne((r) => r.url === '/scheduling/bookable-resources');
+    expect(pedido.request.params.get('resourceType')).toBe('PRACTITIONER');
+    expect(pedido.request.params.get('limit')).toBe('20');
+    expect(pedido.request.params.get('offset')).toBe('0');
+    expect(pedido.request.params.has('q')).toBe(false);
+    pedido.flush({ items: [], count: 0, total: 0 });
   });
 
   /* ---- elegir el lugar cuando atiende en varios (FX-6 · F-23) ------------- */
@@ -972,11 +1016,12 @@ describe('Appointments', () => {
 
     crudo<{ set: (v: unknown) => void }>('recursos').set(DOS_CONSULTORIOS);
 
-    const opciones = interno<() => readonly { value: string; label: string }[]>('opcionesBuscadas');
-    expect(opciones()).toHaveLength(1);
+    const agendas = interno<() => readonly { clave: string; etiqueta: string }[]>('agendas');
+    const opciones = agendas().map((agenda) => ({ value: agenda.clave, label: agenda.etiqueta }));
+    expect(opciones).toHaveLength(1);
     // El nombre interno de cada agenda es justo lo que las distingue: repetirlo
     // ací sería el ruido que F-23 viene a sacar. Queda la persona.
-    expect(opciones()[0].label).toBe('Dra. Ana Muñoz');
+    expect(opciones[0].label).toBe('Dra. Ana Muñoz');
   });
 
   /* ---- pedir un servicio, no una consulta (v4.2.40) ------------------------ */
@@ -1201,6 +1246,7 @@ describe('Appointments', () => {
         desde: HORA_TEMPRANO,
         hasta: '2026-09-02T09:45:00.000Z',
         oferta: 'of-eco',
+        org: 't-1',
       });
     });
 
@@ -1320,9 +1366,12 @@ describe('Appointments', () => {
         p.flush({ offeringId: 'of-eco', minDurationMinutes: 30, maxDurationMinutes: 45, items: [] });
       }
 
-      const estado = interno<() => { status: string; message?: string }>('horarios')();
+      const estado = interno<() => { status: string; message?: string; title?: string }>(
+        'horarios',
+      )();
       expect(estado.status).toBe('empty');
       expect(estado.message).toContain('Ecocardiograma Doppler');
+      expect(estado.title).toBe('Sin horarios para este servicio');
     });
 
     it('si una sede no contesta, muestra los horarios de la otra y lo avisa', () => {
@@ -1696,6 +1745,8 @@ interface Opciones {
   /** La organización activa. Por omisión no hay, como en los casos de E1. */
   readonly tenant?: string;
   readonly resources?: readonly { id: string; name: string }[];
+  /** Who the practitioner picker lists, from every organization. Nobody by default. */
+  readonly bookable?: readonly BookableResource[];
   readonly slots?: readonly AgendaSlot[];
   /** Las esperas activas del titular (P8). Por omisión, ninguna. */
   readonly waitlist?: readonly {
@@ -1752,6 +1803,12 @@ function montarCancelacion(opts: Opciones) {
           enrollWaitlist,
           // Corrección 11 · el bloque «Comprobante de pago» lee el pago de la cita.
           getBooking: vi.fn((id: string) => of({ id })),
+        },
+      },
+      {
+        provide: BookableResourcesClient,
+        useValue: {
+          list: vi.fn().mockReturnValue(of({ items: opts.bookable ?? [], total: opts.bookable?.length ?? 0 })),
         },
       },
       { provide: TerminologyClient, useValue: { readConceptLabels } },
@@ -1901,10 +1958,12 @@ describe('Appointments · cancelar turno propio', () => {
       .cancelarTurno(api(comp).turnosListos()[0])
       .then(() => {
         // El motivo viaja siempre: el servidor lo exige (corrección #14).
-        expect(cancelBooking).toHaveBeenCalledWith('b1', {
-          cancelledBy: 'PATIENT',
-          reasonText: MOTIVO_DE_PRUEBA,
-        });
+        expect(cancelBooking).toHaveBeenCalledWith(
+          'b1',
+          { cancelledBy: 'PATIENT', reasonText: MOTIVO_DE_PRUEBA },
+          undefined,
+          undefined,
+        );
       });
   });
 
@@ -2116,19 +2175,31 @@ describe('Appointments · estados con palabra y avisos con salida (E3)', () => {
     expect(fixture.nativeElement.querySelector('.turnos__reprogramar')).toBeNull();
   });
 
-  it('sin organización activa, el aviso dice que se elige desde el encabezado', async () => {
-    // Sin `tenant`: el caso real de una sesión sin organización activa.
-    const { fixture, comp } = montarCancelacion({ bookings: [], labels: [] });
+  it('sin organización activa igual ofrece con quién pedir: la organización llega con el profesional', async () => {
+    // No `tenant`: a session with no active organization still books.
+    const { fixture, comp } = montarCancelacion({
+      bookings: [],
+      labels: [],
+      bookable: [
+        {
+          tenantId: 't-9',
+          organizationName: 'Clínica X',
+          resourceId: 'r-9',
+          resourceRefType: 'health_practitioner_profiles',
+          resourceRefId: 'p-9',
+          name: 'Dra. Ana Muñoz',
+        },
+      ],
+    });
     fixture.detectChanges();
 
-    // El aviso vive en «Agendar una cita», la otra sección del toggle.
     p8(comp).elegirSeccion('pedir');
     await fixture.whenStable();
     fixture.detectChanges();
 
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(texto).toContain('Elija una organización');
-    expect(texto).toContain('encabezado');
+    expect(texto).not.toContain('Elija una organización');
+    expect(texto).toContain('¿Con quién se quiere atender?');
   });
 });
 
@@ -2327,6 +2398,8 @@ describe('Appointments · lista de espera (P8)', () => {
         patientProfileId: 'p-1',
         resourceId: 'r-1',
       }),
+      undefined,
+      { tenantId: 't-1' },
     );
     expect(toast.success).toHaveBeenCalled();
   });

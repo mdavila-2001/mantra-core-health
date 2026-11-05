@@ -186,7 +186,7 @@ describe('CatalogObjectDetail', () => {
       leerEvidencia: () => void;
     };
     expect(c.errorDeEvidencia()).toBe(
-      'No pudimos traer la evidencia de este objeto. (Código de soporte: corr-evi)',
+      'No pudimos traer la evidencia de este objeto. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-evi)',
     );
     expect(c.errorDeHistorial()).toBeNull();
 

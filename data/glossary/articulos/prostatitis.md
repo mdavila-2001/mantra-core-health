@@ -1,5 +1,6 @@
 ---
 slug: prostatitis
+image: prostatitis.svg | La próstata, bajo la vejiga y alrededor de la uretra, puede inflamarse por infección o sin ella. | Corte lateral de la pelvis masculina con la vejiga, la próstata inflamada que rodea la uretra y el recto detrás. A la derecha, los tipos de prostatitis, los síntomas y cuándo acudir a urgencias.
 ---
 
 ## [definition] Introducción

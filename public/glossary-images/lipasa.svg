@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Lipasa</title>
+  <desc id="d">A la izquierda, el páncreas, que vierte lipasa al intestino para romper las grasas en fragmentos absorbibles, y la nota de que pasa a la sangre cuando el órgano se inflama. A la derecha, el análisis de sangre y las situaciones en que sube.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="50" text-anchor="middle" class="title">Páncreas y digestión de grasas</text>
+  <path d="M70 140 C80 110 120 104 170 112 C230 120 300 110 350 126 C370 134 362 156 340 160 C290 166 230 162 180 170 C140 176 120 190 96 186 C70 180 64 160 70 140 Z" fill="var(--warn)" stroke="var(--warn)" stroke-width="1" opacity=".85"/>
+  <path d="M90 150 C160 144 260 140 340 140" fill="none" stroke="var(--fluid)" stroke-width="3"/>
+  <text x="220" y="92" text-anchor="middle" class="big">Páncreas</text>
+  <text x="80" y="210" class="small" style="fill:var(--muted)">Conducto hacia el duodeno</text>
+  <circle cx="110" cy="280" r="26" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1.5"/>
+  <text x="110" y="285" text-anchor="middle" class="small">Grasa</text>
+  <line x1="142" y1="280" x2="186" y2="280" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)"/>
+  <text x="164" y="266" text-anchor="middle" class="small" style="fill:var(--warn)">Lipasa</text>
+  <circle cx="206" cy="268" r="7" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <circle cx="230" cy="288" r="7" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <circle cx="252" cy="266" r="7" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <circle cx="276" cy="290" r="7" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <text x="300" y="284" class="small">Fragmentos</text>
+  <text x="300" y="300" class="small">absorbibles</text>
+  <rect x="60" y="340" width="300" height="56" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="210.0" y="364.5" text-anchor="middle" class="lab">Si el páncreas se inflama,</text>
+  <text x="210.0" y="381.5" text-anchor="middle" class="lab">la lipasa pasa a la sangre</text>
+  <text x="210" y="424" text-anchor="middle" class="lab">Muestra: sangre</text>
+  <rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="50" text-anchor="middle" class="title">Qué ayuda a valorar</text>
+  <rect x="460" y="70" width="30" height="14" rx="3" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <path d="M463 84 V140 a12 12 0 0 0 24 0 V84" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+  <path d="M465 110 V140 a10 10 0 0 0 20 0 V110 Z" fill="var(--vessel)" stroke="none" stroke-width="2"/>
+  <text x="504" y="108" class="small">Prueba principal ante</text>
+  <text x="504" y="126" class="small">sospecha de pancreatitis</text>
+  <text x="456" y="210" class="step">Puede subir en</text>
+  <text x="464" y="236" class="small">• Pancreatitis aguda</text>
+  <text x="464" y="260" class="small">• Obstrucción de los conductos</text>
+  <text x="464" y="284" class="small">• Enfermedad renal</text>
+  <text x="464" y="308" class="small">• Problemas intestinales graves</text>
+  <rect x="456" y="342" width="304" height="80" rx="10" fill="var(--accent-l)" stroke="none" stroke-width="2"/>
+  <text x="608" y="368" text-anchor="middle" class="small">Más específica del páncreas</text>
+  <text x="608" y="388" text-anchor="middle" class="small">que la amilasa. Se valora junto</text>
+  <text x="608" y="406" text-anchor="middle" class="small">al dolor y a las pruebas de imagen.</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

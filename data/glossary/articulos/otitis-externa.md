@@ -1,5 +1,6 @@
 ---
 slug: otitis-externa
+image: otitis-externa.svg | La inflamación afecta al conducto, por fuera del tímpano. | Corte del oído con el conducto auditivo externo inflamado antes del tímpano, junto a las causas frecuentes y las medidas de prevención y tratamiento.
 ---
 
 ## [definition] Introducción

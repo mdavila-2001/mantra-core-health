@@ -765,7 +765,7 @@ describe('PatientProfileEdit', () => {
     interno<() => void>('guardar')();
     pedidoDeGuardado().error(new ProgressEvent('error'), { status: 500 });
 
-    expect(toasts.toasts().at(-1)?.message).toBe('No pudimos guardar los cambios. Pruebe de nuevo.');
+    expect(toasts.toasts().at(-1)?.message).toBe('No pudimos guardar los cambios. Pruebe de nuevo. El problema fue del servidor, no de lo que usted ingresó.');
     expect(interno<() => boolean>('guardando')()).toBe(false);
     expect(señal<string>('nombre')()).toBe('Ana María');
   });
@@ -839,7 +839,7 @@ describe('PatientProfileEdit', () => {
     );
 
     expect(toasts.toasts().at(-1)?.message).toBe(
-      'No pudimos guardar los cambios. Pruebe de nuevo. (Código de soporte: corr-500)',
+      'No pudimos guardar los cambios. Pruebe de nuevo. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-500)',
     );
   });
 
@@ -927,8 +927,8 @@ describe('PatientProfileEdit', () => {
    * cambios» deshabilitado, y entonces no se podía corregir ni el nombre.
    */
   it.each([
-    ['+591 700 22222', '7002 2222'],
-    ['70012345', '7001 2345'],
+    ['+591 700 22222', '70022222'],
+    ['70012345', '70012345'],
   ])('un teléfono guardado como «%s» abre el editor válido y editable', (guardado, visible) => {
     montarPintadoYCargado({ phone: guardado });
 
@@ -972,7 +972,7 @@ describe('PatientProfileEdit', () => {
     montarPintadoYCargado({ phone: '70012345' });
 
     teclearTelefono('71234567');
-    expect(campoDeTelefono().value).toBe('7123 4567');
+    expect(campoDeTelefono().value).toBe('71234567');
 
     interno<() => void>('guardar')();
 

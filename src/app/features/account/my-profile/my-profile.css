@@ -122,12 +122,33 @@
    ya no hay a qué saltar. Una regla sin quién la use es una pista falsa para
    el próximo que lea este archivo. */
 
-.mi-perfil__coverages { gap: var(--sp-4); }
+/* Policy cards side by side when the tab is wide enough, one column on phones.
+   `auto-fit` lets a single policy span the row; every card stretches to the
+   row height and is a light bordered item, like the address cards. */
+.mi-perfil__lista.mi-perfil__coverages {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(30%, min(100%, 22rem)), 1fr));
+  align-items: stretch;
+  gap: var(--sp-4);
+}
 
-/* Beneficios preventivos del seguro: separados de las coberturas de arriba. */
+.mi-perfil__coverages > li,
+.mi-perfil__coverages app-patient-coverage-card {
+  display: grid;
+}
+
+.mi-perfil__coverages ::ng-deep .coverage {
+  align-content: start;
+  border-color: var(--border-subtle);
+  border-radius: var(--r-card);
+  background: var(--bg-surface);
+}
+
+/* Each Seguros section (policies, preventive benefits, portability) sits
+   the same distance from the previous one. */
 .mi-perfil__campaigns:not(:empty) {
   display: block;
-  margin-block: var(--sp-6);
+  margin-block-start: var(--sp-6);
 }
 
 /* El mapa de residencia, debajo de los datos de contacto y separado de ellos. */

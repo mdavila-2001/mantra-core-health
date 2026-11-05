@@ -1,0 +1,47 @@
+<div class="dispositivos__verificar" data-testid="device-verify">
+  @if (sentTo(); as destino) {
+    <p class="dispositivos__detalle" role="status" data-testid="device-verify-enviado">
+      Enviamos un código de 8 dígitos a {{ destino }}. Vence en 10 minutos.
+    </p>
+  } @else {
+    <p class="dispositivos__detalle">
+      Le enviaremos un código de 8 dígitos al correo verificado de su cuenta.
+    </p>
+  }
+
+  @if (failure(); as fallo) {
+    <p class="dispositivos__fallo" role="alert" data-testid="device-verify-fallo">{{ fallo }}</p>
+  }
+
+  <div class="dispositivos__acciones">
+    <button app-button variant="outline" size="sm" type="button" [isLoading]="sending()" [disabled]="sending() || busy()" (clicked)="send()" data-testid="device-verify-enviar">
+      {{ sentTo() === null ? 'Enviarme el código' : 'Enviar otro código' }}
+    </button>
+  </div>
+
+  @if (sentTo() !== null) {
+    <app-form-field label="Código del correo" [errorMessage]="codeMissing() ? 'Escriba los 8 dígitos del código.' : ''">
+      <app-input
+        [value]="code()"
+        (valueChange)="code.set('' + ($event ?? ''))"
+        inputMode="numeric"
+        autocomplete="one-time-code"
+        placeholder="00000000"
+        ariaLabel="Código del correo"
+        [hasError]="codeMissing()"
+        testId="device-verify-codigo"
+      />
+    </app-form-field>
+  }
+
+  <div class="dispositivos__acciones">
+    @if (sentTo() !== null) {
+      <button app-button variant="primary" size="sm" type="button" [isLoading]="busy()" [disabled]="busy()" (clicked)="confirm()" data-testid="device-verify-confirmar">
+        Verificar dispositivo
+      </button>
+    }
+    <button app-button variant="ghost" size="sm" type="button" [disabled]="busy()" (clicked)="cancelled.emit()" data-testid="device-verify-cancelar">
+      Cancelar
+    </button>
+  </div>
+</div>

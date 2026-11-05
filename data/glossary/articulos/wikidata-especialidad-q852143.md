@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q852143
+image: wikidata-especialidad-q852143.svg | Partes del diente y pasos del tratamiento de conductos | Corte de un diente con el esmalte, la dentina, la pulpa, los conductos y el ápice, junto a los cinco pasos de una endodoncia, de la anestesia a la restauración
 ---
 
 ## [definition] Introducción

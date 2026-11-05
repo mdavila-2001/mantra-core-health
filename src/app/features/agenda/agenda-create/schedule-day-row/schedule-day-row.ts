@@ -34,6 +34,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class.schedule-day-row--active]': 'value().activo',
+    '[class.schedule-day-row--flexible]': 'flexible()',
     // Con la semana entera flexible la fila tiene cuatro columnas menos y la
     // tabla entra en menos ancho: se reparte en renglones más tarde.
     '[class.schedule-day-row--week-flexible]': 'weekFlexible()',

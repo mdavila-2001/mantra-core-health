@@ -12,7 +12,9 @@
  * fondo, que es lo que hace falta para medir de verdad.
  *
  * El mecanismo de excepciones sigue (un par puede declarar `excepcion`, y si
- * deja de incumplir esto lo dice), pero hoy NO hay ninguna: E3, R2 y R3 —los
+ * deja de incumplir esto lo dice). Las únicas hoy son los tres «relevos» de las
+ * series de gráfico en claro (aqua, amarillo, magenta; ver RELEVO_GRAFICO). Las de
+ * texto y bordes NO hay ninguna: E3, R2 y R3 —los
  * bordes de control y el petróleo en oscuro— se cerraron el 2026-10-11
  * subiendo los tokens, sin bajar ningún umbral.
  *
@@ -174,6 +176,9 @@ function contraste(frente, fondo) {
  *
  * `soloEn` limita un par a un tema: el marfil sólo existe en claro.
  */
+const RELEVO_GRAFICO =
+  'relevo declarado: rótulo directo o tabla (frente 05 §2.1; ver check-chart-palette.mjs)';
+
 const PARES = [
   { tinta: '--text-primary', fondo: '--bg-surface', nivel: 4.5 },
   { tinta: '--text-secondary', fondo: '--bg-surface', nivel: 4.5 },
@@ -231,6 +236,30 @@ const PARES = [
   { tinta: '--verified-bg', fondo: '--bg-surface-alt', nivel: 3 },
   { tinta: '--verified-bg', fondo: '--bg-inset', nivel: 3 },
   { tinta: '--verified-bg', fondo: '--st-primary-bg', nivel: 3 },
+
+  // Gráficos (ADR-0017, frente 05 H1): las marcas contra `--bg-surface`, que es
+  // donde el panel las pinta SIEMPRE (sobre `-alt` cae un slot más). 3:1 es el
+  // piso de la skill `dataviz`; los tres tonos de la zona 2–3 en claro (aqua,
+  // amarillo, magenta) son un «relevo» legal sólo con rótulo directo o tabla,
+  // que `ChartPanel` ya da. La lista autoritativa es `RELEVO` en
+  // check-chart-palette.mjs. Los pasos más claros de la ordinal y del
+  // divergente miden contra el piso ordinal de 2:1.
+  { tinta: '--chart-1', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--chart-2', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--chart-3', fondo: '--bg-surface', nivel: 3, excepcion: { claro: RELEVO_GRAFICO } },
+  { tinta: '--chart-4', fondo: '--bg-surface', nivel: 3, excepcion: { claro: RELEVO_GRAFICO } },
+  { tinta: '--chart-5', fondo: '--bg-surface', nivel: 3, excepcion: { claro: RELEVO_GRAFICO } },
+  { tinta: '--chart-6', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--chart-7', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--chart-8', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--chart-ord-1', fondo: '--bg-surface', nivel: 2 },
+  { tinta: '--chart-ord-2', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--chart-ord-3', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--chart-ord-4', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--chart-div-neg', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--chart-div-neg-soft', fondo: '--bg-surface', nivel: 2 },
+  { tinta: '--chart-div-pos-soft', fondo: '--bg-surface', nivel: 2 },
+  { tinta: '--chart-div-pos', fondo: '--bg-surface', nivel: 3 },
 ];
 
 const TEMAS = [
@@ -385,7 +414,13 @@ if (fallos.length > 0) {
 }
 
 console.log('');
+const medidas = filas.filter(
+  (f) => f.startsWith('  ✓') || f.startsWith('  ·') || f.startsWith('  ✗'),
+);
+const conExcepcion = medidas.filter((f) => f.startsWith('  ·')).length;
 console.log(
-  `  ${filas.filter((f) => f.startsWith('  ✓') || f.startsWith('  ·') || f.startsWith('  ✗')).length} ` +
-    `combinaciones medidas en ${HOJAS.length} hojas · sin excepciones declaradas`,
+  `  ${medidas.length} combinaciones medidas en ${HOJAS.length} hojas · ` +
+    (conExcepcion === 0
+      ? 'sin excepciones declaradas'
+      : `${conExcepcion} con relevo gráfico declarado (sólo series de gráfico en claro)`),
 );

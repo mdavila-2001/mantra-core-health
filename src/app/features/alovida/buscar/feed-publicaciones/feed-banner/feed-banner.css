@@ -26,7 +26,7 @@
 .banner__rotulo {
   margin: 0;
   color: var(--tinta-3);
-  font-size: 11px;
+  font-size: var(--fs-overline);
   line-height: 16px;
   font-weight: 600;
   text-transform: uppercase;

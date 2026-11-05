@@ -1,5 +1,6 @@
 ---
 slug: dengue-igg-igm
+image: dengue-igg-igm.svg | La IgM indica una infección reciente por dengue y la IgG una infección previa o en curso. | Gráfica temporal con la detección del virus y la NS1 en los primeros días, la subida de la IgM en la primera y segunda semana y la IgG que persiste semanas después, junto a claves de interpretación.
 ---
 
 ## [definition] Introducción

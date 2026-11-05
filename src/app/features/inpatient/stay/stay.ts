@@ -203,7 +203,7 @@ export class Stay {
     toObservable(computed(() => ({ ok: this.access.state().status === 'ready', id: this.id(), n: this.reloads() })))
       .pipe(
         filter((x) => x.ok),
-        switchMap(({ id }) => this.fetch(id).pipe(startWith(loading() as ViewState<StayView>))),
+        switchMap(({ id }) => this.loadStay(id).pipe(startWith(loading() as ViewState<StayView>))),
         takeUntilDestroyed(),
       )
       .subscribe((s) => this.view.set(s));
@@ -266,7 +266,7 @@ export class Stay {
   }
 
   /** La estancia, y después (en paralelo) el nombre del paciente y cada cama de sus movimientos. */
-  private fetch(id: string): Observable<ViewState<StayView>> {
+  private loadStay(id: string): Observable<ViewState<StayView>> {
     return this.adt.getStay(id).pipe(
       switchMap((stay) => {
         const camas = [...new Set([...stay.movements.map((m) => m.careSpaceId), ...stay.incidents.map((i) => i.careSpaceId)].filter((x): x is string => !!x))];

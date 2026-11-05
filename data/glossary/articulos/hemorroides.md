@@ -1,5 +1,6 @@
 ---
 slug: hemorroides
+image: hemorroides.svg | Las hemorroides internas y externas se separan por la línea dentada. | Corte del canal anal con hemorroides internas por encima de la línea dentada y una externa por debajo, junto a síntomas, cuidados y signos para consultar.
 ---
 
 ## [definition] Introducción

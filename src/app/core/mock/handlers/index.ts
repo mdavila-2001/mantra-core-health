@@ -1,5 +1,11 @@
+import { registrarCalidadYPrivacidad } from './governance-data.handlers';
+import { registrarEditorDeCatalogos } from './catalog-editor.handlers';
+import { registrarVisibilidad } from './ui-visibility.handlers';
+import { registrarMutabilidad } from './mutability.handlers';
+import { registrarPiezasVivas } from './runtime-pieces.handlers';
+import { registrarPoliticasGobierno } from './governance-policies.handlers';
 import { MockRouter } from '../mock-router';
-import { registrarAgenda } from './scheduling.handlers';
+import { activarAceptacionDeDemostracion, registrarAgenda } from './scheduling.handlers';
 import { registrarServiciosDeAgenda } from './service-offerings.handlers';
 import { registrarHorarioFlexible } from './flexible-hours.handlers';
 import { registerPaymentReceipts } from './payment-receipts.handlers';
@@ -14,6 +20,9 @@ import { registerProcedureCenters } from './procedure-centers.handlers';
 import { registrarComunidad } from './community.handlers';
 import { registrarConsentimientos } from './consent.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
+import { registrarCentros } from './centros.handlers';
+import { registerCenterBookings } from './center-bookings.handlers';
+import { registerLabPortalApiParity } from './lab-portal-api-parity.handlers';
 import { registerDiagnosisVerification } from './diagnosis-verification.handlers';
 import { registerMedicalNotes } from './medical-notes.handlers';
 import { registrarDirectorio } from './directory.handlers';
@@ -46,6 +55,12 @@ import { registrarLibretaDeDirecciones } from './address-book.handlers';
 import { registerPrimaryPractitioner } from './primary-practitioner.handlers';
 import { registrarPracticas } from './practice.handlers';
 import { registrarProcedimientos } from './procedures.handlers';
+import { registerOperatingRooms } from './operating-rooms.handlers';
+import { registerSpaceBilling } from './space-billing.handlers';
+import { registerInfraF5Ops } from './infra-f5-ops.handlers';
+import { registerSampleCollection } from './sample-collection.handlers';
+import { registerInfraAccounting } from './infra-accounting.handlers';
+import { registerSiteAccess } from './site-access.handlers';
 import { registerTreatmentInformedConsents } from './treatment-informed-consents.handlers';
 import { registrarPublico } from './public.handlers';
 import { registrarAnaliticaDeSeguros } from './insurance-analytics.handlers';
@@ -57,14 +72,20 @@ import { registerPractitionerInsurerRequests } from './practitioner-insurer-requ
 import { registrarPacientesDeAseguradora } from './insurer-patients.handlers';
 import { registrarTerminologia } from './terminology.handlers';
 import { registrarVarios } from './misc.handlers';
+import { registerAuthz } from './authz.handlers';
+import { registerAccessRequests } from './access-requests.handlers';
 import { registrarPortalAdministrativo } from './admin-portal.handlers';
+import { registrarCatalogoDeModulos } from './authz-modules-catalog.handlers';
+import { registerPermissionsAdmin } from './permissions-admin.handlers';
 import { registerGovernance } from './governance.handlers';
 import { registrarAltaDeMedicoAsistida } from './assisted-practitioner.handlers';
 import { registrarFlujos } from './flows.handlers';
 import { registrarTrafico } from './ops-traffic.handlers';
 import { registrarSondaDeVida } from './ops-liveness.handlers';
+import { registrarSondaCatalogo } from './catalog-fit.handlers';
 import { registrarHerramientas } from './ops-tools.handlers';
 import { registrarDispositivos } from './analytics-devices.handlers';
+import { registrarMisDispositivos } from './my-devices.handlers';
 import { registrarDinero } from './analytics-money.handlers';
 import { registerPromotions } from './promotions.handlers';
 import { registerPatientSpending } from './patient-spending.handlers';
@@ -100,7 +121,13 @@ export function crearRouterSimulado(): MockRouter {
   registerPrimaryPractitioner(router);
   registerSignatureAndSeal(router);
   registrarAgenda(router);
+  activarAceptacionDeDemostracion();
   registrarServiciosDeAgenda(router);
+  // Centros médicos · procedimientos por sede. Antes de `registrarPracticas`:
+  // las dos atienden `/practices/…` y, ante patrones equivalentes, gana el
+  // registrado primero.
+  registerHealthcareServices(router);
+  registerRoleAssignments(router);
   registrarHorarioFlexible(router);
   registerPaymentReceipts(router);
   // Centros médicos · procedimientos por sede. Antes de `registrarPracticas`:
@@ -151,19 +178,41 @@ export function crearRouterSimulado(): MockRouter {
     destinoDeOrden,
     archivos: resultadosDeLaboratorio,
   });
+  // Después de diagnóstico: usa sus unidades y la agenda que les abre.
+  registrarCentros(router);
+  registerCenterBookings(router);
   registrarPortalDeLaboratorio(router);
+  registerLabPortalApiParity(router);
   registrarProcedimientos(router);
+  // F4 · quirófanos: salas, bloques, utilización y el día del caso.
+  registerOperatingRooms(router);
+  // F5e · tarifas de espacios y cargos de día-cama.
+  registerSpaceBilling(router);
+  // F5a/F5c · equipos en sala y botiquín por unidad.
+  registerInfraF5Ops(router);
+  // F5b · puntos de toma de muestra.
+  registerSampleCollection(router);
+  // F5f · activos y centros de costo por espacio y unidad.
+  registerInfraAccounting(router);
+  // Sedes y acciones del actor (§0.3), para elegir sede en F4/F5.
+  registerSiteAccess(router);
   registerTreatmentInformedConsents(router);
   registrarLaboratorioFarmaceutico(router);
   registerLoyalty(router);
   registrarVarios(router);
+  registerAuthz(router);
+  registerAccessRequests(router);
   registrarConsentimientos(router);
   registrarPortalAdministrativo(router);
   registerGovernance(router);
+  registerPermissionsAdmin(router);
+  registrarCatalogoDeModulos(router);
   registrarTrafico(router);
   registrarSondaDeVida(router);
+  registrarSondaCatalogo(router);
   registrarHerramientas(router);
   registrarDispositivos(router);
+  registrarMisDispositivos(router);
   registrarDinero(router);
   registrarFlujos(router);
   registrarAltaDeMedicoAsistida(router);
@@ -172,6 +221,12 @@ export function crearRouterSimulado(): MockRouter {
   registrarInsights(router);
   registrarInsightsWorkspace(router);
   registrarCargasMasivas(router);
+  registrarPoliticasGobierno(router);
+  registrarPiezasVivas(router);
+  registrarMutabilidad(router);
+  registrarVisibilidad(router);
+  registrarCalidadYPrivacidad(router);
+  registrarEditorDeCatalogos(router);
   registerPromotions(router);
   registerPatientSpending(router);
   registerPortalInventory(router);

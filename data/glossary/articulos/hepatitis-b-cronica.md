@@ -1,5 +1,6 @@
 ---
 slug: hepatitis-b-cronica
+image: hepatitis-b-cronica.svg | La hepatitis B crónica puede dañar el hígado en silencio durante años. | Dibujo del virus de la hepatitis B con sus vías de transmisión y prevención, y una secuencia de evolución desde la infección hasta la fibrosis y la cirrosis.
 ---
 
 ## [definition] Introducción

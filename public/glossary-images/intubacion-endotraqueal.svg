@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Intubación endotraqueal</title>
+  <desc id="d">A la izquierda, un corte lateral de cabeza y cuello con un tubo que entra por la boca, pasa entre las cuerdas vocales y llega a la tráquea, con un globo inflado que la sella y conexión a un respirador. A la derecha, los pasos del procedimiento.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230.0" y="50" text-anchor="middle" class="title">Tubo en la tráquea</text>
+  <path d="M80 100 C80 60 200 50 240 80 C270 100 280 130 270 160 L260 180 L240 186 L250 210 L230 230 C250 250 250 270 230 280 L180 290 L180 420 H70 L70 300 C60 220 70 150 80 100 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+  <path d="M240 186 C200 190 170 200 160 230 L150 420" fill="none" stroke="var(--organ)" stroke-width="26" opacity=".7"/>
+  <path d="M160 240 C150 260 130 280 122 420" fill="none" stroke="var(--muted)" stroke-width="1" opacity="0"/>
+  <rect x="152" y="290" width="34" height="130" rx="6" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="196" y="400" class="small" style="fill:var(--accent)">Tráquea</text>
+  <path d="M120 250 L112 420" fill="none" stroke="var(--organ-d)" stroke-width="14" opacity=".45"/>
+  <text x="100" y="410" text-anchor="end" class="small" style="fill:var(--organ-d)">Esófago</text>
+  <path d="M300 140 C260 150 236 176 210 200 C180 230 172 270 170 360" fill="none" stroke="var(--ink)" stroke-width="6"/>
+  <ellipse cx="170" cy="350" rx="14" ry="9" fill="var(--accent)" stroke="none" stroke-width="2" opacity=".7"/>
+  <line x1="160" y1="268" x2="182" y2="268" stroke="var(--vessel)" stroke-width="3"/>
+  <text x="210" y="272" class="small" style="fill:var(--vessel)">Cuerdas vocales</text>
+  <text x="210" y="354" class="small" style="fill:var(--accent)">Globo</text>
+  <rect x="300" y="128" width="40" height="24" rx="4" fill="var(--muted)" stroke="none" stroke-width="2"/>
+  <line x1="340" y1="140" x2="400" y2="140" stroke="var(--muted)" stroke-width="4"/>
+  <text x="400" y="120" text-anchor="end" class="small">Respirador</text>
+  <rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="50" text-anchor="middle" class="title">Paso a paso</text>
+  <circle cx="486" cy="80" r="14" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <text x="486" y="85" text-anchor="middle" class="step on">1</text>
+  <text x="508" y="85" class="small">Oxígeno previo con mascarilla</text>
+  <circle cx="486" cy="132" r="14" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <text x="486" y="137" text-anchor="middle" class="step on">2</text>
+  <text x="508" y="137" class="small">Medicamentos para dormir y relajar</text>
+  <circle cx="486" cy="184" r="14" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <text x="486" y="189" text-anchor="middle" class="step on">3</text>
+  <text x="508" y="189" class="small">Laringoscopio para ver la glotis</text>
+  <circle cx="486" cy="236" r="14" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <text x="486" y="241" text-anchor="middle" class="step on">4</text>
+  <text x="508" y="241" class="small">Tubo entre las cuerdas vocales</text>
+  <circle cx="486" cy="288" r="14" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <text x="486" y="293" text-anchor="middle" class="step on">5</text>
+  <text x="508" y="293" class="small">Se infla el globo para sellar</text>
+  <circle cx="486" cy="340" r="14" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <text x="486" y="345" text-anchor="middle" class="step on">6</text>
+  <text x="508" y="345" class="small">Se comprueba y se conecta</text>
+  <text x="618" y="398" text-anchor="middle" class="small" style="fill:var(--muted)">Asegura la vía aérea en la anestesia</text>
+  <text x="618" y="416" text-anchor="middle" class="small" style="fill:var(--muted)">o en una emergencia</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

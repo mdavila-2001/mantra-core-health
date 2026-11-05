@@ -21,6 +21,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Progress } from '../../../shared/components/atoms/progress/progress';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import { Spinner } from '../../../shared/components/atoms/spinner/spinner';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import {
   FileInput,
@@ -35,20 +36,17 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { CsvExportService, type CsvColumn } from '../../../shared/utils/csv-export/csv-export';
-
 import { PharmacyBulkClient } from '../../../core/data-access/pharmacy/pharmacy-bulk.client';
 import { PharmacyClient } from '../../../core/data-access/pharmacy/pharmacy.client';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-
 import {
   ArchivoInvalido,
   FILE_MAX_BYTES,
   CATEGORIES,
   CSV_COLUMNS,
   FIELD_LABELS,
-  EXAMPLE_ROWS,
   MAX_ROWS_BY_LOAD,
   decodificarCsv,
   readCsv,
@@ -60,6 +58,7 @@ import {
   type CsvReading,
   type LoadMode,
 } from '../catalog-rules/catalog.rules';
+import { EXAMPLE_ROWS } from '../catalog-rules/catalog-example-rows';
 import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import {
   OUTCOME_BADGE,
@@ -159,6 +158,7 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
     PageHeader,
     Progress,
     Select,
+    Spinner,
     Stepper,
     ViewStateHost,
   ],

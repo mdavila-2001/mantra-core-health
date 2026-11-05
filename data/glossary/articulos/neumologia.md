@@ -1,5 +1,6 @@
 ---
 slug: neumologia
+image: neumologia.svg | La neumología se ocupa de los pulmones, los bronquios y la pleura. | Esquema de tráquea, bronquios, pulmones, pleura y diafragma, junto a las enfermedades que atiende la neumología y sus pruebas, como espirometría y broncoscopia.
 ---
 
 ## [definition] Introducción

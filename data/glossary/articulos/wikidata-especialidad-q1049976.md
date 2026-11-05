@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1049976
+image: wikidata-especialidad-q1049976.svg | La transplantología abarca desde la evaluación del candidato hasta el seguimiento de por vida. | Cinco pasos en fila: evaluación del candidato, lista de espera, donante y compatibilidad, cirugía e inmunosupresión con seguimiento. Abajo, los órganos y tejidos que se trasplantan y los retos principales de la especialidad.
 ---
 
 ## [definition] Introducción

@@ -192,6 +192,6 @@ describe('LifecycleList', () => {
         document.body.textContent!.includes('req-777') &&
         document.body.textContent!.includes('No tiene acceso a esta sección'),
     );
-    expect(document.body.textContent).toContain('Algo salió mal');
+    expect(document.body.textContent).toContain('No pudimos completar la operación');
   });
 });

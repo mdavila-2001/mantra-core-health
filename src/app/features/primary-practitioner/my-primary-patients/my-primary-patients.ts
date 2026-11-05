@@ -35,9 +35,11 @@ interface PatientRow {
  * (`GET /profiles/practitioners/me/primary-patients`), que resuelve al
  * profesional de la sesión.
  */
+import { RouterLink } from '@angular/router';
+
 @Component({
   selector: 'app-my-primary-patients',
-  imports: [AppButton, DataTable, PageHeader, ViewStateHost],
+  imports: [AppButton, DataTable, PageHeader, RouterLink, ViewStateHost],
   templateUrl: './my-primary-patients.html',
   styleUrl: './my-primary-patients.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

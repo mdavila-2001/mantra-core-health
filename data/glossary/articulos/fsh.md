@@ -1,5 +1,6 @@
 ---
 slug: fsh
+image: fsh.svg | Eje hormonal de la FSH y para qué se mide | Diagrama del hipotálamo, la hipófisis, el ovario y el testículo con las flechas de la FSH y de la retroalimentación, junto a un tubo de sangre y los usos del análisis
 ---
 
 ## [definition] Introducción

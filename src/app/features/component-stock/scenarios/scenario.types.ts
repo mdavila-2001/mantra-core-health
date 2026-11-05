@@ -4,7 +4,7 @@ import type { Signal, Type } from '@angular/core';
     Escenarios tipados del stock de componentes.
 
     El escáner (`generate-component-index.mjs`) **descubre** los componentes y
-    sus entradas; el generador de valores (`core/mock/faker/props.ts`) rellena
+    sus entradas; el generador de valores (`mock/faker/props.ts` del simulador) rellena
     lo que puede adivinar por nombre y por tipo. Eso alcanza para un botón y no
     alcanza para un organismo: `DataTable` pide un `ViewState<readonly Row[]>`,
     columnas con plantillas de celda y una función de identidad, y ninguna de

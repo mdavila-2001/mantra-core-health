@@ -354,6 +354,33 @@ describe('DataTable', () => {
       expect(host.cursores).toEqual(['cur-sig', 'cur-ant']);
     });
 
+    it('the cursor spinner also clears when the answer keeps the same rows (stale)', async () => {
+      host.cursor.set({ prevCursor: 'cur-ant', nextCursor: 'cur-sig' });
+      await fixture.whenStable();
+
+      botonPorTexto('Siguiente')?.click();
+      await fixture.whenStable();
+      expect(botonPorTexto('Siguiente')?.getAttribute('aria-busy')).toBe('true');
+
+      host.state.set(stale(FILAS, new Date('2026-08-01T10:00:00Z')));
+      await fixture.whenStable();
+      expect(botonPorTexto('Siguiente')?.getAttribute('aria-busy')).not.toBe('true');
+    });
+
+    it('the pressed cursor button shows its spinner until the new rows land', async () => {
+      host.cursor.set({ prevCursor: 'cur-ant', nextCursor: 'cur-sig' });
+      await fixture.whenStable();
+
+      botonPorTexto('Siguiente')?.click();
+      await fixture.whenStable();
+      expect(botonPorTexto('Siguiente')?.getAttribute('aria-busy')).toBe('true');
+      expect(botonPorTexto('Anterior')?.getAttribute('aria-busy')).not.toBe('true');
+
+      host.state.set(ready([{ id: 'p-9', apellido: 'Vaca', documento: '1', obraSocial: 'Particular' }]));
+      await fixture.whenStable();
+      expect(botonPorTexto('Siguiente')?.getAttribute('aria-busy')).not.toBe('true');
+    });
+
     describe('giro de página (pulse.md §7)', () => {
       const OTRAS: readonly Paciente[] = [
         { id: 'p-3', apellido: 'Rojas', documento: '1102938', obraSocial: 'Particular' },

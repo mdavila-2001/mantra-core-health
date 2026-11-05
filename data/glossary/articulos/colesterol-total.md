@@ -1,5 +1,6 @@
 ---
 slug: colesterol-total
+image: colesterol-total.svg | El colesterol total suma el colesterol de todas las lipoproteínas. | Partículas LDL, HDL y VLDL con colesterol dentro, una barra que suma sus aportes y un tubo de suero con la utilidad de la prueba dentro del perfil lipídico.
 ---
 
 ## [definition] Introducción

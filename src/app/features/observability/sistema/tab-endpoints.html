@@ -1,0 +1,50 @@
+<div class="obs-tab" data-testid="obs-tab-endpoints">
+  <section class="obs-seccion" aria-labelledby="obs-ep-t">
+    <h2 class="obs-seccion__titulo" id="obs-ep-t">¿Qué operación falla o tarda?</h2>
+    <p class="obs-seccion__sub">Por plantilla de ruta. «UNMATCHED» agrupa lo que no coincidió con ninguna ruta; «__overflow__», lo que superó el tope de cardinalidad.</p>
+    <app-data-table
+      [state]="filas()"
+      [columns]="columnas"
+      [trackBy]="porId"
+      [rowLabel]="nombreEndpoint"
+      [sort]="ordenActual()"
+      stackedOnMobile
+      fitContainer
+      caption="Operaciones de la API en la ventana"
+      data-testid="obs-endpoints-tabla"
+      (sortChanged)="ordenar($event)"
+      (retry)="cargar()"
+      (refresh)="cargar()"
+    />
+    @if (lista.state().status === 'ready' || lista.state().status === 'stale') {
+      <p class="obs-nota">Se muestran hasta 50 operaciones según el orden elegido.</p>
+    }
+  </section>
+
+  <div class="obs-grid">
+    <section class="obs-seccion" aria-labelledby="obs-top-t">
+      <h2 class="obs-seccion__titulo" id="obs-top-t">Las que más tráfico reciben</h2>
+      <app-view-state-host [state]="lista.state()" (retry)="cargar()" (refresh)="cargar()">
+        @if (specTop(); as spec) {
+          <app-chart-panel [spec]="spec" [plano]="true" [refrescando]="lista.refrescando()" />
+        }
+      </app-view-state-host>
+    </section>
+
+    <section class="obs-seccion" aria-labelledby="obs-mod-t">
+      <h2 class="obs-seccion__titulo" id="obs-mod-t">¿Qué parte de la aplicación?</h2>
+      <app-data-table
+        [state]="filasModulos()"
+        [columns]="columnasModulos"
+        [trackBy]="porId"
+        [rowLabel]="nombreModulo"
+        stackedOnMobile
+        fitContainer
+        caption="Peticiones y fallos por módulo"
+        data-testid="obs-modulos-tabla"
+        (retry)="cargar()"
+        (refresh)="cargar()"
+      />
+    </section>
+  </div>
+</div>

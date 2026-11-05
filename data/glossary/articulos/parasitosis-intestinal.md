@@ -1,5 +1,6 @@
 ---
 slug: parasitosis-intestinal
+image: parasitosis-intestinal.svg | Los parásitos intestinales se transmiten por la vía fecal-oral. | Ciclo circular que va de la boca al intestino, a las heces y al suelo o el agua, junto a dibujos de helmintos y protozoos con síntomas y medidas de prevención.
 ---
 
 ## [definition] Introducción

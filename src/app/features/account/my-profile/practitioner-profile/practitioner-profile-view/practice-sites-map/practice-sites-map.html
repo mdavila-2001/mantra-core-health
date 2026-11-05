@@ -1,6 +1,6 @@
 <!-- El mapa manda y la lista lo indexa. En teléfono la rejilla colapsa a una
      columna y el mapa queda arriba: la pregunta de esta pestaña es «dónde». -->
-<div class="sedes">
+<div class="sedes" [class.sedes--con-mapa]="pines().length > 0">
   @if (pines().length > 0) {
     <div class="sedes__mapa">
       <app-map [pines]="pines()" [etiqueta]="etiquetaDelMapa()" [(seleccionado)]="seleccionada" />
