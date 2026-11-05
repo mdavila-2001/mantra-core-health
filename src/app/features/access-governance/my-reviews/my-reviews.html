@@ -399,8 +399,8 @@
                       label="Acortar la vigencia hasta"
                       hint="Opcional. Debe ser una fecha futura y anterior al vencimiento actual."
                     >
-                      <app-input
-                        type="date"
+                      <app-date-string-picker
+                        
                         [value]="hasta()"
                         (valueChange)="hasta.set('' + ($event ?? ''))"
                         testId="ajuste-fecha"

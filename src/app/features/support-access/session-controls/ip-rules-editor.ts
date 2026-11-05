@@ -20,6 +20,7 @@ import { ViewStateHost } from '../../../shared/components/organisms/view-state-h
 import { draftsOf, endDayOf, endIsoOf, nextUid, rulesOf, sameRules, startDayOf, startIsoOf, type RuleDraft } from './ip-rules-draft';
 import { ipRulesFailureOf, type IpRulesFailure } from './ip-rules-failure';
 import { networkWarning, ruleForMyIp } from './my-network';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 const TIPOS: readonly SelectOption<IpRuleType>[] = [
   { value: 'ALLOW', label: 'Permitir esta red' },
@@ -49,7 +50,7 @@ const TIPOS: readonly SelectOption<IpRuleType>[] = [
  */
 @Component({
   selector: 'app-ip-rules-editor',
-  imports: [Alert, AppButton, FormField, Input, Select, ViewStateHost],
+  imports: [DateStringPicker, Alert, AppButton, FormField, Input, Select, ViewStateHost],
   templateUrl: './ip-rules-editor.html',
   styleUrl: './ip-rules-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

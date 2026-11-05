@@ -92,8 +92,8 @@
                   <form class="horario__alta" (submit)="$event.preventDefault(); agregarTurno(sede)">
                     <div class="horario__par">
                       <app-form-field label="Empieza el" [errorMessage]="errorDe(sede.siteId, 'desde')" [required]="true">
-                        <app-input
-                          type="date"
+                        <app-date-string-picker
+                          
                           testId="horario-desde-fecha"
                           [value]="borrador(sede.siteId).desdeFecha"
                           (valueChange)="escribir(sede.siteId, 'desdeFecha', $event)"
@@ -110,8 +110,8 @@
                     </div>
                     <div class="horario__par">
                       <app-form-field label="Termina el" [errorMessage]="errorDe(sede.siteId, 'hasta')" [required]="true">
-                        <app-input
-                          type="date"
+                        <app-date-string-picker
+                          
                           testId="horario-hasta-fecha"
                           [value]="borrador(sede.siteId).hastaFecha"
                           (valueChange)="escribir(sede.siteId, 'hastaFecha', $event)"

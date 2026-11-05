@@ -10,13 +10,13 @@ import {
 } from '../../../../core/data-access/support-access/support-atoms';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { Input } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import { Accordion } from '../../../../shared/components/molecules/accordion/accordion';
 import { AccordionPanel } from '../../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import type { GrantDraft, TargetOption } from '../grant-draft/grant-draft';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 interface CategoryView {
   readonly code: AtomCategoryCode;
@@ -42,7 +42,7 @@ interface AtomRow {
  */
 @Component({
   selector: 'app-grant-composer',
-  imports: [Accordion, AccordionPanel, AppButton, Checkbox, FormField, Input, Select],
+  imports: [DateStringPicker, Accordion, AccordionPanel, AppButton, Checkbox, FormField, Select],
   templateUrl: './grant-composer.html',
   styleUrl: './grant-composer.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -251,8 +251,8 @@ describe('CombinedAgenda', () => {
     it('el selector de fecha lleva la agenda a ese día', async () => {
       await montar();
       const campo = byId('agenda-fecha') as HTMLInputElement;
-      campo.value = '2030-02-03';
-      campo.dispatchEvent(new Event('change'));
+      campo.value = '03/02/2030';
+      campo.dispatchEvent(new Event('input'));
       await settle();
       expect(router.url).toContain('fecha=2030-02-03');
     });
