@@ -26,10 +26,10 @@
 <ng-template #priceCell let-service>
   <app-input
     inputMode="decimal"
-    [placeholder]="service.hasPrice ? '0.00' : 'Sin precio'"
+    [placeholder]="service.hasPrice !== false ? '0.00' : 'Sin precio'"
     [ariaLabel]="'Precio de lista de ' + service.name + ', en bolivianos'"
     [value]="edits().priceOf(service)"
-    (valueChange)="edits().setPrice(service, $event)"
+    (valueChange)="priceChanged.emit({ service, value: $event })"
     [hasSuccess]="edits().isEdited(service)"
     [testId]="'lab-prices-price-' + service.code"
   />
@@ -41,7 +41,7 @@
     placeholder="Sin descuento"
     [ariaLabel]="'Descuento AloVida de ' + service.name + ', en porcentaje'"
     [value]="edits().discountOf(service)"
-    (valueChange)="edits().setDiscount(service, $event)"
+    (valueChange)="discountChanged.emit({ service, value: $event })"
     [hasSuccess]="edits().isEdited(service)"
     [testId]="'lab-prices-discount-' + service.code"
   />
@@ -52,7 +52,7 @@
     <span class="prices__amount" [attr.data-testid]="'lab-prices-alovida-' + service.code">{{
       price
     }}</span>
-  } @else if (!service.hasPrice && !edits().isEdited(service)) {
+  } @else if (service.hasPrice === false && !edits().isEdited(service)) {
     <span class="prices__muted">—</span>
   } @else {
     <span class="prices__muted">Revise el precio</span>
@@ -62,7 +62,7 @@
 <ng-template #statusCell let-service>
   @if (service.status === 'PUBLISHED') {
     <app-badge variant="success">Visible</app-badge>
-  } @else if (!service.hasPrice) {
+  } @else if (service.hasPrice === false) {
     <!-- An unpriced catalog item waits out of sight; its first price publishes it. -->
     <app-badge variant="warning">Falta el precio</app-badge>
   } @else {

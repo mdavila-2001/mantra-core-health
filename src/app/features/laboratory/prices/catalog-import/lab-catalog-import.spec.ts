@@ -125,4 +125,38 @@ describe('LabCatalogImport', () => {
   it('an análisis already offered cannot be chosen again', () => {
     expect(root().querySelector('[data-code="TSH"] input[type="checkbox"]')).toBeNull();
   });
+
+  it('says why an análisis was rejected, in a warning when nothing was added', () => {
+    importCatalog.mockReturnValue(
+      of({
+        created: 0,
+        linked: 0,
+        republished: 0,
+        skipped: 0,
+        rejected: 1,
+        rows: [
+          {
+            conceptId: 'c-GLUCOSA',
+            outcome: 'REJECTED',
+            serviceId: null,
+            reason: 'Ya tiene un servicio con el código «GLUCOSA».',
+          },
+        ],
+      }),
+    );
+    root().querySelector<HTMLElement>('[data-code="GLUCOSA"] app-checkbox input')!.click();
+    fixture.detectChanges();
+    root().querySelector<HTMLButtonElement>('[data-testid="lab-catalog-add"]')!.click();
+    fixture.detectChanges();
+    const alert = root().querySelector('[data-testid="lab-catalog-result"]')!;
+    expect(alert.textContent).toContain('No se agregó ningún análisis.');
+    expect(alert.textContent).toContain('GLUCOSA: Ya tiene un servicio con el código «GLUCOSA».');
+  });
+
+  it('an empty catalog is an empty state that leads back to Precios', () => {
+    getCatalog.mockReturnValue(of({ sections: [], count: 0, priceRule: '' }));
+    fixture = TestBed.createComponent(LabCatalogImport);
+    fixture.detectChanges();
+    expect(root().textContent).toContain('El catálogo de estudios todavía no está cargado.');
+  });
 });

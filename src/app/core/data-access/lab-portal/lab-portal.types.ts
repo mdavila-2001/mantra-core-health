@@ -104,7 +104,7 @@ export interface LabCategoryPage {
   readonly count: number;
 }
 
-/* ---- carga masiva: `lab-import.types.ts` -------------------------------- */
+/* ---- bulk import and study catalog: `lab-import.types.ts` -------------- */
 
 export type * from './lab-import.types';
 

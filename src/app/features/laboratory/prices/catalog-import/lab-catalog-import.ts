@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import type {
   LabCatalog,
@@ -8,16 +8,17 @@ import type {
   LabCatalogItem,
 } from '../../../../core/data-access/lab-portal/lab-import.types';
 import { LabPortalClient } from '../../../../core/data-access/lab-portal/lab-portal.client';
+import { describeApiFailure } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
+import { dataOf, empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import type { FilterDef } from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { SpecialtyBrowser } from '../../../../shared/components/organisms/specialty-browser/specialty-browser';
-import type { SpecialtyGroup } from '../../../../shared/components/organisms/specialty-browser/specialty-browser.types';
 import { LabCatalogItemCard } from './lab-catalog-item';
+import { catalogGroups, importSummary } from './lab-catalog.rules';
 
 const PRICES_ROUTE = '/administration/laboratory-prices';
 const SECTION = 'section';
@@ -39,7 +40,6 @@ const SECTION = 'section';
 export class LabCatalogImport {
   private readonly lab = inject(LabPortalClient);
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
 
   protected readonly pricesRoute = PRICES_ROUTE;
   protected readonly catalog = signal<ViewState<LabCatalog>>(loading());
@@ -64,30 +64,23 @@ export class LabCatalogImport {
     },
   ]);
 
-  /** Sections filtered by the URL's section and text (name, code, LOINC or component). */
-  protected readonly groups = computed<readonly SpecialtyGroup<LabCatalogItem>[]>(() => {
-    const section = this.params().get(SECTION) ?? '';
-    const term = (this.params().get('q') ?? '').trim().toLocaleLowerCase('es');
-    const hit = (i: LabCatalogItem) =>
-      term === '' ||
-      [i.name, i.code, i.loinc, ...i.components.map((c) => c.name)].some((t) =>
-        (t ?? '').toLocaleLowerCase('es').includes(term),
-      );
-    return (dataOf(this.catalog())?.sections ?? [])
-      .filter((s) => section === '' || s.code === section)
-      .map((s) => ({ conceptId: s.code, label: s.name, items: s.items.filter(hit) }))
-      .filter((g) => g.items.length > 0);
-  });
+  protected readonly groups = computed(() =>
+    catalogGroups(
+      dataOf(this.catalog()),
+      this.params().get(SECTION) ?? '',
+      this.params().get('q') ?? '',
+    ),
+  );
 
-  /** One sentence: added (created or linked to a hand-typed one), skipped, rejected. */
-  protected readonly resultText = computed(() => {
-    const r = this.result();
-    if (r === null) return null;
-    const added = r.created + r.linked + r.republished;
-    const parts = [`Se ${added === 1 ? 'agregó 1 análisis' : `agregaron ${added} análisis`} con sus componentes`];
-    if (r.skipped > 0) parts.push(`${r.skipped} ya estaba${r.skipped === 1 ? '' : 'n'}`);
-    if (r.rejected > 0) parts.push(`${r.rejected} no se pudo agregar`);
-    return `${parts.join('; ')}.`;
+  protected readonly summary = computed(() => {
+    const result = this.result();
+    if (result === null) return null;
+    const names = new Map(
+      (dataOf(this.catalog())?.sections ?? [])
+        .flatMap((s) => s.items)
+        .map((i) => [i.conceptId, i.name]),
+    );
+    return importSummary(result, (id) => names.get(id) ?? 'Un análisis');
   });
   protected readonly addLabel = computed(() => {
     const n = this.selected().size;
@@ -102,19 +95,20 @@ export class LabCatalogImport {
     this.load();
   }
 
+  /** Rereads without a skeleton when data is shown, so open cards stay open. */
   protected load(): void {
-    this.catalog.set(loading());
+    if (this.catalog().status !== 'ready') this.catalog.set(loading());
     this.lab.getCatalog().subscribe({
-      next: (catalog) => this.catalog.set(ready(catalog)),
+      next: (catalog) =>
+        this.catalog.set(
+          catalog.count > 0
+            ? ready(catalog)
+            : empty(
+                { label: 'Volver a Precios', route: PRICES_ROUTE },
+                'El catálogo de estudios todavía no está cargado.',
+              ),
+        ),
       error: (error: unknown) => this.catalog.set(errorToViewState<LabCatalog>(error)),
-    });
-  }
-
-  protected filter(filters: Readonly<Record<string, string>>): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { ...filters },
-      replaceUrl: true,
     });
   }
 
@@ -149,12 +143,7 @@ export class LabCatalogImport {
       },
       error: (error: unknown) => {
         this.importing.set(false);
-        const state = errorToViewState<never>(error);
-        this.failure.set(
-          'message' in state && typeof state.message === 'string'
-            ? state.message
-            : 'No se pudieron agregar los análisis.',
-        );
+        this.failure.set(describeApiFailure(error, 'No se pudieron agregar los análisis.'));
       },
     });
   }

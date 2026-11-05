@@ -66,4 +66,43 @@ describe('handlers del catálogo de análisis del laboratorio', () => {
     const offered = again.sections.flatMap((s) => s.items).find((i) => i.code === 'HEMOGRAMA')!;
     expect(offered.offeredServiceId).toBe(panel.id);
   });
+
+  it('a withdrawn panel can be added again and comes back', () => {
+    const catalog = cuerpo<LabCatalog>(pedir('GET', '/diagnostics/lab/catalog'));
+    const lipid = catalog.sections
+      .flatMap((s) => s.items)
+      .find((i) => i.code === 'PERFIL_LIPIDICO')!;
+    const first = cuerpo<LabCatalogImportResult>(
+      pedir('POST', '/diagnostics/lab/catalog/import', { conceptIds: [lipid.conceptId] }),
+    );
+    const panelId = first.rows[0]!.serviceId!;
+    pedir('DELETE', `/diagnostics/lab/services/${panelId}`);
+    const listed = cuerpo<LabCatalog>(pedir('GET', '/diagnostics/lab/catalog'));
+    expect(
+      listed.sections.flatMap((s) => s.items).find((i) => i.code === 'PERFIL_LIPIDICO')!
+        .offeredServiceId,
+    ).toBeNull();
+    const back = cuerpo<LabCatalogImportResult>(
+      pedir('POST', '/diagnostics/lab/catalog/import', { conceptIds: [lipid.conceptId] }),
+    );
+    expect(back.rows[0]).toMatchObject({ outcome: 'REPUBLISHED', serviceId: panelId });
+  });
+
+  it('a CSV price publishes an unpriced catalog component', () => {
+    const services = cuerpo<{ items: LabService[] }>(
+      pedir('GET', '/diagnostics/lab/services'),
+    ).items;
+    const ldl = services.find((s) => s.code === 'PERFIL_LIPIDICO.LDL')!;
+    expect(ldl).toMatchObject({ hasPrice: false, status: 'DRAFT' });
+    pedir('POST', '/diagnostics/lab/services/import', {
+      mode: 'UPDATE_ONLY',
+      rows: [{ line: 2, service: { code: 'PERFIL_LIPIDICO.LDL', name: ldl.name, price: '15.00' } }],
+    });
+    const after = cuerpo<{ items: LabService[] }>(pedir('GET', '/diagnostics/lab/services')).items;
+    expect(after.find((s) => s.id === ldl.id)).toMatchObject({
+      price: '15.00',
+      hasPrice: true,
+      status: 'PUBLISHED',
+    });
+  });
 });

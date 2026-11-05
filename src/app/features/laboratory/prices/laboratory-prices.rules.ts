@@ -21,7 +21,8 @@ export interface PriceRejection {
 
 /** The typed price of a row before any edit; empty while it has no price. */
 export function priceText(service: LabService): string {
-  return service.hasPrice ? service.price : '';
+  // An API without `hasPrice` yet means every service has its price.
+  return service.hasPrice !== false ? service.price : '';
 }
 
 export function discountText(service: LabService): string {
@@ -53,9 +54,10 @@ export function parseDiscount(text: string): number | null | 'invalid' {
 
 /** Whether an edit brings the row back to what the API has. */
 export function isUnchanged(service: LabService, edit: PriceEdit): boolean {
-  const samePrice = service.hasPrice
-    ? parseAmount(edit.price) === Number(service.price)
-    : edit.price.trim() === '';
+  const samePrice =
+    service.hasPrice !== false
+      ? parseAmount(edit.price) === Number(service.price)
+      : edit.price.trim() === '';
   return samePrice && parseDiscount(edit.discount) === (service.alovidaDiscountPercent ?? null);
 }
 
@@ -72,7 +74,13 @@ export function withComponents(list: readonly LabService[], term: string): reado
     );
   const ids = new Set(list.map((s) => s.id));
   const byName = (a: LabService, b: LabService) => a.name.localeCompare(b.name, 'es');
-  const partsOf = (id: string) => list.filter((s) => s.parentId === id).sort(byName);
+  const children = new Map<string, LabService[]>();
+  for (const s of list) {
+    if (s.parentId !== null && ids.has(s.parentId)) {
+      children.set(s.parentId, [...(children.get(s.parentId) ?? []), s]);
+    }
+  }
+  const partsOf = (id: string) => (children.get(id) ?? []).sort(byName);
   const rows: LabService[] = [];
   for (const top of list.filter((s) => s.parentId === null || !ids.has(s.parentId)).sort(byName)) {
     const parts = partsOf(top.id);

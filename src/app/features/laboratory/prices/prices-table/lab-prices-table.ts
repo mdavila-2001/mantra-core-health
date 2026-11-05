@@ -21,9 +21,10 @@ import type {
 } from '../../../../shared/components/organisms/data-table/data-table.types';
 import type { PriceEdits } from '../price-edits';
 
-/** Rows per page. */
+/** Panels (with their components) per page. */
 const PAGE_SIZE = 10;
 type Cell = TemplateRef<{ $implicit: LabService }>;
+interface CellEdit { readonly service: LabService; readonly value: string | number | null }
 
 /**
  * The editable price table: one row per service, a panel followed by its
@@ -39,20 +40,38 @@ type Cell = TemplateRef<{ $implicit: LabService }>;
 })
 export class LabPricesTable {
   readonly rows = input.required<ViewState<readonly LabService[]>>();
+  /** Read-only here: the container applies `priceChanged`/`discountChanged`. */
   readonly edits = input.required<PriceEdits>();
   /** Service name by id, to say which panel a component belongs to. */
   readonly names = input.required<ReadonlyMap<string, string>>();
   readonly retry = output<void>();
+  readonly priceChanged = output<CellEdit>();
+  readonly discountChanged = output<CellEdit>();
 
   /** Back to the first page whenever the rows change (search, reload). */
   protected readonly offset = linkedSignal({ source: this.rows, computation: () => 0 });
 
+  /** Pages count panels, not rows: a hemogram never loses its parts to the next page. */
+  private readonly groups = computed(() => {
+    const out: LabService[][] = [];
+    for (const service of dataOf(this.rows()) ?? []) {
+      const last = out.at(-1);
+      if (service.parentId !== null && last?.[0]?.id === service.parentId) last.push(service);
+      else out.push([service]);
+    }
+    return out;
+  });
+
   protected readonly pageRows = computed(() =>
-    mapData(this.rows(), (list) => list.slice(this.offset(), this.offset() + PAGE_SIZE)),
+    mapData(this.rows(), () =>
+      this.groups()
+        .slice(this.offset(), this.offset() + PAGE_SIZE)
+        .flat(),
+    ),
   );
 
   protected readonly cursor = computed<CursorState>(() => {
-    const total = dataOf(this.rows())?.length ?? 0;
+    const total = this.groups().length;
     return {
       prevCursor: this.offset() > 0 ? String(Math.max(0, this.offset() - PAGE_SIZE)) : null,
       nextCursor: this.offset() + PAGE_SIZE < total ? String(this.offset() + PAGE_SIZE) : null,

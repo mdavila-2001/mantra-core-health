@@ -11,6 +11,7 @@ import {
   isMockReply as isReply,
   reply,
   type MockHandler,
+  type MockRequest,
   type MockRouter,
 } from '../mock-router';
 import { laboratorioDe } from './lab-portal.handlers';
@@ -68,13 +69,23 @@ function enrichAnswer(answer: unknown): unknown {
 export function registerLabCatalog(router: MockRouter): void {
   const create: MockHandler = router.match('POST', '/diagnostics/lab/services')!.handler;
   const list: MockHandler = router.match('GET', '/diagnostics/lab/services')!.handler;
+  const patch: MockHandler = router.match('PATCH', '/diagnostics/lab/services/:id')!.handler;
+  /** The tenant's services that are not withdrawn (the list hides them). */
+  const alive = (request: MockRequest): LabService[] =>
+    cuerpo<{ items: LabService[] }>(
+      list({ ...request, method: 'GET', query: new URLSearchParams() }),
+    ).items;
+  const setStatus = (request: MockRequest, id: string, status: 'PUBLISHED' | 'DRAFT') =>
+    patch({ ...request, method: 'PATCH', params: { id }, body: { status } });
 
   router.get('/diagnostics/lab/catalog', (request) => {
     const tenantId = laboratorioDe(request);
     if (tenantId === null) return forbidden('Sólo el personal de un laboratorio ve su catálogo.');
+    // A withdrawn panel is not in the price list: it can be added again.
+    const live = new Set(alive(request).map((s) => s.id));
     const offered = new Map(
       links
-        .filtrar((l) => l.tenantId === tenantId && l.parentId === null)
+        .filtrar((l) => l.tenantId === tenantId && l.parentId === null && live.has(l.id))
         .map((l) => [l.conceptId, l.id]),
     );
     const sections = LAB_CATALOG_SECTIONS.map((s) => ({
@@ -135,12 +146,16 @@ export function registerLabCatalog(router: MockRouter): void {
       const existing = links.filtrar(
         (l) => l.tenantId === tenantId && l.parentId === null && l.conceptId === conceptId,
       )[0];
-      if (existing !== undefined)
+      if (existing !== undefined && alive(request).some((s) => s.id === existing.id))
         return row('SKIPPED', existing.id, 'Ya está en su lista de precios.');
+      if (existing !== undefined) {
+        for (const l of links.filtrar((x) => x.id === existing.id || x.parentId === existing.id)) {
+          setStatus(request, l.id, l.hasPrice ? 'PUBLISHED' : 'DRAFT');
+        }
+        return row('REPUBLISHED', existing.id);
+      }
       // Like the API: a free-form service of the same code is linked, keeping its price.
-      const own = cuerpo<{ items: LabService[] }>(
-        list({ ...request, method: 'GET', query: new URLSearchParams() }),
-      ).items.find((s) => s.code.toLowerCase() === item.code.toLowerCase());
+      const own = alive(request).find((s) => s.code.toLowerCase() === item.code.toLowerCase());
       const adopt = own !== undefined && links.get(own.id) === undefined ? own : undefined;
       if (adopt)
         links.agregar({ id: adopt.id, tenantId, parentId: null, conceptId, hasPrice: true });
@@ -166,6 +181,25 @@ export function registerLabCatalog(router: MockRouter): void {
   });
 
   router.wrap('GET', '/diagnostics/lab/services', (request, next) => enrichAnswer(next(request)));
+  // Like the API: a CSV price on an unpriced catalog item counts as its first price.
+  router.wrap('POST', '/diagnostics/lab/services/import', (request, next) => {
+    const answer = next(request);
+    const rows =
+      ((request.body ?? {}) as { rows?: { service?: { code?: string; price?: unknown } }[] })
+        .rows ?? [];
+    const priced = new Set(
+      rows
+        .filter((r) => r.service?.price != null)
+        .map((r) => String(r.service?.code ?? '').toLowerCase()),
+    );
+    for (const service of alive(request)) {
+      const link = links.get(service.id);
+      if (link === undefined || link.hasPrice || !priced.has(service.code.toLowerCase())) continue;
+      links.actualizar(link.id, { hasPrice: true });
+      if (service.status === 'DRAFT') setStatus(request, service.id, 'PUBLISHED');
+    }
+    return answer;
+  });
   router.wrap('POST', '/diagnostics/lab/services', (request, next) => enrichAnswer(next(request)));
   router.wrap('DELETE', '/diagnostics/lab/services/:id', (request, next) =>
     enrichAnswer(next(request)),

@@ -50,7 +50,7 @@ export class PriceEdits {
   alovidaPriceOf(service: LabService): string | null {
     const edit = this.all()[service.id];
     if (edit === undefined) {
-      return service.hasPrice ? withDisplayCurrency(service.alovidaPrice) : null;
+      return service.hasPrice !== false ? withDisplayCurrency(service.alovidaPrice) : null;
     }
     const price = parseAmount(edit.price);
     const discount = parseDiscount(edit.discount);

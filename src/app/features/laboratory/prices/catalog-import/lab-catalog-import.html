@@ -36,15 +36,22 @@
   </div>
 </section>
 
-@if (resultText(); as text) {
+@if (summary(); as done) {
   <app-alert
-    tone="success"
-    title="Análisis agregados"
+    [tone]="done.added > 0 ? 'success' : 'warning'"
+    [title]="done.added > 0 ? 'Análisis agregados' : 'No se agregó nada'"
     [dismissible]="true"
     data-testid="lab-catalog-result"
     (dismissed)="result.set(null)"
   >
-    {{ text }}
+    {{ done.text }}
+    @if (done.rejections.length > 0) {
+      <ul class="catalog__list">
+        @for (reason of done.rejections; track reason) {
+          <li>{{ reason }}</li>
+        }
+      </ul>
+    }
     <div alert-actions>
       <a [routerLink]="[pricesRoute]">Revisar los precios</a>
     </div>
@@ -65,7 +72,6 @@
   [expandAll]="hasFilter()"
   searchLabel="Buscar un análisis por nombre, código, LOINC o componente"
   noMatchesText="Ningún análisis del catálogo coincide. Pruebe con otra palabra o quite la sección."
-  (filtersChanged)="filter($event)"
   (retry)="load()"
 >
   <ng-template let-item>

@@ -7,6 +7,8 @@
     page-actions
     routerLink="/administration/laboratory-prices/catalog"
     data-testid="lab-prices-catalog"
+    [disabled]="edits.count() > 0"
+    [attr.title]="edits.count() > 0 ? 'Guarde o descarte los cambios antes de salir' : null"
   >
     Agregar del catálogo
   </a>
@@ -93,6 +95,13 @@
       </div>
     </div>
 
-    <app-lab-prices-table [rows]="visible()" [edits]="edits" [names]="names()" (retry)="reload()" />
+    <app-lab-prices-table
+      [rows]="visible()"
+      [edits]="edits"
+      [names]="names()"
+      (priceChanged)="edits.setPrice($event.service, $event.value)"
+      (discountChanged)="edits.setDiscount($event.service, $event.value)"
+      (retry)="reload()"
+    />
   </div>
 </app-card>

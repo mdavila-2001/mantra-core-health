@@ -230,10 +230,25 @@ describe('LaboratoryPrices', () => {
     ]);
   });
 
-  it('ofrece agregar análisis del catálogo', () => {
-    const link = (fixture.nativeElement as HTMLElement).querySelector(
-      '[data-testid="lab-prices-catalog"]',
-    );
+  it('ofrece agregar análisis del catálogo, pero no con cambios sin guardar', () => {
+    const link = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="lab-prices-catalog"]');
     expect(link?.getAttribute('href')).toBe('/administration/laboratory-prices/catalog');
+    expect(link?.getAttribute('aria-disabled')).not.toBe('true');
+
+    internal().setPrice(CATALOG[0]!, '90');
+    fixture.detectChanges();
+    expect(link?.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('typing a price in the table counts as an edit and is saved', () => {
+    const input = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+      '[data-testid="lab-prices-price-GLU-01"]',
+    )!;
+    input.value = '33';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(internal().dirtyCount()).toBe(1);
+    internal().save();
+    expect(sent).toEqual([{ id: 's-2', changes: { price: '33.00', alovidaDiscountPercent: null } }]);
   });
 });

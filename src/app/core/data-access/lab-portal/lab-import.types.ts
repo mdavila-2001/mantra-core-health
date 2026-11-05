@@ -1,11 +1,11 @@
 import type { LabServiceDraft } from './lab-portal.types';
 
-/* ---- carga masiva ------------------------------------------------------- */
+/* ---- bulk CSV import ---------------------------------------------------- */
 
-/** Crear lo nuevo y actualizar lo que existe, o sólo actualizar. */
+/** Create what is new and update what exists, or only update. */
 export type LabImportMode = 'CREATE_OR_UPDATE' | 'UPDATE_ONLY';
 
-/** Una fila ya leída del CSV, con el número de línea para poder señalarla. */
+/** A CSV row already parsed, with its line number to point at it. */
 export interface LabImportRow {
   readonly line: number;
   readonly service: LabServiceDraft;
@@ -17,7 +17,7 @@ export interface LabImportRowResult {
   readonly line: number;
   readonly code: string;
   readonly outcome: LabImportOutcome;
-  /** Por qué se rechazó, en palabras de persona. */
+  /** Why it was rejected, in plain words. */
   readonly reason: string | null;
 }
 
