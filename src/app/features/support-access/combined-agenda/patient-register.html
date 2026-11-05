@@ -27,7 +27,7 @@
     <app-form-field label="Apellido paterno" [required]="true"><app-input autocomplete="off" [value]="lastName()" (valueChange)="set(lastName, $event)" ariaLabel="Apellido paterno" data-testid="registro-apellido" /></app-form-field>
     <app-form-field label="Apellido materno"><app-input autocomplete="off" [value]="motherLastName()" (valueChange)="set(motherLastName, $event)" ariaLabel="Apellido materno" /></app-form-field>
     <app-form-field label="Documento de identidad" [required]="true"><app-input autocomplete="off" [value]="documentValue()" (valueChange)="set(documentValue, $event)" ariaLabel="Documento de identidad" data-testid="registro-documento" /></app-form-field>
-    <app-form-field label="Fecha de nacimiento" [required]="true"><app-input autocomplete="off" type="date" [value]="birthDate()" (valueChange)="set(birthDate, $event)" ariaLabel="Fecha de nacimiento" data-testid="registro-nacimiento" /></app-form-field>
+    <app-form-field label="Fecha de nacimiento" [required]="true"><app-date-string-picker  [value]="birthDate()" (valueChange)="set(birthDate, $event)" ariaLabel="Fecha de nacimiento" data-testid="registro-nacimiento" /></app-form-field>
     <app-form-field label="Teléfono" [required]="true" hint="Con sus 8 dígitos."><app-input autocomplete="off" [value]="phone()" (valueChange)="set(phone, $event)" inputMode="tel" ariaLabel="Teléfono" data-testid="registro-telefono" /></app-form-field>
   </div>
 

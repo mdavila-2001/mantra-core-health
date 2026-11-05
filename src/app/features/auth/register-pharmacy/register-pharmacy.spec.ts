@@ -22,6 +22,7 @@ interface CuerpoDelAlta {
   readonly organization: {
     readonly code: string;
     readonly legalName: string;
+    readonly tradeName?: string;
     readonly legalEntityType: string;
     readonly tenantType: string;
     readonly legalRepresentative: {
@@ -149,16 +150,38 @@ describe('RegisterPharmacy', () => {
       displayName: 'Mariana Siles',
     });
     // Nada de lo opcional viaja si no se cargó: ni documentos ni gerencias.
+    // No trade name either: the legal name acts as the name.
     // La dirección legal y el punto de la central sí: son de la casa central,
     // que la API crea en toda alta de farmacia (P50), y el punto es obligatorio.
     expect('legalDocuments' in cuerpo.organization).toBe(false);
     expect('executives' in cuerpo.organization).toBe(false);
+    expect('tradeName' in cuerpo.organization).toBe(false);
     expect(cuerpo.organization.pharmacy).toEqual({
       address: 'Av. Cañoto esq. Ballivián 234',
       latitude: -17.78,
       longitude: -63.18,
     });
 
+    req.flush(RESPUESTA_201);
+  });
+
+  it('pregunta el nombre comercial junto a la razón social, y lo manda sólo si se escribió', () => {
+    // The pharmacy profile and the directory show the trade name, so the sign-up must ask for it.
+    const empresa = component.paginas().find((p) => p.clave === 'empresa');
+    expect(empresa?.campos.map((c) => c.key)).toEqual([
+      'legalName',
+      'tradeName',
+      'companyType',
+      'taxId',
+    ]);
+    expect(empresa?.campos.find((c) => c.key === 'tradeName')?.required).toBeFalsy();
+
+    completarObligatorio();
+    component.form.controls.tradeName.setValue('  Farmacia San Martín  ');
+    component.submit();
+
+    const req = http.expectOne(RUTA_ALTA);
+    expect((req.request.body as CuerpoDelAlta).organization.tradeName).toBe('Farmacia San Martín');
     req.flush(RESPUESTA_201);
   });
 
@@ -413,7 +436,9 @@ describe('RegisterPharmacy', () => {
     req.flush(RESPUESTA_201);
   });
 
-  it('una S.R.L. sin poder notariado no se envía; una unipersonal sí (BR-09)', () => {
+  it('sin poder notariado no se envía, tampoco una unipersonal: es obligatorio para toda organización', () => {
+    // Decisión del propietario (05/11/2026): el front exige el poder a todo tipo
+    // societario, aunque la API (BR-09) dejara pasar a una unipersonal sin él.
     completarObligatorio();
     component.form.controls.powerOfAttorneyFileId.setValue('');
     component.submit();
@@ -421,11 +446,27 @@ describe('RegisterPharmacy', () => {
 
     component.form.controls.companyType.setValue('UNIPERSONAL');
     component.submit();
+    http.expectNone(RUTA_ALTA);
+    expect(component.form.controls.powerOfAttorneyFileId.invalid).toBe(true);
+
+    component.form.controls.powerOfAttorneyFileId.setValue('file-poder');
+    component.submit();
     const req = http.expectOne(RUTA_ALTA);
-    expect((req.request.body as CuerpoDelAlta).organization.legalRepresentative).not.toHaveProperty(
+    expect((req.request.body as CuerpoDelAlta).organization.legalRepresentative).toHaveProperty(
       'powerOfAttorneyFileId',
+      'file-poder',
     );
     req.flush(RESPUESTA_201);
+  });
+
+  it('el poder del representante se rotula obligatorio, nunca «(opcional)»', () => {
+    const poder = component
+      .paginas()
+      .flatMap((p) => p.campos)
+      .find((c) => c.key === 'powerOfAttorneyFileId');
+
+    expect(poder?.label).not.toMatch(/opcional/);
+    expect(poder?.required).toBe(true);
   });
 
   it('una gerencia a medias no viaja: las tres o ninguna', () => {

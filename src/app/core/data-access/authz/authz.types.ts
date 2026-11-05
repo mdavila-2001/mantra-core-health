@@ -49,14 +49,16 @@ export interface AuthzScopeQuery {
  * Lo que manda el profesional al pedir el vínculo
  * (`POST /authz/care-relationships/request`).
  *
- * No lleva especialidades: las elige el **paciente** al aceptar (FT-07-R06),
- * no quien pide. El tipo de relación queda en el default del backend
- * (`TREATING`) porque la pantalla no ofrece otro.
+ * No lleva especialidades: el pedido por especialidad es otro circuito
+ * (`/consent/practitioner-access-requests`). Without `relationshipType` the
+ * backend keeps its default (`TREATING`); `PRIMARY` asks to be the patient's
+ * primary practitioner (cabecera).
  */
 export interface CareRelationshipRequestInput {
   readonly tenantId: string;
   readonly patientProfileId: string;
   readonly reasonText?: string;
+  readonly relationshipType?: 'PRIMARY';
 }
 
 /** Las dos respuestas posibles del paciente, con los nombres del contrato. */
@@ -67,6 +69,37 @@ export interface CareRelationshipRespondInput {
   readonly decision: CareRelationshipDecision;
   /** Sólo con `ACCEPT`: qué áreas autoriza. Aceptar no es todo o nada. */
   readonly authorizedSpecialtyConceptIds?: readonly string[];
+}
+
+/* ---- The unified inbox (`/authz/me/access-requests`) --------------------- */
+
+/** What the request grants: primary practitioner, care episode, or some specialties only. */
+export type AccessRequestKind = 'CABECERA' | 'GRANULAR' | 'ATENCION';
+
+/** Seen from the session: the other side asked (`RECEIVED`) or the session did (`SENT`). */
+export type AccessRequestDirection = 'RECEIVED' | 'SENT';
+
+export type AccessRequestStatus = 'PENDING' | 'ACTIVE' | 'REJECTED' | 'REVOKED' | 'EXPIRED';
+
+/** The session roles the practitioner's inbox (`/authz/practitioners/me/access-requests`) accepts. */
+export const PRACTITIONER_INBOX_ROLES: readonly string[] = ['CLINICIAN', 'PRACTITIONER'];
+
+/**
+ * One row of the inbox, for the patient or for the practitioner. Only the
+ * active tenant: the API does not mix organizations in one list.
+ */
+export interface AccessRequestItem {
+  readonly id: string;
+  readonly kind: AccessRequestKind;
+  readonly direction: AccessRequestDirection;
+  /** The other side: the practitioner for the patient, the patient for the practitioner. */
+  readonly counterpart: { readonly profileId: string; readonly displayName: string };
+  readonly requestedAt: Date;
+  /** Absent while nobody decided. */
+  readonly decidedAt?: Date;
+  readonly status: AccessRequestStatus;
+  readonly requestedSpecialtyConceptIds: readonly string[];
+  readonly authorizedSpecialtyConceptIds: readonly string[];
 }
 
 /* ---- BR-20 · «Quién ve mi historia» -------------------------------------- */

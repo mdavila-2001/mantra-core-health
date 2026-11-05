@@ -110,6 +110,7 @@ import {
   SIGNATURE_IMAGE_MAX_BYTES,
 } from './image-status';
 import { DOCTOR_PROFILE_TABS, TAB_EDITOR, EDITOR_DOCTOR_TABS } from '../doctor-profile-tabs';
+import { EditorSectionAnchor, requestedTab } from './editor-deep-link';
 import { WorkHistory, type LugarSugerido } from '../work-history/work-history';
 import {
   OPCIONES_DE_ESTADO,
@@ -520,6 +521,7 @@ function soloFecha(fecha: Date): string {
     ContentDialog,
     DataTable,
     DatePicker,
+    EditorSectionAnchor,
     FilterBar,
     FormActions,
     FileInput,
@@ -1874,25 +1876,11 @@ export class PractitionerProfileEdit {
   }
 
   constructor() {
-    this.abrirEnLaPestanaPedida();
+    // The tab a link asked for (`?pestana=`); the rules live with the link (`editor-deep-link.ts`).
+    this.pestana.set(requestedTab(this.ruta.snapshot.queryParamMap) ?? this.pestana());
     this.cargar();
     this.cargarEspecialidades();
     this.cargarIdiomas();
-  }
-
-  /**
-   * Abre el editor en la pestaña que traiga `?pestana=`, si es una que existe.
-   *
-   * Del snapshot y no del observable: es la pestaña con la que se ENTRA, no una
-   * que la URL siga mandando después. Sin número, número ilegible o número
-   * fuera de rango, queda la primera — que es lo que pasaba siempre hasta que
-   * el lápiz empezó a decir de dónde venía.
-   */
-  private abrirEnLaPestanaPedida(): void {
-    const pedida = Number(this.ruta.snapshot.queryParamMap.get('pestana'));
-    if (Number.isInteger(pedida) && pedida >= 0 && pedida < EDITOR_DOCTOR_TABS.length) {
-      this.pestana.set(pedida);
-    }
   }
 
   /**

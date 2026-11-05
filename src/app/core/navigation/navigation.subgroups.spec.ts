@@ -62,6 +62,9 @@ describe('NAV_SUBGROUPS', () => {
     // se abre el dominio, no una pantalla más de una lista; envolverla en un
     // bloque la escondería detrás de un desplegable.
     'superadmin/observability',
+    // «Configurar práctica» (2026-11-05): owner request, it leaves «Administración»
+    // and sits loose in «Atención», not inside any block.
+    'administration/medical-center-setup',
   ];
 
   it('reparte el registro entero: ninguna sección se queda sin bloque por descuido', () => {

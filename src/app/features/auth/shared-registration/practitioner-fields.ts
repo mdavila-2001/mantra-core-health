@@ -129,7 +129,7 @@ export function practitionerFields(
       {
         key: 'lastName',
         label: 'Apellido paterno',
-        control: 'text',
+        control: 'text', fieldKind: 'personName',
         required: true,
         autocomplete: 'family-name',
         placeholder: 'Rojas',
@@ -141,7 +141,7 @@ export function practitionerFields(
         key: 'motherLastName',
         label: 'Apellido materno',
         hint: 'Si no lleva, déjelo vacío.',
-        control: 'text',
+        control: 'text', fieldKind: 'personName',
         autocomplete: 'family-name',
         placeholder: 'Paz',
         testId: 'registro-pro-apellido-materno',
@@ -154,7 +154,7 @@ export function practitionerFields(
         hint: 'Se guarda como su documento oficial.',
         description:
           'Sólo el número, sin el complemento: el departamento que la emitió va en la casilla de al lado. No es con lo que inicia sesión —eso es su correo—, pero es lo que ata su matrícula a una persona.',
-        control: 'text',
+        control: 'text', fieldKind: 'identityDocument',
         autocomplete: 'off',
         placeholder: '1234567',
         testId: 'registro-pro-documento',

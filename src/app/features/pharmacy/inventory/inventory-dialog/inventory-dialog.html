@@ -1,0 +1,64 @@
+<app-content-dialog
+  heading="Editar inventario"
+  [description]="name(product()) + ' · ' + product().productCode"
+  size="sm"
+  [dismissible]="!saving()"
+  data-testid="inventory-dialog"
+  (closed)="closed.emit()"
+>
+  @if (error(); as message) {
+    <app-alert tone="error" data-testid="inventory-dialog-error">{{ message }}</app-alert>
+  }
+  @if (notice()) {
+    <app-alert tone="info" data-testid="inventory-dialog-notice">{{ notice() }}</app-alert>
+  }
+  @if (view() === 'AVAILABILITY') {
+    <app-switch
+      [label]="has() ? 'Lo tengo' : 'No lo tengo'"
+      [checked]="has()"
+      (checkedChange)="has.set($event)"
+      data-testid="inventory-dialog-has"
+    />
+  } @else {
+    <app-form-field
+      label="Existencias"
+      [required]="counted()"
+      [hint]="counted() ? 'Unidades que tiene. Para dejarlo sin stock, ponga 0.' : 'Unidades que tiene. Déjelo vacío si no las cuenta.'"
+    >
+      <app-input
+        type="number"
+        inputMode="numeric"
+        placeholder="Sin conteo"
+        [step]="1"
+        [value]="stock()"
+        (valueChange)="stock.set(text($event)); error.set(null)"
+        testId="inventory-dialog-stock"
+      />
+    </app-form-field>
+    <app-form-field label="Umbral de alerta" [required]="true" hint="Con estas unidades o menos, avisa que falta stock.">
+      <app-input
+        type="number"
+        inputMode="numeric"
+        [step]="1"
+        [value]="minimum()"
+        (valueChange)="minimum.set(text($event)); error.set(null)"
+        testId="inventory-dialog-minimum"
+      />
+    </app-form-field>
+  }
+
+  <button dialog-actions app-button type="button" variant="ghost" [disabled]="saving()" (clicked)="closed.emit()">
+    Cancelar
+  </button>
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    [isLoading]="saving()"
+    [disabled]="saving()"
+    data-testid="inventory-dialog-save"
+    (clicked)="save()"
+  >
+    Guardar
+  </button>
+</app-content-dialog>

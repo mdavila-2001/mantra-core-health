@@ -40,11 +40,11 @@
                     size="sm"
                     variant="ghost"
                     [disabled]="removing() !== null"
-                    [attr.aria-label]="'Deshacer el vínculo de ' + entry.code + ' con ' + mapping.productName"
+                    [attr.aria-label]="'Eliminar el vínculo de ' + entry.code + ' con ' + mapping.productName"
                     (clicked)="undo(mapping)"
                     data-testid="integration-ambiguous-undo"
                   >
-                    Deshacer
+                    Eliminar
                   </button>
                 </li>
               }
@@ -70,7 +70,7 @@
 
 @if (dialogOpen()) {
   <app-content-dialog
-    [heading]="editing() === null ? 'Vincular producto' : 'Corregir el vínculo'"
+    [heading]="editing() === null ? 'Vincular producto' : 'Editar el vínculo'"
     [description]="
       editing() === null
         ? 'Elija el producto de su catálogo y el código con que lo nombra el sistema de la farmacia.'

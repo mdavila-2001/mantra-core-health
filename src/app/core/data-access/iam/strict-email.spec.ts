@@ -43,12 +43,17 @@ describe('esCorreoComoLaApi (sólo el simulador)', () => {
 });
 
 describe('CORREO_ESTRICTO', () => {
-  it.each(['ana@gmail.com', 'a.b+c@sub.dominio.com.bo', 'juan_perez-1@mi-clinica.bo', 'x@y.co'])(
+  it.each(['ana@gmail.com', 'a.b_c@sub.dominio.com.bo', 'juan_perez-1@mi-clinica.bo', 'x@y.co'])(
     '«%s» passes',
     (correo) => expect(CORREO_ESTRICTO.test(correo)).toBe(true),
   );
 
   it.each([
+    '---++++-++--+++++',
+    '-ana@gmail.com',
+    'ana-@gmail.com',
+    'ana.-paz@gmail.com',
+    'ana+promo@gmail.com',
     'qqoewqw*[]@gmail.com',
     'ana perez@gmail.com',
     'ana@gmail .com',
@@ -57,6 +62,9 @@ describe('CORREO_ESTRICTO', () => {
     'ana.@gmail.com',
     'ana..p@gmail.com',
     'ana@-gmail.com',
+    'ana@gmail-.com',
+    'ana@gm--ail.com',
+    'ana@gm_ail.com',
     'ana@gmail.c0m',
     'ana@gmail',
     'ana@@gmail.com',

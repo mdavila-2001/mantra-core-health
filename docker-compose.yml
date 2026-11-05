@@ -80,10 +80,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # La API simulada sigue en el navegador. El asistente de IA sí usa el
-        # servicio público configurado abajo.
+        # La API simulada sigue en el navegador.
         PUBLIC_API_BASE_URL: ''
-        PUBLIC_AI_BASE_URL: ${PUBLIC_AI_BASE_URL:-https://demo.alovidasalud.arauzsoftware.com/ai}
         # Explícito, con el mismo valor que el Dockerfile toma si no se le pasa:
         # `production` es la maqueta (`mockBackend: true`), que es lo que este
         # archivo despliega. `production-api` NO sirve acá: apaga el simulador
@@ -98,7 +96,6 @@ services:
       PORT: '4000'
       NODE_ENV: production
       PUBLIC_API_BASE_URL: ''
-      PUBLIC_AI_BASE_URL: ${PUBLIC_AI_BASE_URL:-https://demo.alovidasalud.arauzsoftware.com/ai}
       # Ver la nota de APP_DOMAIN arriba: sin esto el dominio devuelve 400.
       SSR_ALLOWED_HOSTS: ${APP_DOMAIN:-localhost}
     ports:

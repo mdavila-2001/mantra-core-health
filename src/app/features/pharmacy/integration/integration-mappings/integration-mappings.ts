@@ -54,8 +54,8 @@ const PRODUCT_LIMIT = 500;
 
 /** Las dos acciones de cada vínculo, en la fila. */
 const ROW_ACTIONS: readonly RowAction[] = [
-  { code: 'edit', label: 'Corregir', icon: 'edit' },
-  { code: 'undo', label: 'Deshacer', icon: 'remove', destructive: true },
+  { code: 'edit', label: 'Editar', icon: 'edit' },
+  { code: 'undo', label: 'Eliminar', icon: 'remove', destructive: true },
 ];
 
 /** Un código del sistema de la farmacia vinculado a más de un producto. */
@@ -304,7 +304,7 @@ export class IntegrationMappings {
   }
 
   /**
-   * «Deshacer», con confirmación. Lo que se ve después es la tabla releída; un
+   * «Eliminar», con confirmación. Lo que se ve después es la tabla releída; un
    * 404 (otro lo deshizo antes) también relee y lo dice.
    */
   async undo(mapping: ProductMapping): Promise<void> {
@@ -312,9 +312,9 @@ export class IntegrationMappings {
       return;
     }
     const confirmed = await this.dialogs.confirm({
-      title: 'Deshacer el vínculo',
+      title: '¿Eliminar el vínculo?',
       message: `${mapping.externalProductCode} deja de traer existencias para «${mapping.productName}». El stock que ya se sincronizó se conserva.`,
-      confirmLabel: 'Deshacer',
+      confirmLabel: 'Eliminar',
       destructive: true,
     });
     if (!confirmed) {

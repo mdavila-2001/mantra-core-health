@@ -2,6 +2,7 @@ import { ErrorHandler, inject, Injectable, isDevMode } from '@angular/core';
 
 import { BUILD_INFO } from '../build/build-info';
 import { ErrorReporter } from './error-reporter';
+import { StaleBuildRecovery } from './stale-build-recovery';
 
 /**
  * Punto único por el que pasa **todo** fallo no capturado de la aplicación.
@@ -25,6 +26,7 @@ import { ErrorReporter } from './error-reporter';
 export class AppErrorHandler implements ErrorHandler {
   private readonly build = inject(BUILD_INFO);
   private readonly reporter = inject(ErrorReporter);
+  private readonly staleBuild = inject(StaleBuildRecovery);
 
   handleError(error: unknown): void {
     const id = this.reporter.report(error, {
@@ -40,5 +42,9 @@ export class AppErrorHandler implements ErrorHandler {
     if (isDevMode()) {
       console.error(`[${id}]`, error);
     }
+
+    // A chunk from an older build (tab opened before a redeploy: NG0750,
+    // "Failed to fetch dynamically imported module"). See stale-build-recovery.ts.
+    void this.staleBuild.recoverFromBackground(error);
   }
 }

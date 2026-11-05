@@ -1,0 +1,148 @@
+<section class="todas__bloque" aria-labelledby="todas-sedes-titulo">
+  <h2 id="todas-sedes-titulo" class="todas__titulo">A qué sucursales se aplica</h2>
+  <p class="todas__nota">
+    Lo que cargue acá se guarda en cada sucursal marcada, una por una. Para cambiar una sola, use su
+    pestaña.
+  </p>
+  <app-checkbox
+    data-testid="todas-marcar-todas"
+    label="Todas las sucursales"
+    [checked]="todasMarcadas()"
+    [indeterminate]="!todasMarcadas() && !ningunaMarcada()"
+    [disabled]="enCurso() !== null"
+    (checkedChange)="marcarTodas($event)"
+  />
+  <ul class="todas__sedes" data-testid="todas-sedes">
+    @for (sede of sedes(); track sede.siteId) {
+      <li>
+        <app-checkbox
+          [attr.data-testid]="'todas-sede-' + sede.siteId"
+          [label]="sede.siteName"
+          [checked]="marcada(sede.siteId)"
+          [disabled]="enCurso() !== null"
+          (checkedChange)="marcar(sede.siteId, $event)"
+        />
+      </li>
+    }
+  </ul>
+  @if (ningunaMarcada()) {
+    <p class="todas__nota" data-testid="todas-ninguna">Marque al menos una sucursal.</p>
+  }
+</section>
+
+@if (resumen(); as r) {
+  @if (r.fallidas.length > 0) {
+    <app-alert
+      tone="warning"
+      [title]="
+        'Se guardó en ' + r.guardadas + ' de ' + (r.guardadas + r.fallidas.length) + ' sucursales'
+      "
+      data-testid="todas-fallidas"
+    >
+      <ul class="todas__lista">
+        @for (f of r.fallidas; track f.siteId) {
+          <li>
+            <strong>{{ f.siteName }}:</strong> {{ f.motivo }}
+          </li>
+        }
+      </ul>
+    </app-alert>
+  } @else {
+    <app-alert
+      tone="success"
+      title="Guardado en todas las sucursales marcadas"
+      data-testid="todas-ok"
+    >
+      {{ r.operacion === '24h' ? 'La atención de 24 horas' : 'El turno' }} quedó cargado en
+      {{ r.guardadas }} {{ r.guardadas === 1 ? 'sucursal' : 'sucursales' }}.
+    </app-alert>
+  }
+}
+
+<section class="todas__bloque" aria-labelledby="todas-24h-titulo">
+  <h2 id="todas-24h-titulo" class="todas__titulo">Atención las 24 horas</h2>
+  <app-form-field
+    label="¿Las sucursales marcadas abren las 24 horas, todos los días?"
+    hint="Reemplaza lo que cada una tenía declarado. «Sin declarar» no muestra nada a los pacientes."
+  >
+    <app-select
+      data-testid="todas-24h"
+      placeholder="Elija una opción"
+      [options]="opciones24h"
+      [value]="declaracion()"
+      [disabled]="enCurso() !== null"
+      (valueChange)="declaracion.set($event)"
+    />
+  </app-form-field>
+  <div class="todas__acciones">
+    <button
+      app-button
+      type="button"
+      variant="outline"
+      data-testid="todas-aplicar-24h"
+      [isLoading]="enCurso() === '24h'"
+      [disabled]="enCurso() !== null || declaracion() === null || ningunaMarcada()"
+      (clicked)="aplicar24h()"
+    >
+      Aplicar a {{ elegidas().length }} {{ elegidas().length === 1 ? 'sucursal' : 'sucursales' }}
+    </button>
+  </div>
+</section>
+
+<section class="todas__bloque" aria-labelledby="todas-turno-titulo">
+  <h2 id="todas-turno-titulo" class="todas__titulo">Turno de guardia para todas</h2>
+  <p class="todas__nota">
+    El mismo turno se carga en cada sucursal marcada. Dura como mucho 72 horas, se carga con hasta
+    62 días de anticipación, y no se carga en la sucursal que ya tenga otro turno en ese horario: se
+    le avisa cuál.
+  </p>
+  <form class="todas__bloque" (submit)="$event.preventDefault(); cargarTurno()">
+    <div class="todas__par">
+      <app-form-field label="Empieza el" [errorMessage]="errores().desde ?? ''" [required]="true">
+        <app-input
+          type="date"
+          testId="todas-desde-fecha"
+          [value]="borrador().desdeFecha"
+          (valueChange)="escribir('desdeFecha', $event)"
+        />
+      </app-form-field>
+      <app-form-field label="a las (hora de Bolivia)" [required]="true">
+        <app-input
+          type="time"
+          testId="todas-desde-hora"
+          [value]="borrador().desdeHora"
+          (valueChange)="escribir('desdeHora', $event)"
+        />
+      </app-form-field>
+    </div>
+    <div class="todas__par">
+      <app-form-field label="Termina el" [errorMessage]="errores().hasta ?? ''" [required]="true">
+        <app-input
+          type="date"
+          testId="todas-hasta-fecha"
+          [value]="borrador().hastaFecha"
+          (valueChange)="escribir('hastaFecha', $event)"
+        />
+      </app-form-field>
+      <app-form-field label="a las (hora de Bolivia)" [required]="true">
+        <app-input
+          type="time"
+          testId="todas-hasta-hora"
+          [value]="borrador().hastaHora"
+          (valueChange)="escribir('hastaHora', $event)"
+        />
+      </app-form-field>
+    </div>
+    <div class="todas__acciones">
+      <button
+        app-button
+        type="submit"
+        data-testid="todas-cargar-turno"
+        [isLoading]="enCurso() === 'turno'"
+        [disabled]="enCurso() !== null || ningunaMarcada()"
+      >
+        Cargar en {{ elegidas().length }} {{ elegidas().length === 1 ? 'sucursal' : 'sucursales' }}
+      </button>
+    </div>
+  </form>
+</section>

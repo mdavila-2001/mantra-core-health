@@ -88,6 +88,9 @@ export class SolicitarPertenecer {
   /** El nombre de la organización de la ficha. */
   readonly nombre = input.required<string>();
 
+  /** El identificador de la organización, si la ficha lo trae: gana sobre el nombre. */
+  readonly practiceId = input<string | null | undefined>(null);
+
   protected readonly estadoActivo = ROLE_ASSIGNMENT_STATUS.ACTIVE;
   protected readonly estadoPendiente = ROLE_ASSIGNMENT_STATUS.PENDING;
 
@@ -159,8 +162,10 @@ export class SolicitarPertenecer {
       });
   }
 
-  /** Por nombre, y sólo si es inequívoco. */
+  /** Por el identificador de la ficha; si no viene, por nombre y sólo si es inequívoco. */
   private resolverId(practicas: readonly Practice[]): string | null {
+    const declarado = this.practiceId();
+    if (declarado) return declarado;
     const buscado = normalizar(this.nombre());
     const coinciden = practicas.filter((p) => normalizar(p.name) === buscado);
     return coinciden.length === 1 ? coinciden[0].id : null;

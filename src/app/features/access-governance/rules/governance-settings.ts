@@ -25,6 +25,7 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { AccessChallengeService } from '../access-challenge/access-challenge.service';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 /** Un ajuste numérico: su clave, cómo se llama y qué hace, en palabras. */
 interface Campo {
@@ -85,7 +86,7 @@ const CADENCIAS = [
  */
 @Component({
   selector: 'app-governance-settings',
-  imports: [Alert, AppButton, FormField, Input, Select, Switch],
+  imports: [DateStringPicker, Alert, AppButton, FormField, Input, Select, Switch],
   templateUrl: './governance-settings.html',
   styleUrl: './governance-settings.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

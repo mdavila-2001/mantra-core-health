@@ -819,8 +819,8 @@ export interface ConversationPage {
   readonly nextCursor: string | null;
 }
 
-/** Cómo se muestra un mensaje. `AUTO_REPLY_AI`: la redactó la IA y la burbuja lo rotula. */
-export type DirectMessageContentType = 'TEXT' | 'MEDIA' | 'STICKER' | 'AUTO_REPLY_AI';
+/** Cómo se muestra un mensaje. */
+export type DirectMessageContentType = 'TEXT' | 'MEDIA' | 'STICKER';
 
 /** Un mensaje directo. */
 export interface DirectMessage {
@@ -926,7 +926,7 @@ export interface NewDirectMessage {
   readonly bodyText: string;
   readonly replyToMessageId?: string;
   /** `MEDIA` con adjunto; `STICKER` si es uno propio (ver `DirectMessage`). */
-  readonly contentType?: Exclude<DirectMessageContentType, 'AUTO_REPLY_AI'>;
+  readonly contentType?: DirectMessageContentType;
   readonly attachmentFileId?: string;
   /**
    * Personal de apoyo que responde **en nombre de un doctor**: el perfil
@@ -983,14 +983,9 @@ export interface ChatAutoReplySettings {
    * —el turno noche—, y es válida.
    */
   readonly businessHoursTo?: string;
-  /** `FIXED` o `AI` (con `bodyText` de respaldo). Sólo maqueta: falta la columna en el modelo. */
-  readonly replyMode?: ChatAutoReplyMode;
   readonly updatedAt?: Date;
 }
 
-export type ChatAutoReplyMode = 'FIXED' | 'AI';
-/** Claves que el DTO de la API no declara (`forbidNonWhitelisted`): sólo van a la maqueta. */
-export const CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS: readonly string[] = ['replyMode'];
 
 /** Lo que se manda a `PUT /community/profiles/:id/auto-reply`. */
 export type UpsertChatAutoReply = Omit<

@@ -84,7 +84,7 @@ donde la escritura del valor no va al control sino al grupo.
 | Pantalla | Campos | Validación de cliente |
 |---|---|---|
 | Login | identificador, contraseña, código MFA | `required` en los dos primeros |
-| Registro (paciente) | documento, nombre, contraseña, correo | `required`, `minLength(4)`, patrón `[A-Za-z0-9.-]+`, `minLength(8)`, `email` |
+| Registro (paciente) | documento, nombre, contraseña, correo | `required`, `minLength(4)`, `fieldKind: 'identityDocument'`, `minLength(8)`, `fieldKind: 'email'` |
 | Registro (profesional) | nombre, correo, contraseña, matrícula, nº de colegio, título, teléfono | `required`, `email`, `minLength(8)` |
 | Recuperar | identificador | `required` |
 | Nueva contraseña | contraseña nueva | `required`, `minLength(8)` |
@@ -103,6 +103,61 @@ const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;  // el mismo @Matches del backend
 
 Son una **comodidad, no la autoridad**: el backend valida igual y su respuesta se
 traduce a S4. Duplicar la regla evita un viaje; no evita el viaje del atacante.
+
+### Los tipos de dato de una casilla (`fieldKind`)
+
+`shared/forms/field-kinds.ts` es el catálogo de **qué caracteres admite cada
+tipo de casilla, qué forma tiene que tener lo escrito, qué se le dice a la
+persona y qué teclado abre el móvil**. Una sola decisión por tipo de dato, en
+un solo lugar:
+
+| `fieldKind` | Admite | Dónde se usa |
+|---|---|---|
+| `personName` | letras con tildes y ñ; entre palabras un espacio, un guion o un apóstrofo («De la Quintana», «García-Lorca») | cada parte del nombre en todas las altas (`nameGroup`, `app-inline-name-fields`, paciente, profesional), contactos de emergencia |
+| `identityDocument` | letras sin tilde, dígitos, punto y guion; sin espacios (el `@Matches` de la API) | documento del paciente, del profesional, del personal de apoyo y del alta asistida |
+| `identityDocumentWithComplement` | lo mismo, más un espacio entre partes («4872190 SC») | documento del representante legal de laboratorio, farmacia, imagen, centro médico y organización |
+| `email` | letras ASCII y dígitos; `.`, `_` o `-` sólo entre ellos, nunca al inicio ni repetidos; un solo `@`; sin espacios, tildes ni `+` | **todo campo `control: 'email'` del motor, sin declararlo**, y los correos sueltos |
+| `taxId` | dígitos y guion, empezando por dígito | el NIT de una empresa |
+| `digits` | sólo dígitos | el NIT de facturación del paciente |
+| `phone` | dígitos, `+`, espacios, paréntesis y guion (el `@Matches` de la API) | teléfonos escritos en una casilla común (no en `app-phone-input`, que filtra por su cuenta) |
+
+Se declara **una vez** y de ahí salen las tres cosas:
+
+```html
+<!-- suelto: filtra lo tecleado, valida la forma (se cuelga del formControlName
+     como un validador nativo) y abre el teclado que corresponde -->
+<app-input formControlName="nationalId" fieldKind="identityDocument" />
+```
+
+```ts
+// en el motor de formularios paginados: lo mismo, desde la declaración del campo
+{ key: 'legalRepIdNumber', control: 'text', fieldKind: 'identityDocumentWithComplement', … }
+```
+
+El filtro se aplica **en el `<input>` mismo**, así el carácter rechazado no se
+pinta nunca (`Input.inputFilter`). El validador lo aporta
+`FieldKindDirective` (`shared/forms/field-kind.directive.ts`), que `app-input`
+monta como `hostDirective`: con `fieldKind` puesto, se cuelga del
+`formControlName` o `[formControl]` del mismo elemento como un validador
+nativo. Mira lo que viaja —el valor recortado— y deja el error
+`{ fieldKind: { kind, message } }`, que `mensajeDeError` muestra cuando el
+campo no trae `mensajeDeError` propio. `nameGroup` además valida cada parte
+por su cuenta, porque los borradores lo llenan por código.
+
+Las casillas que van por `[value]`/`(valueChange)` y no por un control
+enlazado (primer, segundo y tercer nombre del paciente y del profesional)
+reciben sólo el filtro: no hay control donde colgar el validador.
+
+**Por qué un catálogo y no un `Validators.pattern` por pantalla.** Antes, cada
+alta decidía por su cuenta en tres lugares —un filtro de teclado, un patrón y
+un mensaje— y se desfasaban: el paciente filtraba dígitos en el nombre y el
+laboratorio dejaba escribir «holaLTAD1» en el del representante; el documento
+del paciente aceptaba el guion por validador y lo borraba por filtro. Los
+filtros del alta de paciente (`input-filters.ts`, ya retirado) se absorbieron
+acá con sus mismas reglas de correo. Lo que **no** decide el catálogo: el largo y la obligatoriedad,
+que son de cada DTO y siguen en `required`, `minLength` y `maxLength` de cada
+pantalla. Y sigue sin ser la autoridad: la API valida lo mismo o más en cada
+petición.
 
 ## El patrón de envío
 

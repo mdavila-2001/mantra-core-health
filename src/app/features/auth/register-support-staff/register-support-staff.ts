@@ -139,10 +139,10 @@ export class RegisterSupportStaff {
             autocomplete: 'username',
             placeholder: '1234567',
             testId: 'alta-apoyo-documento',
-            soloAlfanumerico: true,
+            fieldKind: 'identityDocument',
             icono: 'patients',
             ancho: 'mitad',
-            mensajeDeError: 'Ingrese su documento: solo letras y números, sin espacios.',
+            mensajeDeError: 'Ingrese su documento: letras, números, punto y guion, sin espacios.',
           },
           this.catalogoCaido()
             ? {

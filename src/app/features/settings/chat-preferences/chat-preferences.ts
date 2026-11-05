@@ -35,14 +35,14 @@ import { Switch } from '../../../shared/components/atoms/switch/switch';
 const ESPERAS = [5, 15, 30, 60, 120] as const;
 
 /** La única decisión de arriba: qué pasa cuando le escriben y no está. */
-export type ModoDeRespuesta = 'apagado' | 'fijo' | 'ia';
+export type ModoDeRespuesta = 'apagado' | 'fijo';
 
 /**
  * El borrador de la pantalla: lo que se ve antes de tocar «Guardar».
  *
  * Es la configuración guardada más el modo como una sola elección. Antes cada
- * control guardaba al tocarlo; con tres modos excluyentes eso hacía que pasar
- * de «mensaje fijo» a «IA» dejara guardado un estado intermedio.
+ * control guardaba al tocarlo; con modos excluyentes eso dejaba guardado un
+ * estado intermedio.
  */
 interface Borrador {
   readonly modo: ModoDeRespuesta;
@@ -56,7 +56,7 @@ interface Borrador {
 
 function borradorDe(config: RespuestaAutomatica): Borrador {
   return {
-    modo: !config.activa ? 'apagado' : config.conIa ? 'ia' : 'fijo',
+    modo: config.activa ? 'fijo' : 'apagado',
     texto: config.texto,
     minutos: config.minutosDeInactividad,
     horas: config.horasEntreAvisos,
@@ -89,8 +89,8 @@ function fusionar(editado: Borrador, base: Borrador, llegado: Borrador): Borrado
  *
  * ## Una decisión arriba, lo demás plegado
  *
- * Arriba hay **una sola pregunta** con tres respuestas excluyentes —no
- * responder, responder con un mensaje fijo, responder con IA—, cada una con
+ * Arriba hay **una sola pregunta** con dos respuestas excluyentes —no
+ * responder o responder con un mensaje fijo—, cada una con
  * una línea que dice qué pasa. La espera, el descanso entre avisos y la franja
  * horaria van en «Más opciones», con valores de fábrica que ya sirven: quien
  * no toca nada queda bien configurado.
@@ -122,9 +122,6 @@ export class ChatPreferences implements OnInit {
 
   /** `true` si lo que se ve está guardado en el servidor y no sólo acá. */
   protected readonly enElServidor = this.autoReply.enElServidor;
-
-  /** Si se puede elegir «Responder con IA» en este entorno. */
-  protected readonly iaDisponible = this.autoReply.iaDisponible();
 
   /**
    * A quién representa la respuesta. Sin valor se toma de la sesión: una
@@ -242,9 +239,6 @@ export class ChatPreferences implements OnInit {
   /* --- Borrador ------------------------------------------------------------ */
 
   protected elegirModo(modo: ModoDeRespuesta): void {
-    if (modo === 'ia' && !this.iaDisponible) {
-      return;
-    }
     this.errorDelTexto.set('');
     this.cambiar({ modo });
   }
@@ -311,14 +305,9 @@ export class ChatPreferences implements OnInit {
   protected guardar(): void {
     if (this.ocupado()) return;
     const borrador = this.borrador();
-    // Con mensaje fijo o con IA hace falta un texto: es lo que se manda, o lo
-    // que se manda si la IA no responde. Sin él no hay respuesta posible.
+    // With a fixed message the text is what gets sent: without it there is no reply.
     if (borrador.modo !== 'apagado' && borrador.texto.trim() === '') {
-      this.errorDelTexto.set(
-        borrador.modo === 'ia'
-          ? 'Escriba el mensaje de respaldo: es el que se envía si la IA no está disponible.'
-          : 'Escriba el mensaje que se va a enviar.',
-      );
+      this.errorDelTexto.set('Escriba el mensaje que se va a enviar.');
       return;
     }
     this.confirmacion.set('');
@@ -327,7 +316,6 @@ export class ChatPreferences implements OnInit {
     this.autoReply.guardar(
       {
         activa: borrador.modo !== 'apagado',
-        conIa: borrador.modo === 'ia',
         texto: borrador.texto,
         minutosDeInactividad: borrador.minutos,
         horasEntreAvisos: borrador.horas,
@@ -358,8 +346,6 @@ export class ChatPreferences implements OnInit {
         return 'Cambios guardados. No se responderá automáticamente.';
       case 'fijo':
         return 'Cambios guardados. Cuando no esté, se enviará su mensaje fijo.';
-      case 'ia':
-        return `Cambios guardados. Cuando no esté, la IA responderá en nombre de ${this.sujeto()}.`;
     }
   }
 

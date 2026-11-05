@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import type { Provider } from '@angular/core';
 import { throwError } from 'rxjs';
 
-import { AdmissionsClient } from '../app/core/data-access/admissions/admissions.client';
+import { OwnAdmissionClient } from '../app/core/data-access/admissions/own-admission.client';
 import type {
   WireAdmissionDetail,
   WireAdmissionPage,
@@ -225,7 +225,7 @@ export function wireMine(overrides: Partial<WireMyAdmission> = {}): WireMyAdmiss
  */
 export function sinSolicitudDeAdmision(): Provider {
   return {
-    provide: AdmissionsClient,
+    provide: OwnAdmissionClient,
     useValue: {
       myAdmission: () => throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' })),
     },

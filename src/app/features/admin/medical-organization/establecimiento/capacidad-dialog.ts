@@ -12,6 +12,7 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { opcionesDe } from './regulatorio-dialog';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 /**
  * Declarar la capacidad habilitada — `POST /sites/:siteId/declared-capacities`.
@@ -22,7 +23,7 @@ import { opcionesDe } from './regulatorio-dialog';
  */
 @Component({
   selector: 'app-capacidad-dialog',
-  imports: [AppButton, ContentDialog, FormField, Input, ReactiveFormsModule, Select, ViewStateHost],
+  imports: [DateStringPicker, AppButton, ContentDialog, FormField, Input, ReactiveFormsModule, Select, ViewStateHost],
   template: `
     <app-content-dialog
       heading="Declarar capacidad habilitada"
@@ -41,7 +42,7 @@ import { opcionesDe } from './regulatorio-dialog';
           <app-input type="number" formControlName="quantity" />
         </app-form-field>
         <app-form-field label="Vigente desde" [required]="true" errorMessage="Falta la fecha.">
-          <app-input type="date" formControlName="asOf" />
+          <app-date-string-picker  formControlName="asOf" />
         </app-form-field>
         <app-form-field label="N.º de resolución">
           <app-input formControlName="resolutionNumber" />

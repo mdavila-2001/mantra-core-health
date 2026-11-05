@@ -1,6 +1,6 @@
 import { NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal, PLATFORM_ID } from '@angular/core';
-import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { map, switchMap } from 'rxjs';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
@@ -71,6 +71,7 @@ import {
   completeName,
 } from '../shared-registration/name-fields/person-name';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { tradeNameControl, tradeNameField, tradeNameOf } from '../shared-registration/trade-name';
 import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
 import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
 
@@ -199,7 +200,7 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
       icono: 'folder',
       titulo: 'El poder va con quien lo firma',
       texto:
-        'Adjúntelo acá, junto a los datos del representante. Es opcional: si el dueño se representa a sí mismo, no hace falta.',
+        'Adjúntelo acá, junto a los datos del representante. Es obligatorio para toda organización, cualquiera sea su tipo de sociedad.',
     },
   ],
   'gerencia-general': [
@@ -279,8 +280,10 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
  * sociedad (de la lista cerrada), NIT, el punto de la central en el mapa
  * —del que sale su dirección legal—, nombre, cédula y correo del representante
  * legal —que es el correo de acceso— y contraseña**, más el poder notariado
- * salvo en una empresa unipersonal: la API exige la cédula (400) y el poder
- * (422) y este formulario no puede exigir menos (P51, D-3). El punto es
+ * del representante, **para toda organización**: la API exige la cédula (400)
+ * y el poder (422, salvo a una unipersonal) y este formulario no puede exigir
+ * menos (P51, D-3); al poder lo exige incluso a la unipersonal, por decisión
+ * del propietario (05/11/2026). El punto es
  * obligatorio por pedido del cliente (26/10/2026): la persona sólo marca el
  * punto, y la calle, el municipio y la zona se deducen de él, sin editarse.
  * Lo mismo cada sucursal que se declare con nombre.
@@ -336,6 +339,7 @@ export class RegisterLaboratory {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_NOMBRE)],
     }),
+    tradeName: tradeNameControl(),
     companyType: new FormControl<string | null>(null, {
       validators: [Validators.required],
     }),
@@ -348,26 +352,26 @@ export class RegisterLaboratory {
         Validators.pattern(NIT_VALIDO),
       ],
     }),
-    // --- 4.1.1.2, 4.1.2.1, 4.1.3, 4.1.4, 4.1.5, 4.1.8.1 · los seis papeles,
-    // todos opcionales: cada control guarda el `fileId` de la pre-carga ------
+    // --- 4.1.1.2, 4.1.2.1, 4.1.3, 4.1.4, 4.1.5, 4.1.8.1 · los seis papeles:
+    // cada control guarda el `fileId` de la pre-carga. Los cinco de la empresa
+    // son opcionales; el poder del representante es obligatorio para toda
+    // organización (decisión del propietario, 05/11/2026) ---------------------
     constitutionFileId: new FormControl('', { nonNullable: true }),
     taxIdentifierFileId: new FormControl('', { nonNullable: true }),
     commerceRegistryFileId: new FormControl('', { nonNullable: true }),
     operatingLicenseFileId: new FormControl('', { nonNullable: true }),
     healthAuthorityCertificateFileId: new FormControl('', { nonNullable: true }),
-    powerOfAttorneyFileId: new FormControl('', { nonNullable: true }),
+    powerOfAttorneyFileId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     // --- 4.1.6 · dirección legal de la central -----------------------------
-    // No se escribe (pedido del cliente del 26/10/2026): la deduce el punto de
-    // la central, ver `escribirLocalidadCentral`. Sigue obligatoria porque la
-    // API la exige, y nunca queda vacía con un punto puesto.
+    // Derived from the HQ pin (`escribirLocalidadCentral`, client 26/10/2026); the API requires it.
     addressLines: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
     }),
-    // **El punto de la central es obligatorio** (mismo pedido). Vive en el
-    // formulario porque el motor valida de a una página y sólo frena lo que
-    // está en el `FormGroup`. Lo escribe `fijarGpsCentral` con el punto
-    // CONFIRMADO, y vuelve a `null` si se quita o se mueve el pin.
+    // Required HQ pin, kept in the FormGroup so the page validator blocks; set by `fijarGpsCentral`.
     gpsCentral: new FormControl<Coordinates | null>(null, {
       validators: [Validators.required],
     }),
@@ -440,6 +444,7 @@ export class RegisterLaboratory {
             testId: 'registro-lab-razon-social',
             mensajeDeError: 'Escriba el nombre o la razón social de la empresa.',
           },
+          tradeNameField('registro-lab-nombre-comercial', 'Laboratorio del Sur'),
           {
             key: 'companyType',
             label: 'Tipo de sociedad',
@@ -456,7 +461,7 @@ export class RegisterLaboratory {
             key: 'taxId',
             label: 'Número de NIT',
             hint: 'Sólo números. Es el que va a salir en las facturas.',
-            control: 'text' as const,
+            control: 'text' as const, fieldKind: 'taxId',
             required: true,
             icono: 'billing' as const,
             placeholder: '1023456789',
@@ -522,14 +527,14 @@ export class RegisterLaboratory {
             key: 'legalRepIdNumber',
             label: 'Documento de identidad del representante',
             hint: 'Cédula de identidad o documento equivalente.',
-            control: 'text' as const,
+            control: 'text' as const, fieldKind: 'identityDocumentWithComplement',
             required: true,
             icono: 'people' as const,
             testId: 'registro-lab-representante-documento',
             mensajeDeError: 'Escriba el documento del representante (al menos cuatro caracteres).',
           },
           // El poder (4.1.8.1) se pide junto a quien lo firma, no con los papeles de la empresa.
-          notarizedPowerField(PAIS, uiLanguage(), this.poderObligatorio()),
+          notarizedPowerField(PAIS, uiLanguage()),
         ],
       },
       {
@@ -701,21 +706,6 @@ export class RegisterLaboratory {
    * {@link fijarGpsCentral}.
    */
   readonly gpsCentral = signal<Coordinates | null>(null);
-  /** El tipo societario elegido: decide si el poder del representante es obligatorio. */
-  private readonly tipoSocietario = toSignal(this.form.controls.companyType.valueChanges, {
-    initialValue: this.form.controls.companyType.value,
-  });
-
-  /**
-   * La API exige el poder notariado del representante salvo a una empresa
-   * unipersonal (BR-09, 422 «sólo una empresa unipersonal puede omitirlo»).
-   * Mismo criterio que imagenología: sin tipo elegido todavía, no se exige.
-   */
-  private poderObligatorio(): boolean {
-    const tipo = this.tipoSocietario();
-    return tipo !== null && tipo !== 'UNIPERSONAL';
-  }
-
   /** Guarda el borrador del avance del formulario en caché y backend. */
   guardarBorrador(): void {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -802,16 +792,6 @@ export class RegisterLaboratory {
       }
       this.draftService.trackEvent('start', 'laboratory', 0);
     }
-
-    this.form.controls.companyType.valueChanges.pipe(takeUntilDestroyed()).subscribe((tipo) => {
-      const poder = this.form.controls.powerOfAttorneyFileId;
-      if (tipo === null || tipo === 'UNIPERSONAL') {
-        poder.removeValidators(Validators.required);
-      } else {
-        poder.addValidators(Validators.required);
-      }
-      poder.updateValueAndValidity();
-    });
 
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.guardarBorrador();
@@ -1124,12 +1104,14 @@ export class RegisterLaboratory {
     return {
       code: this.codigoDesdeNit(raw.taxId),
       legalName: razonSocial,
+      ...tradeNameOf(raw.tradeName),
       legalEntityType: raw.companyType ?? '',
       countryConceptId: concepto(catalogos.pais, DIAGNOSIS_CODES.pais),
       jurisdictionConceptId: concepto(
         catalogos.jurisdiccion,
         DIAGNOSIS_CODES.jurisdiccionNacional,
       ),
+      taxIdentifier: raw.taxId.trim(),
       diagnosticUnit: {
         name: razonSocial,
         diagnosticUnitTypeConceptId: concepto(

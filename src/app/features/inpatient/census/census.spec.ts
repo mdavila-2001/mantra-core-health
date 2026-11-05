@@ -38,13 +38,13 @@ describe('Census', () => {
     confirm.mockReset();
   });
 
-  it('S1, S5 (Limpieza) y S3 sin camas censables', async () => {
-    const { harness, acceso, maqueta, raiz, http } = await montar('limpieza');
+  it('S1, S5 (sin acceso a la sede) y S3 sin camas censables', async () => {
+    const { harness, acceso, maqueta, raiz, http } = await montar('medica');
     await harness.navigateByUrl('/inpatient/census');
     expect(raiz().textContent).toContain('Verificando permisos');
     acceso.listo(maqueta.acceso());
     harness.detectChanges();
-    expect(raiz().textContent).toContain('Su rol no incluye el censo');
+    expect(raiz().textContent).toContain('no administra ningún establecimiento');
     TestBed.resetTestingModule();
     const s = await montar();
     await s.harness.navigateByUrl(`/inpatient/census?date=${ayer()}`);

@@ -39,7 +39,7 @@
                 [hechos]="[{ etiqueta: 'Fecha', valor: when(s.stay.encounter.endAt) }, { etiqueta: 'Tipo de egreso', valor: label(s.stay.encounter.dischargeDisposition) }]"
               />
             } @else if (!canDischarge()) {
-              <p class="stay__note">Dar de alta es tarea de enfermería o admisión.</p>
+              <p class="stay__note">Dar de alta lo hace quien administra la organización o la sede.</p>
             } @else {
               <app-discharge-form [encounterId]="s.stay.encounter.id" [rowVersion]="s.stay.encounter.rowVersion" (saved)="afterDischarge()" />
             }

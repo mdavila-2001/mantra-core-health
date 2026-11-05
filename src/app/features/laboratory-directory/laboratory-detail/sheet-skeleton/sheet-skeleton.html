@@ -1,0 +1,21 @@
+<div class="sheet-skeleton" aria-hidden="true" data-testid="unit-loading">
+  <div class="sheet-skeleton__body">
+    <div class="sheet-skeleton__top">
+      <div class="sheet-skeleton__lead">
+        <app-skeleton variant="rect" width="3.5rem" height="3.5rem" />
+        <app-skeleton variant="text" [lines]="2" width="60%" />
+      </div>
+      <div class="sheet-skeleton__stats">
+        @for (tile of [1, 2, 3, 4]; track tile) {
+          <app-skeleton variant="rect" height="5.5rem" />
+        }
+      </div>
+    </div>
+    <app-skeleton variant="rect" height="2.75rem" />
+    <div class="sheet-skeleton__cards">
+      @for (card of [1, 2, 3]; track card) {
+        <app-skeleton variant="rect" height="11rem" />
+      }
+    </div>
+  </div>
+</div>

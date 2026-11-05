@@ -137,6 +137,14 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
      sección, que es exactamente lo que el párrafo de arriba dice que no se
      hace: «Archivo clínico» cuelga directo de Atención. */
   {
+    label: 'Marketing',
+    group: 'General',
+    icon: 'megaphone',
+    // Vive en General, a la vista, y no dentro de «Administración» (colapsado):
+    // el mockup tiene que mostrarlo sin buscar. Medir, comparar, entender y decidir: la inteligencia de marketing de AloVida.
+    paths: ['administration/marketing-insights'],
+  },
+  {
     label: 'Estudios y procedimientos',
     group: 'Atención',
     icon: 'scan',
@@ -227,13 +235,6 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     ],
   },
   {
-    label: 'Marketing',
-    group: 'Administración',
-    icon: 'megaphone',
-    // Medir, comparar, entender y decidir: la inteligencia de marketing de AloVida.
-    paths: ['administration/marketing-insights'],
-  },
-  {
     label: 'Identidad y accesos',
     group: 'Administración',
     icon: 'shield',
@@ -291,7 +292,6 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // es configurar la clínica, el laboratorio o la planta como institución.
     paths: [
       'administration/medical-organization',
-      'administration/medical-center-setup',
       'administration/medical-laboratory',
       'administration/pharma-lab',
     ],

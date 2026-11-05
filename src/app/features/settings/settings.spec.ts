@@ -146,6 +146,37 @@ describe('Settings', () => {
     expect(text()).toContain('Qué avisos recibe');
   });
 
+  it('no ofrece «Agenda» a quien no atiende: no hay nada que configurar', () => {
+    mount(['PATIENT']);
+
+    const tabs = [...fixture.nativeElement.querySelectorAll('[role="tab"]')].map((b) =>
+      (b as HTMLElement).textContent?.trim(),
+    );
+    expect(tabs).not.toContain('Agenda');
+  });
+
+  it('a quien atiende le ofrece «Agenda» con el panel de solicitudes de consulta (05/11/2026)', () => {
+    fixture = TestBed.createComponent(Settings);
+    session = TestBed.inject(SessionStore);
+    theme = TestBed.inject(ThemeService);
+    session.start({
+      accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'], hpid: 'hp-1' }),
+      refreshToken: 'r',
+    });
+    fixture.detectChanges();
+
+    goTo('Agenda');
+    // The panel asks for the caller's agendas when it opens.
+    http
+      .expectOne((r) => r.url === '/scheduling/my-resources')
+      .flush({ items: [{ id: 'r-1', name: 'Consultorio propio', requiresApproval: true }] });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-agenda-preferences')).not.toBeNull();
+    expect(text()).toContain('Solicitudes de consulta');
+    expect(query('agenda-prefs-switch-r-1')).not.toBeNull();
+  });
+
   it('ofrece los tutoriales como pestaña: se fusionaron con Ajustes (27/10/2026)', () => {
     mount();
     goTo('Tutoriales');

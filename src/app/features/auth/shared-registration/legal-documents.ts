@@ -97,20 +97,26 @@ export type EnrollmentDocumentKey = DocumentLegalKey | typeof KEY_NOTARIZED_POWE
 
 /**
  * El campo `custom` del poder notariado, mismo patrón que los cinco de la
- * empresa. `required` con el mismo criterio que {@link legalDocumentsFields}.
+ * empresa, pero **siempre obligatorio**: a diferencia de
+ * {@link legalDocumentsFields}, no admite un `required` que lo relaje.
+ *
+ * Decisión del propietario (05/11/2026): el poder se exige en toda alta de
+ * organización, sin distinguir tipo societario, y su rótulo nunca dice
+ * «(opcional)». La API todavía deja pasar a una unipersonal sin él (BR-09);
+ * este formulario pide más que la API, nunca menos.
  */
 export function notarizedPowerField(
   countryIso: string,
   lang: UiLanguage = uiLanguage(),
-  required = true,
 ): CampoDeFormulario {
   const texto = legalDocumentText('POWER_OF_ATTORNEY_DOC', countryIso, lang);
   return {
     key: KEY_NOTARIZED_POWER,
-    label: required ? texto.label : `${texto.label} (opcional)`,
+    label: texto.label,
     hint: texto.hint,
     control: 'custom' as const,
     ancho: 'completo' as const,
-    ...(required ? { required: true, mensajeDeError: MESSAGE_REQUIRED_DOCUMENT } : {}),
+    required: true,
+    mensajeDeError: MESSAGE_REQUIRED_DOCUMENT,
   };
 }
