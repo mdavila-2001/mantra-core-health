@@ -1,22 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import type { FormControl } from '@angular/forms';
-import { finalize, map, of, startWith, switchMap, timer } from 'rxjs';
+import { startWith, switchMap } from 'rxjs';
 
-import { TriageIaClient } from '../../../../core/data-access/triage-ia/triage-ia.client';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import {
   BodyMap,
   type SexoDeLaSilueta,
   type ZonaElegible,
 } from '../../../../shared/components/organisms/body-map/body-map';
-import {
-  combine,
-  currentReading,
-  readingSymptoms,
-  readingZones,
-  type TextReading,
-} from '../../../symptom-check/ai-reading';
 import {
   recognize,
   recognizeAlarms,
@@ -25,16 +17,13 @@ import {
 } from '../../../symptom-check/symptoms';
 import { BODY_ZONES } from '../../../symptom-check/zones.data';
 
-/** Same pause as `symptom-check` before asking the triage service. */
-const READ_PAUSE_MS = 600;
-
 /**
  * The body figure next to the booking's reason field (client request,
  * 2026-11-04: the right column of the booking screen was empty).
  *
  * Same figure and same detection as the symptom check (`features/symptom-check`):
- * - text → figure: the reason goes through the local engine and, after a pause,
- *   the triage service; recognized zones light up on the silhouette;
+ * - text → figure: the reason goes through the local rules engine (no AI
+ *   service: removed on 2026-11-04 for legal risk); recognized zones light up;
  * - figure → text: tapping a zone lists its symptoms, and picking one appends it
  *   to the reason without overwriting it and without exceeding `maximo`.
  *
@@ -49,8 +38,6 @@ const READ_PAUSE_MS = 600;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MotivoFigura {
-  private readonly triageIa = inject(TriageIaClient);
-
   /** The reason field the figure reads and appends to. */
   readonly control = input.required<FormControl<string>>();
 
@@ -70,55 +57,19 @@ export class MotivoFigura {
     { initialValue: '' },
   );
 
-  /* ---- detection: the one from `symptom-check` --------------------------- */
+  /* ---- detection: the local engine of `symptom-check` -------------------- */
 
-  private readonly textoLeido = signal('');
-
-  private readonly lecturaGuardada = toSignal(
-    toObservable(this.texto).pipe(
-      map((texto) => texto.trim()),
-      switchMap((texto) =>
-        texto.length < 3
-          ? of(null)
-          : timer(READ_PAUSE_MS).pipe(
-              switchMap(() => this.triageIa.analizar(texto)),
-              map((lectura): TextReading | null => (lectura === null ? null : { texto, lectura })),
-              finalize(() => this.textoLeido.set(texto)),
-            ),
-      ),
-    ),
-    { initialValue: null },
-  );
-
-  private readonly lecturaVigente = computed(() =>
-    currentReading(this.lecturaGuardada(), this.texto()),
-  );
-
-  /** What the reason mentions: local engine plus what the service added. */
+  /** What the reason mentions, as the local engine reads it. */
   protected readonly sintomas = computed<readonly Sintoma[]>(() =>
-    combine(recognize(this.texto()), readingSymptoms(this.lecturaVigente())).filter((s) =>
-      this.visible(s),
-    ),
+    recognize(this.texto()).filter((s) => this.visible(s)),
   );
-
-  /** The service is still reading the text. */
-  protected readonly leyendo = computed(() => {
-    const texto = this.texto().trim();
-    return texto.length >= 3 && this.textoLeido() !== texto;
-  });
 
   protected readonly alarmas = computed(() => recognizeAlarms(this.texto()));
 
   /** Zones lit by the text (same rule as `symptom-check`). */
   protected readonly zonasMarcadas = computed<readonly string[]>(() => {
-    const delServicio = readingZones(this.lecturaVigente());
     const marcadas = new Set<string>();
     for (const sintoma of [...this.sintomas(), ...this.alarmas()]) {
-      const ubicadas = delServicio.get(sintoma.id);
-      if (ubicadas !== undefined && ubicadas.length > 0) {
-        ubicadas.forEach((zona) => marcadas.add(zona));
-        continue;
-      }
       const deLaTabla = BODY_ZONES.find((zona) => zona.sintomas.includes(sintoma.id));
       if (deLaTabla !== undefined) marcadas.add(deLaTabla.id);
     }

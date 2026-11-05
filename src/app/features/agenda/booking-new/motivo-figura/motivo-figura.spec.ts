@@ -1,9 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
 
-import { TriageIaClient } from '../../../../core/data-access/triage-ia/triage-ia.client';
 import { ESPERAR_IMAGEN_DE_VISTA } from '../../../../shared/components/organisms/body-map/body-map';
 import { MotivoFigura } from './motivo-figura';
 
@@ -19,11 +17,7 @@ class Anfitrion {
 describe('MotivoFigura', () => {
   function montar() {
     TestBed.configureTestingModule({
-      providers: [
-        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
-        // No triage service: the figure keeps working with the local engine.
-        { provide: TriageIaClient, useValue: { analizar: () => of(null) } },
-      ],
+      providers: [{ provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false }],
     });
     const fixture = TestBed.createComponent(Anfitrion);
     fixture.detectChanges();
