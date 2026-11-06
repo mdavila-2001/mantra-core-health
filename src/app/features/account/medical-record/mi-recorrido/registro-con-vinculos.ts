@@ -1,15 +1,9 @@
-import type {
-  ClinicalSummary,
-  Condition,
-  Encounter,
-  MedicationRequest,
-} from '../../../../core/data-access/clinical/clinical.types';
+import type { Condition, Encounter, MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
 import type { PatientOrder } from '../../../../core/data-access/diagnostics/diagnostics.types';
 import {
   esReconsulta,
   type Booking,
 } from '../../../../core/data-access/scheduling/scheduling.types';
-import type { Hecho } from '../../../../shared/components/molecules/fact-list/fact-list.types';
 import {
   CODIGO_ACTIVA,
   CODIGO_CONFIRMADO,
@@ -17,112 +11,46 @@ import {
   diagnosisStateOf,
   type ResolverCodigo,
 } from '../../../../shared/clinical/diagnosis-state';
+import { fechaCorta, fechaValida } from './redaccion';
+import type {
+  EstadoDelControl,
+  EstadoDelDiagnostico,
+  FuentesDelPortal,
+  RegistroConVinculos,
+  ResolverEtiqueta,
+  TipoDeRegistro,
+  VinculoAusente,
+} from './registro-con-vinculos.types';
 
 /* ============================================================================
-    (a) El adaptador: de los tipos del portal del paciente a una interfaz
-    neutra de «registro con vínculos».
+    (a) The adapter: from the patient portal's types to a neutral «record with
+    links» interface (`registro-con-vinculos.types.ts`).
 
-    ## Por qué una interfaz neutra
+    ## Why a neutral interface
 
-    La agrupación en episodios y la narración (`episodios.ts`) no deberían
-    saber si el registro vino de `GET /clinical/patients/:id/summary`, de
-    `/diagnostic-results/me/orders` o de la agenda. Así, cuando la franja 2
-    publique el modelo compartido de la red clínica, se reemplaza **este**
-    archivo y la agrupación queda igual.
+    The grouping into episodes and the narration (`episodios.ts`) should not
+    know whether the record came from `GET /clinical/patients/:id/summary`,
+    from `/diagnostic-results/me/orders` or from the agenda. So, when strip 2
+    publishes the clinical network's shared model, **this** file is replaced
+    and the grouping stays the same.
 
-    ## Por qué no es el `RegistroDeLaRed` del expediente (06/11/2026)
+    ## Why it is not the chart's `RegistroDeLaRed` (06/11/2026)
 
-    Se evaluó producir los nodos de la red clínica del profesional
-    (`patient-chart/recorrido-clinico/red-clinica.model.ts`, ADR-0021) y se
-    descartó: aquel registro es una tarjeta ya redactada para el médico
-    (`titulo`, `detalle`, `estado` en su jerga, sin la hoja de datos ni los
-    vínculos que no constan), y su red **deduce** vínculos (`inferido-*`) que
-    el portal no muestra a propósito (decisión 3 de la Franja 5). Adaptar uno
-    a otro obligaría a des-redactar y a filtrar inferencias: más código que el
-    que se ahorra. Las dos entradas comparten los ids reales y los campos del
-    contrato, que es lo que tiene que coincidir.
+    The practitioner's network nodes (`patient-chart/recorrido-clinico/
+    red-clinica.model.ts`, ADR-0021) were dismissed: that record is a card
+    worded for the doctor (`titulo`, `detalle`, `estado` in their jargon,
+    without the data sheet nor the links not on record), and that network
+    **deduces** links (`inferido-*`) the portal deliberately does not show
+    (Strip 5's decision 3). Adapting costs more than it saves; ids are shared.
 
-    ## Sólo lo que el portal ya recibe
+    ## Only what the portal already receives
 
-    Entran el resumen clínico, las órdenes propias y las citas del titular: las
-    mismas tres lecturas que la vista «Por fecha» ya hace. No se pide nada a
-    otro endpoint. Lo que no viaja —las derivaciones, por ejemplo— no se
-    infiere: queda declarado como ausente.
+    The clinical summary, the own orders and the holder's appointments: the
+    same three reads «Por fecha» already makes. What does not travel
+    —referrals, for example— is not inferred: it is declared absent.
     ========================================================================== */
 
-/** Qué clase de hecho es. */
-export type TipoDeRegistro = 'atencion' | 'diagnostico' | 'estudio' | 'receta' | 'control';
-
-/** El estado de un diagnóstico, en las cuatro palabras que lee el paciente. */
-export type EstadoDelDiagnostico = 'en-estudio' | 'confirmado' | 'descartado' | 'resuelto';
-
-/** Qué pasó con el control (la reconsulta agendada). */
-export type EstadoDelControl = 'realizado' | 'proximo' | 'agendado' | 'no-realizado';
-
-/**
- * Un vínculo que el recorrido necesitaría y que **no consta** en lo que llegó.
- *
- * No distingue «el campo no viajó» de «viajó vacío»: el contrato de la red
- * clínica omite los tres vínculos nuevos cuando valen `null`, así que desde
- * acá las dos cosas se ven igual. Lo que sí se puede decir es que no consta.
- */
-export type VinculoAusente =
-  /** El estudio no dice para qué diagnóstico se pidió (`reasonConditionId`). */
-  | 'estudio-sin-diagnostico'
-  /** El descartado no dice qué diagnóstico quedó en su lugar (`replacedByConditionId`). */
-  | 'descartado-sin-reemplazo'
-  /** La receta no dice para qué diagnóstico es (`indicationConditionId`). */
-  | 'receta-sin-diagnostico';
-
-/** Un registro del portal, con sus vínculos ya resueltos a identificadores. */
-export interface RegistroConVinculos {
-  readonly id: string;
-  readonly tipo: TipoDeRegistro;
-  /** El instante del hecho, o `null` si el registro no lo trae. */
-  readonly cuando: Date | null;
-  /** Lo que se nombra: el motivo, el diagnóstico, el estudio, el medicamento. */
-  readonly nombre: string;
-  /** La atención en que quedó registrado, si consta. */
-  readonly atencionId: string | null;
-  /** El diagnóstico al que sirve: indicación de la receta o motivo del estudio. */
-  readonly diagnosticoId: string | null;
-  /** Diagnóstico: el que lo reemplazó al descartarlo (vínculo nuevo de franja 1). */
-  readonly reemplazadoPorId: string | null;
-  /** Control: la atención de la que salió. */
-  readonly origenAtencionId: string | null;
-  /** Diagnóstico: en qué quedó. */
-  readonly estado: EstadoDelDiagnostico | null;
-  /** Diagnóstico: cuándo se decidió (confirmación o descarte), si consta. */
-  readonly decididoEl: Date | null;
-  /** Diagnóstico: el estudio con que se decidió (`verification.basedOn`). */
-  readonly evidenciaEstudioId: string | null;
-  /** Diagnóstico: cuándo se dio por resuelto. */
-  readonly resueltoEl: Date | null;
-  /** Estudio: el informe liberado, si ya lo hay. */
-  readonly informeId: string | null;
-  /** Estudio: el resultado ya está disponible para el paciente. */
-  readonly conResultado: boolean;
-  /** Control: en qué quedó. */
-  readonly estadoDelControl: EstadoDelControl | null;
-  /** Atención: sigue abierta. */
-  readonly enCurso: boolean;
-  /** Los datos que la hoja de detalle muestra, ya en palabras. */
-  readonly detalle: readonly Hecho[];
-  /** Los vínculos que no constan, para marcarlos sin inferirlos. */
-  readonly ausentes: readonly VinculoAusente[];
-}
-
-/** Lo que el portal ya trajo, tal como lo trajo. */
-export interface FuentesDelPortal {
-  readonly resumen: ClinicalSummary;
-  readonly ordenes: readonly PatientOrder[];
-  readonly citas: readonly Booking[];
-}
-
-/** Resuelve un concepto a su etiqueta legible. */
-export type ResolverEtiqueta = (conceptId: string | undefined) => string;
-
-/** Todos los registros del portal, en la forma neutra. */
+/** Every portal record, in the neutral shape. */
 export function registrosDelPortal(
   fuentes: FuentesDelPortal,
   etiqueta: ResolverEtiqueta,
@@ -151,7 +79,7 @@ export function registrosDelPortal(
   ];
 }
 
-/** Un registro vacío, para no repetir quince `null` en cada adaptador. */
+/** An empty record, so as not to repeat fifteen `null` in each adapter. */
 function base(id: string, tipo: TipoDeRegistro, nombre: string): RegistroConVinculos {
   return {
     id,
@@ -197,13 +125,13 @@ const ESTADO_POR_GRUPO = {
   REFUTED: 'descartado',
 } as const;
 
-/** En qué quedó un diagnóstico, con el mismo helper que usa la pestaña «Diagnósticos». */
+/** How a diagnosis ended up, with the same helper the «Diagnósticos» tab uses. */
 function estadoDelDiagnostico(
   condicion: Condition,
   codigo: ResolverCodigo,
   ahora: Date,
 ): EstadoDelDiagnostico {
-  // La decisión de C3 manda aunque el catálogo no haya traducido el código.
+  // C3's decision rules even if the catalogue did not translate the code.
   if (condicion.verification?.outcome === 'REFUTED') return 'descartado';
   const grupo = diagnosisStateOf(
     {
@@ -216,8 +144,7 @@ function estadoDelDiagnostico(
     { confirmed: CODIGO_CONFIRMADO, refuted: CODIGO_DESCARTADO, active: CODIGO_ACTIVA },
     ahora,
   );
-  // Un confirmado cuyo plazo venció sin resolverse no se da por «resuelto»:
-  // nadie lo resolvió. Sigue confirmado y la fecha la dice el detalle.
+  // An expired, unresolved confirmed one stays confirmed: nobody resolved it.
   if (grupo === 'HISTORIC' && condicion.resolvedAt === undefined) return 'confirmado';
   return ESTADO_POR_GRUPO[grupo];
 }
@@ -279,11 +206,11 @@ function desdeEstudio(
   diagnosticos: ReadonlyMap<string, Condition>,
   nombreDelDiagnostico: (id: string | null) => string | null,
 ): RegistroConVinculos {
-  // `reasonConditionId` llega en `GET /diagnostic-results/me/orders` desde el
-  // 06/11/2026 (`PatientOrderSummaryDto`, ausente si la orden no lo indicó).
+  // `reasonConditionId` arrives in `GET /diagnostic-results/me/orders` since
+  // 06/11/2026 (`PatientOrderSummaryDto`, absent if the order did not state it).
   const motivo = orden.reasonConditionId ?? null;
-  // Un vínculo a un diagnóstico que el resumen no trajo no se puede nombrar:
-  // se trata como si no constara, en vez de dibujar una arista al vacío.
+  // A link to a diagnosis the summary did not bring cannot be named: it is
+  // treated as not on record, instead of drawing an edge into the void.
   const diagnosticoId = motivo !== null && diagnosticos.has(motivo) ? motivo : null;
   return {
     ...base(orden.id, 'estudio', etiqueta(orden.codeConceptId)),
@@ -334,7 +261,7 @@ function desdeReceta(
   };
 }
 
-/** El código de estado de una cita, sin prefijo de módulo y con guion bajo. */
+/** An appointment's status code, without module prefix and with underscores. */
 function codigoDeCita(codigo: string | undefined): string {
   if (codigo === undefined) return '';
   const simple = codigo.includes(':') ? codigo.slice(codigo.lastIndexOf(':') + 1) : codigo;
@@ -369,22 +296,4 @@ function desdeControl(cita: Booking, codigo: ResolverCodigo, ahora: Date): Regis
       { etiqueta: 'Motivo', valor: cita.reasonText?.trim() || null },
     ],
   };
-}
-
-/* ---- fechas -------------------------------------------------------------- */
-
-const DIA_CORTO = new Intl.DateTimeFormat('es-BO', {
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-});
-
-/** «3 feb 2026», o `null` para que la hoja no dibuje la fila. */
-export function fechaCorta(cuando: Date | undefined): string | null {
-  return cuando === undefined || Number.isNaN(cuando.getTime()) ? null : DIA_CORTO.format(cuando);
-}
-
-function fechaValida(iso: string): Date | null {
-  const fecha = new Date(iso);
-  return Number.isNaN(fecha.getTime()) ? null : fecha;
 }

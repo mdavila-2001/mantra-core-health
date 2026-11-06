@@ -1,21 +1,21 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AccordionPanel } from '../../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { FactList } from '../../../../shared/components/molecules/fact-list/fact-list';
 import { DrawerPanel } from '../../../../shared/components/organisms/drawer-panel/drawer-panel';
-import type { Episodio, PasoNarrado, Recorrido } from './episodios';
-import { fechaCorta, type RegistroConVinculos, type VinculoAusente } from './registro-con-vinculos';
+import type { Episodio, Recorrido } from './episodios';
+import type { PasoNarrado } from './narracion';
+import { fechaCorta } from './redaccion';
+import { type RegistroConVinculos } from './registro-con-vinculos.types';
+import { MiRecorridoDetalle } from './detalle/mi-recorrido-detalle';
 
-/** A qué pestaña de «Por fecha» lleva el detalle de cada tipo de registro. */
+/** Which «Por fecha» tab each record type's detail leads to. */
 export type SeccionDeDestino = 'atenciones' | 'diagnosticos' | 'recetas';
 
-/** El recorrido guiado en curso: qué hilo y qué frase. */
+/** The guided tour in progress: which thread and which sentence. */
 interface Guiado {
   readonly episodioId: string;
   readonly indice: number;
@@ -29,26 +29,20 @@ const TIPO_EN_PALABRAS: Readonly<Record<RegistroConVinculos['tipo'], string>> = 
   control: 'Control',
 };
 
-/** Lo que se dice de un vínculo que no consta. Nunca se inventa el vínculo. */
-const AUSENTE_EN_PALABRAS: Readonly<Record<VinculoAusente, string>> = {
-  'estudio-sin-diagnostico': 'No consta para qué diagnóstico se pidió.',
-  'descartado-sin-reemplazo': 'No consta qué diagnóstico quedó en su lugar.',
-  'receta-sin-diagnostico': 'No consta para qué diagnóstico se indicó.',
-};
-
 /**
- * **Mi recorrido** — la historia del paciente contada por problema de salud.
+ * **Mi recorrido** — the patient's history told by health problem.
  *
- * Presentacional: recibe el recorrido ya armado (`recorridoDelPaciente`) y
- * sólo maneja lo que es de la vista —qué está desplegado, en qué paso del
- * recorrido guiado se está, qué registro se mira en la hoja de detalle—. Lo
- * que descarga o navega lo hace la pantalla dueña, por las salidas.
+ * Presentational: it receives the tour already built (`recorridoDelPaciente`)
+ * and only handles what belongs to the view —what is expanded, which step of
+ * the guided tour it is on, which record the detail sheet shows—. Downloading
+ * or navigating is done by the owner screen, through the outputs.
  *
- * Tres niveles, los tres con `aria-expanded` porque son `app-accordion-panel`:
- * el hilo, cada atención del hilo, y el detalle de cada hecho (en un cajón).
+ * Three levels, all three with `aria-expanded` since they are
+ * `app-accordion-panel`: the thread, each of its encounters, and each fact's
+ * detail (in a drawer, `detalle/`).
  *
- * Sin alertas clínicas ni sugerencias: son herramientas del médico, y en el
- * portal del paciente se leerían como un diagnóstico que nadie hizo.
+ * No clinical alerts nor suggestions: they are the doctor's tools, and in the
+ * patient portal they would read as a diagnosis nobody made.
  */
 @Component({
   selector: 'app-mi-recorrido',
@@ -56,12 +50,10 @@ const AUSENTE_EN_PALABRAS: Readonly<Record<VinculoAusente, string>> = {
     AccordionPanel,
     Alert,
     AppButton,
-    AppButtonLink,
     Badge,
     DrawerPanel,
-    FactList,
     NgTemplateOutlet,
-    RouterLink,
+    MiRecorridoDetalle,
   ],
   templateUrl: './mi-recorrido.html',
   styleUrl: './mi-recorrido.css',
@@ -69,30 +61,30 @@ const AUSENTE_EN_PALABRAS: Readonly<Record<VinculoAusente, string>> = {
 })
 export class MiRecorrido {
   readonly recorrido = input.required<Recorrido>();
-  /** Las órdenes y las citas todavía están llegando. */
+  /** The orders and appointments are still arriving. */
   readonly cargando = input(false);
-  /** Las órdenes y las citas no se pudieron leer. */
+  /** The orders and appointments could not be read. */
   readonly fallo = input(false);
-  /** Por qué no llegaron las citas (y con ellas los controles), o `null`. */
+  /** Why the appointments (and with them the follow-ups) did not arrive, or `null`. */
   readonly citasSinCargar = input<string | null>(null);
-  /** La receta que se está descargando ahora, si alguna. */
+  /** The prescription being downloaded now, if any. */
   readonly descargandoReceta = input<string | null>(null);
 
   readonly descargarReceta = output<string>();
   readonly irASeccion = output<SeccionDeDestino>();
   readonly reintentar = output<void>();
 
-  /** «Estudio», «Receta»… — método y no índice: el contexto de la plantilla del hilo no está tipado. */
+  /** «Estudio», «Receta»… — a method and not an index: the thread template's context is untyped. */
   protected tipoDe(registro: RegistroConVinculos): string {
     return TIPO_EN_PALABRAS[registro.tipo];
   }
 
-  /** Los paneles abiertos, por clave. Plegado es el estado de partida. */
+  /** The open panels, by key. Folded is the starting state. */
   private readonly abiertos = signal<ReadonlySet<string>>(new Set());
 
   protected readonly guiado = signal<Guiado | null>(null);
 
-  /** El registro que muestra la hoja de detalle. */
+  /** The record the detail sheet shows. */
   protected readonly enDetalle = signal<RegistroConVinculos | null>(null);
   protected readonly detalleAbierto = signal(false);
 
@@ -101,13 +93,13 @@ export class MiRecorrido {
     return r.episodios.length === 0 && r.descartados.length === 0 && r.otras === null;
   });
 
-  /** Todos los hilos, para encontrar el del paso guiado. */
+  /** Every thread, to find the guided step's one. */
   private readonly todos = computed<readonly Episodio[]>(() => {
     const r = this.recorrido();
     return [...r.episodios, ...r.descartados, ...(r.otras === null ? [] : [r.otras])];
   });
 
-  /** El paso que se está narrando, con su hilo. */
+  /** The step being narrated, with its thread. */
   protected readonly pasoActual = computed<{ episodio: Episodio; paso: PasoNarrado; indice: number } | null>(
     () => {
       const guiado = this.guiado();
@@ -118,7 +110,7 @@ export class MiRecorrido {
     },
   );
 
-  /* ---- despliegue --------------------------------------------------------- */
+  /* ---- expansion ----------------------------------------------------------- */
 
   protected abierto(clave: string): boolean {
     return this.abiertos().has(clave);
@@ -129,8 +121,8 @@ export class MiRecorrido {
     if (abierto) siguiente.add(clave);
     else siguiente.delete(clave);
     this.abiertos.set(siguiente);
-    // Plegar el hilo que se está narrando termina la narración: seguir
-    // hablando de algo que no se ve confunde más de lo que ayuda.
+    // Folding the thread being narrated ends the narration: going on about
+    // something not in view confuses more than it helps.
     if (!abierto && this.guiado()?.episodioId === clave) this.guiado.set(null);
   }
 
@@ -138,7 +130,7 @@ export class MiRecorrido {
     return `${episodio.id}/${atencionId}`;
   }
 
-  /* ---- recorrido guiado --------------------------------------------------- */
+  /* ---- guided tour --------------------------------------------------------- */
 
   protected empezarGuiado(episodio: Episodio): void {
     if (episodio.pasos.length === 0) return;
@@ -159,7 +151,7 @@ export class MiRecorrido {
     this.guiado.set(null);
   }
 
-  /** Despliega la atención del paso para que lo narrado esté a la vista. */
+  /** Expands the step's encounter so what is narrated is in view. */
   private mostrarPaso(episodio: Episodio, indice: number): void {
     const atencionId = episodio.pasos[indice]?.atencionId ?? null;
     const siguiente = new Set(this.abiertos());
@@ -168,13 +160,13 @@ export class MiRecorrido {
     this.abiertos.set(siguiente);
   }
 
-  /** El registro que se está narrando, para resaltarlo en el árbol. */
+  /** The record being narrated, to highlight it in the tree. */
   protected esActual(registroId: string, episodio: Episodio): boolean {
     const actual = this.pasoActual();
     return actual !== null && actual.episodio.id === episodio.id && actual.paso.registroId === registroId;
   }
 
-  /** Abre la hoja del registro que respalda la frase narrada. */
+  /** Opens the sheet of the record backing the narrated sentence. */
   protected verRegistroDelPaso(): void {
     const actual = this.pasoActual();
     if (actual === null) return;
@@ -182,7 +174,7 @@ export class MiRecorrido {
     if (registro !== undefined) this.verDetalle(registro);
   }
 
-  /* ---- hoja de detalle ---------------------------------------------------- */
+  /* ---- detail sheet -------------------------------------------------------- */
 
   protected verDetalle(registro: RegistroConVinculos): void {
     this.enDetalle.set(registro);
@@ -198,11 +190,7 @@ export class MiRecorrido {
     return fecha === null ? TIPO_EN_PALABRAS[registro.tipo] : `${TIPO_EN_PALABRAS[registro.tipo]} · ${fecha}`;
   }
 
-  protected ausentesDe(registro: RegistroConVinculos): readonly string[] {
-    return registro.ausentes.map((a) => AUSENTE_EN_PALABRAS[a]);
-  }
-
-  /** El rótulo corto de un hecho dentro de su atención. */
+  /** A fact's short label inside its encounter. */
   protected resumenDe(registro: RegistroConVinculos): string {
     switch (registro.tipo) {
       case 'diagnostico':
@@ -218,7 +206,7 @@ export class MiRecorrido {
     }
   }
 
-  /** El rótulo plegado de un hilo: el problema, su estado y desde cuándo. */
+  /** A thread's folded label: the problem, its status and since when. */
   protected encabezadoDe(episodio: Episodio): string {
     const desde = fechaCorta(episodio.desde ?? undefined);
     return [episodio.titulo, episodio.sello, desde === null ? null : `desde ${desde}`]

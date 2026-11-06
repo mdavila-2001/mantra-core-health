@@ -1,6 +1,6 @@
-<!-- La narración guiada se anuncia desde UNA región viva que está siempre en el
-     DOM: una región que aparece junto con su texto no se anuncia en todos los
-     lectores. El panel visible de la narración no repite el aria-live. -->
+<!-- The guided narration is announced from ONE live region that is always in
+     the DOM: a region that appears together with its text is not announced by
+     every reader. The narration's visible panel does not repeat the aria-live. -->
 <p class="sr-only" aria-live="polite" aria-atomic="true" data-testid="recorrido-narracion-viva">
   @if (pasoActual(); as actual) {
     Paso {{ actual.indice + 1 }} de {{ actual.episodio.pasos.length }}: {{ actual.paso.texto }}
@@ -50,9 +50,9 @@
         <ng-container [ngTemplateOutlet]="hilo" [ngTemplateOutletContext]="{ $implicit: otras }" />
       }
 
-      <!-- Los hilos que terminaron en un descarte van aparte y plegados: no son
-           un problema de salud que la persona tenga, y ponerlos a la par de lo
-           vigente los haría leer como tales. -->
+      <!-- The threads that ended in a ruling out go apart and folded: they are
+           not a health problem the person has, and putting them next to the
+           current ones would make them read as such. -->
       @if (recorrido().descartados.length > 0) {
         <app-accordion-panel
           class="recorrido__descartados"
@@ -73,15 +73,15 @@
     </div>
   }
 
-  <!-- Pendiente de API: el portal del paciente no recibe sus derivaciones
-       (`GET /referrals` es del profesional). Se dice en vez de callarlo, que se
-       leería como «nunca lo derivaron». -->
+  <!-- Pending API: the patient portal does not receive its referrals
+       (`GET /referrals` is the practitioner's). It is said instead of kept
+       quiet, which would read as «nunca lo derivaron». -->
   <p class="recorrido__nota recorrido__nota--pie" data-testid="recorrido-sin-derivaciones">
     Las derivaciones a otros profesionales todavía no se muestran en este recorrido.
   </p>
 </section>
 
-<!-- ─── Un hilo: el problema de salud, sus consultas y su paso a paso ──────── -->
+<!-- ─── A thread: the health problem, its consultations and its steps ──────── -->
 <ng-template #hilo let-episodio>
   <app-accordion-panel
     class="recorrido__hilo"
@@ -236,8 +236,8 @@
         </ul>
       }
 
-      <!-- Lo descartado en el camino, plegado: es parte de la historia —«se
-           pensó en esto y no era»— pero no lo que la persona tiene. -->
+      <!-- What was ruled out on the way, folded: it is part of the story —«se
+           pensó en esto y no era»— but not what the person has. -->
       @if (episodio.descartados.length > 0) {
         <app-accordion-panel
           class="recorrido__en-el-camino"
@@ -268,7 +268,7 @@
   </app-accordion-panel>
 </ng-template>
 
-<!-- ─── La hoja de detalle ─────────────────────────────────────────────────── -->
+<!-- ─── The detail sheet ───────────────────────────────────────────────────── -->
 <app-drawer-panel
   [heading]="enDetalle()?.nombre ?? 'Detalle'"
   [subheading]="enDetalle() === null ? '' : subtituloDe(enDetalle()!)"
@@ -277,60 +277,14 @@
   (openChange)="detalleAbierto.set($event)"
 >
   @if (enDetalle(); as registro) {
-    <div class="recorrido__detalle" data-testid="recorrido-detalle">
-      <app-fact-list [hechos]="registro.detalle" [etiqueta]="registro.nombre" />
-
-      @for (ausente of ausentesDe(registro); track ausente) {
-        <p class="recorrido__nota" data-testid="recorrido-detalle-ausente">{{ ausente }}</p>
-      }
-
-      <div class="recorrido__detalle-acciones">
-        @if (registro.tipo === 'estudio' && registro.conResultado && registro.informeId !== null) {
-          <a
-            app-button
-            variant="primary"
-            size="sm"
-            data-testid="recorrido-ver-resultado"
-            routerLink="/my-account/diagnostic-results"
-            [fragment]="registro.informeId"
-          >
-            Ver el resultado
-          </a>
-        }
-        @if (registro.tipo === 'receta') {
-          <button
-            app-button
-            variant="primary"
-            size="sm"
-            type="button"
-            data-testid="recorrido-descargar-receta"
-            [isLoading]="descargandoReceta() === registro.id"
-            (clicked)="descargarReceta.emit(registro.id)"
-          >
-            Descargar receta oficial (PDF)
-          </button>
-          <a
-            app-button
-            variant="ghost"
-            size="sm"
-            [routerLink]="['/my-account/medical-record/where-to-buy', registro.id]"
-          >
-            Dónde comprarla
-          </a>
-        }
-        @if (registro.tipo === 'atencion' || registro.tipo === 'diagnostico' || registro.tipo === 'receta') {
-          <button
-            app-button
-            variant="outline"
-            size="sm"
-            type="button"
-            data-testid="recorrido-ir-a-seccion"
-            (clicked)="irAlRegistro(registro)"
-          >
-            Verlo en «Por fecha»
-          </button>
-        }
-      </div>
-    </div>
+    <div
+      app-mi-recorrido-detalle
+      class="recorrido__detalle"
+      data-testid="recorrido-detalle"
+      [registro]="registro"
+      [descargandoReceta]="descargandoReceta()"
+      (descargarReceta)="descargarReceta.emit($event)"
+      (irAlRegistro)="irAlRegistro($event)"
+    ></div>
   }
 </app-drawer-panel>

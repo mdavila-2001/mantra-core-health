@@ -12,14 +12,13 @@ import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnos
 import type {
   ClinicalSummary,
   Encounter,
-  MedicationRequest,
 } from '../../../core/data-access/clinical/clinical.types';
 import { blobToDataUrl } from '../../../core/data-access/files/blob-to-data-url';
 import { FileDownloader } from '../../../core/data-access/files/file-downloader';
 import { FormsClient } from '../../../core/data-access/forms/forms.client';
 import { ReceivedServicesClient } from '../../../core/data-access/received-services/received-services.client';
-import type { FormInstanceDetail } from '../../../core/data-access/forms/forms.types';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
+import type { FormInstanceDetail } from '../../../core/data-access/forms/forms.types';
 import type { Booking } from '../../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
@@ -36,8 +35,8 @@ import { AccordionPanel } from '../../../shared/components/molecules/accordion/a
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FactList } from '../../../shared/components/molecules/fact-list/fact-list';
-import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
-import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
+import { HistoriaVista, type VistaDeLaHistoria } from './historia-vista/historia-vista';
+import { HistoriaLista, type FilaVisible } from './historia-lista/historia-lista';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -52,13 +51,14 @@ import { ReceivedServicesPanel } from '../../../shared/components/organisms/rece
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { downloadVisitPdf } from '../../../shared/utils/clinical-pdf/clinical-pdf';
 import type { DocumentoDeFormulario } from '../../../shared/utils/clinical-pdf/clinical-pdf.types';
+import { comoDocumentoDeFormulario, formularioLeible, type FormularioVisible } from './medical-record.formularios';
+import { conceptosDe, conceptosDeLasCitas, conceptosDeLasOrdenes } from './medical-record.conceptos';
 import {
   atencionDesdeResumen,
   type ContextoDelDocumento,
   historiaDesdeFuentes,
 } from '../../../shared/utils/clinical-pdf/from-summary';
 import { downloadHistoryWithEncounters } from '../../../shared/utils/clinical-pdf/history-with-encounters';
-import { textoDeValor } from '../../../shared/utils/form-values/form-values';
 import { MIS_TURNOS_ROUTE } from '../appointments/appointments.routes';
 import { isHistoryEmpty, summaryHasContent } from './history-emptiness';
 import {
@@ -93,22 +93,11 @@ const PARAM_DE_SECCION = 'seccion';
  */
 const SECCIONES = ['atenciones', 'recetas', 'alergias', 'resultados', 'diagnosticos', 'servicios'] as const;
 
-/* ---- Franja 5a · dos formas de leer la misma historia -------------------- */
+/* ---- Strip 5a · two ways to read the same history ------------------------ */
 
-/** El parámetro que dice cómo se está leyendo la historia. */
+/** The parameter saying how the history is being read. */
 const PARAM_DE_VISTA = 'vista';
 
-type VistaDeLaHistoria = 'fecha' | 'recorrido';
-
-/**
- * «Por fecha» es la vista de siempre y la que se ve al entrar sin nada en la
- * URL; «Mi recorrido» la agrupa por problema de salud. Las dos leen los mismos
- * datos: el recorrido no pide nada que la vista por fecha no pida ya.
- */
-const VISTAS: readonly SegmentedOption<VistaDeLaHistoria>[] = [
-  { value: 'fecha', label: 'Por fecha' },
-  { value: 'recorrido', label: 'Mi recorrido' },
-];
 
 /** Una receta del archivo. */
 interface RecetaVisible {
@@ -118,36 +107,6 @@ interface RecetaVisible {
   readonly estado: string;
   readonly emitida: boolean;
   readonly cuando: Date;
-}
-
-/** Una fila de las listas de sólo lectura (alergias, resultados). */
-interface FilaVisible {
-  readonly id: string;
-  readonly principal: string;
-  readonly secundario: string;
-  readonly cuando: Date | null;
-}
-
-/** Una respuesta de un formulario, ya en palabras. */
-interface RespuestaLeible {
-  readonly id: string;
-  readonly etiqueta: string;
-  /** La respuesta en palabras. Vacía cuando `masked`: el marcador la reemplaza. */
-  readonly texto: string;
-  readonly masked: boolean;
-}
-
-/** Un formulario clínico respondido, tal como lo lee quien fue atendido. */
-interface FormularioVisible {
-  readonly id: string;
-  /** El encuentro en que se respondió; ata el formulario a su atención. */
-  readonly encounterId: string;
-  readonly titulo: string;
-  /** Cuándo se completó, para mostrarse: el cierre manda; si no, la creación. */
-  readonly cuando: Date | null;
-  /** El cierre real, si lo hubo. Es lo único que el PDF declara como completado. */
-  readonly cerradoEl?: Date;
-  readonly respuestas: readonly RespuestaLeible[];
 }
 
 /**
@@ -194,13 +153,14 @@ interface FormularioVisible {
     PageHeader,
     ReceivedServicesPanel,
     RouterLink,
-    SegmentedControl,
+    HistoriaLista,
+    HistoriaVista,
     Tab,
     Tabs,
     ViewStateHost,
   ],
   templateUrl: './medical-record.html',
-  styleUrl: './medical-record.css',
+  styleUrls: ['./medical-record.listas.css', './medical-record.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MedicalRecord {
@@ -271,11 +231,9 @@ export class MedicalRecord {
     });
   }
 
-  /* ---- Franja 5a · la vista elegida ------------------------------------ */
+  /* ---- Strip 5a · the chosen view ----------------------------------------- */
 
-  protected readonly vistas = VISTAS;
-
-  /** Cómo se lee la historia. En la URL, por lo mismo que la pestaña. */
+  /** How the history is read. In the URL, for the same reason as the tab. */
   protected readonly vista = computed<VistaDeLaHistoria>(() =>
     this.params()?.get(PARAM_DE_VISTA) === 'recorrido' ? 'recorrido' : 'fecha',
   );
@@ -289,7 +247,7 @@ export class MedicalRecord {
     });
   }
 
-  /** Desde la hoja de detalle del recorrido, a la pestaña que tiene ese registro. */
+  /** From the tour's detail sheet, to the tab holding that record. */
   protected irASeccion(destino: SeccionDeDestino): void {
     void this.router.navigate([], {
       relativeTo: this.route,
@@ -301,15 +259,15 @@ export class MedicalRecord {
     });
   }
 
-  /** La receta pedida desde el recorrido, por la misma descarga oficial. */
+  /** The prescription requested from the tour, through the same official download. */
   protected descargarRecetaPorId(id: string): void {
     const receta = this.recetas().find((fila) => fila.id === id);
     if (receta !== undefined) this.descargarReceta(receta);
   }
 
   /**
-   * El recorrido, armado con lo que ya llegó: el resumen y —en cuanto estén—
-   * las órdenes y las citas del despliegue perezoso.
+   * The tour, built with what already arrived: the summary and —as soon as
+   * they are there— the orders and appointments of the lazy expansion.
    */
   protected readonly recorrido = computed<Recorrido>(() => {
     const datos = this.datos();
@@ -612,9 +570,9 @@ export class MedicalRecord {
   }
 
   constructor() {
-    // El recorrido necesita las órdenes y las citas, que la vista por fecha
-    // pide recién al desplegar una atención. Abrir «Mi recorrido» cuenta como
-    // ese primer despliegue: la misma lectura, una sola vez.
+    // The tour needs the orders and appointments, which the by-date view only
+    // requests on expanding an encounter. Opening «Mi recorrido» counts as
+    // that first expansion: the same read, once.
     effect(() => {
       if (this.vista() !== 'recorrido') return;
       untracked(() => {
@@ -930,107 +888,4 @@ export class MedicalRecord {
     }
     return texto ?? SIN_DATO;
   }
-}
-
-/**
- * Los conceptos que traen las órdenes del portal.
- *
- * Van en una lectura aparte porque las órdenes llegan después, al primer
- * despliegue: pedirlos con el resumen sería pedir la traducción de algo que
- * todavía no se leyó.
- */
-function conceptosDeLasOrdenes(ordenes: readonly PatientOrder[]): readonly string[] {
-  const ids = ordenes.flatMap((orden) => [
-    orden.codeConceptId,
-    orden.categoryConceptId,
-    orden.statusConceptId,
-  ]);
-  return [...new Set(ids.filter((id): id is string => id !== undefined))];
-}
-
-/**
- * Los conceptos que traen las citas: el estado de la reconsulta.
- *
- * Es uno solo por cita, pero se pide igual con los de las órdenes en la misma
- * lectura: dos peticiones al catálogo para un despliegue serían una de más.
- */
-function conceptosDeLasCitas(citas: readonly Booking[]): readonly string[] {
-  return [...new Set(citas.map((cita) => cita.statusConceptId))];
-}
-
-/** Los conceptos que hay que traducir para pintar la historia. */
-function conceptosDe(resumen: ClinicalSummary): readonly string[] {
-  const ids = [
-    ...resumen.conditions.flatMap((fila) => [
-      fila.codeConceptId,
-      fila.clinicalStatusConceptId,
-      // C6: el bloque de un diagnóstico se decide por estos dos códigos. Sin
-      // pedirlos, `diagnosisStateOf` no tendría con qué ramificar y todo caería
-      // en «en estudio».
-      fila.verificationStatusConceptId,
-      fila.clinicalCourseConceptId,
-    ]),
-    ...resumen.allergies.flatMap((fila) => [fila.substanceConceptId, fila.criticalityConceptId]),
-    ...resumen.medicationRequests.flatMap((fila: MedicationRequest) => [
-      fila.medicationConceptId,
-      fila.statusConceptId,
-    ]),
-    ...resumen.observations.flatMap((fila) => [
-      fila.codeConceptId,
-      fila.quantityUnitConceptId,
-      fila.valueConceptId,
-    ]),
-  ];
-  return [...new Set(ids.filter((id): id is string => id !== undefined))];
-}
-
-/**
- * Un formulario visible, en la forma del documento PDF.
- *
- * Lo comparten la historia de una atención y la historia completa: el mismo
- * formulario no puede salir distinto según qué papel lo lleve. `completadoEl`
- * sale sólo del cierre real, y el texto de un campo enmascarado ya viene vacío
- * del view-model — el armador además lo descarta por la bandera.
- */
-function comoDocumentoDeFormulario(formulario: FormularioVisible): DocumentoDeFormulario {
-  return {
-    id: formulario.id,
-    titulo: formulario.titulo,
-    ...(formulario.cerradoEl === undefined ? {} : { completadoEl: formulario.cerradoEl }),
-    respuestas: formulario.respuestas.map((respuesta) => ({
-      etiqueta: respuesta.etiqueta,
-      texto: respuesta.texto,
-      masked: respuesta.masked,
-    })),
-  };
-}
-
-/**
- * Un formulario respondido, en la forma en que el archivo lo lee.
- *
- * El título es genérico porque la instancia no declara su plantilla y el
- * paciente no puede leer el catálogo de plantillas; la etiqueta de cada campo
- * sí viaja en el detalle (`fieldName`) y es lo que vuelve legible la respuesta.
- * Cuando `masked` está puesto, el texto queda vacío: el marcador lo pone el
- * documento — acá jamás viaja el contenido.
- */
-function formularioLeible(detalle: FormInstanceDetail): FormularioVisible {
-  const cierre = detalle.closedAt == null ? undefined : new Date(detalle.closedAt);
-  const cerradoEl = cierre !== undefined && !Number.isNaN(cierre.getTime()) ? cierre : undefined;
-  const creacion = new Date(detalle.createdAt);
-  return {
-    id: detalle.id,
-    encounterId: detalle.resourceId,
-    titulo: 'Formulario clínico',
-    cuando: cerradoEl ?? (Number.isNaN(creacion.getTime()) ? null : creacion),
-    ...(cerradoEl === undefined ? {} : { cerradoEl }),
-    respuestas: [...detalle.values]
-      .sort((a, b) => a.ordinal - b.ordinal)
-      .map((valor) => ({
-        id: valor.id,
-        etiqueta: valor.fieldName ?? 'Campo del formulario',
-        texto: valor.masked ? '' : textoDeValor(valor.value, valor.dataType),
-        masked: valor.masked,
-      })),
-  };
 }

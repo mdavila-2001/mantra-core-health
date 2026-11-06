@@ -6,14 +6,14 @@ import type {
 } from '../../../../core/data-access/clinical/clinical.types';
 import type { PatientOrder } from '../../../../core/data-access/diagnostics/diagnostics.types';
 import type { Booking } from '../../../../core/data-access/scheduling/scheduling.types';
-import type { FuentesDelPortal } from './registro-con-vinculos';
+import type { FuentesDelPortal } from './registro-con-vinculos.types';
 
-/* Una historia chica y completa, compartida por las pruebas del recorrido:
-   cefalea → se pensó en migraña (descartada, reemplazada por cefalea
-   tensional, confirmada con una resonancia), con receta, control realizado,
-   y una consulta suelta de vacunación con un estudio sin vínculo. */
+/* A small, complete story shared by the tour's tests: headache → migraine
+   was considered (ruled out, replaced by tension headache, confirmed with an
+   MRI), with a prescription, a follow-up done, and a loose vaccination
+   consultation with an unlinked study. */
 
-/** Mediodía UTC: ningún huso horario corre el día. */
+/** Noon UTC: no time zone shifts the day. */
 export const dia = (iso: string): Date => new Date(`${iso}T12:00:00Z`);
 
 export const ETIQUETAS: Readonly<Record<string, { display: string; code: string }>> = {
@@ -106,7 +106,7 @@ export const ORDENES: readonly PatientOrder[] = [
     encounterId: 'e1',
     hasReleasedResult: true,
     reportId: 'rep-1',
-    // `PatientOrderSummaryDto.reasonConditionId` (publicado el 06/11/2026).
+    // `PatientOrderSummaryDto.reasonConditionId` (published on 06/11/2026).
     reasonConditionId: 'c-migrana',
   }),
   orden({ id: 'sr-hem', encounterId: 'e3', codeConceptId: 'hemograma', createdAt: dia('2026-04-01') }),
@@ -119,7 +119,7 @@ export const CITAS: readonly Booking[] = [
     startAt: dia('2026-03-10'),
     followUpOf: { bookingId: 'bk-origen', encounterId: 'e1' },
   } as Booking,
-  // Una cita sin origen no es un control: no entra al recorrido.
+  // An appointment with no origin is not a follow-up: it stays out of the tour.
   { id: 'bk-suelta', statusConceptId: 'bk-confirmed', startAt: dia('2026-05-01') } as Booking,
 ];
 

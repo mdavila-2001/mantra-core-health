@@ -1,70 +1,62 @@
 import type { Tone } from '../../../../shared/components/tone/tone.types';
-import type {
-  EstadoDelDiagnostico,
-  RegistroConVinculos,
-} from './registro-con-vinculos';
+import type { EstadoDelDiagnostico, RegistroConVinculos } from './registro-con-vinculos.types';
+import { narracion, type PasoNarrado } from './narracion';
+import { porFecha } from './redaccion';
 
 /* ============================================================================
-    (b) La agrupación en episodios y la narración por plantillas.
+    (b) The grouping into episodes (the template narration lives in
+    `narracion.ts`).
 
-    Trabaja sólo sobre `RegistroConVinculos`: no conoce endpoints ni tipos del
-    portal. Todo es puro y se prueba sin TestBed.
+    It only works on `RegistroConVinculos`: it knows no endpoints nor portal
+    types. Everything is pure and tested without TestBed.
 
-    ## Qué es un episodio
+    ## What an episode is
 
-    Un hilo por problema de salud. Lo arma el diagnóstico **final** de una
-    cadena de reemplazos (`reemplazadoPorId`): si «Migraña» se descartó y en su
-    lugar quedó «Cefalea tensional», las dos son el mismo hilo y el descartado
-    va plegado dentro. Al hilo se suman, **sólo por vínculo declarado**:
+    One thread per health problem. It is built by the **final** diagnosis of a
+    replacement chain (`reemplazadoPorId`): if «Migraña» was ruled out and
+    «Cefalea tensional» took its place, both are the same thread and the ruled
+    out one goes folded inside. The thread gets, **only by a declared link**:
 
-    - las atenciones en que se registró alguno de sus diagnósticos;
-    - los estudios pedidos para él (`diagnosticoId`) o con los que se decidió
+    - the encounters where any of its diagnoses was entered;
+    - the studies ordered for it (`diagnosticoId`) or used to decide it
       (`evidenciaEstudioId`);
-    - las recetas indicadas para él;
-    - los controles agendados desde una de esas atenciones.
+    - the prescriptions indicated for it;
+    - the follow-ups booked from one of those encounters.
 
-    Un estudio o una receta **sin** vínculo a un diagnóstico no se asigna a un
-    hilo por cercanía: aparece dentro de su atención marcado como «de esta
-    consulta», y no entra en la narración del hilo. Las atenciones que no tocan
-    ningún diagnóstico van a «Otras consultas».
+    A study or a prescription **without** a link to a diagnosis is not assigned
+    to a thread by proximity: it shows inside its encounter marked «de esta
+    consulta», and does not enter the thread's narration. Encounters touching
+    no diagnosis go to «Otras consultas».
 
-    ## Por qué no delega en `agruparEnEpisodios` del expediente (06/11/2026)
+    ## Why it does not delegate to the chart's `agruparEnEpisodios` (06/11/2026)
 
-    La red del profesional (`patient-chart/recorrido-clinico/red-clinica.model.ts`,
-    ADR-0021) resuelve la misma pregunta con otras reglas, deliberadamente:
-    une dos registros del mismo concepto en un problema, reparte una atención
-    entre varios episodios y **deduce** vínculos (el estudio pedido junto a un
-    presuntivo, la cita y la atención del mismo día). Para el paciente, cada
-    hecho entra a un hilo sólo por un vínculo declarado y lo demás se marca
-    «de esta consulta» (decisión 3 de la Franja 5). Delegar exigiría desactivar
-    justo lo que distingue a aquel modelo, así que se queda aparte; lo que sí
-    comparten es la fuente: los mismos ids y los mismos campos del contrato
-    (`replacedByConditionId`, `reasonConditionId`, `indicationConditionId`,
-    `verification.basedOn`, `followUpOf`).
+    The practitioner's network (`patient-chart/recorrido-clinico/red-clinica.episodios.ts`,
+    ADR-0021) answers the same question with other rules, deliberately: it
+    joins two records of the same concept into one problem, splits an
+    encounter across several episodes and **deduces** links (the study ordered
+    next to a presumptive, the same-day appointment and encounter). For the
+    patient, each fact enters a thread only by a declared link and the rest is
+    marked «de esta consulta» (Strip 5's decision 3). Delegating would require
+    switching off exactly what sets that model apart, so it stays separate;
+    what they do share is the source: the same ids and the same contract
+    fields (`replacedByConditionId`, `reasonConditionId`,
+    `indicationConditionId`, `verification.basedOn`, `followUpOf`).
     ========================================================================== */
 
-/** Un hecho dentro de una atención del episodio. */
+/** A fact inside one of the episode's encounters. */
 export interface HechoDelEpisodio {
   readonly registro: RegistroConVinculos;
   /**
-   * `true` si pertenece al episodio por un vínculo declarado; `false` si sólo
-   * comparte la atención (y entonces se muestra marcado como tal).
+   * `true` if it belongs to the episode by a declared link; `false` if it only
+   * shares the encounter (and then it shows marked as such).
    */
   readonly directo: boolean;
 }
 
-/** Una atención, con lo que pasó en ella dentro de este hilo. */
+/** An encounter, with what happened in it within this thread. */
 export interface AtencionDelEpisodio {
   readonly registro: RegistroConVinculos;
   readonly hechos: readonly HechoDelEpisodio[];
-}
-
-/** Una frase de la narración, atada al registro del que sale. */
-export interface PasoNarrado {
-  readonly texto: string;
-  readonly registroId: string;
-  /** La atención que hay que desplegar para ver el registro, si la tiene. */
-  readonly atencionId: string | null;
 }
 
 export type ClaseDeEpisodio = 'vigente' | 'cerrado' | 'descartado' | 'otras';
@@ -79,19 +71,19 @@ export interface Episodio {
   readonly desde: Date | null;
   readonly hasta: Date | null;
   readonly atenciones: readonly AtencionDelEpisodio[];
-  /** Diagnósticos descartados en el camino hacia el final, plegados. */
+  /** Diagnoses ruled out on the way to the final one, folded. */
   readonly descartados: readonly RegistroConVinculos[];
-  /** Hechos del hilo cuya atención no llegó (o que no tienen atención). */
+  /** The thread's facts whose encounter did not arrive (or that have none). */
   readonly sueltos: readonly HechoDelEpisodio[];
   readonly pasos: readonly PasoNarrado[];
 }
 
 export interface Recorrido {
-  /** Los hilos con un diagnóstico vigente o cerrado, del más reciente al más viejo. */
+  /** The threads with a current or closed diagnosis, most recent first. */
   readonly episodios: readonly Episodio[];
-  /** Los hilos que terminaron en un descarte, aparte y plegados. */
+  /** The threads that ended in a ruling out, apart and folded. */
   readonly descartados: readonly Episodio[];
-  /** Las atenciones que no tocan ningún diagnóstico, o `null` si no hay. */
+  /** The encounters touching no diagnosis, or `null` if there are none. */
   readonly otras: Episodio | null;
 }
 
@@ -102,7 +94,7 @@ const SELLO: Readonly<Record<EstadoDelDiagnostico, { readonly sello: string; rea
   descartado: { sello: 'Descartado', tono: 'secondary' },
 };
 
-/** Arma el recorrido entero a partir de los registros neutros. */
+/** Builds the whole tour from the neutral records. */
 export function recorridoDelPaciente(registros: readonly RegistroConVinculos[]): Recorrido {
   const porId = new Map(registros.map((registro) => [registro.id, registro]));
   const atencionesConocidas = new Map(
@@ -112,7 +104,7 @@ export function recorridoDelPaciente(registros: readonly RegistroConVinculos[]):
   const controles = registros.filter((r) => r.tipo === 'control');
   const accesorios = registros.filter((r) => r.tipo === 'estudio' || r.tipo === 'receta');
 
-  // Cada diagnóstico cae en el hilo de su final de cadena.
+  // Each diagnosis falls into the thread of its chain's final one.
   const cadenas = new Map<string, RegistroConVinculos[]>();
   for (const diagnostico of diagnosticos) {
     const final = finalDeCadena(diagnostico, porId);
@@ -204,12 +196,12 @@ export function recorridoDelPaciente(registros: readonly RegistroConVinculos[]):
   };
 }
 
-/** Un descartado que no es el final de su cadena: va plegado en el hilo. */
+/** A ruled-out diagnosis that is not its chain's final one: it goes folded in the thread. */
 function descartadoEnElCamino(registro: RegistroConVinculos, final: RegistroConVinculos): boolean {
   return registro.tipo === 'diagnostico' && registro.id !== final.id && registro.estado === 'descartado';
 }
 
-/** Sigue `reemplazadoPorId` hasta el último diagnóstico conocido. Corta ciclos. */
+/** Follows `reemplazadoPorId` up to the last known diagnosis. Cuts cycles. */
 function finalDeCadena(
   diagnostico: RegistroConVinculos,
   porId: ReadonlyMap<string, RegistroConVinculos>,
@@ -271,161 +263,4 @@ function otrasConsultas(
     sueltos: sinAtencion.map((registro) => ({ registro, directo: true })),
     pasos: narracion(todos, porId),
   };
-}
-
-/* ---- la narración -------------------------------------------------------- */
-
-/** Un paso con lo que hace falta para ordenarlo. */
-interface PasoOrdenable extends PasoNarrado {
-  readonly cuando: Date | null;
-  readonly peso: number;
-}
-
-/**
- * La historia del hilo en frases de plantilla, en orden de fecha.
- *
- * Cada frase sale de **un** registro y lo nombra (`registroId`): así la
- * pantalla puede llevar a quien lee al registro que respalda lo que acaba de
- * leer. No hay frase que no tenga un registro detrás.
- */
-export function narracion(
-  registros: readonly RegistroConVinculos[],
-  porId: ReadonlyMap<string, RegistroConVinculos>,
-): readonly PasoNarrado[] {
-  const nombre = (id: string | null): string | null => (id === null ? null : (porId.get(id)?.nombre ?? null));
-  const atencionDe = (r: RegistroConVinculos): string | null =>
-    r.tipo === 'control' ? r.origenAtencionId : r.atencionId;
-  const pasos: PasoOrdenable[] = [];
-  const paso = (r: RegistroConVinculos, cuando: Date | null, peso: number, texto: string): void => {
-    pasos.push({ texto, registroId: r.id, atencionId: atencionDe(r), cuando, peso });
-  };
-
-  for (const r of registros) {
-    switch (r.tipo) {
-      case 'atencion':
-        paso(
-          r,
-          r.cuando,
-          0,
-          conFecha(r.cuando, `consultó por ${minusculaInicial(r.nombre)}.`) +
-            (r.enCurso ? ' La atención sigue abierta.' : ''),
-        );
-        break;
-      case 'diagnostico':
-        pasosDelDiagnostico(r, nombre, paso);
-        break;
-      case 'estudio': {
-        const para = nombre(r.diagnosticoId);
-        paso(
-          r,
-          r.cuando,
-          2,
-          `Le pidieron ${r.nombre}${para === null ? '' : ` por ${para}`}.` +
-            (r.conResultado ? ' El resultado ya está disponible.' : ''),
-        );
-        break;
-      }
-      case 'receta': {
-        const para = nombre(r.diagnosticoId);
-        paso(r, r.cuando, 4, `Le recetaron ${r.nombre}${para === null ? '' : ` para ${para}`}.`);
-        break;
-      }
-      case 'control':
-        paso(r, r.cuando, 7, fraseDelControl(r));
-        break;
-    }
-  }
-
-  return pasos
-    .sort((a, b) => compararInstantes(a.cuando, b.cuando) || a.peso - b.peso)
-    .map(({ texto, registroId, atencionId }) => ({ texto, registroId, atencionId }));
-}
-
-function pasosDelDiagnostico(
-  r: RegistroConVinculos,
-  nombre: (id: string | null) => string | null,
-  paso: (r: RegistroConVinculos, cuando: Date | null, peso: number, texto: string) => void,
-): void {
-  const decidido = r.estado === 'confirmado' || r.estado === 'descartado';
-  const conDecision = decidido && r.decididoEl !== null;
-  const anotadoComoPosible = r.estado === 'en-estudio' || conDecision || r.estado === 'descartado';
-
-  paso(
-    r,
-    r.cuando,
-    1,
-    anotadoComoPosible
-      ? `Se anotó ${r.nombre} como posible diagnóstico${r.estado === 'en-estudio' ? ', todavía en estudio' : ''}.`
-      : `Se registró el diagnóstico ${r.nombre}.`,
-  );
-
-  if (r.estado === 'confirmado' && r.decididoEl !== null) {
-    const con = nombre(r.evidenciaEstudioId);
-    paso(r, r.decididoEl, 5, conFecha(r.decididoEl, `se confirmó ${r.nombre}${con === null ? '' : ` con su estudio de ${con}`}.`));
-  }
-  if (r.estado === 'descartado') {
-    const enSuLugar = nombre(r.reemplazadoPorId);
-    paso(
-      r,
-      r.decididoEl ?? r.cuando,
-      5,
-      conFecha(r.decididoEl, `se descartó ${r.nombre}${enSuLugar === null ? '' : `; en su lugar quedó ${enSuLugar}`}.`),
-    );
-  }
-  // Un descartado no «se resuelve»: ya se dijo que no era. Contar las dos
-  // cosas el mismo día se lee como que la persona tuvo lo que se descartó.
-  if (r.resueltoEl !== null && r.estado !== 'descartado') {
-    paso(r, r.resueltoEl, 6, conFecha(r.resueltoEl, `el diagnóstico de ${r.nombre} se dio por resuelto.`));
-  }
-}
-
-function fraseDelControl(r: RegistroConVinculos): string {
-  const dia = r.cuando === null ? null : DIA_LARGO.format(r.cuando);
-  switch (r.estadoDelControl) {
-    case 'realizado':
-      return conFecha(r.cuando, 'volvió a control.');
-    case 'proximo':
-      return dia === null ? 'Tiene un control pendiente.' : `Tiene control el ${dia}.`;
-    case 'no-realizado':
-      return dia === null ? 'Un control agendado no se realizó.' : `El control del ${dia} no se realizó.`;
-    default:
-      return dia === null ? 'Se agendó un control.' : `Se agendó un control para el ${dia}.`;
-  }
-}
-
-/* ---- redacción ----------------------------------------------------------- */
-
-/** «3 de febrero de 2026». */
-const DIA_LARGO = new Intl.DateTimeFormat('es-BO', { day: 'numeric', month: 'long', year: 'numeric' });
-
-/** «El 3 de febrero de 2026 se confirmó…», o «Se confirmó…» sin fecha. */
-export function conFecha(cuando: Date | null, resto: string): string {
-  if (cuando === null || Number.isNaN(cuando.getTime())) return mayusculaInicial(resto);
-  return `El ${DIA_LARGO.format(cuando)} ${resto}`;
-}
-
-function mayusculaInicial(texto: string): string {
-  return texto.charAt(0).toLocaleUpperCase('es') + texto.slice(1);
-}
-
-/**
- * «Dolor de cabeza» → «dolor de cabeza», para que entre en la frase. Una sigla
- * («HTA», «ECG») se deja como está: la segunda letra en mayúscula lo delata.
- */
-function minusculaInicial(texto: string): string {
-  const segunda = texto.charAt(1);
-  if (segunda !== '' && segunda === segunda.toLocaleUpperCase('es') && segunda !== segunda.toLocaleLowerCase('es')) {
-    return texto;
-  }
-  return texto.charAt(0).toLocaleLowerCase('es') + texto.slice(1);
-}
-
-/** Más viejo primero; sin fecha, al final. */
-function porFecha(a: RegistroConVinculos, b: RegistroConVinculos): number {
-  return compararInstantes(a.cuando, b.cuando);
-}
-
-function compararInstantes(a: Date | null, b: Date | null): number {
-  if (a === null || b === null) return a === b ? 0 : a === null ? 1 : -1;
-  return a.getTime() - b.getTime();
 }

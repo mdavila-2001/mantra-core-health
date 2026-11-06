@@ -58,19 +58,9 @@
              sueltas sobre el fondo de la página y cada panel dibujaba sus
              propias cajas, que es la pila de tarjetas que la regla prohíbe. -->
         <app-card class="historia__tarjeta" variant="elevated" padding="lg">
-          <!-- Franja 5a · dos formas de leer la misma historia. El selector va
-               DENTRO de la tarjeta: sigue siendo una sola ficha, y lo que
-               cambia es cómo se lee. «Por fecha» es la vista de siempre. -->
-          <div class="historia__vista">
-            <app-segmented-control
-              data-testid="historia-vista"
-              ariaLabel="Cómo ver su historia"
-              size="md"
-              [options]="vistas"
-              [value]="vista()"
-              (valueChange)="elegirVista($event)"
-            />
-          </div>
+          <!-- Strip 5a · two ways to read the same history, INSIDE the card: it
+               is still one sheet, and what changes is how it reads. -->
+          <div app-historia-vista [vista]="vista()" (vistaChange)="elegirVista($event)"></div>
 
           @if (vista() === 'recorrido') {
             <app-mi-recorrido
@@ -354,48 +344,30 @@
          escondía la sección entera: una pestaña ausente no se distingue de una
          función que no hay, y «Alergias (0)» es una respuesta. -->
     <ng-template #panelAlergias>
-      <section class="historia__bloque" aria-labelledby="historia-alergias">
-        <h2 id="historia-alergias" class="historia__titulo sr-only">
-          Alergias ({{ alergias().length }})
-        </h2>
-        @if (alergias().length === 0) {
-          <p class="historia__vacio">No tiene alergias registradas.</p>
-        } @else {
-          <ul class="historia__lista historia__lista--simple" data-testid="historia-alergias">
-            @for (fila of alergias(); track fila.id) {
-              <li class="historia__item">
-                <span class="historia__principal">{{ fila.principal }}</span>
-                <span class="historia__secundario">{{ fila.secundario }}</span>
-              </li>
-            }
-          </ul>
-        }
-      </section>
+      <section
+        app-historia-lista
+        class="historia__bloque"
+        aria-labelledby="historia-alergias"
+        tituloId="historia-alergias"
+        titulo="Alergias"
+        vacio="No tiene alergias registradas."
+        testId="historia-alergias"
+        [filas]="alergias()"
+      ></section>
     </ng-template>
 
     <ng-template #panelResultados>
-      <section class="historia__bloque" aria-labelledby="historia-resultados">
-        <h2 id="historia-resultados" class="historia__titulo sr-only">
-          Resultados ({{ resultados().length }})
-        </h2>
-        @if (resultados().length === 0) {
-          <p class="historia__vacio">Todavía no tiene resultados registrados.</p>
-        } @else {
-          <ul class="historia__lista historia__lista--simple" data-testid="historia-resultados">
-            @for (fila of resultados(); track fila.id) {
-              <li class="historia__item">
-                <span class="historia__principal">{{ fila.principal }}</span>
-                <span class="historia__secundario">
-                  {{ fila.secundario }}
-                  @if (fila.cuando !== null) {
-                    · {{ fila.cuando | date: 'd MMM y' }}
-                  }
-                </span>
-              </li>
-            }
-          </ul>
-        }
-      </section>
+      <section
+        app-historia-lista
+        class="historia__bloque"
+        aria-labelledby="historia-resultados"
+        tituloId="historia-resultados"
+        titulo="Resultados"
+        vacio="Todavía no tiene resultados registrados."
+        testId="historia-resultados"
+        [filas]="resultados()"
+        [conFecha]="true"
+      ></section>
     </ng-template>
   </app-view-state-host>
 }

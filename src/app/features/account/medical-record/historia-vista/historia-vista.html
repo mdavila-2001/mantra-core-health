@@ -1,0 +1,8 @@
+<app-segmented-control
+  data-testid="historia-vista"
+  ariaLabel="Cómo ver su historia"
+  size="md"
+  [options]="vistas"
+  [value]="vista()"
+  (valueChange)="vistaChange.emit($event)"
+/>
