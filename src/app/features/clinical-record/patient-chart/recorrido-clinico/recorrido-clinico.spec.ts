@@ -69,6 +69,7 @@ const VINCULOS: readonly VinculoDeLaRed[] = [
       [vinculos]="vinculos()"
       [resaltados]="resaltados()"
       [visibles]="visibles()"
+      [seleccionado]="seleccionado()"
       (abrir)="abiertos.push($event)"
       (elegido)="elegidos.push($event)"
     />
@@ -79,6 +80,7 @@ class Anfitrion {
   readonly vinculos = signal<readonly VinculoDeLaRed[]>(VINCULOS);
   readonly resaltados = signal<readonly string[]>([]);
   readonly visibles = signal<readonly string[]>([]);
+  readonly seleccionado = signal<string | null>(null);
   readonly abiertos: string[] = [];
   readonly elegidos: NodoElegido[] = [];
 }
@@ -273,5 +275,51 @@ describe('RecorridoClinico · la red por episodios', () => {
     expect(raiz().querySelector('.red-v')).not.toBeNull();
     expect(boton('Medicación: Enalapril').textContent).toContain('indicado para Hipertensión');
     expect(boton('Estudio pedido: MAPA').textContent).toContain('vínculo inferido');
+  });
+  describe('ir a un registro (panel y alertas)', () => {
+    const componente = (): RecorridoClinico =>
+      fixture.debugElement.query(By.directive(RecorridoClinico)).componentInstance as RecorridoClinico;
+    const ir = async (id: string, foco = false): Promise<boolean> => {
+      const ok = componente().irANodo(id, { foco });
+      fixture.detectChanges();
+      await fixture.whenStable();
+      return ok;
+    };
+
+    it('despliega el episodio plegado y marca el registro como enfocado', async () => {
+      expect(botones()).toHaveLength(0);
+      expect(await ir('rx')).toBe(true);
+      expect(episodios()[0].getAttribute('aria-expanded')).toBe('true');
+      expect(boton('Medicación: Enalapril').classList.contains('red__nodo--enfocado')).toBe(true);
+    });
+
+    it('abre el descartado y el «+N» que lo escondían', async () => {
+      await ir('dx-x');
+      expect(boton('Diagnóstico: Angina').dataset['forma']).toBe('tarjeta');
+      await ir('o3');
+      expect(botones().some((b) => b.dataset['id'] === 'o3')).toBe(true);
+    });
+
+    it('con foco, el registro recibe el foco del teclado', async () => {
+      await ir('est', true);
+      expect(document.activeElement).toBe(boton('Estudio pedido: MAPA'));
+    });
+
+    it('no va a un registro que no está o que el filtro oculta', async () => {
+      expect(await ir('fantasma')).toBe(false);
+      fixture.componentInstance.visibles.set(['dx']);
+      fixture.detectChanges();
+      expect(await ir('rx')).toBe(false);
+    });
+
+    it('`seleccionado` marca el registro abierto en el panel', () => {
+      desplegarTodo();
+      fixture.componentInstance.seleccionado.set('rx');
+      fixture.detectChanges();
+      const receta = boton('Medicación: Enalapril');
+      expect(receta.classList.contains('red__nodo--abierto')).toBe(true);
+      expect(receta.getAttribute('aria-current')).toBe('true');
+      expect(boton('Diagnóstico: Hipertensión').getAttribute('aria-current')).toBeNull();
+    });
   });
 });

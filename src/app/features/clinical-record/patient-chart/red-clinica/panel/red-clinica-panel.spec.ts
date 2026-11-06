@@ -317,3 +317,80 @@ describe('RedClinicaPanel', () => {
     });
   });
 });
+
+/**
+ * Lo que la integración con el expediente real necesita del panel: nodos con
+ * menos datos que la demostración (sin nombre del profesional, sin fecha de
+ * liberación) y un padre que decide a dónde vuelve el foco.
+ */
+@Component({
+  imports: [RedClinicaPanel],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <button type="button" data-testid="disparador" (click)="nodo.set(real)">Abrir</button>
+    <app-red-clinica-panel
+      presentacion="lateral"
+      [nodo]="nodo()"
+      [nodos]="[real]"
+      [devolverFoco]="false"
+      (cerrado)="nodo.set(null)"
+    >
+      <button type="button" panel-acciones data-testid="accion-extra">Ver el registro completo</button>
+    </app-red-clinica-panel>
+  `,
+})
+class AnfitrionReal {
+  readonly real: NodoDeRed = {
+    id: 'rep-1',
+    tipo: 'estudio',
+    titulo: 'TSH',
+    cuando: new Date(2026, 9, 1),
+    detalle: { tipo: 'estudio', resultado: { liberadoEn: null, valores: [], archivos: [] } },
+  };
+  readonly nodo = signal<NodoDeRed | null>(null);
+}
+
+describe('RedClinicaPanel con los datos del expediente', () => {
+  let fixture: ComponentFixture<AnfitrionReal>;
+  const el = (): HTMLElement => fixture.nativeElement as HTMLElement;
+  const texto = () => el().querySelector('[data-testid="red-panel"]')?.textContent?.replace(/\s+/g, ' ') ?? '';
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [AnfitrionReal],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+    fixture = TestBed.createComponent(AnfitrionReal);
+    fixture.detectChanges();
+    const disparador = el().querySelector<HTMLButtonElement>('[data-testid="disparador"]')!;
+    disparador.focus();
+    disparador.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+  });
+
+  it('un resultado liberado sin fecha dice «Resultado liberado» y no inventa el día', () => {
+    expect(el().querySelector('[data-testid="red-panel-liberado"]')?.textContent?.trim()).toBe('Resultado liberado');
+    expect(texto()).not.toContain('Liberado el');
+  });
+
+  it('sin profesional conocido no afirma «No registrado»', () => {
+    expect(texto()).not.toContain('Profesional');
+    expect(texto()).not.toContain('No registrado');
+  });
+
+  it('proyecta las acciones del padre al pie del detalle', () => {
+    expect(el().querySelector('[data-testid="red-panel"] [data-testid="accion-extra"]')).not.toBeNull();
+  });
+
+  it('con devolverFoco en false, cerrar no le roba el foco al padre', async () => {
+    const otro = document.createElement('button');
+    document.body.appendChild(otro);
+    fixture.componentInstance.nodo.set(null);
+    fixture.detectChanges();
+    otro.focus();
+    await fixture.whenStable();
+    expect(document.activeElement).toBe(otro);
+    otro.remove();
+  });
+});

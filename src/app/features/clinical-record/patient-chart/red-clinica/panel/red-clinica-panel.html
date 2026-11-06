@@ -74,10 +74,14 @@
           }
         </dd>
       </div>
-      <div class="panel__hecho">
-        <dt>Profesional</dt>
-        <dd>{{ n.profesional?.nombre ?? 'No registrado' }}</dd>
-      </div>
+      <!-- `undefined`: quien armó el nodo no tiene el nombre (la lectura no
+           lo trae) y no se afirma nada; `null`: no hay profesional registrado. -->
+      @if (n.profesional !== undefined) {
+        <div class="panel__hecho">
+          <dt>Profesional</dt>
+          <dd>{{ n.profesional?.nombre ?? 'No registrado' }}</dd>
+        </div>
+      }
       @if (n.especialidad) {
         <div class="panel__hecho">
           <dt>Especialidad</dt>
@@ -108,9 +112,13 @@
           <section class="panel__seccion" aria-labelledby="red-panel-resultado" data-testid="red-panel-resultado">
             <h3 class="panel__seccion-titulo" id="red-panel-resultado">Resultado</h3>
             @if (d.resultado; as r) {
-              <p class="panel__linea">
-                Liberado el
-                <time [attr.datetime]="r.liberadoEn.toISOString()">{{ r.liberadoEn | date: "d 'de' MMMM 'de' y" }}</time>
+              <p class="panel__linea" data-testid="red-panel-liberado">
+                @if (r.liberadoEn) {
+                  Liberado el
+                  <time [attr.datetime]="r.liberadoEn.toISOString()">{{ r.liberadoEn | date: "d 'de' MMMM 'de' y" }}</time>
+                } @else {
+                  Resultado liberado
+                }
                 @if (fueraDeRango() > 0) {
                   ·
                   <strong class="panel__fuera-resumen">
@@ -400,6 +408,12 @@
         }
       </section>
     }
+
+    <!-- Lo que el padre agrega al pie del detalle (p. ej. «Ver el registro
+         completo»): el panel no sabe de bloques ni de modales. -->
+    <div class="panel__acciones">
+      <ng-content select="[panel-acciones]" />
+    </div>
 
     <section class="panel__seccion" aria-labelledby="red-panel-vinculos" data-testid="red-panel-vinculos">
       <h3 class="panel__seccion-titulo" id="red-panel-vinculos">

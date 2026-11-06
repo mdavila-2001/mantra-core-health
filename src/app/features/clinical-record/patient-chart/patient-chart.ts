@@ -1,10 +1,12 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
   effect,
   inject,
+  Injector,
   signal,
   untracked,
   viewChild,
@@ -128,7 +130,18 @@ import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import type { SortState } from '../../../shared/components/organisms/data-table/data-table.types';
-import { RecorridoClinico } from './recorrido-clinico/recorrido-clinico';
+import { RecorridoClinico, type NodoElegido } from './recorrido-clinico/recorrido-clinico';
+import { Breakpoints } from '../../../core/layout/breakpoints';
+import { RedClinicaPanel } from './red-clinica/panel/red-clinica-panel';
+import { RedClinicaFiltros } from './red-clinica/filtros/red-clinica-filtros';
+import { RedClinicaAlertasLista } from './red-clinica/alertas/red-clinica-alertas-lista';
+import { alertasDeApoyo } from './red-clinica/red-clinica-alertas';
+import { aplicarFiltro, criteriosActivos, FILTRO_VACIO, type FiltroDeRed } from './red-clinica/red-clinica-filtro';
+import {
+  nodosDeLaRed,
+  visiblesCombinados,
+  type DetalleDeBloque,
+} from './red-clinica/red-clinica-del-expediente';
 import {
   atencionDeCadaRegistro,
   compararFilas,
@@ -497,6 +510,9 @@ interface Expediente {
     ReceivedServicesPanel,
     Progress,
     RecorridoClinico,
+    RedClinicaAlertasLista,
+    RedClinicaFiltros,
+    RedClinicaPanel,
     SegmentedControl,
     Tab,
     Tabs,
@@ -540,6 +556,8 @@ export class PatientChart {
   private readonly authz = inject(AuthzClient);
   private readonly downloads = inject(FileDownloadService);
   private readonly route = inject(ActivatedRoute);
+  private readonly injector = inject(Injector);
+  private readonly breakpoints = inject(Breakpoints);
 
   private readonly celdaPrincipal =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaPrincipal');
@@ -1276,7 +1294,7 @@ export class PatientChart {
           const estudios = dataOf(leido.estudios);
           const conceptos = [
             ...(dataOf(leido.citas) ?? []).flatMap((c) => [c.statusConceptId, c.typeConceptId]),
-            ...(estudios?.orders ?? []).flatMap((o) => [o.codeConceptId, o.statusConceptId]),
+            ...(estudios?.orders ?? []).flatMap((o) => [o.codeConceptId, o.statusConceptId, o.priorityConceptId]),
             ...(estudios?.reports ?? []).flatMap((r) => [r.codeConceptId, r.lifecycleStatusConceptId]),
             ...(dataOf(leido.procedimientos) ?? []).map((p) => p.statusConceptId),
           ].filter((id): id is string => id !== undefined && id !== '');
@@ -1398,7 +1416,7 @@ export class PatientChart {
    * oculto— es «todos». Los episodios se arman con todo igual: ocultar los
    * diagnósticos deja de dibujarlos, no deshace los problemas.
    */
-  protected readonly visiblesDeLaRed = computed<readonly string[]>(() => {
+  private readonly visiblesPorTipo = computed<readonly string[]>(() => {
     const ocultos = this.tiposOcultos();
     if (ocultos.size === 0) {
       return [];
@@ -1408,6 +1426,187 @@ export class PatientChart {
       .filter((r) => !clasesOcultas.has(r.clase))
       .map((r) => r.id);
   });
+
+  /* -- El panel, los filtros y las alertas de la red (Franja 3) -----------
+     Se arman de lo mismo que la red —sus registros y vínculos, más las
+     lecturas que ya están en pantalla—: el panel no pide nada que la red no
+     tenga, y el filtro y la red no pueden discrepar sobre qué nodo es cuál. */
+
+  /** El análisis que ya muestran los bloques, para los nodos de esos tipos. */
+  private readonly detalleDeLosBloques = computed(() => {
+    const mapa = new Map<string, DetalleDeBloque>();
+    for (const bloque of this.bloques()) {
+      for (const fila of bloque.filas) {
+        const resumen = fila.secundario === SIN_DATO ? '' : fila.secundario;
+        const extra = fila.detalle === SIN_DATO ? '' : fila.detalle;
+        mapa.set(fila.id, {
+          resumen,
+          datos: [
+            ...(extra === '' ? [] : [{ rotulo: 'Detalle', valor: extra }]),
+            ...(fila.cita ? [{ rotulo: 'Consulta', valor: fila.cita }] : []),
+            ...(fila.diagnostico ? [{ rotulo: 'Para', valor: fila.diagnostico }] : []),
+          ],
+        });
+      }
+    }
+    return mapa;
+  });
+
+  /** Los nodos y aristas de la red, en el contrato del panel. Ids reales. */
+  private readonly conexionDeLaRed = computed(() => {
+    const datos = this.datos();
+    const lecturas = this.lecturasDeLaRed();
+    const etiquetas = this.etiquetasDeLaRed();
+    const rotular: Rotulador = (id) => (id === undefined ? {} : (etiquetas.get(id) ?? {}));
+    return nodosDeLaRed(
+      this.registrosDeLaRed(),
+      this.vinculosDeLaRed(),
+      {
+        diagnosticos: datos?.resumen.conditions ?? [],
+        citas: lecturas === null ? null : dataOf(lecturas.citas),
+        derivaciones: lecturas === null ? null : dataOf(lecturas.derivaciones),
+        estudios: lecturas === null ? null : dataOf(lecturas.estudios),
+        bloques: this.detalleDeLosBloques(),
+      },
+      rotular,
+    );
+  });
+
+  protected readonly nodosDeLaRed = computed(() => this.conexionDeLaRed().nodos);
+  protected readonly aristasDeLaRed = computed(() => this.conexionDeLaRed().aristas);
+
+  /** Lo que pide la barra de filtros de la red. Vacío: no filtra. */
+  protected readonly filtroDeLaRed = signal<FiltroDeRed>(FILTRO_VACIO);
+
+  /** Los ids que deja la barra; `null` si no tiene criterios puestos. */
+  private readonly visiblesPorFiltro = computed<readonly string[] | null>(() => {
+    const filtro = this.filtroDeLaRed();
+    return criteriosActivos(filtro) === 0
+      ? null
+      : aplicarFiltro(this.nodosDeLaRed(), filtro, this.aristasDeLaRed()).map((n) => n.id);
+  });
+
+  private readonly visiblesCombinados = computed(() =>
+    visiblesCombinados(this.visiblesPorTipo(), this.visiblesPorFiltro()),
+  );
+
+  /**
+   * Los ids que la red dibuja: el filtro por tipo del expediente **y** la barra
+   * de la red. Vacío —ninguno filtra— es «todos».
+   */
+  protected readonly visiblesDeLaRed = computed<readonly string[]>(() => this.visiblesCombinados() ?? []);
+
+  /** Cuántos registros deja la combinación, para el resumen de la barra. */
+  protected readonly cuantosVisiblesEnLaRed = computed(
+    () => this.visiblesCombinados()?.length ?? this.nodosDeLaRed().length,
+  );
+
+  /**
+   * Los filtros no dejan nada: la red no puede recibir «ninguno» (para ella
+   * vacío es «todos»), y en su lugar se dice y se ofrece limpiar.
+   */
+  protected readonly filtrosDeLaRedSinResultado = computed(() => this.visiblesCombinados()?.length === 0);
+
+  protected limpiarFiltrosDeLaRed(): void {
+    this.filtroDeLaRed.set(FILTRO_VACIO);
+    this.tiposOcultos.set(new Set());
+  }
+
+  /** Las alertas de apoyo, sobre lo que se leyó de esta persona. */
+  protected readonly alertasDeLaRed = computed(() => {
+    const datos = this.datos();
+    if (datos === null) {
+      return [];
+    }
+    const lecturas = this.lecturasDeLaRed();
+    const estudios = lecturas === null ? null : dataOf(lecturas.estudios);
+    const etiquetas = this.etiquetas();
+    const deLaRed = this.etiquetasDeLaRed();
+    const presentes = new Set(this.registrosDeLaRed().map((r) => r.id));
+    return alertasDeApoyo({
+      ahora: this.ahoraDeLaRed(),
+      diagnosticos: datos.resumen.conditions,
+      ordenes: estudios?.orders ?? [],
+      informes: estudios?.reports ?? [],
+      derivaciones: (lecturas === null ? null : dataOf(lecturas.derivaciones)) ?? [],
+      atenciones: datos.resumen.encounters,
+      codigoDe: (id) => (id === undefined ? undefined : (etiquetas.get(id)?.code ?? deLaRed.get(id)?.code)),
+      etiquetaDe: (id) => (id === undefined ? undefined : (etiquetas.get(id)?.display ?? deLaRed.get(id)?.display)),
+    }).filter((alerta) => presentes.has(alerta.nodoId));
+  });
+
+  /** Referencia de «hace N días» del panel y las alertas: la hora de la lectura. */
+  protected readonly ahoraDeLaRed = computed(() => {
+    this.datos();
+    this.lecturasDeLaRed();
+    return new Date();
+  });
+
+  /** Los nodos que una alerta (bajo el puntero o con foco) pide resaltar. */
+  protected readonly resaltadosDeLaRed = signal<readonly string[]>([]);
+
+  /** El nodo cuyo detalle está abierto en el panel. */
+  protected readonly nodoAbiertoId = signal<string | null>(null);
+
+  protected readonly nodoAbierto = computed(() => {
+    const id = this.nodoAbiertoId();
+    return id === null ? null : (this.nodosDeLaRed().find((n) => n.id === id) ?? null);
+  });
+
+  /** ≥ 780 px el panel va al lado del mapa; debajo, como hoja. */
+  protected readonly panelAlLado = computed(() => this.nodoAbierto() !== null && !this.breakpoints.isNavDrawer());
+
+  /** El registro que el panel abierto puede abrir en el detalle de siempre (los de los bloques). */
+  protected readonly filaDelNodoAbierto = computed(() => {
+    const id = this.nodoAbiertoId();
+    return id === null
+      ? null
+      : (this.bloques()
+          .flatMap((bloque) => bloque.filas)
+          .find((fila) => fila.id === id) ?? null);
+  });
+
+  private readonly recorrido = viewChild(RecorridoClinico);
+
+  /**
+   * Se eligió un nodo en la red: su detalle va al panel. También se lo lleva
+   * a la vista, porque abrir el panel angosta el mapa y el lienzo, pegado a lo
+   * más reciente, podía correrse y dejar fuera al nodo que se acaba de elegir.
+   */
+  protected elegirEnLaRed(elegido: NodoElegido): void {
+    this.abrirNodoDeLaRed(elegido.id);
+  }
+
+  /**
+   * Abre un nodo en el panel y lleva la red hasta él (despliega su episodio,
+   * abre lo que lo esconde y lo trae a la vista): es lo que pide un vínculo del
+   * panel o una alerta, que no están sobre el nodo. Un id que no es de la red
+   * no abre nada.
+   */
+  protected abrirNodoDeLaRed(id: string): void {
+    if (!this.nodosDeLaRed().some((n) => n.id === id)) {
+      return;
+    }
+    this.nodoAbiertoId.set(id);
+    this.recorrido()?.irANodo(id);
+  }
+
+  /** Cerrar el panel devuelve el foco al nodo que estaba abierto (no al primero). */
+  protected cerrarPanelDeLaRed(): void {
+    const id = this.nodoAbiertoId();
+    this.nodoAbiertoId.set(null);
+    if (id !== null) {
+      afterNextRender(() => this.recorrido()?.irANodo(id, { foco: true }), { injector: this.injector });
+    }
+  }
+
+  /** «Ver el registro completo»: el detalle de siempre, el mismo que abre la tabla. */
+  protected verRegistroCompleto(): void {
+    const fila = this.filaDelNodoAbierto();
+    if (fila !== null) {
+      this.verDetalle(fila);
+    }
+  }
 
   /** El estado del recorrido: el vacío con su salida, o la red. */
   protected readonly estadoDelRecorrido = computed(() =>
@@ -2498,6 +2697,11 @@ export class PatientChart {
       // único que lo delataría sería un chip apagado. La vista elegida sí se
       // conserva: es una preferencia de lectura, no un dato del paciente.
       untracked(() => this.tiposOcultos.set(new Set()));
+      untracked(() => {
+        this.filtroDeLaRed.set(FILTRO_VACIO);
+        this.nodoAbiertoId.set(null);
+        this.resaltadosDeLaRed.set([]);
+      });
       untracked(() => this.cargar());
     });
 

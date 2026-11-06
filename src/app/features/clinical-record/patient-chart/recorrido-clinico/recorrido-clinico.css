@@ -545,6 +545,13 @@
   outline-offset: 2px;
 }
 
+/* El registro cuyo detalle está abierto en el panel: borde lleno en su tono,
+   para que el mapa diga cuál se está leyendo. */
+.red__nodo--abierto {
+  border-color: var(--t-fg);
+  box-shadow: var(--shadow-md);
+}
+
 .red__nodo-cabeza {
   display: flex;
   align-items: flex-start;

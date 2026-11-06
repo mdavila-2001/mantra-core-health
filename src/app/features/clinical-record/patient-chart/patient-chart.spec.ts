@@ -2294,6 +2294,109 @@ describe('PatientChart', () => {
       expect(abierta?.bloque).toBe('diagnosticos');
     });
 
+    /** Las cuatro lecturas propias de la red, con un estudio pedido para el diagnóstico. */
+    function responderLecturasDeLaRed(): void {
+      for (const req of http.match((r) => r.url === '/scheduling/bookings')) req.flush({ items: [] });
+      for (const req of http.match((r) => r.url === '/referrals')) req.flush([]);
+      for (const req of http.match((r) => r.url.startsWith('/diagnostics/patients/'))) {
+        req.flush({
+          patientProfileId: 'p-1',
+          orders: [
+            { id: 'ord-1', patientProfileId: 'p-1', encounterId: 'e-1', codeConceptId: 'obs-peso', statusConceptId: 'st-final', createdAt: '2026-05-20T10:30:00.000Z', reasonConditionId: 'c-1', category: 'LAB' },
+          ],
+          reports: [],
+          limit: 50,
+          truncated: [],
+        });
+      }
+      responderHistoricoDeProcedimientos();
+      for (const req of http.match((r) => r.url === '/terminology/concepts')) req.flush(CONCEPTOS);
+      harness.fixture.detectChanges();
+    }
+
+    function abrirRecorrido(): HTMLElement {
+      const raiz = pintar(CON_ATENCION);
+      elegir('recorrido');
+      responderLecturasDeLaRed();
+      return raiz;
+    }
+
+    it('la red y el panel comparten nodos con los ids reales, y el estudio llega con su vínculo al diagnóstico', () => {
+      abrirRecorrido();
+      const nodos = interno<() => readonly { id: string; tipo: string }[]>('nodosDeLaRed')();
+      expect(nodos.map((n) => n.id).sort()).toEqual(['c-1', 'e-1', 'o-1', 'ord-1']);
+      expect(interno<() => readonly object[]>('aristasDeLaRed')()).toContainEqual({ desde: 'ord-1', hasta: 'c-1', tipo: 'pedido-para' });
+    });
+
+    it('elegir un nodo en la red abre el panel con ese nodo, y «Ver el registro completo» abre el detalle de siempre', () => {
+      const raiz = abrirRecorrido();
+      expect(raiz.querySelector('[data-testid="red-panel"]')).toBeNull();
+      interno<(e: object) => void>('elegirEnLaRed')({ id: 'c-1', clase: 'diagnostico', episodio: 'episodio:c-1' });
+      harness.fixture.detectChanges();
+      const panel = raiz.querySelector('[data-testid="red-panel"]');
+      expect(panel?.textContent).toContain('Diabetes tipo 2');
+      // Ya no abre el modal: el detalle va al panel.
+      expect(interno<() => unknown>('filaEnDetalle')()).toBeNull();
+      expect(raiz.querySelector('[data-testid="red-panel-registro-completo"]')).not.toBeNull();
+      interno<() => void>('verRegistroCompleto')();
+      expect(interno<() => { fila: { id: string } } | null>('filaEnDetalle')()?.fila.id).toBe('c-1');
+    });
+
+    it('un vínculo del panel abre el otro nodo; cerrar lo vacía', () => {
+      abrirRecorrido();
+      interno<(id: string) => void>('abrirNodoDeLaRed')('c-1');
+      interno<(id: string) => void>('abrirNodoDeLaRed')('ord-1');
+      expect(interno<() => { id: string } | null>('nodoAbierto')()?.id).toBe('ord-1');
+      // Un id que no es de la red no abre nada.
+      interno<(id: string) => void>('abrirNodoDeLaRed')('fantasma');
+      expect(interno<() => { id: string } | null>('nodoAbierto')()?.id).toBe('ord-1');
+      interno<() => void>('cerrarPanelDeLaRed')();
+      expect(interno<() => unknown>('nodoAbierto')()).toBeNull();
+    });
+
+    it('la barra de la red se cruza con el filtro por tipo del expediente', () => {
+      abrirRecorrido();
+      const filtro = (componente as unknown as Record<string, { (): object; set(v: object): void }>)['filtroDeLaRed'];
+      expect(interno<() => readonly string[]>('visiblesDeLaRed')()).toEqual([]);
+      filtro.set({ ...filtro(), hiloDeDiagnosticoId: 'c-1' });
+      expect([...interno<() => readonly string[]>('visiblesDeLaRed')()].sort()).toEqual(['c-1', 'e-1', 'ord-1']);
+      interno<(t: string, v: boolean) => void>('alternarTipo')('diagnosticos', false);
+      expect([...interno<() => readonly string[]>('visiblesDeLaRed')()].sort()).toEqual(['e-1', 'ord-1']);
+    });
+
+    it('si los dos filtros juntos no dejan nada, lo dice y ofrece limpiar, en vez de dibujar todo', () => {
+      const raiz = abrirRecorrido();
+      const filtro = (componente as unknown as Record<string, { (): object; set(v: object): void }>)['filtroDeLaRed'];
+      filtro.set({ ...filtro(), texto: 'nada que coincida' });
+      harness.fixture.detectChanges();
+      expect(raiz.querySelector('[data-testid="red-sin-resultado"]')).not.toBeNull();
+      expect(raiz.querySelector('app-recorrido-clinico')).toBeNull();
+      interno<() => void>('limpiarFiltrosDeLaRed')();
+      harness.fixture.detectChanges();
+      expect(raiz.querySelector('[data-testid="red-sin-resultado"]')).toBeNull();
+      expect(raiz.querySelector('app-recorrido-clinico')).not.toBeNull();
+    });
+
+    it('las alertas salen de lo leído: el estudio sin resultado resalta su nodo y su diagnóstico', () => {
+      const raiz = abrirRecorrido();
+      const alertas = interno<() => readonly { tipo: string; nodoId: string; nodoIds: readonly string[] }[]>('alertasDeLaRed')();
+      const estudio = alertas.find((a) => a.tipo === 'estudio-sin-resultado');
+      expect(estudio?.nodoIds).toEqual(['ord-1', 'c-1']);
+      expect(raiz.querySelector('[data-testid="red-alertas"]')).not.toBeNull();
+      const boton = raiz.querySelector<HTMLButtonElement>('[data-testid="red-alerta"][data-tipo="estudio-sin-resultado"]')!;
+      boton.dispatchEvent(new Event('mouseenter'));
+      expect(interno<() => readonly string[]>('resaltadosDeLaRed')()).toEqual(['ord-1', 'c-1']);
+      boton.click();
+      harness.fixture.detectChanges();
+      expect(interno<() => { id: string } | null>('nodoAbierto')()?.id).toBe('ord-1');
+    });
+
+    it('mientras se leen los estudios no muestra «nada abierto»', () => {
+      const raiz = pintar(CON_ATENCION);
+      elegir('recorrido');
+      expect(raiz.querySelector('[data-testid="red-alertas"]')).toBeNull();
+    });
+
     it('el filtro no pasa de una persona a otra', async () => {
       pintar();
       interno<(t: string, v: boolean) => void>('alternarTipo')('observaciones', false);

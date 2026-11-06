@@ -62,6 +62,12 @@ export class RedClinicaFiltros {
   readonly filtro = model<FiltroDeRed>(FILTRO_VACIO);
   /** Cuántos nodos quedan a la vista tras filtrar, para el resumen. `null` = no se muestra. */
   readonly visibles = input<number | null>(null);
+  /**
+   * Si ofrece los chips de tipo. `false` cuando la pantalla ya tiene su propio
+   * filtro por tipo (el expediente lo comparte entre «Tabla» y «Recorrido»):
+   * dos filas de chips para lo mismo serían dos verdades.
+   */
+  readonly mostrarTipos = input(true);
 
   /** En el teléfono los criterios avanzados se pliegan. */
   protected readonly desplegado = signal(false);

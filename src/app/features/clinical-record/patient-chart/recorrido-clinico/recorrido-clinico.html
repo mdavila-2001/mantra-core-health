@@ -332,6 +332,8 @@
     [class.red__nodo--compacto]="nodo.forma === 'descartado' || nodo.forma === 'plegar'"
     [class.red__nodo--descartado]="nodo.registro?.certeza === 'descartado'"
     [class.red__nodo--resaltado]="resaltado(nodo.id)"
+    [class.red__nodo--abierto]="seleccionado() === nodo.id"
+    [attr.aria-current]="seleccionado() === nodo.id ? 'true' : null"
     [style.top.px]="vertical ? null : nodo.y - hilo.y"
     [style.left.px]="vertical ? null : nodo.x"
     [style.width.px]="vertical ? null : nodo.ancho"

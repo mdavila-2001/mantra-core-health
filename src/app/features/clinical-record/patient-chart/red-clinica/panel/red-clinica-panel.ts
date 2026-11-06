@@ -76,8 +76,16 @@ interface FilaDeValor {
   readonly fuera: boolean;
 }
 
-const ORIGEN: ReadonlySet<string> = new Set(['saliente:reconsulta-de', 'entrante:recibida-en']);
-const SIGUIENTES: ReadonlySet<string> = new Set(['entrante:reconsulta-de', 'entrante:derivada-desde']);
+const ORIGEN: ReadonlySet<string> = new Set([
+  'saliente:reconsulta-de',
+  'entrante:recibida-en',
+  'entrante:atendida-en',
+]);
+const SIGUIENTES: ReadonlySet<string> = new Set([
+  'entrante:reconsulta-de',
+  'entrante:derivada-desde',
+  'saliente:atendida-en',
+]);
 
 /** Lee los vínculos de un nodo: salientes primero, cada grupo en orden de fecha. */
 export function vinculosDe(
@@ -162,6 +170,12 @@ export class RedClinicaPanel {
   /** Referencia para «hace N días». Inyectable para pruebas y capturas. */
   readonly ahora = input<Date>(new Date());
   readonly presentacion = input<PresentacionDelPanel>('auto');
+  /**
+   * Si al cerrar el panel devuelve el foco a quien lo abrió. `false` cuando el
+   * padre sabe mejor a dónde va (el nodo que está abierto ahora, que puede no
+   * ser el primero): el panel sólo cierra la hoja y no compite por el foco.
+   */
+  readonly devolverFoco = input(true);
 
   /** Se eligió otro nodo desde un vínculo o una referencia del panel. */
   readonly nodoElegido = output<string>();
@@ -240,7 +254,7 @@ export class RedClinicaPanel {
           const activo = this.document.activeElement;
           this.retorno = activo instanceof HTMLElement && activo !== this.document.body ? activo : null;
         }
-        if (nodo === null && this.abiertoAntes) this.devolverFoco();
+        if (nodo === null && this.abiertoAntes) this.alCerrar();
         this.abiertoAntes = nodo !== null;
         this.cancelarDescarga();
         if (nodo === null) return;
@@ -312,12 +326,12 @@ export class RedClinicaPanel {
     this.descarga.set(null);
   }
 
-  private devolverFoco(): void {
+  private alCerrar(): void {
     const dialogo = this.hoja()?.nativeElement;
     if (dialogo?.open && typeof dialogo.close === 'function') dialogo.close();
     const destino = this.retorno;
     this.retorno = null;
-    if (destino?.isConnected) {
+    if (this.devolverFoco() && destino?.isConnected) {
       afterNextRender(() => destino.focus(), { injector: this.injector });
     }
   }

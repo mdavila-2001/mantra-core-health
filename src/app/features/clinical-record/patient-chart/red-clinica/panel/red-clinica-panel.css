@@ -21,8 +21,11 @@
 
 .panel--lateral {
   position: sticky;
-  inset-block-start: var(--sp-4);
-  max-block-size: calc(100dvh - var(--sp-8));
+  /* Debajo de la cabecera fija del shell (`app-header`, 56–64 px): sin ese
+     margen, el título y «Cerrar» quedaban tapados al desplazar. La variable
+     vive en la cabecera; acá llega el valor de respaldo, el mayor de los dos. */
+  inset-block-start: calc(var(--header-height, 4rem) + var(--sp-4));
+  max-block-size: calc(100dvh - var(--header-height, 4rem) - var(--sp-8));
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-card);
   box-shadow: var(--shadow-md);
@@ -159,6 +162,16 @@
 .panel__pares dd {
   margin: var(--sp-1) 0 0;
   overflow-wrap: anywhere;
+}
+
+.panel__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.panel__acciones:empty {
+  display: none;
 }
 
 .panel__seccion {

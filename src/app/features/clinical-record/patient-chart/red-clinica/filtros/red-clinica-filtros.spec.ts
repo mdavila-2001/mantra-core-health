@@ -14,6 +14,7 @@ import { RedClinicaFiltros } from './red-clinica-filtros';
       [nodos]="nodos"
       [(filtro)]="filtro"
       [visibles]="visibles().length"
+      [mostrarTipos]="mostrarTipos()"
       (filtroChange)="emitidos.push($event)"
     />
   `,
@@ -23,6 +24,7 @@ class Anfitrion {
   readonly filtro = signal<FiltroDeRed>(FILTRO_VACIO);
   readonly visibles = computed(() => aplicarFiltro(this.nodos, this.filtro(), ARISTAS_DEMO));
   readonly emitidos: FiltroDeRed[] = [];
+  readonly mostrarTipos = signal(true);
 }
 
 describe('RedClinicaFiltros', () => {
@@ -50,6 +52,14 @@ describe('RedClinicaFiltros', () => {
       'Derivaciones',
       'Medicación',
     ]);
+  });
+
+  it('con mostrarTipos en false no ofrece chips de tipo (la pantalla tiene los suyos)', async () => {
+    host.mostrarTipos.set(false);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(chips()).toHaveLength(0);
+    expect(el().querySelector('[data-testid="red-filtro-hilo"]')).not.toBeNull();
   });
 
   it('sin filtros resume el total y no ofrece «Limpiar»', () => {

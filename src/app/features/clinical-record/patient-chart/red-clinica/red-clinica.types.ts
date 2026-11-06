@@ -34,6 +34,8 @@ export const TIPOS_DE_NODO = [
   'estudio',
   'derivacion',
   'medicacion',
+  'procedimiento',
+  'plan',
   'observacion',
   'internacion',
   'nota',
@@ -57,6 +59,8 @@ export const ASPECTO_DE_TIPO: Readonly<Record<TipoDeNodo, AspectoDeTipo>> = {
   estudio: { singular: 'Estudio', plural: 'Estudios', icono: 'flask' },
   derivacion: { singular: 'Derivación', plural: 'Derivaciones', icono: 'route' },
   medicacion: { singular: 'Medicación', plural: 'Medicación', icono: 'pill' },
+  procedimiento: { singular: 'Procedimiento', plural: 'Procedimientos', icono: 'scalpel' },
+  plan: { singular: 'Plan de cuidados', plural: 'Planes de cuidados', icono: 'clipboard' },
   observacion: { singular: 'Observación', plural: 'Observaciones', icono: 'chart' },
   internacion: { singular: 'Internación', plural: 'Internaciones', icono: 'hospital' },
   nota: { singular: 'Nota clínica', plural: 'Notas', icono: 'note' },
@@ -141,7 +145,13 @@ export interface ArchivoDeInforme {
 
 /** El resultado **liberado**. Un borrador nunca llega acá. */
 export interface ResultadoDeEstudio {
-  readonly liberadoEn: Date;
+  /**
+   * Cuándo se liberó. `null` cuando el contrato dice que hay una versión
+   * liberada pero no cuándo (la lectura del profesional,
+   * `GET /diagnostics/patients/:id/orders`, publica `currentReleasedVersionId`
+   * y no la fecha): el panel dice «Liberado» sin inventar el día.
+   */
+  readonly liberadoEn: Date | null;
   readonly conclusion?: string;
   readonly valores: readonly ValorDeResultado[];
   readonly archivos: readonly ArchivoDeInforme[];
@@ -244,6 +254,9 @@ export const TIPOS_DE_VINCULO = [
   'reemplaza-receta',
   'estudio-previo',
   'resultado-de',
+  'plan-para',
+  'atendida-en',
+  'durante-internacion',
 ] as const;
 
 export type TipoDeVinculo = (typeof TIPOS_DE_VINCULO)[number];
@@ -267,6 +280,9 @@ export const LECTURA_DE_VINCULO: Readonly<Record<TipoDeVinculo, LecturaDeVinculo
   'reemplaza-receta': { saliente: 'Reemplazada por', entrante: 'Reemplaza a la receta' },
   'estudio-previo': { saliente: 'Reutiliza o repite', entrante: 'Reutilizado o repetido por' },
   'resultado-de': { saliente: 'Resultado de', entrante: 'Su resultado' },
+  'plan-para': { saliente: 'Plan para', entrante: 'Plan de cuidados' },
+  'atendida-en': { saliente: 'Atendida en', entrante: 'Atención de la cita' },
+  'durante-internacion': { saliente: 'Durante la internación', entrante: 'Atención durante la internación' },
 };
 
 /** Una conexión de la red. */

@@ -75,7 +75,7 @@
     </app-form-field>
   </div>
 
-  @if (tipos().length > 0) {
+  @if (mostrarTipos() && tipos().length > 0) {
     <div class="filtros__tipos" role="group" aria-label="Tipos de registro">
       <span class="filtros__rotulo">Tipos</span>
       @for (tipo of tipos(); track tipo) {

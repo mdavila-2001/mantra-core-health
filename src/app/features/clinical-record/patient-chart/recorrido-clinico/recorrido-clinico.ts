@@ -118,6 +118,8 @@ export class RecorridoClinico {
   readonly resaltados = input<readonly string[]>([]);
   /** Ids de registros a dibujar. Vacío: todos. */
   readonly visibles = input<readonly string[]>([]);
+  /** El registro cuyo detalle está abierto (en el panel): se marca en la red. */
+  readonly seleccionado = input<string | null>(null);
 
   /** Se pidió el detalle de un registro (el que ya abre el expediente). */
   readonly abrir = output<string>();
@@ -178,6 +180,7 @@ export class RecorridoClinico {
   });
 
   private readonly lienzo = viewChild<ElementRef<HTMLElement>>('lienzo');
+  private readonly anfitrion = inject<ElementRef<HTMLElement>>(ElementRef);
 
   /** Pantalla angosta (`--bp-sm`, 650 px): la red se lee en vertical. */
   protected readonly angosto = signal(false);
@@ -354,6 +357,35 @@ export class RecorridoClinico {
       this.abrir.emit(nodo.registro.id);
       this.elegido.emit({ id: nodo.registro.id, clase: nodo.registro.clase, episodio: nodo.episodio });
     }
+  }
+
+  /* -- Ir a un registro (desde el panel o una alerta) ---------------------- */
+
+  /**
+   * Lleva la red a un registro: despliega su episodio, abre el descartado o el
+   * «+N» que lo esconde, lo trae a la vista y lo marca enfocado (`foco`: también
+   * el del teclado, al cerrar el panel). `false` si no está o se filtró.
+   */
+  irANodo(id: string, opciones: { readonly foco?: boolean } = {}): boolean {
+    const [registro, episodio, visibles] = [this.porId().get(id), this.red().episodioDe.get(id), this.conjuntoVisible()];
+    if (registro === undefined || episodio === undefined || (visibles.size > 0 && !visibles.has(id))) return false;
+    if (!this.desplegados().has(episodio)) this.desplegados.update((actual) => new Set([...actual, episodio]));
+    if (registro.clase === 'diagnostico' && registro.certeza === 'descartado') this.alternarAbierto(id, true);
+    const grupo = this.plano().nodos.find((n) => n.grupo?.accion === 'expandir' && n.grupo.ocultos.some((r) => r.id === id));
+    if (grupo?.grupo !== undefined) this.alternarAbierto(grupo.grupo.clave, true);
+    this.pegadoAlFinal = false;
+    this.conElFoco.set(id);
+    afterNextRender(
+      () => {
+        const nodos = this.anfitrion.nativeElement.querySelectorAll<HTMLElement>('[data-testid="recorrido-nodo"]');
+        const boton = Array.from(nodos).find((b) => b.dataset['id'] === id);
+        const reducir = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+        boton?.scrollIntoView?.({ block: 'nearest', inline: 'center', behavior: reducir ? 'auto' : 'smooth' });
+        if (opciones.foco === true) boton?.focus({ preventScroll: true });
+      },
+      { injector: this.injector },
+    );
+    return true;
   }
 
   /* -- Camino iluminado ---------------------------------------------------- */
