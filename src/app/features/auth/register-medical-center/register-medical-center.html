@@ -163,6 +163,15 @@
                 (sucursalesChange)="fijarSucursales($event)"
               />
             </ng-template>
+
+            <ng-template appCampoPersonalizado="openingHours">
+              <app-registration-opening-hours
+                testId="registration-medical-hours"
+                [value]="form.controls.openingHours.value"
+                [branches]="sucursales()"
+                (valueChange)="form.controls.openingHours.setValue($event)"
+              />
+            </ng-template>
           </app-paginated-form>
         </div>
 

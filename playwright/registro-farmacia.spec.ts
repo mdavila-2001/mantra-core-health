@@ -81,6 +81,12 @@ async function saltarSucursales(page: Page): Promise<void> {
   await page.getByTestId('paginated-form-continuar').click();
 }
 
+/** Página «Horario de atención»: the preloaded template is valid, so it is accepted as is. */
+async function aceptarHorario(page: Page): Promise<void> {
+  await expect(page.locator('.paginated-form__titulo')).toContainText('Horario de atención');
+  await page.getByTestId('paginated-form-continuar').click();
+}
+
 /**
  * Escribe un nombre desglosado (`app-inline-name-fields`): primer nombre y
  * apellido paterno, que son las dos partes obligatorias desde e1acc37a.
@@ -179,6 +185,7 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await saltarLosPapeles(page);
     await completarCentral(page);
     await saltarSucursales(page);
+    await aceptarHorario(page);
     await completarRepresentante(page);
     await saltarGerencias(page);
     await completarAccesoYEnviar(page, 'legal@farmacia-minima.test');
@@ -197,6 +204,7 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await saltarLosPapeles(page);
     await completarCentral(page);
     await saltarSucursales(page);
+    await aceptarHorario(page);
     // La cuenta de demostración del paciente ya existe en el simulador.
     await completarRepresentante(page);
     await saltarGerencias(page);
@@ -259,6 +267,7 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await expect(page.getByTestId('registro-farmacia-sucursal-1-location-confirmed')).toBeVisible();
     await capturar(page, 'sucursal-agregada');
     await page.getByTestId('paginated-form-continuar').click();
+    await aceptarHorario(page);
 
     // El representante, con su poder notarial: el sexto papel.
     await expect(page.locator('.paginated-form__titulo')).toContainText('Representante legal');
@@ -325,6 +334,7 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await saltarLosPapeles(page);
     await completarCentral(page);
     await saltarSucursales(page);
+    await aceptarHorario(page);
     await completarRepresentante(page);
     await saltarGerencias(page);
     await completarAccesoYEnviar(page, 'legal@farmacia-oscura.test');

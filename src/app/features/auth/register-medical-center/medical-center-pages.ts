@@ -5,6 +5,7 @@ import type {
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { executivesPages } from '../shared-registration/executives';
+import { openingHoursSection } from '../shared-registration/opening-hours';
 import { accessPasswordFields } from '../shared-registration/password-confirmation';
 import { MIN_CHARACTERS_PASSWORD } from '../shared-registration/password-policy';
 import { MAX_LEGAL_NAME } from './medical-center-form';
@@ -214,6 +215,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
         },
       ],
     },
+    openingHoursSection(true),
     {
       titulo: 'Representante legal',
       clave: 'representante',

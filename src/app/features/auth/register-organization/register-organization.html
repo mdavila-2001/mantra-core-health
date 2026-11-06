@@ -186,6 +186,14 @@
               }
             </app-accordion>
           </ng-template>
+
+          <ng-template appCampoPersonalizado="openingHours">
+            <app-registration-opening-hours
+              testId="registration-insurer-hours"
+              [value]="form.controls.openingHours.value"
+              (valueChange)="form.controls.openingHours.setValue($event); guardarBorrador()"
+            />
+          </ng-template>
         </app-paginated-form>
       </div>
 

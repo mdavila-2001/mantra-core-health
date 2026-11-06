@@ -20,6 +20,11 @@ import type { EnrollmentDocumentKey } from '../shared-registration/legal-documen
 import { DiagnosisCenterEnrollment } from '../shared-registration/diagnostic-center-enrollment';
 import { RegisterLaboratory, TIPOS_DE_SOCIEDAD } from './register-laboratory';
 
+import { defaultWeekHours, toShifts } from '../shared-registration/opening-hours/opening-hours';
+
+/** The pre-filled week every sign-up starts with, as it travels to the API. */
+const HORARIO_PLANTILLA = toShifts(defaultWeekHours());
+
 /**
  * Catálogo fijo para el alta: país, jurisdicción, tipo de unidad y modalidad
  * que la API exige como conceptos. Cada id es «concepto-<código>».
@@ -436,6 +441,7 @@ describe('RegisterLaboratory', () => {
       {
         name: 'Equipetrol',
         address: { lines: ['Av. San Martín 456'], latitude: -17.76, longitude: -63.19 },
+        openingHours: HORARIO_PLANTILLA,
       },
     ]);
   });
@@ -477,11 +483,13 @@ describe('RegisterLaboratory', () => {
         address: { lines: ['Av. Banzer 100'], latitude: -17.76, longitude: -63.19 },
         description: 'Planta baja',
         locationUrl: 'https://www.google.com/maps?q=-17.76,-63.19',
+        openingHours: HORARIO_PLANTILLA,
       },
       {
         name: 'Sur',
         address: { lines: [], latitude: -17.8, longitude: -63.2 },
         locationUrl: 'https://maps.app.goo.gl/abc',
+        openingHours: HORARIO_PLANTILLA,
       },
     ]);
   });

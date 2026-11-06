@@ -1,3 +1,4 @@
+import { defaultRegistrationHours } from '../shared-registration/opening-hours/opening-hours';
 import type { NameValue } from '../shared-registration/name-fields/person-name';
 import { medicalCenterBody, type MedicalCenterRaw } from './medical-center-body';
 
@@ -43,6 +44,7 @@ function raw(tradeName: string): MedicalCenterRaw {
     marketingManagerName: NOMBRE,
     marketingManagerPhone: '',
     marketingManagerEmail: '',
+    openingHours: defaultRegistrationHours(),
   };
 }
 

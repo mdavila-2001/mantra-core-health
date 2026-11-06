@@ -8,7 +8,6 @@ import { Router, RouterLink } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
-  PharmacyBranchRegistration,
   PharmacyOrganizationRegistration,
 } from '../../../core/data-access/iam/iam.types';
 import { registrationErrorToViewState } from '../shared-registration/registration-errors';
@@ -77,6 +76,7 @@ import { RegistrationBadge } from '../shared-registration/registration-badge';
 import { tradeNameControl, tradeNameField, tradeNameOf } from '../shared-registration/trade-name';
 import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
 import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
+import { RegistrationOpeningHours, openingHoursControl, openingHoursSection, pharmacyBranches, toShifts } from '../shared-registration/opening-hours';
 import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
 
 /* ============================================================================
@@ -200,6 +200,7 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
     DropzonePdf,
     InlineNameFields,
     OnboardingDraftBanner,
+    RegistrationOpeningHours,
   ],
   templateUrl: './register-pharmacy.html',
   styleUrls: ['../shared-registration/registration.css', './register-pharmacy.css'],
@@ -295,6 +296,7 @@ export class RegisterPharmacy {
       validators: [Validators.email, Validators.maxLength(MAX_CORREO)],
     }),
     // --- la cuenta -------------------------------------------------------------
+    openingHours: openingHoursControl(),
     ...passwordWithConfirmation(),
   });
 
@@ -400,6 +402,7 @@ export class RegisterPharmacy {
         hint: 'Si sólo atiende en la central, siga de largo.',
         campos: [{ key: 'sucursales', label: 'Sucursales (opcional)', control: 'custom' as const }],
       },
+      openingHoursSection(true),
       {
         titulo: 'Representante legal',
         clave: 'representante',
@@ -957,15 +960,7 @@ export class RegisterPharmacy {
     const central = this.gpsCentral();
     const nombreDelRepresentante = completeName(raw.legalRepName);
 
-    const sucursales: readonly PharmacyBranchRegistration[] = this.sucursales()
-      .filter((s) => s.nombre.trim() !== '' && s.gps !== null)
-      .map((s) => ({
-        name: s.nombre.trim(),
-        latitude: s.gps!.lat,
-        longitude: s.gps!.lng,
-        ...(s.descripcion.trim() === '' ? {} : { description: s.descripcion.trim() }),
-        ...(s.urlUbicacion === '' ? {} : { locationUrl: s.urlUbicacion }),
-      }));
+    const sucursales = pharmacyBranches(this.sucursales(), raw.openingHours);
 
     const gerencias = {
       generalManager: {
@@ -1007,6 +1002,7 @@ export class RegisterPharmacy {
       ),
       taxIdentifier: raw.taxId.trim(),
       legalAddress: raw.addressLines.trim(),
+      openingHours: toShifts(raw.openingHours.headquarters),
       ...(central === null
         ? {}
         : { headquarters: { latitude: central.lat, longitude: central.lng } }),

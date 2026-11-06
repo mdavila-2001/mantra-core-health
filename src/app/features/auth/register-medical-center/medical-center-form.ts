@@ -1,5 +1,7 @@
 import { FormControl, FormGroup, Validators, type ValidatorFn } from '@angular/forms';
 
+import { openingHoursControl } from '../shared-registration/opening-hours';
+
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import {
   MAX_MEDICAL_FACILITY_BRANCHES,
@@ -121,6 +123,7 @@ export function createMedicalCenterForm(tipoOfrecido: ValidatorFn) {
     legalRepPhone: new FormControl('', { nonNullable: true, validators: [telefonoCompleto] }),
     // --- las tres gerencias, todas opcionales ---------------------------------
     ...executivesControls(),
+    openingHours: openingHoursControl(),
     // --- la cuenta -----------------------------------------------------------
     ...passwordWithConfirmation(),
   });

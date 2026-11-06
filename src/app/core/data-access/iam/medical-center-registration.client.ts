@@ -4,6 +4,7 @@ import type { Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type { MedicalOrganizationType } from '../directory/directory.types';
+import type { OpeningHoursShift } from './organization-branches.types';
 import type {
   OrganizationExecutives,
   OrganizationLegalRepresentative,
@@ -68,6 +69,8 @@ export interface MedicalCenterRegistration {
    * contrato; lo obligatorio lo impone el formulario.
    */
   readonly medicalFacility?: MedicalFacility;
+  /** Horario de atención de la casa central (`organization.openingHours`). */
+  readonly openingHours?: readonly OpeningHoursShift[];
 }
 
 /**
@@ -101,7 +104,12 @@ function cuerpoDeEstablecimiento(facility: MedicalFacility): unknown {
     // su ausencia no diga.
     ...(facility.branches === undefined || facility.branches.length === 0
       ? {}
-      : { branches: facility.branches.map(sitio) }),
+      : {
+          branches: facility.branches.map((b) => ({
+            ...sitio(b),
+            ...(b.openingHours === undefined ? {} : { openingHours: b.openingHours }),
+          })),
+        }),
   };
 }
 
@@ -141,7 +149,8 @@ export class MedicalCenterRegistrationClient {
               ? {}
               : { commerceRegistryFileId: registration.legalDocuments.commerceRegistryFileId }),
             operatingLicenseFileId: registration.legalDocuments.operatingLicenseFileId,
-            healthAuthorityCertificateFileId: registration.legalDocuments.healthAuthorityCertificateFileId,
+            healthAuthorityCertificateFileId:
+              registration.legalDocuments.healthAuthorityCertificateFileId,
           },
           countryConceptId: registration.countryConceptId,
           jurisdictionConceptId: registration.jurisdictionConceptId,
@@ -153,6 +162,9 @@ export class MedicalCenterRegistrationClient {
           ...(registration.medicalFacility === undefined
             ? {}
             : { medicalFacility: cuerpoDeEstablecimiento(registration.medicalFacility) }),
+          ...(registration.openingHours === undefined
+            ? {}
+            : { openingHours: registration.openingHours }),
         },
         owner: {
           email: registration.owner.email,

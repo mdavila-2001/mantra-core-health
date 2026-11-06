@@ -42,11 +42,7 @@ import { addressFromPoint, pointLabel } from '../shared-registration/address-fro
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { generateReadableCode } from '../../../core/readable-code/readable-code';
 import { IamClient } from '../../../core/data-access/iam/iam.client';
-import type {
-  DiagnosticCenterRegistration,
-  OrganizationContactPerson,
-  OrganizationExecutives,
-} from '../../../core/data-access/iam/iam.types';
+import type { DiagnosticCenterRegistration } from '../../../core/data-access/iam/iam.types';
 import { MESSAGE_REQUIRED_DOCUMENT } from '../shared-registration/legal-documents';
 import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
@@ -65,6 +61,8 @@ import { RegistrationBadge } from '../shared-registration/registration-badge';
 import { tradeNameControl, tradeNameField, tradeNameOf } from '../shared-registration/trade-name';
 import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
 import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
+import { RegistrationOpeningHours, openingHoursControl, openingHoursSection, toShifts } from '../shared-registration/opening-hours';
+import { executivesFrom } from '../shared-registration/executives';
 
 /* ============================================================================
     Alta del centro de imagenología — «MODULO ANALISIS MEDICOS (RAYOS X,
@@ -454,6 +452,7 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
     MapLocationPicker,
     InlineNameFields,
     OnboardingDraftBanner,
+    RegistrationOpeningHours,
   ],
   templateUrl: './register-imaging-center.html',
   styleUrls: ['../shared-registration/registration.css', './register-imaging-center.css'],
@@ -675,6 +674,7 @@ export class RegisterImagingCenter {
       nonNullable: true,
       validators: [Validators.email],
     }),
+    openingHours: openingHoursControl(),
     // --- la cuenta ---------------------------------------------------------
     ...passwordWithConfirmation(),
   });
@@ -842,6 +842,7 @@ export class RegisterImagingCenter {
         },
       ],
     },
+    openingHoursSection(false),
     {
       titulo: 'Representante legal',
       clave: 'representante',
@@ -1290,7 +1291,7 @@ export class RegisterImagingCenter {
   ): DiagnosticCenterRegistration {
     const raw = this.form.getRawValue();
     const gps = this.gpsCentral();
-    const gerencias = this.gerencias();
+    const gerencias = executivesFrom(raw);
     const nombre = raw.legalName.trim();
     const { taxIdentifierFileId, commerceRegistryFileId } = ids;
     const { operatingLicenseFileId, healthAuthorityCertificateFileId } = ids;
@@ -1312,6 +1313,7 @@ export class RegisterImagingCenter {
       ...tradeNameOf(raw.tradeName),
       legalEntityType: raw.companyType ?? '',
       timeZone: 'America/La_Paz',
+      openingHours: toShifts(raw.openingHours.headquarters),
       taxIdentifier: raw.taxId.trim(),
       countryConceptId: conceptos.pais,
       jurisdictionConceptId: conceptos.jurisdiccion,
@@ -1354,29 +1356,6 @@ export class RegisterImagingCenter {
       // entero. Viajan sólo si están las tres completas.
       ...(gerencias === null ? {} : { executives: gerencias }),
     };
-  }
-
-  /** Las tres gerencias, o `null` si alguna no está completa (nombre, celular y correo). */
-  private gerencias(): OrganizationExecutives | null {
-    const raw = this.form.getRawValue();
-    const contacto = (
-      fullName: string,
-      phone: string,
-      email: string,
-    ): OrganizationContactPerson | null =>
-      fullName.trim() === '' || phone.trim() === '' || email.trim() === ''
-        ? null
-        : { fullName: fullName.trim(), phone: phone.trim(), email: email.trim() };
-    const general = contacto(completeName(raw.generalManagerName), raw.generalManagerPhone, raw.generalManagerEmail);
-    const comercial = contacto(completeName(raw.salesManagerName), raw.salesManagerPhone, raw.salesManagerEmail);
-    const marketing = contacto(
-      completeName(raw.marketingManagerName),
-      raw.marketingManagerPhone,
-      raw.marketingManagerEmail,
-    );
-    return general === null || comercial === null || marketing === null
-      ? null
-      : { generalManager: general, commercialManager: comercial, marketingManager: marketing };
   }
 
   /** Traduce lo que falló a un estado que la pantalla sabe decir. */
