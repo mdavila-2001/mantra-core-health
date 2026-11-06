@@ -124,10 +124,10 @@ export type ResolverEtiqueta = (conceptId: string | undefined) => string;
  * // `PatientOrder.reasonConditionId` estén declarados en los tipos, estas dos
  * // lecturas pasan a ser acceso directo.
  */
-type ConVinculosNuevos = {
+interface ConVinculosNuevos {
   readonly replacedByConditionId?: string | null;
   readonly reasonConditionId?: string | null;
-};
+}
 
 function vinculoNuevo(
   registro: object,
