@@ -104,6 +104,7 @@
             [descarga]="descarga.estado()"
             [pedidoHace]="n.cuando ? hace() : null"
             (releer)="releerInforme()"
+            (volver)="cerrar()"
             (abrirArchivo)="abrirArchivo($event)"
           />
         }

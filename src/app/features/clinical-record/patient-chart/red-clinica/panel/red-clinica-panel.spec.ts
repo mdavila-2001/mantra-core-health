@@ -220,6 +220,43 @@ describe('RedClinicaPanel', () => {
       expect(texto()).toContain('Código de soporte');
     });
 
+    it('cambiar el ancho (lateral ⇄ hoja) no cancela la descarga en curso', async () => {
+      vi.spyOn(TestBed.inject(FileDownloadService), 'save').mockImplementation(() => undefined);
+      await abrirMapaConInforme();
+      el().querySelector<HTMLElement>('[data-testid="red-panel-archivo"]')!.click();
+      fixture.detectChanges();
+      const req = http.expectOne((r) => r.url.endsWith(URL_DEL_PDF));
+      host.presentacion.set('hoja');
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(panel()?.tagName).toBe('DIALOG');
+      expect(req.cancelled).toBe(false);
+      req.flush(new Blob(['%PDF'], { type: 'application/pdf' }));
+      await vi.waitFor(() => {
+        fixture.detectChanges();
+        expect(texto()).toContain('Descarga iniciada');
+      });
+    });
+
+    it('el aviso de la descarga entra en vista al aparecer, sin animar con movimiento reducido', async () => {
+      const original = HTMLElement.prototype.scrollIntoView;
+      const scroll = vi.fn();
+      HTMLElement.prototype.scrollIntoView = scroll;
+      try {
+        await abrirMapaConInforme();
+        el().querySelector<HTMLElement>('[data-testid="red-panel-archivo"]')!.click();
+        fixture.detectChanges();
+        http.expectOne((r) => r.url.endsWith(URL_DEL_PDF)).flush(new Blob(['x']), { status: 500, statusText: 'Error' });
+        await vi.waitFor(() => {
+          fixture.detectChanges();
+          expect(scroll).toHaveBeenCalledWith({ block: 'nearest', behavior: 'auto' });
+        });
+        expect((scroll.mock.contexts[0] as HTMLElement).textContent).toContain('No se pudo descargar el archivo');
+      } finally {
+        HTMLElement.prototype.scrollIntoView = original;
+      }
+    });
+
     it('cambiar de nodo cancela la descarga en curso', async () => {
       await abrirMapaConInforme();
       el().querySelector<HTMLElement>('[data-testid="red-panel-archivo"]')!.click();

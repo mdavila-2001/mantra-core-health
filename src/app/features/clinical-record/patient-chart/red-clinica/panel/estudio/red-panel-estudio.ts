@@ -1,4 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DOCUMENT,
+  effect,
+  ElementRef,
+  inject,
+  Injector,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 
 import type { ViewState } from '../../../../../../core/view-state/view-state.types';
@@ -52,7 +65,37 @@ export class RedPanelEstudio {
   readonly pedidoHace = input<string | null>(null);
 
   readonly releer = output<void>();
+  /** «Volver a la red» from a 403 or 404 of the report read. */
+  readonly volver = output<void>();
   readonly abrirArchivo = output<ArchivoDeInforme>();
+
+  /** The released content is drawn once the read succeeded, or when nothing is read (no patient). */
+  protected readonly exito = computed(() => {
+    const status = this.lectura()?.estado.status;
+    return status === undefined || status === 'ready';
+  });
+
+  private readonly document = inject(DOCUMENT);
+  private readonly injector = inject(Injector);
+  private readonly avisoDeDescarga = viewChild<ElementRef<HTMLElement>>('avisoDeDescarga');
+
+  constructor() {
+    // A download's outcome appears under the file buttons, often below the
+    // fold: bring it into view, without animating under reduced motion.
+    effect(() => {
+      const status = this.descarga()?.estado.status;
+      if (status === undefined || status === 'loading') return;
+      afterNextRender(
+        () => {
+          const aviso = this.avisoDeDescarga()?.nativeElement;
+          if (typeof aviso?.scrollIntoView !== 'function') return;
+          const reducido = this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true;
+          aviso.scrollIntoView({ block: 'nearest', behavior: reducido ? 'auto' : 'smooth' });
+        },
+        { injector: this.injector },
+      );
+    });
+  }
 
   protected readonly textoDeLectura = TEXTO_DE_LECTURA;
 

@@ -193,12 +193,11 @@ export class RedClinicaPanel {
       });
     });
 
-    // Open, switch node, close: focus and dialog. Keyed by id (`idAbierto`), so
-    // a new reference to the same node (the chart re-derives its nodes) does
-    // not steal focus nor cancel a download in progress.
+    // Open, switch node, close: focus and download. Keyed by id (`idAbierto`),
+    // so a new reference to the same node (the chart re-derives its nodes)
+    // does not steal focus nor cancel a download in progress.
     effect(() => {
       const id = this.idAbierto();
-      const hoja = this.esHoja();
       untracked(() => {
         if (id !== null && !this.abiertoAntes) {
           const activo = this.document.activeElement;
@@ -207,20 +206,35 @@ export class RedClinicaPanel {
         if (id === null && this.abiertoAntes) this.alCerrar();
         this.abiertoAntes = id !== null;
         this.descarga.cancelar();
-        if (id === null) return;
-        afterNextRender(
-          () => {
-            const dialogo = this.hoja()?.nativeElement;
-            if (hoja && dialogo && !dialogo.open) {
-              if (typeof dialogo.showModal === 'function') dialogo.showModal();
-              else dialogo.setAttribute('open', '');
-            }
-            this.titulo()?.nativeElement.focus();
-          },
-          { injector: this.injector },
-        );
+        if (id !== null) this.alPintar(true);
       });
     });
+
+    // Side panel <-> sheet with the panel open (the width changed): the same
+    // node is redrawn in the other container. Neither the download in progress
+    // nor the focus are touched, unless the focus was lost with the old one.
+    effect(() => {
+      this.esHoja();
+      untracked(() => {
+        if (this.idAbierto() !== null) this.alPintar(false);
+      });
+    });
+  }
+
+  /** After drawing: opens the sheet's dialog if it is not open, and focuses the title if asked or if the focus was lost. */
+  private alPintar(enfocarTitulo: boolean): void {
+    afterNextRender(
+      () => {
+        const dialogo = this.hoja()?.nativeElement;
+        if (dialogo && !dialogo.open) {
+          if (typeof dialogo.showModal === 'function') dialogo.showModal();
+          else dialogo.setAttribute('open', '');
+        }
+        const activo = this.document.activeElement;
+        if (enfocarTitulo || activo === null || activo === this.document.body) this.titulo()?.nativeElement.focus();
+      },
+      { injector: this.injector },
+    );
   }
 
   protected cerrar(): void {

@@ -113,3 +113,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Without a notice the wrapper is not a grid item: no extra gap. */
+.panel__aviso-descarga:empty {
+  display: none;
+}
