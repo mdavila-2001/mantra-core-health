@@ -19,6 +19,7 @@ import {
 import { EQUIPMENT_LOCATION_CONTRACT_PENDING_KEYS } from '../../data-access/diagnostic-units/equipment-location.types';
 import { INVENTORY_LOCATION_CONTRACT_PENDING_KEYS } from '../../data-access/pharmacy/inventory-locations.types';
 import { SERVICE_REQUEST_COLLECTION_POINT_PENDING_KEYS } from '../../data-access/diagnostics/sample-collection.types';
+import { STUDY_DETAIL_CONTRACT_PENDING_KEYS } from '../../data-access/diagnostics/study-detail.types';
 import { TEMPLATE_CARE_SPACE_PENDING_KEYS } from '../../data-access/scheduling/scheduling.types';
 
 /* ============================================================================
@@ -63,8 +64,9 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // F5b/F5d: la web **no** las manda mientras `INFRA_INTEGRATION_FLAGS` esté
   // apagada (la API las rechaza con 400); la maqueta las acepta para poder
   // probar la pantalla con la bandera encendida.
-  // F5b: el punto de toma sugerido de la orden.
-  'POST /clinical/service-requests': SERVICE_REQUEST_COLLECTION_POINT_PENDING_KEYS,
+  // F5b: el punto de toma sugerido de la orden. Más la muestra y el detalle de imagen (v4.2.82):
+  // el `openapi.json` de la API ya los declara, el contrato generado de la maqueta todavía no.
+  'POST /clinical/service-requests': [...SERVICE_REQUEST_COLLECTION_POINT_PENDING_KEYS, ...STUDY_DETAIL_CONTRACT_PENDING_KEYS],
   // F5d: el consultorio de la plantilla de horario.
   'POST /scheduling/resources/:id/templates': TEMPLATE_CARE_SPACE_PENDING_KEYS,
   'POST /community/conversations/:conversationId/messages': DIRECT_MESSAGE_CONTRACT_PENDING_KEYS,

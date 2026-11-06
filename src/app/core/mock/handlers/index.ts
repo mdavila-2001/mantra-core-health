@@ -20,6 +20,7 @@ import { registerProcedureCenters } from './procedure-centers.handlers';
 import { registrarComunidad } from './community.handlers';
 import { registrarConsentimientos } from './consent.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
+import { registrarDetalleDeEstudio } from './study-detail.handlers';
 import { registrarCentros } from './centros.handlers';
 import { registerDiagnosisVerification } from './diagnosis-verification.handlers';
 import { registerMedicalNotes } from './medical-notes.handlers';
@@ -223,6 +224,8 @@ export function crearRouterSimulado(): MockRouter {
   registerMedicalGroups(router);
   registerMedicalCenters(router);
   registerOrganizationPracticeHandlers(router);
+  // El detalle de la orden de estudios (muestra / región): envuelve rutas de diagnóstico y de terminología ya registradas.
+  registrarDetalleDeEstudio(router);
   // La pre-carga del logo del consultorio en el alta del médico.
   registerRegistrationLogo(router);
   // Personal de apoyo (secretaria y otros roles). Al final: envuelve rutas que
