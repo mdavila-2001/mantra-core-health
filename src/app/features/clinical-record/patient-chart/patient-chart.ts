@@ -154,12 +154,8 @@ import {
   type AspectoDelTipo,
   type TipoDelRecorrido,
 } from './recorrido-clinico/recorrido-clinico.model';
-import {
-  CLASE_DEL_TIPO,
-  construirRed,
-  type FilaPresentada,
-  type Rotulador,
-} from './recorrido-clinico/red-clinica.adaptador';
+import { CLASE_DEL_TIPO, construirRed } from './recorrido-clinico/red-clinica.adaptador';
+import { type FilaPresentada, type Rotulador } from './recorrido-clinico/red-clinica.fuente';
 import type { CertezaDiagnostica } from './recorrido-clinico/red-clinica.model';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import { ReferralsClient } from '../../../core/data-access/referrals/referrals.client';

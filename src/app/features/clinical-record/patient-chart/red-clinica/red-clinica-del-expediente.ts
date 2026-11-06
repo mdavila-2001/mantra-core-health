@@ -29,7 +29,7 @@ import type {
 import type { Referral } from '../../../../core/data-access/referrals/referrals.types';
 import type { Booking } from '../../../../core/data-access/scheduling/scheduling.types';
 import { referralTypeLabel } from '../referral-block/referral-block.model';
-import type { Rotulador } from '../recorrido-clinico/red-clinica.adaptador';
+import type { Rotulador } from '../recorrido-clinico/red-clinica.fuente';
 import type {
   ClaseDeLaRed,
   MotivoDelVinculo,

@@ -1,0 +1,132 @@
+/* ============================================================================
+    What is inside a node of the clinical network. The node itself (the
+    positioned button, its border and states) is styled by the network; the
+    states that change the inside are read here from the host.
+    ========================================================================== */
+
+.red__nodo-cabeza {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.red__marca {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: 22px;
+  block-size: 22px;
+  border-radius: var(--r-full);
+  background: var(--t-bg);
+  color: var(--t-fg);
+  border: 1px solid var(--t-bd);
+}
+
+.red__marca app-nav-icon {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.red__nodo-principal {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-weight: 600;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.red__nodo-una-linea {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-caption);
+  line-height: 22px;
+}
+
+.red__nodo-pie {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.red__nodo-secundario {
+  flex: 0 1000 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.red__nodo-fecha {
+  flex: none;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  text-transform: capitalize;
+}
+
+:host(.red__nodo--grupo) .red__nodo-principal {
+  color: var(--text-secondary);
+}
+
+:host(.red__nodo--compacto) .red__marca {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.red__descartado-rotulo {
+  margin-inline-end: var(--sp-1);
+  font-weight: 700;
+  color: var(--st-error-fg);
+}
+
+/* The open ruled-out diagnosis reads struck through: it is not a current problem. */
+:host(.red__nodo--descartado:not(.red__nodo--compacto)) .red__nodo-principal {
+  text-decoration: line-through;
+  text-decoration-color: var(--st-error-fg);
+}
+
+.red__nodo-compartido-marca {
+  position: absolute;
+  inset-block-start: var(--sp-1);
+  inset-inline-end: var(--sp-1);
+  display: inline-grid;
+  place-items: center;
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: var(--r-full);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+}
+
+.red__nodo-compartido-marca app-nav-icon {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+.red__nodo-relacion,
+.red__nodo-compartido {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--st-success-fg);
+  font-weight: 600;
+}
+
+.red__nodo-relacion--inferido {
+  color: var(--st-warning-fg);
+  font-style: italic;
+}
+
+.red__nodo-compartido {
+  color: var(--st-primary-fg);
+}

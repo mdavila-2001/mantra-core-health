@@ -10,7 +10,7 @@ import type { ClinicalSummary } from '../../../../../core/data-access/clinical/c
 import type { PatientDiagnostics } from '../../../../../core/data-access/diagnostics/diagnostics.types';
 import type { Referral } from '../../../../../core/data-access/referrals/referrals.types';
 import type { Booking } from '../../../../../core/data-access/scheduling/scheduling.types';
-import type { EpisodioClinico, RedPorEpisodios } from '../../recorrido-clinico/red-clinica.model';
+import type { EpisodioClinico, RedPorEpisodios } from '../../recorrido-clinico/red-clinica.episodio';
 import type {
   LectorDelRecorrido,
   RegistrosDelRecorrido,

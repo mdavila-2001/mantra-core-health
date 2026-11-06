@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { construirRed, type FilaPresentada, type Rotulador } from '../recorrido-clinico/red-clinica.adaptador';
+import { construirRed } from '../recorrido-clinico/red-clinica.adaptador';
+import { type FilaPresentada, type Rotulador } from '../recorrido-clinico/red-clinica.fuente';
 import type { MotivoDelVinculo, RegistroDeLaRed, VinculoDeLaRed } from '../recorrido-clinico/red-clinica.model';
 import { aplicarFiltro, FILTRO_VACIO, hiloDeDiagnostico } from './red-clinica-filtro';
 import { aristasDeLaRed, nodosDeLaRed, VINCULO_DEL_MOTIVO, visiblesCombinados } from './red-clinica-del-expediente';

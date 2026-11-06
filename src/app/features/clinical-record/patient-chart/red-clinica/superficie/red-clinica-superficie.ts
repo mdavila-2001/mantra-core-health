@@ -26,7 +26,8 @@ import {
   type NodoElegido,
   type PlegadoDeLaRed,
 } from '../../recorrido-clinico/recorrido-clinico';
-import { agruparEnEpisodios, type RegistroDeLaRed, type VinculoDeLaRed } from '../../recorrido-clinico/red-clinica.model';
+import { type RegistroDeLaRed, type VinculoDeLaRed } from '../../recorrido-clinico/red-clinica.model';
+import { agruparEnEpisodios } from '../../recorrido-clinico/red-clinica.episodios';
 import { RecorridoGuiado, type PasoActualDelRecorrido } from '../../recorrido-guiado/recorrido-guiado';
 import { armarRecorridoGuiado, type PasoDelRecorrido } from '../../recorrido-guiado/recorrido-guiado.model';
 import { RedClinicaAlertasLista } from '../alertas/red-clinica-alertas-lista';

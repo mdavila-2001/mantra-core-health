@@ -1,13 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  agruparEnEpisodios,
-  ID_SIN_DIAGNOSTICO,
-  inferirVinculos,
-  relacionesDe,
-  type RegistroDeLaRed,
-  type VinculoDeLaRed,
-} from './red-clinica.model';
+import { type RegistroDeLaRed, type VinculoDeLaRed } from './red-clinica.model';
+import { agruparEnEpisodios } from './red-clinica.episodios';
+import { ID_SIN_DIAGNOSTICO } from './red-clinica.episodio';
+import { inferirVinculos, relacionesDe } from './red-clinica.vinculos';
 
 /**
  * La regla de episodios (ADR-0021) sobre una historia de dieciocho meses con

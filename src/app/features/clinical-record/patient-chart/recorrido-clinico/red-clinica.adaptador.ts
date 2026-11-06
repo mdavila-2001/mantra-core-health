@@ -1,38 +1,21 @@
 /* ============================================================================
-    Del contrato a la red clínica: los registros y **sólo** los vínculos que el
-    contrato guarda.
+    From the contract to the clinical network: the records and **only** the
+    links the contract stores.
 
-    Las formas de entrada son los tipos de `core/data-access` recortados con
-    `Pick`. Los campos de la Franja 1 (`reasonConditionId`,
-    `targetEncounterId` —sólo tras aceptar—, `replacedByConditionId`) y
-    `replacedByRequestId` de las recetas son opcionales en el contrato:
-    ausentes, la red no dibuja esos vínculos.
+    The input shapes are the `core/data-access` types trimmed with `Pick`
+    (`red-clinica.fuente.ts`). The Strip 1 fields (`reasonConditionId`,
+    `targetEncounterId` —only after accepting—, `replacedByConditionId`) and
+    the prescriptions' `replacedByRequestId` are optional in the contract:
+    when absent, the network does not draw those links.
     ========================================================================== */
 
 import type { Tone } from '../../../../shared/components/tone/tone.types';
-import {
-  inferirVinculos,
-  type CertezaDiagnostica,
-  type ClaseDeLaRed,
-  type RegistroDeLaRed,
-  type VinculoDeLaRed,
-} from './red-clinica.model';
+import type { ClaseDeLaRed, RegistroDeLaRed, VinculoDeLaRed } from './red-clinica.model';
+import { inferirVinculos } from './red-clinica.vinculos';
 import type { TipoDelRecorrido } from './recorrido-clinico.model';
-import type {
-  CarePlan,
-  ChartNote,
-  Condition,
-  DiagnosisEvidence,
-  Encounter,
-  MedicationRequest,
-  Observation,
-} from '../../../../core/data-access/clinical/clinical.types';
-import type { DiagnosticOrder, DiagnosticReport } from '../../../../core/data-access/diagnostics/diagnostics.types';
-import type { Referral } from '../../../../core/data-access/referrals/referrals.types';
-import type { Booking } from '../../../../core/data-access/scheduling/scheduling.types';
-import type { DentalProcedure } from '../../../../core/data-access/procedures/procedures.types';
+import type { DerivacionDeLaFuente, FilaPresentada, FuenteDeLaRed, Rotulador } from './red-clinica.fuente';
 
-/** La clase de la red que corresponde a cada bloque del expediente. */
+/** The network class matching each chart block. */
 export const CLASE_DEL_TIPO: Readonly<Record<TipoDelRecorrido, ClaseDeLaRed>> = {
   encuentros: 'atencion',
   internaciones: 'internacion',
@@ -44,88 +27,7 @@ export const CLASE_DEL_TIPO: Readonly<Record<TipoDelRecorrido, ClaseDeLaRed>> = 
   documentos: 'documento',
 };
 
-/** Un registro de los bloques del expediente, ya presentado (lo arma la pantalla, con la misma regla que la tabla). */
-export interface FilaPresentada {
-  readonly id: string;
-  readonly tipo: TipoDelRecorrido;
-  readonly titulo: string;
-  readonly detalle: string;
-  readonly estado: string;
-  readonly tonoDelEstado?: Tone;
-  readonly cuando: Date | null;
-  readonly certeza?: CertezaDiagnostica;
-  readonly concepto?: string;
-}
-
-/**
- * Lo que la red lee de cada lectura: los tipos del contrato
- * (`core/data-access`), recortados a los campos que usa. Así las pruebas no
- * fabrican un resumen clínico entero, y un cambio de nombre en el contrato
- * rompe la compilación acá en vez de borrar una línea en silencio.
- */
-export interface FuenteDeLaRed {
-  readonly encounters: readonly Pick<Encounter, 'id' | 'episodeId'>[];
-  readonly conditions: readonly (Pick<Condition, 'id' | 'encounterId' | 'replacedByConditionId'> & {
-    readonly verification?: { readonly basedOn: DiagnosisEvidence | null } | null;
-  })[];
-  readonly medicationRequests: readonly Pick<
-    MedicationRequest,
-    'id' | 'encounterId' | 'indicationConditionId' | 'replacedByRequestId'
-  >[];
-  readonly observations: readonly Pick<Observation, 'id' | 'encounterId'>[];
-  readonly notes: readonly Pick<ChartNote, 'noteId' | 'encounterId'>[];
-  readonly carePlans: readonly Pick<CarePlan, 'id' | 'conditionId'>[];
-  /** Las lecturas que la red pide aparte. `null`: no se pudo leer o todavía no llegó. */
-  readonly citas?: readonly CitaDeLaFuente[] | null;
-  readonly derivaciones?: readonly DerivacionDeLaFuente[] | null;
-  readonly estudios?: {
-    readonly orders: readonly OrdenDeLaFuente[];
-    readonly reports: readonly InformeDeLaFuente[];
-  } | null;
-  readonly procedimientos?: readonly ProcedimientoDeLaFuente[] | null;
-}
-
-export type CitaDeLaFuente = Pick<
-  Booking,
-  'id' | 'startAt' | 'createdAt' | 'statusConceptId' | 'typeConceptId' | 'reasonText' | 'followUpOf'
-> & { readonly service?: Pick<NonNullable<Booking['service']>, 'name'> };
-
-export type DerivacionDeLaFuente = Pick<
-  Referral,
-  | 'id'
-  | 'createdAt'
-  | 'status'
-  | 'sourceEncounterId'
-  | 'targetEncounterId'
-  | 'targetDisplayName'
-  | 'targetTenantName'
-  | 'targetExternalName'
-  | 'targetServiceName'
-  | 'requestedServiceText'
-  | 'reasonText'
-  | 'diagnosisText'
-  | 'counterReferralAt'
-> & { readonly transfer?: Pick<NonNullable<Referral['transfer']>, 'arrivedAt'> };
-
-export type OrdenDeLaFuente = Pick<
-  DiagnosticOrder,
-  'id' | 'encounterId' | 'codeConceptId' | 'statusConceptId' | 'createdAt' | 'reasonConditionId'
->;
-
-export type InformeDeLaFuente = Pick<
-  DiagnosticReport,
-  'id' | 'serviceRequestId' | 'encounterId' | 'codeConceptId' | 'lifecycleStatusConceptId' | 'createdAt'
->;
-
-export type ProcedimientoDeLaFuente = Pick<
-  DentalProcedure,
-  'id' | 'encounterId' | 'procedureCodeConceptId' | 'statusConceptId' | 'performedAt' | 'createdAt'
->;
-
-/** La etiqueta de un concepto: `display` para mostrar, `code` para decidir. */
-export type Rotulador = (conceptId: string | undefined) => { readonly display?: string; readonly code?: string };
-
-/** El estado de una cita, por código: el tono no depende del texto. */
+/** An appointment's status, by code: the tone does not depend on the text. */
 const CITA: Readonly<Record<string, { tono: Tone; atendible: boolean }>> = {
   'BK-REQUESTED': { tono: 'info', atendible: true },
   'BK-CONFIRMED': { tono: 'info', atendible: true },
@@ -137,7 +39,7 @@ const CITA: Readonly<Record<string, { tono: Tone; atendible: boolean }>> = {
   'BK-NO-SHOW': { tono: 'warning', atendible: false },
 };
 
-/** El estado de una derivación en palabras: el ciclo enviada → aceptada → llegó → contrarreferencia. */
+/** A referral's status in words: the cycle sent → accepted → arrived → counter-referral. */
 export function estadoDeLaDerivacion(d: DerivacionDeLaFuente): { readonly estado: string; readonly tono: Tone } {
   if (d.counterReferralAt !== undefined) return { estado: 'Contrarreferencia', tono: 'success' };
   if (d.transfer?.arrivedAt !== undefined) return { estado: 'Llegó al destino', tono: 'success' };
@@ -158,11 +60,11 @@ export function estadoDeLaDerivacion(d: DerivacionDeLaFuente): { readonly estado
 }
 
 /**
- * Los registros y vínculos de la red.
+ * The network's records and links.
  *
- * Un vínculo se dibuja sólo si sus **dos** extremos llegaron en esta lectura:
- * un diagnóstico recortado por el tope no puede ser el origen de una línea.
- * Los inferidos se agregan al final, ya marcados.
+ * A link is drawn only if **both** ends arrived in this read: a diagnosis cut
+ * off by the cap cannot be the source of a line. Inferred ones are appended at
+ * the end, already marked.
  */
 export function construirRed(
   filas: readonly FilaPresentada[],
@@ -258,8 +160,7 @@ export function construirRed(
       ...(p.encounterId ? { encuentroId: p.encounterId } : {}),
     });
   }
-
-  /* Los vínculos del contrato, con sus dos extremos a la vista. */
+  /* The contract's links, with both ends in view. */
   const presentes = new Set(registros.map((r) => r.id));
   const atenciones = new Set(fuente.encounters.map((e) => e.id));
   const vinculos: VinculoDeLaRed[] = [];
@@ -281,8 +182,7 @@ export function construirRed(
     if (dx.replacedByConditionId) unir(dx.id, dx.replacedByConditionId, 'reemplazado-por');
     const base = dx.verification?.basedOn;
     if (base !== undefined && base !== null) {
-      const evidencia = base.diagnosticReportId ?? base.serviceRequestId ?? base.noteId ?? base.encounterId;
-      // La atención donde se registró ya está unida por `registrado-en`.
+      const evidencia = base.diagnosticReportId ?? base.serviceRequestId ?? base.noteId ?? base.encounterId;      // The encounter where it was entered is already joined by `registrado-en`.
       if (evidencia !== dx.encounterId) unir(evidencia, dx.id, 'evidencia');
     }
   }
@@ -300,9 +200,8 @@ export function construirRed(
   }
   for (const c of fuente.citas ?? []) {
     const origen = c.followUpOf;
-    if (origen === undefined || origen === null) continue;
-    // La cita de origen si llegó; si no, su atención. Una sola línea: las dos
-    // dicen lo mismo.
+    if (origen === undefined || origen === null) continue;    // The source appointment if it arrived; otherwise its encounter. A single
+    // line: both say the same.
     if (presentes.has(origen.bookingId)) unir(origen.bookingId, c.id, 'reconsulta-de');
     else unir(origen.encounterId, c.id, 'reconsulta-de');
   }
@@ -313,9 +212,8 @@ export function construirRed(
   const atendible = new Map(
     (fuente.citas ?? []).map((c) => [c.id, CITA[rotular(c.statusConceptId).code ?? '']?.atendible ?? true]),
   );
-  const inferidos = inferirVinculos(registros, vinculos, (id) => atendible.get(id) ?? true);
-  // La cita a la que se le infiere una atención va en la columna de esa
-  // atención: es la misma visita. La línea que las une dice «inferido».
+  const inferidos = inferirVinculos(registros, vinculos, (id) => atendible.get(id) ?? true);  // The appointment inferred to an encounter goes in that encounter's column:
+  // it is the same visit. The line joining them says «inferido».
   const columnaInferida = new Map(
     inferidos.filter((v) => v.motivo === 'inferido-mismo-dia').map((v) => [v.desde, v.hasta]),
   );

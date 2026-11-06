@@ -1,5 +1,5 @@
-<!-- Fuera del PDF: un lienzo posicionado sale como párrafos sueltos. El
-     expediente avisa arriba qué se exporta desde esta vista. -->
+<!-- Out of the PDF: a positioned canvas comes out as loose paragraphs. The
+     chart says above what is exported from this view. -->
 <div class="red" data-testid="expediente-recorrido" data-pdf-ignore>
   <div class="red__barra">
     <div class="red__acciones">
@@ -40,57 +40,26 @@
     }
   </div>
 
-  <!-- La leyenda nombra cada clase de línea que hay en pantalla, y la de los
-       hitos de la franja plegada. Sin ella, las líneas son un código. -->
+  <!-- The legend names each kind of line on screen, and the collapsed strip's
+       milestones. Without it, the lines are a code. -->
   @if (!angosto()) {
-    <ul class="red__leyenda" aria-label="Qué significa cada marca" data-testid="red-leyenda">
-      @if (!todoDesplegado()) {
-        <li class="red__leyenda-item">
-          <span class="red__muestra-hito red__hito--confirmado" aria-hidden="true"></span> Confirmado
-        </li>
-        <li class="red__leyenda-item">
-          <span class="red__muestra-hito red__hito--presuntivo" aria-hidden="true"></span> Presuntivo
-        </li>
-        <li class="red__leyenda-item">
-          <span class="red__muestra-hito red__hito--descartado" aria-hidden="true"></span> Descartado
-        </li>
-        <li class="red__leyenda-item">
-          <span class="red__muestra-hito red__hito--momento" aria-hidden="true"></span> Atención o cita
-        </li>
-      }
-      @for (item of leyenda(); track item.motivo) {
-        <li class="red__leyenda-item" [attr.data-motivo]="item.motivo">
-          <svg class="red__muestra" viewBox="0 0 28 8" aria-hidden="true" focusable="false">
-            <path
-              class="red__arista"
-              [class.red__arista--tronco]="item.familia === 'tronco'"
-              [class.red__arista--enlace]="item.familia === 'enlace'"
-              [class.red__arista--inferido]="item.familia === 'inferido'"
-              d="M 1 4 H 22"
-            />
-            @if (item.familia !== 'tronco') {
-              <path
-                [class]="item.familia === 'inferido' ? 'red__punta red__punta--inferido' : 'red__punta'"
-                d="M 21 1 L 27 4 L 21 7 Z"
-              />
-            }
-          </svg>
-          {{ item.nombre }}
-        </li>
-      }
-    </ul>
+    <ul
+      app-red-leyenda
+      class="red__leyenda"
+      aria-label="Qué significa cada marca"
+      data-testid="red-leyenda"
+      [aristas]="plano().aristas"
+      [conHitos]="!todoDesplegado()"
+    ></ul>
   }
 
   @if (angosto()) {
-    <!-- En el teléfono: un episodio por bloque, y dentro, lo más reciente
-         arriba. Las líneas se dicen en texto debajo de cada registro. -->
+    <!-- On the phone: one episode per block and, inside, the most recent on
+         top. The lines are said in text under each record. -->
     <ol class="red-v" aria-label="Recorrido clínico por episodios">
       @for (hilo of plano().hilos; track hilo.episodio.id) {
         <li class="red-v__episodio" [class.red__hilo--resaltado]="hiloResaltado(hilo.episodio)">
-          <ng-container
-            [ngTemplateOutlet]="plantillaDelEpisodio"
-            [ngTemplateOutletContext]="{ $implicit: hilo }"
-          />
+          <div app-red-cabecera class="red__cabecera-hilo" [hilo]="hilo" (alternar)="alternarEpisodio($event)"></div>
           @if (hilo.desplegado) {
             <ol class="red-v__momentos" [attr.id]="'red-' + hilo.episodio.id">
               @for (momento of momentosDe(hilo); track momento.columna.clave) {
@@ -117,7 +86,7 @@
       }
     </ol>
   } @else {
-    <!-- El desplazamiento horizontal vive acá adentro y nunca en la página. -->
+    <!-- The horizontal scroll lives in here and never on the page. -->
     <div
       #lienzo
       class="red__lienzo"
@@ -126,8 +95,8 @@
       tabindex="0"
     >
       <div class="red__plano" [style.width.px]="plano().ancho" [style.height.px]="plano().alto">
-        <!-- El eje: una marca por momento, con su fecha. Lo dice también cada
-             nodo en su nombre accesible. -->
+        <!-- The axis: one mark per moment, with its date. Each node also says
+             it in its accessible name. -->
         <ol class="red__eje" aria-hidden="true">
           @for (columna of plano().columnas; track columna.clave) {
             <li
@@ -155,8 +124,8 @@
           }
         </ol>
 
-        <!-- Los hilos: una banda por episodio. El botón de cada uno pliega y
-             despliega; detrás van sus registros en orden cronológico. -->
+        <!-- The threads: one band per episode. Each one's button folds and
+             unfolds it; its records follow in chronological order. -->
         <ol class="red__hilos">
           @for (hilo of plano().hilos; track hilo.episodio.id) {
             <li
@@ -169,10 +138,13 @@
               data-testid="red-hilo"
               [attr.data-episodio]="hilo.episodio.id"
             >
-              <ng-container
-                [ngTemplateOutlet]="plantillaDelEpisodio"
-                [ngTemplateOutletContext]="{ $implicit: hilo }"
-              />
+              <div
+                app-red-cabecera
+                class="red__cabecera-hilo"
+                [style.height.px]="medidas.altoCabeceraHilo"
+                [hilo]="hilo"
+                (alternar)="alternarEpisodio($event)"
+              ></div>
               @if (!hilo.desplegado) {
                 @if (hilo.hitos.length > 1) {
                   <span
@@ -216,7 +188,7 @@
           }
         </ol>
 
-        <!-- Las líneas, por encima de las bandas y por debajo de los nodos. -->
+        <!-- The lines, above the bands and below the nodes. -->
         <svg
           class="red__trazos"
           [attr.width]="plano().ancho"
@@ -260,8 +232,8 @@
           }
         </svg>
 
-        <!-- La palabra «inferido» sobre cada vínculo deducido: la línea
-             punteada sola sería un código que hay que adivinar. -->
+        <!-- The word «inferido» on each deduced link: the dotted line alone
+             would be a code to guess. -->
         @for (arista of plano().aristas; track arista.clave) {
           @if (arista.etiqueta; as etiqueta) {
             <span
@@ -281,48 +253,10 @@
   }
 </div>
 
-<!-- La cabecera de un episodio: el botón que lo pliega y despliega, con el
-     resumen (nivel 1) a la vista. -->
-<ng-template #plantillaDelEpisodio let-hilo>
-  <div class="red__cabecera-hilo" [style.height.px]="angosto() ? null : medidas.altoCabeceraHilo">
-    <button
-      type="button"
-      class="red__alternar"
-      [attr.aria-expanded]="hilo.desplegado"
-      [attr.aria-controls]="hilo.desplegado ? 'red-' + hilo.episodio.id : null"
-      [attr.aria-label]="nombreDelEpisodio(hilo)"
-      data-testid="red-episodio"
-      (click)="alternarEpisodio(hilo.episodio.id)"
-    >
-      <span class="red__chevron" aria-hidden="true"></span>
-      <span class="red__episodio-nombre">{{ hilo.episodio.nombre }}</span>
-      @if (hilo.episodio.estado !== '') {
-        <span [class]="'red__estado tono--' + (hilo.episodio.tonoDelEstado ?? 'info')">{{ hilo.episodio.estado }}</span>
-      }
-      <span class="red__episodio-datos">
-        @if (hilo.episodio.desde) {
-          <span class="red__episodio-rango"
-            >{{ hilo.episodio.desde | date: 'MMM y' }}@if (hilo.episodio.hasta && (hilo.episodio.hasta | date: 'MMM y') !== (hilo.episodio.desde | date: 'MMM y')) {
-              – {{ hilo.episodio.hasta | date: 'MMM y' }}
-            }</span
-          >
-        }
-        @for (conteo of conteosDe(hilo.episodio); track conteo) {
-          <span class="red__episodio-conteo">{{ conteo }}</span>
-        }
-        @if (hilo.episodio.descartados > 0) {
-          <span class="red__episodio-descartados">
-            {{ hilo.episodio.descartados }} descartado{{ hilo.episodio.descartados === 1 ? '' : 's' }}
-          </span>
-        }
-      </span>
-    </button>
-  </div>
-</ng-template>
-
-<!-- El nodo, una sola vez para las dos disposiciones. -->
+<!-- The node, once for both layouts. -->
 <ng-template #plantillaDelNodo let-nodo let-columna="columna" let-vertical="vertical" let-hilo="hilo">
   <button
+    app-red-nodo
     type="button"
     class="red__nodo"
     [class]="'tono--' + tonoDe(nodo)"
@@ -339,84 +273,15 @@
     [style.width.px]="vertical ? null : nodo.ancho"
     [style.height.px]="vertical ? null : nodo.alto"
     [attr.aria-label]="nombres().get(nodo.id)"
-    [attr.aria-expanded]="
-      nodo.forma === 'grupo'
-        ? nodo.grupo.accion === 'contraer'
-        : nodo.forma === 'descartado'
-          ? false
-          : nodo.forma === 'plegar'
-            ? true
-            : null
-    "
-    [attr.title]="nodo.forma === 'grupo' ? null : nodo.registro.titulo"
-    data-testid="recorrido-nodo"
-    [attr.data-clase]="nodo.registro?.clase ?? 'grupo'"
-    [attr.data-forma]="nodo.forma"
-    [attr.data-id]="nodo.id"
+    [nodo]="nodo"
+    [propia]="fechaPropia(nodo, columna)"
+    [vertical]="vertical"
+    [relaciones]="(nodo.registro && relaciones().get(nodo.registro.id)) ?? []"
+    [compartidoCon]="compartidoCon(nodo)"
     (mouseenter)="apuntar(nodo)"
     (mouseleave)="apuntar(null)"
     (focus)="enfocar(nodo)"
     (blur)="enfocar(null)"
     (click)="activar(nodo)"
-  >
-    @switch (nodo.forma) {
-      @case ('grupo') {
-        <span class="red__nodo-cabeza">
-          <span class="red__nodo-principal">
-            {{ nodo.grupo.accion === 'expandir' ? '+' + nodo.grupo.ocultos.length + ' de detalle' : 'Agrupar el detalle' }}
-          </span>
-        </span>
-        @if (nodo.grupo.accion === 'expandir') {
-          <span class="red__nodo-secundario">{{ titulosDe(nodo.grupo.ocultos) }}</span>
-        }
-      }
-      @case ('descartado') {
-        <span class="red__nodo-cabeza">
-          <span class="red__marca"><app-nav-icon name="heart" /></span>
-          <span class="red__nodo-una-linea"><span class="red__descartado-rotulo">Descartado</span> {{ nodo.registro.titulo }}</span>
-        </span>
-      }
-      @case ('plegar') {
-        <span class="red__nodo-cabeza">
-          <span class="red__chevron red__chevron--abierto" aria-hidden="true"></span>
-          <span class="red__nodo-una-linea">Ocultar el descartado</span>
-        </span>
-      }
-      @default {
-        <span class="red__nodo-cabeza">
-          <span class="red__marca">
-            <app-nav-icon [name]="iconoDe(nodo.registro.clase)" />
-          </span>
-          <span class="red__nodo-principal">{{ nodo.registro.titulo }}</span>
-        </span>
-        <span class="red__nodo-pie">
-          @if (nodo.registro.estado !== '') {
-            <span [class]="'red__nodo-estado tono--' + (nodo.registro.tonoDelEstado ?? 'info')">{{ nodo.registro.estado }}</span>
-          }
-          @if (fechaPropia(nodo, columna); as propia) {
-            <span class="red__nodo-fecha" [attr.title]="propia.rotulo + ' ' + (propia.fecha | date: 'd MMMM y')"
-              >{{ propia.rotulo }} {{ propia.fecha | date: propia.formato }}</span
-            >
-          }
-          @if (nodo.registro.detalle !== '') {
-            <span class="red__nodo-secundario">{{ nodo.registro.detalle }}</span>
-          }
-        </span>
-        @if (vertical) {
-          @for (frase of relaciones().get(nodo.registro.id) ?? []; track frase) {
-            <span class="red__nodo-relacion" [class.red__nodo-relacion--inferido]="frase.startsWith('vínculo inferido')">{{ frase }}</span>
-          }
-        }
-        @if (compartidoCon(nodo).length > 0) {
-          @if (vertical) {
-            <span class="red__nodo-compartido">También en: {{ compartidoCon(nodo).join(', ') }}</span>
-          } @else {
-            <span class="red__nodo-compartido-marca" [attr.title]="'También en: ' + compartidoCon(nodo).join(', ')">
-              <app-nav-icon name="link" />
-            </span>
-          }
-        }
-      }
-    }
-  </button>
+  ></button>
 </ng-template>

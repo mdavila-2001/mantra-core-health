@@ -1,0 +1,49 @@
+/* ============================================================================
+    Shared by the clinical network and its header and node subcomponents: the
+    tone map, the status pill and the fold chevron.
+    ========================================================================== */
+
+/* -- Tones -------------------------------------------------------------------
+   Same map as `shared/components/tone/tone.css`, which cannot be imported here
+   because it is written for an atom's `:host`. */
+.tono--primary   { --t-bg: var(--st-primary-bg);   --t-fg: var(--st-primary-fg);   --t-bd: var(--st-primary-bd); }
+.tono--secondary { --t-bg: var(--st-secondary-bg); --t-fg: var(--st-secondary-fg); --t-bd: var(--st-secondary-bd); }
+.tono--success   { --t-bg: var(--st-success-bg);   --t-fg: var(--st-success-fg);   --t-bd: var(--st-success-bd); }
+.tono--warning   { --t-bg: var(--st-warning-bg);   --t-fg: var(--st-warning-fg);   --t-bd: var(--st-warning-bd); }
+.tono--error     { --t-bg: var(--st-error-bg);     --t-fg: var(--st-error-fg);     --t-bd: var(--st-error-bd); }
+.tono--info      { --t-bg: var(--st-info-bg);      --t-fg: var(--st-info-fg);      --t-bd: var(--st-info-bd); }
+.tono--neutral   { --t-bg: var(--bg-inset);        --t-fg: var(--text-secondary);  --t-bd: var(--border-default); }
+
+/* The fold arrow, with no new icon: a rotated border. */
+.red__chevron {
+  flex: none;
+  inline-size: 8px;
+  block-size: 8px;
+  margin-inline: 2px 4px;
+  border-inline-end: 2px solid currentColor;
+  border-block-end: 2px solid currentColor;
+  rotate: -45deg;
+  transition: rotate var(--dur-fast) ease;
+}
+
+.red__chevron--abierto {
+  rotate: 45deg;
+}
+
+.red__estado,
+.red__nodo-estado {
+  flex: none;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--t-bg);
+  color: var(--t-fg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .red__chevron {
+    transition: none;
+  }
+}

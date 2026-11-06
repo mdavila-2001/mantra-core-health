@@ -18,31 +18,28 @@ import { DatePipe, NgTemplateOutlet } from '@angular/common';
 
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
-import type { NavIconName } from '../../../../shared/components/atoms/nav-icon/nav-icon.types';
-import { conectadosA, describirIntervalo } from './recorrido-clinico.model';
-import {
-  agruparEnEpisodios,
-  ASPECTO_DE_LA_CLASE,
-  NOMBRE_DEL_MOTIVO,
-  relacionesDe,
-  type ClaseDeLaRed,
-  type EpisodioClinico,
-  type MotivoDelVinculo,
-  type RegistroDeLaRed,
-  type VinculoDeLaRed,
-} from './red-clinica.model';
+import { conectadosA } from './recorrido-clinico.model';
+import { ASPECTO_DE_LA_CLASE, type ClaseDeLaRed, type RegistroDeLaRed, type VinculoDeLaRed } from './red-clinica.model';
+import { agruparEnEpisodios } from './red-clinica.episodios';
+import { type EpisodioClinico } from './red-clinica.episodio';
+import { relacionesDe } from './red-clinica.vinculos';
+import { ubicarRed } from './red-clinica.geometria';
 import {
   DISTANCIA_DEL_TRONCO,
   MEDIDAS_DE_LA_RED,
-  ubicarRed,
   type ColumnaDeLaRed,
   type HiloDeLaRed,
   type NodoDeLaRed,
-} from './red-clinica.geometria';
+} from './red-clinica.geometria.types';
+import { contextoDe, fechaPropia, nombresDeLosNodos, type FechaPropia } from './recorrido-clinico.textos';
+import { DesplazamientoDelLienzo, reducirMovimiento } from './desplazamiento-del-lienzo';
+import { RedNodo } from './nodo/red-nodo';
+import { RedCabecera } from './cabecera/red-cabecera';
+import { RedLeyenda } from './leyenda/red-leyenda';
 
 /**
- * El nodo elegido, para quien quiera mostrar su detalle (el panel lateral de
- * la Franja 3). El `id` es el del registro real.
+ * The chosen node, for whoever wants to show its detail (the Strip 3 side
+ * panel). The `id` is the real record's id.
  */
 export interface NodoElegido {
   readonly id: string;
@@ -50,69 +47,50 @@ export interface NodoElegido {
   readonly episodio: string;
 }
 
-/** Lo que `plegado()` guarda y `restaurarPlegado()` repone. */
+/** What `plegado()` saves and `restaurarPlegado()` puts back. */
 export interface PlegadoDeLaRed {
   readonly desplegados: ReadonlySet<string>;
   readonly abiertos: ReadonlySet<string>;
   readonly desplazamiento: number | null;
 }
 
-/** Los vínculos que tiene la leyenda, en el orden en que se explican. */
-const ORDEN_DE_LA_LEYENDA: readonly MotivoDelVinculo[] = [
-  'registrado-en',
-  'derivado-desde',
-  'indicado-para',
-  'pedido-para',
-  'resultado-de',
-  'plan-para',
-  'evidencia',
-  'reemplazado-por',
-  'receta-reemplazada',
-  'reconsulta-de',
-  'recibido-en',
-  'durante-internacion',
-  'inferido-misma-atencion',
-  'inferido-mismo-dia',
-];
-
 /**
- * **Recorrido clínico** — la historia de una persona como una red de
- * episodios.
+ * **Clinical tour** — a person's history as a network of episodes.
  *
- * ## Qué responde
+ * ## What it answers
  *
- * «¿Qué le pasó, problema por problema, y en qué orden?». Cada hilo es un
- * episodio clínico —un problema y todo lo que se hizo por él: atenciones,
- * estudios, recetas, derivaciones, reconsultas—, y el tiempo corre de
- * izquierda a derecha, alineado entre hilos. La regla de agrupación está en
- * `red-clinica.model.ts` y en `docs/adr/ADR-0021-red-clinica-por-episodios.md`.
+ * «What happened to them, problem by problem, and in what order?». Each
+ * thread is a clinical episode —a problem and everything done for it:
+ * encounters, studies, prescriptions, referrals, follow-ups—, and time runs
+ * left to right, aligned across threads. The grouping rule is in
+ * `red-clinica.model.ts` and `docs/adr/ADR-0021-red-clinica-por-episodios.md`.
  *
- * ## Divulgación progresiva
+ * ## Progressive disclosure
  *
- * 1. Plegado, cada episodio es una franja-resumen: nombre, estado, fechas,
- *    conteos y los hitos clave sobre el eje.
- * 2. Desplegado, sus registros en el tiempo, con los vínculos del contrato.
- * 3. El detalle (observaciones, notas, planes, documentos) agrupado tras un
- *    «+N» por momento; los diagnósticos descartados, plegados en un marcador.
+ * 1. Collapsed, each episode is a summary strip: name, status, dates, counts
+ *    and the key milestones on the axis.
+ * 2. Expanded, its records over time, with the contract's links.
+ * 3. The detail (observations, notes, plans, documents) grouped behind a «+N»
+ *    per moment; ruled-out diagnoses, folded into a marker.
  *
- * ## Puntos de extensión
+ * ## Extension points
  *
- * - `elegido` emite el nodo que se eligió, con el id del registro real.
- * - `resaltados`: ids de registros a resaltar (alertas). Vacío, sin efecto.
- * - `visibles`: ids de registros a dibujar (filtro). Vacío, sin efecto.
+ * - `elegido` emits the chosen node, with the real record's id.
+ * - `resaltados`: ids of records to highlight (alerts). Empty, no effect.
+ * - `visibles`: ids of records to draw (filter). Empty, no effect.
  *
- * ## Accesibilidad
+ * ## Accessibility
  *
- * Cada episodio es un botón con `aria-expanded` cuyo nombre resume el
- * episodio, seguido de sus registros en orden cronológico. Las líneas son
- * decorativas: lo que dicen está en el nombre de cada nodo, y un vínculo
- * inferido lo dice con esa palabra.
+ * Each episode is a button with `aria-expanded` whose name summarises the
+ * episode, followed by its records in chronological order. The lines are
+ * decorative: what they say is in each node's name, and an inferred link says
+ * so with that word.
  */
 @Component({
   selector: 'app-recorrido-clinico',
-  imports: [AppButton, DatePipe, NavIcon, NgTemplateOutlet],
+  imports: [AppButton, DatePipe, NavIcon, NgTemplateOutlet, RedCabecera, RedLeyenda, RedNodo],
   templateUrl: './recorrido-clinico.html',
-  styleUrl: './recorrido-clinico.css',
+  styleUrls: ['./red-clinica-tonos.css', './recorrido-clinico.css', './red-clinica-trazos.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecorridoClinico {
@@ -121,25 +99,25 @@ export class RecorridoClinico {
 
   readonly registros = input.required<readonly RegistroDeLaRed[]>();
   readonly vinculos = input.required<readonly VinculoDeLaRed[]>();
-  /** Ids de registros a resaltar. Vacío: ninguno. */
+  /** Ids of records to highlight. Empty: none. */
   readonly resaltados = input<readonly string[]>([]);
-  /** Ids de registros a dibujar. Vacío: todos. */
+  /** Ids of records to draw. Empty: all. */
   readonly visibles = input<readonly string[]>([]);
-  /** El registro cuyo detalle está abierto (en el panel): se marca en la red. */
+  /** The record whose detail is open (in the panel): it is marked on the network. */
   readonly seleccionado = input<string | null>(null);
 
-  /** Se pidió el detalle de un registro (el que ya abre el expediente). */
+  /** A record's detail was requested (the one the chart already opens). */
   readonly abrir = output<string>();
-  /** Se eligió un nodo: para el panel de detalle. */
+  /** A node was chosen: for the detail panel. */
   readonly elegido = output<NodoElegido>();
 
   protected readonly medidas = MEDIDAS_DE_LA_RED;
-  protected readonly aspecto = ASPECTO_DE_LA_CLASE;
   protected readonly distanciaDelTronco = DISTANCIA_DEL_TRONCO;
+  protected readonly contextoDe = contextoDe;
 
-  /** Los episodios desplegados. Arranca todo plegado: nivel 1. */
+  /** The expanded episodes. Everything starts collapsed: level 1. */
   protected readonly desplegados = signal<ReadonlySet<string>>(new Set());
-  /** Descartados abiertos (por id) y grupos de detalle abiertos (por clave). */
+  /** Open ruled-out diagnoses (by id) and open detail groups (by key). */
   protected readonly abiertos = signal<ReadonlySet<string>>(new Set());
 
   protected readonly red = computed(() => agruparEnEpisodios(this.registros(), this.vinculos()));
@@ -163,19 +141,9 @@ export class RecorridoClinico {
   );
   protected readonly nadaDesplegado = computed(() => this.plano().hilos.every((h) => !h.desplegado));
 
-  /** Los motivos que hay en pantalla, para la leyenda. */
-  protected readonly leyenda = computed(() => {
-    const presentes = new Set(this.plano().aristas.map((a) => a.motivo));
-    return ORDEN_DE_LA_LEYENDA.filter((m) => presentes.has(m)).map((motivo) => ({
-      motivo,
-      nombre: NOMBRE_DEL_MOTIVO[motivo],
-      familia: motivo.startsWith('inferido-') ? 'inferido' : motivo === 'registrado-en' || motivo === 'derivado-desde' ? 'tronco' : 'enlace',
-    }));
-  });
-
   /*
-   * El nodo bajo el puntero y el que tiene el foco, por separado: sacar el
-   * puntero no apaga el camino del que sigue enfocado con el teclado.
+   * The node under the pointer and the focused one, apart: moving the pointer
+   * away does not switch off the path of the one still focused by keyboard.
    */
   private readonly bajoElPuntero = signal<string | null>(null);
   private readonly conElFoco = signal<string | null>(null);
@@ -188,8 +156,9 @@ export class RecorridoClinico {
 
   private readonly lienzo = viewChild<ElementRef<HTMLElement>>('lienzo');
   private readonly anfitrion = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly desplazamiento = new DesplazamientoDelLienzo(() => this.lienzo()?.nativeElement);
 
-  /** Pantalla angosta (`--bp-sm`, 650 px): la red se lee en vertical. */
+  /** Narrow screen (`--bp-sm`, 650 px): the network reads vertically. */
   protected readonly angosto = signal(false);
 
   constructor() {
@@ -204,115 +173,43 @@ export class RecorridoClinico {
       this.destroyRef.onDestroy(() => consulta.removeEventListener('change', alCambiar));
     });
 
-    // Lo más reciente es lo que se viene a mirar: el lienzo abre por el final,
-    // cada vez que se CREA un lienzo, y no cuando se despliega un episodio.
+    // The most recent is what people come to see: the canvas opens at the end
+    // every time a canvas is CREATED, and not when an episode is expanded.
     effect(() => {
       const lienzo = this.lienzo()?.nativeElement;
       if (lienzo === undefined) {
         return;
       }
-      untracked(() => afterNextRender(() => this.fijarAlFinal(lienzo), { injector: this.injector }));
+      untracked(() => afterNextRender(() => this.desplazamiento.fijarAlFinal(lienzo), { injector: this.injector }));
     });
-    this.destroyRef.onDestroy(() => this.soltarLienzo?.());
+    this.destroyRef.onDestroy(() => this.desplazamiento.soltar());
   }
 
-  private soltarLienzo: (() => void) | null = null;
-
-  /**
-   * Si el lienzo sigue pegado al final. Lo suelta quien se desplaza, y
-   * también desplegar un episodio: el lienzo va a sus registros.
-   */
-  private pegadoAlFinal = true;
-
-  /**
-   * Abre por el final y se queda ahí mientras quien mira no se mueva: después
-   * del primer render el lienzo todavía cambia de ancho (barra de
-   * desplazamiento, fuentes), y la última columna quedaba cortada.
-   */
-  private fijarAlFinal(lienzo: HTMLElement): void {
-    this.soltarLienzo?.();
-    this.soltarLienzo = null;
-    if (typeof ResizeObserver !== 'function') {
-      this.irA('final', false);
-      return;
-    }
-    this.pegadoAlFinal = true;
-    let propio = lienzo.scrollLeft;
-    const pegar = (): void => {
-      this.irA('final', false);
-      propio = lienzo.scrollLeft;
-    };
-    const observador = new ResizeObserver(() => {
-      if (this.pegadoAlFinal) {
-        pegar();
-      }
-    });
-    observador.observe(lienzo);
-    if (lienzo.firstElementChild !== null) {
-      observador.observe(lienzo.firstElementChild);
-    }
-    const alDesplazar = (): void => {
-      if (Math.abs(lienzo.scrollLeft - propio) <= 1) {
-        return;
-      }
-      if (lienzo.scrollLeft < lienzo.scrollWidth - lienzo.clientWidth - 2) {
-        this.pegadoAlFinal = false;
-      }
-    };
-    lienzo.addEventListener('scroll', alDesplazar, { passive: true });
-    pegar();
-    this.soltarLienzo = () => {
-      observador.disconnect();
-      lienzo.removeEventListener('scroll', alDesplazar);
-    };
+  protected irA(extremo: 'inicio' | 'final'): void {
+    this.desplazamiento.irA(extremo);
   }
 
-  protected irA(extremo: 'inicio' | 'final', suave = true): void {
-    const lienzo = this.lienzo()?.nativeElement;
-    if (lienzo === undefined) {
-      return;
-    }
-    const destino = extremo === 'inicio' ? 0 : lienzo.scrollWidth;
-    if (typeof lienzo.scrollTo === 'function') {
-      const reducir =
-        typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-      lienzo.scrollTo({ left: destino, behavior: suave && !reducir ? 'smooth' : 'auto' });
-    } else {
-      lienzo.scrollLeft = destino;
-    }
-  }
-
-  /* -- Plegar y desplegar ------------------------------------------------- */
+  /* -- Fold and unfold ----------------------------------------------------- */
 
   protected alternarEpisodio(id: string): void {
     const desplegar = !this.desplegados().has(id);
     this.desplegados.update((actual) => (desplegar ? new Set([...actual, id]) : new Set([...actual].filter((e) => e !== id))));
     if (desplegar) {
-      // Desplegado, el episodio puede tener sus registros a la izquierda de lo
-      // que se ve (empezó hace un año): el lienzo va a su primer momento, para
-      // no mostrar un hilo abierto y vacío.
-      this.pegadoAlFinal = false;
+      // Expanded, the episode may have its records left of what is in view (it
+      // started a year ago): the canvas goes to its first moment, so as not to
+      // show an open, empty thread.
+      this.desplazamiento.pegadoAlFinal = false;
       afterNextRender(() => this.irAlEpisodio(id), { injector: this.injector });
     }
   }
 
   private irAlEpisodio(id: string): void {
-    const lienzo = this.lienzo()?.nativeElement;
     const xs = this.plano()
       .nodos.filter((n) => n.episodio === id)
       .map((n) => n.x);
-    if (lienzo === undefined || xs.length === 0 || typeof lienzo.scrollTo !== 'function') {
-      return;
+    if (xs.length > 0) {
+      this.desplazamiento.mostrarTramo(Math.min(...xs) - 2 * this.distanciaDelTronco, Math.max(...xs) + this.medidas.anchoAncha);
     }
-    const primero = Math.min(...xs) - 2 * this.distanciaDelTronco;
-    const ultimo = Math.max(...xs) + this.medidas.anchoAncha;
-    // Si ya se ve entero, no se mueve: un salto sin motivo desorienta.
-    if (primero >= lienzo.scrollLeft && ultimo <= lienzo.scrollLeft + lienzo.clientWidth) {
-      return;
-    }
-    const reducir =
-      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    lienzo.scrollTo({ left: Math.max(0, primero), behavior: reducir ? 'auto' : 'smooth' });
   }
 
   protected desplegarTodo(): void {
@@ -328,7 +225,7 @@ export class RecorridoClinico {
     this.abiertos.update((actual) => (abrir ? new Set([...actual, clave]) : new Set([...actual].filter((c) => c !== clave))));
   }
 
-  /** Qué está desplegado y abierto, y dónde está el lienzo: para volver ahí (al salir del recorrido guiado). */
+  /** What is expanded and open, and where the canvas is: to come back there (on leaving the guided tour). */
   plegado(): PlegadoDeLaRed {
     return { desplegados: this.desplegados(), abiertos: this.abiertos(), desplazamiento: this.lienzo()?.nativeElement.scrollLeft ?? null };
   }
@@ -338,12 +235,12 @@ export class RecorridoClinico {
     this.abiertos.set(previo.abiertos);
     this.bajoElPuntero.set(null);
     this.conElFoco.set(null);
-    this.pegadoAlFinal = false;
+    this.desplazamiento.pegadoAlFinal = false;
     const izquierda = previo.desplazamiento;
     if (izquierda !== null) afterNextRender(() => this.lienzo()?.nativeElement.scrollTo?.({ left: izquierda }), { injector: this.injector });
   }
 
-  /** Un registro abre su detalle; los controles abren o cierran lo suyo. */
+  /** A record opens its detail; the controls open or close their own. */
   protected activar(nodo: NodoDeLaRed): void {
     if (nodo.forma === 'grupo' && nodo.grupo !== undefined) {
       this.alternarAbierto(nodo.grupo.clave, nodo.grupo.accion === 'expandir');
@@ -365,12 +262,13 @@ export class RecorridoClinico {
     }
   }
 
-  /* -- Ir a un registro (desde el panel o una alerta) ---------------------- */
+  /* -- Go to a record (from the panel or an alert) -------------------------- */
 
   /**
-   * Lleva la red a un registro: despliega su episodio, abre el descartado o el
-   * «+N» que lo esconde, lo trae a la vista y lo marca enfocado (`foco`: también
-   * el del teclado, al cerrar el panel). `false` si no está o se filtró.
+   * Takes the network to a record: expands its episode, opens the ruled-out
+   * marker or the «+N» hiding it, brings it into view and marks it focused
+   * (`foco`: also the keyboard focus, on closing the panel). `false` if it is
+   * not there or was filtered out.
    */
   irANodo(id: string, opciones: { readonly foco?: boolean } = {}): boolean {
     const [registro, episodio, visibles] = [this.porId().get(id), this.red().episodioDe.get(id), this.conjuntoVisible()];
@@ -379,14 +277,13 @@ export class RecorridoClinico {
     if (registro.clase === 'diagnostico' && registro.certeza === 'descartado') this.alternarAbierto(id, true);
     const grupo = this.plano().nodos.find((n) => n.grupo?.accion === 'expandir' && n.grupo.ocultos.some((r) => r.id === id));
     if (grupo?.grupo !== undefined) this.alternarAbierto(grupo.grupo.clave, true);
-    this.pegadoAlFinal = false;
+    this.desplazamiento.pegadoAlFinal = false;
     this.conElFoco.set(id);
     afterNextRender(
       () => {
         const nodos = this.anfitrion.nativeElement.querySelectorAll<HTMLElement>('[data-testid="recorrido-nodo"]');
         const boton = Array.from(nodos).find((b) => b.dataset['id'] === id);
-        const reducir = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-        boton?.scrollIntoView?.({ block: 'nearest', inline: 'center', behavior: reducir ? 'auto' : 'smooth' });
+        boton?.scrollIntoView?.({ block: 'nearest', inline: 'center', behavior: reducirMovimiento() ? 'auto' : 'smooth' });
         if (opciones.foco === true) boton?.focus({ preventScroll: true });
       },
       { injector: this.injector },
@@ -394,9 +291,9 @@ export class RecorridoClinico {
     return true;
   }
 
-  /* -- Camino iluminado ---------------------------------------------------- */
+  /* -- Lit path ------------------------------------------------------------- */
 
-  /** Sólo los registros iluminan camino: un control no es un registro. */
+  /** Only records light up a path: a control is not a record. */
   protected apuntar(nodo: NodoDeLaRed | null): void {
     this.bajoElPuntero.set(nodo === null || nodo.forma === 'grupo' || nodo.forma === 'plegar' ? null : nodo.id);
   }
@@ -428,45 +325,9 @@ export class RecorridoClinico {
     return resaltados.size > 0 && [...episodio.miembros, ...episodio.compartidos].some((id) => resaltados.has(id));
   }
 
-  /* -- Textos -------------------------------------------------------------- */
+  /* -- Texts ---------------------------------------------------------------- */
 
-  /** Los conteos del resumen, en palabras cortas. */
-  protected conteosDe(episodio: EpisodioClinico): readonly string[] {
-    const orden: readonly [ClaseDeLaRed, string, string][] = [
-      ['atencion', 'atención', 'atenciones'],
-      ['cita', 'cita', 'citas'],
-      ['estudio', 'estudio', 'estudios'],
-      ['medicacion', 'receta', 'recetas'],
-      ['derivacion', 'derivación', 'derivaciones'],
-      ['internacion', 'internación', 'internaciones'],
-      ['procedimiento', 'procedimiento', 'procedimientos'],
-    ];
-    return orden
-      .filter(([clase]) => (episodio.conteos[clase] ?? 0) > 0)
-      .map(([clase, uno, varios]) => {
-        const n = episodio.conteos[clase] ?? 0;
-        return `${n} ${n === 1 ? uno : varios}`;
-      });
-  }
-
-  /** El nombre accesible del botón de un episodio: el resumen entero. */
-  protected nombreDelEpisodio(hilo: HiloDeLaRed): string {
-    const e = hilo.episodio;
-    const fecha = (f: Date | null): string =>
-      f === null ? '' : f.toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' });
-    const rango = e.desde === null ? '' : e.hasta === null || e.hasta.getTime() === e.desde.getTime() ? `el ${fecha(e.desde)}` : `del ${fecha(e.desde)} al ${fecha(e.hasta)}`;
-    const partes = [
-      `Episodio: ${e.nombre}`,
-      e.estado,
-      rango,
-      this.conteosDe(e).join(', '),
-      e.descartados > 0 ? `${e.descartados} diagnóstico${e.descartados === 1 ? '' : 's'} descartado${e.descartados === 1 ? '' : 's'}` : '',
-      e.compartidos.length > 0 ? `${e.compartidos.length} registro${e.compartidos.length === 1 ? '' : 's'} compartido${e.compartidos.length === 1 ? '' : 's'} con otro episodio` : '',
-    ];
-    return partes.filter((p) => p !== '').join('. ');
-  }
-
-  /** Los otros episodios a los que pertenece un registro dibujado acá. */
+  /** The other episodes a record drawn here belongs to. */
   protected compartidoCon(nodo: NodoDeLaRed): readonly string[] {
     if (nodo.registro === undefined) return [];
     const episodios = this.episodioPorId();
@@ -476,7 +337,7 @@ export class RecorridoClinico {
       .filter((n) => n !== '');
   }
 
-  /** Las relaciones del nodo en palabras: lo que en vertical reemplaza a las líneas. */
+  /** The node's relations in words: what replaces the lines in the vertical layout. */
   protected readonly relaciones = computed(() => {
     const porId = this.porId();
     const vinculos = this.vinculos();
@@ -487,84 +348,23 @@ export class RecorridoClinico {
     return mapa;
   });
 
-  /** El nombre accesible de cada nodo: clase, registro, estado, fecha y vínculos. */
-  protected readonly nombres = computed(() => {
-    const nombres = new Map<string, string>();
-    const relaciones = this.relaciones();
-    for (const nodo of this.plano().nodos) {
-      if (nodo.forma === 'grupo' && nodo.grupo !== undefined) {
-        nombres.set(
-          nodo.id,
-          nodo.grupo.accion === 'expandir'
-            ? `Mostrar ${nodo.grupo.ocultos.length} registros de detalle: ${nodo.grupo.ocultos.map((r) => r.titulo).join(', ')}`
-            : 'Agrupar el detalle',
-        );
-        continue;
-      }
-      const r = nodo.registro!;
-      if (nodo.forma === 'descartado') {
-        nombres.set(nodo.id, `Diagnóstico descartado: ${r.titulo}. Mostrar`);
-        continue;
-      }
-      if (nodo.forma === 'plegar') {
-        nombres.set(nodo.id, `Ocultar el diagnóstico descartado ${r.titulo}`);
-        continue;
-      }
-      const otros = this.compartidoCon(nodo);
-      const partes = [
-        `${this.aspecto[r.clase].singular}: ${r.titulo}`,
-        r.detalle,
-        r.estado,
-        r.cuando === null
-          ? ''
-          : `fecha ${r.cuando.toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' })}`,
-        ...(relaciones.get(r.id) ?? []),
-        otros.length > 0 ? `también en el episodio ${otros.join(' y ')}` : '',
-        this.resaltado(r.id) ? 'resaltado' : '',
-      ];
-      nombres.set(nodo.id, partes.filter((p) => p !== '').join('. '));
-    }
-    return nombres;
-  });
+  protected readonly nombres = computed(() =>
+    nombresDeLosNodos(this.plano(), this.relaciones(), (nodo) => this.compartidoCon(nodo), (id) => this.resaltado(id)),
+  );
 
-  /** Qué es la columna, en palabras: cabecera visible. */
-  protected contextoDe(columna: ColumnaDeLaRed): string {
-    return columna.contexto === 'atencion' ? 'Atención' : columna.contexto === 'dia' ? 'Registros del día' : 'Sin atención';
-  }
-
-  /** La fecha propia del registro cuando no es la de su columna. */
-  protected fechaPropia(
-    nodo: NodoDeLaRed,
-    columna: ColumnaDeLaRed | undefined,
-  ): { readonly rotulo: string; readonly fecha: Date; readonly formato: string } | null {
-    const r = nodo.registro;
-    if (nodo.forma !== 'tarjeta' || r === undefined || r.cuando === null || columna === undefined || columna.fecha === null) return null;
-    if (r.cuando.toDateString() === columna.fecha.toDateString()) return null;
-    const rotulo = r.clase === 'diagnostico' ? 'Inicio' : r.clase === 'medicacion' ? 'Desde' : 'Del';
-    const dias = Math.abs(r.cuando.getTime() - columna.fecha.getTime()) / 86_400_000;
-    const formato = this.angosto()
-      ? 'd MMM y'
-      : r.cuando.getFullYear() === columna.fecha.getFullYear()
-        ? 'd MMM'
-        : dias < 90
-          ? 'd MMM y'
-          : 'MMM y';
-    return { rotulo, fecha: r.cuando, formato };
-  }
-
-  protected iconoDe(clase: ClaseDeLaRed): NavIconName {
-    return this.aspecto[clase].icono;
+  protected fechaPropia(nodo: NodoDeLaRed, columna: ColumnaDeLaRed | undefined): FechaPropia | null {
+    return fechaPropia(nodo, columna, this.angosto());
   }
 
   protected tonoDe(nodo: NodoDeLaRed): string {
-    return nodo.forma === 'grupo' ? 'neutral' : this.aspecto[nodo.registro!.clase].tono;
+    return nodo.forma === 'grupo' ? 'neutral' : ASPECTO_DE_LA_CLASE[nodo.registro!.clase].tono;
   }
 
-  /* -- La versión vertical ---------------------------------------------- */
+  /* -- The vertical layout -------------------------------------------------- */
 
   /**
-   * Los momentos de un episodio desplegado, lo más reciente primero, con sus
-   * nodos: el mismo plano que el lienzo, leído de otra manera.
+   * The moments of an expanded episode, most recent first, with their nodes:
+   * the same plane as the canvas, read another way.
    */
   protected momentosDe(hilo: HiloDeLaRed): readonly { readonly columna: ColumnaDeLaRed; readonly nodos: readonly NodoDeLaRed[] }[] {
     const plano = this.plano();
@@ -579,18 +379,10 @@ export class RecorridoClinico {
       .map(([c, nodos]) => ({ columna: plano.columnas[c], nodos: [...nodos].sort((a, b) => a.y - b.y) }));
   }
 
-  protected intervaloDelEpisodio(e: EpisodioClinico): string {
-    return e.desde === null || e.hasta === null ? '' : describirIntervalo(e.desde, e.hasta);
-  }
-
   protected nodosDelHilo(hilo: HiloDeLaRed): readonly NodoDeLaRed[] {
     return this.plano()
       .nodos.filter((n) => n.episodio === hilo.episodio.id)
       .sort((a, b) => a.columna - b.columna || a.y - b.y);
-  }
-
-  protected titulosDe(registros: readonly RegistroDeLaRed[]): string {
-    return registros.map((r) => r.titulo).join(', ');
   }
 
   protected tituloDelHito(titulos: readonly string[]): string {

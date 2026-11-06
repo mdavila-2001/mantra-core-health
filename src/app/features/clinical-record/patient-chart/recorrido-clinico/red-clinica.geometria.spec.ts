@@ -1,20 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  agruparEnEpisodios,
-  inferirVinculos,
-  type RegistroDeLaRed,
-  type VinculoDeLaRed,
-} from './red-clinica.model';
+import { type RegistroDeLaRed, type VinculoDeLaRed } from './red-clinica.model';
+import { agruparEnEpisodios } from './red-clinica.episodios';
+import { inferirVinculos } from './red-clinica.vinculos';
+import { ubicarRed } from './red-clinica.geometria';
 import {
   claveDeGrupo,
   DISTANCIA_DEL_TRONCO,
   MEDIDAS_DE_LA_RED,
-  ubicarRed,
   type AristaDeLaRed,
   type EstadoDeLaRed,
   type PlanoDeLaRed,
-} from './red-clinica.geometria';
+} from './red-clinica.geometria.types';
 
 // Noon, so the clinical day (La Paz, `dia-clinico.ts`) is the same whatever the machine's zone.
 const d = (anio: number, mes: number, dia = 10): Date => new Date(anio, mes - 1, dia, 12);

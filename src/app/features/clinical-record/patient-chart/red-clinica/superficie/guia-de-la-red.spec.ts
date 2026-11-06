@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Condition, Encounter, MedicationRequest } from '../../../../../core/data-access/clinical/clinical.types';
-import { agruparEnEpisodios, type RegistroDeLaRed, type VinculoDeLaRed } from '../../recorrido-clinico/red-clinica.model';
+import { type RegistroDeLaRed, type VinculoDeLaRed } from '../../recorrido-clinico/red-clinica.model';
+import { agruparEnEpisodios } from '../../recorrido-clinico/red-clinica.episodios';
 import { episodioPropuesto, guiaDelExpediente, idsDelEpisodio, NINGUNO_VISIBLE, visiblesDelPaso } from './guia-de-la-red';
 
 const registro = (id: string, clase: RegistroDeLaRed['clase'], extra: Partial<RegistroDeLaRed> = {}): RegistroDeLaRed => ({

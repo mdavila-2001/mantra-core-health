@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  construirRed,
-  estadoDeLaDerivacion,
-  type FilaPresentada,
-  type FuenteDeLaRed,
-  type Rotulador,
-} from './red-clinica.adaptador';
+import { construirRed, estadoDeLaDerivacion } from './red-clinica.adaptador';
+import { type FilaPresentada, type FuenteDeLaRed, type Rotulador } from './red-clinica.fuente';
 
 /**
  * Lo que más importa de la red no es cómo se ve sino que no mienta: cada
