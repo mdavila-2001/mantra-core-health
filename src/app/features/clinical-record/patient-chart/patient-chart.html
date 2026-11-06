@@ -133,64 +133,10 @@
           </p>
         }
         <!-- The network's own readings fail on their own: it is drawn with what arrived and says what is missing. -->
-        <app-red-clinica-lecturas-aviso [faltas]="faltasDeLaRed()" (reintentar)="releerLaRed()" />
+        <app-red-clinica-lecturas-aviso [faltas]="redDelExpediente.faltas()" (reintentar)="redDelExpediente.cargar()" />
         <app-view-state-host [state]="estadoDelRecorrido()" (retry)="recargar()">
-          <!-- Una sola superficie a lo ancho: la barra de filtros, las alertas y
-               la red; con un nodo abierto (≥ 780 px), el panel a su lado en la
-               misma rejilla. Sin nodo abierto no hay columna: la red se lleva
-               el ancho entero. Debajo de 780 px el panel es una hoja. -->
-          <div
-            class="expediente__red"
-            [class.expediente__red--con-panel]="panelAlLado()"
-            data-testid="expediente-red"
-          >
-            <!-- Filtros, alertas, recorrido paso a paso y red: una sola
-                 superficie (regla 6), en `red-clinica/superficie/`. -->
-            <app-red-clinica-superficie
-              class="expediente__red-mapa"
-              [registros]="registrosDeLaRed()"
-              [vinculos]="vinculosDeLaRed()"
-              [nodos]="nodosDeLaRed()"
-              [visibles]="visiblesDeLaRed()"
-              [cuantosVisibles]="cuantosVisiblesEnLaRed()"
-              [sinResultado]="filtrosDeLaRedSinResultado()"
-              [alertas]="alertasDeLaRed()"
-              [alertasListas]="faltasDeLaRed().listas"
-              [alertasComprobadas]="faltasDeLaRed().comprobadas"
-              [seleccionado]="nodoAbiertoId()"
-              [guia]="guiaDeLaRed()"
-              [(filtro)]="filtroDeLaRed"
-              (elegido)="elegirEnLaRed($event)"
-              (nodoElegido)="abrirNodoDeLaRed($event)"
-              (limpiar)="limpiarFiltrosDeLaRed()"
-            />
-            <app-red-clinica-panel
-              class="expediente__red-panel"
-              [nodo]="nodoAbierto()"
-              [nodos]="nodosDeLaRed()"
-              [aristas]="aristasDeLaRed()"
-              [ahora]="ahoraDeLaRed()"
-              [devolverFoco]="false"
-              [pacienteId]="profileId()"
-              (informeLeido)="alLeerInforme($event)"
-              (nodoElegido)="abrirNodoDeLaRed($event)"
-              (cerrado)="cerrarPanelDeLaRed()"
-            >
-              @if (filaDelNodoAbierto()) {
-                <button
-                  app-button
-                  panel-acciones
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  data-testid="red-panel-registro-completo"
-                  (clicked)="verRegistroCompleto()"
-                >
-                  Ver el registro completo
-                </button>
-              }
-            </app-red-clinica-panel>
-          </div>
+          <!-- One full-width surface; with a node open (≥ 780 px), the panel next to it. -->
+          <div app-red-clinica-del-expediente class="expediente__red" (verDetalle)="verRegistroDeLaRed($event)"></div>
         </app-view-state-host>
       } @else {
       <app-tabs [(selectedIndex)]="activeTab">

@@ -34,38 +34,6 @@
   min-inline-size: 0;
 }
 
-/* -- Recorrido: red, filtros, alertas y panel ------------------------------
-   Sin nodo abierto, una sola columna a lo ancho (regla 6: nunca una columna
-   vacía al lado). Con nodo abierto y ≥ 780 px, rejilla mapa | panel; el panel
-   se pega arriba al desplazar (lo hace su propio CSS). */
-.expediente__red {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-4);
-  align-items: start;
-}
-
-.expediente__red--con-panel {
-  grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
-}
-
-.expediente__red-mapa {
-  display: grid;
-  gap: var(--sp-4);
-  min-inline-size: 0;
-}
-
-/* Sin nodo abierto el panel no ocupa celda; abierto como hoja es un
-   `<dialog>` modal y tampoco. */
-.expediente__red:not(.expediente__red--con-panel) .expediente__red-panel {
-  display: contents;
-}
-
-.expediente__red--con-panel .expediente__red-panel {
-  position: sticky;
-  inset-block-start: calc(var(--header-height, 4rem) + var(--sp-4));
-}
-
 /* Registro arriba y su contexto debajo, en la misma celda: la dosis es parte
    del medicamento, no una columna aparte. */
 .expediente__principal {
