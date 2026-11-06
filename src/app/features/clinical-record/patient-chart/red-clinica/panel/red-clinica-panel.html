@@ -31,8 +31,8 @@
   <header class="panel__cabecera">
     <div class="panel__encabezado">
       <p class="panel__tipo">
-        <app-nav-icon [name]="aspecto[n.tipo].icono" />
-        {{ aspecto[n.tipo].singular }}
+        <app-nav-icon [name]="aspectoDe(n.tipo).icono" />
+        {{ aspectoDe(n.tipo).singular }}
       </p>
       <h2 #titulo class="panel__titulo" tabindex="-1" [id]="tituloId">{{ n.titulo }}</h2>
       @if (n.subtitulo) {
@@ -445,7 +445,7 @@
       data-testid="red-panel-vinculo"
       (click)="elegir(v.otroId)"
     >
-      <span class="panel__vinculo-icono" aria-hidden="true"><app-nav-icon [name]="aspecto[otro.tipo].icono" /></span>
+      <span class="panel__vinculo-icono" aria-hidden="true"><app-nav-icon [name]="aspectoDe(otro.tipo).icono" /></span>
       <span class="panel__vinculo-texto">
         <span class="panel__vinculo-relacion">
           {{ v.sentido === 'saliente' ? '→' : '←' }} {{ v.relacion }}
@@ -453,7 +453,7 @@
             <span class="panel__inferido">inferido</span>
           }
         </span>
-        <span class="panel__vinculo-titulo">{{ aspecto[otro.tipo].singular }}: {{ otro.titulo }}</span>
+        <span class="panel__vinculo-titulo">{{ aspectoDe(otro.tipo).singular }}: {{ otro.titulo }}</span>
         @if (otro.cuando) {
           <span class="panel__tenue">{{ otro.cuando | date: 'd MMM y' }}</span>
         }

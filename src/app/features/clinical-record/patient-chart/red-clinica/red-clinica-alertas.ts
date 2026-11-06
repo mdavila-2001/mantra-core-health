@@ -134,13 +134,16 @@ export function diasEntre(desde: Date, hasta: Date): number {
   return Math.max(0, Math.floor((hasta.getTime() - desde.getTime()) / DIA_MS));
 }
 
-/** «hoy», «hace 1 día», «hace 12 días», «hace 3 meses» (desde 60 días). */
+/**
+ * «hoy», «hace 1 día», «hace 12 días»; desde 60 días, «hace 3 meses (94 días)»:
+ * los meses se leen rápido y los días son el dato que se compara con un plazo.
+ */
 export function antiguedad(dias: number): string {
   if (dias === 0) return 'hoy';
   if (dias === 1) return 'hace 1 día';
   if (dias < 60) return `hace ${dias} días`;
   const meses = Math.floor(dias / 30);
-  return `hace ${meses} meses`;
+  return `hace ${meses} meses (${dias} días)`;
 }
 
 function prioridadPorPlazo(dias: number, plazo: number): PrioridadDeAlerta {

@@ -66,7 +66,7 @@ describe('utilidades', () => {
     expect(antiguedad(0)).toBe('hoy');
     expect(antiguedad(1)).toBe('hace 1 día');
     expect(antiguedad(45)).toBe('hace 45 días');
-    expect(antiguedad(95)).toBe('hace 3 meses');
+    expect(antiguedad(95)).toBe('hace 3 meses (95 días)');
   });
 });
 

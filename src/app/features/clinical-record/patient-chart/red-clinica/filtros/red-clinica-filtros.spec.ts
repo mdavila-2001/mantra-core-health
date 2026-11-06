@@ -112,8 +112,8 @@ describe('RedClinicaFiltros', () => {
     ]);
     expect(cmp.opcionesDeProfesional().map((o) => o.label)).toEqual([
       'Todos los profesionales',
-      'Dra. Ana Rojas',
       'Dr. Luis Méndez',
+      'Dra. Ana Rojas',
     ]);
     expect(cmp.opcionesDeHilo()[0].label).toBe('Toda la historia');
     expect(cmp.opcionesDeHilo()[1]).toEqual(

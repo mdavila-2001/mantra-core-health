@@ -104,7 +104,7 @@ describe('RedClinicaPanel', () => {
     expect(texto()).toContain('Estudio');
     expect(texto()).toContain('Dra. Ana Rojas');
     expect(texto()).toContain('Resultado liberado');
-    expect(texto()).toContain('hace 94 días');
+    expect(texto()).toContain('hace 3 meses (94 días)');
   });
 
   it('al abrir, el foco va al título; Escape cierra y lo devuelve a quien lo abrió', async () => {
@@ -147,7 +147,7 @@ describe('RedClinicaPanel', () => {
 
     it('sin resultado liberado lo dice, con la antigüedad del pedido', async () => {
       await abrir('e3');
-      expect(el().querySelector('[data-testid="red-panel-sin-resultado"]')?.textContent).toContain('pedido hace 65 días');
+      expect(el().querySelector('[data-testid="red-panel-sin-resultado"]')?.textContent).toContain('pedido hace 2 meses (65 días)');
       expect(el().querySelector('[data-testid="red-panel-valor"]')).toBeNull();
     });
 
@@ -172,13 +172,14 @@ describe('RedClinicaPanel', () => {
       fixture.detectChanges();
       http
         .expectOne((r) => r.url.endsWith('/common/files/file-mapa/content'))
-        .flush(new Blob([JSON.stringify({ code: 'FORBIDDEN' })], { type: 'application/json' }), {
+        .flush(new Blob([JSON.stringify({ code: 'FORBIDDEN', message: 'Sin acceso', correlationId: 'req-403' })], { type: 'application/json' }), {
           status: 403,
           statusText: 'Forbidden',
         });
-      fixture.detectChanges();
-      await fixture.whenStable();
-      expect(texto()).toContain('No puede abrir este archivo');
+      await vi.waitFor(() => {
+        fixture.detectChanges();
+        expect(texto()).toContain('No puede abrir este archivo');
+      });
       expect(el().querySelectorAll('[data-testid="red-panel-valor"]')).toHaveLength(3);
     });
 
@@ -189,9 +190,10 @@ describe('RedClinicaPanel', () => {
       http
         .expectOne((r) => r.url.endsWith('/common/files/file-mapa/content'))
         .flush(new Blob(['x']), { status: 500, statusText: 'Error', headers: { 'x-request-id': 'req-123' } });
-      fixture.detectChanges();
-      await fixture.whenStable();
-      expect(texto()).toContain('No se pudo descargar el archivo');
+      await vi.waitFor(() => {
+        fixture.detectChanges();
+        expect(texto()).toContain('No se pudo descargar el archivo');
+      });
       expect(texto()).toContain('Código de soporte');
     });
 
@@ -236,7 +238,7 @@ describe('RedClinicaPanel', () => {
     it('un presuntivo sin decisión dice desde cuándo está abierto', async () => {
       await abrir('dx3');
       expect(texto()).toContain('Presuntivo, en estudio');
-      expect(texto()).toContain('Todavía no se confirmó ni se descartó · registrado hace 65 días');
+      expect(texto()).toContain('Todavía no se confirmó ni se descartó · registrado hace 2 meses (65 días)');
     });
   });
 

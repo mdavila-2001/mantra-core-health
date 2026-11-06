@@ -18,6 +18,7 @@ import {
 } from '@angular/core';
 import type { Subscription } from 'rxjs';
 
+import { parseBlobError } from '../../../../../core/data-access/files/blob-error';
 import { FileDownloader } from '../../../../../core/data-access/files/file-downloader';
 import { FilesClient } from '../../../../../core/data-access/files/files.client';
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
@@ -42,6 +43,8 @@ import {
   LECTURA_DE_VINCULO,
   type ArchivoDeInforme,
   type AristaDeRed,
+  type AspectoDeTipo,
+  type TipoDeNodo,
   type NodoDeRed,
   type TipoDeVinculo,
   type ValorDeResultado,
@@ -166,7 +169,10 @@ export class RedClinicaPanel {
   readonly cerrado = output<void>();
 
   protected readonly tituloId = nextControlId('red-panel-titulo');
-  protected readonly aspecto = ASPECTO_DE_TIPO;
+  /** El nombre y el ícono de un tipo. Método y no índice: el contexto de `ng-template` no está tipado. */
+  protected aspectoDe(tipo: TipoDeNodo): AspectoDeTipo {
+    return ASPECTO_DE_TIPO[tipo];
+  }
 
   private readonly titulo = viewChild<ElementRef<HTMLElement>>('titulo');
   private readonly hoja = viewChild<ElementRef<HTMLDialogElement>>('hoja');
@@ -277,7 +283,9 @@ export class RedClinicaPanel {
   protected abrirArchivo(archivo: ArchivoDeInforme): void {
     this.cancelarDescarga();
     this.descarga.set({ fileId: archivo.fileId, estado: { status: 'loading' } });
-    this.suscripcion = this.files.contentDataUrl(archivo.fileId).subscribe({
+    // `parseBlobError`: con `responseType: 'blob'` el cuerpo del error llega como Blob y,
+    // sin releerlo, un 403 del contrato se vería como un error genérico.
+    this.suscripcion = this.files.contentDataUrl(archivo.fileId).pipe(parseBlobError()).subscribe({
       next: (dataUrl) => {
         this.downloader.trigger(dataUrl, archivo.nombre);
         this.descarga.set({ fileId: archivo.fileId, estado: { status: 'ready', data: null } });
