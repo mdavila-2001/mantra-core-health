@@ -287,6 +287,9 @@ test.describe('Cadenas de integración a 1440', () => {
     await pick(modal, modal.getByRole('combobox', { name: /^Estudio\b/ }), (l) => l.getByRole('option', { name: /Glucosa/ }));
     const kind = modal.getByRole('combobox', { name: /^Tipo\b/ });
     if ((await kind.count()) > 0) await pick(modal, kind, (l) => l.getByRole('option', { name: 'Laboratorio', exact: true }));
+    // Un laboratorio pide la muestra (obligatoria desde 2026-11-06).
+    const muestra = modal.getByRole('combobox', { name: /^Muestra\b/ });
+    if ((await muestra.count()) > 0) await pick(modal, muestra, (l) => l.getByRole('option').first());
     await expect(page.getByTestId('order-collection-point')).toHaveCount(0);
     await shot(page, '30-orden-sin-punto-de-toma', '1440');
     await modal.getByRole('button', { name: 'Pedir estudio' }).click();
