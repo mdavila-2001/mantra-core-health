@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { elegirOpcion } from './support/desplegable';
+
 /**
  * B.1 · registrar un dependiente por CI, en el navegador.
  *
@@ -101,7 +103,7 @@ test.describe('B.1 · dependientes por CI', () => {
     await page.goto('/my-account/dependents');
     const solicitudes = page.getByTestId('dependents-solicitudes');
     await expect(solicitudes).toContainText(TITULAR.nombre);
-    await solicitudes.getByRole('combobox').selectOption({ label: 'Madre' });
+    await elegirOpcion(solicitudes.getByRole('combobox'), 'Madre');
     await page.getByRole('button', { name: `Aceptar la solicitud de ${TITULAR.nombre}` }).click();
     await expect(solicitudes).toHaveCount(0);
 
