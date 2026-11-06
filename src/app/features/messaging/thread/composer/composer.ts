@@ -34,6 +34,7 @@ import { AttachmentPreview } from './attachment-preview/attachment-preview';
 import { ATTACHMENT_ACCEPT, type AttachmentDraft, createDraft, DOCUMENT_ACCEPT, PHOTO_ACCEPT } from './attachment-draft';
 import { AttachmentPreparer } from './attachment-preparer';
 import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
+import { lastOwnText } from './last-own-message';
 
 /**
  * Las respuestas rápidas cuando el hilo está vacío y nadie pasó otras.
@@ -137,10 +138,7 @@ export class Composer {
   protected readonly solapa = signal<'emojis' | 'stickers'>('emojis');
   protected readonly error = signal('');
 
-  /**
-   * Lo elegido para mandar, con su pie de foto. Mientras no esté vacía, la
-   * vista previa tapa el hilo (ver `AttachmentPreview`).
-   */
+  /** Picked files with their captions; while non-empty the preview covers the thread. */
   protected readonly adjuntos = signal<readonly AttachmentDraft[]>([]);
 
   /**
@@ -169,10 +167,7 @@ export class Composer {
    */
   private generacion = 0;
 
-  /**
-   * Si la fila de respuestas rápidas tiene más chips de un lado o del otro:
-   * prende el degradado de ese borde.
-   */
+  /** Whether quick replies overflow on either side (lights that edge's fade). */
   protected readonly chipsDesbordan = signal({ inicio: false, final: false });
 
   /** Si ya se mandó algo en esta conversación: los chips se retiran. */
@@ -228,7 +223,7 @@ export class Composer {
 
     // El modo edición nace en el hilo (`store.editar()`), así que el campo
     // tiene que reaccionar a él y no al revés: es el store el que sabe si el
-    // mensaje todavía está dentro de la ventana de cinco minutos.
+    // mensaje todavía está dentro de la ventana de quince minutos.
     effect(() => {
       const mensaje = this.store.editando();
       untracked(() => {
@@ -302,19 +297,23 @@ export class Composer {
 
   protected alEscribir(valor: string): void {
     this.texto.set(valor);
-    // Editando, lo que se teclea es el texto del mensaje, no un borrador de la
-    // conversación: guardarlo dejaría el composer con esa frase después de
-    // cancelar.
+    // While editing, the text is the message, not a draft of the conversation.
     if (this.editando() === null) {
       this.store.guardarBorrador(valor);
     }
   }
 
-  /** Enter envía; Shift+Enter hace salto de línea. */
+  /** Enter sends, Shift+Enter breaks the line, ↑ on empty edits the last own message. */
   protected alTeclear(evento: KeyboardEvent): void {
     if (evento.key === 'Enter' && !evento.shiftKey) {
       evento.preventDefault();
       this.enviar();
+    }
+    const ultimo = evento.key === 'ArrowUp' && this.texto() === '' && this.editando() === null
+      ? lastOwnText(this.store.enOrden(), this.store.perfil(), Date.now() + this.store.desfase()) : undefined;
+    if (ultimo) {
+      evento.preventDefault();
+      this.store.editar(ultimo);
     }
     if (evento.key === 'Escape') {
       if (this.editando() !== null) {

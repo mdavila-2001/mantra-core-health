@@ -1059,7 +1059,7 @@ export function registrarComunidad(router: MockRouter): void {
   });
 
   /**
-   * Editar un mensaje propio, con la ventana de cinco minutos (F4.5).
+   * Editar un mensaje propio, con la ventana de quince minutos (F4.5).
    *
    * La ventana se comprueba **acá y no sólo en la pantalla**: ocultar el botón
    * no es la regla, es la comodidad. Fuera de la ventana responde 422, que es
@@ -1081,7 +1081,7 @@ export function registrarComunidad(router: MockRouter): void {
       return validation('El mensaje no puede quedar vacío');
     }
     if (Date.now() - new Date(m.sentAt).getTime() > VENTANA_DE_EDICION_MS) {
-      return validation('Pasaron más de 5 minutos: el mensaje ya no se puede editar');
+      return validation('Pasaron más de 15 minutos: el mensaje ya no se puede editar');
     }
     return messageList.actualizar(m.id, { bodyText: texto, isEdited: true });
   });

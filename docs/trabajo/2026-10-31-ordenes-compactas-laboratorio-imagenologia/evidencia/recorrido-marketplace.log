@@ -1,0 +1,28 @@
+[390/claro] mis-servicios: tabs=["Todos","Activos","Inactivos"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1
+[390/claro] lab-ficha /laboratory-directory/33274214-9365-47b2-a526-281efcdee4e6: tabs=["Estudios (252)","Sedes (8)"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1
+[390/claro] lab-ficha segunda pestaña: url=laboratory-directory/33274214-9365-47b2-a526-281efcdee4e6?tab=sedes desbordes=[]
+[390/claro] farmacia-ficha: tabs=["Medicamentos (13)","Sucursales y receta"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1 chat=13
+[390/claro] farmacia pestaña 2: medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} desbordes=[] textarea="66% de la tarjeta"
+[390/claro] errores de consola/red: ninguno
+[390/oscuro] mis-servicios: tabs=["Todos","Activos","Inactivos"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1
+[390/oscuro] lab-ficha /laboratory-directory/33274214-9365-47b2-a526-281efcdee4e6: tabs=["Estudios (252)","Sedes (8)"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1
+[390/oscuro] farmacia-ficha: tabs=["Medicamentos (13)","Sucursales y receta"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1 chat=13
+[390/oscuro] farmacia pestaña 2: medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} desbordes=[] textarea="66% de la tarjeta"
+[390/oscuro] errores de consola/red: ninguno
+[768/claro] mis-servicios: tabs=["Todos","Activos","Inactivos"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1
+[768/claro] lab-ficha /laboratory-directory/33274214-9365-47b2-a526-281efcdee4e6: tabs=["Estudios (252)","Sedes (8)"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1
+[768/claro] lab-ficha segunda pestaña: url=laboratory-directory/33274214-9365-47b2-a526-281efcdee4e6?tab=sedes desbordes=[]
+[768/claro] farmacia-ficha: tabs=["Medicamentos (13)","Sucursales y receta"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1 chat=13
+[768/claro] farmacia pestaña 2: medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} desbordes=[] textarea="83% de la tarjeta"
+[768/claro] errores de consola/red: ninguno
+[1440/claro] mis-servicios: tabs=["Todos","Activos","Inactivos"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1
+[1440/claro] lab-ficha /laboratory-directory/33274214-9365-47b2-a526-281efcdee4e6: tabs=["Estudios (252)","Sedes (8)"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1
+[1440/claro] lab-ficha segunda pestaña: url=laboratory-directory/33274214-9365-47b2-a526-281efcdee4e6?tab=sedes desbordes=[]
+[1440/claro] farmacia-ficha: tabs=["Medicamentos (13)","Sucursales y receta"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1 chat=13
+[1440/claro] farmacia pestaña 2: medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} desbordes=[] textarea="89% de la tarjeta"
+[1440/claro] errores de consola/red: ninguno
+[1440/oscuro] mis-servicios: tabs=["Todos","Activos","Inactivos"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1
+[1440/oscuro] lab-ficha /laboratory-directory/33274214-9365-47b2-a526-281efcdee4e6: tabs=["Estudios (252)","Sedes (8)"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1
+[1440/oscuro] farmacia-ficha: tabs=["Medicamentos (13)","Sucursales y receta"] medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} cards=1 chat=13
+[1440/oscuro] farmacia pestaña 2: medida={"holguraIzq":0,"holguraDer":0,"ocupa":100,"desborde":false} desbordes=[] textarea="89% de la tarjeta"
+[1440/oscuro] errores de consola/red: ninguno

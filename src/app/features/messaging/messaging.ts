@@ -38,6 +38,7 @@ import { SegmentedControl } from '../../shared/components/molecules/segmented-co
 import type { SegmentedOption } from '../../shared/components/molecules/segmented-control/segmented-control.types';
 import { ConversationList, type AccionDeFila } from './conversation-list/conversation-list';
 import { LoadingState } from '../../shared/components/molecules/loading-state/loading-state';
+import { MessagingShortcuts } from './shortcuts/messaging-shortcuts';
 
 /** Los cuatro filtros de la bandeja, en el orden en que se muestran. */
 const FILTROS = ['todos', 'no-leidos', 'favoritos', 'grupos'] as const;
@@ -67,9 +68,7 @@ const ESPERA_DE_BUSQUEDA_MS = 300;
  * cambiar de conversación la lista no se entera, que es lo primero que separa
  * esto de un chat de verdad.
  *
- * El estado no vive acá sino en `ChatStore`, que es de la aplicación y no de la
- * pantalla: el hilo lee del mismo store y por eso no necesita volver a pedir
- * nada para saber con quién está hablando.
+ * El estado vive en `ChatStore`; los atajos de WhatsApp Web, en `MessagingShortcuts`.
  *
  * ## El buscador busca dos cosas
  *
@@ -92,6 +91,7 @@ const ESPERA_DE_BUSQUEDA_MS = 300;
     RouterOutlet,
     SegmentedControl,
     LoadingState,
+    MessagingShortcuts,
   ],
   templateUrl: './messaging.html',
   styleUrl: './messaging.css',
