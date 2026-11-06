@@ -1,0 +1,18 @@
+@if (ayuda()) {
+  <app-content-dialog heading="Atajos de teclado" size="md" data-testid="mensajeria-atajos" (closed)="ayuda.set(false)">
+    <dl class="atajos">
+      @for (atajo of atajos; track atajo.descripcion) {
+        <div class="atajos__fila">
+          <dt>{{ atajo.descripcion }}</dt>
+          <dd><kbd>{{ atajo.teclas.replace('Mod', mod) }}</kbd></dd>
+        </div>
+      }
+      @for (fija of fijas; track fija.descripcion) {
+        <div class="atajos__fila">
+          <dt>{{ fija.descripcion }}</dt>
+          <dd><kbd>{{ fija.teclas }}</kbd></dd>
+        </div>
+      }
+    </dl>
+  </app-content-dialog>
+}

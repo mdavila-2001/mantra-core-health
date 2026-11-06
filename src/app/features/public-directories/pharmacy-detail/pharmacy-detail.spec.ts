@@ -334,7 +334,7 @@ describe('PharmacyDetail', () => {
   }
 
   function abrirSucursales(): ReturnType<typeof vi.spyOn> {
-    return abrirPestana('Sucursales y receta');
+    return abrirPestana('Sucursales');
   }
 
   /** Los nombres de las sucursales, en el orden en que se dibujan. */
@@ -801,7 +801,7 @@ describe('PharmacyDetail', () => {
     expect(tarjetas.length).toBe(1);
     expect(tarjetas[0].getAttribute('data-testid')).toBe('pharmacy-card');
     expect(fixture.nativeElement.querySelectorAll('app-tabs').length).toBe(1);
-    expect(rotulosDeLasPestanas()).toEqual(['Medicamentos (7)', 'Sucursales y receta']);
+    expect(rotulosDeLasPestanas()).toEqual(['Medicamentos (7)', 'Sucursales']);
     // El resumen de la farmacia está dentro de la misma tarjeta, no en otra.
     expect(tarjetas[0].textContent).toContain('Av. Alemana N.º 2100');
     expect(tarjetas[0].textContent).toContain('Genéricos y de marca, entrega en menos de una hora.');
@@ -973,7 +973,7 @@ describe('PharmacyDetail', () => {
 
     expect(fixture.nativeElement.querySelectorAll('app-card').length).toBe(1);
     expect(fixture.nativeElement.querySelector('[data-testid="chatear-con-la-farmacia"]')).toBeNull();
-    expect(rotulosDeLasPestanas()).toEqual(['Medicamentos', 'Sucursales y receta']);
+    expect(rotulosDeLasPestanas()).toEqual(['Medicamentos', 'Sucursales']);
   });
 
   it('no llama a la API cuando la ruta no trae slug', () => {

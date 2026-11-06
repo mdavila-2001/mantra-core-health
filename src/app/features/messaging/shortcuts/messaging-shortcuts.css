@@ -1,0 +1,37 @@
+:host {
+  display: contents;
+}
+
+.atajos {
+  display: grid;
+  gap: var(--e1);
+  margin: 0;
+}
+
+.atajos__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  padding-block: var(--e1);
+  border-block-end: 1px solid var(--filete);
+}
+
+.atajos dt {
+  color: var(--tinta);
+  font-size: var(--fs-caption);
+}
+
+.atajos dd {
+  margin: 0;
+}
+
+.atajos kbd {
+  padding: 2px var(--e2);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-ctrl);
+  background: var(--sup-inset);
+  font: inherit;
+  font-size: var(--fs-overline);
+  white-space: nowrap;
+}

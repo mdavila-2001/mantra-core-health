@@ -16,6 +16,7 @@ import {
   conversationVerification,
 } from '../../../core/messaging/conversation-label';
 import { ChatPreferences } from '../../../core/messaging/chat-preferences';
+import { pointerOutside } from '../menu-dismiss';
 import { chatTime } from '../../../shared/date/chat-time';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { VerificationBadge } from '../../../shared/components/atoms/verification-badge/verification-badge';
@@ -70,6 +71,10 @@ export interface AccionDeFila {
   templateUrl: './conversation-list.html',
   styleUrl: './conversation-list.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:pointerdown)': 'alTocarAfuera($event)',
+    '(document:keydown.escape)': 'cerrarMenu()',
+  },
 })
 export class ConversationList {
   private readonly preferencias = inject(ChatPreferences);
@@ -201,6 +206,16 @@ export class ConversationList {
 
   protected cerrarMenu(): void {
     this.menuAbierto.set(null);
+  }
+
+  /** Closes the row menu when the pointer lands outside it (WhatsApp behaviour). */
+  protected alTocarAfuera(evento: Event): void {
+    if (
+      this.menuAbierto() !== null &&
+      pointerOutside(evento.target, '.conversaciones__menu, .conversaciones__mas')
+    ) {
+      this.menuAbierto.set(null);
+    }
   }
 
   protected alternarMenu(id: string, evento: Event): void {

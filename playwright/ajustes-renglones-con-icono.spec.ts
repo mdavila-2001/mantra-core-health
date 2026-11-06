@@ -53,6 +53,14 @@ for (const width of [1280, 390]) {
       expect(overflow, `${tab}: no horizontal scroll`).toBeLessThanOrEqual(0);
     }
 
+    // On a phone the index is a strip above the panel, so the panel takes the width.
+    if (width < 640) {
+      const list = await page.getByRole('tablist').boundingBox();
+      const panel = await page.locator('[role="tabpanel"]:visible').first().boundingBox();
+      expect(list && panel && list.y + list.height <= panel.y, 'tab strip above the panel').toBe(true);
+      expect(panel?.width ?? 0, 'panel uses the phone width').toBeGreaterThan(width - 80);
+    }
+
     // Dispositivos: the verify button sits inside the row, after the text.
     await page.getByRole('tab', { name: 'Dispositivos' }).click();
     const button = page.getByTestId('device-verificar').first();

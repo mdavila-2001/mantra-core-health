@@ -375,11 +375,42 @@ describe('ChatStore', () => {
       expect(store.editando()?.id).toBe('m-1');
     });
 
-    it('no deja editar uno propio de hace más de cinco minutos', () => {
-      conHilo([propio('m-1', 6 * 60_000)]);
+    it('no deja editar uno propio de hace más de quince minutos', () => {
+      conHilo([propio('m-1', 16 * 60_000)]);
 
       store.editar(store.enOrden()[0]);
       expect(store.editando()).toBeNull();
+    });
+
+    it('a live reaction updates the reactions and leaves the text and «editado» alone', () => {
+      conHilo([propio('m-1', 60_000, 'Original')]);
+      TestBed.inject(ChatSocketService)['updated$'].next({
+        id: 'm-1',
+        conversationId: 'c-1',
+        senderProfileId: 'pp-1',
+        contentTypeConceptId: 'c-text',
+        bodyText: 'Original',
+        isEdited: null as unknown as undefined,
+        reactions: [{ emoji: '❤️', profileIds: ['pp-2'] }],
+      });
+      const [m] = store.enOrden();
+      expect(m.reactions).toEqual([{ emoji: '❤️', profileIds: ['pp-2'] }]);
+      expect(m.isEdited).toBeFalsy();
+    });
+
+    it('a live edit (no `reactions`) applies the text and keeps the reactions', () => {
+      conHilo([{ ...propio('m-1', 60_000, 'Original'), reactions: [{ emoji: '👍', profileIds: ['pp-2'] }] }]);
+      TestBed.inject(ChatSocketService)['updated$'].next({
+        id: 'm-1',
+        conversationId: 'c-1',
+        senderProfileId: 'pp-1',
+        contentTypeConceptId: 'c-text',
+        bodyText: 'Corregido',
+        isEdited: true,
+      });
+      const [m] = store.enOrden();
+      expect(m.bodyText).toBe('Corregido');
+      expect(m.reactions).toEqual([{ emoji: '👍', profileIds: ['pp-2'] }]);
     });
 
     it('no deja editar el mensaje de otro, por reciente que sea', () => {
@@ -421,7 +452,7 @@ describe('ChatStore', () => {
         .flush(
           {
             code: 'PRECONDITION_FAILED',
-            message: 'Pasaron más de 5 minutos: el mensaje ya no se puede editar',
+            message: 'Pasaron más de 15 minutos: el mensaje ya no se puede editar',
             correlationId: 'corr-edit',
             timestamp: '',
             path: '',
@@ -433,7 +464,7 @@ describe('ChatStore', () => {
       expect(store.enOrden()[0].isEdited).toBe(false);
       // El plazo lo dice la API, no la pantalla.
       expect(store.error()).toBe(
-        'Pasaron más de 5 minutos: el mensaje ya no se puede editar (Código de soporte: corr-edit)',
+        'Pasaron más de 15 minutos: el mensaje ya no se puede editar (Código de soporte: corr-edit)',
       );
     });
 
