@@ -36,6 +36,8 @@ test.afterEach(async () => {
 });
 
 const offer = (page: Page) => page.getByTestId('web-push-offer');
+/** The offer component finished deciding for this sign-in (resync done, offer shown or not). */
+const decided = (page: Page) => expect(page.locator('app-web-push-offer[data-ready]')).toBeAttached({ timeout: 30_000 });
 const shot = (page: Page, name: string) =>
   page.screenshot({ path: `${PUSH_EVIDENCE}/${name}.png`, animations: 'disabled', caret: 'hide' });
 
@@ -72,8 +74,7 @@ test('ofrece una vez, «Activar avisos» suscribe, y recargar no repite el PUT n
   expect(pushCalls(api)[0]).toMatchObject({ method: 'PUT', body: { endpoint: 'https://fcm.googleapis.com/fcm/send/e2e-1' } });
 
   await page.reload();
-  await expect(page.getByTestId('campana')).toBeVisible();
-  await page.waitForTimeout(1500);
+  await decided(page);
   await expect(offer(page)).toBeHidden();
   expect(pushCalls(api)).toHaveLength(1);
   expect(errors).toEqual([]);
@@ -153,8 +154,7 @@ test('errores: bloqueado lleva a Ajustes, no disponible solo «Entendido», fall
 test('sin PushManager (no soportado) no se ofrece ni se pregunta al servidor', async ({ browser }) => {
   const api = mockApi('u-a');
   const page = await start(browser, api, { push: false });
-  await expect(page.getByTestId('campana')).toBeVisible({ timeout: 30_000 });
-  await page.waitForTimeout(2000);
+  await decided(page);
   await expect(offer(page)).toHaveCount(0);
   expect(api.calls.filter((c) => c.path.includes('web-push'))).toEqual([]);
 });
@@ -165,8 +165,7 @@ test('«Ahora no» lo oculta y no vuelve al recargar', async ({ browser }) => {
   await page.getByTestId('web-push-offer-ahora-no').click();
   await expect(offer(page)).toBeHidden();
   await page.reload();
-  await expect(page.getByTestId('campana')).toBeVisible();
-  await page.waitForTimeout(2000);
+  await decided(page);
   await expect(offer(page)).toHaveCount(0);
   expect(pushCalls(api)).toEqual([]);
 });
@@ -176,7 +175,7 @@ test('con otro aviso del área privada en pantalla, la oferta espera', async ({ 
   api.extraClaims = { deniedTenants: { 't-2': 'OUTSIDE_HOURS' } };
   const page = await start(browser, api);
   await expect(page.getByTestId('aviso-organizaciones-negadas')).toBeVisible({ timeout: 30_000 });
-  await page.waitForTimeout(2000);
+  await decided(page);
   await expect(offer(page)).toHaveCount(0);
   await shot(page, 'oferta-push-apilada-390');
 });

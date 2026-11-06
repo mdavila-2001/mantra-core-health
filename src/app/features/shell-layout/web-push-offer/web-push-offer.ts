@@ -28,6 +28,9 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
   templateUrl: './web-push-offer.html',
   styleUrl: '../../ux-consent/ux-consent-notice.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // Marks that this sign-in's decision (resync, offer or not) is done: lets a browser
+  // test assert «no offer» on a condition instead of a timeout.
+  host: { '[attr.data-ready]': 'ready() || null' },
 })
 export class WebPushOffer {
   private readonly session = inject(SessionStore);
@@ -38,6 +41,7 @@ export class WebPushOffer {
   readonly held = input(false);
 
   protected readonly offering = signal(false);
+  protected readonly ready = signal(false);
   /** Why activation did not work; while set, the only actions are «Entendido» (and Settings when blocked). */
   protected readonly failure = signal<Exclude<WebPushOutcome, 'enabled'> | null>(null);
   protected readonly notices = WEB_PUSH_NOTICES;
@@ -49,7 +53,8 @@ export class WebPushOffer {
       untracked(() => {
         this.offering.set(false);
         this.failure.set(null);
-        if (userId !== null) void this.prepare(userId);
+        this.ready.set(false);
+        if (userId !== null) void this.prepare(userId).finally(() => this.ready.set(true));
       });
     });
   }
