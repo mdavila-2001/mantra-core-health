@@ -14,7 +14,7 @@ import { entrar } from './support/sesion';
  * empty list for `GET /surveys/me/invitations`. Before this change that same
  * empty list hid the link entirely, so this spec fails without it.
  *
- * Never waits for `networkidle`: waits on elements.
+ * Waits on elements, never on network quiescence.
  */
 
 const PATIENT: Actor = {

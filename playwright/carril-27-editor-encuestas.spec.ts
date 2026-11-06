@@ -17,7 +17,7 @@ import { entrar, esperarAplicacionLista, irA } from './support/sesion';
  *   - «Quitar»:   `DELETE /surveys/service-assignments/:serviceId` → 204.
  * And that the fixed «Cita médica» row (system survey) offers neither.
  *
- * Never waits for `networkidle` (never reached with HMR): waits on elements.
+ * Waits on elements, never on network quiescence (never reached with HMR).
  */
 
 const MEDICA: Actor = {

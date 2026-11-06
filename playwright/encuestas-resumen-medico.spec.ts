@@ -25,7 +25,7 @@ import { entrar, esperarAplicacionLista, irA } from './support/sesion';
  *      —la asociación libre ya no existe: la API la rechaza—, sobrevive a la
  *      recarga y apunta a «Encuestas por servicio».
  *
- * Nunca espera `networkidle`: contra `ng serve` con HMR no llega. Se espera por
+ * Nunca espera a que la red quede quieta: contra `ng serve` con HMR no llega. Se espera por
  * elementos y por respuestas concretas.
  *
  * Las capturas (claro y oscuro; 1440 y 390 px) se guardan en `SALIDA`.
