@@ -1,4 +1,8 @@
-import type { SimulatedNoteRow } from './clinic';
+/** Una fila de la nota médica: el campo y lo que vale, como lo escribió la médica. */
+export interface SimulatedNoteRow {
+  readonly label: string;
+  readonly value: string;
+}
 
 /**
  * Las filas que una médica anota en una consulta, campo por campo. Cinco

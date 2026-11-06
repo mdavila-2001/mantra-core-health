@@ -1,6 +1,6 @@
 import type { OrderAppointment } from '../diagnostic-units/center-schedule.types';
 import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
-import type { AnalysisCategory } from './diagnostics.types';
+import type { AnalysisCategory } from './analysis-category.types';
 import type { ServiceRequestPerformerFields } from './service-request-performer.types';
 
 /* ============================================================================

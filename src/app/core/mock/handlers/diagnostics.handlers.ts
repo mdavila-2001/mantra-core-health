@@ -1172,7 +1172,7 @@ export function registrarDiagnostico(router: MockRouter): void {
     };
   });
 
-  registrarInformeDelProfesional(router, informes, ROL_CONTENIDO, FORMATO_PDF);
+  registrarInformeDelProfesional(router, (id) => informes.get(id), ROL_CONTENIDO, FORMATO_PDF);
 
   /**
    * CL-56: una orden pendiente no tiene ningún estudio DICOM que mostrar —el

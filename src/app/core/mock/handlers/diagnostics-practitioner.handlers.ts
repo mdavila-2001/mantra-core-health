@@ -7,14 +7,28 @@
 import { displayOf, STATUS } from '../fixtures/concepts';
 import { valoresDelInforme } from '../fixtures/patient-network.data';
 import { forbidden, notFound, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
-import { uuid, type Coleccion } from '../mock-store';
+import { uuid } from '../mock-store';
 import { puedeLeer } from './clinical.handlers';
-import type { InformeSimulado } from './diagnostics.handlers';
 import { pdfMinimo } from './files.handlers';
+
+/** What this route reads of a seeded report (`InformeSimulado`, `diagnostics.handlers.ts`). */
+export interface InformeDelProfesional {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly released: boolean;
+  readonly serviceRequestId?: string;
+  readonly codeConceptId: string;
+  readonly categoryConceptId?: string;
+  readonly currentVersionId: string;
+  readonly issuedAt?: string;
+  readonly releasedAt?: string | null;
+  readonly patientVisible: boolean;
+  readonly conclusionText?: string;
+}
 
 export function registrarInformeDelProfesional(
   router: MockRouter,
-  informes: Coleccion<InformeSimulado>,
+  informePorId: (id: string) => InformeDelProfesional | undefined,
   rolContenido: string,
   formatoPdf: string,
 ): void {
@@ -22,13 +36,13 @@ export function registrarInformeDelProfesional(
     const base = notFound('Recurso diagnóstico no disponible');
     return { ...base, body: { ...(base.body as object), reason: 'DIAGNOSTICS_RESOURCE_NOT_AVAILABLE' } };
   };
-  const informeDelProfesional = (request: MockRequest): InformeSimulado | MockReply => {
+  const informeDelProfesional = (request: MockRequest): InformeDelProfesional | MockReply => {
     const pacienteId = request.params['id']!;
     if (!puedeLeer(request, pacienteId)) return forbidden('No tiene cita hoy ni vínculo vigente con esta persona');
-    const r = informes.get(request.params['reportId']!);
+    const r = informePorId(request.params['reportId']!);
     return r === undefined || r.patientProfileId !== pacienteId || !r.released ? noDisponible() : r;
   };
-  const archivosDelInforme = (r: InformeSimulado) => [
+  const archivosDelInforme = (r: InformeDelProfesional) => [
     { id: uuid(`result-file-${r.id}`), fileId: uuid(`file-lab-${r.patientProfileId}`), name: `Informe de ${displayOf(r.codeConceptId)}.pdf`, contentRoleConceptId: rolContenido, presentationFormatConceptId: formatoPdf, ordinal: 1 },
   ];
 

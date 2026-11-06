@@ -23,7 +23,7 @@ import { MEDICAL, PATIENTS, PROFESSIONALS, type PacienteSimulado } from './peopl
 import { TENANT_CLINICA } from '../mock-session';
 import { Coleccion, iso, isoDia, uuid } from '../mock-store';
 import * as network from './patient-network.data';
-import { NOTE_ROWS } from './clinic-notes.data';
+import { NOTE_ROWS, type SimulatedNoteRow } from './clinic-notes.data';
 
 /* ============================================================================
     El expediente clínico de cada paciente: condiciones, alergias, recetas,
@@ -159,12 +159,6 @@ export interface SimulatedEncounter {
   readonly reasonText: string;
   readonly startAt: string;
   readonly endAt: string | null;
-}
-
-/** Una fila de la nota médica: el campo y lo que vale, como lo escribió la médica. */
-export interface SimulatedNoteRow {
-  readonly label: string;
-  readonly value: string;
 }
 
 export interface SimulatedNote {
