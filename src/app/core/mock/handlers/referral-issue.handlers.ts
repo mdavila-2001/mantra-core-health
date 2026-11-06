@@ -15,7 +15,6 @@ import {
   ORGANIZATIONS,
   preconditionInDetails,
   REFERRAL_STATUS,
-  REFERRAL_TYPES,
   referralError,
   referralList,
   servicesOfOrganization,
@@ -23,6 +22,7 @@ import {
   view,
   type SimulatedReferral,
 } from './referrals.handlers';
+import { REFERRAL_TYPES } from './referral-types.data';
 
 /* ============================================================================
     Emitir una derivación (`POST /referrals`) y el aviso a la persona.

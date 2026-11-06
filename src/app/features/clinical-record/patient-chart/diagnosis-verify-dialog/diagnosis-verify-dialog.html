@@ -47,6 +47,29 @@
       />
     </app-form-field>
 
+    @if (!confirma()) {
+      <!-- Clinical network (patch v4291): the resolved differential. Optional,
+           and only this person's other confirmed diagnoses. -->
+      <app-form-field
+        label="Se confirmó en su lugar"
+        [hint]="
+          opcionesDeReemplazo().length === 0
+            ? 'Esta persona no tiene otro diagnóstico confirmado al que atribuir el cuadro.'
+            : 'Opcional. El diagnóstico confirmado que explica el cuadro en lugar de éste.'
+        "
+        [errorMessage]="errorDeReemplazo()"
+      >
+        <app-select
+          data-testid="verificar-reemplazo"
+          [value]="reemplazo()"
+          (valueChange)="reemplazo.set($event); errorDeReemplazo.set('')"
+          [options]="opcionesDeReemplazo()"
+          [disabled]="opcionesDeReemplazo().length === 0"
+          placeholder="Ninguno"
+        />
+      </app-form-field>
+    }
+
     @if (confirma()) {
       <!-- Desde y Hasta en la misma fila: son un solo período. Con curso
            crónico queda sólo Desde, a lo ancho. -->

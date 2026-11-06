@@ -1,0 +1,267 @@
+@if (nodo(); as n) {
+  @if (esHoja()) {
+    <!-- Phone: modal bottom sheet. The browser traps the focus and delivers
+         `Escape` as `cancel`. -->
+    <dialog
+      #hoja
+      class="panel panel--hoja"
+      data-testid="red-panel"
+      [attr.aria-labelledby]="tituloId"
+      (cancel)="alCancelarHoja($event)"
+    >
+      <ng-container *ngTemplateOutlet="contenido; context: { $implicit: n }" />
+    </dialog>
+  } @else {
+    <!-- Desktop: a column next to the map, with no veil and no focus trap.
+         The `keydown` does not make the `<aside>` interactive: it listens to
+         the `Escape` bubbling from its controls (and from the title, which
+         gets the focus). -->
+    <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
+    <aside
+      class="panel panel--lateral"
+      data-testid="red-panel"
+      [attr.aria-labelledby]="tituloId"
+      (keydown.escape)="alPulsarEscape($event)"
+    >
+      <ng-container *ngTemplateOutlet="contenido; context: { $implicit: n }" />
+    </aside>
+  }
+}
+
+<ng-template #contenido let-n>
+  <header class="panel__cabecera">
+    <div class="panel__encabezado">
+      <p class="panel__tipo">
+        <app-nav-icon [name]="aspectoDe(n.tipo).icono" />
+        {{ aspectoDe(n.tipo).singular }}
+      </p>
+      <h2 #titulo class="panel__titulo" tabindex="-1" [id]="tituloId">{{ n.titulo }}</h2>
+      @if (n.subtitulo) {
+        <p class="panel__subtitulo">{{ n.subtitulo }}</p>
+      }
+    </div>
+    <button
+      app-button
+      variant="ghost"
+      size="md"
+      iconOnly
+      aria-label="Cerrar el detalle"
+      data-testid="red-panel-cerrar"
+      (clicked)="cerrar()"
+    >
+      <app-nav-icon name="close" />
+    </button>
+  </header>
+
+  <div class="panel__cuerpo">
+    <!-- What, when, who, status. -->
+    <dl class="panel__hechos">
+      @if (n.estado) {
+        <div class="panel__hecho">
+          <dt>Estado</dt>
+          <dd>
+            <app-badge [variant]="n.estado.tono ?? 'info'" size="sm">{{ n.estado.etiqueta }}</app-badge>
+          </dd>
+        </div>
+      }
+      <div class="panel__hecho">
+        <dt>Cuándo</dt>
+        <dd>
+          @if (n.cuando) {
+            <time [attr.datetime]="n.cuando.toISOString()">{{ n.cuando | date: "d 'de' MMMM 'de' y, HH:mm" }}</time>
+            <span class="panel__tenue"> · {{ hace() }}</span>
+          } @else {
+            <span class="panel__tenue">Sin fecha registrada</span>
+          }
+        </dd>
+      </div>
+      <!-- `undefined`: whoever built the node does not have the name (the read
+           does not bring it) and nothing is asserted; `null`: no practitioner
+           recorded. -->
+      @if (n.profesional !== undefined) {
+        <div class="panel__hecho">
+          <dt>Profesional</dt>
+          <dd>{{ n.profesional?.nombre ?? 'No registrado' }}</dd>
+        </div>
+      }
+      @if (n.especialidad) {
+        <div class="panel__hecho">
+          <dt>Especialidad</dt>
+          <dd>{{ n.especialidad.nombre }}</dd>
+        </div>
+      }
+    </dl>
+
+    @if (n.detalle; as d) {
+      @switch (d.tipo) {
+        <!-- ===== Study ======================================================= -->
+        @case ('estudio') {
+          <app-red-panel-estudio
+            [d]="d"
+            [resultado]="resultado()"
+            [lectura]="lecturaDelInforme()"
+            [descargable]="descargable()"
+            [descarga]="descarga.estado()"
+            [pedidoHace]="n.cuando ? hace() : null"
+            (releer)="releerInforme()"
+            (abrirArchivo)="abrirArchivo($event)"
+          />
+        }
+
+        <!-- ===== Diagnosis =================================================== -->
+        @case ('diagnostico') {
+          <section
+            app-red-panel-razonamiento
+            class="panel__seccion"
+            aria-labelledby="red-panel-razonamiento"
+            data-testid="red-panel-razonamiento"
+            [d]="d"
+            [hace]="hace()"
+            (elegir)="elegir($event)"
+          ></section>
+        }
+
+        <!-- ===== Referral ==================================================== -->
+        @case ('derivacion') {
+          <section
+            app-red-panel-derivacion
+            class="panel__seccion"
+            aria-labelledby="red-panel-derivacion"
+            data-testid="red-panel-derivacion"
+            [d]="d"
+            (elegir)="elegir($event)"
+          ></section>
+        }
+        <!-- ===== Appointment / follow-up ===================================== -->
+        @case ('cita') {
+          <ng-container *ngTemplateOutlet="cita; context: { $implicit: d }" />
+        }
+        @case ('reconsulta') {
+          <ng-container *ngTemplateOutlet="cita; context: { $implicit: d }" />
+        }
+
+        <!-- ===== The rest =================================================== -->
+        @case ('general') {
+          @if (d.resumen || (d.datos && d.datos.length > 0)) {
+            <section class="panel__seccion" aria-labelledby="red-panel-general">
+              <h3 class="panel__seccion-titulo" id="red-panel-general">Detalle</h3>
+              @if (d.resumen) {
+                <p>{{ d.resumen }}</p>
+              }
+              @if (d.datos && d.datos.length > 0) {
+                <dl class="panel__pares">
+                  @for (dato of d.datos; track $index) {
+                    <div><dt>{{ dato.rotulo }}</dt><dd>{{ dato.valor }}</dd></div>
+                  }
+                </dl>
+              }
+            </section>
+          }
+        }
+      }
+    }
+
+    @if (n.tipo === 'cita' || n.tipo === 'reconsulta' || n.tipo === 'atencion') {
+      <section class="panel__seccion" aria-labelledby="red-panel-continuidad" data-testid="red-panel-continuidad">
+        <h3 class="panel__seccion-titulo" id="red-panel-continuidad">Origen y continuidad</h3>
+        <p class="panel__rotulo">Viene de</p>
+        @if (origen().length > 0) {
+          <ul class="panel__vinculos">
+            @for (v of origen(); track v.clave) {
+              <li><ng-container *ngTemplateOutlet="vinculo; context: { $implicit: v }" /></li>
+            }
+          </ul>
+        } @else {
+          <p class="panel__tenue">Sin cita, reconsulta ni derivación de origen registrada.</p>
+        }
+        <p class="panel__rotulo">Siguió con</p>
+        @if (siguientes().length > 0) {
+          <ul class="panel__vinculos">
+            @for (v of siguientes(); track v.clave) {
+              <li><ng-container *ngTemplateOutlet="vinculo; context: { $implicit: v }" /></li>
+            }
+          </ul>
+        } @else {
+          <p class="panel__tenue">Sin reconsultas ni derivaciones posteriores.</p>
+        }
+      </section>
+    }
+
+    <!-- What the parent adds at the foot of the detail (e.g. «Ver el registro
+         completo»): the panel knows nothing of blocks or modals. -->
+    <div class="panel__acciones">
+      <ng-content select="[panel-acciones]" />
+    </div>
+
+    <section class="panel__seccion" aria-labelledby="red-panel-vinculos" data-testid="red-panel-vinculos">
+      <h3 class="panel__seccion-titulo" id="red-panel-vinculos">
+        Vínculos <span class="panel__tenue">({{ vinculos().length }})</span>
+      </h3>
+      @if (vinculos().length > 0) {
+        <ul class="panel__vinculos">
+          @for (v of vinculos(); track v.clave) {
+            <li><ng-container *ngTemplateOutlet="vinculo; context: { $implicit: v }" /></li>
+          }
+        </ul>
+      } @else {
+        <p class="panel__tenue">Este registro no tiene vínculos guardados con otros.</p>
+      }
+    </section>
+  </div>
+</ng-template>
+
+<ng-template #cita let-d>
+  @if (d.motivo || d.modalidad || d.lugar) {
+    <section class="panel__seccion" aria-labelledby="red-panel-cita">
+      <h3 class="panel__seccion-titulo" id="red-panel-cita">{{ d.tipo === 'reconsulta' ? 'Reconsulta' : 'Cita' }}</h3>
+      <dl class="panel__pares">
+        @if (d.motivo) {
+          <div><dt>Motivo</dt><dd>{{ d.motivo }}</dd></div>
+        }
+        @if (d.modalidad) {
+          <div><dt>Modalidad</dt><dd>{{ d.modalidad }}</dd></div>
+        }
+        @if (d.lugar) {
+          <div><dt>Lugar</dt><dd>{{ d.lugar }}</dd></div>
+        }
+      </dl>
+    </section>
+  }
+</ng-template>
+
+<ng-template #vinculo let-v>
+  @if (v.otro; as otro) {
+    <button
+      type="button"
+      class="panel__vinculo"
+      data-testid="red-panel-vinculo"
+      (click)="elegir(v.otroId)"
+    >
+      <span class="panel__vinculo-icono" aria-hidden="true"><app-nav-icon [name]="aspectoDe(otro.tipo).icono" /></span>
+      <span class="panel__vinculo-texto">
+        <span class="panel__vinculo-relacion">
+          {{ v.sentido === 'saliente' ? '→' : '←' }} {{ v.relacion }}
+          @if (v.inferido) {
+            <span class="panel__inferido">inferido</span>
+          }
+        </span>
+        <span class="panel__vinculo-titulo">{{ aspectoDe(otro.tipo).singular }}: {{ otro.titulo }}</span>
+        @if (otro.cuando) {
+          <span class="panel__tenue">{{ otro.cuando | date: 'd MMM y' }}</span>
+        }
+      </span>
+    </button>
+  } @else {
+    <span class="panel__vinculo panel__vinculo--fuera">
+      <span class="panel__vinculo-texto">
+        <span class="panel__vinculo-relacion">
+          {{ v.relacion }}
+          @if (v.inferido) {
+            <span class="panel__inferido">inferido</span>
+          }
+        </span>
+        <span class="panel__tenue">Registro fuera de la vista actual (filtrado o fuera del tope de lectura)</span>
+      </span>
+    </span>
+  }
+</ng-template>

@@ -1,0 +1,158 @@
+[
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505"
+  },
+  {
+    "kind": "console",
+    "type": "log",
+    "text": "NG0751: Angular has detected that this application contains `@defer` blocks and the hot module replacement (HMR) mode is enabled. All `@defer` block dependencies will be loaded eagerly. Find more at https://v21.angular.dev/errors/NG0751"
+  },
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505"
+  },
+  {
+    "kind": "console",
+    "type": "log",
+    "text": "NG0751: Angular has detected that this application contains `@defer` blocks and the hot module replacement (HMR) mode is enabled. All `@defer` block dependencies will be loaded eagerly. Find more at https://v21.angular.dev/errors/NG0751"
+  },
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all the items in the collection. Duplicated keys were: \nkey \"Consulta\" at index \"0\" and \"1\". Find more at https://v21.angular.dev/errors/NG0955"
+  },
+  {
+    "kind": "mock",
+    "label": "derivacion",
+    "row": {
+      "method": "PATCH",
+      "url": "/referrals/f572a0ee-2f58-4760-a83a-14321a54ae4e/respond",
+      "status": 200,
+      "body": {
+        "decision": "ACCEPT",
+        "targetEncounterId": "218c8833-e07d-4125-a082-0f5209e32ba8"
+      },
+      "respuesta": {
+        "ok": true,
+        "id": "f572a0ee-2f58-4760-a83a-14321a54ae4e",
+        "patientProfileId": "c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0",
+        "sourceEncounterId": null,
+        "referringProfileId": "853d6262-a379-411c-a5e8-5afa604de53e",
+        "targetProfileId": "be0f3a66-c03e-4eac-a416-c1068238d3d2",
+        "targetTenantId": null,
+        "targetServiceCatalogId": null,
+        "referralType": "CONSULTATION",
+        "reasonText": null,
+        "priorityConceptId": null,
+        "statusConceptId": "f817abad-30d3-4fa5-abb1-2998362105a2",
+        "validUntil": "2026-12-01T00:00:00.000Z",
+        "respondedAt": "2026-11-06T04:36:50.793Z",
+        "createdAt": "2026-11-04T16:00:00.000Z",
+        "targetDisplayName": "Valeria Rojas Mendoza",
+        "targetServiceName": null,
+        "requestedServiceText": "Interconsulta con cardiología por dolor torácico atípico",
+        "diagnosisText": "Dolor torácico no especificado (R07.4)",
+        "clinicalSummary": "Dolor punzante intermitente de 2 semanas, no relacionado con esfuerzo. ECG en reposo normal.",
+        "transfer": {
+          "required": true,
+          "transportMode": "AMBULANCE_ADVANCED",
+          "transportDetail": "Unidad 12 · placa 3456-KTR",
+          "escortProfessionalName": "Lic. Ana Suárez",
+          "escortProfessionalRole": "Enfermería",
+          "departureCondition": "UNSTABLE",
+          "vitals": {
+            "recordedAt": "2026-11-05T08:00:00.000Z",
+            "systolicBp": 96,
+            "diastolicBp": 60,
+            "heartRate": 112,
+            "oxygenSaturation": 93
+          },
+          "receiverContacted": true,
+          "receiverContactName": "Guardia de cardiología",
+          "departedAt": "2026-11-05T09:00:00.000Z"
+        },
+        "rejectReason": null,
+        "targetEncounterId": "218c8833-e07d-4125-a082-0f5209e32ba8",
+        "status": "ACCEPTED",
+        "targetTenantName": null,
+        "targetBranchName": null
+      }
+    }
+  },
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505"
+  },
+  {
+    "kind": "console",
+    "type": "log",
+    "text": "NG0751: Angular has detected that this application contains `@defer` blocks and the hot module replacement (HMR) mode is enabled. All `@defer` block dependencies will be loaded eagerly. Find more at https://v21.angular.dev/errors/NG0751"
+  },
+  {
+    "kind": "relectura-derivacion",
+    "gets": [
+      {
+        "url": "/referrals/f572a0ee-2f58-4760-a83a-14321a54ae4e",
+        "status": 200,
+        "targetEncounterId": "218c8833-e07d-4125-a082-0f5209e32ba8"
+      }
+    ]
+  },
+  {
+    "kind": "sessionStorage",
+    "sizes": [
+      [
+        "mock.comunidad.vitrinas",
+        3933332
+      ],
+      [
+        "mock.agenda.reservas",
+        303224
+      ],
+      [
+        "mock.clinica.encuentros",
+        253006
+      ],
+      [
+        "mock.agenda.plantillas",
+        43212
+      ],
+      [
+        "mock.agenda.recursos",
+        36205
+      ],
+      [
+        "mock.comunidad.mensajes",
+        17528
+      ],
+      [
+        "mock.apoyo.permisos",
+        11252
+      ],
+      [
+        "mock.apoyo.vinculos",
+        6436
+      ],
+      [
+        "mock.comunidad.conversaciones",
+        6298
+      ],
+      [
+        "mock.clinical.derivaciones",
+        6082
+      ],
+      [
+        "mock.practice.servicios",
+        4078
+      ],
+      [
+        "mock.apoyo.asignaciones",
+        2325
+      ]
+    ]
+  }
+]

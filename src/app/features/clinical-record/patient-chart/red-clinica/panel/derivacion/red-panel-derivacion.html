@@ -1,0 +1,62 @@
+<h3 class="panel__seccion-titulo" id="red-panel-derivacion">Derivación</h3>
+<dl class="panel__pares">
+  @if (d().tipoDeDerivacion) {
+    <div><dt>Tipo</dt><dd>{{ d().tipoDeDerivacion }}</dd></div>
+  }
+  @if (d().destino) {
+    <div><dt>Destino</dt><dd>{{ d().destino }}</dd></div>
+  }
+  @if (d().motivo) {
+    <div><dt>Motivo</dt><dd>{{ d().motivo }}</dd></div>
+  }
+</dl>
+@if (d().resumenClinico) {
+  <div class="panel__texto">
+    <p class="panel__rotulo">Resumen clínico</p>
+    <p>{{ d().resumenClinico }}</p>
+  </div>
+}
+<div class="panel__texto">
+  <p class="panel__rotulo">Respuesta del destino</p>
+  @if (d().respuesta; as resp) {
+    <p>
+      {{ resp.decision === 'aceptada' ? 'Aceptada' : 'Rechazada' }}
+      @if (resp.en) {
+        el {{ resp.en | date: "d 'de' MMMM 'de' y" }}
+      }
+      @if (resp.motivoDeRechazo) {
+        · {{ resp.motivoDeRechazo }}
+      }
+    </p>
+  } @else {
+    <p class="panel__pendiente">Sin respuesta todavía</p>
+  }
+</div>
+<div class="panel__texto">
+  <p class="panel__rotulo">Llegada</p>
+  @if (d().llegada; as ll) {
+    <p>
+      Llegó el {{ ll.en | date: "d 'de' MMMM 'de' y, HH:mm" }}
+      @if (ll.atencionNodoId) {
+        ·
+        <button type="button" class="panel__enlace" (click)="elegir.emit(ll.atencionNodoId)">Ver la atención de llegada</button>
+      }
+    </p>
+    @if (ll.notas) {
+      <p>{{ ll.notas }}</p>
+    }
+  } @else {
+    <p class="panel__pendiente">Sin llegada registrada</p>
+  }
+</div>
+<div class="panel__texto">
+  <p class="panel__rotulo">Contrarreferencia</p>
+  @if (d().contrarreferencia; as cr) {
+    @if (cr.en) {
+      <p class="panel__tenue">{{ cr.en | date: "d 'de' MMMM 'de' y" }}</p>
+    }
+    <p>{{ cr.texto }}</p>
+  } @else {
+    <p class="panel__pendiente">El destino todavía no devolvió su informe</p>
+  }
+</div>

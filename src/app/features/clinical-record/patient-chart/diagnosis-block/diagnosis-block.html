@@ -28,6 +28,7 @@
       [patientProfileId]="patientProfileId()"
       [outcome]="decision.outcome"
       [nombre]="decision.fila.nombre"
+      [diagnosticos]="diagnosticos()"
       (verified)="alVerificar($event)"
       (closed)="verificando.set(null)"
     />

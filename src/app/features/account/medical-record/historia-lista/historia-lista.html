@@ -1,0 +1,24 @@
+<h2 [id]="tituloId()" class="historia__titulo sr-only">
+  {{ titulo() }} ({{ filas().length }})
+</h2>
+@if (filas().length === 0) {
+  <p class="historia__vacio">{{ vacio() }}</p>
+} @else {
+  <ul class="historia__lista historia__lista--simple" [attr.data-testid]="testId()">
+    @for (fila of filas(); track fila.id) {
+      <li class="historia__item">
+        <span class="historia__principal">{{ fila.principal }}</span>
+        @if (conFecha()) {
+          <span class="historia__secundario">
+            {{ fila.secundario }}
+            @if (fila.cuando !== null) {
+              · {{ fila.cuando | date: 'd MMM y' }}
+            }
+          </span>
+        } @else {
+          <span class="historia__secundario">{{ fila.secundario }}</span>
+        }
+      </li>
+    }
+  </ul>
+}
