@@ -70,24 +70,16 @@ const NOTAS = {
 };
 
 /**
- * El resumen de la persona: el propio presuntivo, un confirmado, otro en
- * estudio y un descartado. Sólo los dos del medio son candidatos a reemplazo.
+ * The person's diagnoses as the host passes them: the presumptive itself, a
+ * confirmed one, another in study and a refuted one. Only the confirmed one
+ * can have been «confirmed instead».
  */
-const RESUMEN = {
-  patientProfileId: 'p-1',
-  conditions: [
-    { id: 'c-1', codeConceptId: 'dx-hta', verificationStatusConceptId: 'st-provisional', createdAt: '2026-09-20T10:00:00.000Z' },
-    { id: 'c-hipo', codeConceptId: 'dx-hipo', verificationStatusConceptId: 'st-confirmada', createdAt: '2026-09-01T10:00:00.000Z' },
-    { id: 'c-ans', codeConceptId: 'dx-ans', verificationStatusConceptId: 'st-provisional', createdAt: '2026-09-02T10:00:00.000Z' },
-    { id: 'c-anemia', codeConceptId: 'dx-anemia', verificationStatusConceptId: 'st-descartada', createdAt: '2026-09-03T10:00:00.000Z' },
-  ],
-  allergies: [],
-  medicationRequests: [],
-  observations: [],
-  encounters: [],
-  limit: 50,
-  truncated: [],
-};
+const DIAGNOSTICOS = [
+  { id: 'c-1', etiqueta: 'Hipertensión', confirmado: false },
+  { id: 'c-hipo', etiqueta: 'Hipotiroidismo', confirmado: true },
+  { id: 'c-ans', etiqueta: 'Ansiedad', confirmado: false },
+  { id: 'c-anemia', etiqueta: 'Anemia', confirmado: true, descartado: true },
+];
 
 const ETIQUETAS = {
   items: [
@@ -179,15 +171,16 @@ describe('DiagnosisVerifyDialog', () => {
   }
 
   /**
-   * Pinta el diálogo y responde las cinco lecturas con las que se arma: el
-   * resumen (patch v4291) trae los candidatos a «Se confirmó en su lugar».
+   * Paints the dialog and answers its four reads. The candidates for «Se
+   * confirmó en su lugar» come from the host (`diagnosticos`): no summary read.
    */
-  function abrir(outcome: DiagnosisOutcome = 'CONFIRMED', resumen: object = RESUMEN): void {
+  function abrir(outcome: DiagnosisOutcome = 'CONFIRMED', diagnosticos: readonly object[] = DIAGNOSTICOS): void {
     fixture.componentRef.setInput('outcome', outcome);
+    fixture.componentRef.setInput('diagnosticos', diagnosticos);
     fixture.detectChanges();
     http.expectOne((r) => r.url === '/diagnostics/patients/p-1/orders').flush(CIRCUITO);
     http.expectOne((r) => r.url === '/charts/notes').flush(NOTAS);
-    http.expectOne((r) => r.url === '/clinical/patients/p-1/summary').flush(resumen);
+    http.expectNone((r) => r.url === '/clinical/patients/p-1/summary');
     http.expectOne((r) => r.url === '/terminology/concepts').flush(ETIQUETAS);
     http.expectOne((r) => r.url === '/system-context/dynamic-enums').flush(CATALOGO_DE_CURSO);
     fixture.detectChanges();
@@ -324,11 +317,10 @@ describe('DiagnosisVerifyDialog', () => {
 
   /* -- Red clínica (patch v4291): «Se confirmó en su lugar» -------------- */
 
-  it('al rechazar ofrece los otros diagnósticos no descartados, y nunca a sí mismo', () => {
+  it('al rechazar ofrece sólo los otros diagnósticos confirmados: ni en estudio, ni descartados, ni a sí mismo', () => {
     abrir('REFUTED');
     expect(interno<() => readonly { label: string; value: string | null }[]>('opcionesDeReemplazo')()).toEqual([
       { value: 'c-hipo', label: 'Hipotiroidismo · Confirmado' },
-      { value: 'c-ans', label: 'Ansiedad · En estudio' },
     ]);
     expect(fixture.nativeElement.querySelector('[data-testid="verificar-reemplazo"]')).not.toBeNull();
   });
@@ -378,15 +370,9 @@ describe('DiagnosisVerifyDialog', () => {
     expect(texto()).toContain('El diagnóstico de reemplazo no existe');
   });
 
-  it('si el resumen no se puede leer, el rechazo sigue disponible sin reemplazo', () => {
-    fixture.componentRef.setInput('outcome', 'REFUTED');
-    fixture.detectChanges();
-    http.expectOne((r) => r.url === '/diagnostics/patients/p-1/orders').flush(CIRCUITO);
-    http.expectOne((r) => r.url === '/charts/notes').flush(NOTAS);
-    http.expectOne((r) => r.url === '/clinical/patients/p-1/summary').flush({}, { status: 500, statusText: 'Error' });
-    http.expectOne((r) => r.url === '/terminology/concepts').flush(ETIQUETAS);
-    http.expectOne((r) => r.url === '/system-context/dynamic-enums').flush(CATALOGO_DE_CURSO);
-    fixture.detectChanges();
+  it('sin otro diagnóstico confirmado, el rechazo sigue disponible sin reemplazo', () => {
+    abrir('REFUTED', [{ id: 'c-ans', etiqueta: 'Ansiedad', confirmado: false }]);
     expect(interno<() => readonly unknown[]>('opcionesDeReemplazo')()).toEqual([]);
+    expect(texto()).toContain('no tiene otro diagnóstico confirmado');
   });
 });

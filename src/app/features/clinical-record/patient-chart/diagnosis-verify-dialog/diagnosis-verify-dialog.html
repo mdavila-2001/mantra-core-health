@@ -48,16 +48,14 @@
     </app-form-field>
 
     @if (!confirma()) {
-      <!-- Red clínica (patch v4291): el diferencial resuelto. Opcional, y sólo
-           los otros diagnósticos de esta persona que no están descartados. -->
+      <!-- Clinical network (patch v4291): the resolved differential. Optional,
+           and only this person's other confirmed diagnoses. -->
       <app-form-field
         label="Se confirmó en su lugar"
         [hint]="
-          cargandoEvidencia()
-            ? 'Buscando los diagnósticos de esta persona…'
-            : opcionesDeReemplazo().length === 0
-              ? 'Esta persona no tiene otro diagnóstico al que atribuir el cuadro.'
-              : 'Opcional. El diagnóstico que explica el cuadro en lugar de éste.'
+          opcionesDeReemplazo().length === 0
+            ? 'Esta persona no tiene otro diagnóstico confirmado al que atribuir el cuadro.'
+            : 'Opcional. El diagnóstico confirmado que explica el cuadro en lugar de éste.'
         "
         [errorMessage]="errorDeReemplazo()"
       >
@@ -66,7 +64,7 @@
           [value]="reemplazo()"
           (valueChange)="reemplazo.set($event); errorDeReemplazo.set('')"
           [options]="opcionesDeReemplazo()"
-          [disabled]="cargandoEvidencia() || opcionesDeReemplazo().length === 0"
+          [disabled]="opcionesDeReemplazo().length === 0"
           placeholder="Ninguno"
         />
       </app-form-field>

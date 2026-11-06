@@ -29,6 +29,18 @@ export function diagnosisLinkOptions(
 }
 
 /**
+ * «Se confirmó en su lugar» of a rejection: only a **confirmed** diagnosis can
+ * have been confirmed instead (an «En estudio» one has not been, yet). Same
+ * labels as {@link diagnosisLinkOptions}; the rejected one itself is left out.
+ */
+export function replacementOptions(
+  diagnoses: readonly DiagnosisOption[],
+  excludeId: string,
+): readonly SelectOption<string | null>[] {
+  return diagnosisLinkOptions(diagnoses.filter((dx) => dx.confirmado === true), excludeId);
+}
+
+/**
  * El mensaje de un 422 de vínculo (patch v4291) si su `reason` es uno de
  * `reasons`, o `null`. La API los manda como `PreconditionFailedException`
  * con el campo en `details.field`: el formulario lo muestra **en el control**

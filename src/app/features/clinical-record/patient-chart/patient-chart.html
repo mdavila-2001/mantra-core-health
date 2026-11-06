@@ -419,6 +419,7 @@
     [patientProfileId]="pacienteDeLaFicha()"
     [outcome]="decision.outcome"
     [nombre]="decision.nombre"
+    [diagnosticos]="diagnosticosParaReceta()"
     (verified)="verificacionCompletada()"
     (closed)="verificando.set(null)"
   />
