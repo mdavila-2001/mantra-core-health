@@ -1,0 +1,4 @@
+:host {
+  /* The notices stay direct flex items of `.app-main__inner`, as before this wrapper. */
+  display: contents;
+}

@@ -2,29 +2,52 @@ import { isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { SessionStore } from '../auth/session.store';
 import { WebPushClient } from '../data-access/notifications/web-push.client';
+import { endpointHash, migrateLegacyOffered, readFlag, readOwner, writeFlag, writeOwner } from './web-push-local';
 
 /** Dónde vive el service worker (raíz de `public/`, alcance completo). */
 export const PUSH_WORKER_URL = '/push-sw.js';
-/** Marca local: ya le ofrecimos el permiso una vez, no se vuelve a pedir solo. */
-const OFFERED_KEY = 'alovida.webpush.offered';
+/** Message the service worker posts when the push service rotated the subscription. */
+export const SUBSCRIPTION_CHANGED_MESSAGE = 'alovida-push-subscription-changed';
 
 /** Por qué no se pudo activar, dicho para mostrarlo a la persona. */
 export type WebPushOutcome = 'enabled' | 'unsupported' | 'unavailable' | 'denied' | 'failed';
 
+/** Qué decirle a la persona cuando no se pudo activar, sin culparla. */
+export const WEB_PUSH_NOTICES: Record<Exclude<WebPushOutcome, 'enabled'>, string> = {
+  unsupported: 'Este navegador no admite avisos fuera de la página.',
+  unavailable: 'Los avisos del navegador todavía no están disponibles en este entorno.',
+  // AloVida cannot undo a browser block: say where the person does it.
+  denied:
+    'El navegador tiene bloqueados los avisos. Para permitirlos, toque el candado junto a la dirección de la página y active «Notificaciones».',
+  failed: 'No pudimos activar los avisos. Intente de nuevo en unos minutos.',
+};
+
 /**
  * Avisos push del navegador.
  *
- * - **Se pide el permiso al reservar la primera cita** (`offerAfterFirstBooking`),
- *   una sola vez; si la persona lo rechaza, no se insiste. El interruptor de
- *   Ajustes sigue disponible para activarlo cuando quiera.
+ * - **Offered once per person**: after the first booking (`offerAfterFirstBooking`)
+ *   or through the private-area notice (`canOffer`). A refusal is not insisted on;
+ *   Settings stays available.
+ * - **A subscription belongs to one person** (`web-push-local.ts`): logout unsubscribes
+ *   the browser (`forgetBrowser`), and `resync` never adopts a live subscription saved
+ *   for someone else or for nobody known (a logout whose cleanup did not run): it
+ *   removes it. The opt-in of **this person** is kept, so on their next login `resync`
+ *   creates a fresh subscription without asking (permission already granted).
+ * - The API is only told again when the endpoint changed (rotation) or on an explicit
+ *   activation: reloads and other tabs do not repeat the audited PUT.
+ * - Every await re-checks that the signed-in person did not change (logout race).
  * - Todo es inerte bajo SSR y en navegadores sin `PushManager`.
  * - Un fallo nunca interrumpe a quien llama: devuelve un `WebPushOutcome`.
  */
 @Injectable({ providedIn: 'root' })
 export class WebPushService {
   private readonly client = inject(WebPushClient);
+  private readonly session = inject(SessionStore);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private pendingEnable: Promise<WebPushOutcome> | null = null;
+  private pendingResync: { readonly userId: string | null; readonly run: Promise<void> } | null = null;
 
   /** Si este navegador está suscrito ahora. */
   readonly subscribed = signal(false);
@@ -58,41 +81,10 @@ export class WebPushService {
     }
   }
 
-  /** Pide el permiso y suscribe este navegador. Debe llamarse desde un gesto. */
-  async enable(): Promise<WebPushOutcome> {
-    if (!this.supported) return 'unsupported';
-    this.busy.set(true);
-    try {
-      const config = await firstValueFrom(this.client.config());
-      if (!config.enabled || config.publicKey === null) return 'unavailable';
-
-      const permission =
-        this.permission === 'default' ? await Notification.requestPermission() : this.permission;
-      if (permission !== 'granted') return 'denied';
-
-      const registration = await navigator.serviceWorker.register(PUSH_WORKER_URL);
-      await navigator.serviceWorker.ready;
-      const subscription =
-        (await registration.pushManager.getSubscription()) ??
-        (await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToBytes(config.publicKey),
-        }));
-
-      const json = subscription.toJSON();
-      const p256dh = json.keys?.['p256dh'];
-      const auth = json.keys?.['auth'];
-      if (!json.endpoint || !p256dh || !auth) return 'failed';
-      await firstValueFrom(
-        this.client.subscribe({ endpoint: json.endpoint, keys: { p256dh, auth } }),
-      );
-      this.subscribed.set(true);
-      return 'enabled';
-    } catch {
-      return 'failed';
-    } finally {
-      this.busy.set(false);
-    }
+  /** Pide el permiso y suscribe este navegador, desde un gesto. Concurrent calls share one run. */
+  enable(): Promise<WebPushOutcome> {
+    this.pendingEnable ??= this.runEnable().finally(() => (this.pendingEnable = null));
+    return this.pendingEnable;
   }
 
   /** Quita la suscripción de este navegador, en el servidor y en el navegador. */
@@ -107,9 +99,59 @@ export class WebPushService {
         await subscription.unsubscribe();
       }
       this.subscribed.set(false);
+      writeOwner(null);
+      writeFlag('optin', this.currentUser(), false);
     } finally {
       this.busy.set(false);
     }
+  }
+
+  /**
+   * On every login, restore and worker message: removes a live subscription that is
+   * not this person's, and restores push for a person who opted in here. Without a
+   * prompt (only with the permission already granted). Never throws; concurrent calls
+   * share one run.
+   */
+  resync(): Promise<void> {
+    const userId = this.session.userId();
+    // Shared only by calls for the same person: a run for the previous one aborts on its own.
+    if (this.pendingResync?.userId === userId) return this.pendingResync.run;
+    const run: Promise<void> = this.runResync().finally(() => {
+      if (this.pendingResync?.run === run) this.pendingResync = null;
+    });
+    this.pendingResync = { userId, run };
+    return run;
+  }
+
+  /** Resyncs on the worker's `pushsubscriptionchange` message (it has no token). Returns the disposer. */
+  watchWorker(): () => void {
+    if (!this.supported) return () => undefined;
+    const onMessage = (event: MessageEvent): void => {
+      if (event.data?.type === SUBSCRIPTION_CHANGED_MESSAGE) void this.resync();
+    };
+    navigator.serviceWorker.addEventListener('message', onMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage);
+  }
+
+  /**
+   * Whether the one-time offer makes sense for the signed-in person: push is
+   * supported, not blocked, not already on, and never offered to them here.
+   * The server side (`config().enabled`) is checked by whoever shows the offer.
+   */
+  canOffer(): boolean {
+    const userId = this.session.userId();
+    return (
+      this.supported &&
+      userId !== null &&
+      this.permission !== 'denied' &&
+      !this.subscribed() &&
+      !readFlag('offered', userId)
+    );
+  }
+
+  /** Remembers that the offer was shown to this person (accepted or not). */
+  markOffered(): void {
+    writeFlag('offered', this.currentUser(), true);
   }
 
   /**
@@ -119,13 +161,15 @@ export class WebPushService {
    * un `DELETE` respondería 401. No hace falta: con la suscripción dada de baja
    * el servicio de push contesta 410 al siguiente envío y la API retira la fila
    * sola. Así, en un dispositivo compartido, la persona siguiente no recibe los
-   * avisos de la anterior.
+   * avisos de la anterior. If it never runs, `resync` removes the orphan on the
+   * next login. The per-user opt-in is kept on purpose (see `resync`).
    */
   async forgetBrowser(): Promise<void> {
     if (!this.supported) return;
     try {
       const registration = await navigator.serviceWorker.getRegistration(PUSH_WORKER_URL);
       await (await registration?.pushManager.getSubscription())?.unsubscribe();
+      writeOwner(null);
     } catch {
       /* cerrar sesión no puede fallar por esto */
     }
@@ -138,27 +182,107 @@ export class WebPushService {
    * ofreció antes. Nunca lanza.
    */
   async offerAfterFirstBooking(): Promise<WebPushOutcome | 'skipped'> {
-    if (!this.supported || this.permission !== 'default' || this.alreadyOffered()) {
+    if (!this.supported || this.permission !== 'default' || readFlag('offered', this.currentUser())) {
       return 'skipped';
     }
     this.markOffered();
     return this.enable();
   }
 
-  private alreadyOffered(): boolean {
+  private async runEnable(): Promise<WebPushOutcome> {
+    if (!this.supported) return 'unsupported';
+    const userId = this.currentUser();
+    this.busy.set(true);
     try {
-      return localStorage.getItem(OFFERED_KEY) === '1';
+      // Asked first, while the click's user activation is still fresh (Firefox and
+      // Safari drop it after a network round trip). Harmless if push turns out off.
+      const permission =
+        this.permission === 'default' ? await Notification.requestPermission() : this.permission;
+      if (permission !== 'granted') return 'denied';
+
+      const config = await firstValueFrom(this.client.config());
+      if (!config.enabled || config.publicKey === null) return 'unavailable';
+      return (await this.save(config.publicKey, userId, true)) ? 'enabled' : 'failed';
     } catch {
-      return false;
+      return 'failed';
+    } finally {
+      this.busy.set(false);
     }
   }
 
-  private markOffered(): void {
+  private async runResync(): Promise<void> {
+    const userId = this.session.userId();
+    if (!this.supported || userId === null) return;
+    migrateLegacyOffered(userId);
+    if (this.permission !== 'granted') return;
     try {
-      localStorage.setItem(OFFERED_KEY, '1');
+      const registration = await navigator.serviceWorker.getRegistration(PUSH_WORKER_URL);
+      const live = await registration?.pushManager.getSubscription();
+      if (!this.still(userId)) return;
+      const owner = readOwner();
+      if (live && owner?.user !== userId) {
+        // Another account's subscription, or one nobody can vouch for: never adopt it.
+        await live.unsubscribe();
+        writeOwner(null);
+        this.subscribed.set(false);
+        // Unknown owner = saved before ownership existed: offer again rather than lose it.
+        if (owner === null) writeFlag('offered', userId, false);
+      } else if (live && owner?.endpoint === endpointHash(live.endpoint)) {
+        this.subscribed.set(true);
+        return;
+      }
+      if (!(live && owner?.user === userId) && !readFlag('optin', userId)) return;
+
+      const config = await firstValueFrom(this.client.config());
+      if (!this.still(userId) || !config.enabled || config.publicKey === null) return;
+      await this.save(config.publicKey, userId, false);
     } catch {
-      /* sin almacenamiento: se vuelve a ofrecer, no se rompe nada */
+      /* a failed resync leaves things as they were; the next login retries */
     }
+  }
+
+  /**
+   * Registers the worker, reuses this person's subscription (or creates one) and
+   * tells the API when it is new, rotated or `force`d. Aborts if the person changed.
+   */
+  private async save(publicKey: string, userId: string, force: boolean): Promise<boolean> {
+    const registration = await navigator.serviceWorker.register(PUSH_WORKER_URL);
+    await navigator.serviceWorker.ready;
+    const owner = readOwner();
+    let subscription = await registration.pushManager.getSubscription();
+    if (subscription && owner?.user !== userId) {
+      await subscription.unsubscribe();
+      subscription = null;
+    }
+    if (!this.still(userId)) return false;
+    subscription ??= await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToBytes(publicKey),
+    });
+
+    const json = subscription.toJSON();
+    const p256dh = json.keys?.['p256dh'];
+    const auth = json.keys?.['auth'];
+    if (!json.endpoint || !p256dh || !auth) return false;
+    const hash = endpointHash(json.endpoint);
+    if (force || owner?.user !== userId || owner.endpoint !== hash) {
+      if (!this.still(userId)) return false;
+      await firstValueFrom(this.client.subscribe({ endpoint: json.endpoint, keys: { p256dh, auth } }));
+      writeOwner({ user: userId, endpoint: hash });
+    }
+    writeFlag('optin', userId, true);
+    writeFlag('offered', userId, true);
+    if (this.still(userId)) this.subscribed.set(true);
+    return true;
+  }
+
+  /** The signed-in person (or '' with no session, as in the booking flow's tests). */
+  private currentUser(): string {
+    return this.session.userId() ?? '';
+  }
+
+  private still(userId: string): boolean {
+    return this.currentUser() === userId;
   }
 }
 

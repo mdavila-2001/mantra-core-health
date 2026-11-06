@@ -14,7 +14,7 @@ import type {
   QuietHours,
 } from '../../../core/data-access/notifications/notifications.types';
 import { NotificationsStore } from '../../../core/notifications/notifications.store';
-import { WebPushService, type WebPushOutcome } from '../../../core/notifications/web-push.service';
+import { WEB_PUSH_NOTICES, WebPushService } from '../../../core/notifications/web-push.service';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
@@ -93,15 +93,6 @@ const ICONS: Readonly<Record<NotificationCategory, NavIconName>> = {
  * ventana **existe** y aparece cuando la ventana termina. Prometer «no te
  * molesto» y perder un aviso serían dos cosas distintas.
  */
-/** Qué decirle a la persona cuando no se pudo activar, sin culparla. */
-const PUSH_NOTICES: Record<Exclude<WebPushOutcome, 'enabled'>, string> = {
-  unsupported: 'Este navegador no admite avisos fuera de la página.',
-  unavailable: 'Los avisos del navegador todavía no están disponibles en este entorno.',
-  denied:
-    'El navegador tiene bloqueados los avisos. Puede permitirlos desde la configuración del sitio.',
-  failed: 'No pudimos activar los avisos. Intente de nuevo en unos minutos.',
-};
-
 @Component({
   selector: 'app-notification-preferences',
   imports: [Alert, AppButton, FormsModule, NavIcon, Switch, LoadingState],
@@ -166,7 +157,7 @@ export class NotificationPreferences {
       return;
     }
     const outcome = await this.webPush.enable();
-    if (outcome !== 'enabled') this.pushNotice.set(PUSH_NOTICES[outcome]);
+    if (outcome !== 'enabled') this.pushNotice.set(WEB_PUSH_NOTICES[outcome]);
   }
 
   /**
