@@ -1,6 +1,6 @@
-<!-- Lo que falló al abrir un chat o crear el perfil. Los fallos de la
-     bandeja los pinta la bandeja (su `ViewState`) y los de un mensaje, su
-     burbuja: ninguno de los dos viene acá. -->
+<app-messaging-shortcuts /><!-- First: its document listeners run before the thread's (Esc). -->
+<!-- Lo que falló al abrir un chat o crear el perfil. Los fallos de la bandeja
+     los pinta la bandeja (su `ViewState`) y los de un mensaje, su burbuja. -->
 @if (store.error(); as mensaje) {
   <app-alert tone="error" class="mensajeria__alerta">{{ mensaje }}</app-alert>
 }

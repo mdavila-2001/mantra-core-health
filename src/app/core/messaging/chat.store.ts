@@ -219,17 +219,13 @@ function requestIdDe(error: unknown): string {
 }
 
 /**
- * Cuánto tiempo se puede editar un mensaje después de mandarlo.
+ * How long a message can be edited after sending it: 15 minutes, as WhatsApp.
  *
- * Cinco minutos, contados contra `sentAt` — la hora del servidor, no la del
- * navegador de quien edita: el reloj local se puede atrasar, y la ventana sería
- * la que quisiera cada máquina.
- *
- * **La regla también vive en el servidor.** Acá se aplica para que el menú no
- * ofrezca algo que va a fallar; ocultar el botón no es la barrera. La maqueta
- * responde 422 fuera de la ventana, igual que la API.
+ * Counted against `sentAt` (server time). The view adds `desfase` to
+ * the browser clock: a laptop clock two minutes ahead used to close the
+ * window at minute three. The API enforces the same rule (`EDIT_WINDOW_MS`).
  */
-export const VENTANA_DE_EDICION_MS = 5 * 60_000;
+export const VENTANA_DE_EDICION_MS = 15 * 60_000;
 
 /**
  * `true` si el mensaje todavía se puede editar.
@@ -477,6 +473,7 @@ export class ChatStore {
   readonly hiloCargado = signal(false);
   readonly enviando = signal(false);
 
+  readonly desfase = signal(0); // server minus browser clock, measured by the thread
   /** Los que todavía no acusó el servidor, de todas las conversaciones. */
   readonly pendientes = signal<readonly MensajePendiente[]>([]);
 
@@ -695,7 +692,8 @@ export class ChatStore {
       .pipe(takeUntilDestroyed())
       .subscribe((mensaje) => {
         if (mensaje.conversationId === this.activaId()) {
-          this.aplicarTexto(mensaje.id, mensaje.bodyText, mensaje.isEdited ?? true);
+          if (mensaje.reactions) this.aplicarReacciones(mensaje.id, mensaje.reactions); // reaction: text untouched
+          else this.aplicarTexto(mensaje.id, mensaje.bodyText, mensaje.isEdited ?? true);
         }
         this.recargarBandeja();
       });
@@ -1663,7 +1661,7 @@ export class ChatStore {
       this.editando.set(null);
       return;
     }
-    if (!editable(mensaje, this.perfil(), Date.now())) {
+    if (!editable(mensaje, this.perfil(), Date.now() + this.desfase())) {
       return;
     }
     this.respondiendoA.set(null);
@@ -1712,7 +1710,7 @@ export class ChatStore {
           this.aplicarTexto(messageId, editado.bodyText ?? cuerpo, true);
           this.recargarBandeja();
         },
-        // El plazo de cinco minutos lo explica la API cuando es eso
+        // El plazo de quince minutos lo explica la API cuando es eso
         // (`PRECONDITION_FAILED`); un corte de red no es un plazo vencido.
         error: (error: unknown) => {
           this.aplicarTexto(messageId, anterior, mensaje.isEdited ?? false);

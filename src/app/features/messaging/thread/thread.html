@@ -82,6 +82,9 @@
           </li>
         }
         <li role="none">
+          <button role="menuitem" type="button" data-testid="hilo-fondo" (click)="menuCabecera.set(false); eligiendoFondo.set(true)">Fondo de pantalla</button>
+        </li>
+        <li role="none">
           <button
             role="menuitem"
             type="button"
@@ -97,14 +100,8 @@
   </div>
 </header>
 
-<!-- «Consulta sobre: …» — la tarjeta de la conversación, fijada arriba como el
-     resumen del pedido en el chat de una app de delivery: se sabe de qué se
-     habla sin subir hasta el primer mensaje.
-
-     Mientras la tarjeta original está a la vista en el hilo, la barra se
-     recoge: las dos juntas decían lo mismo dos veces en 390 px. Se recoge con
-     una clase y no con `@if`, para que siga siendo el mismo nodo —y lo que se
-     lee de ella no dependa de dónde quedó el scroll—. -->
+<!-- «Consulta sobre: …», pinned on top. Collapsed (by class, same node) while
+     the original card is on screen, so the two never say the same twice. -->
 @if (contextoFijado(); as fijado) {
   <!-- Con quién la envió: el texto de una tarjeta lo escribe un participante,
        y sin decirlo cualquiera podía hacerla pasar por un dato de la app. -->
@@ -498,7 +495,7 @@
                 </button>
 
                 @if (menuAbierto() === linea.clave) {
-                  <ul class="hilo__menu hilo__menu--mensaje" role="menu" [class.hilo__menu--arriba]="menuArriba()">
+                  <ul class="hilo__menu hilo__menu--mensaje" role="menu">
                     <!-- La barra de reacciones, arriba del todo. Las seis de
                          siempre y un «+» con el catálogo entero. -->
                     <li role="none" class="hilo__menu-reacciones">
@@ -528,7 +525,7 @@
                       </button>
                     </li>
                     <!-- «Editar» se ofrece siempre en un texto propio. Dentro de
-                         los cinco minutos hace lo suyo; después queda apagado y
+                         los quince minutos hace lo suyo; después queda apagado y
                          dice por qué: esconderlo hacía creer que la función no
                          existía. El servidor es quien decide igual. -->
                     @if (esEditableEnTeoria(linea.mensaje)) {
@@ -538,12 +535,12 @@
                           type="button"
                           data-testid="hilo-editar"
                           [disabled]="!puedeEditarse(linea.mensaje)"
-                          [attr.title]="puedeEditarse(linea.mensaje) ? null : 'Sólo se puede editar durante los primeros 5 minutos'"
+                          [attr.title]="puedeEditarse(linea.mensaje) ? null : 'Sólo se puede editar durante los primeros 15 minutos'"
                           (click)="editar(linea.mensaje)"
                         >
                           Editar
                           @if (!puedeEditarse(linea.mensaje)) {
-                            <span class="hilo__menu-nota">Pasaron más de 5 min</span>
+                            <span class="hilo__menu-nota">Pasaron más de 15 min</span>
                           }
                         </button>
                       </li>
@@ -597,9 +594,7 @@
   <p class="hilo__aviso" role="status" data-testid="hilo-aviso">{{ aviso }}</p>
 }
 
-<!-- En angosto el selector «Escribiendo como» queda en la bandeja, que con el
-     hilo abierto no se ve: esta franja dice en nombre de quién sale la
-     respuesta. En ancho el selector está a la vista y la franja se esconde. -->
+<!-- Narrow screens: on whose behalf the reply goes out (the selector is in the inbox). -->
 @if (respondiendoComo(); as vitrina) {
   <p class="hilo__como" data-testid="hilo-respondiendo-como">
     Respondiendo como <strong>{{ vitrina }}</strong>
@@ -684,6 +679,10 @@
       }
     </dl>
   </app-content-dialog>
+}
+
+@if (eligiendoFondo()) {
+  <app-wallpaper-dialog (closed)="eligiendoFondo.set(false)" />
 }
 
 <!-- «Más reacciones»: el catálogo de emojis entero, para reaccionar. -->
