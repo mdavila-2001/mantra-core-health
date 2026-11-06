@@ -136,7 +136,7 @@
         <app-red-clinica-lecturas-aviso [faltas]="redDelExpediente.faltas()" (reintentar)="redDelExpediente.cargar()" />
         <app-view-state-host [state]="estadoDelRecorrido()" (retry)="recargar()">
           <!-- One full-width surface; with a node open (≥ 780 px), the panel next to it. -->
-          <div app-red-clinica-del-expediente class="expediente__red" (verDetalle)="verRegistroDeLaRed($event)"></div>
+          <div app-red-clinica-del-expediente class="expediente__red" (verDetalle)="verRegistroDeLaRed($event.id)"></div>
         </app-view-state-host>
       } @else {
       <app-tabs [(selectedIndex)]="activeTab">

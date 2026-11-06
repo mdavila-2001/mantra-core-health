@@ -126,7 +126,7 @@ import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { RedClinicaDelExpediente } from './red-clinica/expediente/red-clinica-del-expediente';
-import { RedDelExpediente, type FilaDeLaRed } from './red-clinica/expediente/red-del-expediente';
+import { RedDelExpediente } from './red-clinica/expediente/red-del-expediente';
 import { SeleccionDeLaRed } from './red-clinica/expediente/seleccion-de-la-red';
 import { SIN_DATO, TOPE } from './patient-chart.constants';
 import {
@@ -1201,9 +1201,10 @@ export class PatientChart {
   });
   private readonly seleccionDeLaRed = inject(SeleccionDeLaRed);
 
-  /** «Ver el registro completo» from the network's panel: its rows are this screen's. */
-  protected verRegistroDeLaRed(fila: FilaDeLaRed): void {
-    this.verDetalle(fila as FilaClinica);
+  /** «Ver el registro completo» from the network's panel: the id is resolved against this screen's own rows. */
+  protected verRegistroDeLaRed(id: string): void {
+    const fila = this.bloques().flatMap((bloque) => bloque.filas).find((candidata) => candidata.id === id);
+    if (fila !== undefined) this.verDetalle(fila);
   }
 
   /** The tour's state: the empty one with its way out, or the network. */
