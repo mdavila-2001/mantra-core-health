@@ -87,26 +87,27 @@ async function detalleGuardado(page: Page): Promise<Record<string, unknown>[]> {
   });
 }
 
-/** Laboratorio: el tipo de análisis arma el árbol; elige el primer estudio del árbol que case con el patrón. */
+/** Laboratorio: el tipo de análisis arma el árbol; busca por nombre y elige el primer estudio que aparezca. */
 async function elegirEstudioDeLaboratorio(
   modal: Locator,
   tipo: string,
-  patron: RegExp,
+  busquedas: readonly string[],
 ): Promise<string> {
   await elegirTipoDeOrden(modal, 'Laboratorio');
   await elegirOpcion(modal.getByRole('combobox', { name: /^Tipo de análisis\b/ }), tipo);
   await modal.locator('app-tree-select button').first().click();
   const dialogo = modal.page().locator('dialog[open]').last();
-  await dialogo
-    .getByRole('treeitem')
-    .first()
-    .click()
-    .catch(() => undefined);
-  const fila = dialogo.getByRole('treeitem').filter({ hasText: patron }).first();
-  await expect(fila).toBeVisible({ timeout: 15_000 });
-  const nombre = ((await fila.innerText()) ?? '').trim();
-  await fila.click();
-  return nombre;
+  const caja = dialogo.locator('input[placeholder*="Buscar"]').first();
+  for (const busqueda of busquedas) {
+    await caja.fill(busqueda);
+    const fila = dialogo.getByRole('treeitem', { name: new RegExp(busqueda, 'i') }).last();
+    if (await fila.isVisible().catch(() => false)) {
+      const nombre = ((await fila.innerText()) ?? '').trim();
+      await fila.click();
+      return nombre;
+    }
+  }
+  throw new Error(`ningún estudio del árbol coincide con: ${busquedas.join(', ')}`);
 }
 
 /** Imagenología: el tipo de imagen filtra los estudios; elige el primero de la lista. */
@@ -175,11 +176,12 @@ test.describe('la orden de estudios lleva muestra o parte del cuerpo (maqueta)',
     page.on('pageerror', (e) => errores.push(e.message));
 
     let modal = await abrirOrdenes(page);
-    const estudio = await elegirEstudioDeLaboratorio(
-      modal,
-      'Sangre',
-      /Glucosa|Creatinina|TSH|Perfil lip/i,
-    );
+    const estudio = await elegirEstudioDeLaboratorio(modal, 'Sangre', [
+      'Glucosa',
+      'Creatinina',
+      'TSH',
+      'lip',
+    ]);
     const pedir = modal.getByRole('button', { name: 'Pedir estudio' });
 
     // Sin muestra no se puede pedir, y el campo lo dice.
