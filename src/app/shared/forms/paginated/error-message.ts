@@ -1,6 +1,7 @@
 import type { AbstractControl } from '@angular/forms';
 
 import type { DateTextProblem } from '../../components/organisms/date-picker/date-picker.types';
+import { fieldKindErrorMessage } from '../field-kinds';
 
 import type { CampoDeFormulario } from './paginated-form.types';
 
@@ -38,6 +39,11 @@ export function mensajeDeError(
   }
 
   const errores = control.errors ?? {};
+  // Before `email` and `pattern`: the field-kind message is more precise.
+  const porTipo = fieldKindErrorMessage(errores);
+  if (porTipo !== null) {
+    return porTipo;
+  }
 
   if ('required' in errores) {
     return campo.mensajeSiFalta ?? 'Este dato es obligatorio.';

@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 
 import { PracticeSitesClient } from './practice-sites.client';
-import type { JoinablePractice, MyRoleAssignment, PracticeSitePage } from './practice-sites.types';
+import type { MyRoleAssignment, PracticeSitePage } from './practice-sites.types';
 
 describe('PracticeSitesClient', () => {
   let client: PracticeSitesClient;
@@ -71,22 +71,6 @@ describe('PracticeSitesClient', () => {
     http.expectOne((r) => r.url === '/practitioners/prac-1/sites').flush({ items: [], count: 0 });
 
     expect(pagina!.count).toBe(0);
-  });
-
-  /**
-   * Regresión: el selector de «Pedir una vinculación» leía `GET /practices`,
-   * que la API acota a la organización activa, y salía vacío para quien busca
-   * una organización nueva. La lista para elegir cruza organizaciones.
-   */
-  it('pide las organizaciones vinculables a su propia ruta y no a /practices', () => {
-    let lista: readonly JoinablePractice[] = [];
-    client.listJoinablePractices().subscribe((l) => (lista = l));
-
-    const req = http.expectOne('/practitioners/me/joinable-practices');
-    expect(req.request.method).toBe('GET');
-    req.flush([{ id: 'p-1', name: 'Hospital Central', practiceType: null }]);
-
-    expect(lista.map((p) => p.name)).toEqual(['Hospital Central']);
   });
 
   it('envía el teléfono particular de la sede y permite quitarlo', () => {

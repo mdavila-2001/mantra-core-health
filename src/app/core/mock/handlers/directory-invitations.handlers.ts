@@ -1,5 +1,5 @@
 import { STATUS } from '../fixtures/concepts';
-import { notFound, unauthorized, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, notFound, unauthorized, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_NAMES } from '../mock-session';
 import { ROL_TENANT, membresias, tenants } from './directory.handlers';
 
@@ -7,7 +7,8 @@ import { ROL_TENANT, membresias, tenants } from './directory.handlers';
     Las **invitaciones de organizaciones**, con la forma de la API
     (`directory/dto/membership-invitation.dto.ts`):
 
-    - `POST /tenants/:id/memberships` deja la membresía **pendiente de aceptación** (en `directory.handlers.ts`);
+    - `POST /tenants/:id/memberships` deja la membresía **pendiente de aceptación** (en `directory.handlers.ts`) y responde
+      409 si la persona ya es miembro o ya tiene una invitación pendiente (`details.membershipId`);
     - `GET /tenants/me/membership-invitations` → `{ items: [{ id, tenantId, tenantName, role, invitedAt }] }`;
     - `POST /tenants/me/membership-invitations/:membershipId/accept` → `{ id, tenantId, status: 'ACTIVE' }` y
       `…/decline` → `{ …, status: 'DECLINED' }`. Aceptar o rechazar una ajena, o una que ya no está pendiente, es 404
@@ -61,5 +62,16 @@ export function registrarInvitacionesDeOrganizacion(router: MockRouter): void {
     if (fila === undefined || fila.tenantId !== request.params['id'] || fila.statusConceptId === STATUS['ST-INACTIVE']) return notFound('Membresía no encontrada');
     membresias.actualizar(fila.id, { statusConceptId: STATUS['ST-INACTIVE']!, endDate: new Date().toISOString().slice(0, 10) });
     return { ok: true };
+  });
+
+  router.wrap('POST', '/tenants/:id/memberships', (request, next) => {
+    const userId = (request.body as { userId?: unknown } | null)?.userId;
+    const previa = membresias.filtrar(
+      (m) => m.tenantId === request.params['id'] && m.userId === userId && [PENDIENTE, STATUS['ST-ACTIVE']].includes(m.statusConceptId),
+    )[0];
+    if (previa === undefined) return next(request);
+    return previa.statusConceptId === PENDIENTE
+      ? conflict('Esa persona ya tiene una invitación pendiente.', { membershipId: previa.id })
+      : conflict('Esa persona ya es miembro de la organización.', { membershipId: previa.id });
   });
 }

@@ -1,5 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+  type TestRequest,
+} from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
@@ -60,7 +64,12 @@ describe('MyAgenda', () => {
     fixture.detectChanges();
   }
 
-  function crear(perfil: string | null = PERFIL, tenant: string | null = TENANT): void {
+  function crear(
+    perfil: string | null = PERFIL,
+    tenant: string | null = TENANT,
+    otras: readonly string[] = [],
+  ): void {
+    const activa = signal<string | null>(tenant);
     // Cada caso monta su propia sesión (con perfil, sin perfil, sin tenant), y
     // sin reiniciar, el segundo `configureTestingModule` revienta.
     TestBed.resetTestingModule();
@@ -73,7 +82,9 @@ describe('MyAgenda', () => {
           provide: AuthService,
           useValue: {
             practitionerProfileId: signal<string | null>(perfil),
-            activeTenantId: signal<string | null>(tenant),
+            activeTenantId: activa,
+            tenants: signal<readonly string[]>(tenant === null ? otras : [tenant, ...otras]),
+            selectTenant: (id: string) => activa.set(id),
             roles: signal<readonly string[]>(['PRACTITIONER']),
           },
         },
@@ -235,6 +246,7 @@ describe('MyAgenda', () => {
             useValue: {
               practitionerProfileId: signal<string | null>(PERFIL),
               activeTenantId: signal<string | null>(TENANT),
+              tenants: signal<readonly string[]>([]),
               roles: signal<readonly string[]>(['PRACTITIONER']),
             },
           },
@@ -380,6 +392,163 @@ describe('MyAgenda', () => {
         abrir();
 
         expect($(AVISO)).toBeNull();
+      });
+    });
+
+    /**
+     * While the day is read it claims nothing: it used to show "No atiende
+     * este día" during the load and the doctor believed that day was off.
+     */
+    describe('la carga del día', () => {
+      const LOADING = '[data-testid="dia-cargando"]';
+      interface Readings {
+        dayLoad: { loading(): boolean };
+        cuposDelDia(): readonly unknown[];
+        dayState(): string;
+        diaAbierto(): Date | null;
+        cargarDia(fecha: Date): void;
+      }
+      const readings = (): Readings => fixture.componentInstance as unknown as Readings;
+      const isDayRead = (r: { url: string; params: { get(k: string): string | null } }): boolean =>
+        (r.url === '/scheduling/slots' || r.url === '/scheduling/bookings') &&
+        r.params.get('limit') === '100';
+
+      /** Answers everything empty except the day's two reads, which it returns held. */
+      function holdDay(): { slots: TestRequest; bookings: TestRequest } {
+        const held = http.match((r) => isDayRead(r));
+        for (const req of http.match(
+          (r) =>
+            r.url === '/scheduling/slots' ||
+            r.url === '/scheduling/bookings' ||
+            r.url === '/scheduling/resources/res-1/exceptions' ||
+            r.url === '/visit-requests/inbox' ||
+            r.url === '/pharma-labs/reference/concepts',
+        )) {
+          req.flush(req.request.url === '/visit-requests/inbox' ? [] : { items: [], count: 0 });
+        }
+        fixture.detectChanges();
+        const slots = held.find((r) => r.request.url === '/scheduling/slots');
+        const bookings = held.find((r) => r.request.url === '/scheduling/bookings');
+        if (slots === undefined || bookings === undefined) throw new Error('missing day reads');
+        return { slots, bookings };
+      }
+
+      function openHeld(): { slots: TestRequest; bookings: TestRequest } {
+        crearCalendario();
+        conRecurso();
+        conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
+        return holdDay();
+      }
+
+      const slotOf = (id: string) => ({
+        id,
+        startAt: new Date().toISOString(),
+        endAt: new Date().toISOString(),
+      });
+
+      it('keeps loading while one of the two answers is missing', () => {
+        const { slots, bookings } = openHeld();
+        expect(readings().dayLoad.loading()).toBe(true);
+        expect($(LOADING)).not.toBeNull();
+        expect(fixture.nativeElement.textContent).not.toContain('No atiende este día');
+
+        // Atomic: slots alone are neither drawn nor enough to stop loading.
+        slots.flush({ items: [slotOf('solo-cupos')], count: 1 });
+        fixture.detectChanges();
+        expect(readings().dayLoad.loading()).toBe(true);
+        expect(readings().cuposDelDia().length).toBe(0);
+
+        bookings.flush({ items: [], count: 0 });
+        fixture.detectChanges();
+        expect(readings().dayLoad.loading()).toBe(false);
+        expect($(LOADING)).toBeNull();
+      });
+
+      it('an old answer for another day does not overwrite the new one', () => {
+        const previous = openHeld();
+        ($('[data-testid="dia-siguiente"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        const fresh = holdDay();
+
+        fresh.slots.flush({ items: [slotOf('fresh')], count: 1 });
+        fresh.bookings.flush({ items: [], count: 0 });
+        fixture.detectChanges();
+        expect(readings().dayLoad.loading()).toBe(false);
+
+        // The old turn was cancelled: its requests can no longer overwrite anything.
+        expect(previous.slots.cancelled).toBe(true);
+        expect(previous.bookings.cancelled).toBe(true);
+        expect(readings().cuposDelDia().length).toBe(1);
+        expect(readings().dayLoad.loading()).toBe(false);
+      });
+
+      it('after a failure on the previous day, the day says it is loading while the new one loads', () => {
+        const { slots, bookings } = openHeld();
+        slots.flush(
+          { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '', correlationId: 'c' },
+          { status: 500, statusText: 'Internal Server Error' },
+        );
+        bookings.flush({ items: [], count: 0 });
+        fixture.detectChanges();
+
+        ($('[data-testid="dia-siguiente"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect($(LOADING)).not.toBeNull();
+        holdDay();
+      });
+
+      it('changing day empties the slots of the previous day', () => {
+        const { slots, bookings } = openHeld();
+        slots.flush({ items: [slotOf('de-ayer')], count: 1 });
+        bookings.flush({ items: [], count: 0 });
+        fixture.detectChanges();
+        expect(readings().cuposDelDia().length).toBe(1);
+
+        ($('[data-testid="dia-siguiente"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(readings().cuposDelDia().length).toBe(0);
+        expect(readings().dayLoad.loading()).toBe(true);
+        holdDay();
+      });
+
+      it('retrying the same day keeps its failure: a taken slot is not shown as "No disponible"', () => {
+        const { slots, bookings } = openHeld();
+        const taken = { ...slotOf('tomado'), remainingCapacity: 0 };
+        slots.flush({ items: [taken], count: 1 });
+        bookings.flush(
+          { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '', correlationId: 'c' },
+          { status: 500, statusText: 'Internal Server Error' },
+        );
+        fixture.detectChanges();
+
+        ($('[data-testid="agenda-reintentar-lecturas"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        // Same day: the lists stay and so does the failure until the retry answers.
+        expect(readings().dayLoad.loading()).toBe(true);
+        expect(readings().dayState()).toBe('error');
+        expect(fixture.nativeElement.textContent).not.toContain('No disponible');
+        for (const req of http.match((r) => isDayRead(r))) req.flush({ items: [], count: 0 });
+      });
+
+      it('a slow write that asks for the day it started on does not replace the day open now', () => {
+        const first = openHeld();
+        first.slots.flush({ items: [], count: 0 });
+        first.bookings.flush({ items: [], count: 0 });
+        fixture.detectChanges();
+        const startedOn = readings().diaAbierto() as Date;
+
+        ($('[data-testid="dia-siguiente"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        const next = holdDay();
+
+        readings().cargarDia(startedOn);
+        expect(http.match((r) => isDayRead(r))).toEqual([]);
+        expect(next.slots.cancelled).toBe(false);
+        next.slots.flush({ items: [], count: 0 });
+        next.bookings.flush({ items: [], count: 0 });
       });
     });
 
@@ -563,6 +732,7 @@ describe('MyAgenda', () => {
             useValue: {
               practitionerProfileId: signal<string | null>(PERFIL),
               activeTenantId: signal<string | null>(TENANT),
+              tenants: signal<readonly string[]>([]),
               roles: signal<readonly string[]>(['PRACTITIONER']),
             },
           },
@@ -659,6 +829,7 @@ describe('MyAgenda', () => {
             useValue: {
               practitionerProfileId: signal<string | null>(PERFIL),
               activeTenantId: signal<string | null>(TENANT),
+              tenants: signal<readonly string[]>([]),
               roles: signal<readonly string[]>(['PRACTITIONER']),
             },
           },
@@ -722,6 +893,7 @@ describe('MyAgenda', () => {
             useValue: {
               practitionerProfileId: signal<string | null>(PERFIL),
               activeTenantId: signal<string | null>(TENANT),
+              tenants: signal<readonly string[]>([]),
               roles: signal<readonly string[]>(['PRACTITIONER']),
             },
           },
@@ -1223,6 +1395,28 @@ describe('MyAgenda', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Publicar mi agenda');
+  });
+
+  it('si el horario está publicado en otra organización, cambia a esa y lo muestra', () => {
+    // «¿Dónde publica?» deja publicar en una organización afiliada: buscar solo
+    // en la activa decía «Todavía no publicó su horario» con el horario publicado.
+    crear(PERFIL, TENANT, ['org-afiliada']);
+    conTipologias();
+    http.expectOne(RECURSOS).flush({ items: [], count: 0 });
+    const ajena = http.expectOne('/scheduling/resources?tenantId=org-afiliada');
+    expect(ajena.request.headers.get('X-Tenant-Id')).toBe('org-afiliada');
+    ajena.flush({ items: [{ id: 'res-1', name: 'Agenda', resourceRefId: PERFIL }], count: 1 });
+    conPlantilla([]);
+    // Switched: the screen reloads as the affiliated organization, which is now the active one.
+    conTipologias();
+    http
+      .expectOne('/scheduling/resources?tenantId=org-afiliada')
+      .flush({ items: [{ id: 'res-1', name: 'Agenda', resourceRefId: PERFIL }], count: 1 });
+    conPlantilla([]);
+    conCuposHasta(null);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Todavía no publicó su horario');
   });
 
   it('una cuenta sin perfil profesional no pide nada al servidor', () => {

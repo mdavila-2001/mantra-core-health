@@ -618,6 +618,7 @@ export interface DiagnosticCenterRegistration {
   readonly legalEntityType: string;
   readonly tradeName?: string;
   readonly timeZone?: string;
+  readonly taxIdentifier: string;
   /** Los tipos territoriales exigen país y jurisdicción (422 `missing` si faltan). */
   readonly countryConceptId: string;
   readonly jurisdictionConceptId: string;
@@ -770,14 +771,10 @@ export interface PharmacyBranchRegistration {
  * Alta pública de una farmacia por sí misma (`POST /iam/auth/register-organization`
  * con `tenantType: 'PHARMACY'`).
  *
- * Mismo endpoint que {@link OrganizationRegistration} (la aseguradora): el
- * registro de procesos repite el mismo onboarding de tenant —empresa,
- * papeles, representante legal, gerencias, cuenta de acceso— para farmacia,
- * laboratorio e imagenología (Módulo Farmacia §1). Es una interfaz aparte y
- * no una unión con `OrganizationRegistration` porque el bloque específico del
- * tipo de tenant no coincide: la aseguradora exige `payer` siempre; la
- * farmacia manda su bloque `pharmacy` (`RegisterPharmacyBlockDto`), con las
- * coordenadas de la casa matriz y las sucursales que la persona cargó (P49).
+ * Same endpoint and onboarding as {@link OrganizationRegistration} (Módulo
+ * Farmacia §1), but a separate interface: the insurer always sends `payer`,
+ * the pharmacy its `pharmacy` block (`RegisterPharmacyBlockDto`) with the HQ
+ * coordinates and branches (P49).
  *
  * A diferencia de la aseguradora, acá **lo obligatorio es lo más básico**
  * (decisión D2 del carril de farmacia): razón social, tipo societario, NIT,
@@ -788,6 +785,7 @@ export interface PharmacyBranchRegistration {
 export interface PharmacyOrganizationRegistration {
   readonly code: string;
   readonly legalName: string;
+  readonly tradeName?: string;
   /** Tipo societario del diccionario `VS_LEGAL_ENTITY_TYPE`, p. ej. `SRL`. */
   readonly legalEntityType: string;
   /** País y jurisdicción (conceptos): la API los exige a toda organización territorial. */
@@ -872,11 +870,13 @@ export interface DiagnosticUnitBranchRegistration {
 export interface LaboratoryOrganizationRegistration {
   readonly code: string;
   readonly legalName: string;
+  readonly tradeName?: string;
   /** Tipo societario del diccionario `VS_LEGAL_ENTITY_TYPE`, p. ej. `SRL`. */
   readonly legalEntityType: string;
   /** País y jurisdicción (conceptos): la API los exige a toda organización territorial. */
   readonly countryConceptId: string;
   readonly jurisdictionConceptId: string;
+  readonly taxIdentifier: string;
   /** La unidad diagnóstica que nace con el alta: la central y, si hay, sus sucursales. */
   readonly diagnosticUnit: {
     readonly name: string;

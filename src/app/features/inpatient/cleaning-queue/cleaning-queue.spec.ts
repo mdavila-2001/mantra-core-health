@@ -47,7 +47,7 @@ describe('CleaningQueue', () => {
     expect(raiz().textContent).toContain('Verificando permisos');
     acceso.listo({ userId: 'x', tenantId: 't', sites: [] });
     harness.detectChanges();
-    expect(raiz().textContent).toContain('Su rol no incluye la cola de limpieza');
+    expect(raiz().textContent).toContain('no administra ningún establecimiento');
     expect(colas(http)).toHaveLength(0);
   });
 

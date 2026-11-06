@@ -21,9 +21,15 @@
      no tienen día que mirar, así que no tienen dónde recibirlos. Quitárselos
      también a ellos sería sacarles la función, no moverla — y el pedido del
      doctor es sobre SU pantalla, la del calendario. -->
+<!-- Only who has «Cupos» hears about cupos (E4): who attends sees their
+     consultations and their schedule. -->
 <app-page-header
   title="Consultas"
-  subtitle="Las consultas comprometidas y los cupos que quedan por ofrecer."
+  [subtitle]="
+    hasSlotsTab()
+      ? 'Las consultas comprometidas y los cupos que quedan por ofrecer.'
+      : 'Las consultas comprometidas y sus horarios de atención.'
+  "
   [breadcrumbs]="breadcrumbs()"
 >
   @if (!tieneCalendario() && puedeIngresarPorMostrador()) {
@@ -60,7 +66,7 @@
   @if (sinOrganizacion()) {
     <app-alert tone="info" title="Elija una organización">
       La agenda pertenece a una organización concreta. Elija una en el selector del encabezado para
-      ver sus citas y sus cupos.
+      ver sus citas{{ hasSlotsTab() ? ' y sus cupos' : '' }}.
     </app-alert>
   } @else {
     <!-- ─── Sin recursos agendables ───────────────────────────────────────
@@ -69,7 +75,8 @@
     @if (sinRecursos()) {
       <app-alert tone="info" title="Todavía no hay recursos agendables">
         Una agenda se arma sobre recursos —la consulta de un profesional, un box, un equipo—. Cuando
-        esta organización tenga alguno, sus citas y sus cupos van a aparecer acá.
+        esta organización tenga alguno, sus citas{{ hasSlotsTab() ? ' y sus cupos' : '' }} van a
+        aparecer acá.
       </app-alert>
     }
 
@@ -173,16 +180,18 @@
       >
         <h2 id="reprogramando-titulo" class="agenda__reprogramando-titulo">Elija el horario nuevo</h2>
         <p class="agenda__reprogramando-ayuda">
+          <!-- Who attends picks on their calendar, where the gaps read «Disponible». -->
+          @let moveTarget = hasSlotsTab() ? 'el cupo' : 'el horario libre';
           @if (citaEnReprogramacion(); as origen) {
             Está moviendo la cita de <strong>{{ origen.paciente }}</strong>
             @if (origen.cuando !== null) {
               del {{ origen.cuando | date: "EEEE d 'de' MMMM, HH:mm" }}
             }
-            . Toque «Mover acá» en el cupo que quiera: el horario anterior queda libre y la cita
-            conserva su estado.
+            . Toque «Mover acá» en {{ moveTarget }} que quiera: el horario anterior queda libre y la
+            cita conserva su estado.
           } @else {
-            Toque «Mover acá» en el cupo que quiera. El horario anterior queda libre y la cita
-            conserva su estado.
+            Toque «Mover acá» en {{ moveTarget }} que quiera. El horario anterior queda libre y la
+            cita conserva su estado.
           }
         </p>
         <div class="agenda__reprogramando-acciones">
@@ -295,10 +304,11 @@
       }
 
       <!-- ─── Cupos ─────────────────────────────────────────────────────────
-           Mismo criterio que la lista: sobrevive sólo donde no hay calendario,
-           porque es el único lugar en que esa persona ve los huecos y puede
-           reservarlos o elegirlos como destino de un movimiento. -->
-      @if (!tieneCalendario()) {
+           Only for who hands out appointments (E4): it is the only place where
+           they see the gaps and book them or pick them as a move target. Who
+           attends never gets it: they move bookings on their calendar, and
+           without a published agenda they have no booking to move. -->
+      @if (hasSlotsTab()) {
         <app-tab [label]="rotuloDeCupos()">
           <ng-container [ngTemplateOutlet]="filtrosDeListas" />
           @if (cuposRecortados()) {

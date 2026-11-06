@@ -124,6 +124,7 @@ describe('AgendaCreate', () => {
           useValue: {
             roles: signal<readonly string[]>(roles),
             activeTenantId: signal<string | null>(tenant),
+            selectTenant: vi.fn(),
             practitionerProfileId: signal<string | null>(perfilProfesional),
             displayName: signal<string | null>('Dra. Elena Salas'),
           },
@@ -179,6 +180,7 @@ describe('AgendaCreate', () => {
           useValue: {
             roles: signal<readonly string[]>(['PRACTITIONER']),
             activeTenantId: signal<string | null>(TENANT),
+            selectTenant: vi.fn(),
             practitionerProfileId: signal<string | null>(PERFIL),
             displayName: signal<string | null>('Dra. Elena Salas'),
           },
@@ -482,6 +484,7 @@ describe('AgendaCreate', () => {
             useValue: {
               roles: signal<readonly string[]>(['PRACTITIONER']),
               activeTenantId: signal<string | null>(TENANT),
+              selectTenant: vi.fn(),
               practitionerProfileId: signal<string | null>(PERFIL),
               displayName: signal<string | null>('Dra. Elena Salas'),
             },
@@ -2063,6 +2066,7 @@ describe('AgendaCreate', () => {
       expect(creation.request.body).not.toHaveProperty('practiceId');
       creation.flush({ id: 'res-1', name: 'x', stateConceptId: 'c' });
       finishPublishing('res-1');
+      expect(TestBed.inject(AuthService).selectTenant).not.toHaveBeenCalled();
     });
 
     it('con otra organización, busca sus agendas y el recurso lleva su organización y su práctica', () => {
@@ -2080,6 +2084,8 @@ describe('AgendaCreate', () => {
       });
       creation.flush({ id: 'res-olivos', name: 'x', stateConceptId: 'c' });
       finishPublishing('res-olivos');
+      // «Consultas» lee con la organización activa: tiene que ser donde se publicó.
+      expect(TestBed.inject(AuthService).selectTenant).toHaveBeenCalledWith('tenant-olivos');
     });
 
     it('cambiar de organización suelta la agenda y el horario de la anterior', () => {

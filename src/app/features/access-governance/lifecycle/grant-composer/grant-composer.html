@@ -28,8 +28,8 @@
       "
       [errorMessage]="dateError()"
     >
-      <app-input
-        type="date"
+      <app-date-string-picker
+        
         [value]="draft().validTo"
         (valueChange)="setValidTo($event)"
         [hasError]="dateError() !== ''"

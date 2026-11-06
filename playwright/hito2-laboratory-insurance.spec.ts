@@ -165,7 +165,9 @@ test.describe('Hito 2 · laboratorio y aseguradora · solo demo', () => {
 
       await irA(page, LAB_SUMMARY);
       await expect(page.getByTestId('summary-result-files')).toHaveText(String(initialCount + 1));
-      await expect(page.getByTestId('summary-activity')).toContainText(fileName);
+      // The redesigned home names the study of the last upload («último: Hemograma completo, hace un
+      // momento»), never the file name: a fresh upload reads «hace un momento».
+      await expect(page.getByTestId('summary-activity')).toContainText(/último: .+, hace un momento/);
       await capture(page, 'laboratory-portal-after-upload', viewport.width, info);
       expect(errors, 'errores de consola o del navegador en laboratorio').toEqual([]);
     });

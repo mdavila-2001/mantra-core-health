@@ -158,4 +158,33 @@ describe('PharmacyOpeningHoursPage', () => {
       'De turno ahora',
     );
   });
+
+  it('con una sola sede no ofrece la pestaña «Todas las sucursales»', () => {
+    expect(raiz().querySelector('app-opening-hours-all-sites')).toBeNull();
+  });
+
+  it('con varias sedes, la primera pestaña es «Todas las sucursales»', async () => {
+    respuesta = {
+      ...respuesta,
+      sites: [sede(), sede({ siteId: 's-2', siteName: 'Sucursal Norte' })],
+    };
+    client.getOpeningHours.mockReturnValue(of(respuesta));
+    (fixture.componentInstance as unknown as { recargar: () => void }).recargar();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(raiz().textContent).toContain('Todas las sucursales');
+    expect(raiz().querySelector('app-opening-hours-all-sites')).not.toBeNull();
+  });
+
+  it('dentro de Sucursales (embedded) no dibuja membrete ni tarjeta propios', async () => {
+    fixture.componentRef.setInput('embedded', true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(raiz().querySelector('app-page-header')).toBeNull();
+    expect(raiz().querySelector('app-card')).toBeNull();
+    expect(raiz().querySelector('[data-testid="horario-card"]')).not.toBeNull();
+  });
 });

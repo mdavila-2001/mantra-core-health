@@ -2,8 +2,8 @@
  * Evidencia de navegador del menú de la cuenta de farmacia (30/10/2026),
  * contra el simulador (`ng serve --configuration demo`).
  *
- * - Farmacia (`farmacia@alovida.mock`): la barra lateral tiene sólo sus seis
- *   renglones; la cabecera ya no ofrece «Mis solicitudes» (seguros) y conserva
+ * - Farmacia (`farmacia@alovida.mock`): la barra lateral tiene sólo sus cinco
+ *   renglones (05/11/2026: «Horario y turnos» es pestaña de «Sucursales»); la cabecera ya no ofrece «Mis solicitudes» (seguros) y conserva
  *   «Mis facturas»; escribir `/my-account/requests` a mano no abre la pantalla.
  * - Paciente y médica: siguen viendo «Mis solicitudes».
  *
@@ -20,7 +20,6 @@ mkdirSync(SALIDA, { recursive: true });
 const MENU_DE_LA_FARMACIA = [
   '/administration/pharmacy',
   '/administration/pharmacy-catalog',
-  '/administration/pharmacy-hours',
   '/administration/pharmacy-orders',
   '/administration/pharmacy-campaigns',
   '/administration/pharmacy-branches',
@@ -73,7 +72,7 @@ const enCabecera = (pagina, testId) => pagina.locator(`[data-testid="${testId}"]
     .evaluateAll((as) => as.map((a) => a.getAttribute('href')));
   const propios = lateral.filter((ruta) => !['/my-account', '/notification-center'].includes(ruta));
   comprobar(
-    'farmacia: la barra lateral tiene sólo sus seis renglones',
+    'farmacia: la barra lateral tiene sólo sus cinco renglones',
     JSON.stringify(propios) === JSON.stringify(MENU_DE_LA_FARMACIA),
     propios.join(', '),
   );

@@ -7,6 +7,7 @@ import type {
   CenterBookingPage,
   CenterSchedule,
   CenterScheduleView,
+  CenterEquipmentInput,
   EquipmentStatus,
   OrderAppointment,
   OrderBookingOptions,
@@ -17,9 +18,9 @@ import type {
  * Horarios y equipos de un centro de diagnóstico, y la reserva de un estudio a
  * partir de la orden médica.
  *
- * Contrato que hoy sólo implementa el simulador: ver `PENDIENTES-BACKEND.md`
- * (P-CENTRO-HORARIOS). Los instantes viajan en ISO y se dejan como texto: la
- * pantalla los formatea al mostrar.
+ * The real API serves it; the simulator mirrors it under `development,demo`.
+ * Los instantes viajan en ISO y se dejan como texto: la pantalla los formatea
+ * al mostrar.
  */
 @Injectable({ providedIn: 'root' })
 export class CenterScheduleClient {
@@ -58,6 +59,26 @@ export class CenterScheduleClient {
     return this.http.patch<CenterScheduleView>(
       this.url(`/diagnostic-units/${encodeURIComponent(unitId)}/equipment/${encodeURIComponent(equipmentId)}`),
       { status },
+    );
+  }
+
+  /** `POST /diagnostic-units/{unitId}/equipment` — registers a device (a production line). */
+  addEquipment(unitId: string, input: CenterEquipmentInput): Observable<CenterScheduleView> {
+    return this.http.post<CenterScheduleView>(this.url(`/diagnostic-units/${encodeURIComponent(unitId)}/equipment`), input);
+  }
+
+  /** `PUT /diagnostic-units/{unitId}/equipment/{equipmentId}` — name, maker, serial and modality. */
+  editEquipment(unitId: string, equipmentId: string, input: CenterEquipmentInput): Observable<CenterScheduleView> {
+    return this.http.put<CenterScheduleView>(
+      this.url(`/diagnostic-units/${encodeURIComponent(unitId)}/equipment/${encodeURIComponent(equipmentId)}`),
+      input,
+    );
+  }
+
+  /** `DELETE /diagnostic-units/{unitId}/equipment/{equipmentId}` — 409 once it has records. */
+  removeEquipment(unitId: string, equipmentId: string): Observable<CenterScheduleView> {
+    return this.http.delete<CenterScheduleView>(
+      this.url(`/diagnostic-units/${encodeURIComponent(unitId)}/equipment/${encodeURIComponent(equipmentId)}`),
     );
   }
 

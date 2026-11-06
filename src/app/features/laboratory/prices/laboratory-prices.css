@@ -5,6 +5,7 @@
 .prices__panel {
   display: grid;
   gap: var(--sp-4);
+  padding-block-start: var(--sp-4);
 }
 
 .prices__list {
@@ -35,26 +36,5 @@
 
 .prices__dirty {
   font-size: var(--fs-caption);
-  color: var(--text-secondary);
-}
-
-.prices__main {
-  display: block;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.prices__code {
-  font-family: var(--font-mono);
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
-}
-
-.prices__amount {
-  font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
-}
-
-.prices__muted {
   color: var(--text-secondary);
 }

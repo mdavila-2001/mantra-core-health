@@ -1,10 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { NgTemplateOutlet } from '@angular/common';
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   inject,
+  input,
   signal,
   untracked,
 } from '@angular/core';
@@ -26,7 +29,6 @@ import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
-import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -38,44 +40,17 @@ import { ViewStateHost } from '../../../shared/components/organisms/view-state-h
 
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
 import { PharmacyScope } from '../pharmacy-scope';
-
-/** Lo que la sede dice de sus 24 h, como lo elige la persona. */
-type Declaracion24h = 'si' | 'no' | 'sin-declarar';
-
-const OPCIONES_24H: readonly SelectOption<Declaracion24h>[] = [
-  { value: 'si', label: 'Sí, abre las 24 horas' },
-  { value: 'no', label: 'No abre las 24 horas' },
-  { value: 'sin-declarar', label: 'Sin declarar' },
-];
-
-/** El borrador del turno nuevo de una sede: lo tipeado se conserva ante un fallo. */
-interface BorradorDeTurno {
-  readonly desdeFecha: string;
-  readonly desdeHora: string;
-  readonly hastaFecha: string;
-  readonly hastaHora: string;
-}
-
-const BORRADOR_VACIO: BorradorDeTurno = {
-  desdeFecha: '',
-  desdeHora: '',
-  hastaFecha: '',
-  hastaHora: '',
-};
-
-/** Los errores del alta, por campo. */
-interface ErroresDeTurno {
-  readonly desde?: string;
-  readonly hasta?: string;
-}
-
-function declaracionDe(open24h: boolean | null): Declaracion24h {
-  return open24h === true ? 'si' : open24h === false ? 'no' : 'sin-declarar';
-}
-
-function open24hDe(declaracion: Declaracion24h): boolean | null {
-  return declaracion === 'si' ? true : declaracion === 'no' ? false : null;
-}
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
+import { OpeningHoursAllSites } from './all-sites/opening-hours-all-sites';
+import {
+  BORRADOR_VACIO,
+  OPCIONES_24H,
+  declaracionDe,
+  open24hDe,
+  type BorradorDeTurno,
+  type Declaracion24h,
+  type ErroresDeTurno,
+} from './opening-hours-options';
 
 /** El mensaje que el servidor da a un 409/422 del turno, si lo hay. */
 function mensajeDelServidor(error: unknown): string | null {
@@ -102,16 +77,25 @@ function mensajeDelServidor(error: unknown): string | null {
  *
  * Una sede «sin declarar» no es «cerrada de noche»: el paciente no ve nada, en
  * vez de ver una afirmación que la farmacia nunca hizo.
+ *
+ * ## Per branch and for all branches
+ *
+ * With more than one site the first tab is "Todas las sucursales"
+ * ({@link OpeningHoursAllSites}): the same 24 h declaration or shift is applied
+ * to the checked sites, one request per site. Per-site tabs remain the granular
+ * editor. It lives as a tab of "Sucursales" (`embedded`): no own header/card.
  */
 @Component({
   selector: 'app-pharmacy-opening-hours',
-  imports: [
+  imports: [DateStringPicker, 
     Alert,
     AppButton,
     Badge,
     Card,
     FormField,
     Input,
+    NgTemplateOutlet,
+    OpeningHoursAllSites,
     PageHeader,
     Select,
     Tab,
@@ -124,6 +108,9 @@ function mensajeDelServidor(error: unknown): string | null {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PharmacyOpeningHoursPage {
+  /** Mounted inside the Branches hub: no own header or card. */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
   protected readonly scope = inject(PharmacyScope);
   private readonly pharmacy = inject(PharmacyClient);
   private readonly toasts = inject(ToastService);
@@ -141,6 +128,8 @@ export class PharmacyOpeningHoursPage {
   protected readonly falloGeneral = signal<Readonly<Record<string, string>>>({});
 
   protected readonly sedes = computed(() => dataOf(this.horario()) ?? []);
+  /** The bulk tab only makes sense with two or more sites. */
+  protected readonly variasSedes = computed(() => this.sedes().length > 1);
 
   constructor() {
     effect(() => {
@@ -150,12 +139,15 @@ export class PharmacyOpeningHoursPage {
     });
   }
 
-  protected recargar(): void {
+  /** `silent` after a mutation: keeps the tabs mounted (and the bulk summary). */
+  protected recargar(silent = false): void {
     const pharmacyId = this.scope.pharmacyId();
     if (pharmacyId === null) {
       return;
     }
-    this.horario.set(loading());
+    if (!silent) {
+      this.horario.set(loading());
+    }
     this.pharmacy.getOpeningHours(pharmacyId).subscribe({
       next: (respuesta: PharmacyOpeningHours) =>
         this.horario.set(
@@ -242,7 +234,7 @@ export class PharmacyOpeningHoursPage {
         this.borradores.update((todos) => ({ ...todos, [sede.siteId]: BORRADOR_VACIO }));
         this.toasts.success(`Turno cargado: hasta el ${momentoDeBolivia(turno.endsAt)}.`);
         // La recarga trae el turno desde el servidor, no desde lo tipeado.
-        this.recargar();
+        this.recargar(true);
       },
       error: (error: unknown) => {
         this.guardando.set(null);
@@ -268,7 +260,7 @@ export class PharmacyOpeningHoursPage {
       next: () => {
         this.guardando.set(null);
         this.toasts.success('Turno cancelado: ya no se muestra a los pacientes.');
-        this.recargar();
+        this.recargar(true);
       },
       error: (error: unknown) => {
         this.guardando.set(null);

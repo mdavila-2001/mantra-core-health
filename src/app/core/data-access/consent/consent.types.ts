@@ -87,3 +87,23 @@ export interface InformedConsentRegistration {
   readonly decision: string;
   readonly createdAt: Date;
 }
+
+/* ---- Access by specialty (granular): only the practitioner asks ---------- */
+
+/** What the practitioner sends (`POST /consent/practitioner-access-requests`). */
+export interface PractitionerAccessRequestInput {
+  readonly patientProfileId: string;
+  /** At least one: the request names what it wants to read. */
+  readonly specialtyConceptIds: readonly string[];
+  readonly reasonText?: string;
+}
+
+/** The patient's two answers, with the contract's names. */
+export type PractitionerAccessDecision = 'ACCEPTED' | 'DECLINED';
+
+/** What the patient sends (`POST /consent/practitioner-access-requests/:id/decision`). */
+export interface PractitionerAccessDecisionInput {
+  readonly decision: PractitionerAccessDecision;
+  /** A subset of the requested ones; empty when declining. */
+  readonly authorizedSpecialtyConceptIds: readonly string[];
+}

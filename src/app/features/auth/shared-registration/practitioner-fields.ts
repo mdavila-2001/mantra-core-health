@@ -129,7 +129,7 @@ export function practitionerFields(
       {
         key: 'lastName',
         label: 'Apellido paterno',
-        control: 'text',
+        control: 'text', fieldKind: 'personName',
         required: true,
         autocomplete: 'family-name',
         placeholder: 'Rojas',
@@ -141,7 +141,7 @@ export function practitionerFields(
         key: 'motherLastName',
         label: 'Apellido materno',
         hint: 'Si no lleva, déjelo vacío.',
-        control: 'text',
+        control: 'text', fieldKind: 'personName',
         autocomplete: 'family-name',
         placeholder: 'Paz',
         testId: 'registro-pro-apellido-materno',
@@ -154,7 +154,7 @@ export function practitionerFields(
         hint: 'Se guarda como su documento oficial.',
         description:
           'Sólo el número, sin el complemento: el departamento que la emitió va en la casilla de al lado. No es con lo que inicia sesión —eso es su correo—, pero es lo que ata su matrícula a una persona.',
-        control: 'text',
+        control: 'text', fieldKind: 'identityDocument',
         autocomplete: 'off',
         placeholder: '1234567',
         testId: 'registro-pro-documento',
@@ -299,22 +299,6 @@ export function practitionerFields(
           mensajeDeError: 'El número está incompleto para el país elegido.',
         },
         {
-          key: 'email',
-          label: 'Correo de trabajo (opcional)',
-          hint: 'El institucional, si tiene. No es con el que entra.',
-          description:
-            'Es un dato de contacto del consultorio: lo ve quien necesita escribirle por trabajo.',
-          control: 'email',
-          // `email` y no `username`: el identificador de acceso es el correo
-          // personal del paso anterior. Marcar los dos como `username` haría
-          // que el navegador guardara el equivocado.
-          autocomplete: 'email',
-          placeholder: 'matricula@hospital.bo',
-          testId: 'registro-pro-correo',
-          icono: 'mail',
-          mensajeDeError: 'Ingrese un correo válido.',
-        },
-        {
           key: 'gpsTrabajo',
           label: 'Ubicación GPS del trabajo (opcional)',
           hint: 'Confirme el punto para guardar la ubicación laboral.',
@@ -444,10 +428,10 @@ export function practitionerFields(
       // La autoridad emisora ya no se pregunta (propietario, 26/10/2026): el
       // colegio se completa solo con el título profesional
       // (`syncCollegeWithProfession`) y se puede corregir desde el perfil.
-      hint: 'Sin matrícula, registro del SEDES y registro del colegio no podemos darle de alta. Las fechas y los respaldos son opcionales.',
+      hint: 'Sin matrícula, registro del SEDES y registro del colegio no podemos darle de alta. Cada registro lleva su número, su fecha de inscripción y su respaldo en PDF.',
       campos: [
-        // Cada registro es UN renglón con su número, su fecha de inscripción y
-        // su respaldo (propietario, 27/10/2026): una fecha y un archivo sueltos
+        // Each registry is ONE row with its number, registration date and backup;
+        // all three are mandatory (owner, 04/11/2026): una fecha y un archivo sueltos
         // no dicen de cuál de las tres habilitaciones son. El renglón lo
         // proyecta la pantalla bajo la `key` del número, así el motor sigue
         // validando el obligatorio y sabe a qué página volver.
@@ -462,7 +446,7 @@ export function practitionerFields(
           placeholder: placeholderMatricula,
           testId: 'registro-pro-matricula',
           icono: 'shield',
-          mensajeDeError: 'Ingrese su matrícula profesional.',
+          mensajeDeError: 'Complete la matrícula, su fecha de inscripción y su respaldo.',
         },
         {
           key: 'sedesLicenseNumber',
@@ -473,7 +457,7 @@ export function practitionerFields(
           placeholder: 'T.I. 538/14',
           testId: 'registro-pro-credencial',
           icono: 'briefcase',
-          mensajeDeError: 'Ingrese su número de registro del SEDES.',
+          mensajeDeError: 'Complete el registro del SEDES, su fecha de inscripción y su respaldo.',
         },
         {
           key: 'collegeLicenseNumber',
@@ -488,7 +472,8 @@ export function practitionerFields(
           placeholder: esOdontologo ? 'COB-12345' : 'CMB-12345',
           testId: 'registro-pro-colegio',
           icono: 'building',
-          mensajeDeError: 'Ingrese su número de registro en el colegio.',
+          mensajeDeError:
+            'Complete el registro del colegio, su fecha de inscripción y su respaldo.',
         },
       ],
     },

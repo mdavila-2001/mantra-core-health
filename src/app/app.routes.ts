@@ -113,7 +113,7 @@ const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
       loadComponent: () =>
         import('./features/messaging/thread/thread')
           .then((m) => m.Thread)
-          .catch(() => chunkFallido()),
+          .catch(chunkFallido),
     },
   ],
 };
@@ -158,7 +158,12 @@ export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, DestinoRedirigido>> 
   'my-support': { ruta: '/my-team', query: { tab: 'mis-accesos' } },
   'my-account/loyalty': { ruta: '/my-account', query: { pestana: 'puntos' } },
   'my-account/clinical-access': { ruta: '/my-account/privacy', query: { ver: 'historia' } },
+  'my-account/access-requests': { ruta: '/my-account/requests', query: { pestana: 'vinculos' } },
   'administration/pharmacy-profile': { ruta: '/my-account' },
+  'administration/pharmacy-hours': {
+    ruta: '/administration/pharmacy-branches',
+    query: { tab: 'horario' },
+  },
   'administration/data-catalog': { ruta: '/superadmin/data-catalog' },
   'administration/web-analytics': { ruta: '/superadmin/web-analytics' },
   'administration/qa-lab': { ruta: '/superadmin/qa-lab' },
@@ -183,14 +188,14 @@ function componenteDe(
 
   const diferida = PANTALLAS_DIFERIDAS[section.path];
   if (diferida !== undefined) {
-    return { loadComponent: () => diferida().catch(() => chunkFallido()) };
+    return { loadComponent: () => diferida().catch(chunkFallido) };
   }
 
   return {
     loadComponent: () =>
       import('./features/section-placeholder/section-placeholder')
         .then((m) => m.SectionPlaceholder)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   };
 }
 
@@ -245,7 +250,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/design-system-sample/design-system-sample')
         .then((m) => m.DesignSystemSample)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
     title: 'AloVida - Vitrina de Diseño',
   },
   ...simulatorRoutes(chunkFallido),

@@ -1374,6 +1374,7 @@ export class AgendaCreate {
     this.scheduling.generateSlots(templateId, range, this.attempt.scope()).subscribe({
       next: (resultado) => {
         this.cuposCreados.set(resultado.created);
+        this.attempt.activateIn(this.auth);
         this.compararConLoGenerado(resultado.created);
         this.estado.set(ready(null));
         this.publicado.set(true);

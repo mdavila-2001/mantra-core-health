@@ -26,9 +26,6 @@ export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
   refreshCookie: envFromProcess.refreshCookie ?? false,
 
-  /** Mismo origen: ver `aiBaseUrl` en `environment.types.ts`. */
-  aiBaseUrl: envFromProcess.aiBaseUrl ?? '/ai',
-
   /**
    * Apagada por defecto: en producción la barra de demostración no existe
    * salvo que el despliegue la pida (`PUBLIC_DEMO_PRESETS=true`, pensado para

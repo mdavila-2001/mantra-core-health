@@ -1,0 +1,70 @@
+:host {
+  display: block;
+}
+
+.coincidencias {
+  display: grid;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-6);
+}
+
+.coincidencias__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+}
+
+.coincidencias__nota {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.coincidencias__lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coincidencias__item {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+.coincidencias__nombre {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.coincidencias__uso {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--c-aqua-600);
+}
+
+.coincidencias__dato {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.coincidencias__correccion {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.coincidencias__vacio {
+  margin: var(--sp-6) 0 0;
+  color: var(--text-secondary);
+  text-align: center;
+}

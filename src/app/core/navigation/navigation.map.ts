@@ -4,6 +4,7 @@ import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-ver
 import { ANY_ROLE } from './navigation.types';
 import { SECCIONES_DE_LABORATORIO } from './navigation.laboratory';
 import { INSIGHTS_SECTIONS } from './navigation.insights';
+import { ACCESS_REQUESTS_SECTIONS } from './navigation.access-requests';
 import { SECCIONES_DE_PLATAFORMA } from './navigation.platform';
 import { SECCIONES_DE_APOYO } from './navigation.support';
 import type { AppSection } from './navigation.types';
@@ -1217,7 +1218,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
     label: 'Configurar práctica',
-    group: 'Administración',
+    // Moved out of «Administración» into «Atención» on 2026-11-05 (owner request).
+    group: 'Atención',
     icon: 'hospital',
     requiresTenant: true,
     availability: 'disponible',
@@ -1400,16 +1402,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Quién ve su historia clínica, y revóquelo.',
     module: 'M06 authz',
   },
-  {
-    path: 'my-account/access-requests',
-    label: 'Buzón de solicitudes',
-    group: 'Mi cuenta',
-    icon: 'mail',
-    roles: [ANY_ROLE],
-    availability: 'disponible',
-    summary: 'Solicitudes de vínculo asistencial.',
-    module: 'M06 authz',
-  },
+  ...ACCESS_REQUESTS_SECTIONS,
   {
     // ID-24 / CV-22: cambiar la contraseña y ver o cerrar las sesiones.
     fueraDelMenuPara: [ANY_ROLE],
@@ -1961,10 +1954,14 @@ export const APP_SECTIONS: readonly AppSection[] = [
   {
     // P34 (26/10/2026): qué sucursales abren las 24 h y sus turnos de guardia.
     // Lo ven los pacientes al elegir farmacia y en «Abiertas ahora».
+    // No longer a menu entry (05/11/2026, owner request): it is the "Horario y
+    // turnos" tab of Sucursales. The old route redirects to
+    // `/administration/pharmacy-branches?tab=horario` (`SECCIONES_REDIRIGIDAS`);
+    // the section stays registered so saved links keep resolving.
     path: 'administration/pharmacy-hours',
     onlyForTenantTypes: ['PHARMACY'],
     roles: [ANY_ROLE],
-    fueraDelMenuPara: ['PRACTITIONER'],
+    fueraDelMenuPara: [ANY_ROLE],
     hiddenFor: ['PATIENT'],
     label: 'Horario y turnos',
     group: 'General',
@@ -2056,7 +2053,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'pin',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Edite sus sucursales o suba varias de una vez con un CSV.',
+    summary: 'Sus sucursales, su horario de 24 h y sus turnos de guardia, por sucursal o en todas.',
     module: 'M04 directory',
   },
 

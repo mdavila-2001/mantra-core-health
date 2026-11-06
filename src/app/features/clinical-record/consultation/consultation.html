@@ -281,15 +281,10 @@
         />
       }
       @case ('derivacion') {
-        <!-- Derivar a otro profesional (pedido del propietario, 24/10/2026)
-             o a una organización médica, por un servicio concreto (pedido del
-             cliente, 28/10/2026). Atado al encuentro en curso: sin él el
-             bloque lo dice y no ofrece el formulario, porque sin encuentro no
-             hay aviso a la persona, y el aviso ofrece ir a abrirlo. El modal
-             queda abierto tras derivar: la lista de abajo muestra la recién
-             emitida cuando la relectura la devuelve (la dispara el cliente al
-             emitir, aunque el modal ya se haya cerrado), y el contador de la
-             casilla sale de esa misma lectura. -->
+        <!-- Refer to a practitioner or medical organization for a concrete service
+             (owner 24/10, client 28/10). Tied to the open encounter: without it the
+             block says so and offers to open one. The modal stays open; the list and
+             the tile counter come from the same re-read. -->
         <app-referral-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
@@ -300,6 +295,10 @@
           (retry)="referrals.reload()"
           (openEncounter)="irAAbrirElEncuentro()"
         />
+      }
+      @case ('internacion') {
+        <app-admission-block [patientProfileId]="pacienteDeLaFicha()" [encounterId]="encuentroActual()"
+          [internaciones]="internaciones()" (cambio)="recargar()" />
       }
       @case ('planes') {
         <app-care-plan-block

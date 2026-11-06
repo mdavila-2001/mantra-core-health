@@ -95,12 +95,12 @@
             </div>
             <div class="regla__fecha">
               <app-form-field label="Desde (opcional)">
-                <app-input type="date" [value]="diaDesde(regla)" (valueChange)="cambiarDesde(regla, $event)" [ariaLabel]="'Rige desde, regla ' + (i + 1)" [testId]="'redes-desde-' + i" />
+                <app-date-string-picker  [value]="diaDesde(regla)" (valueChange)="cambiarDesde(regla, $event)" [ariaLabel]="'Rige desde, regla ' + (i + 1)" [testId]="'redes-desde-' + i" />
               </app-form-field>
             </div>
             <div class="regla__fecha">
               <app-form-field label="Hasta (opcional)" [errorMessage]="problemaDe(i, 'validity')">
-                <app-input type="date" [value]="diaHasta(regla)" (valueChange)="cambiarHasta(regla, $event)" [ariaLabel]="'Rige hasta, regla ' + (i + 1)" [hasError]="problemaDe(i, 'validity') !== ''" [testId]="'redes-hasta-' + i" />
+                <app-date-string-picker  [value]="diaHasta(regla)" (valueChange)="cambiarHasta(regla, $event)" [ariaLabel]="'Rige hasta, regla ' + (i + 1)" [hasError]="problemaDe(i, 'validity') !== ''" [testId]="'redes-hasta-' + i" />
               </app-form-field>
             </div>
             <div class="regla__quitar">

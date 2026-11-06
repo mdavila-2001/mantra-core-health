@@ -102,11 +102,13 @@ describe('NavigationService', () => {
       expect(enGrupos).not.toContain('/notification-center');
     });
 
-    it('al médico Mi cuenta conserva sólo el Buzón común de solicitudes', () => {
+    // The «Buzón de solicitudes» left the menu (owner, 04/11/2026): it is the
+    // «Solicitudes de vínculo» tab of «Mis solicitudes», in the top bar.
+    it('al médico Mi cuenta ya no conserva el Buzón de solicitudes', () => {
       abrirSesion(['PRACTITIONER'], ['t-1']);
 
-      expect(service.menu().find((g) => g.label === 'Mi cuenta')?.items.map((item) => item.route))
-        .toEqual(['/my-account/access-requests']);
+      const rutas = service.menu().flatMap((g) => g.items.map((item) => item.route));
+      expect(rutas).not.toContain('/my-account/access-requests');
     });
 
     it('un destino fijo no nombra su grupo en la ruta de navegación', async () => {
@@ -177,7 +179,6 @@ describe('NavigationService', () => {
         // perfil de paciente, que no es un rol sino un dato de la cuenta, y la
         // pantalla lo dice cuando falta. Mismo criterio que «Mis citas».
         '/my-account/dependents',
-        '/my-account/access-requests', // ANY_ROLE en el dev9ad vigente.
         '/my-account/appointments',
         // El archivo clínico propio (carril 09), por lo mismo que «Mis turnos»:
         // el filtro real es tener perfil de paciente, y lo resuelve la pantalla.
@@ -831,10 +832,9 @@ describe('NavigationService', () => {
         // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
         '/administration/insurance-campaigns',
         '/administration/my-organization',
-        '/my-account/access-requests',
       ]);
-      // Conserva el dominio de Administración y el nuevo Buzón común de ANY_ROLE.
-      expect(service.menu().map((grupo) => grupo.label)).toEqual(['Administración', 'Mi cuenta']);
+      // The «Buzón de solicitudes» moved into «Mis solicitudes» (04/11/2026).
+      expect(service.menu().map((grupo) => grupo.label)).toEqual(['Administración']);
       expect(service.menu()[0]?.blocks.map((bloque) => bloque.label)).toEqual([
         'Seguros',
         'Organizaciones',
@@ -847,7 +847,6 @@ describe('NavigationService', () => {
       // El armazón dibuja sin `<details>` todo grupo con `aplanado`.
       expect(service.menu().map((grupo) => [grupo.label, grupo.aplanado])).toEqual([
         ['Administración', true],
-        ['Mi cuenta', true],
       ]);
     });
 

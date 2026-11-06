@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { describe, expect, it } from 'vitest';
 
 import type {
@@ -6,9 +7,12 @@ import type {
 } from '../../../core/data-access/lab-portal/lab-portal.types';
 import {
   actionsOf,
+  apiMessageOf,
   disabledAll,
   ORDER_STATUS_BADGE,
   ORDER_TABS,
+  REASON_FIELD,
+  REASON_STEPS,
   orderTabIndexOf,
   orderTabKeyOf,
   ordersOfTab,
@@ -37,30 +41,67 @@ const habilitadas = (o: LabOrder) =>
     .map((a) => a.code);
 
 describe('órdenes del laboratorio: acciones por estado', () => {
-  it('ofrece sólo las cuatro acciones, en el orden del camino', () => {
-    expect(actionsOf(order('DRAFT')).map((a) => a.code)).toEqual([
-      'receive',
-      'process',
-      'upload',
-      'download',
-    ]);
+  it('ofrece las cuatro del camino y, sólo si la API lo permite, Rechazar al final', () => {
+    expect(actionsOf(order('DRAFT')).map((a) => a.code)).toEqual(['receive', 'process', 'upload', 'download']);
     expect(actionsOf(order('DRAFT')).map((a) => a.label)).toEqual([
       'Recibir',
       'Marcar como procesada',
       'Subir resultados',
       'Descargar',
     ]);
+    expect(actionsOf({ ...order('RECEIVED'), canReject: true }).map((a) => a.code)).toEqual([
+      'receive',
+      'process',
+      'upload',
+      'download',
+      'reject',
+    ]);
   });
 
-  it('en cada estado sólo está habilitado el paso que le toca', () => {
+  it('en cada estado sólo está habilitado el paso que le toca, y el rechazo donde la API lo admite', () => {
     expect(habilitadas(order('DRAFT'))).toEqual(['receive']);
     expect(habilitadas(order('RECEIVED'))).toEqual(['process']);
+    expect(habilitadas({ ...order('RECEIVED'), canReject: true })).toEqual(['process', 'reject']);
     expect(habilitadas(order('PROCESSED'))).toEqual(['upload']);
     expect(habilitadas(order('UPLOADED', 2))).toEqual(['upload', 'download']);
   });
 
   it('descargar exige archivos aunque el estado sea «Subidos»', () => {
     expect(habilitadas(order('UPLOADED', 0))).toEqual(['upload']);
+  });
+
+  it('Cancelar nunca se ofrece (la API responde 422 a CANCEL) y imagenología, sin muestra, tampoco ofrece Rechazar', () => {
+    const imaging = (status: LabOrderStatus, canReject?: boolean) => ({
+      ...order(status, 1),
+      studyName: 'Ecografía abdominal',
+      ...(canReject === undefined ? {} : { canReject }),
+    });
+    for (const status of ['DRAFT', 'RECEIVED', 'PROCESSED', 'UPLOADED'] as const) {
+      for (const canReject of [undefined, false, true]) {
+        expect(actionsOf(imaging(status, canReject)).some((a) => a.code === ('cancel' as string))).toBe(false);
+      }
+      expect(actionsOf(imaging(status)).some((a) => a.code === 'reject')).toBe(false);
+      expect(actionsOf(imaging(status, false)).some((a) => a.code === 'reject')).toBe(false);
+    }
+  });
+
+  it('Rechazar es una acción destructiva que lleva su paso REJECT y su motivo mínimo; es la única salida', () => {
+    const recibida = { ...order('RECEIVED'), canReject: true };
+    const exits = actionsOf(recibida).filter((a) => a.code === 'reject');
+    expect(exits).toHaveLength(1);
+    expect(exits.every((a) => a.destructive === true)).toBe(true);
+    expect(Object.keys(REASON_STEPS)).toEqual(['reject']);
+    expect(REASON_STEPS.reject.action).toBe('REJECT');
+    expect(REASON_FIELD.minLength).toBeGreaterThanOrEqual(3);
+    expect(REASON_STEPS.reject.dialog(order('RECEIVED')).message).toContain('Hemograma completo');
+  });
+
+  it('Rechazar aparece sólo cuando la API dice canReject (orden recibida con su muestra)', () => {
+    const recibida = { ...order('RECEIVED'), canReject: true };
+    expect(habilitadas(recibida)).toEqual(['process', 'reject']);
+    const rechazar = actionsOf(recibida).find((a) => a.code === 'reject');
+    expect(rechazar).toMatchObject({ label: 'Rechazar', destructive: true });
+    expect(actionsOf(order('RECEIVED')).some((a) => a.code === 'reject')).toBe(false);
   });
 
   it('una orden cancelada o rechazada no tiene acciones', () => {
@@ -113,5 +154,26 @@ describe('órdenes del laboratorio: pestañas', () => {
     ] as const) {
       expect(ORDER_STATUS_BADGE[status].label).not.toBe('');
     }
+  });
+});
+
+describe('órdenes del laboratorio: mensaje de la API', () => {
+  const failure = (status: number, error: unknown) => new HttpErrorResponse({ status, error });
+
+  it('un 422 lleva el mensaje legible de la API, no el genérico', () => {
+    const error = failure(422, {
+      statusCode: 422,
+      code: 'VALIDATION_FAILED',
+      message: 'La orden no admite ese paso.',
+    });
+    expect(apiMessageOf(error, 'No pudimos cambiar el estado de la orden.')).toBe(
+      'La orden no admite ese paso.',
+    );
+  });
+
+  it('sin cuerpo de la API, o con un mensaje vacío, queda el de reserva', () => {
+    expect(apiMessageOf(failure(502, '<html>Bad gateway</html>'), 'reserva')).toBe('reserva');
+    expect(apiMessageOf(failure(422, { code: 'VALIDATION_FAILED', message: '' }), 'reserva')).toBe('reserva');
+    expect(apiMessageOf(new Error('x'), 'reserva')).toBe('reserva');
   });
 });

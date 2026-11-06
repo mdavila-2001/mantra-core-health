@@ -1,7 +1,7 @@
 <app-card padding="lg" data-testid="lab-home-catalog">
   <app-section-heading card-header icono="tag" titulo="Su catálogo y precios" />
 
-  <app-lab-block-state [state]="state()" subject="su catálogo" skeletonHeight="11rem" (retry)="retry.emit()">
+  <app-lab-block-state [state]="state()" subject="su catálogo" skeleton="figures" [skeletonRows]="3" (retry)="retry.emit()">
     @if (data(); as s) {
       <dl class="figures">
         <div class="figure">

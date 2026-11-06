@@ -36,10 +36,9 @@ function jwt(payload: Record<string, unknown>): string {
 const MENU_DE_LA_FARMACIA = [
   '/administration/pharmacy',
   '/administration/pharmacy-catalog',
-  // P34 (26/10/2026): 24 h y turnos de guardia.
-  '/administration/pharmacy-hours',
   '/administration/pharmacy-orders',
   '/administration/pharmacy-campaigns',
+  // Includes "Horario y turnos" as a tab (05/11/2026): no longer a menu entry.
   '/administration/pharmacy-branches',
 ];
 
@@ -84,20 +83,21 @@ describe('Menú de la cuenta de farmacia', () => {
     ];
   }
 
-  it('ofrece los seis renglones de farmacia y el Buzón común, sin otra cuenta', () => {
+  // The «Buzón de solicitudes» left the menu (owner, 04/11/2026): it is a tab of «Mis solicitudes».
+  it('ofrece los seis renglones de farmacia, sin otra cuenta', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
 
     const rutas = rutasDelMenu();
 
     expect(rutas.filter((ruta) => !FIJOS_DE_TODA_CUENTA.includes(ruta))).toEqual(
-      [...MENU_DE_LA_FARMACIA, '/my-account/access-requests'],
+      [...MENU_DE_LA_FARMACIA],
     );
     expect(rutas.filter((ruta) => FIJOS_DE_TODA_CUENTA.includes(ruta)).sort()).toEqual(
       [...FIJOS_DE_TODA_CUENTA].sort(),
     );
   });
 
-  it('los seis van planos («Catálogo» junta cinco pantallas en pestañas): en un dominio aplanado, sin encabezado ni desplegable', () => {
+  it('los cinco van planos («Catálogo» junta sus pantallas en pestañas y «Sucursales» trae «Horario y turnos»): en un dominio aplanado, sin encabezado ni desplegable', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
 
     const grupos = service
@@ -109,11 +109,17 @@ describe('Menú de la cuenta de farmacia', () => {
     expect(grupos[0].items.map((item) => item.label)).toEqual([
       'Resumen',
       'Catálogo',
-      'Horario y turnos',
       'Solicitudes de retiro',
       'Promociones',
       'Sucursales',
     ]);
+  });
+
+  it('«Horario y turnos» no es un renglón: es una pestaña de «Sucursales»', () => {
+    abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
+
+    expect(rutasDelMenu()).not.toContain('/administration/pharmacy-hours');
+    expect(rutasDelMenu()).toContain('/administration/pharmacy-branches');
   });
 
   it('la ficha de la farmacia no es un renglón: es su «Mi perfil»', () => {

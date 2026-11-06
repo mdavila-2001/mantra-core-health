@@ -6,3 +6,97 @@
 .failure__text {
   margin: 0;
 }
+
+/* The failure title fills the line before wrapping: the inherited
+   `text-wrap: balance` split «No pudimos cargar / los turnos de hoy» with room left. */
+.failure {
+  text-wrap: pretty;
+}
+
+/* Skeleton: same rhythm as the loaded rows (`.row` in lab-home-block.css). */
+.skeleton {
+  display: grid;
+}
+
+.skeleton__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-3);
+  min-block-size: 3.8rem;
+  padding-block: var(--sp-2);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.skeleton__row:last-child {
+  border-block-end: 0;
+}
+
+.skeleton__lines {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.skeleton__rows {
+  display: grid;
+}
+
+.skeleton--figures .skeleton__rows {
+  gap: var(--sp-2);
+}
+
+.skeleton--orders {
+  gap: var(--sp-5);
+}
+
+.skeleton__tiles {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* Narrow: the loaded order rows wrap their meta line onto a second one. */
+@media (max-width: 779px) {
+  .skeleton--orders .skeleton__row {
+    min-block-size: 4.9rem;
+  }
+}
+
+@media (min-width: 1120px) {
+  .skeleton--orders {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: var(--sp-8);
+  }
+
+  /* Wide: the tiles column sits beside the recent rows, like the loaded layout. */
+  .skeleton__tiles {
+    align-content: start;
+  }
+}
+
+/* The empty state's action link gets a 44px target without a bigger look. */
+:host ::ng-deep app-empty-state .empty-state__actions a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+}
+
+/* An empty block stays compact: the shared empty state pads and sizes its
+   medallion for a whole page, which made the wide orders card ~400px tall. */
+:host ::ng-deep app-empty-state {
+  padding-block: var(--sp-2);
+}
+
+:host ::ng-deep app-empty-state .empty-state__icon {
+  margin-bottom: var(--sp-1);
+}
+
+:host ::ng-deep app-empty-state .empty-state__medal {
+  width: var(--sp-12);
+}
+
+/* Phones: the retry button reaches the 44px target (the small size is 40px). */
+@media (max-width: 779px) {
+  [app-button] {
+    --btn-min-block: 44px;
+  }
+}

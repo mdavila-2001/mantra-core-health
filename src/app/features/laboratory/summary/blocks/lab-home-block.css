@@ -92,19 +92,56 @@ app-card {
   block-size: 1rem;
 }
 
-/* One non-wrapping line: a long study name is cut with an ellipsis. */
+/* The count never shrinks and «último:» stays readable: only the study name is
+   cut with an ellipsis. On phones the activity wraps to its own line (its basis
+   is wider than what the count leaves) and the name gets the whole width. */
 .footer__line {
+  display: flex;
   flex: 1 1 0;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-1);
   min-inline-size: 0;
   margin: 0;
-  overflow: hidden;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
+}
+
+.footer__count {
+  flex: none;
+}
+
+.footer__last {
+  display: flex;
+  flex: 1 1 18rem;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.footer__sep,
+.footer__label {
+  flex: none;
+}
+
+.footer__name {
+  min-inline-size: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* Tap targets of 44px: the text link centers its line in a taller box (no new
+   ink); the small buttons take the button's own minimum-height hook on phones. */
 .more {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
   color: var(--text-link);
 }
+
+@media (max-width: 779px) {
+  a[app-button] {
+    --btn-min-block: 44px;
+  }
+}
+

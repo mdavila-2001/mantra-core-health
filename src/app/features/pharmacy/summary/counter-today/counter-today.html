@@ -1,0 +1,44 @@
+<div class="counter" data-testid="counter-today">
+  <h2 class="counter__title">
+    <app-nav-icon name="bag" aria-hidden="true" />
+    Mostrador ahora
+  </h2>
+
+  <app-view-state-host [state]="state()" (retry)="load()">
+    <div vsh-skeleton>
+      <app-skeleton variant="text" [lines]="5" />
+    </div>
+
+    <p class="counter__lead" [class.counter__lead--alert]="fresh() > 0" data-testid="counter-today-lead">
+      @if (fresh() > 0) {
+        {{ fresh() === 1 ? 'Llegó 1 solicitud nueva: nadie la abrió todavía.' : 'Llegaron ' + fresh() + ' solicitudes nuevas: nadie las abrió todavía.' }}
+      } @else if (open() > 0) {
+        {{ open() === 1 ? '1 solicitud abierta' : open() + ' solicitudes abiertas' }}, ninguna sin abrir.
+      } @else {
+        Sin solicitudes abiertas. Cuando llegue una, suena en la bandeja.
+      }
+    </p>
+
+    <ul class="counter__queues">
+      @for (queue of queues(); track queue.group) {
+        <li class="counter__queue" [class.counter__queue--fresh]="queue.group === 'NUEVOS' && queue.count > 0">
+          <span>{{ queue.label }}</span>
+          <strong class="counter__count" [attr.data-testid]="'counter-today-' + queue.group">
+            {{ queue.count }}
+          </strong>
+        </li>
+      }
+    </ul>
+
+    <a
+      app-button
+      [variant]="fresh() > 0 ? 'primary' : 'secondary'"
+      size="sm"
+      routerLink="/administration/pharmacy-orders"
+      data-testid="counter-today-go"
+    >
+      Abrir la bandeja
+      <app-nav-icon name="arrow-right" />
+    </a>
+  </app-view-state-host>
+</div>

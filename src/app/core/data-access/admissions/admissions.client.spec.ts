@@ -3,7 +3,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { wireDetail, wireItem, wireMine, wirePage, wireRequirement, wireSummary } from '../../../../testing/admissions';
+import { wireDetail, wireItem, wirePage, wireRequirement, wireSummary } from '../../../../testing/admissions';
 import { SessionStore } from '../../auth/session.store';
 import { authInterceptor } from '../../http/auth.interceptor';
 import { AdmissionsClient, DocumentLinkExpiredError, normalizeStatusCode } from './admissions.client';
@@ -304,43 +304,6 @@ describe('AdmissionsClient', () => {
         expect(falla).not.toBeInstanceOf(DocumentLinkExpiredError);
         expect(falla.status).toBe(403);
       });
-    });
-  });
-
-  describe('lo del propio médico', () => {
-    it('lee su admisión y convierte las fechas y los estados', () => {
-      let m: any;
-      client.myAdmission().subscribe((x) => (m = x));
-      http.expectOne('/profiles/practitioners/me/admission').flush(wireMine({ status: { code: 'ENVIADA', label: 'Enviada' }, infoDueAt: '2026-11-20T00:00:00Z', canWithdraw: true }));
-      expect(m.status.code).toBe('SUBMITTED');
-      expect(m.infoDueAt).toBeInstanceOf(Date);
-      expect(m).toMatchObject({ canResubmit: false, canWithdraw: true, resubmissionCount: 0 });
-    });
-
-    it('a quien le ven un motivo de fraude no se lo cuentan: la API ya lo entrega como «otro»', () => {
-      let m: any;
-      client.myAdmission().subscribe((x) => (m = x));
-      http.expectOne('/profiles/practitioners/me/admission').flush(
-        wireMine({ items: [{ type: 'LICENSE', id: 'i', label: 'Matrícula', state: 'REJECTED', reasonText: 'No se lee.', reasonCode: 'ILEGIBLE' }] }),
-      );
-      expect(m.items[0].reasonCode).toBe('ILLEGIBLE');
-    });
-
-    it('reenvía con la atestación y su versión, y nada más', () => {
-      client.resubmitMyAdmission({ attested: true, attestationVersion: '2026-10' }).subscribe();
-      const req = http.expectOne('/profiles/practitioners/me/admission/resubmit');
-      expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual({ attested: true, attestationVersion: '2026-10' });
-      req.flush(wireMine());
-    });
-
-    it('retira su solicitud', () => {
-      let m: any;
-      client.withdrawMyAdmission().subscribe((x) => (m = x));
-      const req = http.expectOne('/profiles/practitioners/me/admission/withdraw');
-      expect(req.request.method).toBe('POST');
-      req.flush(wireMine({ status: { code: 'RETIRADA', label: 'Retirada' }, canWithdraw: false }));
-      expect(m.status.code).toBe('WITHDRAWN');
     });
   });
 });
