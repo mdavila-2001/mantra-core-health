@@ -59,10 +59,9 @@ const PATIENT_STYLESHEET_HREF = 'paciente.css?v=2';
 import { PHARMACY_CART_ROUTE } from '../account/pharmacy/pharmacy.routes';
 import { MIS_CUESTIONARIOS_ROUTE } from '../account/questionnaires/questionnaires.routes';
 import { PHARMACY_TESTIDS } from '../account/pharmacy/pharmacy.testids';
-import { DeniedTenantsBanner } from './denied-tenants-banner/denied-tenants-banner';
 import { TenantMenu } from './tenant-menu/tenant-menu';
-import { UxConsentNotice } from '../ux-consent/ux-consent-notice';
 import { NewDeviceBanner } from './new-device-banner/new-device-banner';
+import { ShellNotices } from './shell-notices/shell-notices';
 
 /**
  * Si un destino de la barra queda debajo de la URL actual.
@@ -147,10 +146,9 @@ const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
     Badge,
     NavIcon,
     NewDeviceBanner,
-    DeniedTenantsBanner,
+    ShellNotices,
     TenantMenu,
     Tooltip,
-    UxConsentNotice,
   ],
   templateUrl: './shell-layout.html',
   styleUrl: './shell-layout.css',

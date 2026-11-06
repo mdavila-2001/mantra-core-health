@@ -68,6 +68,9 @@ export class BranchCategoryState {
     this.withoutPoint().map((branch) => `«${branch.name}»`).join(', '),
   );
 
+  /** The current head office's name, for the CSV import's early check. */
+  readonly headOfficeName = computed(() => this.headOffice()?.name ?? null);
+
   private readonly headOffice = computed(
     () => this.loaded().find((branch) => branchCategoryOf(branch) === 'head_office') ?? null,
   );

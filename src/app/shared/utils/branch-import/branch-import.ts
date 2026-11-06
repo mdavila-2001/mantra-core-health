@@ -4,6 +4,12 @@ import {
   normalizarEncabezado,
 } from '../csv-import/csv-import';
 import { BRANCH_IMPORT_COLUMNS, type BranchCells, type BranchField, type BranchImportColumn } from './branch-columns';
+import type { BranchCategory } from '../../../core/data-access/directory/branch-category';
+import {
+  BRANCH_CATEGORY_COLUMN,
+  UNKNOWN_CATEGORY_ERROR,
+  branchCategoryFromCell,
+} from './branch-category-cell';
 import {
   coordinatesFromColumns,
   coordinatesFromMapUrl,
@@ -53,6 +59,21 @@ export interface BranchDraft {
   readonly code: string;
   /** Sacadas de `locationUrl` cuando el enlace las lleva escritas; si no, `null`. */
   readonly coordinates: BranchCoordinates | null;
+  /** Only when the `categoria` column is enabled (v4.2.92); empty cell = `default`. */
+  readonly category?: BranchCategory;
+}
+
+/** What the screen that opens the import allows. */
+export interface BranchImportOptions {
+  /** Read the optional `categoria` column (screens that create straight in the API). */
+  readonly withCategory?: boolean;
+  /** The organization's current head office, if any: no row may become another. */
+  readonly headOfficeName?: string | null;
+}
+
+/** The template columns for a screen, `categoria` last when it is enabled. */
+export function branchImportColumns(withCategory: boolean): readonly BranchImportColumn[] {
+  return withCategory ? [...BRANCH_IMPORT_COLUMNS, BRANCH_CATEGORY_COLUMN] : BRANCH_IMPORT_COLUMNS;
 }
 
 /** Una fila del archivo, revisada. */
@@ -88,9 +109,11 @@ export function validDrafts(review: BranchImportReview): readonly BranchDraft[] 
 export function reviewBranchCsv(
   content: string,
   existingNames: readonly string[] = [],
+  options: BranchImportOptions = {},
 ): BranchImportReview {
   const table = leerTablaCsv(content, BRANCH_IMPORT_MAX_ROWS);
-  const targets = table.encabezados.map((header) => columnFor(header)?.field ?? null);
+  const columns = branchImportColumns(options.withCategory === true);
+  const targets = table.encabezados.map((header) => columnFor(header, columns)?.field ?? null);
 
   if (!targets.includes('name')) {
     throw new ArchivoInvalido(
@@ -105,6 +128,7 @@ export function reviewBranchCsv(
   }
 
   const seen = new Set(existingNames.map(nameKey));
+  let headOfficeLine: number | null = null;
   const rows = table.renglones.map((renglon): BranchImportRow => {
     const cell = (field: BranchField): string => {
       const index = targets.indexOf(field);
@@ -118,7 +142,20 @@ export function reviewBranchCsv(
       longitude: cell('longitude'),
       address: collapseSpaces(cell('address')),
       code: cell('code'),
-    });
+      category: cell('category'),
+    }, options.withCategory === true);
+    if (row.ok && row.draft.category === 'head_office') {
+      // At most one head office per organization: the API answers 409 otherwise.
+      const taken = options.headOfficeName
+        ? `Su organización ya tiene una casa matriz («${options.headOfficeName}»).`
+        : headOfficeLine !== null
+          ? `La casa matriz ya es la de la línea ${headOfficeLine}.`
+          : null;
+      if (taken !== null) {
+        return { line: row.line, ok: false, name: row.draft.name, errors: [taken] };
+      }
+      headOfficeLine = row.line;
+    }
     if (row.ok) {
       const key = nameKey(row.draft.name);
       if (seen.has(key)) {
@@ -140,7 +177,7 @@ export function reviewBranchCsv(
   };
 }
 
-function reviewRow(line: number, fields: BranchCells): BranchImportRow {
+function reviewRow(line: number, fields: BranchCells, withCategory: boolean): BranchImportRow {
   const errors: string[] = [];
   const notes: string[] = [];
 
@@ -157,6 +194,11 @@ function reviewRow(line: number, fields: BranchCells): BranchImportRow {
   }
   if (fields.code.length > BRANCH_CODE_MAX_LENGTH) {
     errors.push(`El código pasa de ${BRANCH_CODE_MAX_LENGTH} caracteres.`);
+  }
+
+  const category = withCategory ? branchCategoryFromCell(fields.category) : undefined;
+  if (category === null) {
+    errors.push(UNKNOWN_CATEGORY_ERROR);
   }
 
   // Latitude and longitude win over the link: they are the exact point.
@@ -187,6 +229,7 @@ function reviewRow(line: number, fields: BranchCells): BranchImportRow {
           address: fields.address,
           code: fields.code,
           coordinates,
+          ...(category ? { category } : {}),
         },
         notes,
       };
@@ -226,9 +269,12 @@ export function branchCodeFromName(name: string, taken: ReadonlySet<string>): st
   return `${base}-${suffix}`;
 }
 
-function columnFor(header: string): BranchImportColumn | undefined {
+function columnFor(
+  header: string,
+  columns: readonly BranchImportColumn[],
+): BranchImportColumn | undefined {
   const normalized = normalizarEncabezado(header);
-  return BRANCH_IMPORT_COLUMNS.find(
+  return columns.find(
     (column) => column.header === normalized || column.aliases.includes(normalized),
   );
 }

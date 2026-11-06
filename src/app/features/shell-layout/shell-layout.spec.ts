@@ -351,7 +351,10 @@ describe('ShellLayout', () => {
    * en silencio: la geometría del marco —que es lo que la hoja de la bóveda
    * espera encontrar— y que el menú siga saliendo del registro de secciones.
    */
-  it('el aviso de consentimiento vive dentro del contenido (en el flujo), no suelto en la raíz de la app', () => {
+  it('el aviso de consentimiento vive dentro del contenido (en el flujo), no suelto en la raíz de la app', async () => {
+    fixture.detectChanges();
+    // The notices are a deferred chunk (`@defer (on immediate)`): wait for it to load.
+    await fixture.whenStable();
     fixture.detectChanges();
     const main = (fixture.nativeElement as HTMLElement).querySelector('main#contenido-principal');
     expect(main?.querySelector('app-ux-consent-notice')).not.toBeNull();

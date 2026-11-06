@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { elegirOpcion } from './support/desplegable';
+
 /**
  * B.1 · registrar un dependiente por CI, en el navegador.
  *
@@ -16,6 +18,7 @@ import { expect, test, type Page } from '@playwright/test';
  * 3. Un CI con cuenta le manda una notificación a esa cuenta.
  * 4. Esa cuenta acepta desde Dependientes y el titular la ve en su lista.
  * 5. El modal entra en teléfono, tableta y escritorio.
+ * 6. Actuando por el dependiente, la figura del cuerpo es la de su sexo.
  */
 
 /** La titular: la cuenta de paciente de la maqueta. */
@@ -55,6 +58,10 @@ async function enviarCi(page: Page, documento: string): Promise<void> {
   await campo.fill(documento);
   await page.getByTestId('dependent-submit').click();
 }
+
+test.use({
+  launchOptions: process.env['PW_CHROMIUM'] ? { executablePath: process.env['PW_CHROMIUM'] } : {},
+});
 
 test.describe('B.1 · dependientes por CI', () => {
   test('pedir por CI, aceptar desde la otra cuenta y verla en la lista', async ({ page }) => {
@@ -96,7 +103,7 @@ test.describe('B.1 · dependientes por CI', () => {
     await page.goto('/my-account/dependents');
     const solicitudes = page.getByTestId('dependents-solicitudes');
     await expect(solicitudes).toContainText(TITULAR.nombre);
-    await solicitudes.getByRole('combobox').selectOption({ label: 'Madre' });
+    await elegirOpcion(solicitudes.getByRole('combobox'), 'Madre');
     await page.getByRole('button', { name: `Aceptar la solicitud de ${TITULAR.nombre}` }).click();
     await expect(solicitudes).toHaveCount(0);
 
@@ -127,6 +134,34 @@ test.describe('B.1 · dependientes por CI', () => {
     await entrar(page, TITULAR.documento);
     await page.goto('/my-account/dependents');
     await expect(page.getByTestId('dependents-lista')).toContainText(DEPENDIENTE.nombre);
+
+    // 6 · acting for Jorge (MALE), the body map follows him, not Ana: the home
+    // figure loads the male mannequin. In-app navigation only, because a reload
+    // drops the chosen patient. The rendered href is a blob copy, so the image
+    // request is the observable signal.
+    const maniquies: string[] = [];
+    page.on('request', (r) => {
+      const m = /\/body-map\/(\w+)-front\.webp/.exec(r.url());
+      if (m) maniquies.push(m[1]!);
+    });
+    // Desktop again: at 390 px the demo badge covers the header switcher, and
+    // the card's own button is the screen's main path anyway.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/my-account/dependents');
+    const lista = page.getByTestId('dependents-lista');
+    await lista.getByRole('button', { name: `Actuar por ${DEPENDIENTE.nombre}` }).click();
+    await expect(lista.getByText('Perfil activo')).toBeVisible();
+    await page.getByRole('link', { name: 'AloVida — ir al panel' }).click();
+    const figura = page.locator('app-symptom-check app-body-map');
+    await expect(figura).toBeVisible({ timeout: 30_000 });
+    await expect.poll(() => maniquies.includes('male')).toBe(true);
+    // Shoot the figure itself once it is on screen, not the route transition.
+    await figura.scrollIntoViewIfNeeded();
+    await expect(figura.locator('image').first()).toBeVisible();
+    await figura.screenshot({
+      path: 'artifacts/playwright/figura-dependiente-jorge.png',
+      animations: 'disabled',
+    });
 
     expect(errores).toEqual([]);
   });

@@ -173,13 +173,15 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
     );
     expect(estado(respuesta)).toBe(200);
 
-    const dependientes = call<{ patientProfileId: string }[]>(
+    const dependientes = call<{ patientProfileId: string; sexAtBirth?: string }[]>(
       'GET',
       '/profiles/patients/me/dependents',
       null,
       titular,
-    ) as { patientProfileId: string }[];
+    ) as { patientProfileId: string; sexAtBirth?: string }[];
     expect(dependientes.map((d) => d.patientProfileId)).toContain(JORGE.id);
+    // Like the API: the booking body map draws Jorge (MALE) as a man.
+    expect(dependientes.find((d) => d.patientProfileId === JORGE.id)?.sexAtBirth).toBe('MALE');
 
     const avisos = avisosDe(titular).map((a) => a.subject);
     expect(avisos).toContain(`${JORGE.displayName} aceptó ser su dependiente`);

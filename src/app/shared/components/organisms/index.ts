@@ -8,6 +8,8 @@ export { AttachmentUploader } from './attachment-uploader/attachment-uploader';
 
 export { AnatomyViewer } from './anatomy-viewer/anatomy-viewer';
 export type { AnatomyViewerStatus } from './anatomy-viewer/anatomy-viewer';
+export { BodySitePicker } from './body-site-picker/body-site-picker';
+export type { BodySiteSelection } from './body-site-picker/body-site-picker';
 
 export { AuthLayout } from './auth-layout/auth-layout';
 

@@ -124,4 +124,6 @@ export interface PatientOrderRow extends PatientSettlementFields {
   readonly performerMode: PerformerSelectionCode | null;
   /** El nombre de la sede que sugirió el médico; nunca su uuid. `null` = sin sede. */
   readonly suggestedSiteName: string | null;
+  /** La muestra o la parte del cuerpo que pidió el médico, en una línea; `null` si la orden no la trae. */
+  readonly studyDetail: string | null;
 }
