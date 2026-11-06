@@ -1,3 +1,4 @@
+import { ETIQUETA, type EstadoPedido } from './pharmacy-orders.data';
 import { CATALOGO_MEDICAMENTOS, type CatalogFixtureRow } from '../fixtures/medication-catalog.generated';
 import { CORPUS_PHARMACIES } from '../fixtures/bolivia-central-axis';
 import { patientSettlementForItems } from '../fixtures/patient-settlements';
@@ -421,10 +422,9 @@ function nombreDeCategoriaInvalido() {
 const STOCK_SIN_CONTEO = null;
 
 /*
- * Las concentraciones aparte (`MEDICAMENTO_POR_CONCENTRACION`) van al final:
- * las farmacias también venden levotiroxina de 25 y de 75 mcg, y «dónde
- * comprarla» busca por el concepto de la receta. Al final, para que los
- * productos de siempre conserven su precio y sus existencias.
+ * The separate strengths (`MEDICAMENTO_POR_CONCENTRACION`) go last: pharmacies
+ * also sell 25 and 75 mcg levothyroxine, and «dónde comprarla» searches by the
+ * prescription's concept. Last, so the usual products keep price and stock.
  */
 export const productos = new Coleccion<ProductoSimulado>(
   FARMACIAS.flatMap((f, fi) =>
@@ -531,21 +531,6 @@ function resumenDe(pharmacyId: string) {
 }
 
 /* ---- pedidos ---------------------------------------------------------------- */
-
-type EstadoPedido = 'ENVIADO' | 'EN_REVISION' | 'CONFIRMADO' | 'ACEPTACION_PENDIENTE' | 'ACEPTADO' | 'LISTO_PARA_RETIRO' | 'RETIRADO' | 'RECHAZADO' | 'VENCIDO' | 'CANCELADO';
-
-const ETIQUETA: Record<EstadoPedido, string> = {
-  ENVIADO: 'Enviado',
-  EN_REVISION: 'En revisión',
-  CONFIRMADO: 'Confirmado',
-  ACEPTACION_PENDIENTE: 'Esperando su aceptación',
-  ACEPTADO: 'Aceptado',
-  LISTO_PARA_RETIRO: 'Listo para retirar',
-  RETIRADO: 'Retirado',
-  RECHAZADO: 'Rechazado',
-  VENCIDO: 'Vencido',
-  CANCELADO: 'Cancelado',
-};
 
 interface LineaSimulada {
   readonly productId: string;

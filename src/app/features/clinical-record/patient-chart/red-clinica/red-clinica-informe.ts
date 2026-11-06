@@ -14,7 +14,7 @@
 import type {
   PractitionerDiagnosticResult,
   PractitionerResultValue,
-} from '../../../../core/data-access/diagnostics/diagnostics.types';
+} from '../../../../core/data-access/diagnostics/diagnostics-practitioner-result.types';
 import type {
   InterpretacionDeValor,
   RangoDeReferencia,

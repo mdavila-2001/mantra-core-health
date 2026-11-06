@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type {
   PractitionerDiagnosticResult,
   PractitionerResultValue,
-} from '../../../../core/data-access/diagnostics/diagnostics.types';
+} from '../../../../core/data-access/diagnostics/diagnostics-practitioner-result.types';
 import { interpretacionDelCodigo, resultadoDelInforme, valorDelInforme } from './red-clinica-informe';
 import { esCritico, estaFueraDeRango, leerValor } from './red-clinica-valores';
 

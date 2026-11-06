@@ -26,13 +26,12 @@ import { transferIssues } from '../../../../core/data-access/referrals/referral-
 import {
   REFERRAL_LIMITS,
   REFERRAL_TYPES_WITH_CONSENT,
-  referralIssues,
   type NewReferral,
   type Referral,
-  type ReferralIssue,
   type ReferralTarget,
   type ReferralType,
 } from '../../../../core/data-access/referrals/referrals.types';
+import { referralIssues, type ReferralIssue } from '../../../../core/data-access/referrals/referral-issues';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';

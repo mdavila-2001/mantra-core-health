@@ -16,10 +16,8 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../../core/auth/auth.service';
-import {
-  DiagnosticsClient,
-  previousStudyFromErrorDetails,
-} from '../../../../core/data-access/diagnostics/diagnostics.client';
+import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
+import { previousStudyFromErrorDetails } from '../../../../core/data-access/diagnostics/diagnostics.wire';
 import type {
   DiagnosticOrder,
   DiagnosticReport,

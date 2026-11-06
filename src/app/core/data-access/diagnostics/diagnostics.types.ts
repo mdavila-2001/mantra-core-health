@@ -1,10 +1,8 @@
-import type { OrderAppointment } from '../diagnostic-units/center-schedule.types';
-import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
 import type { CollectionPointRef } from './sample-collection.types';
-import type {
-  ServiceRequestPerformerFields,
-  ServiceRequestPerformerInput,
-} from './service-request-performer.types';
+import type { ServiceRequestPerformerInput } from './service-request-performer.types';
+
+/** The patient's own view of their results lives apart; re-exported so its importers stay as they were. */
+export type * from './diagnostics-patient.types';
 
 /**
  * Clasificación de la orden de análisis (C2, P40). La API la deriva de
@@ -77,9 +75,9 @@ export interface DiagnosticOrder {
    */
   readonly previousServiceRequestId?: string;
   /**
-   * El diagnóstico que la orden quiere confirmar, descartar o seguir (patch
-   * v4291, `service_requests.reason_condition_id`). Ausente si se pidió sin
-   * diagnóstico detrás.
+   * The diagnosis the order wants to confirm, rule out or follow (patch
+   * v4291, `service_requests.reason_condition_id`). Absent if ordered with no
+   * diagnosis behind it.
    */
   readonly reasonConditionId?: string;
 }
@@ -104,91 +102,6 @@ export interface DiagnosticReport {
   readonly currentReleasedVersionId?: string;
   readonly resultReleaseStatusConceptId?: string;
   readonly createdAt: Date;
-}
-
-/* ============================================================================
- * El informe liberado, leído por el profesional (06/11/2026)
- *
- * `GET /diagnostics/patients/:patientProfileId/reports/:reportId`
- * (`PractitionerDiagnosticResultDto`). Misma puerta que la lista de órdenes del
- * profesional: 403 sin acceso a la historia; 404 idéntico
- * (`DIAGNOSTICS_RESOURCE_NOT_AVAILABLE`) para un informe inexistente, de otro
- * paciente u organización, o sin liberar. Los nulables llegan siempre, con
- * `null`: el tipo los conserva así.
- * ========================================================================== */
-
-/** Cómo viene escrito el valor (`value` siempre llega como texto). */
-export type PractitionerResultValueKind =
-  | 'QUANTITY'
-  | 'DECIMAL'
-  | 'INTEGER'
-  | 'TEXT'
-  | 'BOOLEAN'
-  | 'CONCEPT'
-  | 'DATETIME'
-  | 'DATE';
-
-export interface PractitionerResultRange {
-  /** Texto decimal exacto («0.4»), como el valor. */
-  readonly low: string | null;
-  readonly high: string | null;
-  /** El rango impreso cuando no es numérico («Negativo»). */
-  readonly text: string | null;
-  readonly unitConceptId: string | null;
-  readonly unit: string | null;
-}
-
-/** Un valor del informe. */
-export interface PractitionerResultValue {
-  readonly observationId: string;
-  readonly codeConceptId: string;
-  readonly name: string | null;
-  /**
-   * El valor como texto: numéricos en decimal exacto («126.0»), booleanos
-   * «true»/«false», un concepto por su rótulo, fechas ISO o `AAAA-MM-DD`.
-   */
-  readonly value: string | null;
-  readonly valueKind: PractitionerResultValueKind | null;
-  readonly valueConceptId: string | null;
-  readonly unitConceptId: string | null;
-  readonly unit: string | null;
-  readonly referenceRange: PractitionerResultRange | null;
-  readonly interpretationConceptId: string | null;
-  /** El código del laboratorio («H»). No se traduce en el cliente. */
-  readonly interpretationCode: string | null;
-  /** El rótulo de la interpretación («Alto»): lo que se muestra. */
-  readonly interpretation: string | null;
-  readonly statusConceptId: string;
-  readonly effectiveAt: string | null;
-}
-
-export interface PractitionerResultFile {
-  readonly id: string;
-  /** El archivo; se baja por la ruta del informe, no por `/common/files`. */
-  readonly fileId: string;
-  readonly name: string | null;
-  readonly contentRoleConceptId: string;
-  readonly presentationFormatConceptId: string | null;
-  readonly ordinal: number | null;
-}
-
-export interface PractitionerDiagnosticResult {
-  readonly reportId: string;
-  readonly patientProfileId: string;
-  readonly serviceRequestId: string | null;
-  readonly codeConceptId: string;
-  readonly codeDisplay: string | null;
-  readonly categoryConceptId: string | null;
-  readonly versionId: string;
-  readonly versionNumber: number;
-  readonly clinicalStatusConceptId: string;
-  readonly issuedAt: Date | null;
-  readonly releasedAt: Date;
-  /** `false`: liberado, pero no publicado al paciente. */
-  readonly patientVisible: boolean;
-  readonly conclusionText: string | null;
-  readonly values: readonly PractitionerResultValue[];
-  readonly files: readonly PractitionerResultFile[];
 }
 
 /**
@@ -253,8 +166,8 @@ export interface NewDiagnosticOrder extends ServiceRequestPerformerInput {
   readonly reusePreviousReport?: boolean;
   readonly duplicateOverrideReason?: string;
   /**
-   * Para qué diagnóstico se pide (patch v4291): una condición del mismo
-   * paciente; si no, 422. Opcional: un estudio de control no cuelga de ninguno.
+   * Which diagnosis it is ordered for (patch v4291): a condition of the same
+   * patient; otherwise, 422. Optional: a control study hangs from none.
    */
   readonly reasonConditionId?: string;
 }
@@ -272,7 +185,7 @@ export interface DiagnosticOrderCreated {
   readonly category?: AnalysisCategory;
   /** Notas vinculadas a la orden (P40). */
   readonly basedOnNoteIds?: readonly string[];
-  /** El diagnóstico vinculado (patch v4291); ausente si se pidió sin él. */
+  /** The linked diagnosis (patch v4291); absent if ordered without one. */
   readonly reasonConditionId?: string;
   readonly status: string;
   readonly intent: string;
@@ -370,155 +283,10 @@ export interface LabWorkOrderQuery {
   readonly offset?: number;
 }
 
-/* ============================================================================
-    Los resultados vistos por la persona a la que pertenecen.
-
-    Lo de arriba es la mirada de quien atiende: exige rol clínico, se acota a la
-    organización del contexto y muestra órdenes e informes **estén liberados o
-    no**, que es lo correcto para el circuito y lo que no se le puede mostrar a
-    un paciente. Estos tipos son la otra mitad, la del portal:
-    `GET /diagnostics/me/diagnostic-results` y sus operaciones.
-
-    No hay identificador de paciente en ninguno de estos contratos, y es a
-    propósito: el backend resuelve al titular por el vínculo de su cuenta, así
-    que no hay nada que la pantalla pueda pedir de otra persona.
-    ========================================================================== */
-
-/** Un archivo del informe: lo que se descarga. */
-export interface DiagnosticResultFile {
-  readonly id: string;
-  /** Se descarga por `GET /common/files/{id}/content`. */
-  readonly fileId: string;
-  readonly contentRoleConceptId: string;
-  readonly presentationFormatConceptId?: string;
-  readonly ordinal?: number;
-}
-
 /**
- * Un resultado que el paciente puede ver.
- *
- * Es el informe **y** su versión liberada juntos: lo que una persona llama «mi
- * resultado» es el texto firmado y sus archivos, y ésos viven en la versión. Un
- * informe sin versión liberada no llega acá — no está escondido por error, es
- * que todavía no lo validó nadie.
- */
-export interface PatientDiagnosticResult {
-  readonly reportId: string;
-  readonly versionId: string;
-  readonly versionNumber: number;
-  readonly serviceRequestId?: string;
-  readonly codeConceptId: string;
-  readonly categoryConceptId?: string;
-  readonly custodianTenantId: string;
-  readonly conclusionText?: string;
-  readonly issuedAt?: Date;
-  readonly releasedAt: Date;
-  readonly clinicalStatusConceptId: string;
-  readonly observationIds: readonly string[];
-  readonly files: readonly DiagnosticResultFile[];
-}
-
-/** Página de resultados propios. */
-export interface PatientDiagnosticResults {
-  readonly patientProfileId: string;
-  readonly items: readonly PatientDiagnosticResult[];
-  readonly limit: number;
-  readonly truncated: boolean;
-}
-
-/**
- * Una orden diagnóstica que el paciente tiene pendiente o cumplida.
- *
- * Es la otra mitad de {@link PatientDiagnosticResult}: aquélla es «qué me
- * volvió» y ésta «qué me pidieron y qué tengo que hacer para cumplirlo».
- *
- * `hasReleasedResult` lo decide el servidor y no se recalcula acá: que exista un
- * informe no quiere decir que haya un resultado que esta persona pueda leer.
- */
-export interface PatientOrder extends PatientSettlementFields, ServiceRequestPerformerFields {
-  readonly id: string;
-  readonly encounterId?: string;
-  /**
-   * El diagnóstico propio para el que se pidió (patch v4291). La API lo
-   * publica en `PatientOrderSummaryDto` desde el 06/11/2026; ausente si la
-   * orden no lo indicó. Es un `clinical.conditions.id`: se resuelve contra los
-   * diagnósticos que el paciente ya ve en su resumen.
-   */
-  readonly reasonConditionId?: string;
-  readonly codeConceptId: string;
-  readonly categoryConceptId?: string;
-  /**
-   * Categoría de análisis (P40); ausente = sin clasificar. Las notas que
-   * motivan la orden no llegan al portal: una nota puede no estar liberada.
-   */
-  readonly category?: AnalysisCategory;
-  readonly statusConceptId: string;
-  readonly priorityConceptId?: string;
-  readonly createdAt: Date;
-  /** Ayunas, horarios, qué llevar. Ausente = ningún centro publicó preparación. */
-  readonly preparationInstructions?: string;
-  readonly hasReleasedResult: boolean;
-  readonly reportId?: string;
-  /**
-   * El turno que el paciente reservó en un centro para hacer este estudio.
-   * `null` o ausente: todavía no reservó. Contrato del simulador, pendiente de
-   * backend (P-CENTRO-HORARIOS).
-   */
-  readonly appointment?: OrderAppointment | null;
-}
-
-/** Página de órdenes propias. */
-export interface PatientOwnOrders {
-  readonly patientProfileId: string;
-  readonly items: readonly PatientOrder[];
-  readonly limit: number;
-  readonly truncated: boolean;
-}
-
-/**
- * Con quién está compartido un resultado, y hasta cuándo.
- *
- * `active` lo decide el servidor contra su propio reloj, no la pantalla: dos
- * relojes distintos dan dos respuestas distintas a «¿todavía vale?», y la que
- * importa es la del que después autoriza el acceso.
- */
-export interface DiagnosticResultShare {
-  readonly id: string;
-  readonly reportId: string;
-  /** La cuenta del profesional con acceso; la API la resuelve del perfil. */
-  readonly practitionerUserId: string;
-  /**
-   * El nombre del profesional, para que «Compartido con» no muestre un uuid.
-   * Ausente si la cuenta perdió su vínculo con la persona (caso raro).
-   */
-  readonly practitionerName?: string;
-  readonly validFrom: Date;
-  readonly validTo?: Date;
-  readonly active: boolean;
-}
-
-/**
- * Compartir un resultado: con quién y hasta cuándo.
- *
- * `practitionerProfileId` (CL-48), no una cuenta: es el mismo id que ya trae
- * `MyCareRelationship.practitionerProfileId` (`GET /authz/me/access`, BR-20).
- * El paciente elige de esa lista —sus relaciones asistenciales reales—, nunca
- * tipea un identificador. El servidor exige que la relación esté vigente antes
- * de resolver la cuenta y crear el acceso.
- *
- * `reason` se retiró (CL-50): `authz.resource_scope_grants` no tiene columna
- * para guardarlo y el backend ya lo ignoraba en silencio.
- */
-export interface NewDiagnosticResultShare {
-  readonly practitionerProfileId: string;
-  /** Obligatorio: no existe compartir sin plazo. */
-  readonly validUntil: Date;
-}
-
-/**
- * Claves del alta de orden (`POST /clinical/service-requests`) que la API suma
- * con el patch v4291 y el `openapi.json` del contrato de la maqueta todavía no
- * declara. El cliente SÍ las manda a la API real; la entrada en
- * `core/mock/contract/simulator-extensions.ts` se borra al regenerar el contrato.
+ * Order creation keys (`POST /clinical/service-requests`) the API adds with
+ * patch v4291 and the mockup contract's `openapi.json` does not declare yet.
+ * The client DOES send them to the real API; the entry in
+ * `core/mock/contract/simulator-extensions.ts` goes away on regenerating it.
  */
 export const DIAGNOSTIC_ORDER_CONTRACT_PENDING_KEYS: readonly string[] = ['reasonConditionId'];

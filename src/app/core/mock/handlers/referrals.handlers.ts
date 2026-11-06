@@ -90,17 +90,6 @@ const STATUS_BY_CONCEPT: Readonly<Record<string, string>> = {
   [REFERRAL_STATUS['REF_CANCELLED']!]: 'CANCELLED',
 };
 
-export const REFERRAL_TYPES = [
-  'TREATMENT',
-  'CONSULTATION',
-  'DIAGNOSTIC_STUDY',
-  'PROCEDURE',
-  'SECOND_OPINION',
-  'THERAPY',
-  'HOSPITALIZATION',
-  'OTHER',
-] as const;
-
 /** Las sedes del directorio simulado (`directory.handlers.ts`), con el nombre que se resuelve. */
 export const BRANCHES: Readonly<Record<string, { readonly tenantId: string; readonly name: string }>> = {
   [uuid('branch-olivos-central')]: { tenantId: TENANT_CLINICA, name: 'Sede Central' },
@@ -151,7 +140,7 @@ export interface SimulatedReferral {
   readonly informedConsentId?: string | null;
   // v4274 — el traslado, anidado como viaja (`referral-transfer.rules.ts`).
   readonly transfer?: SimulatedTransfer | null;
-  // Patch v4291: la atención en la que el destino recibió a la persona.
+  // Patch v4291: the encounter where the destination received the person.
   readonly targetEncounterId?: string | null;
 }
 

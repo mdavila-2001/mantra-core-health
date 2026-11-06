@@ -1,5 +1,6 @@
 import { encounterList } from './clinic';
 import { networkBookings } from './patient-network.data';
+import { MOTIVOS } from './agenda-motivos.data';
 import { ACTIVITY, CANAL, STATUS, BOOKING_STATUS, BLOCK_TYPE, APPOINTMENT_TYPE } from './concepts';
 import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, type ProfesionalSimulado } from './people';
 import { offers } from './offered-services';
@@ -441,19 +442,6 @@ export function abrirAgendaDeCentro(centro: CentroConAgenda): void {
 
 /* ---- reservas: pasado y futuro de la médica, con todos los estados --------- */
 
-const MOTIVOS = [
-  'Control de presión arterial',
-  'Dolor en el pecho al subir escaleras',
-  'Chequeo anual',
-  'Palpitaciones nocturnas',
-  'Seguimiento post infarto',
-  'Resultados de laboratorio',
-  'Mareos frecuentes',
-  'Renovación de receta',
-  'Control de colesterol',
-  'Segunda opinión',
-];
-
 /**
  * La tipología de actividad de una reserva generada, determinista (C-24 /
  * hallazgo D5 post-#559): antes las tres asignaciones de `serviceConceptId`
@@ -571,7 +559,7 @@ function generarReservas(): ReservaSimulada[] {
     }
   });
   reservas.push(...reservasDeServicios());
-  // La historia de ~18 meses de la paciente de prueba (red clínica, 06/11/2026).
+  // The test patient's ~18-month story (clinical network, 06/11/2026).
   reservas.push(...networkBookings(RECURSO_MEDICA));
   return reservas;
 }

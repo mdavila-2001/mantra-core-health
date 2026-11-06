@@ -4,6 +4,7 @@ import { imageBenefit } from './reference-prices';
 import { CATALOGO_MEDICAMENTOS } from './medication-catalog.generated';
 import { MEDICAMENTOS_LINAME, type MedicamentoLiname } from './liname.generated';
 import { PROFESIONES_COB_2023 } from './professions-cob-2023.generated';
+import { MUNICIPIOS_BO } from './municipalities-bo.data';
 
 /* ============================================================================
     El catálogo de terminología del backend simulado.
@@ -124,29 +125,7 @@ export const DEPARTMENT = define('VS_BO_DEPARTMENT', [
 ]);
 
 conjunto('VS_BO_MUNICIPALITY', 'Municipios de Bolivia', 'Municipios, agrupados por departamento.');
-export const MUNICIPALITY = define('VS_BO_MUNICIPALITY', [
-  ['SC-SCZ', 'Santa Cruz de la Sierra'],
-  ['SC-MON', 'Montero'],
-  ['SC-WAR', 'Warnes'],
-  ['SC-COT', 'Cotoca'],
-  ['SC-LGD', 'La Guardia'],
-  // Con el código del catálogo real (`03_terminology.seeds.json`): los traen
-  // los consultorios de la red de Nacional Seguros en la frontera con Brasil.
-  ['SC-PUERTO_SUAREZ', 'Puerto Suárez'],
-  ['SC-PUERTO_QUIJARRO', 'Puerto Quijarro'],
-  ['LP-LPZ', 'La Paz'],
-  ['LP-ELA', 'El Alto'],
-  ['LP-VIA', 'Viacha'],
-  ['CB-CBB', 'Cochabamba'],
-  ['CB-QUI', 'Quillacollo'],
-  ['CB-SAC', 'Sacaba'],
-  ['OR-ORU', 'Oruro'],
-  ['PT-PTS', 'Potosí'],
-  ['CH-SRE', 'Sucre'],
-  ['TJ-TJA', 'Tarija'],
-  ['BE-TRI', 'Trinidad'],
-  ['PD-COB', 'Cobija'],
-]);
+export const MUNICIPALITY = define('VS_BO_MUNICIPALITY', MUNICIPIOS_BO);
 
 /* Las ocupaciones y los empleadores llevan el código del catálogo real por lo
    mismo que los departamentos de acá arriba, y es la tercera vez que muerde: la
