@@ -84,6 +84,16 @@ export class ReferralDetail {
     consentEncounter(this.referral().sourceEncounterId, this.encounterId(), this.appointments()),
   );
 
+  /**
+   * La atención de llegada (`targetEncounterId`, patch v4291) en palabras: la
+   * cita de la lista si está, si no que existe sin poder nombrarla.
+   */
+  protected readonly arrivalEncounterLabel = computed<string | null>(() => {
+    const id = this.referral().targetEncounterId;
+    if (id === undefined) return null;
+    return this.appointments().find((cita) => cita.id === id)?.etiqueta ?? 'Atención registrada en la historia';
+  });
+
   protected readonly type = computed(() => referralTypeLabel(this.referral().referralType));
   protected readonly destination = computed(() => destinationOf(this.referral()));
   protected readonly status = computed(() => referralStatusOf(this.referral()));
@@ -164,15 +174,23 @@ export class ReferralDetail {
   );
 
   protected async accept(): Promise<void> {
+    // Patch v4291: si el contexto tiene la atención abierta, es la de llegada.
+    // Sin ella no se inventa una: se acepta sin vínculo, como permite el contrato.
+    const targetEncounterId = this.encounterId();
     const confirmed = await this.dialogs.confirm({
       title: 'Aceptar derivación',
-      message: `Quedará registrado que ${this.destination()} recibe a la persona para: ${this.referral().requestedServiceText ?? this.referral().targetServiceName ?? 'el servicio pedido'}.`,
+      message:
+        `Quedará registrado que ${this.destination()} recibe a la persona para: ${this.referral().requestedServiceText ?? this.referral().targetServiceName ?? 'el servicio pedido'}.` +
+        (targetEncounterId === null ? '' : ' La atención en curso queda como la de llegada.'),
       confirmLabel: 'Aceptar derivación',
       cancelLabel: 'Volver',
     });
     if (confirmed) {
       this.run(
-        this.referrals.respond(this.referral().id, { decision: 'ACCEPT' }),
+        this.referrals.respond(this.referral().id, {
+          decision: 'ACCEPT',
+          ...(targetEncounterId === null ? {} : { targetEncounterId }),
+        }),
         'Derivación aceptada',
         'Cuando termine la atención, registre la contrarreferencia.',
       );

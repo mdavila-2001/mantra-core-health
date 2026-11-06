@@ -11,6 +11,8 @@ import { abrirAgendaDeCentro, ZONA_HORARIA_POR_OMISION } from '../fixtures/agend
 import { patientSettlementFixture } from '../fixtures/patient-settlements';
 import { PHARMACIES_AND_LABS } from '../fixtures/markdown-institutions.generated';
 import { orderList } from '../fixtures/clinic';
+import { NETWORK_ORDER_IDS, networkReports } from '../fixtures/patient-network.data';
+import { checkReasonCondition, isRejection } from './clinical-links.mock';
 import { analisisInlasaDe, TARIFA_INLASA } from '../fixtures/inlasa';
 import { ANALISIS_INLASA } from '../fixtures/inlasa-tariffs.generated';
 import { imagePrice, testPrice, imageBenefit, type ReferencePrice } from '../fixtures/reference-prices';
@@ -109,9 +111,9 @@ const CONCLUSIONES: Readonly<Record<string, string>> = {
   'Ecografía abdominal': 'Hígado de tamaño y ecogenicidad conservados. Vesícula sin litiasis. Riñones normales.',
 };
 
-export const informes = new Coleccion<InformeSimulado>(
-  orderList
-    .filtrar((o) => o.statusConceptId === STATUS['ST-COMPLETED'])
+export const informes = new Coleccion<InformeSimulado>([
+  ...orderList
+    .filtrar((o) => o.statusConceptId === STATUS['ST-COMPLETED'] && !NETWORK_ORDER_IDS.has(o.id))
     .map((o, i) => ({
       id: uuid(`report-${o.id}`),
       patientProfileId: o.patientProfileId,
@@ -128,7 +130,9 @@ export const informes = new Coleccion<InformeSimulado>(
       createdAt: iso(-3 - (i % 5), 13),
       custodianTenantId: i % 2 === 0 ? TENANT_LABORATORIO : TENANT_CLINICA,
     })),
-);
+  // La historia de la paciente de prueba: sus informes, todos liberados.
+  ...networkReports(),
+]);
 
 interface CompartidoSimulado {
   readonly id: string;
@@ -1005,6 +1009,8 @@ export function registrarDiagnostico(router: MockRouter): void {
       previousDiagnosticReportId?: string;
       reusePreviousReport?: boolean;
       duplicateOverrideReason?: string;
+      // Red clínica (patch v4291): el diagnóstico para el que se pide.
+      reasonConditionId?: unknown;
     }>(request);
 
     const patientProfileId = datos.patientProfileId ?? '';
@@ -1017,6 +1023,12 @@ export function registrarDiagnostico(router: MockRouter): void {
     if (esRechazo(categoria)) return rechazoDeOrden(categoria);
     const notas = validarNotas(datos.basedOnNoteIds, patientProfileId, datos.encounterId);
     if (esRechazo(notas)) return rechazoDeOrden(notas);
+    const motivo = checkReasonCondition(
+      datos.reasonConditionId,
+      patientProfileId,
+      (datos as { custodianTenantId?: string }).custodianTenantId,
+    );
+    if (isRejection(motivo)) return motivo.rejection;
 
     // Sin decisión, el alta vuelve a correr el mismo detector que el
     // chequeo: la UI no es la barrera. Con decisión, se confía en lo que el
@@ -1054,6 +1066,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       ...(datos.duplicateOverrideReason === undefined
         ? {}
         : { duplicateOverrideReason: datos.duplicateOverrideReason }),
+      ...(motivo.value === undefined ? {} : { reasonConditionId: motivo.value }),
     });
     return {
       status: 201,
@@ -1061,6 +1074,7 @@ export function registrarDiagnostico(router: MockRouter): void {
         id: nueva.id,
         patientProfileId: nueva.patientProfileId,
         ...ordenDeAnalisis(nueva),
+        ...(nueva.reasonConditionId === undefined ? {} : { reasonConditionId: nueva.reasonConditionId }),
         status: reutilizada ? 'SATISFIED_BY_PRIOR' : 'ACTIVE',
         createdAt: nueva.createdAt,
       },

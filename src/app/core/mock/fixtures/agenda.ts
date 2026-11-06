@@ -1,4 +1,5 @@
 import { encounterList } from './clinic';
+import { networkBookings } from './patient-network.data';
 import { ACTIVITY, CANAL, STATUS, BOOKING_STATUS, BLOCK_TYPE, APPOINTMENT_TYPE } from './concepts';
 import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, type ProfesionalSimulado } from './people';
 import { offers } from './offered-services';
@@ -568,6 +569,8 @@ function generarReservas(): ReservaSimulada[] {
     }
   });
   reservas.push(...reservasDeServicios());
+  // La historia de ~18 meses de la paciente de prueba (red clínica, 06/11/2026).
+  reservas.push(...networkBookings(RECURSO_MEDICA));
   return reservas;
 }
 
