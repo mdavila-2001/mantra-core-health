@@ -24,7 +24,7 @@ describe('service-surveys.logic', () => {
     const texto = answerFormat({ text: '¿Lo recomendaría?', answerType: 'SCALE', required: false, scaleMin: 0, scaleMax: 10, dimension: 'recomendacion' });
     expect(texto).toBe('Recomendación del 0 al 10 · opcional');
     expect(texto).not.toMatch(/NPS|Net Promoter/);
-    expect(answerFormat({ text: 'x', answerType: 'BOOLEAN', required: true })).toBe('Sí / No');
+    expect(answerFormat({ text: 'x', answerType: 'BOOLEAN', required: true })).toBe('Sí / No · obligatoria');
     // The text already spells out the scale: no redundant «Escala del 1 al 5».
     expect(answerFormat({ text: '¿Lo trató con respeto? (1 = Nunca, 5 = Siempre)', answerType: 'SCALE', required: false, scaleMin: 1, scaleMax: 5 })).toBe('Escala · opcional');
   });
@@ -54,9 +54,12 @@ describe('service-surveys.logic', () => {
 
   it('un rechazo (403/412) es S5, sin «Reintentar»; un fallo del servidor es S9 con código', () => {
     const refused = failureState(new HttpErrorResponse({ status: 412, error: { code: 'PRECONDITION_FAILED', message: 'RAW', correlationId: 'c-1' } }), 'T', 'M');
-    expect(refused).toMatchObject({ status: 'forbidden', message: 'T. M', requestId: 'c-1' });
+    expect(refused).toMatchObject({
+      title: 'T',
+      state: { status: 'forbidden', message: 'M', requestId: 'c-1', nextAction: { label: 'Completar mi perfil profesional', route: '/my-account' } },
+    });
     const failed = failureState(new HttpErrorResponse({ status: 500, error: { code: 'INTERNAL', message: 'RAW', correlationId: 'c-2' } }), 'T', 'M');
-    expect(failed).toMatchObject({ status: 'error', title: 'T', message: 'M', requestId: 'c-2' });
+    expect(failed).toMatchObject({ title: 'T', state: { status: 'error', title: 'T', message: 'M', requestId: 'c-2' } });
   });
 
   it('cita las fuentes como ítems adaptados', () => {

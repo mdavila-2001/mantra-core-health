@@ -276,12 +276,9 @@ test.describe('Encuestas · «Cómo le va» y el Buzón de solo lectura', () => 
     await tarjeta.getByRole('link', { name: 'Ver las respuestas de Experiencia de teleconsulta' }).click();
     await expect(page).toHaveURL(/\/questionnaires\/[0-9a-f-]{36}#respuestas$/);
 
-    // La ficha se lee: cuestionario y respuestas recibidas.
-    await expect(page.getByTestId('survey-detail-read-only')).toBeVisible({ timeout: 30_000 });
-    // ONE card with tabs; `#respuestas` opens the answers tab.
-    await expect(page.getByRole('tab', { name: 'Preguntas', exact: true })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Respuestas', exact: true })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('heading', { name: 'Respuestas recibidas', exact: true })).toBeVisible();
+    // La ficha se lee. ONE card with tabs; `#respuestas` opens the answers tab, with the answers.
+    await expect(page.getByRole('tab', { name: 'Respuestas', exact: true })).toHaveAttribute('aria-selected', 'true', { timeout: 30_000 });
+    await expect(page.getByTestId('survey-detail-answer-list')).toBeVisible({ timeout: 30_000 });
     const lecturas = async (): Promise<readonly number[]> =>
       (await atendidas(page)).filter((r) => r.method === 'GET' && /^\/surveys\/templates\/[^/?]+\/responses/.test(r.url)).map((r) => r.status);
     await expect.poll(lecturas, { timeout: 15_000 }).toEqual([200]);
@@ -294,13 +291,19 @@ test.describe('Encuestas · «Cómo le va» y el Buzón de solo lectura', () => 
     expect((await atendidas(page)).filter((r) => r.method !== 'GET' && r.url.startsWith('/surveys/'))).toEqual([]);
     await capturar(page, '08-ficha-solo-lectura-claro-1440');
 
-    // Recarga completa → sigue legible.
+    // Recarga completa → sigue legible, en la misma pestaña.
     await page.reload();
     await esperarAplicacionLista(page);
-    await expect(page.getByTestId('survey-detail-read-only')).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole('heading', { name: 'Respuestas recibidas', exact: true })).toBeVisible();
+    await expect(page.getByTestId('survey-detail-answer-list')).toBeVisible({ timeout: 30_000 });
+
+    // «Resumen»: the tab writes its fragment and shows the summary of the answers.
+    await page.getByRole('tab', { name: 'Resumen', exact: true }).click();
+    await expect(page).toHaveURL(/#resumen$/);
+    await expect(page.getByTestId('survey-detail-summary-bars').or(page.getByTestId('survey-detail-summary-below-minimum'))).toBeVisible();
 
     // ── 5. La ficha lleva a donde hoy se elige la encuesta de cada servicio ─────
+    await page.getByRole('tab', { name: 'Preguntas', exact: true }).click();
+    await expect(page.getByTestId('survey-detail-read-only')).toContainText('Solo lectura');
     await page.getByTestId('survey-detail-go-to-services').click();
     await expect(page).toHaveURL(/\/questionnaires\?encuestas=servicios$/);
     await expect(page.getByTestId('service-surveys-list')).toBeVisible({ timeout: 30_000 });

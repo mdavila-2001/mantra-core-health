@@ -26,7 +26,7 @@ describe('simulador: encuestas estándar por servicio', () => {
     readonly items: readonly { code: string; source: { license: string }; questions: readonly { answerType: string; required: boolean }[] }[];
     readonly consultation: unknown;
     readonly services: readonly Row[];
-    readonly assignment: { readonly catalogCode: string };
+    readonly assignment: { readonly catalogCode: string; readonly templateId: string };
     readonly reason: string;
   }
 
@@ -91,10 +91,20 @@ describe('simulador: encuestas estándar por servicio', () => {
     expect(call('GET', '/surveys/service-assignments', patient).status).toBe(403);
   });
 
-  it('una importación nueva no trae respuestas viejas; la sembrada sí trae algunas', () => {
-    const imported = call('PUT', `/surveys/service-assignments/${ECG}`, doctor, { catalogCode: 'STD_PROCEDURE_V1' }).body.assignment as unknown as { templateId: string };
-    const fresh = router.match('GET', `/surveys/templates/${imported.templateId}/responses`)!;
-    const freshAnswers = fresh.handler({ method: 'GET', path: '', params: fresh.params, query: new URLSearchParams(), body: null, headers: new HttpHeaders(), user: doctor });
-    expect(freshAnswers).toEqual([]);
+  it('una importación nueva no trae respuestas viejas; la sembrada sí, y las conserva al quitarla y reimportarla', () => {
+    const answersOf = (templateId: string): readonly unknown[] => {
+      const match = router.match('GET', `/surveys/templates/${templateId}/responses`)!;
+      const reply: unknown = match.handler({ method: 'GET', path: '', params: match.params, query: new URLSearchParams(), body: null, headers: new HttpHeaders(), user: doctor });
+      return Array.isArray(reply) ? reply : [];
+    };
+    const fresh = call('PUT', `/surveys/service-assignments/${ECG}`, doctor, { catalogCode: 'STD_PROCEDURE_V1' }).body.assignment;
+    expect(answersOf(fresh.templateId)).toEqual([]);
+
+    const echo = uuid('service-ECO-DOPPLER');
+    const seeded = call('GET', '/surveys/service-assignments').body.services.find((s) => s.serviceId === echo)!.assignment!;
+    expect(answersOf(seeded.templateId).length).toBeGreaterThan(0);
+    expect(call('DELETE', `/surveys/service-assignments/${echo}`).status).toBe(204);
+    call('PUT', `/surveys/service-assignments/${echo}`, doctor, { catalogCode: 'STD_IMAGING_V1' });
+    expect(answersOf(seeded.templateId).length).toBeGreaterThan(0);
   });
 });

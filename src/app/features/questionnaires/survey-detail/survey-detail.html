@@ -1,6 +1,6 @@
 <app-page-header
-  title="Encuesta"
-  subtitle="Lea el cuestionario y lo que respondieron sus pacientes."
+  [title]="encuesta()?.title ?? 'Encuesta'"
+  subtitle="Encuesta de sus pacientes: lea el cuestionario y lo que respondieron."
   [breadcrumbs]="crumbs()"
 >
   <app-back-link page-actions [fallback]="rutaDeLasEncuestas" label="Volver a las encuestas" />
@@ -8,10 +8,9 @@
 
 <app-view-state-host [state]="vista()" (retry)="cargar()">
   @if (encuesta(); as encuesta) {
-    <!-- ONE card with tabs (composition-rules §5): identity, status and notice on
-         top; then Preguntas · Resumen · Respuestas. -->
+    <!-- ONE card with tabs (composition-rules §5): description and status on top,
+         then Preguntas · Resumen · Respuestas. The survey's name is the page title. -->
     <app-card variant="outlined" padding="lg" class="encuesta">
-      <h2 card-header class="encuesta__titulo">{{ encuesta.title }}</h2>
       @if (encuesta.description) {
         <p class="encuesta__consigna">{{ encuesta.description }}</p>
       }
@@ -41,31 +40,18 @@
             }
             @if (encuesta.effectiveTo) {
               · hasta {{ encuesta.effectiveTo | date: 'd MMM y' : 'UTC' }}
-            } @else if (sending() === 'no') {
-              · ya no se envía
             }
           </dd>
         </div>
-        <div>
-          <dt>Versión</dt>
-          <dd>{{ encuesta.latestVersionNumber }}</dd>
-        </div>
       </dl>
 
-      <!-- Read-only since 06/11/2026: hand-made surveys are no longer edited,
-           published or attached (the API rejects it). -->
-      <app-alert class="encuesta__aviso" tone="info" title="Esta encuesta es de solo lectura" data-testid="survey-detail-read-only">
-        Qué encuesta recibe cada servicio se elige del catálogo estándar en «Encuestas por servicio».
-        <div alert-actions>
-          <a app-button size="sm" variant="outline" [routerLink]="rutaDeLasEncuestas" [queryParams]="serviceSurveysQuery" data-testid="survey-detail-go-to-services">
-            Ir a «Encuestas por servicio»
-          </a>
-        </div>
-      </app-alert>
-
-      <app-tabs class="encuesta__pestanas" data-testid="survey-detail-tabs" [(selectedIndex)]="selectedTab">
+      <app-tabs class="encuesta__pestanas" data-testid="survey-detail-tabs" [selectedIndex]="activeTab()" (selectedIndexChange)="selectTab($event)">
         <app-tab label="Preguntas">
-          @if (selectedTab() === 0) {
+          @if (activeTab() === 0) {
+            <!-- Read-only since 06/11/2026 (the API rejects editing hand-made surveys): one compact line. -->
+            <p class="encuesta__solo-lectura" data-testid="survey-detail-read-only">
+              Solo lectura: qué encuesta recibe cada servicio se elige en&nbsp;<a app-link [routerLink]="rutaDeLasEncuestas" [queryParams]="serviceSurveysQuery" data-testid="survey-detail-go-to-services">«Encuestas por servicio»</a>.
+            </p>
             <div class="encuesta__panel-cabecera">
               @if (encuesta.questions.length > 0) {
                 <button app-button type="button" variant="outline" size="sm" (click)="alternarPrevia()" data-testid="encuesta-previa">
@@ -90,110 +76,76 @@
         </app-tab>
         @if (publicada()) {
           <app-tab label="Resumen">
-            @if (selectedTab() === 1) {
-            @if (respuestasProhibidas()) {
-              <app-alert tone="error" title="No tiene acceso a las respuestas" data-testid="survey-detail-answers-forbidden">{{ motivoRespuestasProhibidas() }}</app-alert>
-            } @else if (cargandoRespuestas()) {
-              <app-skeleton />
-            } @else if (respuestas().length === 0) {
-              <app-empty-state
-                variant="empty"
-                title="Todavía no respondió nadie"
-                description="Las respuestas llegan cuando sus pacientes completan la encuesta después de una atención."
-                data-testid="survey-detail-no-answers"
-              >
-                <a app-button empty-actions variant="secondary" [routerLink]="rutaDeLasEncuestas" [queryParams]="serviceSurveysQuery">Ver «Encuestas por servicio»</a>
-              </app-empty-state>
-            } @else if (!suficientesRespuestas()) {
-              <p class="encuesta__vacio">
-                {{ respuestas().length }} de un mínimo de 5 respuestas necesarias para mostrar un
-                resumen sin arriesgar identificar a quien respondió.
-              </p>
-            } @else {
-              <ul class="encuesta__resumen">
-                @for (resumen of resumenPorPregunta(); track resumen.questionId) {
-                  <li class="encuesta__resumen-pregunta">
-                    <div class="encuesta__resumen-cabecera">
-                      <span class="encuesta__resumen-texto">{{ resumen.questionText }}</span>
-                      <span class="encuesta__resumen-total">
-                        {{ resumen.totalRespondida }}
-                        {{ resumen.totalRespondida === 1 ? 'respuesta' : 'respuestas' }}
-                        @if (resumen.promedio !== null) {
-                          · promedio {{ resumen.promedio | number: '1.1-1' }}
+            @if (activeTab() === 1) {
+              <app-view-state-host class="encuesta__panel" [state]="answersView()" (retry)="cargarRespuestas()" data-testid="survey-detail-summary">
+                @if (!suficientesRespuestas()) {
+                  <!-- Below the minimum a chart would point at a single person (D-13). -->
+                  <p class="encuesta__vacio" data-testid="survey-detail-summary-below-minimum">
+                    {{ respuestas().length }} de un mínimo de 5 respuestas necesarias para mostrar un resumen sin arriesgar
+                    identificar a quien respondió.
+                  </p>
+                } @else {
+                  <ul class="encuesta__resumen" data-testid="survey-detail-summary-bars">
+                    @for (resumen of resumenPorPregunta(); track resumen.questionId) {
+                      <li class="encuesta__resumen-pregunta">
+                        <div class="encuesta__resumen-cabecera">
+                          <span class="encuesta__resumen-texto">{{ resumen.questionText }}</span>
+                          <span class="encuesta__resumen-total">
+                            {{ resumen.totalRespondida }} {{ resumen.totalRespondida === 1 ? 'respuesta' : 'respuestas' }}
+                            @if (resumen.promedio !== null) {
+                              · promedio {{ resumen.promedio | number: '1.1-1' }}
+                            }
+                          </span>
+                        </div>
+                        @if (resumen.answerType === 'TEXT') {
+                          <p class="encuesta__resumen-nota">Texto libre: se lee completo en la pestaña «Respuestas».</p>
+                        } @else if (resumen.totalRespondida === 0) {
+                          <p class="encuesta__resumen-nota">Nadie respondió esta pregunta todavía.</p>
+                        } @else {
+                          <ul class="encuesta__barras">
+                            @for (barra of resumen.barras; track barra.etiqueta) {
+                              <li class="encuesta__barra-fila">
+                                <span class="encuesta__barra-etiqueta">{{ barra.etiqueta }}</span>
+                                <span class="encuesta__barra-pista">
+                                  <span class="encuesta__barra-relleno" [style.inline-size.%]="barra.porcentaje"></span>
+                                </span>
+                                <span class="encuesta__barra-cifra">{{ barra.cantidad }} · {{ barra.porcentaje }}%</span>
+                              </li>
+                            }
+                          </ul>
                         }
-                      </span>
-                    </div>
-                    @if (resumen.answerType === 'TEXT') {
-                      <p class="encuesta__resumen-nota">
-                        Texto libre: se lee completo en la pestaña «Respuestas».
-                      </p>
-                    } @else if (resumen.totalRespondida === 0) {
-                      <p class="encuesta__resumen-nota">Nadie respondió esta pregunta todavía.</p>
-                    } @else {
-                      <ul class="encuesta__barras">
-                        @for (barra of resumen.barras; track barra.etiqueta) {
-                          <li class="encuesta__barra-fila">
-                            <span class="encuesta__barra-etiqueta">{{ barra.etiqueta }}</span>
-                            <span class="encuesta__barra-pista">
-                              <span
-                                class="encuesta__barra-relleno"
-                                [style.inline-size.%]="barra.porcentaje"
-                              ></span>
-                            </span>
-                            <span class="encuesta__barra-cifra">
-                              {{ barra.cantidad }} · {{ barra.porcentaje }}%
-                            </span>
-                          </li>
-                        }
-                      </ul>
+                      </li>
                     }
-                  </li>
+                  </ul>
                 }
-              </ul>
-            }
+              </app-view-state-host>
             }
           </app-tab>
           <app-tab label="Respuestas">
-            @if (selectedTab() === 2) {
-              <div id="respuestas" class="encuesta__respuestas-cabecera">
-                <h3>Respuestas recibidas</h3>
-                @if (suficientesRespuestas()) {
-                  <button app-button type="button" variant="outline" (click)="descargarCsv()">Descargar CSV</button>
-                }
-              </div>
-              @if (respuestas().length > 0 && !suficientesRespuestas()) {
-                <p class="encuesta__nota-csv">
-                  El CSV se habilita con un mínimo de 5 respuestas, para no exponer una respuesta
-                  puntual como si fuera identificable.
-                </p>
-              }
-              @if (respuestasProhibidas()) {
-              <app-alert tone="error" title="No tiene acceso a las respuestas" data-testid="survey-detail-answers-forbidden">{{ motivoRespuestasProhibidas() }}</app-alert>
-            } @else if (cargandoRespuestas()) {
-                <app-skeleton />
-              } @else if (respuestas().length === 0) {
-                <app-empty-state
-                  variant="empty"
-                  title="Todavía no respondió nadie"
-                  description="Las respuestas llegan cuando sus pacientes completan la encuesta después de una atención."
-                  data-testid="survey-detail-no-answers-list"
-                >
-                  <a app-button empty-actions variant="secondary" [routerLink]="rutaDeLasEncuestas" [queryParams]="serviceSurveysQuery">Ver «Encuestas por servicio»</a>
-                </app-empty-state>
-              } @else {
-                <ul class="encuesta__respuestas">
+            @if (activeTab() === 2) {
+              <app-view-state-host id="respuestas" class="encuesta__panel" [state]="answersView()" (retry)="cargarRespuestas()" data-testid="survey-detail-answers">
+                <div class="encuesta__respuestas-cabecera">
+                  @if (suficientesRespuestas()) {
+                    <button app-button type="button" variant="outline" size="sm" (click)="descargarCsv()">Descargar CSV</button>
+                  } @else {
+                    <p class="encuesta__nota-csv">
+                      El CSV se habilita con un mínimo de 5 respuestas, para no exponer una respuesta puntual como si fuera
+                      identificable.
+                    </p>
+                  }
+                </div>
+                <ul class="encuesta__respuestas" data-testid="survey-detail-answer-list">
                   @for (respuesta of respuestas(); track respuesta.id) {
                     <li class="encuesta__respuesta">
                       <span class="encuesta__respuesta-fecha">
-                        <!-- Sólo el día, en UTC: el servidor lo redondea al día (medianoche UTC) y
-                             la hora exacta junto a un comentario reconocería a quien lo escribió. -->
+                        <!-- Day only, in UTC: the server rounds it to the day; an exact time next to a comment would identify its author. -->
                         @if (respuesta.submittedAt) {
                           {{ respuesta.submittedAt | date: 'd MMM y' : 'UTC' }}
                         } @else {
                           Sin enviar
                         }
                       </span>
-                      <!-- Cada valor con su pregunta: «3» o «Sí» a secas no se entienden. -->
+                      <!-- Each value with its question: «3» or «Sí» alone mean nothing. -->
                       <dl class="encuesta__answers">
                         @for (answer of respuesta.answers; track answer.questionId) {
                           <div class="encuesta__answer">
@@ -205,7 +157,7 @@
                     </li>
                   }
                 </ul>
-              }
+              </app-view-state-host>
             }
           </app-tab>
         }

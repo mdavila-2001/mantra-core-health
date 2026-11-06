@@ -134,6 +134,11 @@ export function slugify(texto: string): string {
 /** The sheet's tabs, in order; the fragment of each deep-links to it (index + 1). */
 export const SHEET_TABS = ['resumen', 'respuestas'] as const;
 
+/** The tab a URL fragment asks for: `resumen` → 1, `respuestas` → 2, anything else → 0. */
+export function tabOfFragment(fragment: string | null): number {
+  return SHEET_TABS.indexOf(fragment as (typeof SHEET_TABS)[number]) + 1;
+}
+
 /** Whether a survey is sent today: `unknown` when the service list could not be read. */
 export type SendingStatus = 'yes' | 'no' | 'unknown';
 

@@ -7,11 +7,12 @@ import type {
 } from '../../../core/data-access/surveys/surveys-service-assignments.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import type { ViewState } from '../../../core/view-state/view-state.types';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { SupportCode } from '../../../shared/components/molecules/support-code/support-code';
-import { answerFormat, questionCount, sortForService, sourcesLine } from './service-surveys.logic';
+import { RouterLink } from '@angular/router';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
+import { answerFormat, questionCount, sortForService, sourcesLine, type ShownFailure } from './service-surveys.logic';
 
 /**
  * Standard-catalog picker for one service («Importar» / «Cambiar»). A modal
@@ -25,7 +26,7 @@ import { answerFormat, questionCount, sortForService, sourcesLine } from './serv
  */
 @Component({
   selector: 'app-survey-catalog-picker',
-  imports: [Alert, AppButton, Badge, ContentDialog, SupportCode],
+  imports: [Alert, AppButton, AppButtonLink, Badge, ContentDialog, RouterLink, SupportCode],
   templateUrl: './survey-catalog-picker.html',
   styleUrl: './survey-catalog-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,19 +39,28 @@ export class SurveyCatalogPicker {
   readonly catalog = input.required<readonly StandardSurvey[]>();
   readonly saving = input(false);
   /** The last failed attempt, drawn with the S9 anatomy; `null` if none. */
-  readonly error = input<ViewState<never> | null>(null);
+  readonly error = input<ShownFailure | null>(null);
 
   readonly pick = output<string>();
   readonly closed = output<void>();
 
-  /** The failure in words: title, message, hint and support code (never the server's text). */
+  /** The failure in words, laid out like the page's error banner (never the server's text). */
   protected readonly failure = computed(() => {
-    const state = this.error();
-    if (state === null) return null;
-    if (state.status === 'error') return { title: state.title ?? 'No se pudo importar la encuesta', message: state.message ?? '', hint: state.hint ?? null, requestId: state.requestId };
-    if (state.status === 'forbidden') return { title: 'No se pudo importar la encuesta', message: state.message ?? '', hint: null, requestId: state.requestId ?? null };
-    return { title: 'No se pudo importar la encuesta', message: 'No hay conexión con el servidor. Revise su red y vuelva a intentar.', hint: null, requestId: null };
+    const shown = this.error();
+    if (shown === null) return null;
+    const { title, state } = shown;
+    if (state.status === 'error') return { title, message: state.message ?? '', hint: state.hint ?? null, requestId: state.requestId, action: null };
+    if (state.status === 'forbidden') {
+      const action = state.nextAction?.route ? { label: state.nextAction.label, route: state.nextAction.route } : null;
+      return { title, message: state.message ?? '', hint: null, requestId: state.requestId ?? null, action };
+    }
+    return { title, message: 'No hay conexión con el servidor. Revise su red y vuelva a intentar.', hint: null, requestId: null, action: null };
   });
+
+  /** «Copiar código», as in the page's banner. */
+  protected copyCode(code: string): void {
+    void this.host.nativeElement.ownerDocument.defaultView?.navigator.clipboard?.writeText(code);
+  }
 
   protected readonly options = computed(() => sortForService(this.catalog(), this.kind()));
 

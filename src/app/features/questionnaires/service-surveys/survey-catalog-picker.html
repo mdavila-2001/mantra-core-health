@@ -18,7 +18,17 @@
         <p class="catalogo__error-pista"><strong>Qué puede hacer:</strong> {{ f.hint }}</p>
       }
       @if (f.requestId) {
-        <app-support-code [code]="f.requestId" />
+        <app-support-code [code]="f.requestId" [copyable]="false" />
+      }
+      @if (f.requestId || f.action) {
+        <div alert-actions>
+          @if (f.requestId; as code) {
+            <button app-button size="sm" variant="outline" type="button" (clicked)="copyCode(code)">Copiar código</button>
+          }
+          @if (f.action; as action) {
+            <a app-button size="sm" variant="outline" [routerLink]="action.route">{{ action.label }}</a>
+          }
+        </div>
       }
     </app-alert>
   }

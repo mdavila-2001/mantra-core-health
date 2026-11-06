@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, output, signal } from '@angular/core';
-import { catchError, forkJoin, map, of, type Subscription } from 'rxjs';
+import { catchError, forkJoin, of, type Subscription } from 'rxjs';
 
 import { SurveysCatalogClient, type SurveyCatalogEntry } from '../../../core/data-access/surveys/surveys-catalog.client';
 import { SurveysServiceAssignmentsClient } from '../../../core/data-access/surveys/surveys-service-assignments.client';
+import type { ServiceSurveyAssignments } from '../../../core/data-access/surveys/surveys-service-assignments.types';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -14,6 +15,7 @@ import { SurveyInsightsPanel } from '../insights/survey-insights';
 import { SurveyCard, type SurveyCardData } from '../survey-card/survey-card';
 import { encuestaRoute } from '../questionnaires.routes';
 import { readFailureState } from '../service-surveys/service-surveys.logic';
+import { sendingStatusOf } from '../survey-detail/survey-detail.logic';
 
 /** Diacritics left loose by `normalize('NFD')`. */
 const DIACRITICS = /[̀-ͯ]/g;
@@ -93,16 +95,13 @@ export class SurveysInbox {
   protected load(): void {
     this.read?.unsubscribe();
     this.state.set(loading());
-    // Which templates are sent today. If it fails, the inbox still shows (all as readable).
-    const currentTemplates = this.assignments.list().pipe(
-      map((data) => new Set(data.services.flatMap((row) => (row.assignment ? [row.assignment.templateId] : [])))),
-      catchError(() => of(null)),
-    );
-    this.read = forkJoin([this.catalog.list(), currentTemplates]).subscribe({
-      next: ([entries, current]) => {
+    // Which templates services send today. If it fails, the inbox still shows (nothing claimed).
+    const assignments = this.assignments.list().pipe(catchError(() => of(null)));
+    this.read = forkJoin([this.catalog.list(), assignments]).subscribe({
+      next: ([entries, sent]) => {
         // What is sent today first, then what cannot be confirmed, then past surveys; server order within each.
         const shown = entries
-          .map((entry) => this.toInbox(entry, current))
+          .map((entry) => this.toInbox(entry, entries, sent))
           .filter((s) => s.sending === 'yes' || s.status !== 'DRAFT')
           .sort((a, b) => SENDING_ORDER[a.sending] - SENDING_ORDER[b.sending]);
         this.state.set(
@@ -123,14 +122,9 @@ export class SurveysInbox {
     this.query.set('');
   }
 
-  /**
-   * Sent today = a system base survey, or the template a service uses NOW
-   * (`GET /surveys/service-assignments`, where legacy non-catalog attachments
-   * already read as none). If that read failed, a practitioner survey is
-   * «unknown»: never claimed as sent nor as past.
-   */
-  private toInbox(entry: SurveyCatalogEntry, currentTemplates: ReadonlySet<string> | null): InboxSurvey {
-    const sending = entry.origin === 'SYSTEM' ? 'yes' : currentTemplates === null ? 'unknown' : currentTemplates.has(entry.id) ? 'yes' : 'no';
+  /** Sent today or not: the single rule of `sendingStatusOf`, shared with the survey sheet. */
+  private toInbox(entry: SurveyCatalogEntry, catalog: readonly SurveyCatalogEntry[], sent: ServiceSurveyAssignments | null): InboxSurvey {
+    const sending = sendingStatusOf(entry.id, catalog, sent);
     return {
       ...entry,
       sending,

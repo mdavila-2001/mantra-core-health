@@ -7,14 +7,7 @@
   margin-block-start: var(--sp-4);
 }
 
-.encuesta__titulo {
-  margin: 0;
-}
 
-.encuesta__aviso {
-  display: block;
-  margin-block: var(--sp-4) 0;
-}
 
 .encuesta__pestanas {
   display: block;
@@ -25,11 +18,11 @@
 .encuesta__panel-cabecera {
   display: flex;
   justify-content: flex-end;
-  margin-block: var(--sp-4) var(--sp-3);
+  margin-block: 0 var(--sp-3);
 }
 
 .encuesta__consigna {
-  margin: 0 0 var(--sp-3);
+  margin: 0 0 var(--sp-4);
   color: var(--text-secondary);
 }
 
@@ -93,27 +86,17 @@
   font-size: var(--fs-caption);
 }
 
-.encuesta__escala {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-3);
-}
 
 .encuesta__respuestas-cabecera {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--sp-2);
   inline-size: 100%;
-  margin-block: var(--sp-4) var(--sp-3);
+  margin-block: 0 var(--sp-3);
 }
 
-.encuesta__respuestas-cabecera h3 {
-  margin: 0;
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
-}
 
 .encuesta__resumen {
   display: grid;
@@ -245,8 +228,18 @@
   .encuesta__datos {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
 
-  .encuesta__escala {
-    grid-template-columns: 1fr;
-  }
+/* The read-only notice: one compact line with its link, inside «Preguntas». */
+.encuesta__solo-lectura {
+  margin: var(--sp-4) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* Each answers panel (summary, list) starts below the tab strip. */
+.encuesta__panel {
+  display: block;
+  margin-block-start: var(--sp-4);
 }

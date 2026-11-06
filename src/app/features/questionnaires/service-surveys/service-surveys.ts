@@ -10,6 +10,8 @@ import { MY_SERVICES_ROUTE } from '../../my-services/my-services.routes';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { SupportCode } from '../../../shared/components/molecules/support-code/support-code';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
@@ -31,7 +33,7 @@ import { SurveyQuestionsDialog } from './survey-questions-dialog';
  */
 @Component({
   selector: 'app-service-surveys',
-  imports: [AppButton, AppButtonLink, Badge, EmptyState, NavIcon, RouterLink, ServiceSurveyRow, Skeleton, SurveyCatalogPicker, SurveyQuestionsDialog, ViewStateHost],
+  imports: [Alert, AppButton, AppButtonLink, Badge, EmptyState, NavIcon, RouterLink, ServiceSurveyRow, Skeleton, SupportCode, SurveyCatalogPicker, SurveyQuestionsDialog, ViewStateHost],
   templateUrl: './service-surveys.html',
   styleUrl: './service-surveys.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,9 +59,9 @@ export class ServiceSurveys {
   });
   protected readonly saving = signal(false);
   /** The import failure shown inside the open picker. */
-  protected readonly saveError = signal<ViewState<never> | null>(null);
+  protected readonly saveError = signal<logic.ShownFailure | null>(null);
   /** A write failure shown above the list (late import, removal), with what «Reintentar» redoes. */
-  protected readonly writeError = signal<ViewState<never> | null>(null);
+  protected readonly writeError = signal<logic.ShownFailure | null>(null);
   private retryWrite: () => void = () => undefined;
   protected readonly removing = signal<string | null>(null);
   protected readonly viewing = signal<logic.QuestionsView | null>(null);
@@ -93,7 +95,7 @@ export class ServiceSurveys {
         this.catalogState.set(entries.length === 0 ? empty({ label: 'Mientras tanto, cada servicio usa la encuesta base de servicios' }) : ready(entries)),
       error: (error: unknown) =>
         this.catalogState.set(
-          logic.failureState(error, 'No se pudo cargar el catálogo de encuestas', 'La lista de sus servicios se ve, pero por ahora no puede importar ni cambiar.'),
+          logic.failureState(error, 'No se pudo cargar el catálogo de encuestas', 'La lista de sus servicios se ve, pero por ahora no puede importar ni cambiar.').state,
         ),
     });
   }
@@ -178,9 +180,22 @@ export class ServiceSurveys {
     if (entry !== null) this.viewing.set(logic.serviceQuestions(row, entry));
   }
 
-  private showWriteError(state: ViewState<never>, retry: () => void): void {
+  /** The refusal's text and its door, if any (S5 drawn with our own title). */
+  protected refusalMessage(state: ViewState<never>): string {
+    return state.status === 'forbidden' ? (state.message ?? '') : '';
+  }
+
+  protected refusalCode(state: ViewState<never>): string | null {
+    return state.status === 'forbidden' ? (state.requestId ?? null) : null;
+  }
+
+  protected refusalAction(state: ViewState<never>): { label: string; route: string } | null {
+    return state.status === 'forbidden' && state.nextAction?.route ? { label: state.nextAction.label, route: state.nextAction.route } : null;
+  }
+
+  private showWriteError(failure: logic.ShownFailure, retry: () => void): void {
     this.retryWrite = retry;
-    this.writeError.set(state);
+    this.writeError.set(failure);
   }
 
   private replace(next: Row): void {

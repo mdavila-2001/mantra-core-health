@@ -1,6 +1,6 @@
 /**
  * Evidence for «Encuestas por servicio», the read-only «Buzón», the read-only
- * survey sheet and the patient's «Mis encuestas» (06/11/2026, fourth round).
+ * survey sheet and the patient's «Mis encuestas» (06/11/2026, fifth round).
  *
  * Against the demo build (`yarn start:demo`, mock backend). One browser, serial
  * captures, VIEWPORT-only screenshots (never full page: the side rail would cover
@@ -17,7 +17,7 @@ import { join } from 'node:path';
 import { chromium, expect } from '@playwright/test';
 
 const BASE = process.env.BASE ?? 'http://localhost:4200';
-const OUT = process.env.OUT ?? 'docs/refactor-profesional/trabajo/capturas/despues/surveys-per-service-2026-11-06-r4';
+const OUT = process.env.OUT ?? 'docs/refactor-profesional/trabajo/capturas/despues/surveys-per-service-2026-11-06-r5';
 mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch();
@@ -46,6 +46,8 @@ async function go(page, path) {
 }
 
 async function shot(page, name) {
+  // No hover state in any capture: the pointer goes to a neutral corner first.
+  await page.mouse.move(1, 1);
   await page.evaluate(async () => {
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     await document.fonts.ready;
@@ -103,9 +105,9 @@ const list = (page) => page.getByTestId('service-surveys-list');
   await shot(page, '04-inbox-after-import-sent-1440');
   await card.getByRole('link', { name: `Ver las respuestas de ${title}` }).click();
   await expect(page.getByTestId('survey-detail-sending')).toHaveText('Se envía', { timeout: 30_000 });
+  // Settled: just imported, no answers yet, so the answers tab is an S3 with its next action.
+  await expect(page.getByTestId('survey-detail-answers')).toContainText('Todavía no respondió nadie', { timeout: 30_000 });
   await shot(page, '05-imported-survey-sheet-1440');
-  // Just imported: no answers yet, so the answers tab is an S3 with its next action.
-  await expect(page.getByTestId('survey-detail-no-answers-list')).toBeVisible();
   await page.getByTestId('survey-detail-tabs').scrollIntoViewIfNeeded();
   await shot(page, '05b-imported-survey-no-answers-yet-1440');
   await go(page, servicesUrl);
@@ -170,7 +172,10 @@ for (const [name, failures, ready] of [
   await signIn(page, DOCTOR);
   await go(page, servicesUrl);
   await expect(page.locator(ready).first()).toBeVisible({ timeout: 30_000 });
-  if (name.startsWith('11')) await expect(page.getByText(/mock-fallo/).first()).toBeVisible({ timeout: 30_000 });
+  if (name.startsWith('11')) {
+    await expect(page.getByText(/mock-fallo/).first()).toBeVisible({ timeout: 30_000 });
+    log.push({ step: 'load-error', requests: await requests(page, 'GET', '/surveys/service-assignments') });
+  }
   if (name.startsWith('12')) log.push({ step: 'catalog-error', requests: await requests(page, 'GET', '/surveys/standard-catalog') });
   if (name.startsWith('13')) {
     await page.locator('[data-testid^="service-survey-import-"]').first().click();
@@ -228,6 +233,74 @@ for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) 
   await page.getByTestId('survey-detail-questions').scrollIntoViewIfNeeded();
   await page.evaluate(() => window.scrollBy(0, 120));
   await shot(page, `22-legacy-sheet-questions-${suffix}`);
+  await context.close();
+}
+
+/** Opens a survey's sheet from the Buzón by its title and waits until the answers settled. */
+async function openSheet(page, title) {
+  await go(page, '/questionnaires');
+  const card = page.getByTestId('surveys-inbox-list').locator('li', { hasText: title });
+  await card.getByRole('link', { name: /Ver las respuestas/ }).click();
+  await expect(page.getByTestId('survey-detail-answers')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('survey-detail-answers').locator('app-skeleton')).toHaveCount(0);
+}
+
+// 30–37 · The sheet's tabs: Resumen with data and below the minimum (1440, 390), Respuestas with
+// data (390), «Ver como el paciente», the #resumen entry, and an unpublished survey (single tab).
+for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) {
+  const { context, page } = await fresh(width, height);
+  await signIn(page, DOCTOR);
+  await openSheet(page, 'Estudios por imágenes');
+  if (width === 390) {
+    await page.getByTestId('survey-detail-tabs').scrollIntoViewIfNeeded();
+    await shot(page, '30-answers-with-data-390');
+  }
+  await page.getByRole('tab', { name: 'Resumen', exact: true }).click();
+  await expect(page.getByTestId('survey-detail-summary-bars')).toBeVisible();
+  await page.getByTestId('survey-detail-tabs').scrollIntoViewIfNeeded();
+  await shot(page, `31-summary-with-data-${suffix}`);
+  await openSheet(page, 'Satisfacción general con el servicio');
+  await page.getByRole('tab', { name: 'Resumen', exact: true }).click();
+  await expect(page.getByTestId('survey-detail-summary-below-minimum')).toBeVisible();
+  await page.getByTestId('survey-detail-tabs').scrollIntoViewIfNeeded();
+  await shot(page, `32-summary-below-minimum-${suffix}`);
+  await context.close();
+}
+{
+  const { context, page } = await fresh(1440, 900);
+  await signIn(page, DOCTOR);
+  await openSheet(page, 'Estudios por imágenes');
+  await page.getByRole('tab', { name: 'Preguntas', exact: true }).click();
+  await page.getByTestId('encuesta-previa').click();
+  await expect(page.locator('app-survey-form')).toBeVisible();
+  await page.getByTestId('survey-detail-tabs').scrollIntoViewIfNeeded();
+  await shot(page, '33-as-the-patient-sees-it-1440');
+  // The #resumen entry: a full load straight into the summary tab.
+  const sheetUrl = new URL(page.url());
+  await page.goto('about:blank');
+  await page.goto(`${BASE}${sheetUrl.pathname}#resumen`);
+  await expect(page.getByRole('tab', { name: 'Resumen', exact: true })).toHaveAttribute('aria-selected', 'true', { timeout: 30_000 });
+  await expect(page.getByTestId('survey-detail-summary-bars')).toBeVisible({ timeout: 30_000 });
+  await shot(page, '34-entry-by-resumen-link-1440');
+  // An unpublished (draft) survey: only «Preguntas», even if the link asks for answers.
+  await go(page, '/questionnaires');
+  await expect(page.getByTestId('surveys-inbox-list')).toBeVisible({ timeout: 30_000 });
+  const draftId = await page.evaluate(() => {
+    const read = (window.__mockRequests ?? []).filter((r) => r.url.startsWith('/surveys/catalog') && Array.isArray(r.respuesta)).pop();
+    return read?.respuesta.find((s) => s.status === 'DRAFT')?.id ?? null;
+  });
+  await page.goto(`${BASE}/questionnaires/${draftId}#respuestas`);
+  await expect(page.getByTestId('survey-detail-sending')).toHaveText('Nunca se envió', { timeout: 30_000 });
+  await shot(page, '35-unpublished-single-tab-1440');
+  await context.close();
+}
+{
+  const { context, page } = await fresh(1440, 900, null, 'dark');
+  await signIn(page, DOCTOR);
+  await openSheet(page, 'Estudios por imágenes');
+  await page.getByRole('tab', { name: 'Preguntas', exact: true }).click();
+  await page.getByTestId('survey-detail-tabs').scrollIntoViewIfNeeded();
+  await shot(page, '36-dark-questions-1440');
   await context.close();
 }
 

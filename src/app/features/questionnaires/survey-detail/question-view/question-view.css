@@ -44,9 +44,6 @@
   overflow-wrap: anywhere;
 }
 
-.pregunta__obligatoria {
-  color: var(--st-error-fg, var(--text-primary));
-}
 
 .pregunta__meta {
   color: var(--text-secondary);

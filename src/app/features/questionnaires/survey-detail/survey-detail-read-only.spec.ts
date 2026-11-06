@@ -120,7 +120,7 @@ describe('SurveyDetailScreen · solo lectura', () => {
     http.expectOne((r) => r.url === '/surveys/templates/s-1/responses').flush([]);
     harness.detectChanges();
 
-    expect(find('[data-testid="survey-detail-read-only"]')?.textContent).toContain('solo lectura');
+    expect(find('[data-testid="survey-detail-read-only"]')?.textContent).toContain('Solo lectura');
     expect(find('[data-testid="survey-detail-go-to-services"]')?.getAttribute('href')).toBe('/questionnaires?encuestas=servicios');
   });
 

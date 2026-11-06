@@ -10,3 +10,7 @@
 .tarjeta__acciones app-nav-icon { inline-size: 1rem; block-size: 1rem; }
 .tarjeta__nota { color: var(--text-secondary); font-size: var(--fs-caption); line-height: var(--lh-caption); margin: 0; }
 .tarjeta--anterior .tarjeta__marca { background: var(--bg-inset); color: var(--text-muted); }
+/* Phones: badges and «Ver respuestas» start under the text column, never under the icon. */
+@media (max-width: 599px) {
+  .tarjeta__acciones { inline-size: 100%; box-sizing: border-box; padding-inline-start: calc(2.25rem + var(--sp-4)); }
+}

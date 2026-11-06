@@ -11,11 +11,11 @@ function render(question: SurveyQuestion): HTMLElement {
 }
 
 describe('QuestionView · solo lectura, como texto', () => {
-  it('muestra texto, la marca de obligatoria (dicha en palabras) y cómo se responde; nada editable', () => {
+  it('muestra texto y cómo se responde, con «obligatoria» en palabras como en el selector; nada editable', () => {
     const view = render({ id: 'q', position: 2, questionText: '¿Volvería?', answerType: 'BOOLEAN', required: true });
     expect(view.textContent).toContain('¿Volvería?');
-    expect(view.querySelector('.sr-only')?.textContent).toContain('obligatoria');
-    expect(view.querySelector('.pregunta__meta')?.textContent?.trim()).toBe('Sí / No');
+    expect(view.querySelector('.pregunta__meta')?.textContent?.trim()).toBe('Sí / No · obligatoria');
+    expect(view.textContent).not.toContain('*');
     expect(view.querySelector('input, button, [role="button"]')).toBeNull();
   });
 

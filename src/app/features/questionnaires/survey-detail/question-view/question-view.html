@@ -2,15 +2,8 @@
   <span class="pregunta__posicion">{{ question().position }}</span>
   <app-question-type-icon class="pregunta__icono" [tipo]="question().answerType" />
   <span class="pregunta__cuerpo">
-    <span class="pregunta__texto">
-      {{ question().questionText }}
-      @if (question().required) {
-        <span class="pregunta__obligatoria" aria-hidden="true">*</span>
-        <span class="sr-only">(obligatoria)</span>
-      }
-    </span>
-    @if (answer()) {
-      <span class="pregunta__meta">{{ answer() }}</span>
-    }
+    <span class="pregunta__texto">{{ question().questionText }}</span>
+    <!-- Required/optional is said in words by the shared `answerFormat`, as in the picker. -->
+    <span class="pregunta__meta">{{ answer() }}</span>
   </span>
 </div>

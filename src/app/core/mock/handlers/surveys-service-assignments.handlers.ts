@@ -47,6 +47,18 @@ const serviceAssignments = new Coleccion<ServiceAssignmentRecord>(
       versionId: uuid(`std-template-${MEDICAL.id}-STD_IMAGING_V1-v1`),
       assignedAt: iso(-12, 10),
     },
+    // A recent import (a week ago): only three answers so far, below the summary's minimum of five.
+    {
+      id: `${MEDICAL.id}:${uuid('service-HOLTER')}`,
+      practitionerProfileId: MEDICAL.id,
+      serviceId: uuid('service-HOLTER'),
+      assignmentId: uuid('service-assignment-holter'),
+      catalogCode: 'STD_OTHER_V1',
+      title: 'Satisfacción general con el servicio',
+      templateId: templateIdOf(MEDICAL.id, 'STD_OTHER_V1'),
+      versionId: uuid(`std-template-${MEDICAL.id}-STD_OTHER_V1-v1`),
+      assignedAt: iso(-7, 10),
+    },
     // Legacy: the hand-made teleconsultation survey, still linked from before the catalog.
     {
       id: `${MEDICAL.id}:${uuid('service-TELE-CARDIO')}`,
@@ -63,9 +75,22 @@ const serviceAssignments = new Coleccion<ServiceAssignmentRecord>(
   'encuestas-por-servicio',
 );
 
+/**
+ * When each imported template was FIRST imported: its answers start there and
+ * survive removing and re-importing it (like the API keeps the template).
+ */
+const firstImports = new Coleccion<{ readonly id: string; readonly at: string }>(
+  [
+    { id: templateIdOf(MEDICAL.id, 'STD_IMAGING_V1'), at: iso(-12, 10) },
+    { id: templateIdOf(MEDICAL.id, 'STD_OTHER_V1'), at: iso(-7, 10) },
+  ],
+  'encuestas-por-servicio-primera-importacion',
+);
+
 /** Resets the seeded attachments. Tests only. */
 export function resetServiceSurveyAssignments(): void {
   serviceAssignments.reiniciar();
+  firstImports.reiniciar();
 }
 
 /** The caller's practitioner profile; without a session (tests), the demo doctor. Same roles as the API. */
@@ -110,6 +135,11 @@ function importedTemplates(practitionerId: string) {
     byTemplate.set(record.templateId, entry);
   }
   return [...byTemplate.entries()].map(([id, { template, records }]) => ({ id, template, records }));
+}
+
+/** The oldest attachment date among a template's records. */
+function oldestImport(records: readonly ServiceAssignmentRecord[]): string {
+  return records.map((r) => r.assignedAt).sort()[0]!;
 }
 
 function templateSummary(id: string, template: StandardTemplate) {
@@ -181,6 +211,8 @@ export function registerServiceSurveyAssignments(router: MockRouter): void {
       return reply(404, { statusCode: 404, code: 'NOT_FOUND', reason: 'SURVEY_CATALOG_CODE_UNKNOWN', details: { reason: 'SURVEY_CATALOG_CODE_UNKNOWN' }, message: 'La encuesta del catálogo no existe.', error: 'Not Found' });
     }
     const id = `${practitionerId}:${serviceId}`;
+    const templateId = templateIdOf(practitionerId, template.code);
+    if (firstImports.get(templateId) === undefined) firstImports.agregar({ id: templateId, at: ahora() });
     if (serviceAssignments.get(id)?.catalogCode !== template.code) {
       serviceAssignments.borrar(id);
       serviceAssignments.agregar({
@@ -190,7 +222,7 @@ export function registerServiceSurveyAssignments(router: MockRouter): void {
         assignmentId: nuevoId('service-assignment'),
         catalogCode: template.code,
         title: template.title,
-        templateId: templateIdOf(practitionerId, template.code),
+        templateId,
         versionId: uuid(`std-template-${practitionerId}-${template.code}-v1`),
         assignedAt: ahora(),
       });
@@ -230,7 +262,7 @@ export function registerServiceSurveyAssignments(router: MockRouter): void {
       ...templateSummary(id, template),
       latestVersionId: records[0]!.versionId,
       responseWindowDays: 7,
-      effectiveFrom: records[0]!.assignedAt.slice(0, 10),
+      effectiveFrom: (firstImports.get(id)?.at ?? oldestImport(records)).slice(0, 10),
       effectiveTo: null,
       questions: template.questions.map((q, i) => ({ id: uuid(`${id}-q-${i}`), position: i + 1, questionText: q.text, answerType: q.answerType, required: q.required, ...(q.options ? { options: q.options } : {}), ...(q.scaleMin === undefined ? {} : { scaleMin: q.scaleMin, scaleMax: q.scaleMax }) })),
       assignments: records.map((r) => ({ id: r.assignmentId, targetType: 'SERVICE', targetId: r.serviceId })),
@@ -238,6 +270,8 @@ export function registerServiceSurveyAssignments(router: MockRouter): void {
   });
   router.wrap('GET', '/surveys/templates/:id/responses', (request, next) => {
     const found = imported(request);
-    return found === undefined ? next(request) : responsesFor(found.id, found.template, found.records[0]!.assignedAt);
+    if (found === undefined) return next(request);
+    // Answers start at the template's first import (the oldest), not at the latest re-import.
+    return responsesFor(found.id, found.template, firstImports.get(found.id)?.at ?? oldestImport(found.records));
   });
 }

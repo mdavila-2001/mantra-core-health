@@ -1,19 +1,18 @@
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
-import { apiViva, contextoDeApi, doctora, urlDeApi, type Actor } from './support/actores';
-import { entrar, esperarAplicacionLista, irA } from './support/sesion';
+import type { Actor } from './support/actores';
+import { firstServiceWithoutSurvey, openServiceSurveys, pickFirstCatalogOption, reloadServiceSurveys } from './support/service-surveys';
+import { entrar, irA } from './support/sesion';
 
 /**
  * TAREA-27 · the practitioner's «Encuestas» after standard surveys per service
  * (06/11/2026). Free creation («Nueva encuesta») is gone: a practitioner only
  * attaches a standard catalog survey to each of their services.
  *
- * Two runs of the same flow:
- *   - Mock (default): `yarn start:demo`, the mock practitioner. The mock answers
- *     inside the browser, so requests/responses come from `window.__mockRequests`.
- *   - Real API (opt-in, `E2E_API_REAL=1`): `ng serve` proxied to a live API
- *     seeded with `tools/alovida/seed-dev-data.mjs`; requests/responses are read
- *     from the network.
+ * Against `yarn start:demo` (mock backend), the mock practitioner. The mock
+ * answers inside the browser, so requests/responses come from
+ * `window.__mockRequests`. The same flow against a live API lives in
+ * `carril-27-editor-encuestas-api-real.spec.ts` (opt-in, `E2E_API_REAL=1`).
  *
  * Proves UI → request → response → persistence → reload → UI for both writes
  * («Importar» = PUT, «Quitar» = DELETE), that the fixed «Cita médica» row offers
@@ -23,8 +22,6 @@ import { entrar, esperarAplicacionLista, irA } from './support/sesion';
  */
 
 const MOCK_DOCTOR: Actor = { rol: 'doctora', identificador: 'medica@alovida.mock', clave: 'mock', nombre: 'Médica' };
-/** Same switch as the other real-API specs (`altas-api-real-tres-escenarios.spec.ts`). */
-const API_REAL = process.env['E2E_API_REAL'] === '1';
 
 /** The three widths required by the TAREA-27 sheet. */
 const VIEWPORTS = [
@@ -47,48 +44,7 @@ async function served(page: Page, method: string, prefix: string): Promise<reado
   return all.filter((r) => r.method === method && r.url.startsWith(prefix));
 }
 
-/** Formularios → «Encuestas» → «Encuestas por servicio», the way the practitioner gets there. */
-async function openServiceSurveys(page: Page): Promise<void> {
-  await irA(page, '/form-builder');
-  await page.getByRole('tab', { name: 'Encuestas', exact: true }).click();
-  await expect(page).toHaveURL(/\/questionnaires/);
-  await expect(page.getByRole('tab', { name: 'Buzón', exact: true })).toBeVisible({ timeout: 30_000 });
-  await page.getByRole('tab', { name: 'Encuestas por servicio', exact: true }).click();
-  await expect(page).toHaveURL(/encuestas=servicios/);
-  await expect(page.getByTestId('service-surveys-list')).toBeVisible({ timeout: 30_000 });
-}
-
-/** The `serviceId` of the first service row that still offers «Importar». */
-async function firstServiceWithoutSurvey(page: Page): Promise<string> {
-  const button = page.locator('[data-testid^="service-survey-import-"]').first();
-  await expect(button).toBeVisible();
-  return (await button.getAttribute('data-testid'))!.replace('service-survey-import-', '');
-}
-
-/** Picks the first catalog option and returns its code and title. */
-async function pickFirstCatalogOption(page: Page): Promise<{ code: string; title: string }> {
-  const catalog = page.getByTestId('standard-catalog');
-  await expect(catalog).toBeVisible();
-  const option = catalog.locator('[data-testid^="standard-catalog-option-"]').first();
-  const code = (await option.getAttribute('data-testid'))!.replace('standard-catalog-option-', '');
-  const title = (await option.locator('.catalogo__opcion-titulo').textContent())!.trim();
-  await option.click();
-  await expect(page.getByTestId('standard-catalog-preview')).toContainText(title);
-  return { code, title };
-}
-
-async function reloadServiceSurveys(page: Page): Promise<void> {
-  await page.reload();
-  await esperarAplicacionLista(page);
-  await expect(page.getByTestId('service-surveys-list')).toBeVisible({ timeout: 30_000 });
-}
-
 test.describe('Encuestas por servicio · backend simulado', () => {
-  // Each mode runs alone: with the real API on, the mock run is reported as skipped (not as a pass).
-  test.beforeAll(() => {
-    test.info().skip(API_REAL, 'Omitido: E2E_API_REAL=1 corre el modo contra la API real.');
-  });
-
   test('importar y quitar persisten tras recargar; la cita médica es fija; lo importado se lee en el Buzón', async ({ page }) => {
     test.setTimeout(4 * 60_000);
     await entrar(page, MOCK_DOCTOR);
@@ -155,7 +111,8 @@ test.describe('Encuestas por servicio · backend simulado', () => {
     await expect(imported).toContainText('Se envía', { timeout: 30_000 });
     await imported.getByRole('link', { name: `Ver las respuestas de ${title}` }).click();
     await expect(page.getByTestId('survey-detail-sending')).toHaveText('Se envía', { timeout: 30_000 });
-    await expect(page.getByRole('heading', { name: 'Respuestas recibidas', exact: true })).toBeVisible();
+    // Just imported: no answers yet, said as S3 in the answers tab.
+    await expect(page.getByTestId('survey-detail-answers')).toContainText('Todavía no respondió nadie');
     await page.goBack();
     await page.getByRole('tab', { name: 'Encuestas por servicio', exact: true }).click();
     await expect(page.getByTestId('service-surveys-list')).toBeVisible({ timeout: 30_000 });
@@ -227,60 +184,3 @@ test.describe('Encuestas por servicio · backend simulado', () => {
     }
   });
 });
-
-/*
- * Real API, opt-in with `E2E_API_REAL=1`: against `yarn start` (not demo)
- * proxied to a live API seeded with `tools/alovida/seed-dev-data.mjs`, with a
- * seeded practitioner that offers at least one service. Without it the group is
- * reported as skipped, never as a pass.
- */
-test.describe('Encuestas por servicio · API real', () => {
-    let api: APIRequestContext | undefined;
-
-    test.beforeAll(async () => {
-      test.info().skip(!API_REAL, 'Omitido: hace falta E2E_API_REAL=1 con la API sembrada y el front en modo real. No es un verde.');
-      const context = await contextoDeApi();
-      api = context;
-      expect(await apiViva(context), `La API no responde en ${urlDeApi()}. Levántela y siémbrela con \`node tools/alovida/seed-dev-data.mjs\`.`).toBe(true);
-    });
-
-    test.afterAll(async () => {
-      await api?.dispose();
-    });
-
-    test('GET/PUT/DELETE service-assignments contra la API, con recarga', async ({ page }) => {
-      test.setTimeout(4 * 60_000);
-      const listed = page.waitForResponse((r) => r.request().method() === 'GET' && r.url().endsWith('/surveys/service-assignments'));
-      await entrar(page, doctora());
-      await openServiceSurveys(page);
-      expect((await listed).status()).toBe(200);
-
-      const serviceId = await firstServiceWithoutSurvey(page);
-      const row = page.getByTestId(`service-survey-${serviceId}`);
-      await row.getByTestId(`service-survey-import-${serviceId}`).click();
-      const { code, title } = await pickFirstCatalogOption(page);
-      const put = page.waitForResponse((r) => r.request().method() === 'PUT' && r.url().endsWith(`/surveys/service-assignments/${serviceId}`));
-      await page.getByTestId('standard-catalog-import').click();
-      const putResponse = await put;
-      expect(putResponse.status()).toBe(200);
-      expect(putResponse.request().postDataJSON()).toEqual({ catalogCode: code });
-      expect(await putResponse.json()).toMatchObject({ serviceId, assignment: { catalogCode: code } });
-
-      const afterImport = page.waitForResponse((r) => r.request().method() === 'GET' && r.url().endsWith('/surveys/service-assignments'));
-      await reloadServiceSurveys(page);
-      const persisted = (await (await afterImport).json()) as { services: { serviceId: string; assignment: { catalogCode: string } | null }[] };
-      expect(persisted.services.find((s) => s.serviceId === serviceId)?.assignment?.catalogCode).toBe(code);
-      await expect(row).toContainText(title);
-
-      const removal = page.waitForResponse((r) => r.request().method() === 'DELETE' && r.url().endsWith(`/surveys/service-assignments/${serviceId}`));
-      await row.getByTestId(`service-survey-remove-${serviceId}`).click();
-      await page.getByTestId('dialogo-confirmar').click();
-      expect((await removal).status()).toBe(204);
-
-      const afterRemove = page.waitForResponse((r) => r.request().method() === 'GET' && r.url().endsWith('/surveys/service-assignments'));
-      await reloadServiceSurveys(page);
-      const removed = (await (await afterRemove).json()) as { services: { serviceId: string; assignment: unknown }[] };
-      expect(removed.services.find((s) => s.serviceId === serviceId)?.assignment ?? null).toBeNull();
-      await expect(row.getByTestId('service-surveys-base-only')).toBeVisible();
-    });
-  });

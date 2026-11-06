@@ -1,7 +1,8 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { catchError, forkJoin, of } from 'rxjs';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { SurveysClient } from '../../../core/data-access/surveys/surveys.client';
 import { SurveysCatalogClient } from '../../../core/data-access/surveys/surveys-catalog.client';
@@ -15,23 +16,22 @@ import type {
 } from '../../../core/data-access/surveys/surveys.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { dataOf, loading, ready } from '../../../core/view-state/view-state';
+import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { BackLink } from '../../../shared/components/atoms/back-link/back-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { releaseObjectUrlLater } from '../../../shared/utils/file-download/release-object-url';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
-import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
-import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { Link } from '../../../shared/components/atoms/link/link';
 import { Card } from '../../../shared/components/molecules/card/card';
-import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { SurveyForm } from '../../../shared/components/organisms/survey-form/survey-form';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { QuestionView } from './question-view/question-view';
-import { celdaCsv, resumirPregunta, sendingLabelOf, sendingStatusOf, SHEET_TABS, slugify, submissionDay, type QuestionSummary, type SendingStatus } from './survey-detail.logic';
+import { celdaCsv, resumirPregunta, sendingLabelOf, sendingStatusOf, SHEET_TABS, slugify, submissionDay, tabOfFragment, type QuestionSummary, type SendingStatus } from './survey-detail.logic';
 import { ENCUESTAS_ROUTE, SERVICE_SURVEYS_QUERY } from '../questionnaires.routes';
+import { readFailureState } from '../service-surveys/service-surveys.logic';
 
 /**
  * Piso de respuestas para mostrar un agregado o habilitar el CSV.
@@ -63,7 +63,6 @@ const UMBRAL_MINIMO_RESPUESTAS = 5;
 @Component({
   selector: 'app-survey-detail',
   imports: [
-    Alert,
     AppButton,
     AppButtonLink,
     BackLink,
@@ -71,11 +70,10 @@ const UMBRAL_MINIMO_RESPUESTAS = 5;
     Card,
     DatePipe,
     DecimalPipe,
-    EmptyState,
+    Link,
     PageHeader,
     QuestionView,
     RouterLink,
-    Skeleton,
     SurveyForm,
     Tab,
     Tabs,
@@ -90,6 +88,7 @@ export class SurveyDetailScreen {
   private readonly serviceAssignments = inject(SurveysServiceAssignmentsClient);
   private readonly catalog = inject(SurveysCatalogClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly navigation = inject(NavigationService);
 
   /** A dónde vuelve quien entró a una encuesta: al listado del que salió. */
@@ -117,26 +116,24 @@ export class SurveyDetailScreen {
    * por `status`, con la misma traducción que el resto de la aplicación
    * (`errorToViewState`).
    */
-  protected readonly estadoRespuestas = signal<ViewState<readonly SurveyResponse[]>>(ready([]));
+  protected readonly estadoRespuestas = signal<ViewState<readonly SurveyResponse[]>>(loading());
 
   /** Las respuestas cuando las hay. Vacío en todo estado que no las transporta. */
   protected readonly respuestas = computed(() => dataOf(this.estadoRespuestas()) ?? []);
 
-  protected readonly cargandoRespuestas = computed(
-    () => this.estadoRespuestas().status === 'loading',
-  );
-
-  /** S5 sobre lo recogido: hay encuesta, pero este rol no puede leer respuestas. */
-  protected readonly respuestasProhibidas = computed(
-    () => this.estadoRespuestas().status === 'forbidden',
-  );
-
-  /** The 403 reason for the answers, as S5: never read as «nadie respondió». */
-  protected readonly motivoRespuestasProhibidas = computed(() => {
-    const actual = this.estadoRespuestas();
-    return actual.status === 'forbidden'
-      ? (actual.message ?? 'Su rol o el propósito de uso declarado no alcanzan para ver este contenido.')
-      : '';
+  /**
+   * The answers as ONE view state, drawn by `app-view-state-host` in both the
+   * Resumen and the Respuestas tabs: none yet is S3 with a next action; a refusal
+   * S5, missing S6, offline S8, anything else S9 with retry — never «nadie respondió».
+   */
+  protected readonly answersView = computed<ViewState<readonly SurveyResponse[]>>(() => {
+    const state = this.estadoRespuestas();
+    if (state.status !== 'ready' || state.data.length > 0) return state;
+    return empty(
+      { label: 'Ver qué encuesta recibe cada servicio', route: ENCUESTAS_ROUTE, queryParams: SERVICE_SURVEYS_QUERY },
+      'Las respuestas llegan cuando sus pacientes completan la encuesta después de una atención.',
+      'Todavía no respondió nadie',
+    );
   });
 
   /** Si ya hay respuestas suficientes para un agregado o un CSV sin poner en riesgo el anonimato (D-13). */
@@ -161,8 +158,10 @@ export class SurveyDetailScreen {
   protected readonly sending = signal<SendingStatus | null>(null);
   protected readonly sendingLabel = computed(() => sendingLabelOf(this.encuesta()?.published ?? false, this.sending()));
 
-  /** The open tab: Preguntas · Resumen · Respuestas. `#resumen` / `#respuestas` deep-link to theirs. */
-  protected readonly selectedTab = signal(SHEET_TABS.indexOf(this.route.snapshot.fragment as (typeof SHEET_TABS)[number]) + 1 || 0);
+  /** The asked tab: Preguntas · Resumen · Respuestas. `#resumen` / `#respuestas` deep-link to theirs. */
+  private readonly selectedTab = signal(tabOfFragment(this.route.snapshot.fragment));
+  /** The tab actually shown: an unpublished survey only has «Preguntas», whatever the link asked. */
+  protected readonly activeTab = computed(() => Math.min(this.selectedTab(), this.publicada() ? SHEET_TABS.length : 0));
 
   /** The section's crumbs, then the survey itself (the section becomes a link back). */
   protected readonly crumbs = computed<readonly BreadcrumbItem[]>(() => {
@@ -179,12 +178,27 @@ export class SurveyDetailScreen {
   });
 
   constructor() {
+    // A link that changes only the fragment (#resumen, #respuestas) also opens its tab.
+    this.route.fragment.pipe(takeUntilDestroyed()).subscribe((fragment) => this.selectedTab.set(tabOfFragment(fragment)));
     this.cargar();
     // Sent today = a system base survey, or the template a service uses now. Either read may fail on its own.
     forkJoin([
       this.catalog.list().pipe(catchError(() => of(null))),
       this.serviceAssignments.list().pipe(catchError(() => of(null))),
-    ]).subscribe(([catalog, assignments]) => this.sending.set(sendingStatusOf(this.surveyId, catalog, assignments)));
+    ])
+      .pipe(takeUntilDestroyed())
+      .subscribe(([catalog, assignments]) => this.sending.set(sendingStatusOf(this.surveyId, catalog, assignments)));
+  }
+
+  /** Opens a tab and writes it to the URL fragment, so the link can be shared and reloaded. */
+  protected selectTab(index: number): void {
+    this.selectedTab.set(index);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      fragment: index === 0 ? undefined : SHEET_TABS[index - 1],
+      queryParamsHandling: 'preserve',
+      replaceUrl: true,
+    });
   }
 
   /** Trae la encuesta con su cuestionario. */
@@ -218,7 +232,8 @@ export class SurveyDetailScreen {
     this.estadoRespuestas.set(loading());
     this.surveys.listResponses(this.surveyId).subscribe({
       next: (recibidas) => this.estadoRespuestas.set(ready(recibidas)),
-      error: (error: unknown) => this.estadoRespuestas.set(errorToViewState(error)),
+      error: (error: unknown) =>
+        this.estadoRespuestas.set(readFailureState(error, 'No pudimos cargar las respuestas', 'El servidor tuvo un problema al leer las respuestas de esta encuesta.')),
     });
   }
 
