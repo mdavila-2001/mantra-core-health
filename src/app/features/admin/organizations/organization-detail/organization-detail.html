@@ -314,7 +314,7 @@
   <app-branch-bulk-import
     testIdPrefix="organizacion-lote"
     confirmVerb="Crear"
-    [closeOnConfirm]="false"
+    [closeOnConfirm]="false" [withCategory]="true"
     [pending]="creandoLote()"
     [existingNames]="nombresDeSucursales()"
     contextNote="Cada fila se crea como una sucursal activa de esta organización."

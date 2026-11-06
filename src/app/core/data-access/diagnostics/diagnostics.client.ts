@@ -9,6 +9,7 @@ import { parseBlobError } from '../files/blob-error';
 import { nombreDeContentDisposition } from '../files/content-disposition';
 import type { DownloadedFile } from '../files/files.types';
 import { sinNulos, type ConNulos } from '../wire';
+import { toWireOrder, withStudyDetail } from './study-detail.types';
 import type {
   DiagnosticOrder,
   DiagnosticOrderCreated,
@@ -156,9 +157,8 @@ export class DiagnosticsClient {
    * @returns La orden creada, con su identificador y su estado inicial.
    */
   requestStudy(orden: NewDiagnosticOrder): Observable<DiagnosticOrderCreated> {
-    // Sin las claves ausentes: el backend valida con `forbidNonWhitelisted`
-    // y un opcional en `undefined` viaja como clave declarada.
-    const body = sinAusentes(orden);
+    // Sin claves ausentes (`forbidNonWhitelisted`) y con el detalle en la forma del cable.
+    const body = sinAusentes(toWireOrder(orden));
     return sendIdempotent(this.submissionKeys, 'service-request', body, (headers) =>
       this.http.post<WireOrderCreated>(this.url('/clinical/service-requests'), body, { headers }),
     ).pipe(map(toOrderCreated));
@@ -428,7 +428,7 @@ function toOrder({
   ...resto
 }: WireOrder): DiagnosticOrder {
   return {
-    ...resto,
+    ...withStudyDetail(resto),
     createdAt: new Date(createdAt),
     ...(previousDiagnosticReportId == null ? {} : { previousDiagnosticReportId }),
     ...(duplicateOverrideReason == null ? {} : { duplicateOverrideReason }),
@@ -576,7 +576,7 @@ function toPatientResult({
 }
 
 function toPatientOrder({ createdAt, ...resto }: WirePatientOrder): PatientOrder {
-  return { ...resto, ...normalizePatientSettlement(resto), createdAt: new Date(createdAt) };
+  return { ...withStudyDetail(resto), ...normalizePatientSettlement(resto), createdAt: new Date(createdAt) };
 }
 
 function toShare({ validFrom, validTo, ...resto }: WireShare): DiagnosticResultShare {

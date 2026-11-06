@@ -106,4 +106,23 @@ describe('BranchBulkImport', () => {
     ]);
     expect((rows as unknown[]).length).toBeGreaterThan(0);
   });
+
+  it('con categoría: la columna se ofrece, la plantilla la trae y la vista previa la muestra', async () => {
+    const columnas = () => root().querySelector('[aria-label="Columnas del archivo"]')?.textContent ?? '';
+    expect(columnas()).not.toContain('categoria');
+
+    fixture.componentRef.setInput('withCategory', true);
+    fixture.detectChanges();
+    expect(columnas()).toContain('categoria');
+
+    internal().downloadTemplate();
+    const headers = (download.mock.calls[0][1] as { header: string }[]).map((c) => c.header);
+    expect(headers.at(-1)).toBe('categoria');
+
+    await upload('nombre;categoria\nNorte;casa matriz\n');
+    expect(text('branch-import-preview')).toContain('Casa matriz');
+    internal().confirm();
+    expect(emitted[0][0].category).toBe('head_office');
+  });
 });
+

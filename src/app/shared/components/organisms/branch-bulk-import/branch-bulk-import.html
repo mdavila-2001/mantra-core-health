@@ -29,7 +29,7 @@
     </div>
 
     <dl class="bulk__columns" aria-label="Columnas del archivo">
-      @for (column of columns; track column.header) {
+      @for (column of columns(); track column.header) {
         <div class="bulk__column">
           <dt>
             <code>{{ column.header }}</code>
@@ -107,6 +107,9 @@
                   <th scope="col">Nombre</th>
                   <th scope="col">Descripción</th>
                   <th scope="col">Ubicación</th>
+                  @if (withCategory()) {
+                    <th scope="col">Categoría</th>
+                  }
                 </tr>
               </thead>
               <tbody>
@@ -123,6 +126,9 @@
                         Sin ubicación
                       }
                     </td>
+                    @if (withCategory()) {
+                      <td>{{ categoryLabels[draft.category ?? 'default'] }}</td>
+                    }
                   </tr>
                 }
               </tbody>
