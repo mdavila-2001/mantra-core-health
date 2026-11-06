@@ -1,0 +1,119 @@
+:host {
+  display: block;
+}
+
+.nueva__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-block: var(--sp-4);
+}
+
+.nueva__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.nueva__ayuda {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.nueva__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.nueva__video {
+  width: 100%;
+  max-height: 24rem;
+  border-radius: var(--r-ctrl);
+  background: var(--bg-surface-alt);
+  object-fit: cover;
+}
+
+.nueva__derivadas {
+  margin-block-start: var(--sp-4);
+}
+
+.nueva__pie {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-start: var(--sp-4);
+}
+
+/* Tres opciones para entregar el QR, como tarjetas pulsables. */
+.nueva__opciones {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-card);
+  background: var(--bg-surface-alt);
+}
+
+@media (min-width: 720px) {
+  .nueva__opciones {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.nueva__opciones--suelta {
+  border-color: var(--brand-primary);
+  background: var(--bg-active);
+}
+
+.opcion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-ctrl);
+  background: var(--bg-surface, transparent);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.opcion:hover:not(:disabled) {
+  border-color: var(--brand-primary);
+  background: var(--bg-hover);
+}
+
+.opcion:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.opcion:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.opcion__icono {
+  display: inline-flex;
+  margin-block-end: var(--sp-2);
+  color: var(--brand-primary);
+}
+
+.opcion__titulo {
+  font-weight: 600;
+}
+
+.opcion__ayuda {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .opcion {
+    transition: none;
+  }
+}

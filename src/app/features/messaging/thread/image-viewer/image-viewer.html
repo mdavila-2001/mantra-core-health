@@ -27,6 +27,11 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 14 5-5-5-5" /><path d="M20 9H10a6 6 0 0 0-6 6v5" /></svg>
           </button>
         }
+        @if (permiteOrden()) {
+          <button class="visor__boton" type="button" data-testid="hilo-visor-usar-orden" aria-label="Usar esta imagen para crear una orden" title="Usar para una orden" [disabled]="ocupado()" (click)="alUsarParaOrden(imagen)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 15V4" /><path d="m7 9 5-5 5 5" /><path d="M5 20h14" /></svg>
+          </button>
+        }
         <a class="visor__boton" data-testid="hilo-visor-descargar" aria-label="Descargar la imagen" [href]="imagen.url" [download]="imagen.nombreArchivo">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v11" /><path d="m7 10 5 5 5-5" /><path d="M5 20h14" /></svg>
         </a>

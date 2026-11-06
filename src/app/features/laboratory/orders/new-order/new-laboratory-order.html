@@ -1,0 +1,180 @@
+<!-- UNA tarjeta con pestañas, a lo ancho y centrada: la regla de la casa
+     (`docs/components/composition-rules.md` §5). -->
+<app-card padding="lg" class="nueva__card" data-testid="lab-new-order-card">
+  <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="selectTab($event)" data-testid="lab-new-order-tabs">
+    <app-tab label="Con el QR del paciente">
+      @if (tab() === 0) {
+        <section class="nueva__panel" aria-labelledby="nueva-qr-titulo">
+          <h2 id="nueva-qr-titulo" class="nueva__titulo">El paciente le mandó un QR</h2>
+          <p class="nueva__ayuda">
+            Léalo con la cámara, suba la imagen, péguela con Ctrl+V o, si lo recibió por la
+            mensajería, ábrala allí y use «Usar para una orden».
+          </p>
+
+          <!-- Tres maneras de entregar el QR. Soltar una imagen sobre la zona también vale. -->
+          <div
+            class="nueva__opciones"
+            [class.nueva__opciones--suelta]="dragging()"
+            data-testid="lab-new-order-opciones"
+            (dragover)="onDragOver($event)"
+            (dragleave)="dragging.set(false)"
+            (drop)="onDrop($event)"
+          >
+            <button
+              type="button"
+              class="opcion"
+              [disabled]="busy() || !qrSupported"
+              (click)="cameraOn() ? stopCamera() : openCamera()"
+              data-testid="lab-new-order-camera"
+            >
+              <span class="opcion__icono"><app-nav-icon name="camera" /></span>
+              <span class="opcion__titulo">{{ cameraOn() ? 'Apagar la cámara' : 'Leer con la cámara' }}</span>
+              <span class="opcion__ayuda">Apunte al QR del paciente</span>
+            </button>
+            <button
+              type="button"
+              class="opcion"
+              [disabled]="busy()"
+              (click)="qrFile.click()"
+              data-testid="lab-new-order-upload"
+            >
+              <span class="opcion__icono"><app-nav-icon name="qr" /></span>
+              <span class="opcion__titulo">Subir una imagen</span>
+              <span class="opcion__ayuda">O suéltela aquí</span>
+            </button>
+            <button
+              type="button"
+              class="opcion"
+              [disabled]="busy()"
+              (click)="pasteFromClipboard()"
+              data-testid="lab-new-order-paste"
+            >
+              <span class="opcion__icono"><app-nav-icon name="clipboard" /></span>
+              <span class="opcion__titulo">Pegar del portapapeles</span>
+              <span class="opcion__ayuda">Imagen o código, con Ctrl+V</span>
+            </button>
+          </div>
+          <input
+            #qrFile
+            type="file"
+            accept="image/*"
+            class="sr-only"
+            tabindex="-1"
+            aria-hidden="true"
+            data-testid="lab-new-order-file"
+            (change)="onFileChosen($event)"
+          />
+
+          @if (!qrSupported) {
+            <app-alert tone="info" data-testid="lab-new-order-sin-lector">
+              Este navegador no lee QR. Escriba el código que acompaña al QR del paciente.
+            </app-alert>
+          }
+
+          @if (cameraOn()) {
+            <video
+              #video
+              class="nueva__video"
+              playsinline
+              muted
+              aria-label="Cámara apuntando al QR del paciente"
+              data-testid="lab-new-order-video"
+            ></video>
+          }
+
+          <app-form-field
+            label="O escriba el código"
+            hint="Empieza con «ALOVIDA-ORDEN:». Viene debajo del QR."
+          >
+            <app-input
+              placeholder="ALOVIDA-ORDEN:v1:…"
+              ariaLabel="Código de la orden"
+              [(value)]="manualCode"
+              testId="lab-new-order-code"
+            />
+          </app-form-field>
+          <div class="nueva__acciones">
+            <button
+              app-button
+              type="button"
+              variant="secondary"
+              [disabled]="busy() || manualCode().trim() === ''"
+              [isLoading]="busy()"
+              (clicked)="submitManualCode()"
+              data-testid="lab-new-order-code-submit"
+            >
+              Crear la orden con este código
+            </button>
+          </div>
+        </section>
+      }
+    </app-tab>
+
+    <app-tab label="Orden propia">
+      @if (tab() === 1) {
+        <section class="nueva__panel" aria-labelledby="nueva-propia-titulo">
+          <h2 id="nueva-propia-titulo" class="nueva__titulo">Cree la orden usted</h2>
+          <p class="nueva__ayuda">Elija al paciente y escriba el estudio. Nace en «Borrador».</p>
+
+          <app-form-field label="Paciente" hint="Busque por nombre o por código." [required]="true" [errorMessage]="fieldErrors().patient">
+            <app-reference-combobox
+              [selected]="patient()"
+              [options]="patientOptions()"
+              [loading]="searchingPatient()"
+              placeholder="Nombre o código"
+              emptyMessage="Ningún paciente coincide"
+              (searched)="searchPatient($event)"
+              (selectionChange)="patient.set($event)"
+            />
+          </app-form-field>
+
+          <app-form-field label="Estudio" [required]="true" [errorMessage]="fieldErrors().study">
+            <app-input
+              placeholder="Hemograma completo, Ecografía abdominal…"
+              ariaLabel="Estudio que se pide"
+              [(value)]="studyName"
+              [hasError]="!!fieldErrors().study"
+              testId="lab-new-order-study"
+            />
+          </app-form-field>
+
+          <app-form-field label="Nota" hint="Opcional. Indicaciones para quien procesa la orden.">
+            <app-textarea [(value)]="note" />
+          </app-form-field>
+
+          <div class="nueva__acciones">
+            <button
+              app-button
+              type="button"
+              variant="primary"
+              [disabled]="busy()"
+              [isLoading]="busy()"
+              (clicked)="submitOwn()"
+              data-testid="lab-new-order-submit"
+            >
+              Crear la orden
+            </button>
+          </div>
+        </section>
+      }
+    </app-tab>
+  </app-tabs>
+
+  @if (error(); as message) {
+    <app-alert tone="error" dismissible data-testid="lab-new-order-error" (dismissed)="error.set(null)">
+      {{ message }}
+    </app-alert>
+  }
+
+  <div class="nueva__derivadas">
+    <app-alert tone="info" data-testid="lab-new-order-derivadas">
+      Las órdenes que un médico le deriva aparecen solas en «Borrador» cuando el paciente las acepta.
+    </app-alert>
+  </div>
+
+  <div class="nueva__pie">
+    <button app-button type="button" variant="ghost" (clicked)="cancelled.emit()" data-testid="lab-new-order-cancel">
+      Volver a las órdenes
+    </button>
+  </div>
+</app-card>

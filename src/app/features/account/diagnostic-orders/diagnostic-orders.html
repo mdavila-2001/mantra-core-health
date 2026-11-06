@@ -100,6 +100,24 @@
 <ng-template #celdaEstudio let-fila>
   <span class="ordenes__estudio">{{ fila.studyLabel }}</span>
   <app-order-performer-summary [mode]="fila.performerMode" [siteName]="fila.suggestedSiteName" />
+  @if (fila.referral; as derivacion) {
+    <span class="ordenes__derivacion" [attr.data-status]="derivacion.status" data-testid="mis-ordenes-derivacion">
+      <app-organization-identity [tenantId]="derivacion.performerTenantId ?? null" [name]="derivacion.performerName" size="sm" [compact]="true" />
+      <span>
+        @switch (derivacion.status) {
+          @case ('PENDING') {
+            {{ derivacion.requestedByName }} la deriva a {{ derivacion.performerName }}. Espera su aceptación.
+          }
+          @case ('ACCEPTED') {
+            Derivada a {{ derivacion.performerName }}.
+          }
+          @default {
+            Rechazó la derivación a {{ derivacion.performerName }}.
+          }
+        }
+      </span>
+    </span>
+  }
 </ng-template>
 
 <ng-template #celdaTipo let-fila>
@@ -129,6 +147,10 @@
 </ng-template>
 
 <!-- ─── Diálogos de las acciones ───────────────────────────────────────────── -->
+
+@if (qrAbierto(); as fila) {
+  <app-order-qr-dialog [orderId]="fila.id" [studyLabel]="fila.studyLabel" (closed)="qrAbierto.set(null)" />
+}
 
 @if (preparacionAbierta(); as fila) {
   <app-content-dialog

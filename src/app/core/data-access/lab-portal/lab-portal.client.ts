@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { type Observable } from 'rxjs';
+import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { simulatorOnly } from '../simulator-only';
@@ -12,6 +12,9 @@ import type {
   LabImportRow,
   LabOrder,
   LabOrderAction,
+  LabOrderFromQr,
+  LabPatientPage,
+  NewLabOrder,
   LabOrderPage,
   LabResultFile,
   LabResultFilePage,
@@ -128,6 +131,32 @@ export class LabPortalClient {
   listOrders(): Observable<LabOrderPage> {
     return this.simulated('Ver las órdenes del laboratorio', () =>
       this.http.get<LabOrderPage>(this.url('/diagnostics/lab/orders')),
+    );
+  }
+
+  /** Pacientes entre los que elegir al crear una orden propia (mínimo 2 letras). */
+  searchPatients(q: string): Observable<LabPatientPage> {
+    return this.simulated('Buscar un paciente para una orden', () =>
+      this.http.get<LabPatientPage>(this.url('/diagnostics/lab/patients'), { params: { q } }),
+    );
+  }
+
+  /** Vía 3: el propio centro crea la orden. Nace en borrador. */
+  createOrder(order: NewLabOrder): Observable<LabOrder> {
+    return this.simulated('Crear una orden desde el laboratorio', () =>
+      this.http.post<LabOrder>(this.url('/diagnostics/lab/orders'), order),
+    );
+  }
+
+  /**
+   * Vía 1: crea la orden con el código del QR que mandó el paciente. Idempotente:
+   * un código ya usado devuelve la misma orden con `created: false`.
+   */
+  createOrderFromQr(code: string): Observable<LabOrderFromQr> {
+    return this.simulated('Crear una orden con el QR del paciente', () =>
+      this.http
+        .post<LabOrder>(this.url('/diagnostics/lab/orders/from-qr'), { code }, { observe: 'response' })
+        .pipe(map((res) => ({ order: res.body as LabOrder, created: res.status === 201 }))),
     );
   }
 

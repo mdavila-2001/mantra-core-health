@@ -72,6 +72,8 @@ export interface DiagnosticOrder {
    * (v4.2.47). Ausente en cualquier otro caso.
    */
   readonly previousServiceRequestId?: string;
+  /** Derivación a un centro (06/11/2026); sólo existe en el simulador. */
+  readonly referral?: OrderReferral;
 }
 
 /**
@@ -343,6 +345,32 @@ export interface PatientOrder extends PatientSettlementFields, ServiceRequestPer
   readonly preparationInstructions?: string;
   readonly hasReleasedResult: boolean;
   readonly reportId?: string;
+  /**
+   * La derivación del médico a un centro, si la hay (06/11/2026). Sólo existe
+   * en el simulador: ausente = la orden no fue derivada.
+   */
+  readonly referral?: OrderReferral;
+}
+
+/** En qué punto está la derivación de una orden: el paciente decide. */
+export type OrderReferralStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+
+/** La derivación de una orden a un laboratorio o centro de imagenología. */
+export interface OrderReferral {
+  readonly status: OrderReferralStatus;
+  /** El nombre del centro; nunca su identificador. */
+  readonly performerName: string;
+  /** La organización del centro, para mostrar su logo. */
+  readonly performerTenantId?: string;
+  /** Quién deriva, para que el paciente sepa a quién le contesta. */
+  readonly requestedByName: string;
+}
+
+/** Lo que vuelve de derivar una orden o de responder a su derivación. */
+export interface OrderReferralResult {
+  readonly orderId: string;
+  readonly status: OrderReferralStatus;
+  readonly performerName: string;
 }
 
 /** Página de órdenes propias. */

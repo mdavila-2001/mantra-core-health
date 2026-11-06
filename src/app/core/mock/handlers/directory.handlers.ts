@@ -1,3 +1,4 @@
+import { unidadPublicadaDe } from './diagnostics.handlers';
 import { reservas, recursos } from '../fixtures/agenda';
 import { CARGO, STATUS, ORGANIZATION_TYPE } from '../fixtures/concepts';
 import { ALCANCE_ACCESO, INVITACIONES_PENDIENTES, MEMBRESIAS_DEL_APOYO, ROL_TENANT, TENANTS_DEL_APOYO } from '../fixtures/directory-apoyo';
@@ -632,8 +633,10 @@ export function registrarDirectorio(router: MockRouter): void {
 
   // El logo de una organización (P58), como `GET`/`PUT /tenants/:id/logo` de la API. Sólo
   // owner/admin escribe; leerlo lo puede hacer cualquiera que vea la ficha.
+  // Un centro publicado en el directorio de diagnóstico existe aunque la maqueta no lo tenga
+  // entre sus organizaciones: responde «sin logo», no 404 (06/11/2026: las tarjetas de centros).
   router.get('/tenants/:id/logo', ({ params }) =>
-    tenants.get(params['id']!) === undefined
+    tenants.get(params['id']!) === undefined && unidadPublicadaDe(params['id']!) === undefined
       ? notFound('Organización no encontrada')
       : { fileId: logosDeOrganizaciones.get(params['id']!) ?? null },
   );

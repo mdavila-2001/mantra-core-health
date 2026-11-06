@@ -11,6 +11,8 @@ import {
   ORDER_TABS,
   orderTabIndexOf,
   orderTabKeyOf,
+  originChip,
+  originLabel,
   ordersOfTab,
 } from './laboratory-orders.logic';
 
@@ -22,6 +24,7 @@ function order(status: LabOrderStatus, files = 0): LabOrder {
     requesterName: 'Dra. Rojas',
     requestedAt: '2026-10-30T10:00:00Z',
     status,
+    origin: 'CLINIC',
     reason: null,
     files: Array.from({ length: files }, (_, i) => ({
       id: `f-${i}`,
@@ -113,5 +116,28 @@ describe('órdenes del laboratorio: pestañas', () => {
     ] as const) {
       expect(ORDER_STATUS_BADGE[status].label).not.toBe('');
     }
+  });
+});
+
+describe('originLabel: cómo llegó la orden', () => {
+  const base = order('DRAFT');
+  it.each([
+    ['CLINIC', 'Pidió Dra. Rojas'],
+    ['PATIENT_QR', 'Por el QR del paciente · pidió Dra. Rojas'],
+    ['DOCTOR_REFERRAL', 'Derivada por Dra. Rojas, aceptada por el paciente'],
+    ['LAB_OWN', 'Creada por el centro'],
+  ] as const)('%s → «%s»', (origin, esperado) => {
+    expect(originLabel({ ...base, origin })).toBe(esperado);
+  });
+});
+
+describe('originChip', () => {
+  it.each([
+    ['CLINIC', null],
+    ['PATIENT_QR', 'QR del paciente'],
+    ['DOCTOR_REFERRAL', 'Derivada por médico'],
+    ['LAB_OWN', 'Creada por el centro'],
+  ] as const)('%s → %s', (origin, esperado) => {
+    expect(originChip({ ...order('DRAFT'), origin })).toBe(esperado);
   });
 });

@@ -104,3 +104,8 @@
   inline-size: 100%;
   block-size: 0.5rem;
 }
+
+.orders__identidad {
+  display: block;
+  margin-block: var(--sp-4);
+}

@@ -457,7 +457,7 @@ export function destinoDeOrden(orderId: string) {
   const medico = PROFESSIONALS.find((p) => p.id === orden.requesterProfileId);
   return {
     orden,
-    studyName: displayOf(orden.codeConceptId),
+    studyName: orden.studyNameOverride ?? displayOf(orden.codeConceptId),
     patientName: paciente?.displayName ?? 'Paciente',
     patientUserId: paciente?.userId ?? null,
     requesterName: medico?.displayName ?? 'Médico solicitante',

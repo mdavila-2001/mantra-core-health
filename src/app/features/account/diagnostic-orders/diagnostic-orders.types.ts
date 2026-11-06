@@ -1,3 +1,4 @@
+import type { OrderReferral } from '../../../core/data-access/diagnostics/diagnostics.types';
 import type { PerformerSelectionCode } from '../../../core/data-access/diagnostics/service-request-performer.types';
 import type { PatientSettlementFields } from '../../../core/data-access/insurance/patient-insurance-settlement.types';
 
@@ -119,4 +120,6 @@ export interface PatientOrderRow extends PatientSettlementFields {
   readonly performerMode: PerformerSelectionCode | null;
   /** El nombre de la sede que sugirió el médico; nunca su uuid. `null` = sin sede. */
   readonly suggestedSiteName: string | null;
+  /** La derivación del médico a un centro (06/11/2026); `null` = no fue derivada. */
+  readonly referral: OrderReferral | null;
 }

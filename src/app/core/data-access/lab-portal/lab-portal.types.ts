@@ -269,6 +269,13 @@ export type LabOrderStatus =
 /** Lo que el personal le hace a una orden desde su fila. */
 export type LabOrderAction = 'RECEIVE' | 'PROCESS' | 'CANCEL' | 'REJECT';
 
+/**
+ * Cómo llegó una orden al laboratorio (06/11/2026). Son las tres vías de
+ * alta: el QR que mandó el paciente, la derivación directa de un médico
+ * (que el paciente ya aceptó) y la que creó el propio personal del centro.
+ */
+export type LabOrderOrigin = 'PATIENT_QR' | 'DOCTOR_REFERRAL' | 'LAB_OWN' | 'CLINIC';
+
 /** Un resultado ya subido, lo justo para descargarlo. */
 export interface LabOrderFile {
   readonly id: string;
@@ -284,6 +291,8 @@ export interface LabOrder {
   readonly requesterName: string;
   readonly requestedAt: string;
   readonly status: LabOrderStatus;
+  /** Por cuál de las tres vías llegó; `CLINIC` es la que ya venía dirigida al centro. */
+  readonly origin: LabOrderOrigin;
   /** El motivo de una orden cancelada o rechazada, si se dio. */
   readonly reason: string | null;
   readonly files: readonly LabOrderFile[];
@@ -292,4 +301,32 @@ export interface LabOrder {
 export interface LabOrderPage {
   readonly items: readonly LabOrder[];
   readonly count: number;
+}
+
+/** Un paciente que el personal del centro puede elegir al crear una orden. */
+export interface LabPatient {
+  readonly patientProfileId: string;
+  readonly displayName: string;
+  readonly patientCode: string | null;
+}
+
+export interface LabPatientPage {
+  readonly items: readonly LabPatient[];
+  readonly count: number;
+}
+
+/** Lo que se manda para que el propio centro cree una orden. */
+export interface NewLabOrder {
+  readonly patientProfileId: string;
+  readonly studyName: string;
+  readonly note?: string | null;
+}
+
+/**
+ * Lo que vuelve de crear una orden desde el QR del paciente. `created` es
+ * `false` si el código ya se había usado: leerlo dos veces no duplica la orden.
+ */
+export interface LabOrderFromQr {
+  readonly order: LabOrder;
+  readonly created: boolean;
 }

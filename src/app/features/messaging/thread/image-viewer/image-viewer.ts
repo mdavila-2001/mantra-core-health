@@ -59,9 +59,15 @@ export class ImageViewer implements OnDestroy {
   /** Cuál se está mirando. `model` para que el hilo sepa a cuál volver. */
   readonly indice = model.required<number>();
 
+  /** Ofrece «Usar para una orden» (sólo cuentas de laboratorio). */
+  readonly permiteOrden = input(false);
+  /** Hay una orden creándose a partir de una imagen. */
+  readonly ocupado = input(false);
+
   readonly cerrado = output<void>();
   readonly responder = output<string>();
   readonly reenviar = output<string>();
+  readonly usarParaOrden = output<string>();
 
   private readonly dialogo = viewChild.required<ElementRef<HTMLDialogElement>>('dialogo');
   private readonly cerrar = viewChild.required<ElementRef<HTMLButtonElement>>('cerrar');
@@ -192,5 +198,9 @@ export class ImageViewer implements OnDestroy {
 
   protected alReenviar(imagen: ImagenDelVisor): void {
     this.reenviar.emit(imagen.clave);
+  }
+
+  protected alUsarParaOrden(imagen: ImagenDelVisor): void {
+    this.usarParaOrden.emit(imagen.clave);
   }
 }

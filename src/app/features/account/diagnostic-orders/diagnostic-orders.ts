@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -16,6 +17,7 @@ import { of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { OrderReferralClient } from '../../../core/data-access/diagnostics/order-referral.client';
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
 import type { PatientOrder } from '../../../core/data-access/diagnostics/diagnostics.types';
 import { performerSelectionCodeOf } from '../../../core/data-access/diagnostics/service-request-performer.types';
@@ -33,6 +35,10 @@ import { ContentDialog } from '../../../shared/components/organisms/content-dial
 import { FilterBar, type FilterDef } from '../../../shared/components/organisms/filter-bar/filter-bar';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
+import { readApiError } from '../../../core/http/api-error';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { OrganizationIdentity } from '../../../shared/components/molecules/organization-identity/organization-identity';
+import { OrderQrDialog } from './order-qr-dialog/order-qr-dialog';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
@@ -91,6 +97,8 @@ const PERIODOS: readonly { readonly value: string; readonly label: string; reado
     DatePipe,
     FilterBar,
     OrderPerformerSummary,
+    OrderQrDialog,
+    OrganizationIdentity,
     PageHeader,
     Pagination,
     PatientInsuranceSettlement,
@@ -107,10 +115,12 @@ const PERIODOS: readonly { readonly value: string; readonly label: string; reado
 })
 export class DiagnosticOrders {
   private readonly diagnostics = inject(DiagnosticsClient);
+  private readonly referrals = inject(OrderReferralClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly toasts = inject(ToastService);
 
   /** Sin perfil de paciente no hay órdenes que leer: la API respondería 412. */
   protected readonly sinPerfilDePaciente = this.auth.patientProfileId() === null;
@@ -265,6 +275,7 @@ export class DiagnosticOrders {
           ? null
           : performerSelectionCodeOf(etiquetas.get(item.performerSelectionConceptId)?.code),
       suggestedSiteName: item.suggestedPracticeSiteName ?? null,
+      referral: item.referral ?? null,
     };
   }
 
@@ -451,6 +462,11 @@ export class DiagnosticOrders {
 
   protected accionesDe(fila: PatientOrderRow): readonly RowAction[] {
     const acciones: RowAction[] = [];
+    // Primero lo que espera una decisión suya: una derivación pendiente.
+    if (fila.referral?.status === 'PENDING') {
+      acciones.push({ code: 'aceptar-derivacion', label: 'Aceptar la derivación', icon: 'check' });
+      acciones.push({ code: 'rechazar-derivacion', label: 'Rechazar la derivación', icon: 'close' });
+    }
     if (fila.hasResult) {
       acciones.push({ code: 'ver-resultado', label: 'Ver resultado', icon: 'eye' });
     }
@@ -471,11 +487,25 @@ export class DiagnosticOrders {
       icon: 'billing',
     });
     acciones.push({ code: 'reservar', label: 'Reservar hora en un laboratorio', icon: 'calendar' });
+    // La vía 1 de una orden: el QR que el paciente le manda al laboratorio (06/11/2026).
+    // Sólo una orden todavía abierta: la completada ya no se le manda a nadie.
+    if ((fila.type === 'LAB' || fila.type === 'IMAGING') && this.estaAbierta(fila)) {
+      acciones.push({ code: 'mostrar-qr', label: 'Mostrar QR para el laboratorio', icon: 'orders' });
+    }
     return acciones;
   }
 
   /** La orden cuya preparación está abierta en el diálogo, o `null`. */
   protected readonly preparacionAbierta = signal<PatientOrderRow | null>(null);
+  /** Pendiente o activa: lo único que todavía se puede mandar a un centro. */
+  private estaAbierta(fila: PatientOrderRow): boolean {
+    return fila.stateCode.includes('PENDING') || fila.stateCode.includes('ACTIVE');
+  }
+
+  /** La orden cuyo QR está abierto en el diálogo, o `null`. */
+  protected readonly qrAbierto = signal<PatientOrderRow | null>(null);
+  /** La orden con una respuesta a su derivación en vuelo: no se manda dos veces. */
+  protected readonly respondiendoId = signal<string | null>(null);
   /** La orden cuya liquidación está abierta en el diálogo, o `null`. */
   protected readonly liquidacionAbierta = signal<PatientOrderRow | null>(null);
 
@@ -495,6 +525,15 @@ export class DiagnosticOrders {
         return;
       case 'ver-liquidacion':
         this.liquidacionAbierta.set(fila);
+        return;
+      case 'mostrar-qr':
+        this.qrAbierto.set(fila);
+        return;
+      case 'aceptar-derivacion':
+        this.responderDerivacion(fila, 'accept');
+        return;
+      case 'rechazar-derivacion':
+        this.responderDerivacion(fila, 'reject');
         return;
       case 'ver-resultado':
         if (fila.reportId !== null) {
@@ -517,6 +556,34 @@ export class DiagnosticOrders {
         });
         return;
     }
+  }
+
+  /**
+   * Acepta o rechaza la derivación de una orden. La decisión es del paciente y
+   * la API revalida el estado: un 409 quiere decir que ya estaba resuelta, y la
+   * lista se relee igual para mostrar lo que el servidor tiene.
+   */
+  private responderDerivacion(fila: PatientOrderRow, decision: 'accept' | 'reject'): void {
+    if (this.respondiendoId() !== null) return;
+    this.respondiendoId.set(fila.id);
+    this.referrals.respondToReferral(fila.id, decision).subscribe({
+      next: (resultado) => {
+        this.respondiendoId.set(null);
+        this.toasts.success(
+          decision === 'accept'
+            ? `Aceptó la derivación. ${resultado.performerName} ya puede ver su orden.`
+            : 'Rechazó la derivación. El centro no verá su orden.',
+        );
+        this.cargar();
+      },
+      error: (error: unknown) => {
+        this.respondiendoId.set(null);
+        const mensaje =
+          error instanceof HttpErrorResponse ? readApiError(error)?.message : undefined;
+        this.toasts.error(mensaje ?? 'No pudimos registrar su respuesta. Intente de nuevo.');
+        this.cargar();
+      },
+    });
   }
 }
 

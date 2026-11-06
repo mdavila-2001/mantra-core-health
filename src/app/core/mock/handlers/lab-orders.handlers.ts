@@ -2,16 +2,22 @@ import {
   conflict,
   forbidden,
   notFound,
+  reply,
   validation,
   type MockRequest,
   type MockRouter,
 } from '../mock-router';
-import { TENANT_LABORATORIO } from '../mock-session';
-import { Coleccion, cuerpo } from '../mock-store';
+import { ESTUDIO, ORDER_CATEGORY, STATUS, displayOf } from '../fixtures/concepts';
+import { orderList } from '../fixtures/clinic';
+import { MEDICAL, PATIENTS, patientById } from '../fixtures/people';
+import { TENANT_CLINICA, TENANT_LABORATORIO } from '../mock-session';
+import { ahora, Coleccion, cuerpo, nuevoId, texto } from '../mock-store';
 import { labInboxOrders } from './diagnostics.handlers';
+import { orderIdFromQrCode } from '../../data-access/lab-portal/lab-order-qr';
 import type {
   LabOrder,
   LabOrderAction,
+  LabOrderOrigin,
   LabOrderStatus,
 } from '../../data-access/lab-portal/lab-portal.types';
 
@@ -118,6 +124,7 @@ function ordenDeRespuesta(orderId: string, deps: DependenciasDeOrdenes): LabOrde
     patientName: destino.patientName,
     requesterName: destino.requesterName,
     requestedAt: orden.requestedAt,
+    origin: (orden.origin ?? 'CLINIC') satisfies LabOrderOrigin,
     status: status === 'PROCESSED' && files.length > 0 ? 'UPLOADED' : status,
     reason: guardado?.reason ?? null,
     files,
@@ -148,6 +155,121 @@ export function registrarOrdenesDeLaboratorio(
     return { items, count: items.length };
   });
 
+  /* ---- cómo nace una orden (06/11/2026) -------------------------------------
+     Dos de las tres vías de alta: el QR que mandó el paciente y la orden que
+     crea el propio centro. La tercera —la derivación del médico, aceptada por
+     el paciente— entra a la misma bandeja desde `referral.handlers.ts`. */
+
+  router.get('/diagnostics/lab/patients', (request) => {
+    if (deps.laboratorioDe(request) === null) return forbidden();
+    const q = (texto(request.query, 'q') ?? '').trim().toLocaleLowerCase('es');
+    if (q.length < 2) return validation('Escriba al menos 2 letras para buscar un paciente.');
+    const items = PATIENTS.filter(
+      (p) =>
+        p.displayName.toLocaleLowerCase('es').includes(q) ||
+        p.patientCode.toLocaleLowerCase('es').includes(q),
+    )
+      .slice(0, 10)
+      .map((p) => ({
+        patientProfileId: p.id,
+        displayName: p.displayName,
+        patientCode: p.patientCode,
+      }));
+    return { items, count: items.length };
+  });
+
+  router.post('/diagnostics/lab/orders', (request) => {
+    const tenantId = deps.laboratorioDe(request);
+    if (tenantId === null) return forbidden('Sólo el personal del laboratorio crea sus órdenes.');
+    const { patientProfileId, studyName, note } = cuerpo<{
+      patientProfileId?: unknown;
+      studyName?: unknown;
+      note?: unknown;
+    }>(request);
+    const estudio = typeof studyName === 'string' ? studyName.trim() : '';
+    if (estudio === '' || estudio.length > 120) {
+      return validation('Indique el estudio (hasta 120 letras).', [
+        { field: 'studyName', message: 'must not be empty' },
+      ]);
+    }
+    if (typeof patientProfileId !== 'string' || patientById(patientProfileId) === undefined) {
+      return validation('Elija un paciente de la lista.', [
+        { field: 'patientProfileId', message: 'must be a known patient' },
+      ]);
+    }
+    if (note !== undefined && note !== null && (typeof note !== 'string' || note.length > 500)) {
+      return validation('La nota admite hasta 500 letras.', [
+        { field: 'note', message: 'must be shorter than or equal to 500 characters' },
+      ]);
+    }
+    const id = nuevoId('lab-own-order');
+    labInboxOrders.agregar({
+      id,
+      patientProfileId,
+      codeConceptId: conceptoDe(estudio),
+      categoryConceptId: ORDER_CATEGORY['SRQ-LAB']!,
+      priorityConceptId: '',
+      statusConceptId: '',
+      requesterProfileId: MEDICAL.id,
+      requestingTenantId: tenantId,
+      performerTenantId: tenantId,
+      requestedAt: ahora(),
+      origin: 'LAB_OWN',
+      studyNameOverride: estudio,
+    });
+    estadosDeOrden.agregar({ id, status: 'DRAFT', reason: null });
+    return reply(201, ordenDeRespuesta(id, deps));
+  });
+
+  router.post('/diagnostics/lab/orders/from-qr', (request) => {
+    const tenantId = deps.laboratorioDe(request);
+    if (tenantId === null) return forbidden('Sólo el personal del laboratorio crea sus órdenes.');
+    const { code } = cuerpo<{ code?: unknown }>(request);
+    const orderId = typeof code === 'string' ? orderIdFromQrCode(code) : null;
+    if (orderId === null) {
+      return validation('Ese código no es el de una orden de AloVida.', [
+        { field: 'code', message: 'must be an order QR code' },
+      ]);
+    }
+    const dirigida = labInboxOrders.get(orderId);
+    if (dirigida !== undefined) {
+      if (dirigida.performerTenantId !== tenantId) {
+        return conflict('Esa orden ya está dirigida a otro centro.');
+      }
+      return ordenDeRespuesta(orderId, deps);
+    }
+    const clinica = orderList.get(orderId);
+    if (clinica === undefined) return notFound('No encontramos la orden de ese código.');
+    const esDeEstudio =
+      clinica.categoryConceptId === ORDER_CATEGORY['SRQ-LAB'] ||
+      clinica.categoryConceptId === ORDER_CATEGORY['SRQ-IMAGING'];
+    if (!esDeEstudio) {
+      return validation('Esa orden no es de laboratorio ni de imagenología.', [
+        { field: 'code', message: 'must be a laboratory or imaging order' },
+      ]);
+    }
+    if (!esOrdenAbierta(clinica.statusConceptId)) {
+      return conflict('Esa orden ya no está pendiente: no se puede dirigir a un centro.', {
+        currentStatus: displayOf(clinica.statusConceptId),
+      });
+    }
+    labInboxOrders.agregar({
+      id: clinica.id,
+      patientProfileId: clinica.patientProfileId,
+      codeConceptId: clinica.codeConceptId,
+      categoryConceptId: clinica.categoryConceptId,
+      priorityConceptId: clinica.priorityConceptId,
+      statusConceptId: clinica.statusConceptId,
+      requesterProfileId: clinica.requesterProfileId,
+      requestingTenantId: TENANT_CLINICA,
+      performerTenantId: tenantId,
+      requestedAt: clinica.createdAt,
+      origin: 'PATIENT_QR',
+    });
+    estadosDeOrden.agregar({ id: clinica.id, status: 'DRAFT', reason: null });
+    return reply(201, ordenDeRespuesta(clinica.id, deps));
+  });
+
   router.post('/diagnostics/lab/orders/:orderId/transitions', (request) => {
     const tenantId = deps.laboratorioDe(request);
     if (tenantId === null) return forbidden();
@@ -175,6 +297,27 @@ export function registrarOrdenesDeLaboratorio(
     });
     return ordenDeRespuesta(orderId, deps)!;
   });
+}
+
+/**
+ * Si una orden clínica todavía se puede dirigir a un centro: pendiente o activa.
+ * Una completada, en curso o anulada ya no: dirigirla de nuevo la duplicaría.
+ */
+export function esOrdenAbierta(statusConceptId: string): boolean {
+  return statusConceptId === STATUS['ST-PENDING'] || statusConceptId === STATUS['ST-ACTIVE'];
+}
+
+/**
+ * El concepto del catálogo que mejor corresponde al estudio escrito: el de igual
+ * nombre, o el primero. El nombre que ve el centro es el que escribió
+ * (`studyNameOverride`); el concepto sólo hace falta para no dejar la orden sin código.
+ */
+function conceptoDe(estudio: string): string {
+  const buscado = estudio.toLocaleLowerCase('es');
+  const conceptos = Object.values(ESTUDIO) as string[];
+  return (
+    conceptos.find((id) => displayOf(id).toLocaleLowerCase('es') === buscado) ?? conceptos[0]!
+  );
 }
 
 estadosDeOrden.persistirEn('mock.lab-portal.ordenes');

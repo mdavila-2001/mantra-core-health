@@ -1,5 +1,6 @@
 import type {
   DiagnosticOrder,
+  OrderReferral,
   PatientDiagnostics,
 } from '../../../../core/data-access/diagnostics/diagnostics.types';
 
@@ -47,6 +48,10 @@ export interface EstudioEnFicha {
   readonly justificacion: string | null;
   /** La consulta en la que se pidió, si la orden la trae. Ata su consentimiento informado. */
   readonly encounterId?: string;
+  /** Si es de laboratorio o imagen: sólo ésas se derivan a un centro. */
+  readonly derivable: boolean;
+  /** La derivación a un centro y qué decidió el paciente; `null` = no se derivó. */
+  readonly derivacion: OrderReferral | null;
 }
 
 /**

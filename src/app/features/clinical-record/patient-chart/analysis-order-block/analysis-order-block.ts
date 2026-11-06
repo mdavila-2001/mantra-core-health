@@ -43,6 +43,7 @@ import { writeFailureMessage } from '../../write-message';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { consentTargetState } from '../informed-consent/consent-target';
 import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
+import { OrderReferralDialog } from './order-referral-dialog/order-referral-dialog';
 import { InformedConsentDialog } from '../informed-consent/informed-consent-dialog';
 import { DuplicateStudyWarningDialog } from './duplicate-study-warning-dialog/duplicate-study-warning-dialog';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
@@ -134,6 +135,7 @@ const TOPE = 25;
 @Component({
   selector: 'app-analysis-order-block',
   imports: [
+    OrderReferralDialog,
     FormResponsePicker,
     Alert,
     AppButton,
@@ -276,6 +278,9 @@ export class AnalysisOrderBlock {
   /* -- El histórico -------------------------------------------------------- */
 
   protected readonly circuito = signal<ViewState<PatientDiagnostics>>(loading());
+
+  /** La orden que se está derivando a un centro (06/11/2026), o `null`. */
+  protected readonly derivando = signal<EstudioEnFicha | null>(null);
 
   /** Las etiquetas de los conceptos que el histórico muestra. */
   private readonly etiquetas = signal<ConceptLabels>(new Map());
@@ -645,7 +650,23 @@ export class AnalysisOrderBlock {
           : null,
       justificacion: orden.duplicateOverrideReason ?? null,
       ...(orden.encounterId === undefined ? {} : { encounterId: orden.encounterId }),
+      derivable:
+        (orden.category === 'LAB' || orden.category === 'IMAGING') &&
+        this.estaAbierta(orden.statusConceptId),
+      derivacion: orden.referral ?? null,
     };
+  }
+
+  /** Pendiente o activa por **código** del estado: lo único que se puede derivar. */
+  private estaAbierta(statusConceptId: string): boolean {
+    const codigo = this.etiquetas().get(statusConceptId)?.code ?? '';
+    return codigo.includes('PENDING') || codigo.includes('ACTIVE');
+  }
+
+  /** Se derivó una orden: se relee el histórico para mostrar lo que el servidor tiene. */
+  protected alDerivar(): void {
+    this.derivando.set(null);
+    this.cargar(this.patientProfileId());
   }
 
   private cargar(patientProfileId: string): void {

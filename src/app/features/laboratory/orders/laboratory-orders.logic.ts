@@ -94,3 +94,35 @@ export function actionsOf(order: LabOrder): readonly RowAction[] {
 export function disabledAll(actions: readonly RowAction[]): readonly RowAction[] {
   return actions.map((action) => ({ ...action, disabled: true }));
 }
+
+/**
+ * Cómo llegó la orden, en una línea bajo el paciente (06/11/2026): por el QR que
+ * mandó el paciente, derivada por un médico, creada por el propio centro, o la
+ * que ya venía dirigida al centro.
+ */
+export function originLabel(order: LabOrder): string {
+  switch (order.origin) {
+    case 'PATIENT_QR':
+      return `Por el QR del paciente · pidió ${order.requesterName}`;
+    case 'DOCTOR_REFERRAL':
+      return `Derivada por ${order.requesterName}, aceptada por el paciente`;
+    case 'LAB_OWN':
+      return 'Creada por el centro';
+    case 'CLINIC':
+      return `Pidió ${order.requesterName}`;
+  }
+}
+
+/** El origen en una palabra, para el chip junto al paciente; `null` si ya venía dirigida al centro. */
+export function originChip(order: LabOrder): string | null {
+  switch (order.origin) {
+    case 'PATIENT_QR':
+      return 'QR del paciente';
+    case 'DOCTOR_REFERRAL':
+      return 'Derivada por médico';
+    case 'LAB_OWN':
+      return 'Creada por el centro';
+    case 'CLINIC':
+      return null;
+  }
+}

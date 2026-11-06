@@ -64,6 +64,7 @@ import {
   VERBO_DE_CONTEXTO,
 } from './thread-context';
 import { ImageViewer, type ImagenDelVisor } from './image-viewer/image-viewer';
+import { ImageToOrder } from './image-viewer/image-to-order';
 
 /**
  * Una línea del hilo: un separador —de día o de «no leídos»— o un mensaje con
@@ -318,6 +319,7 @@ export class Thread {
   private readonly preferencias = inject(ChatPreferences);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  protected readonly imagenAOrden = inject(ImageToOrder);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   private readonly marco = viewChild<ElementRef<HTMLElement>>('marco');
@@ -1550,6 +1552,12 @@ export class Thread {
     const mensaje = this.store.enOrden().find((m) => m.clave === clave);
     this.cerrarImagen();
     if (mensaje !== undefined) this.responder(mensaje);
+  }
+
+  /** «Usar para una orden»: el QR de la foto abierta crea la orden del laboratorio. */
+  protected usarParaOrden(clave: string): void {
+    const url = this.imagenesDelVisor().find((imagen) => imagen.clave === clave)?.url;
+    if (url !== undefined) void this.imagenAOrden.use(url);
   }
 
   protected reenviarDesdeVisor(clave: string): void {

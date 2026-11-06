@@ -1,0 +1,85 @@
+<app-content-dialog
+  heading="Derivar a un centro"
+  [description]="studyLabel()"
+  data-testid="derivar-dialog"
+  (dismissAttempt)="closed.emit()"
+  (closed)="closed.emit()"
+>
+  <div class="derivar">
+    <p class="derivar__ayuda">
+      Elija el laboratorio o centro de imagen. El paciente tiene que aceptar la derivación desde
+      «Mis órdenes»: hasta entonces el centro no ve la orden.
+    </p>
+
+    <app-search-field
+      label="Buscar un centro"
+      placeholder="Nombre del laboratorio o centro"
+      data-testid="derivar-buscar"
+      (searched)="searchCenters($event)"
+    />
+
+    @if (error(); as message) {
+      <app-alert tone="error" data-testid="derivar-error">{{ message }}</app-alert>
+    }
+
+    @if (centers(); as state) {
+      @if (state.status === 'loading') {
+        <p class="derivar__estado" data-testid="derivar-cargando">Buscando centros…</p>
+      } @else if (state.status === 'ready') {
+        @if (state.data.length === 0) {
+          <p class="derivar__estado" data-testid="derivar-vacio">
+            Ningún centro coincide. Pruebe con otro nombre.
+          </p>
+        } @else {
+          <!-- Tarjetas elegibles: un radio nativo por tarjeta (teclado y lector de
+               pantalla intactos); la lista se desplaza sola y los botones quedan a la vista. -->
+          <fieldset class="derivar__lista" data-testid="derivar-lista">
+            <legend class="sr-only">Centro al que se deriva</legend>
+            @for (center of state.data; track center.id) {
+              <label class="centro" [class.centro--elegido]="chosen() === center.tenantId">
+                <input
+                  class="centro__radio"
+                  type="radio"
+                  name="derivar-centro"
+                  [value]="center.tenantId"
+                  [checked]="chosen() === center.tenantId"
+                  [attr.aria-label]="center.name"
+                  (change)="chosen.set(center.tenantId)"
+                />
+                <app-organization-identity [tenantId]="center.tenantId" [name]="center.name" [subtitle]="detail(center)" />
+                @if (center.rating !== null) {
+                  <span class="centro__nota" [attr.aria-label]="'Calificación ' + center.rating + ' de 5'">★ {{ center.rating }}</span>
+                }
+                <span class="centro__marca" aria-hidden="true">
+                  @if (chosen() === center.tenantId) {
+                    <app-nav-icon name="check" />
+                  }
+                </span>
+              </label>
+            }
+          </fieldset>
+        }
+      } @else {
+        <app-alert tone="error" data-testid="derivar-sin-centros">
+          No pudimos traer los centros.
+          <button app-button variant="ghost" size="sm" type="button" (clicked)="loadCenters()">Reintentar</button>
+        </app-alert>
+      }
+    }
+
+    <div class="derivar__acciones">
+      <button app-button variant="ghost" type="button" (clicked)="closed.emit()">Cancelar</button>
+      <button
+        app-button
+        variant="primary"
+        type="button"
+        data-testid="derivar-enviar"
+        [disabled]="chosen() === null || sending()"
+        [isLoading]="sending()"
+        (clicked)="send()"
+      >
+        Derivar
+      </button>
+    </div>
+  </div>
+</app-content-dialog>

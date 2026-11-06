@@ -31,6 +31,7 @@ import {
 import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, patientById, professionalById } from '../fixtures/people';
 import { conflict, forbidden, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENANT_TYPES, type MockUser } from '../mock-session';
+import { referralFieldsOf } from './referral.store';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 import { decodeInboxCursor, encodeInboxCursor } from './diagnostics-inbox-cursor';
 import { performerFieldsOfOrder, pickPerformerFields, seededProcedureOrdersOf } from './service-request-performer.mock';
@@ -288,6 +289,10 @@ export interface LabInboxOrderRecord {
   readonly requestingTenantId: string;
   readonly performerTenantId: string;
   readonly requestedAt: string;
+  /** Por cuál vía llegó al centro; ausente = ya venía dirigida (`CLINIC`). */
+  readonly origin?: 'PATIENT_QR' | 'DOCTOR_REFERRAL' | 'LAB_OWN';
+  /** El estudio escrito por el centro cuando no coincide con un concepto del catálogo. */
+  readonly studyNameOverride?: string;
 }
 
 const INBOX_STUDIES = ['STUDY-HEMOGRAMA', 'STUDY-GLUCOSA', 'STUDY-PERFIL-LIPIDICO', 'STUDY-TSH', 'STUDY-ORINA'] as const;
@@ -394,6 +399,14 @@ interface UnidadSimulada {
  * pantalla queda vacía. Y el corpus **no investigó centros de imagen**, así
  * que los de imagenología sólo pueden salir de acá.
  */
+/**
+ * La unidad de diagnóstico publicada de una organización, o `undefined`: lo que
+ * hace que un laboratorio o centro de imagen pueda recibir una derivación.
+ */
+export function unidadPublicadaDe(tenantId: string): { readonly name: string } | undefined {
+  return UNIDADES.find((u) => u.tenantId === tenantId && u.publiclyListed);
+}
+
 const UNIDADES_DE_MAQUETA: readonly UnidadSimulada[] = [
   { id: uuid('unit-lab-central'), tenantId: TENANT_LABORATORIO, code: 'LABCEN', name: 'Laboratorio Central', kind: 'LABORATORY', rating: 4.8, ratingCount: 210, walkIn: true, home: true, external: true, publiclyListed: true, verified: true, lat: -17.784, lng: -63.1815 },
   { id: uuid('unit-lab-olivos'), tenantId: TENANT_CLINICA, code: 'LAB-OLIVOS', name: 'Laboratorio Clínica Los Olivos', kind: 'LABORATORY', rating: 4.5, ratingCount: 88, walkIn: true, home: false, external: false, publiclyListed: true, verified: true, lat: -17.7712, lng: -63.1955 },
@@ -1115,7 +1128,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       patientProfileId: id,
       orders: orderList
         .filtrar((o) => o.patientProfileId === id)
-        .map(({ patientProfileId: _p, reasonText: _r, ...o }) => ({ ...o, patientProfileId: id, ...ordenDeAnalisis(o) })),
+        .map(({ patientProfileId: _p, reasonText: _r, ...o }) => ({ ...o, patientProfileId: id, ...ordenDeAnalisis(o), ...referralFieldsOf(o.id) })),
       reports: informes.filtrar((r) => r.patientProfileId === id).map((r) => ({ id: r.id, patientProfileId: r.patientProfileId, serviceRequestId: r.serviceRequestId, codeConceptId: r.codeConceptId, categoryConceptId: r.categoryConceptId, lifecycleStatusConceptId: r.lifecycleStatusConceptId, currentVersionId: r.currentVersionId, currentReleasedVersionId: r.released ? r.currentVersionId : null, resultReleaseStatusConceptId: r.released ? STATUS['ST-PUBLISHED']! : STATUS['ST-PENDING']!, createdAt: r.createdAt })),
       limit,
       truncated: [],
@@ -1487,6 +1500,7 @@ export function registrarDiagnostico(router: MockRouter): void {
         hasReleasedResult: informe !== undefined && esVisibleParaPaciente(informe),
         reportId: informe !== undefined && esVisibleParaPaciente(informe) ? informe.id : undefined,
         ...performerFieldsOfOrder(o),
+        ...referralFieldsOf(o.id),
       };
     });
     return { patientProfileId: id, items, limit: 50, truncated: false };

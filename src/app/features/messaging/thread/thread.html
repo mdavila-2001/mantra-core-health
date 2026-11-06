@@ -743,6 +743,9 @@
     (cerrado)="cerrarImagen()"
     (responder)="responderDesdeVisor($event)"
     (reenviar)="reenviarDesdeVisor($event)"
+    [permiteOrden]="imagenAOrden.available()"
+    [ocupado]="imagenAOrden.busy()"
+    (usarParaOrden)="usarParaOrden($event)"
   />
 }
 

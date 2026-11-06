@@ -172,6 +172,33 @@
               >
                 Consentimiento informado
               </button>
+              @if (estudio.derivacion; as derivacion) {
+                <span class="estudios__resultado" data-testid="estudios-derivacion">
+                  @switch (derivacion.status) {
+                    @case ('PENDING') {
+                      Derivada a {{ derivacion.performerName }}: espera la aceptación del paciente
+                    }
+                    @case ('ACCEPTED') {
+                      Derivada a {{ derivacion.performerName }}: el paciente aceptó
+                    }
+                    @default {
+                      El paciente rechazó la derivación a {{ derivacion.performerName }}
+                    }
+                  }
+                </span>
+              }
+              @if (estudio.derivable && (estudio.derivacion === null || estudio.derivacion.status === 'REJECTED')) {
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="study-refer"
+                  (clicked)="derivando.set(estudio)"
+                >
+                  Derivar a un centro
+                </button>
+              }
             </div>
           </li>
         }
@@ -204,6 +231,15 @@
 </app-card>
 
 <!-- El consentimiento DIRIGIDO a la orden elegida (CPE art. 44). -->
+@if (derivando(); as estudio) {
+  <app-order-referral-dialog
+    [orderId]="estudio.id"
+    [studyLabel]="estudio.estudio"
+    (referred)="alDerivar()"
+    (closed)="derivando.set(null)"
+  />
+}
+
 @if (consent.target(); as estudio) {
   <app-informed-consent-dialog
     [patientProfileId]="patientProfileId()"

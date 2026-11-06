@@ -1,6 +1,6 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -33,6 +33,7 @@ function order(id: string, status: LabOrderStatus, extra: Partial<LabOrder> = {}
     requesterName: 'Dra. Rojas',
     requestedAt: '2026-10-30T10:00:00Z',
     status,
+    origin: 'CLINIC',
     reason: null,
     files: [],
     ...extra,
@@ -266,5 +267,46 @@ describe('LaboratoryOrders', () => {
     fixture.detectChanges();
     expect(panel.textContent).toContain('Resultados subidos · 1 de 1');
     expect(panel.querySelector('progress')).toBeNull();
+  });
+
+  describe('Nueva orden', () => {
+    it('el botón lleva a ?nueva=1 y la pantalla muestra el alta en lugar de la lista', async () => {
+      create();
+      const router = TestBed.inject(Router);
+      const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+      (host().querySelector('[data-testid="lab-orders-new"]') as HTMLButtonElement).click();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: { nueva: '1', estado: null } }),
+      );
+    });
+
+    it('al crear una orden avisa, relee la lista y vuelve a «Borrador»', () => {
+      create();
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      listOrders.mockClear();
+
+      (fixture.componentInstance as unknown as {
+        onCreated: (r: { order: LabOrder; created: boolean }) => void;
+      }).onCreated({ order: ORDERS[0]!, created: true });
+
+      expect(success).toHaveBeenCalledWith('Orden creada para Paciente a.');
+      expect(listOrders).toHaveBeenCalledTimes(1);
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: { nueva: null, estado: 'draft' } }),
+      );
+    });
+
+    it('un código que ya estaba cargado se dice distinto', () => {
+      create();
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      (fixture.componentInstance as unknown as {
+        onCreated: (r: { order: LabOrder; created: boolean }) => void;
+      }).onCreated({ order: ORDERS[0]!, created: false });
+      expect(success).toHaveBeenCalledWith('Esa orden ya estaba cargada (Paciente a).');
+    });
   });
 });

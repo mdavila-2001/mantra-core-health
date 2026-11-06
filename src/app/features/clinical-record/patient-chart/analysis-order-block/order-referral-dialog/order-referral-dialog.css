@@ -1,0 +1,94 @@
+.derivar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.derivar__ayuda,
+.derivar__estado {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.derivar__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+}
+
+.derivar__lista {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+  max-height: 20rem;
+  margin: 0;
+  padding: 0 var(--sp-2) 0 0;
+  border: 0;
+  overflow-y: auto;
+}
+
+@media (min-width: 640px) {
+  .derivar__lista {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Una tarjeta por centro. El estado elegido se dice con el borde, la marca y el
+   radio nativo: nunca sólo con el color. */
+.centro {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-card);
+  background: var(--bg-surface, transparent);
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.centro:hover {
+  background: var(--bg-hover);
+}
+
+.centro:has(.centro__radio:focus-visible) {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.centro--elegido {
+  border-color: var(--brand-primary);
+  background: var(--bg-active);
+}
+
+.centro__radio {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+}
+
+.centro__nota {
+  margin-inline-start: auto;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.centro__marca {
+  display: inline-flex;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .centro {
+    transition: none;
+  }
+}

@@ -1,7 +1,28 @@
+@if (creating()) {
+  <app-page-header
+    title="Nueva orden"
+    subtitle="Por el QR del paciente o creada por usted. Las que deriva un médico llegan solas."
+  >
+    <app-organization-identity page-meta class="orders__identidad" size="lg" [tenantId]="ownTenantId()" [name]="ownName()" subtitle="Laboratorio e imagenología" />
+  </app-page-header>
+  <app-new-laboratory-order (created)="onCreated($event)" (cancelled)="stopCreating()" />
+} @else {
 <app-page-header
   title="Órdenes"
   subtitle="Reciba cada orden, márquela como procesada, suba sus resultados y descárguelos."
-/>
+>
+  <app-organization-identity page-meta class="orders__identidad" size="lg" [tenantId]="ownTenantId()" [name]="ownName()" subtitle="Laboratorio e imagenología" />
+  <button
+    page-actions
+    app-button
+    type="button"
+    variant="primary"
+    data-testid="lab-orders-new"
+    (clicked)="startCreating()"
+  >
+    Nueva orden
+  </button>
+</app-page-header>
 
 <!-- UNA tarjeta con pestañas, a lo ancho y centrada: la regla de la casa
      (`docs/components/composition-rules.md` §5). Cada pestaña es un estado. -->
@@ -21,6 +42,7 @@
     }
   </app-tabs>
 </app-card>
+}
 
 <ng-template #board>
   <div class="orders">
@@ -147,7 +169,10 @@
 
 <ng-template #patientCell let-order>
   <strong class="orders__patient">{{ order.patientName }}</strong>
-  <span class="orders__secondary">Pidió {{ order.requesterName }}</span>
+  @if (originChip(order); as chip) {
+    <app-badge size="sm" variant="info" [value]="chip" data-testid="lab-order-origin-chip" />
+  }
+  <span class="orders__secondary" data-testid="lab-order-origin">{{ originLabel(order) }}</span>
 </ng-template>
 
 <ng-template #studyCell let-order>{{ order.studyName }}</ng-template>

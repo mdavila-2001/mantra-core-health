@@ -15,6 +15,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { concat, map, type Observable, toArray } from 'rxjs';
 
+import { SessionStore } from '../../../core/auth/session.store';
 import { LabPortalClient } from '../../../core/data-access/lab-portal/lab-portal.client';
 import type {
   LabOrder,
@@ -26,6 +27,8 @@ import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import { AppButton } from '../../../shared/components/atoms/button/button';
+import { OrganizationIdentity } from '../../../shared/components/molecules/organization-identity/organization-identity';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
@@ -38,6 +41,7 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 
 import { formatBytes } from '../file-size';
+import { NewLaboratoryOrder, type NewOrderResult } from './new-order/new-laboratory-order';
 import { filesFromInput } from '../results/picked-files';
 import { ResultUploadQueue, type UploadItem } from '../results/result-upload-queue';
 import {
@@ -48,6 +52,8 @@ import {
   ORDER_TABS,
   orderTabIndexOf,
   orderTabKeyOf,
+  originChip,
+  originLabel,
   ordersOfTab,
   type OrderActionCode,
 } from './laboratory-orders.logic';
@@ -85,11 +91,14 @@ import {
   selector: 'app-laboratory-orders',
   imports: [
     Alert,
+    AppButton,
     Badge,
     Card,
     DataTable,
     DatePipe,
+    NewLaboratoryOrder,
     NgTemplateOutlet,
+    OrganizationIdentity,
     PageHeader,
     RowActions,
     SearchField,
@@ -103,6 +112,7 @@ import {
 })
 export class LaboratoryOrders {
   private readonly lab = inject(LabPortalClient);
+  private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toasts = inject(ToastService);
@@ -120,16 +130,28 @@ export class LaboratoryOrders {
   private readonly actionsCell =
     viewChild.required<TemplateRef<{ $implicit: LabOrder }>>('actionsCell');
 
+  /** El propio centro, con su logo, en el encabezado: se reconoce de quién es la bandeja. */
+  protected readonly ownTenantId = computed(() => this.session.activeTenantId());
+  protected readonly ownName = computed(() => {
+    const id = this.ownTenantId();
+    return id === null ? 'Su centro' : this.session.tenantName(id);
+  });
+
   protected readonly tabs = ORDER_TABS;
   protected readonly labels = ORDER_TAB_LABELS;
   protected readonly formatBytes = formatBytes;
   protected readonly actionsOf = actionsOf;
+  protected readonly originLabel = originLabel;
+  protected readonly originChip = originChip;
   protected readonly disabledAll = disabledAll;
 
   protected readonly selected = signal(
     orderTabIndexOf(this.route.snapshot.queryParamMap.get('estado')),
   );
   protected readonly search = signal('');
+
+  /** `?nueva=1`: en vez de la lista se muestra el alta de una orden (vive en la URL: el botón Atrás vuelve). */
+  protected readonly creating = signal(this.route.snapshot.queryParamMap.get('nueva') === '1');
 
   /** Todas las órdenes, tal como las tiene el servidor. */
   private readonly orders = signal<ViewState<readonly LabOrder[]>>(loading());
@@ -190,6 +212,7 @@ export class LaboratoryOrders {
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       this.selected.set(orderTabIndexOf(params.get('estado')));
+      this.creating.set(params.get('nueva') === '1');
     });
     this.load();
 
@@ -230,6 +253,28 @@ export class LaboratoryOrders {
     this.lab.listOrders().subscribe({
       next: (page) => this.orders.set(ready(page.items)),
       error: (error: unknown) => this.orders.set(errorToViewState<readonly LabOrder[]>(error)),
+    });
+  }
+
+  protected startCreating(): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { nueva: '1', estado: null } });
+  }
+
+  protected stopCreating(): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { nueva: null } });
+  }
+
+  /** Una orden recién creada: se va a «Borrador», donde está, y se avisa si ya existía. */
+  protected onCreated({ order, created }: NewOrderResult): void {
+    this.toasts.success(
+      created
+        ? `Orden creada para ${order.patientName}.`
+        : `Esa orden ya estaba cargada (${order.patientName}).`,
+    );
+    this.load();
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { nueva: null, estado: orderTabKeyOf(order.status === 'DRAFT' ? 1 : 0) },
     });
   }
 

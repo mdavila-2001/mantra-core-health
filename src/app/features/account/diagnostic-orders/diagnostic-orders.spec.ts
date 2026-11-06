@@ -5,6 +5,7 @@ import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { signal } from '@angular/core';
 
+import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/auth/auth.service';
 import { DiagnosticOrders } from './diagnostic-orders';
 import type { AnalysisCategory, PatientOrderRow } from './diagnostic-orders.types';
@@ -56,6 +57,11 @@ interface OrdenDeApi {
   readonly performerPractitionerProfileId?: string;
   readonly suggestedPracticeSiteId?: string;
   readonly suggestedPracticeSiteName?: string | null;
+  readonly referral?: {
+    readonly status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+    readonly performerName: string;
+    readonly requestedByName: string;
+  };
 }
 
 /**
@@ -112,6 +118,11 @@ function authDoble(patientProfileId: string | null) {
  * URL queda muda.
  */
 describe('DiagnosticOrders', () => {
+  // «Responder a la derivación» sólo existe en el simulador (`simulatorOnly`): se enciende acá.
+  const mockBackendAntes = environment.mockBackend;
+  beforeAll(() => Object.assign(environment, { mockBackend: true }));
+  afterAll(() => Object.assign(environment, { mockBackend: mockBackendAntes }));
+
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
 
@@ -549,6 +560,154 @@ describe('DiagnosticOrders', () => {
     expect(texto()).not.toContain('Sede sugerida');
     expect(texto()).not.toContain(sede);
     expect(texto()).not.toContain(practitioner);
+  });
+
+  /* ---- 06/11/2026: el QR de la orden y la derivación del médico ----------------- */
+
+  describe('QR y derivación', () => {
+    const CONCEPTOS = [
+      concepto('cat-lab', 'SRQ-LAB', 'Laboratorio'),
+      concepto('cat-img', 'SRQ-IMAGING', 'Imagenología'),
+      concepto('cat-proc', 'SRQ-PROCEDURE', 'Procedimiento'),
+      concepto('c-hemo', 'STUDY-HEMO', 'Hemograma'),
+      concepto('st-1', 'ST-PENDING', 'Pendiente'),
+    ];
+    const lab = (extra: Partial<OrdenDeApi> = {}) =>
+      orden({ categoryConceptId: 'cat-lab', codeConceptId: 'c-hemo', statusConceptId: 'st-1', ...extra });
+    const derivada = {
+      status: 'PENDING',
+      performerName: 'Laboratorio Central',
+      requestedByName: 'Dra. Quispe',
+    } as const;
+
+    it('laboratorio e imagen ofrecen «Mostrar QR»; un procedimiento y «Otros» no', async () => {
+      configurar(PROFILE_ID);
+      const componente = await mount();
+      responder(
+        [
+          lab(),
+          orden({ categoryConceptId: 'cat-img', codeConceptId: 'c-hemo', statusConceptId: 'st-1' }),
+          orden({ categoryConceptId: 'cat-proc', codeConceptId: 'c-hemo', statusConceptId: 'st-1' }),
+        ],
+        CONCEPTOS,
+      );
+
+      const codigos = api(componente)
+        .filasFiltradas()
+        .map((fila) => api(componente).accionesDe(fila).map((a) => a.code));
+      const tiposConQr = api(componente)
+        .filasFiltradas()
+        .filter((_, i) => codigos[i]!.includes('mostrar-qr'))
+        .map((fila) => fila.type);
+      expect(tiposConQr.sort()).toEqual(['IMAGING', 'LAB']);
+    });
+
+    it('una orden ya completada no ofrece «Mostrar QR»: no se le manda a ningún centro', async () => {
+      configurar(PROFILE_ID);
+      const componente = await mount();
+      responder(
+        [lab({ statusConceptId: 'st-done' })],
+        [...CONCEPTOS, concepto('st-done', 'ST-COMPLETED', 'Completado')],
+      );
+
+      const codigos = api(componente)
+        .accionesDe(api(componente).filasFiltradas()[0]!)
+        .map((a) => a.code);
+      expect(codigos).not.toContain('mostrar-qr');
+    });
+
+    it('«Mostrar QR» abre el diálogo con el código de esa orden', async () => {
+      configurar(PROFILE_ID);
+      const componente = await mount();
+      const propia = lab();
+      responder([propia], CONCEPTOS);
+
+      api(componente).ejecutarAccion('mostrar-qr', api(componente).filasFiltradas()[0]!);
+      harness.detectChanges();
+
+      expect(
+        harness.routeNativeElement?.querySelector('[data-testid="mis-ordenes-qr-codigo"]')?.textContent,
+      ).toBe(`ALOVIDA-ORDEN:v1:${propia.id}`);
+    });
+
+    it('una derivación pendiente se dice en la fila y ofrece aceptar y rechazar primero', async () => {
+      configurar(PROFILE_ID);
+      const componente = await mount();
+      responder([lab({ referral: derivada })], CONCEPTOS);
+
+      const codigos = api(componente)
+        .accionesDe(api(componente).filasFiltradas()[0]!)
+        .map((a) => a.code);
+      expect(codigos.slice(0, 2)).toEqual(['aceptar-derivacion', 'rechazar-derivacion']);
+      expect(texto()).toContain('Dra. Quispe la deriva a Laboratorio Central. Espera su aceptación.');
+    });
+
+    it('sin derivación, o ya resuelta, no hay nada que decidir', async () => {
+      configurar(PROFILE_ID);
+      const componente = await mount();
+      responder(
+        [lab(), lab({ referral: { ...derivada, status: 'ACCEPTED' } }), lab({ referral: { ...derivada, status: 'REJECTED' } })],
+        CONCEPTOS,
+      );
+
+      for (const fila of api(componente).filasFiltradas()) {
+        const codigos = api(componente).accionesDe(fila).map((a) => a.code);
+        expect(codigos).not.toContain('aceptar-derivacion');
+        expect(codigos).not.toContain('rechazar-derivacion');
+      }
+      expect(texto()).toContain('Derivada a Laboratorio Central.');
+      expect(texto()).toContain('Rechazó la derivación a Laboratorio Central.');
+    });
+
+    it('aceptar pide el paso accept de esa orden y relee la lista', async () => {
+      configurar(PROFILE_ID);
+      const componente = await mount();
+      const propia = lab({ referral: derivada });
+      responder([propia], CONCEPTOS);
+
+      api(componente).ejecutarAccion('aceptar-derivacion', api(componente).filasFiltradas()[0]!);
+
+      const pedido = http.expectOne(`/diagnostic-results/me/orders/${propia.id}/referral/accept`);
+      expect(pedido.request.method).toBe('POST');
+      pedido.flush({ orderId: propia.id, status: 'ACCEPTED', performerName: 'Laboratorio Central' });
+      responder([lab({ id: propia.id, referral: { ...derivada, status: 'ACCEPTED' } })], CONCEPTOS);
+
+      expect(texto()).toContain('Derivada a Laboratorio Central.');
+    });
+
+    it('rechazar pide el paso reject; mientras corre no se manda otra respuesta', async () => {
+      configurar(PROFILE_ID);
+      const componente = await mount();
+      const propia = lab({ referral: derivada });
+      responder([propia], CONCEPTOS);
+      const fila = api(componente).filasFiltradas()[0]!;
+
+      api(componente).ejecutarAccion('rechazar-derivacion', fila);
+      api(componente).ejecutarAccion('aceptar-derivacion', fila);
+
+      const pedido = http.expectOne(`/diagnostic-results/me/orders/${propia.id}/referral/reject`);
+      http.expectNone(`/diagnostic-results/me/orders/${propia.id}/referral/accept`);
+      pedido.flush({ orderId: propia.id, status: 'REJECTED', performerName: 'Laboratorio Central' });
+      responder([lab({ id: propia.id, referral: { ...derivada, status: 'REJECTED' } })], CONCEPTOS);
+    });
+
+    it('si el servidor dice que ya estaba resuelta (409), relee y no deja la fila vieja', async () => {
+      configurar(PROFILE_ID);
+      const componente = await mount();
+      const propia = lab({ referral: derivada });
+      responder([propia], CONCEPTOS);
+
+      api(componente).ejecutarAccion('aceptar-derivacion', api(componente).filasFiltradas()[0]!);
+      http
+        .expectOne(`/diagnostic-results/me/orders/${propia.id}/referral/accept`)
+        .flush(
+          { statusCode: 409, code: 'CONFLICT', message: 'Esa derivación ya está resuelta.' },
+          { status: 409, statusText: 'Conflict' },
+        );
+      responder([lab({ id: propia.id, referral: { ...derivada, status: 'REJECTED' } })], CONCEPTOS);
+
+      expect(texto()).not.toContain('Espera su aceptación');
+    });
   });
 
   /* ---- Sin uuids en pantalla -------------------------------------------------- */

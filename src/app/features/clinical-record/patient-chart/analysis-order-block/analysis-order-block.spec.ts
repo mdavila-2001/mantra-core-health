@@ -444,6 +444,75 @@ describe('AnalysisOrderBlock', () => {
    * carrera entre el chequeo y el alta reabre el diálogo con lo que vino en
    * el propio 422.
    */
+  /**
+   * 06/11/2026: «Derivar a un centro». Sólo una orden de laboratorio o imagen
+   * todavía abierta (pendiente o activa, por **código** del estado) se deriva, y
+   * lo que el paciente decidió se ve en la fila.
+   */
+  describe('derivar a un centro', () => {
+    const CONCEPTOS = [
+      { conceptId: 'st-activa', code: 'ST-ACTIVE', display: 'Activo' },
+      { conceptId: 'st-hecha', code: 'ST-COMPLETED', display: 'Completado' },
+      { conceptId: 'code-hemograma', code: 'STUDY-HEMOGRAMA', display: 'Hemograma' },
+      { conceptId: 'cat-lab', code: 'SRQ-LAB', display: 'Laboratorio' },
+    ];
+    const DERIVACION = { performerName: 'Laboratorio Central', requestedByName: 'Dra. Quispe' };
+
+    function montar(ordenes: readonly object[]): HTMLElement {
+      fixture.detectChanges();
+      responderCatalogos();
+      http
+        .expectOne((r) => r.url === '/diagnostics/patients/p-1/orders')
+        .flush({ ...CIRCUITO_VACIO, orders: ordenes });
+      for (const req of http.match((r) => r.url === '/terminology/concepts')) {
+        req.flush({ items: CONCEPTOS, total: CONCEPTOS.length });
+      }
+      for (const req of http.match((r) => r.url === '/consent/treatment-informed-consents')) {
+        req.flush({ items: [] });
+      }
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    }
+    const lab = (extra: object = {}) => ({ ...ORDEN, category: 'LAB', ...extra });
+
+    it('una orden de laboratorio abierta ofrece derivarla', () => {
+      const pantalla = montar([lab()]);
+      expect(pantalla.querySelector('[data-testid="study-refer"]')).not.toBeNull();
+    });
+
+    it('una orden completada, o que no es de laboratorio ni imagen, no se deriva', () => {
+      const pantalla = montar([
+        lab({ id: 'sr-2', statusConceptId: 'st-hecha' }),
+        lab({ id: 'sr-3', category: 'OTHER' }),
+      ]);
+      expect(pantalla.querySelector('[data-testid="study-refer"]')).toBeNull();
+    });
+
+    it('una derivación pendiente se dice en la fila y ya no se ofrece derivar de nuevo', () => {
+      const pantalla = montar([lab({ referral: { status: 'PENDING', ...DERIVACION } })]);
+      expect(pantalla.querySelector('[data-testid="estudios-derivacion"]')?.textContent).toContain(
+        'Derivada a Laboratorio Central: espera la aceptación del paciente',
+      );
+      expect(pantalla.querySelector('[data-testid="study-refer"]')).toBeNull();
+    });
+
+    it('tras un rechazo se dice y se puede derivar a otro centro', () => {
+      const pantalla = montar([lab({ referral: { status: 'REJECTED', ...DERIVACION } })]);
+      expect(pantalla.querySelector('[data-testid="estudios-derivacion"]')?.textContent).toContain(
+        'El paciente rechazó la derivación a Laboratorio Central',
+      );
+      expect(pantalla.querySelector('[data-testid="study-refer"]')).not.toBeNull();
+    });
+
+    it('si el paciente aceptó, se dice y no se ofrece derivar', () => {
+      const pantalla = montar([lab({ referral: { status: 'ACCEPTED', ...DERIVACION } })]);
+      expect(pantalla.querySelector('[data-testid="estudios-derivacion"]')?.textContent).toContain(
+        'el paciente aceptó',
+      );
+      expect(pantalla.querySelector('[data-testid="study-refer"]')).toBeNull();
+    });
+  });
+
   it('cada orden ofrece su consentimiento informado, atado a su consulta (CPE art. 44)', () => {
     fixture.detectChanges();
     responderCatalogos();
