@@ -44,8 +44,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       clave: 'organizacion',
       icon: 'building' as const,
       hint: 'Qué tipo de institución es, cómo se llama y qué figura jurídica tiene.',
-      // Cuatro campos cortos, de a dos desde 672 px (`composition-rules.md` §5):
-      // sin casillas kilométricas.
+      // Cuatro campos cortos, de a dos desde 672 px (`composition-rules.md` §5).
       disposicion: 'dos-columnas' as const,
       campos: [
         {
@@ -63,10 +62,10 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           label: 'Razón social',
           control: 'text' as const,
           required: true,
+          placeholder: 'Centro Médico Norte S.R.L.',
           hint: `Hasta ${MAX_LEGAL_NAME} caracteres.`,
           testId: `${TEST_ID}-legal-name`,
-          // Sólo el vacío lleva mensaje propio: el tope de 300 lo dice el
-          // motor con su número, que es lo que la persona necesita leer.
+          // Only an empty value has its own message: the engine states the 300 cap.
           mensajeSiFalta: 'Escriba la razón social de la organización.',
         },
         {
@@ -74,6 +73,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           label: 'Nombre comercial (opcional)',
           hint: 'Con el que la conocen sus pacientes. Es el que se ve en el directorio.',
           control: 'text' as const,
+          placeholder: 'Clínica Norte',
           testId: `${TEST_ID}-trade-name`,
           mensajeDeError: `El nombre comercial no puede pasar de ${MAX_LEGAL_NAME} caracteres.`,
         },
@@ -159,6 +159,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           control: 'email' as const,
           required: true,
           icono: 'mail' as const,
+          placeholder: 'director@centro.com',
           testId: `${TEST_ID}-director-email`,
           mensajeDeError: 'Escriba un correo válido para el director médico.',
         },
@@ -173,8 +174,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       ],
     },
     {
-      // Sin «obligatoria»: según el tipo societario, la escritura y la
-      // matrícula pueden ser opcionales (decisión del propietario, 30/10/2026).
+      // Not marked «obligatoria»: some company types may omit two papers (owner, 30/10/2026).
       titulo: 'Documentación legal (PDF)',
       clave: 'documentos-legales',
       icon: 'folder' as const,
@@ -239,6 +239,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           control: 'text' as const, fieldKind: 'identityDocumentWithComplement',
           required: true,
           icono: 'people' as const,
+          placeholder: '1234567',
           testId: `${TEST_ID}-legal-rep-id`,
           mensajeDeError: 'Escriba el documento del representante (al menos cuatro caracteres).',
         },
@@ -280,10 +281,14 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           required: true,
           icono: 'mail' as const,
           autocomplete: 'username',
+          placeholder: 'representante@centro.com',
           testId: `${TEST_ID}-legal-rep-email`,
           mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
         },
-        ...accessPasswordFields(`${TEST_ID}-password`, { hint: `Mínimo ${MIN_CHARACTERS_PASSWORD} caracteres.` }),
+        ...accessPasswordFields(`${TEST_ID}-password`, {
+          hint: `Mínimo ${MIN_CHARACTERS_PASSWORD} caracteres.`,
+          placeholder: 'Mínimo 8 caracteres',
+        }),
       ],
     },
   ]);

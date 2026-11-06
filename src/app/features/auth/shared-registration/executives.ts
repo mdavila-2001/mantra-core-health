@@ -251,6 +251,7 @@ export function executivesPages(
         control: 'email' as const,
         ...(enUso ? { required: true } : {}),
         icono: 'mail' as const,
+        placeholder: 'gerencia@organizacion.com',
         testId: `${prefijoTestId}-${g.testId}-correo`,
         mensajeDeError: 'Escriba un correo válido, o deje las tres gerencias vacías.',
       },
