@@ -18,6 +18,13 @@
         >
           <!-- El poder no se copia acá: se va a buscar donde está. De lectura
                la carpeta son las licencias, y el poder no está entre ellas. -->
+          @if (editableTenantId(); as tenantId) {
+            <app-representative-name-editor
+              [tenantId]="tenantId"
+              [parts]="datos.representante.partes ?? {}"
+              (saved)="nameSaved.emit()"
+            />
+          }
           @if (!readOnly()) {
             <button
               app-button
