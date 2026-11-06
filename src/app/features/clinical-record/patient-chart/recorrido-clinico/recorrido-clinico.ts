@@ -209,6 +209,12 @@ export class RecorridoClinico {
   private soltarLienzo: (() => void) | null = null;
 
   /**
+   * Si el lienzo sigue pegado al final. Lo suelta quien se desplaza, y
+   * también desplegar un episodio: el lienzo va a sus registros.
+   */
+  private pegadoAlFinal = true;
+
+  /**
    * Abre por el final y se queda ahí mientras quien mira no se mueva: después
    * del primer render el lienzo todavía cambia de ancho (barra de
    * desplazamiento, fuentes), y la última columna quedaba cortada.
@@ -220,14 +226,14 @@ export class RecorridoClinico {
       this.irA('final', false);
       return;
     }
-    let pegado = true;
+    this.pegadoAlFinal = true;
     let propio = lienzo.scrollLeft;
     const pegar = (): void => {
       this.irA('final', false);
       propio = lienzo.scrollLeft;
     };
     const observador = new ResizeObserver(() => {
-      if (pegado) {
+      if (this.pegadoAlFinal) {
         pegar();
       }
     });
@@ -240,7 +246,7 @@ export class RecorridoClinico {
         return;
       }
       if (lienzo.scrollLeft < lienzo.scrollWidth - lienzo.clientWidth - 2) {
-        pegado = false;
+        this.pegadoAlFinal = false;
       }
     };
     lienzo.addEventListener('scroll', alDesplazar, { passive: true });
@@ -269,15 +275,42 @@ export class RecorridoClinico {
   /* -- Plegar y desplegar ------------------------------------------------- */
 
   protected alternarEpisodio(id: string): void {
+    const desplegar = !this.desplegados().has(id);
     this.desplegados.update((actual) => {
       const siguiente = new Set(actual);
-      if (siguiente.has(id)) {
-        siguiente.delete(id);
-      } else {
+      if (desplegar) {
         siguiente.add(id);
+      } else {
+        siguiente.delete(id);
       }
       return siguiente;
     });
+    if (desplegar) {
+      // Desplegado, el episodio puede tener sus registros a la izquierda de lo
+      // que se ve (empezó hace un año): el lienzo va a su primer momento, para
+      // no mostrar un hilo abierto y vacío.
+      this.pegadoAlFinal = false;
+      afterNextRender(() => this.irAlEpisodio(id), { injector: this.injector });
+    }
+  }
+
+  private irAlEpisodio(id: string): void {
+    const lienzo = this.lienzo()?.nativeElement;
+    const xs = this.plano()
+      .nodos.filter((n) => n.episodio === id)
+      .map((n) => n.x);
+    if (lienzo === undefined || xs.length === 0 || typeof lienzo.scrollTo !== 'function') {
+      return;
+    }
+    const primero = Math.min(...xs) - 2 * this.distanciaDelTronco;
+    const ultimo = Math.max(...xs) + this.medidas.anchoAncha;
+    // Si ya se ve entero, no se mueve: un salto sin motivo desorienta.
+    if (primero >= lienzo.scrollLeft && ultimo <= lienzo.scrollLeft + lienzo.clientWidth) {
+      return;
+    }
+    const reducir =
+      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    lienzo.scrollTo({ left: Math.max(0, primero), behavior: reducir ? 'auto' : 'smooth' });
   }
 
   protected desplegarTodo(): void {

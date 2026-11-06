@@ -107,7 +107,7 @@ describe('construirRed · los vínculos nuevos del contrato', () => {
     conditions: [
       { id: 'dx-p', encounterId: 'e1' },
       { id: 'dx-x', encounterId: 'e1', replacedByConditionId: 'dx-ok' },
-      { id: 'dx-ok', encounterId: 'e2', verification: { basedOn: { noteId: 'n1' } } },
+      { id: 'dx-ok', encounterId: 'e2', verification: { basedOn: { kind: 'NOTE', noteId: 'n1' } } },
     ],
     medicationRequests: [{ id: 'rx-a', replacedByRequestId: 'rx-b' }, { id: 'rx-b' }],
     notes: [{ noteId: 'n1', encounterId: 'e1' }],
@@ -200,7 +200,7 @@ describe('estadoDeLaDerivacion', () => {
     [{ status: 'ACCEPTED', transfer: { arrivedAt: new Date() } }, 'Llegó al destino'],
     [{ status: 'COMPLETED', counterReferralAt: new Date() }, 'Contrarreferencia'],
     [{ status: 'CANCELLED' }, 'Cancelada'],
-  ])('%o → %s', (extra, esperado) => {
+  ] as const)('%o → %s', (extra, esperado) => {
     expect(estadoDeLaDerivacion({ ...base, ...extra }).estado).toBe(esperado);
   });
 });

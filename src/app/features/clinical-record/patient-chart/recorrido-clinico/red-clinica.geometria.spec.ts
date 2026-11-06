@@ -89,7 +89,7 @@ describe('ubicarRed · plegado (nivel 1)', () => {
     expect(p.hilos.every((h) => !h.desplegado && h.hitos.length > 0)).toBe(true);
   });
 
-  it('todas las columnas son angostas: dieciocho meses entran en una pantalla', () => {
+  it('todas las columnas son angostas: una historia corta entra en una pantalla', () => {
     expect(p.columnas.every((c) => !c.ancha && c.ancho === MEDIDAS_DE_LA_RED.anchoAngosta)).toBe(true);
     expect(p.ancho).toBeLessThan(1000);
   });

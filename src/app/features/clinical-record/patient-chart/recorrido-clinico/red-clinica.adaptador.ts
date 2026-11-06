@@ -2,12 +2,10 @@
     Del contrato a la red clínica: los registros y **sólo** los vínculos que el
     contrato guarda.
 
-    Las formas de entrada son estructurales y mínimas, no los tipos de
-    `core/data-access`: así las pruebas no fabrican un resumen clínico entero,
-    y los tres campos nuevos del contrato (`reasonConditionId`,
-    `targetEncounterId`, `replacedByConditionId`) se leen como opcionales —
-    ausentes mientras la API o el simulador no los devuelvan, la red
-    simplemente no dibuja esos vínculos—.
+    Las formas de entrada son los tipos de `core/data-access` recortados con
+    `Pick`. Los tres campos de la Franja 1 (`reasonConditionId`,
+    `targetEncounterId` —sólo tras aceptar—, `replacedByConditionId`) son
+    opcionales en el contrato: ausentes, la red no dibuja esos vínculos.
     ========================================================================== */
 
 import type { Tone } from '../../../../shared/components/tone/tone.types';
@@ -19,6 +17,19 @@ import {
   type VinculoDeLaRed,
 } from './red-clinica.model';
 import type { TipoDelRecorrido } from './recorrido-clinico.model';
+import type {
+  CarePlan,
+  ChartNote,
+  Condition,
+  DiagnosisEvidence,
+  Encounter,
+  MedicationRequest,
+  Observation,
+} from '../../../../core/data-access/clinical/clinical.types';
+import type { DiagnosticOrder, DiagnosticReport } from '../../../../core/data-access/diagnostics/diagnostics.types';
+import type { Referral } from '../../../../core/data-access/referrals/referrals.types';
+import type { Booking } from '../../../../core/data-access/scheduling/scheduling.types';
+import type { DentalProcedure } from '../../../../core/data-access/procedures/procedures.types';
 
 /** La clase de la red que corresponde a cada bloque del expediente. */
 export const CLASE_DEL_TIPO: Readonly<Record<TipoDelRecorrido, ClaseDeLaRed>> = {
@@ -45,33 +56,28 @@ export interface FilaPresentada {
   readonly concepto?: string;
 }
 
-interface ConId {
-  readonly id: string;
-}
-
-/** Lo que la red lee de cada lectura. Opcional lo que el contrato puede no traer. */
+/**
+ * Lo que la red lee de cada lectura: los tipos del contrato
+ * (`core/data-access`), recortados a los campos que usa. Así las pruebas no
+ * fabrican un resumen clínico entero, y un cambio de nombre en el contrato
+ * rompe la compilación acá en vez de borrar una línea en silencio.
+ */
 export interface FuenteDeLaRed {
-  readonly encounters: readonly (ConId & { readonly episodeId?: string })[];
-  readonly conditions: readonly (ConId & {
-    readonly encounterId?: string;
-    readonly replacedByConditionId?: string | null;
-    readonly verification?: {
-      readonly basedOn?: {
-        readonly noteId?: string;
-        readonly encounterId?: string;
-        readonly serviceRequestId?: string;
-        readonly diagnosticReportId?: string;
-      } | null;
-    } | null;
+  readonly encounters: readonly Pick<Encounter, 'id' | 'episodeId'>[];
+  readonly conditions: readonly (Pick<Condition, 'id' | 'encounterId' | 'replacedByConditionId'> & {
+    readonly verification?: { readonly basedOn: DiagnosisEvidence | null } | null;
   })[];
-  readonly medicationRequests: readonly (ConId & {
-    readonly encounterId?: string;
-    readonly indicationConditionId?: string;
+  readonly medicationRequests: readonly (Pick<MedicationRequest, 'id' | 'encounterId' | 'indicationConditionId'> & {
+    /**
+     * El reemplazo de una receta. El simulador lo siembra y la API lo guarda
+     * (`medication_requests.replaced_by_request_id`), pero el resumen todavía
+     * no lo publica ni `MedicationRequest` lo declara: se lee si viene.
+     */
     readonly replacedByRequestId?: string | null;
   })[];
-  readonly observations: readonly (ConId & { readonly encounterId?: string })[];
-  readonly notes: readonly { readonly noteId: string; readonly encounterId?: string }[];
-  readonly carePlans: readonly (ConId & { readonly conditionId?: string })[];
+  readonly observations: readonly Pick<Observation, 'id' | 'encounterId'>[];
+  readonly notes: readonly Pick<ChartNote, 'noteId' | 'encounterId'>[];
+  readonly carePlans: readonly Pick<CarePlan, 'id' | 'conditionId'>[];
   /** Las lecturas que la red pide aparte. `null`: no se pudo leer o todavía no llegó. */
   readonly citas?: readonly CitaDeLaFuente[] | null;
   readonly derivaciones?: readonly DerivacionDeLaFuente[] | null;
@@ -82,55 +88,42 @@ export interface FuenteDeLaRed {
   readonly procedimientos?: readonly ProcedimientoDeLaFuente[] | null;
 }
 
-export interface CitaDeLaFuente extends ConId {
-  readonly startAt?: Date;
-  readonly createdAt: Date;
-  readonly statusConceptId: string;
-  readonly typeConceptId?: string;
-  readonly reasonText?: string;
-  readonly service?: { readonly name: string };
-  readonly followUpOf?: { readonly bookingId: string; readonly encounterId: string | null } | null;
-}
+export type CitaDeLaFuente = Pick<
+  Booking,
+  'id' | 'startAt' | 'createdAt' | 'statusConceptId' | 'typeConceptId' | 'reasonText' | 'followUpOf'
+> & { readonly service?: Pick<NonNullable<Booking['service']>, 'name'> };
 
-export interface DerivacionDeLaFuente extends ConId {
-  readonly createdAt: Date;
-  readonly status?: string;
-  readonly sourceEncounterId?: string;
-  readonly targetEncounterId?: string | null;
-  readonly targetDisplayName?: string;
-  readonly targetTenantName?: string;
-  readonly targetExternalName?: string;
-  readonly targetServiceName?: string;
-  readonly requestedServiceText?: string;
-  readonly reasonText?: string;
-  readonly diagnosisText?: string;
-  readonly counterReferralAt?: Date;
-  readonly transfer?: { readonly arrivedAt?: Date };
-}
+export type DerivacionDeLaFuente = Pick<
+  Referral,
+  | 'id'
+  | 'createdAt'
+  | 'status'
+  | 'sourceEncounterId'
+  | 'targetEncounterId'
+  | 'targetDisplayName'
+  | 'targetTenantName'
+  | 'targetExternalName'
+  | 'targetServiceName'
+  | 'requestedServiceText'
+  | 'reasonText'
+  | 'diagnosisText'
+  | 'counterReferralAt'
+> & { readonly transfer?: Pick<NonNullable<Referral['transfer']>, 'arrivedAt'> };
 
-export interface OrdenDeLaFuente extends ConId {
-  readonly encounterId?: string;
-  readonly codeConceptId: string;
-  readonly statusConceptId: string;
-  readonly createdAt: Date;
-  readonly reasonConditionId?: string | null;
-}
+export type OrdenDeLaFuente = Pick<
+  DiagnosticOrder,
+  'id' | 'encounterId' | 'codeConceptId' | 'statusConceptId' | 'createdAt' | 'reasonConditionId'
+>;
 
-export interface InformeDeLaFuente extends ConId {
-  readonly serviceRequestId?: string;
-  readonly encounterId?: string;
-  readonly codeConceptId: string;
-  readonly lifecycleStatusConceptId: string;
-  readonly createdAt: Date;
-}
+export type InformeDeLaFuente = Pick<
+  DiagnosticReport,
+  'id' | 'serviceRequestId' | 'encounterId' | 'codeConceptId' | 'lifecycleStatusConceptId' | 'createdAt'
+>;
 
-export interface ProcedimientoDeLaFuente extends ConId {
-  readonly encounterId?: string;
-  readonly procedureCodeConceptId: string;
-  readonly statusConceptId: string;
-  readonly performedAt?: Date;
-  readonly createdAt: Date;
-}
+export type ProcedimientoDeLaFuente = Pick<
+  DentalProcedure,
+  'id' | 'encounterId' | 'procedureCodeConceptId' | 'statusConceptId' | 'performedAt' | 'createdAt'
+>;
 
 /** La etiqueta de un concepto: `display` para mostrar, `code` para decidir. */
 export type Rotulador = (conceptId: string | undefined) => { readonly display?: string; readonly code?: string };

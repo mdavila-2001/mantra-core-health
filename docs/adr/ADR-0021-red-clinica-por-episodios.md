@@ -76,8 +76,10 @@ la atención (ahí quedaría tapado por los reales).
 - **Nivel 1**: todo plegado; cada episodio es una franja con nombre (el
   diagnóstico vigente más reciente), estado, rango de fechas, conteos e
   hitos sobre el eje (rombo lleno: confirmado; hueco: presuntivo; tachado:
-  descartado). Las columnas sin nada desplegado son angostas: dieciocho
-  meses entran en una pantalla.
+  descartado). Las columnas sin nada desplegado son angostas (76 px en
+  vez de 248): la historia plegada ocupa una fracción del ancho. Con la
+  historia de demostración (47 momentos en 18 meses) igual no entra en una
+  pantalla de 1440 px: abre por el final y se desplaza.
 - **Nivel 2**: el episodio desplegado muestra sus registros en sus columnas.
 - **Nivel 3**: observaciones, notas, planes y documentos de cada momento
   van tras un «+N»; los diagnósticos descartados, en un marcador compacto que

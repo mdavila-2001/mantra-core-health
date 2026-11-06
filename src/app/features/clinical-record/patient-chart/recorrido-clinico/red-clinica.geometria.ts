@@ -15,8 +15,8 @@
     - De arriba abajo, un **hilo** por episodio. Plegado es una franja-resumen
       con sus hitos; desplegado muestra sus registros en las columnas.
     - Una columna es **ancha** si algún hilo desplegado tiene registros en
-      ella; si no, es **angosta**: con todo plegado, dieciocho meses entran en
-      una pantalla.
+      ella; si no, es **angosta** (76 px en vez de 248): plegada, la historia
+      ocupa una fracción del ancho.
 
     ## Las líneas
 
