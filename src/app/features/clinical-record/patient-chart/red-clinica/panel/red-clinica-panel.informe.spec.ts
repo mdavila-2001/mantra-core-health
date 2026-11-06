@@ -159,6 +159,34 @@ describe('RedClinicaPanel: el informe liberado, leído al abrir el estudio', () 
     expect(el().querySelectorAll('[data-testid="red-panel-valor"]')).toHaveLength(2);
   });
 
+  it('un 429 (S4) dice lo que contestó el servidor, cuánto esperar y ofrece reintentar', async () => {
+    await abrir(ESTUDIO);
+    http
+      .expectOne((r) => r.url.endsWith(URL))
+      .flush({ code: 'RATE_LIMITED', message: 'Demasiadas lecturas seguidas.' }, { status: 429, statusText: 'Too Many Requests', headers: { 'retry-after': '30' } });
+    await pintar();
+    const aviso = el().querySelector('[data-testid="red-panel-informe-error"]');
+    expect(aviso?.textContent).toContain('Demasiadas lecturas seguidas.');
+    expect(aviso?.textContent).toContain('Reintente en 30 segundos');
+    Array.from(aviso!.querySelectorAll<HTMLElement>('button')).find((b) => b.textContent?.includes('Reintentar'))!.click();
+    await pintar();
+    http.expectOne((r) => r.url.endsWith(URL)).flush(LEIDO);
+    await pintar();
+    expect(el().querySelectorAll('[data-testid="red-panel-valor"]')).toHaveLength(2);
+  });
+
+  it('una referencia nueva del mismo nodo no le quita el foco a quien lo tiene', async () => {
+    await abrir(ESTUDIO);
+    http.expectOne((r) => r.url.endsWith(URL)).flush(LEIDO);
+    await pintar();
+    const otro = document.createElement('button');
+    document.body.appendChild(otro);
+    otro.focus();
+    await abrir({ ...ESTUDIO });
+    expect(document.activeElement).toBe(otro);
+    otro.remove();
+  });
+
   it('cambiar a otro nodo cancela la lectura en curso; volver lee de nuevo', async () => {
     await abrir(ESTUDIO);
     const primera = http.expectOne((r) => r.url.endsWith(URL));

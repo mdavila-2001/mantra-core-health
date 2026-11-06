@@ -116,39 +116,7 @@
                    archivos), con sus estados: mientras llega o si falla, lo
                    que ya se sabe (que está liberado) sigue a la vista. -->
               @if (lecturaDelInforme(); as lectura) {
-                @switch (lectura.estado.status) {
-                  @case ('loading') {
-                    <p class="panel__tenue" role="status" data-testid="red-panel-informe-cargando">Leyendo los valores del informe…</p>
-                  }
-                  @case ('forbidden') {
-                    <app-alert tone="warning" title="No puede ver este informe" data-testid="red-panel-informe-error">
-                      El servidor no le da acceso a los valores de este informe.
-                    </app-alert>
-                  }
-                  @case ('not-found') {
-                    <app-alert tone="warning" title="El informe no está disponible" data-testid="red-panel-informe-error">
-                      No se encontró un informe liberado para este estudio.
-                    </app-alert>
-                  }
-                  @case ('offline') {
-                    <app-alert tone="warning" title="Sin conexión" data-testid="red-panel-informe-error">
-                      No se pudieron leer los valores del informe.
-                      <div alert-actions>
-                        <button app-button variant="outline" size="sm" type="button" (clicked)="releerInforme()">Reintentar</button>
-                      </div>
-                    </app-alert>
-                  }
-                  @case ('error') {
-                    <app-alert tone="error" title="No se pudieron leer los valores del informe" data-testid="red-panel-informe-error">
-                      @if (lectura.estado.status === 'error') {
-                        Código de soporte: <code>{{ lectura.estado.requestId }}</code>
-                      }
-                      <div alert-actions>
-                        <button app-button variant="outline" size="sm" type="button" (clicked)="releerInforme()">Reintentar</button>
-                      </div>
-                    </app-alert>
-                  }
-                }
+                <app-red-clinica-informe-estado [estado]="lectura.estado" (reintentar)="releerInforme()" />
               }
               <p class="panel__linea" data-testid="red-panel-liberado">
                 @if (r.liberadoEn) {

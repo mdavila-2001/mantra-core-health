@@ -30,6 +30,7 @@ import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-ico
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { nextControlId } from '../../../../../shared/forms/form-control.context';
 import { antiguedad, diasEntre } from '../red-clinica-alertas';
+import { RedClinicaInformeEstado } from './informe-estado/red-clinica-informe-estado';
 import { resultadoDelInforme } from '../red-clinica-informe';
 import {
   leerValor,
@@ -39,31 +40,19 @@ import {
   textoDelValor,
   type LecturaDeValor,
 } from '../red-clinica-valores';
+import { ORIGEN, SIGUIENTES, vinculosDe } from './red-clinica-panel.vinculos';
 import {
   ASPECTO_DE_TIPO,
-  LECTURA_DE_VINCULO,
   type ArchivoDeInforme,
   type AristaDeRed,
   type ResultadoDeEstudio,
   type AspectoDeTipo,
   type TipoDeNodo,
   type NodoDeRed,
-  type TipoDeVinculo,
   type ValorDeResultado,
 } from '../red-clinica.types';
 
-/** Un vínculo del nodo abierto, ya leído desde su punta. */
-export interface VinculoDelPanel {
-  readonly clave: string;
-  readonly sentido: 'saliente' | 'entrante';
-  readonly tipo: TipoDeVinculo;
-  /** «Se pidió para estudiar», «Estudio pedido para esto». */
-  readonly relacion: string;
-  readonly otroId: string;
-  /** `null` si la otra punta no está en `nodos` (filtrada o fuera del tope). */
-  readonly otro: NodoDeRed | null;
-  readonly inferido: boolean;
-}
+export { vinculosDe, type VinculoDelPanel } from './red-clinica-panel.vinculos';
 
 /** Cómo se presenta: columna al lado del mapa, o hoja inferior modal. */
 export type PresentacionDelPanel = 'auto' | 'lateral' | 'hoja';
@@ -76,54 +65,6 @@ interface FilaDeValor {
   readonly lectura: LecturaDeValor;
   readonly simbolo: string;
   readonly fuera: boolean;
-}
-
-const ORIGEN: ReadonlySet<string> = new Set([
-  'saliente:reconsulta-de',
-  'entrante:recibida-en',
-  'entrante:atendida-en',
-]);
-const SIGUIENTES: ReadonlySet<string> = new Set([
-  'entrante:reconsulta-de',
-  'entrante:derivada-desde',
-  'saliente:atendida-en',
-]);
-
-/** Lee los vínculos de un nodo: salientes primero, cada grupo en orden de fecha. */
-export function vinculosDe(
-  nodoId: string,
-  aristas: readonly AristaDeRed[],
-  nodos: readonly NodoDeRed[],
-): readonly VinculoDelPanel[] {
-  const porId = new Map(nodos.map((n) => [n.id, n]));
-  const vinculos: VinculoDelPanel[] = [];
-  aristas.forEach((a, i) => {
-    if (a.desde === nodoId && a.hasta !== nodoId) {
-      vinculos.push({
-        clave: `s${i}`,
-        sentido: 'saliente',
-        tipo: a.tipo,
-        relacion: LECTURA_DE_VINCULO[a.tipo].saliente,
-        otroId: a.hasta,
-        otro: porId.get(a.hasta) ?? null,
-        inferido: a.inferido === true,
-      });
-    } else if (a.hasta === nodoId && a.desde !== nodoId) {
-      vinculos.push({
-        clave: `e${i}`,
-        sentido: 'entrante',
-        tipo: a.tipo,
-        relacion: LECTURA_DE_VINCULO[a.tipo].entrante,
-        otroId: a.desde,
-        otro: porId.get(a.desde) ?? null,
-        inferido: a.inferido === true,
-      });
-    }
-  });
-  const t = (v: VinculoDelPanel) => v.otro?.cuando?.getTime() ?? Number.MAX_SAFE_INTEGER;
-  return vinculos.sort(
-    (a, b) => (a.sentido === b.sentido ? 0 : a.sentido === 'saliente' ? -1 : 1) || t(a) - t(b),
-  );
 }
 
 /**
@@ -155,7 +96,7 @@ export function vinculosDe(
  */
 @Component({
   selector: 'app-red-clinica-panel',
-  imports: [AppButton, Alert, Badge, DatePipe, NavIcon, NgTemplateOutlet],
+  imports: [AppButton, Alert, Badge, DatePipe, NavIcon, NgTemplateOutlet, RedClinicaInformeEstado],
   templateUrl: './red-clinica-panel.html',
   styleUrl: './red-clinica-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -268,6 +209,7 @@ export class RedClinicaPanel {
   /** Quién tenía el foco al abrir: a donde vuelve al cerrar. */
   private retorno: HTMLElement | null = null;
   private abiertoAntes = false;
+  private readonly idAbierto = computed(() => this.nodo()?.id ?? null);
 
   constructor() {
     inject(DestroyRef).onDestroy(() => {
@@ -290,19 +232,21 @@ export class RedClinicaPanel {
       });
     });
 
-    // Abrir, cambiar de nodo y cerrar: foco y diálogo.
+    // Open, switch node, close: focus and dialog. Keyed by id (`idAbierto`), so
+    // a new reference to the same node (the chart re-derives its nodes) does
+    // not steal focus nor cancel a download in progress.
     effect(() => {
-      const nodo = this.nodo();
+      const id = this.idAbierto();
       const hoja = this.esHoja();
       untracked(() => {
-        if (nodo !== null && !this.abiertoAntes) {
+        if (id !== null && !this.abiertoAntes) {
           const activo = this.document.activeElement;
           this.retorno = activo instanceof HTMLElement && activo !== this.document.body ? activo : null;
         }
-        if (nodo === null && this.abiertoAntes) this.alCerrar();
-        this.abiertoAntes = nodo !== null;
+        if (id === null && this.abiertoAntes) this.alCerrar();
+        this.abiertoAntes = id !== null;
         this.cancelarDescarga();
-        if (nodo === null) return;
+        if (id === null) return;
         afterNextRender(
           () => {
             const dialogo = this.hoja()?.nativeElement;
@@ -386,7 +330,7 @@ export class RedClinicaPanel {
   }
 
   protected tonoDeLectura(lectura: LecturaDeValor): 'error' | 'warning' | null {
-    if (lectura === 'critico-alto' || lectura === 'critico-bajo') return 'error';
+    if (lectura.startsWith('critico')) return 'error';
     if (lectura === 'normal' || lectura === 'sin-referencia') return null;
     return 'warning';
   }
