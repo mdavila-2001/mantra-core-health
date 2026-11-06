@@ -1,0 +1,53 @@
+<section class="alertas" aria-labelledby="red-alertas-titulo" data-testid="red-alertas">
+  <header class="alertas__cabecera">
+    <h2 class="alertas__titulo" id="red-alertas-titulo">
+      {{ titulo() }}
+      <span class="alertas__cuenta">{{ alertas().length }}</span>
+    </h2>
+    @if (altas() > 0) {
+      <p class="alertas__resumen">{{ altas() }} de prioridad alta</p>
+    }
+  </header>
+
+  @if (alertas().length === 0) {
+    <p class="alertas__vacio" data-testid="red-alertas-vacio">
+      Nada abierto en los registros a la vista: sin presuntivos por resolver, estudios sin resultado,
+      derivaciones pendientes ni valores fuera de rango.
+    </p>
+  } @else {
+    <ul class="alertas__lista">
+      @for (alerta of aLaVista(); track alerta.id) {
+        <li>
+          <button
+            type="button"
+            class="alerta alerta--{{ alerta.prioridad }}"
+            data-testid="red-alerta"
+            [attr.data-tipo]="alerta.tipo"
+            (click)="elegir(alerta)"
+            (mouseenter)="entrar(alerta)"
+            (mouseleave)="salir()"
+            (focus)="entrar(alerta)"
+            (blur)="salir()"
+          >
+            <span class="alerta__icono" aria-hidden="true"><app-nav-icon [name]="icono[alerta.tipo]" /></span>
+            <span class="alerta__texto">
+              <span class="alerta__prioridad">{{ prioridad[alerta.prioridad] }}</span>
+              <span class="alerta__titulo">{{ alerta.titulo }}</span>
+              <span class="alerta__detalle">{{ alerta.detalle }}</span>
+            </span>
+            <span class="alerta__ir" aria-hidden="true"><app-nav-icon name="arrow-right" /></span>
+          </button>
+        </li>
+      }
+    </ul>
+    @if (ocultas() > 0) {
+      <button app-button variant="ghost" size="sm" data-testid="red-alertas-todas" [attr.aria-expanded]="todas()" (clicked)="todas.set(!todas())">
+        {{ todas() ? 'Ver menos' : 'Ver las ' + alertas().length + ' alertas' }}
+      </button>
+    }
+  }
+
+  <p class="alertas__pie">
+    Señalan registros abiertos, repetidos o fuera de rango. No sugieren ni descartan diagnósticos.
+  </p>
+</section>

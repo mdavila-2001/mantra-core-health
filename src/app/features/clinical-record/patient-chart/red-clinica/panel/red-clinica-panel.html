@@ -1,0 +1,475 @@
+@if (nodo(); as n) {
+  @if (esHoja()) {
+    <!-- Teléfono: hoja inferior modal. El navegador atrapa el foco y entrega
+         `Escape` como `cancel`. -->
+    <dialog
+      #hoja
+      class="panel panel--hoja"
+      data-testid="red-panel"
+      [attr.aria-labelledby]="tituloId"
+      (cancel)="alCancelarHoja($event)"
+    >
+      <ng-container *ngTemplateOutlet="contenido; context: { $implicit: n }" />
+    </dialog>
+  } @else {
+    <!-- Escritorio: columna al lado del mapa, sin velo y sin atrapar el foco.
+         El `keydown` no hace interactivo al `<aside>`: escucha el `Escape` que
+         burbujea desde sus controles (y desde el título, que recibe el foco). -->
+    <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
+    <aside
+      class="panel panel--lateral"
+      data-testid="red-panel"
+      [attr.aria-labelledby]="tituloId"
+      (keydown.escape)="alPulsarEscape($event)"
+    >
+      <ng-container *ngTemplateOutlet="contenido; context: { $implicit: n }" />
+    </aside>
+  }
+}
+
+<ng-template #contenido let-n>
+  <header class="panel__cabecera">
+    <div class="panel__encabezado">
+      <p class="panel__tipo">
+        <app-nav-icon [name]="aspecto[n.tipo].icono" />
+        {{ aspecto[n.tipo].singular }}
+      </p>
+      <h2 #titulo class="panel__titulo" tabindex="-1" [id]="tituloId">{{ n.titulo }}</h2>
+      @if (n.subtitulo) {
+        <p class="panel__subtitulo">{{ n.subtitulo }}</p>
+      }
+    </div>
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      iconOnly
+      aria-label="Cerrar el detalle"
+      data-testid="red-panel-cerrar"
+      (clicked)="cerrar()"
+    >
+      <app-nav-icon name="close" />
+    </button>
+  </header>
+
+  <div class="panel__cuerpo">
+    <!-- Qué, cuándo, quién, estado. -->
+    <dl class="panel__hechos">
+      @if (n.estado) {
+        <div class="panel__hecho">
+          <dt>Estado</dt>
+          <dd>
+            <app-badge [variant]="n.estado.tono ?? 'info'" size="sm">{{ n.estado.etiqueta }}</app-badge>
+          </dd>
+        </div>
+      }
+      <div class="panel__hecho">
+        <dt>Cuándo</dt>
+        <dd>
+          @if (n.cuando) {
+            <time [attr.datetime]="n.cuando.toISOString()">{{ n.cuando | date: "d 'de' MMMM 'de' y, HH:mm" }}</time>
+            <span class="panel__tenue"> · {{ hace() }}</span>
+          } @else {
+            <span class="panel__tenue">Sin fecha registrada</span>
+          }
+        </dd>
+      </div>
+      <div class="panel__hecho">
+        <dt>Profesional</dt>
+        <dd>{{ n.profesional?.nombre ?? 'No registrado' }}</dd>
+      </div>
+      @if (n.especialidad) {
+        <div class="panel__hecho">
+          <dt>Especialidad</dt>
+          <dd>{{ n.especialidad.nombre }}</dd>
+        </div>
+      }
+    </dl>
+
+    @if (n.detalle; as d) {
+      @switch (d.tipo) {
+        <!-- ===== Estudio ===================================================== -->
+        @case ('estudio') {
+          <section class="panel__seccion" aria-labelledby="red-panel-estudio">
+            <h3 class="panel__seccion-titulo" id="red-panel-estudio">Pedido</h3>
+            <dl class="panel__pares">
+              @if (d.categoria) {
+                <div><dt>Categoría</dt><dd>{{ d.categoria }}</dd></div>
+              }
+              @if (d.prioridad) {
+                <div><dt>Prioridad</dt><dd>{{ d.prioridad }}</dd></div>
+              }
+              @if (d.motivo) {
+                <div><dt>Motivo</dt><dd>{{ d.motivo }}</dd></div>
+              }
+            </dl>
+          </section>
+
+          <section class="panel__seccion" aria-labelledby="red-panel-resultado" data-testid="red-panel-resultado">
+            <h3 class="panel__seccion-titulo" id="red-panel-resultado">Resultado</h3>
+            @if (d.resultado; as r) {
+              <p class="panel__linea">
+                Liberado el
+                <time [attr.datetime]="r.liberadoEn.toISOString()">{{ r.liberadoEn | date: "d 'de' MMMM 'de' y" }}</time>
+                @if (fueraDeRango() > 0) {
+                  ·
+                  <strong class="panel__fuera-resumen">
+                    {{ fueraDeRango() }} {{ fueraDeRango() === 1 ? 'valor fuera' : 'valores fuera' }} de rango
+                  </strong>
+                }
+              </p>
+              @if (filas().length > 0) {
+                <div class="panel__tabla-caja">
+                  <table class="panel__tabla">
+                    <caption class="panel__oculto">Valores del resultado con su rango de referencia</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Análisis</th>
+                        <th scope="col">Valor</th>
+                        <th scope="col">Referencia</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (f of filas(); track $index) {
+                        <tr [class.panel__fila--fuera]="f.fuera" data-testid="red-panel-valor">
+                          <th scope="row">{{ f.valor.nombre }}</th>
+                          <td>
+                            <span class="panel__valor">{{ f.texto }}</span>
+                            @if (tonoDeLectura(f.lectura); as tono) {
+                              <span class="panel__lectura panel__lectura--{{ tono }}">
+                                <span aria-hidden="true">{{ f.simbolo }}</span>
+                                {{ textoDeLectura[f.lectura] }}
+                              </span>
+                            }
+                          </td>
+                          <td class="panel__tenue">{{ f.rango }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+              @if (r.conclusion) {
+                <div class="panel__texto">
+                  <p class="panel__rotulo">Conclusión del informe</p>
+                  <p>{{ r.conclusion }}</p>
+                </div>
+              }
+              @if (r.archivos.length > 0) {
+                <ul class="panel__archivos">
+                  @for (archivo of r.archivos; track archivo.fileId) {
+                    <li>
+                      <button
+                        app-button
+                        variant="secondary"
+                        size="sm"
+                        data-testid="red-panel-archivo"
+                        [isLoading]="descargando(archivo.fileId)"
+                        (clicked)="abrirArchivo(archivo)"
+                      >
+                        <app-nav-icon name="download" />
+                        Descargar {{ archivo.nombre }}
+                      </button>
+                    </li>
+                  }
+                </ul>
+                @if (descarga(); as dl) {
+                  @switch (dl.estado.status) {
+                    @case ('forbidden') {
+                      <app-alert tone="warning" title="No puede abrir este archivo">
+                        El servidor no le da acceso al archivo del informe. Los valores de arriba siguen siendo los liberados.
+                      </app-alert>
+                    }
+                    @case ('not-found') {
+                      <app-alert tone="warning" title="El archivo no está disponible">
+                        No se encontró el archivo del informe.
+                      </app-alert>
+                    }
+                    @case ('offline') {
+                      <app-alert tone="warning" title="Sin conexión">
+                        No se pudo descargar el archivo. Revise la conexión y vuelva a intentarlo.
+                      </app-alert>
+                    }
+                    @case ('validation') {
+                      <app-alert tone="info" title="El archivo todavía no se puede abrir">
+                        Puede estar en revisión de seguridad. Intente de nuevo en unos minutos.
+                      </app-alert>
+                    }
+                    @case ('error') {
+                      <app-alert tone="error" title="No se pudo descargar el archivo">
+                        Intente de nuevo.
+                        @if (dl.estado.status === 'error') {
+                          Código de soporte: <code>{{ dl.estado.requestId }}</code>
+                        }
+                      </app-alert>
+                    }
+                    @case ('ready') {
+                      <p class="panel__tenue" role="status">Descarga iniciada.</p>
+                    }
+                  }
+                }
+              }
+            } @else {
+              <p class="panel__pendiente" data-testid="red-panel-sin-resultado">
+                Sin resultado liberado todavía
+                @if (n.cuando) {
+                  · pedido {{ hace() }}
+                }
+              </p>
+            }
+          </section>
+        }
+
+        <!-- ===== Diagnóstico ================================================= -->
+        @case ('diagnostico') {
+          <section class="panel__seccion" aria-labelledby="red-panel-razonamiento" data-testid="red-panel-razonamiento">
+            <h3 class="panel__seccion-titulo" id="red-panel-razonamiento">Razonamiento</h3>
+            <p class="panel__linea">
+              Certeza:
+              <strong>
+                @switch (d.certeza) {
+                  @case ('presuntivo') { Presuntivo, en estudio }
+                  @case ('confirmado') { Confirmado }
+                  @case ('descartado') { Descartado }
+                }
+              </strong>
+              @if (d.inicio) {
+                · inicio {{ d.inicio | date: "d MMM y" }}
+              }
+            </p>
+            @if (d.nota) {
+              <div class="panel__texto">
+                <p class="panel__rotulo">Hallazgos y justificación</p>
+                <p>{{ d.nota }}</p>
+              </div>
+            }
+            @if (d.decision; as dec) {
+              <div class="panel__texto">
+                <p class="panel__rotulo">
+                  {{ dec.resultado === 'confirmado' ? 'Confirmado' : 'Descartado' }}
+                  el {{ dec.decididoEn | date: "d 'de' MMMM 'de' y" }}
+                  @if (dec.decididoPor) {
+                    por {{ dec.decididoPor }}
+                  }
+                </p>
+                @if (dec.motivo) {
+                  <p>{{ dec.motivo }}</p>
+                }
+                @if (dec.evidencia; as ev) {
+                  <p class="panel__linea">
+                    Basado en {{ ev.tipo === 'nota' ? 'la nota' : 'el análisis' }}:
+                    @if (ev.nodoId) {
+                      <button type="button" class="panel__enlace" (click)="elegir(ev.nodoId)">{{ ev.etiqueta }}</button>
+                    } @else {
+                      {{ ev.etiqueta }}
+                    }
+                  </p>
+                }
+              </div>
+            } @else if (d.certeza === 'presuntivo') {
+              <p class="panel__pendiente">Todavía no se confirmó ni se descartó · registrado {{ hace() }}</p>
+            }
+            @if (d.reemplazadoPor; as rp) {
+              <p class="panel__linea" data-testid="red-panel-reemplazo">
+                Se descartó en favor de
+                <button type="button" class="panel__enlace" (click)="elegir(rp.nodoId)">{{ rp.etiqueta }}</button>
+              </p>
+            }
+          </section>
+        }
+
+        <!-- ===== Derivación ================================================== -->
+        @case ('derivacion') {
+          <section class="panel__seccion" aria-labelledby="red-panel-derivacion" data-testid="red-panel-derivacion">
+            <h3 class="panel__seccion-titulo" id="red-panel-derivacion">Derivación</h3>
+            <dl class="panel__pares">
+              @if (d.tipoDeDerivacion) {
+                <div><dt>Tipo</dt><dd>{{ d.tipoDeDerivacion }}</dd></div>
+              }
+              @if (d.destino) {
+                <div><dt>Destino</dt><dd>{{ d.destino }}</dd></div>
+              }
+              @if (d.motivo) {
+                <div><dt>Motivo</dt><dd>{{ d.motivo }}</dd></div>
+              }
+            </dl>
+            @if (d.resumenClinico) {
+              <div class="panel__texto">
+                <p class="panel__rotulo">Resumen clínico</p>
+                <p>{{ d.resumenClinico }}</p>
+              </div>
+            }
+            <div class="panel__texto">
+              <p class="panel__rotulo">Respuesta del destino</p>
+              @if (d.respuesta; as resp) {
+                <p>
+                  {{ resp.decision === 'aceptada' ? 'Aceptada' : 'Rechazada' }}
+                  @if (resp.en) {
+                    el {{ resp.en | date: "d 'de' MMMM 'de' y" }}
+                  }
+                  @if (resp.motivoDeRechazo) {
+                    · {{ resp.motivoDeRechazo }}
+                  }
+                </p>
+              } @else {
+                <p class="panel__pendiente">Sin respuesta todavía</p>
+              }
+            </div>
+            <div class="panel__texto">
+              <p class="panel__rotulo">Llegada</p>
+              @if (d.llegada; as ll) {
+                <p>
+                  Llegó el {{ ll.en | date: "d 'de' MMMM 'de' y, HH:mm" }}
+                  @if (ll.atencionNodoId) {
+                    ·
+                    <button type="button" class="panel__enlace" (click)="elegir(ll.atencionNodoId)">Ver la atención de llegada</button>
+                  }
+                </p>
+                @if (ll.notas) {
+                  <p>{{ ll.notas }}</p>
+                }
+              } @else {
+                <p class="panel__pendiente">Sin llegada registrada</p>
+              }
+            </div>
+            <div class="panel__texto">
+              <p class="panel__rotulo">Contrarreferencia</p>
+              @if (d.contrarreferencia; as cr) {
+                @if (cr.en) {
+                  <p class="panel__tenue">{{ cr.en | date: "d 'de' MMMM 'de' y" }}</p>
+                }
+                <p>{{ cr.texto }}</p>
+              } @else {
+                <p class="panel__pendiente">El destino todavía no devolvió su informe</p>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- ===== Cita / reconsulta =========================================== -->
+        @case ('cita') {
+          <ng-container *ngTemplateOutlet="cita; context: { $implicit: d }" />
+        }
+        @case ('reconsulta') {
+          <ng-container *ngTemplateOutlet="cita; context: { $implicit: d }" />
+        }
+
+        <!-- ===== El resto ==================================================== -->
+        @case ('general') {
+          @if (d.resumen || (d.datos && d.datos.length > 0)) {
+            <section class="panel__seccion" aria-labelledby="red-panel-general">
+              <h3 class="panel__seccion-titulo" id="red-panel-general">Detalle</h3>
+              @if (d.resumen) {
+                <p>{{ d.resumen }}</p>
+              }
+              @if (d.datos && d.datos.length > 0) {
+                <dl class="panel__pares">
+                  @for (dato of d.datos; track $index) {
+                    <div><dt>{{ dato.rotulo }}</dt><dd>{{ dato.valor }}</dd></div>
+                  }
+                </dl>
+              }
+            </section>
+          }
+        }
+      }
+    }
+
+    @if (n.tipo === 'cita' || n.tipo === 'reconsulta' || n.tipo === 'atencion') {
+      <section class="panel__seccion" aria-labelledby="red-panel-continuidad" data-testid="red-panel-continuidad">
+        <h3 class="panel__seccion-titulo" id="red-panel-continuidad">Origen y continuidad</h3>
+        <p class="panel__rotulo">Viene de</p>
+        @if (origen().length > 0) {
+          <ul class="panel__vinculos">
+            @for (v of origen(); track v.clave) {
+              <li><ng-container *ngTemplateOutlet="vinculo; context: { $implicit: v }" /></li>
+            }
+          </ul>
+        } @else {
+          <p class="panel__tenue">Sin cita, reconsulta ni derivación de origen registrada.</p>
+        }
+        <p class="panel__rotulo">Siguió con</p>
+        @if (siguientes().length > 0) {
+          <ul class="panel__vinculos">
+            @for (v of siguientes(); track v.clave) {
+              <li><ng-container *ngTemplateOutlet="vinculo; context: { $implicit: v }" /></li>
+            }
+          </ul>
+        } @else {
+          <p class="panel__tenue">Sin reconsultas ni derivaciones posteriores.</p>
+        }
+      </section>
+    }
+
+    <section class="panel__seccion" aria-labelledby="red-panel-vinculos" data-testid="red-panel-vinculos">
+      <h3 class="panel__seccion-titulo" id="red-panel-vinculos">
+        Vínculos <span class="panel__tenue">({{ vinculos().length }})</span>
+      </h3>
+      @if (vinculos().length > 0) {
+        <ul class="panel__vinculos">
+          @for (v of vinculos(); track v.clave) {
+            <li><ng-container *ngTemplateOutlet="vinculo; context: { $implicit: v }" /></li>
+          }
+        </ul>
+      } @else {
+        <p class="panel__tenue">Este registro no tiene vínculos guardados con otros.</p>
+      }
+    </section>
+  </div>
+</ng-template>
+
+<ng-template #cita let-d>
+  @if (d.motivo || d.modalidad || d.lugar) {
+    <section class="panel__seccion" aria-labelledby="red-panel-cita">
+      <h3 class="panel__seccion-titulo" id="red-panel-cita">{{ d.tipo === 'reconsulta' ? 'Reconsulta' : 'Cita' }}</h3>
+      <dl class="panel__pares">
+        @if (d.motivo) {
+          <div><dt>Motivo</dt><dd>{{ d.motivo }}</dd></div>
+        }
+        @if (d.modalidad) {
+          <div><dt>Modalidad</dt><dd>{{ d.modalidad }}</dd></div>
+        }
+        @if (d.lugar) {
+          <div><dt>Lugar</dt><dd>{{ d.lugar }}</dd></div>
+        }
+      </dl>
+    </section>
+  }
+</ng-template>
+
+<ng-template #vinculo let-v>
+  @if (v.otro; as otro) {
+    <button
+      type="button"
+      class="panel__vinculo"
+      data-testid="red-panel-vinculo"
+      (click)="elegir(v.otroId)"
+    >
+      <span class="panel__vinculo-icono" aria-hidden="true"><app-nav-icon [name]="aspecto[otro.tipo].icono" /></span>
+      <span class="panel__vinculo-texto">
+        <span class="panel__vinculo-relacion">
+          {{ v.sentido === 'saliente' ? '→' : '←' }} {{ v.relacion }}
+          @if (v.inferido) {
+            <span class="panel__inferido">inferido</span>
+          }
+        </span>
+        <span class="panel__vinculo-titulo">{{ aspecto[otro.tipo].singular }}: {{ otro.titulo }}</span>
+        @if (otro.cuando) {
+          <span class="panel__tenue">{{ otro.cuando | date: 'd MMM y' }}</span>
+        }
+      </span>
+    </button>
+  } @else {
+    <span class="panel__vinculo panel__vinculo--fuera">
+      <span class="panel__vinculo-texto">
+        <span class="panel__vinculo-relacion">
+          {{ v.relacion }}
+          @if (v.inferido) {
+            <span class="panel__inferido">inferido</span>
+          }
+        </span>
+        <span class="panel__tenue">Registro fuera de la vista actual (filtrado o fuera del tope de lectura)</span>
+      </span>
+    </span>
+  }
+</ng-template>

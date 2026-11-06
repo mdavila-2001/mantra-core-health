@@ -1,0 +1,93 @@
+/* ============================================================================
+    Barra de filtros de la red clínica.
+
+    Escritorio: búsqueda e hilo en la primera fila, los cuatro criterios en la
+    segunda, los tipos como chips debajo. Teléfono (< 780 px, el umbral del
+    cajón): los cuatro criterios se pliegan tras «Más filtros» para que el mapa
+    no quede bajo media pantalla de controles.
+    ========================================================================== */
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.filtros {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-card);
+  background: var(--bg-surface);
+}
+
+.filtros__fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: end;
+}
+
+.filtros__avanzados {
+  display: none;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+}
+
+.filtros__avanzados--abierto {
+  display: grid;
+}
+
+.filtros__mas {
+  justify-self: start;
+}
+
+.filtros__tipos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.filtros__rotulo {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-inline-end: var(--sp-1);
+}
+
+.filtros__resumen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-block-size: 2rem;
+}
+
+.filtros__cuenta {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+@media (min-width: 780px) {
+  .filtros__fila {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+
+  .filtros__mas {
+    display: none;
+  }
+
+  .filtros__avanzados {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .filtros__avanzados {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

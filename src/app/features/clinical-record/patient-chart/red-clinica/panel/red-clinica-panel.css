@@ -1,0 +1,418 @@
+/* ============================================================================
+    Panel de detalle de la red clínica.
+
+    Lateral: una columna que el padre pone al lado del mapa. Se pega arriba al
+    hacer scroll (`sticky`) y tiene su propio scroll, así el mapa no se mueve.
+    Hoja: `<dialog>` modal anclado abajo, casi a pantalla completa.
+    ========================================================================== */
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+.panel--lateral {
+  position: sticky;
+  inset-block-start: var(--sp-4);
+  max-block-size: calc(100dvh - var(--sp-8));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.panel--hoja {
+  margin: 0;
+  margin-block-start: auto;
+  padding: 0;
+  border: none;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  block-size: 92dvh;
+  max-block-size: 92dvh;
+  border-start-start-radius: var(--r-xl);
+  border-start-end-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.panel--hoja[open] {
+  display: flex;
+  animation: panel-hoja-entrada var(--dur-base) var(--ease-out);
+}
+
+.panel--hoja::backdrop {
+  background: var(--velo);
+}
+
+@keyframes panel-hoja-entrada {
+  from {
+    transform: translateY(2rem);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel--hoja[open] {
+    animation: none;
+  }
+}
+
+/* -- Cabecera ------------------------------------------------------------- */
+
+.panel__cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.panel__encabezado {
+  min-inline-size: 0;
+}
+
+.panel__tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.panel__tipo app-nav-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.panel__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.panel__titulo:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--r-xs);
+}
+
+.panel__subtitulo {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* -- Cuerpo --------------------------------------------------------------- */
+
+.panel__cuerpo {
+  flex: 1;
+  min-block-size: 0;
+  overflow-y: auto;
+  padding: var(--sp-4) var(--sp-5) var(--sp-6);
+  display: grid;
+  align-content: start;
+  gap: var(--sp-5);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.panel__hechos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--sp-3) var(--sp-4);
+  margin: 0;
+}
+
+.panel__hecho dt,
+.panel__pares dt,
+.panel__rotulo {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.panel__hecho dd,
+.panel__pares dd {
+  margin: var(--sp-1) 0 0;
+  overflow-wrap: anywhere;
+}
+
+.panel__seccion {
+  display: grid;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.panel__seccion-titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+}
+
+.panel__pares {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.panel__pares:empty {
+  display: none;
+}
+
+.panel__texto {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.panel__texto p,
+.panel__linea {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.panel__tenue {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+p.panel__tenue {
+  margin: 0;
+}
+
+.panel__pendiente {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-inline-start: 3px solid var(--st-warning-bd);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  border-radius: var(--r-sm);
+  font-weight: 600;
+  font-size: var(--fs-caption);
+}
+
+.panel__fuera-resumen {
+  color: var(--st-warning-fg);
+}
+
+/* -- Tabla de valores ----------------------------------------------------- */
+
+.panel__tabla-caja {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+
+.panel__tabla {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.panel__tabla th,
+.panel__tabla td {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: start;
+  vertical-align: top;
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.panel__tabla tbody tr:last-child th,
+.panel__tabla tbody tr:last-child td {
+  border-block-end: none;
+}
+
+.panel__tabla thead th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-surface-alt);
+}
+
+.panel__tabla tbody th {
+  font-weight: 500;
+}
+
+.panel__fila--fuera {
+  background: var(--st-warning-bg);
+}
+
+.panel__valor {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.panel__lectura {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-inline-start: var(--sp-2);
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-pill);
+  border: 1px solid;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.panel__lectura--warning {
+  color: var(--st-warning-fg);
+  background: var(--st-warning-bg);
+  border-color: var(--st-warning-bd);
+}
+
+.panel__lectura--error {
+  color: var(--st-error-fg);
+  background: var(--st-error-bg);
+  border-color: var(--st-error-bd);
+}
+
+.panel__archivos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* -- Enlaces y vínculos --------------------------------------------------- */
+
+.panel__enlace {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--text-link);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+  text-align: start;
+}
+
+.panel__enlace:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--r-xs);
+}
+
+.panel__vinculos {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel__vinculo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+
+button.panel__vinculo:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-default);
+}
+
+button.panel__vinculo:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.panel__vinculo--fuera {
+  cursor: default;
+  border-style: dashed;
+  background: var(--bg-surface-alt);
+}
+
+.panel__vinculo-icono {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+}
+
+.panel__vinculo-icono app-nav-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.panel__vinculo-texto {
+  display: grid;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.panel__vinculo-relacion {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.panel__vinculo-titulo {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.panel__inferido {
+  display: inline-block;
+  margin-inline-start: var(--sp-1);
+  padding: 0 var(--sp-2);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-caption);
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.panel__oculto {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
