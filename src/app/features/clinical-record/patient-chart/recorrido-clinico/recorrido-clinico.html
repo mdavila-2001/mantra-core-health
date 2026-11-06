@@ -107,17 +107,17 @@
               [style.height.px]="medidas.altoEje"
               [attr.title]="columna.intervalo === '' ? null : '+ ' + columna.intervalo"
             >
-              @if (columna.ancha && columna.intervalo !== '' && columna.hueco >= 56) {
-                <span class="red__intervalo" [style.inset-inline-start.px]="-columna.hueco / 2">
-                  {{ columna.intervalo === 'el mismo día' ? columna.intervalo : '+ ' + columna.intervalo }}
-                </span>
+              @let mismoDia = columna.intervalo === 'el mismo día';
+              @if (columna.ancha && columna.intervalo !== '' && !mismoDia && columna.hueco >= 56) {
+                <span class="red__intervalo" [style.inset-inline-start.px]="-columna.hueco / 2">+ {{ columna.intervalo }}</span>
               }
               @if (columna.ancha) {
-                <p class="red__fecha">{{ columna.fecha ? (columna.fecha | date: 'd MMM y') : 'Sin fecha' }}</p>
+                <!-- A second column on the same day does not repeat the date. -->
+                <p class="red__fecha">{{ mismoDia ? 'Mismo día' : columna.fecha ? (columna.fecha | date: 'd MMM y') : 'Sin fecha' }}</p>
                 <p class="red__contexto">{{ contextoDe(columna) }}</p>
               } @else {
-                <p class="red__fecha red__fecha--corta">{{ columna.fecha ? (columna.fecha | date: 'd MMM') : '—' }}</p>
-                <p class="red__contexto">{{ columna.fecha ? (columna.fecha | date: 'y') : 'Sin fecha' }}</p>
+                <p class="red__fecha red__fecha--corta">{{ mismoDia ? 'Mismo' : columna.fecha ? (columna.fecha | date: 'd MMM') : '—' }}</p>
+                <p class="red__contexto">{{ mismoDia ? 'día' : columna.fecha ? (columna.fecha | date: 'y') : 'Sin fecha' }}</p>
               }
               <span class="red__marca-eje" [class.red__marca-eje--atencion]="columna.contexto === 'atencion'"></span>
             </li>
@@ -146,6 +146,13 @@
                 (alternar)="alternarEpisodio($event)"
               ></div>
               @if (!hilo.desplegado) {
+                @let f = fuera().hilos.get(hilo.episodio.id);
+                @if (f && f.antes > 0) {
+                  <button type="button" class="red__fuera" data-testid="red-fuera" [style.top.px]="hilo.yPista - hilo.y" [style.left.px]="fuera().desde + 8" (click)="verHitos(hilo)" [attr.aria-label]="'Ver ' + f.antes + (f.antes === 1 ? ' marca de ' : ' marcas de ') + hilo.episodio.nombre + (f.antes === 1 ? ' anterior' : ' anteriores') + ' a lo visible'">← {{ f.antes }} antes</button>
+                }
+                @if (f && f.despues > 0) {
+                  <button type="button" class="red__fuera red__fuera--despues" data-testid="red-fuera" [style.top.px]="hilo.yPista - hilo.y" [style.left.px]="fuera().hasta - 8" (click)="verHitos(hilo)" [attr.aria-label]="'Ver ' + f.despues + (f.despues === 1 ? ' marca de ' : ' marcas de ') + hilo.episodio.nombre + (f.despues === 1 ? ' posterior' : ' posteriores') + ' a lo visible'">{{ f.despues }} después →</button>
+                }
                 @if (hilo.hitos.length > 1) {
                   <span
                     class="red__pista"

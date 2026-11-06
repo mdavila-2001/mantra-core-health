@@ -39,6 +39,9 @@
 }
 
 .red__episodio-nombre {
+  /* The name gives way last: the counts are cut first. */
+  flex: 0 1 auto;
+  min-inline-size: 8ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -53,11 +56,12 @@
 }
 
 .red__episodio-datos {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
+  /* Block, not flex: a cut-off summary ends in an ellipsis, not mid-word. */
+  display: block;
+  flex: 0 1000 auto;
   min-inline-size: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
@@ -66,17 +70,25 @@
 
 .red__episodio-rango {
   font-variant-numeric: tabular-nums;
-  text-transform: capitalize;
 }
 
 .red__episodio-conteo::before,
 .red__episodio-descartados::before {
   content: '·';
-  margin-inline-end: var(--sp-2);
+  margin-inline: var(--sp-1);
+}
+
+/* With no date range the first count opens the line: no loose «·». */
+.red__episodio-datos > :first-child::before {
+  content: none;
 }
 
 .red__episodio-descartados {
   color: var(--st-error-fg);
+}
+
+:host-context(.red-v__episodio.red__hilo--resaltado) .red__alternar {
+  border-inline-start: 4px solid var(--st-warning-fg);
 }
 
 :host-context(.red-v) .red__alternar {
@@ -90,7 +102,33 @@
 }
 
 :host-context(.red-v) .red__episodio-datos {
+  /* On the phone the summary wraps: separated by gap, never by a «·» left
+     alone at a line's end. */
+  display: flex;
   flex-wrap: wrap;
+  gap: 0 var(--sp-3);
   white-space: normal;
   inline-size: 100%;
+}
+
+:host-context(.red-v) .red__episodio-datos > ::before {
+  content: none;
+}
+
+/* A narrow canvas (the side panel open at 1024 px): the name is what must
+   read. Status and counts step aside (they stay in the button's accessible
+   name) and the name wraps to two lines instead of being cut. */
+@container (max-width: 480px) {
+  .red__alternar > .red__estado,
+  .red__episodio-datos {
+    display: none;
+  }
+
+  .red__episodio-nombre {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    line-height: var(--lh-caption);
+  }
 }

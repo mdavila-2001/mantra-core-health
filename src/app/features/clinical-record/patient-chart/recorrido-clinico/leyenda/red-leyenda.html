@@ -12,7 +12,7 @@
     <span class="red__muestra-hito red__hito--momento" aria-hidden="true"></span> Atención o cita
   </li>
 }
-@for (item of items(); track item.motivo) {
+@for (item of items(); track item.clave) {
   <li class="red__leyenda-item" [attr.data-motivo]="item.motivo">
     <svg class="red__muestra" viewBox="0 0 28 8" aria-hidden="true" focusable="false">
       <path

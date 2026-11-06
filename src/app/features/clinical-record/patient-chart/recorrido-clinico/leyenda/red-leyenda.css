@@ -17,6 +17,10 @@
 
 .red__muestra-hito {
   position: relative;
+  /* The canvas milestone's base (`.red__hito`) is not on the sample: without
+     its border the hollow «Presuntivo» diamond did not show. */
+  border: 2px solid var(--border-strong);
+  background: var(--bg-surface);
   display: inline-block;
   inline-size: 12px;
   block-size: 12px;

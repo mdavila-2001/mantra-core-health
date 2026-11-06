@@ -65,6 +65,10 @@
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   overscroll-behavior-x: contain;
+  /* The thread headers measure themselves against the visible canvas (cqi),
+     not the viewport: wider than the view, a sticky header slid out of its
+     band and the episode name was cut on the left. */
+  container-type: inline-size;
 }
 
 .red__lienzo:focus-visible {
@@ -104,7 +108,6 @@
   line-height: var(--lh-body);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  text-transform: capitalize;
   color: var(--text-primary);
   white-space: nowrap;
 }
@@ -129,6 +132,7 @@
 /* The mark on the axis: filled for an encounter, hollow for a loose day. */
 .red__marca-eje {
   position: absolute;
+  z-index: 2;
   inset-block-end: 8px;
   inset-inline-start: 50%;
   inline-size: 12px;
@@ -147,6 +151,8 @@
 
 .red__intervalo {
   position: absolute;
+  /* Above the axis line (the SVG, z-index 1): under it the label read struck through. */
+  z-index: 2;
   inset-block-end: 2px;
   translate: -50% 0;
   padding: 0 var(--sp-2);
@@ -188,8 +194,36 @@
   inset-inline-start: 0;
   display: inline-flex;
   align-items: center;
-  max-inline-size: min(100%, calc(100vw - 2 * var(--sp-6)));
+  max-inline-size: min(100%, calc(100cqi - var(--sp-2)));
   padding-inline: var(--sp-2);
+}
+
+/* A collapsed thread whose milestones are out of view says so on its track:
+   the canvas opens at the end and an older episode looked empty. */
+.red__fuera {
+  position: absolute;
+  z-index: 3;
+  translate: 0 -50%;
+  min-block-size: 28px;
+  padding: 0 var(--sp-3);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-link);
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-full);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.red__fuera--despues {
+  translate: -100% -50%;
+}
+
+.red__fuera:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 /* -- The nodes --------------------------------------------------------------- */
@@ -211,6 +245,10 @@
   border-radius: var(--r-sm);
   box-shadow: var(--shadow-sm);
   cursor: pointer;
+  /* Brought into view (alert, panel, guided step): clear of the fixed app
+     header above and of the canvas edges at the sides. */
+  scroll-margin-block: calc(var(--header-height, 4rem) + var(--sp-4)) var(--sp-6);
+  scroll-margin-inline: var(--sp-6);
   transition:
     opacity var(--dur-base) ease,
     box-shadow var(--dur-fast) ease,
@@ -232,8 +270,13 @@
     var(--shadow-md);
 }
 
+/* Off the lit path: the card recedes (flat, inset, faint border) but its
+   text keeps full contrast; a translucent card fell to 2:1 in dark mode. */
 .red__nodo--atenuado {
-  opacity: 0.35;
+  background: var(--bg-inset);
+  border-color: var(--border-subtle);
+  border-inline-start-color: var(--border-default);
+  box-shadow: none;
 }
 
 .red__nodo--resaltado {
@@ -291,6 +334,12 @@
 .red-v__episodio {
   display: grid;
   gap: var(--sp-3);
+}
+
+/* On the phone the highlight goes on the episode's own border (cabecera),
+   not as a second rule outside it: nested borders. */
+.red-v .red__hilo--resaltado {
+  box-shadow: none;
 }
 
 .red-v .red__cabecera-hilo {

@@ -4,12 +4,21 @@
     and jumps to a stretch only when it is not already in view.
     ========================================================================== */
 
+import { signal } from '@angular/core';
+
 /** Whether the person asked for reduced motion. */
 export function reducirMovimiento(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 export class DesplazamientoDelLienzo {
+  /**
+   * The stretch of the plane in view, in canvas pixels. With it each thread
+   * says what it has left or right of the view: the canvas opens at the end,
+   * and an episode from a year ago looked empty.
+   */
+  readonly ventana = signal<{ readonly desde: number; readonly hasta: number }>({ desde: 0, hasta: Number.POSITIVE_INFINITY });
+
   /**
    * Whether the canvas is still stuck to the end. Whoever scrolls releases it,
    * and so does expanding an episode: the canvas goes to its records.
@@ -37,16 +46,19 @@ export class DesplazamientoDelLienzo {
       this.irA('final', false);
       propio = lienzo.scrollLeft;
     };
+    const medir = (): void => this.ventana.set({ desde: lienzo.scrollLeft, hasta: lienzo.scrollLeft + lienzo.clientWidth });
     const observador = new ResizeObserver(() => {
       if (this.pegadoAlFinal) {
         pegar();
       }
+      medir();
     });
     observador.observe(lienzo);
     if (lienzo.firstElementChild !== null) {
       observador.observe(lienzo.firstElementChild);
     }
     const alDesplazar = (): void => {
+      medir();
       if (Math.abs(lienzo.scrollLeft - propio) <= 1) {
         return;
       }
@@ -56,6 +68,7 @@ export class DesplazamientoDelLienzo {
     };
     lienzo.addEventListener('scroll', alDesplazar, { passive: true });
     pegar();
+    medir();
     this.soltarLienzo = () => {
       observador.disconnect();
       lienzo.removeEventListener('scroll', alDesplazar);

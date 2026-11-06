@@ -185,6 +185,18 @@ export class RecorridoClinico {
     this.destroyRef.onDestroy(() => this.desplazamiento.soltar());
   }
 
+  /** Per collapsed thread, how many of its milestones are left and right of the view, and where the view is. */
+  protected readonly fuera = computed(() => {
+    const v = this.desplazamiento.ventana();
+    const conteo = (h: HiloDeLaRed) => ({ antes: h.hitos.filter((x) => x.x < v.desde).length, despues: h.hitos.filter((x) => x.x > v.hasta).length });
+    return { ...v, hilos: new Map(this.plano().hilos.filter((h) => !h.desplegado).map((h) => [h.episodio.id, conteo(h)])) };
+  });
+
+  protected verHitos(hilo: HiloDeLaRed): void {
+    this.desplazamiento.pegadoAlFinal = false;
+    this.desplazamiento.mostrarTramo(hilo.hitos[0].x - this.medidas.anchoAncha, hilo.hitos[hilo.hitos.length - 1].x + this.distanciaDelTronco);
+  }
+
   protected irA(extremo: 'inicio' | 'final'): void {
     this.desplazamiento.irA(extremo);
   }
@@ -339,13 +351,8 @@ export class RecorridoClinico {
 
   /** The node's relations in words: what replaces the lines in the vertical layout. */
   protected readonly relaciones = computed(() => {
-    const porId = this.porId();
-    const vinculos = this.vinculos();
-    const mapa = new Map<string, readonly string[]>();
-    for (const r of this.registros()) {
-      mapa.set(r.id, relacionesDe(r.id, vinculos, porId));
-    }
-    return mapa;
+    const [porId, vinculos] = [this.porId(), this.vinculos()];
+    return new Map<string, readonly string[]>(this.registros().map((r) => [r.id, relacionesDe(r.id, vinculos, porId)]));
   });
 
   protected readonly nombres = computed(() =>

@@ -72,7 +72,6 @@
   white-space: nowrap;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
-  text-transform: capitalize;
 }
 
 :host(.red__nodo--grupo) .red__nodo-principal {

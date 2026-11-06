@@ -80,3 +80,15 @@
     justify-content: center;
   }
 }
+
+/* On the phone the chart's card already frames the page: a second outline
+   inside it was a nested border. The strips keep their rules. */
+@media (max-width: 649px) {
+  .superficie.superficie {
+    border-color: transparent;
+  }
+
+  .superficie__franja:not(.superficie__guiado) {
+    padding-inline: 0;
+  }
+}

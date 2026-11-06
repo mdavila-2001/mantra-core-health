@@ -3,6 +3,8 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { NOMBRE_DEL_MOTIVO, type MotivoDelVinculo } from '../red-clinica.model';
 import type { AristaDeLaRed } from '../red-clinica.geometria.types';
 
+type Familia = 'tronco' | 'enlace' | 'inferido';
+
 /** The links the legend explains, in the order it explains them. */
 const ORDEN_DE_LA_LEYENDA: readonly MotivoDelVinculo[] = [
   'registrado-en',
@@ -37,13 +39,28 @@ export class RedLeyenda {
   /** Whether the strip's milestones are explained (something is collapsed). */
   readonly conHitos = input(true);
 
-  /** The reasons on screen. */
+  /**
+   * The lines on screen, by reason AND by how they are drawn: the family comes
+   * from the geometry (same column: trunk; otherwise: link), so a reason drawn
+   * both ways gets two samples, the trunk one saying «en la misma atención».
+   */
   protected readonly items = computed(() => {
-    const presentes = new Set(this.aristas().map((a) => a.motivo));
-    return ORDEN_DE_LA_LEYENDA.filter((m) => presentes.has(m)).map((motivo) => ({
-      motivo,
-      nombre: NOMBRE_DEL_MOTIVO[motivo],
-      familia: motivo.startsWith('inferido-') ? 'inferido' : motivo === 'registrado-en' || motivo === 'derivado-desde' ? 'tronco' : 'enlace',
-    }));
+    const presentes = new Map<MotivoDelVinculo, Set<Familia>>();
+    for (const a of this.aristas()) {
+      const familia: Familia = a.inferido ? 'inferido' : a.familia;
+      presentes.set(a.motivo, (presentes.get(a.motivo) ?? new Set<Familia>()).add(familia));
+    }
+    return ORDEN_DE_LA_LEYENDA.flatMap((motivo) => {
+      const familias = [...(presentes.get(motivo) ?? [])].sort();
+      return familias.map((familia) => ({
+        clave: `${motivo}:${familia}`,
+        motivo,
+        familia,
+        nombre:
+          familia === 'tronco' && familias.length > 1
+            ? `${NOMBRE_DEL_MOTIVO[motivo]} (en la misma atención)`
+            : NOMBRE_DEL_MOTIVO[motivo],
+      }));
+    });
   });
 }
