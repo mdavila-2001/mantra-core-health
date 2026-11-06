@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cirugía general: abdomen y vías de acceso</title>
+  <desc id="d">A la izquierda, un abdomen con el hígado, la vesícula, el estómago y el colon, y marcas en la vesícula, el apéndice y una hernia de la pared, operaciones frecuentes de la cirugía general. A la derecha, la comparación entre la cirugía abierta, con una incisión amplia, y la laparoscopia, con pequeñas incisiones por donde entran la cámara y los instrumentos, y las urgencias más habituales.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Órganos que opera</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Abierta o laparoscópica</text>
+<path d="M80 70 L320 70 C334 140 336 260 320 360 L80 360 C64 260 66 140 80 70 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M110 100 C110 84 200 80 230 92 C260 104 250 130 220 140 C180 150 120 144 110 100 Z" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="150" y="116" text-anchor="middle" class="small">Hígado</text>
+<ellipse cx="196" cy="146" rx="12" ry="9" fill="var(--ok)"/>
+<path d="M240 100 C290 96 300 140 270 160 C250 170 230 150 240 100 Z" fill="var(--organ)" stroke="none" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" opacity=".55"/>
+<text x="268" y="132" text-anchor="middle" class="small">Estómago</text>
+<path d="M110 210 C100 180 130 170 200 170 C270 170 300 180 290 210 L290 300 C290 320 110 320 110 300 Z" fill="none" stroke="var(--warn)" stroke-width="14" stroke-linejoin="round" stroke-linecap="round" opacity=".55"/>
+<path d="M150 220 C170 200 230 240 250 216 S220 280 200 260 S150 280 160 250" fill="none" stroke="var(--warn)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" opacity=".5"/>
+<circle cx="116" cy="300" r="8" fill="var(--bad)" opacity=".8"/>
+<text x="200" y="196" text-anchor="middle" class="small">Colon</text>
+<circle cx="260" cy="340" r="9" fill="var(--purple)" opacity=".7"/>
+<text x="40" y="172" class="small" style="fill:var(--bad)">Vesícula</text>
+<text x="40" y="344" class="small" style="fill:var(--bad)">Apéndice</text>
+<text x="280" y="390" class="small" style="fill:var(--purple)">Hernia</text>
+<line x1="102" y1="168" x2="184" y2="148" stroke="var(--bad)" stroke-width="1"/>
+<line x1="100" y1="340" x2="110" y2="308" stroke="var(--bad)" stroke-width="1"/>
+<line x1="286" y1="378" x2="264" y2="350" stroke="var(--purple)" stroke-width="1"/>
+<text x="200" y="416" text-anchor="middle" class="small" style="fill:var(--muted)">También mama, tiroides, piel y urgencias.</text>
+<text x="496" y="76" text-anchor="middle" class="step" style="fill:var(--accent)">Cirugía abierta</text>
+<path d="M436 96 L556 96 C566 150 566 220 556 270 L436 270 C426 220 426 150 436 96 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="496" y1="120" x2="496" y2="240" stroke="var(--accent)" stroke-width="4"/>
+<line x1="488" y1="130" x2="504" y2="130" stroke="var(--accent)" stroke-width="2"/>
+<line x1="488" y1="150" x2="504" y2="150" stroke="var(--accent)" stroke-width="2"/>
+<line x1="488" y1="170" x2="504" y2="170" stroke="var(--accent)" stroke-width="2"/>
+<line x1="488" y1="190" x2="504" y2="190" stroke="var(--accent)" stroke-width="2"/>
+<line x1="488" y1="210" x2="504" y2="210" stroke="var(--accent)" stroke-width="2"/>
+<line x1="488" y1="230" x2="504" y2="230" stroke="var(--accent)" stroke-width="2"/>
+<text x="496" y="296" text-anchor="middle" class="small">Una incisión amplia</text>
+<text x="496" y="312" text-anchor="middle" class="small" style="fill:var(--muted)">acceso directo</text>
+<text x="676" y="76" text-anchor="middle" class="step" style="fill:var(--ok)">Laparoscopia</text>
+<path d="M616 96 L736 96 C746 150 746 220 736 270 L616 270 C606 220 606 150 616 96 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="676" cy="150" r="5" fill="var(--ok)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="636" cy="200" r="5" fill="var(--ok)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="716" cy="200" r="5" fill="var(--ok)" stroke="var(--panel)" stroke-width="2"/>
+<line x1="636" y1="200" x2="666" y2="170" stroke="var(--ok)" stroke-width="3"/>
+<line x1="716" y1="200" x2="688" y2="170" stroke="var(--ok)" stroke-width="3"/>
+<text x="676" y="296" text-anchor="middle" class="small">Pequeñas incisiones</text>
+<text x="676" y="312" text-anchor="middle" class="small" style="fill:var(--muted)">cámara e instrumentos</text>
+<text x="416" y="350" class="h">Urgencias frecuentes</text>
+<text x="416" y="374" class="small">Apendicitis, colecistitis, obstrucción</text>
+<text x="416" y="390" class="small">intestinal, traumatismos abdominales.</text>
+<text x="416" y="418" class="small" style="fill:var(--muted)">Laparoscopia: menos dolor y recuperación más rápida.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

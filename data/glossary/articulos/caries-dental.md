@@ -1,5 +1,6 @@
 ---
 slug: caries-dental
+image: caries-dental.svg | La caries avanza del esmalte a la dentina y puede llegar a la pulpa. | Corte de un diente con esmalte, dentina, pulpa y encía y una caries en el esmalte, junto a la cadena azúcar, bacterias, ácido y pérdida de minerales, y medidas de prevención.
 ---
 
 ## [definition] Introducción

@@ -71,13 +71,22 @@
   background: var(--bg-surface-alt);
   text-align: center;
   transition:
-    border-color 150ms ease,
-    background-color 150ms ease;
+    border-color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
 }
 
 .results__drop--active {
   border-color: var(--c-aqua-500);
   background: var(--bg-hover);
+}
+
+/* Con «Elegir archivos» o «Elegir una carpeta» abiertos la zona no invita a soltar. */
+.results__drop--picker-open {
+  border-style: solid;
+  border-color: var(--border-default);
+}
+.results__drop--picker-open .results__drop-title {
+  color: var(--text-secondary);
 }
 
 .results__drop-icon {

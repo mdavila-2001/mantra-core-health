@@ -155,20 +155,6 @@ export interface Environment {
    */
   readonly apiBaseUrl: string;
 
-  /**
-   * Raíz del servicio de triage por IA (AlovidaAIService): convierte lo que el
-   * paciente escribe o dicta en síntomas, partes del cuerpo y especialistas.
-   *
-   * Relativa por defecto (`/ai`), igual que las trazas: el navegador le habla
-   * al mismo origen desde el que se sirvió, así la política de seguridad de
-   * contenido se queda en `connect-src 'self'` y no hay CORS que negociar. En
-   * el despliegue la resuelve Traefik; en `yarn start`, `proxy.conf.mjs`.
-   *
-   * Se define por entorno con `PUBLIC_AI_BASE_URL`. El servicio es público y
-   * no lleva credencial: no hay nada que filtrar desde acá.
-   */
-  readonly aiBaseUrl: string;
-
   /** Ver {@link TelemetryEnvironment}. */
   readonly telemetry: TelemetryEnvironment;
 
@@ -275,6 +261,16 @@ export interface Environment {
   readonly designMockups: boolean;
 
   /**
+   * Maqueta comercial de reportería (`features/reporting/`, datos de ejemplo
+   * generados en el navegador). **Apagada por defecto**: con `false` el portal
+   * no se ofrece en el login ni en el Centro, `/reports/**` redirige al panel de
+   * observabilidad y `/portal-selector` a la raíz. Se enciende con
+   * `PUBLIC_REPORTING_MOCK=true` (o con la configuración demo) para las capturas
+   * del simulador. La API real no tiene las rutas que la maqueta consulta.
+   */
+  readonly reportingMockEnabled: boolean;
+
+  /**
    * El refresh token viaja en una cookie `httpOnly` que pone y lee la API, y no
    * en el cuerpo de las respuestas ni en `localStorage` (TX-10, decisión D-I).
    *
@@ -289,7 +285,7 @@ export interface Environment {
   /**
    * Rama `mockup`: la aplicación no habla con ninguna API. Un interceptor
    * responde cada petición desde datos de prueba en memoria, con todas las
-   * pantallas pobladas. Ver `src/app/core/mock/`.
+   * pantallas pobladas. Ver el simulador, en la carpeta `mock/` de `src/app/core/`.
    */
   readonly mockBackend: boolean;
 }
@@ -304,7 +300,6 @@ export interface Environment {
  */
 export interface EnvironmentOverrides {
   readonly apiBaseUrl?: string;
-  readonly aiBaseUrl?: string;
   readonly telemetry?: Partial<TelemetryEnvironment>;
   readonly uxAnalytics?: Partial<UxAnalyticsEnvironment>;
   readonly demoPresets?: boolean;
@@ -313,6 +308,7 @@ export interface EnvironmentOverrides {
   readonly campaignsDemo?: boolean;
   readonly billingSiatDemo?: boolean;
   readonly designMockups?: boolean;
+  readonly reportingMockEnabled?: boolean;
   readonly refreshCookie?: boolean;
   readonly mockBackend?: boolean;
 }

@@ -1,0 +1,141 @@
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { of } from 'rxjs';
+import { describe, expect, it, vi } from 'vitest';
+
+import { CenterScheduleClient } from '../../../core/data-access/diagnostic-units/center-schedule.client';
+import { horarioDeSemana } from '../../../core/data-access/diagnostic-units/center-schedule.rules';
+import type { CenterBookingPage, CenterSchedule, CenterScheduleView } from '../../../core/data-access/diagnostic-units/center-schedule.types';
+import { CenterSchedulePage } from './center-schedule';
+
+const VISTA: CenterScheduleView = {
+  unitId: 'sur',
+  unitName: 'Centro de Imagen Sur',
+  kind: 'IMAGING',
+  schedule: { general: horarioDeSemana('08:00', '17:00', 30), modalities: [], studies: [] },
+  studies: [
+    { code: 'STUDY-ECO-ABD', name: 'Ecografía abdominal', modalityCode: 'ECO', price: 340, currency: 'BOB', preparation: null },
+    { code: 'STUDY-ECO-OBSTETRICA', name: 'Ecografía obstétrica', modalityCode: 'ECO', price: 300, currency: 'BOB', preparation: null },
+    { code: 'STUDY-RX-TORAX', name: 'Radiografía de tórax', modalityCode: 'RX', price: 120, currency: 'BOB', preparation: null },
+  ],
+  equipment: [
+    { id: 'eco-1', name: 'Ecógrafo', manufacturer: 'GE', model: 'Logiq', modalityCode: 'ECO', status: 'OPERATIONAL', glossaryConceptId: null },
+    { id: 'eco-2', name: 'Ecógrafo portátil', manufacturer: null, model: null, modalityCode: 'ECO', status: 'OUT_OF_SERVICE', glossaryConceptId: null },
+    { id: 'rx-1', name: 'Rayos X', manufacturer: null, model: null, modalityCode: 'RX', status: 'OPERATIONAL', glossaryConceptId: null },
+  ],
+  updatedAt: null,
+};
+
+async function montar(cliente: Partial<CenterScheduleClient>) {
+  TestBed.configureTestingModule({
+    providers: [
+      provideRouter([{ path: 'administration/center-schedule', component: CenterSchedulePage }]),
+      // Today's queue of each line comes from the center's bookings.
+      { provide: CenterScheduleClient, useValue: { getMyBookings: () => of({ items: [], count: 0 }), ...cliente } },
+    ],
+  });
+  const harness = await RouterTestingHarness.create();
+  await harness.navigateByUrl('/administration/center-schedule');
+  harness.fixture.detectChanges();
+  const el = harness.routeNativeElement as HTMLElement;
+  const clic = async (b: HTMLElement): Promise<void> => {
+    b.click();
+    harness.fixture.detectChanges();
+    await harness.fixture.whenStable();
+    harness.fixture.detectChanges();
+  };
+  const opcion = (testid: string, texto: string): HTMLElement =>
+    [...el.querySelectorAll(`[data-testid="${testid}"] [role="radio"]`)].find((b) => b.textContent?.trim() === texto) as HTMLElement;
+  return { el, clic, opcion };
+}
+
+describe('CenterSchedulePage', () => {
+  it('sin horarios propios, el general se llama «Horario general» y cubre todas las modalidades', async () => {
+    const { el } = await montar({ getMySchedule: () => of(VISTA) });
+    expect(el.querySelector('[data-testid="centro-horario-general-titulo"]')?.textContent?.trim()).toBe('Horario general');
+    expect(el.querySelector('[data-testid="centro-resumen"]')?.textContent).toContain('1 paciente por horario (1 ecógrafo)');
+  });
+
+  it('dar horario propio a una modalidad convierte el general en «Resto de servicios» y publica ese horario', async () => {
+    const saveSchedule = vi.fn((_unit: string, schedule: CenterSchedule) => of({ ...VISTA, schedule }));
+    const { el, clic, opcion } = await montar({ getMySchedule: () => of(VISTA), saveSchedule });
+    await clic(opcion('centro-propio-ECO', 'Sí'));
+    expect(el.querySelector('[data-testid="centro-horario-general-titulo"]')?.textContent?.trim()).toBe('Resto de servicios');
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-publicar"]')!);
+    expect(saveSchedule).toHaveBeenCalledTimes(1);
+    const enviado = saveSchedule.mock.calls[0]![1];
+    expect(enviado.modalities.map((m) => m.modalityCode)).toEqual(['ECO']);
+    expect(el.querySelector('[data-testid="centro-publicado"]')).not.toBeNull();
+  });
+
+  it('no publica un horario propio sin días: muestra qué falta', async () => {
+    const saveSchedule = vi.fn();
+    const { el, clic, opcion } = await montar({ getMySchedule: () => of(VISTA), saveSchedule });
+    await clic(opcion('centro-propio-ECO', 'Sí'));
+    for (const dia of [1, 2, 3, 4, 5]) {
+      await clic(opcion(`centro-ECO-dia-${dia}`, 'No'));
+    }
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-publicar"]')!);
+    expect(saveSchedule).not.toHaveBeenCalled();
+    expect(el.querySelector('[data-testid="centro-problemas"]')?.textContent).toContain('Ecografía: marque al menos un día de atención.');
+  });
+
+  it('marcar un equipo como operativo lo manda al servidor', async () => {
+    const setEquipmentStatus = vi.fn(() => of(VISTA));
+    const { el, clic } = await montar({ getMySchedule: () => of(VISTA), setEquipmentStatus });
+    const pestana = [...el.querySelectorAll('[role="tab"]')].find((t) => t.textContent?.trim() === 'Equipos') as HTMLElement;
+    await clic(pestana);
+    // The status is an `app-select`: open it from its trigger and pick the option, like a person would.
+    await clic(el.querySelector<HTMLElement>('[data-testid="centro-estado-eco-2"] .select-trigger')!);
+    const operativo = [...el.querySelectorAll<HTMLElement>('[role="option"]')].find(
+      (o) => o.textContent?.trim() === 'Operativo',
+    );
+    await clic(operativo!);
+    expect(setEquipmentStatus).toHaveBeenCalledWith('sur', 'eco-2', 'OPERATIONAL');
+  });
+
+  async function abrirEquipos(cliente: Partial<CenterScheduleClient>) {
+    const m = await montar({ getMySchedule: () => of(VISTA), ...cliente });
+    await m.clic([...m.el.querySelectorAll('[role="tab"]')].find((t) => t.textContent?.trim() === 'Equipos') as HTMLElement);
+    return m;
+  }
+
+  it('agregar un equipo lo manda al servidor con su modalidad', async () => {
+    const addEquipment = vi.fn(() => of(VISTA));
+    const { el, clic } = await abrirEquipos({ addEquipment });
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-equipo-agregar"]')!);
+    const nombre = el.querySelector<HTMLInputElement>('[data-testid="centro-equipo-formulario"] input')!;
+    nombre.value = 'Ecógrafo sala 2';
+    nombre.dispatchEvent(new Event('input'));
+    // Focusing the field again lets change detection run, like a person would.
+    await clic(nombre);
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-equipo-guardar"]')!);
+    expect(addEquipment).toHaveBeenCalledWith('sur', { name: 'Ecógrafo sala 2', manufacturer: null, serialNumber: null, modalityCode: 'ECO' });
+  });
+
+  it('un turno propio de equipo viaja con el horario publicado', async () => {
+    const saveSchedule = vi.fn((_unit: string, schedule: CenterSchedule) => of({ ...VISTA, schedule }));
+    const { el, clic, opcion } = await abrirEquipos({ saveSchedule });
+    await clic(opcion('centro-turno-propio-eco-1', 'Sí'));
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-publicar"]')!);
+    expect(saveSchedule.mock.calls[0]![1].equipment?.map((e) => e.equipmentId)).toEqual(['eco-1']);
+  });
+
+  it('cada equipo muestra la cola de hoy que le toca', async () => {
+    const hoy = new Date();
+    hoy.setHours(9, 0, 0, 0);
+    const turno = { orderId: null, studyName: 'Ecografía abdominal', siteName: null, status: 'CONFIRMED', startsAt: hoy.toISOString(), endsAt: hoy.toISOString() };
+    const page: CenterBookingPage = {
+      items: [
+        { ...turno, bookingId: 'b1', patientName: 'Ana Pérez', equipmentId: 'eco-1' },
+        { ...turno, bookingId: 'b2', patientName: 'Luis Rojas', equipmentId: 'rx-1' },
+      ],
+      count: 2,
+    };
+    const { el } = await abrirEquipos({ getMyBookings: () => of(page) });
+    const cola = el.querySelector('[data-testid="centro-cola-eco-1"]')?.textContent ?? '';
+    expect(cola).toContain('Ana Pérez');
+    expect(cola).not.toContain('Luis Rojas');
+  });
+});

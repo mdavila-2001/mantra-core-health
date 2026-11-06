@@ -1,0 +1,306 @@
+<app-page-header
+  title="Árbol de términos médicos"
+  subtitle="Cada término con su definición y, ramificado, todo lo que lo rodea: síntomas, enfermedades, estudios, tratamientos y especialidades."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<main class="grafo">
+  <!-- Una sola tarjeta: la búsqueda, las herramientas y el lienzo. -->
+  <section class="grafo__tarjeta" aria-label="Árbol de términos">
+    <div class="grafo__buscador">
+      <app-form-field
+        label="Término central"
+        hint="Escriba un síntoma, una enfermedad, un medicamento o una especialidad."
+      >
+        <app-reference-combobox
+          label="Término central"
+          placeholder="Por ejemplo: tos, neumonía o cardiología"
+          emptyMessage="No encontramos términos con ese nombre"
+          [options]="termSearch.options()"
+          [loading]="termSearch.searching()"
+          [selected]="selectedOption()"
+          (searched)="termSearch.search($event)"
+          (selectionChange)="choose($event)"
+        />
+      </app-form-field>
+    </div>
+
+    @if (focusId() === '') {
+      <app-empty-state
+        title="Elija un término para ver su árbol"
+        description="Busque un síntoma, una enfermedad o un medicamento. Verá su definición y, al abrir cada rama, qué lo rodea y cómo se relaciona."
+      />
+    } @else {
+      <app-view-state-host [state]="rootState()" (retry)="reload()">
+        @if (placed(); as placed) {
+          <div class="grafo__herramientas" role="toolbar" aria-label="Herramientas del árbol">
+            <app-segmented-control
+              ariaLabel="Cómo ver el árbol"
+              [options]="modeOptions"
+              [value]="mode()"
+              (valueChange)="setMode($event)"
+            />
+            <app-switch
+              label="Mostrar definiciones"
+              data-testid="grafo-definiciones"
+              [checked]="showDefinitions()"
+              (checkedChange)="showDefinitions.set($event); viewport.markTouched()"
+            />
+            @if (mode() === 'tree') {
+              <span class="grafo__zoom">
+                <button
+                  app-button
+                  iconOnly
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  aria-label="Alejar"
+                  data-testid="grafo-alejar"
+                  (click)="viewport.zoomOut()"
+                >
+                  <span aria-hidden="true">−</span>
+                </button>
+                <span class="grafo__zoom-valor" aria-live="polite" data-testid="grafo-zoom">{{ viewport.zoomText() }}</span>
+                <button
+                  app-button
+                  iconOnly
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  aria-label="Acercar"
+                  data-testid="grafo-acercar"
+                  (click)="viewport.zoomIn()"
+                >
+                  <span aria-hidden="true">+</span>
+                </button>
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="grafo-ajustar"
+                  (click)="fit()"
+                >
+                  Ajustar
+                </button>
+              </span>
+            }
+            <app-share-menu
+              class="grafo__compartir"
+              testId="grafo-share"
+              [title]="shareTitle()"
+              [url]="shareUrl()"
+              (exported)="exportAs($event)"
+            />
+          </div>
+
+          <p class="grafo__resumen" aria-live="polite" data-testid="grafo-resumen">
+            {{ summary() }} Pulse un término para abrir o cerrar lo que lo rodea.
+          </p>
+
+          <div class="grafo__cuerpo">
+            <div class="grafo__lienzo-caja" [hidden]="mode() !== 'tree'">
+              <!-- El árbol dibujado. Cada término es un control (rol de ítem de
+                   árbol, foco y teclado); el fondo se arrastra, Ctrl + rueda
+                   acerca. La misma información está en la vista «Lista». -->
+              <svg
+                #canvas
+                class="grafo__lienzo"
+                role="tree"
+                aria-label="Árbol de términos: use la vista Lista para recorrerlo con lector de pantalla"
+                data-testid="grafo-lienzo"
+                (wheel)="viewport.onWheel($event)"
+                (pointerdown)="viewport.onPointerDown($event)"
+                (pointermove)="viewport.onPointerMove($event)"
+                (pointerup)="viewport.onPointerUp()"
+                (pointercancel)="viewport.onPointerUp()"
+              >
+                <g [attr.transform]="viewport.transform()">
+                  <g aria-hidden="true">
+                    @for (link of placed.links; track link.to) {
+                      <path class="grafo__enlace" [attr.d]="link.d" />
+                    }
+                  </g>
+                  @for (entry of placed.nodes; track entry.node.key) {
+                    <g
+                      class="grafo__nodo"
+                      [class]="'grafo__nodo grafo__nodo--' + entry.node.kind + ' grafo__nodo--' + entry.node.tone"
+                      [class.grafo__nodo--elegido]="isSelected(entry.node)"
+                      [class.grafo__nodo--abierto]="entry.node.expanded"
+                      [attr.role]="entry.node.kind === 'group' ? 'group' : 'treeitem'"
+                      [attr.tabindex]="entry.node.kind === 'group' ? null : 0"
+                      [attr.aria-level]="entry.depth + 1"
+                      [attr.aria-expanded]="entry.node.kind === 'term' ? entry.node.expanded : null"
+                      [attr.aria-selected]="entry.node.kind === 'term' ? isSelected(entry.node) : null"
+                      [attr.aria-busy]="entry.node.loading ? 'true' : null"
+                      [attr.aria-label]="ariaLabelOf(entry.node)"
+                      [attr.data-testid]="'grafo-nodo-' + entry.node.kind"
+                      (click)="activate(entry.node)"
+                      (keydown.enter)="activate(entry.node)"
+                      (keydown.space)="activate(entry.node); $event.preventDefault()"
+                    >
+                      <rect
+                        class="grafo__caja"
+                        [attr.x]="entry.x"
+                        [attr.y]="entry.y"
+                        [attr.width]="entry.width"
+                        [attr.height]="entry.height"
+                        [attr.rx]="entry.node.kind === 'term' ? 10 : entry.height / 2"
+                      />
+                      @for (line of entry.lines; track $index) {
+                        <text
+                          [class]="'grafo__texto grafo__texto--' + line.role"
+                          [attr.x]="centerX(entry)"
+                          [attr.y]="entry.y + line.dy"
+                          [attr.text-anchor]="entry.node.kind === 'term' ? 'start' : 'middle'"
+                        >{{ line.text }}</text>
+                      }
+                      @if (entry.separatorDy !== null) {
+                        <line
+                          class="grafo__raya"
+                          [attr.x1]="entry.x + 14"
+                          [attr.x2]="entry.x + entry.width - 14"
+                          [attr.y1]="entry.y + entry.separatorDy"
+                          [attr.y2]="entry.y + entry.separatorDy"
+                        />
+                      }
+                      @if (entry.node.kind === 'term') {
+                        <!-- Abierto o cerrado, dicho también con una marca y no
+                             sólo con el borde. -->
+                        <text
+                          class="grafo__marca"
+                          aria-hidden="true"
+                          [attr.x]="entry.x + entry.width - 16"
+                          [attr.y]="entry.y + 22"
+                          text-anchor="middle"
+                        >{{ entry.node.loading ? '…' : entry.node.expanded ? '−' : '+' }}</text>
+                      }
+                    </g>
+                  }
+                </g>
+              </svg>
+            </div>
+
+            @if (mode() === 'list') {
+              <nav class="grafo__lista" aria-label="Árbol de términos en lista" data-testid="grafo-lista">
+                <ul class="grafo__rama">
+                  <ng-container *ngTemplateOutlet="rama; context: { $implicit: tree() }" />
+                </ul>
+              </nav>
+            }
+
+            <!-- Lo que se sabe del término elegido: su definición entera y, desde
+                 ahí, ir a su ficha o ponerlo al centro del árbol. -->
+            <aside class="grafo__ficha" aria-label="Definición del término elegido" data-testid="grafo-ficha">
+              @if (detail(); as state) {
+                <app-view-state-host [state]="state" (retry)="retryDetail()">
+                  @if (state.status === 'ready') {
+                    @let term = state.data;
+                    <h2 class="grafo__ficha-titulo">{{ term.display }}</h2>
+                    @if (term.category) {
+                      <p class="grafo__ficha-categoria">{{ term.category.name }}</p>
+                    }
+                    @if (term.plainSummary; as plain) {
+                      <h3 class="grafo__ficha-subtitulo">En palabras sencillas</h3>
+                      <p>{{ plain.text }}</p>
+                    }
+                    @if (term.clinicalDefinition; as clinical) {
+                      <h3 class="grafo__ficha-subtitulo">Definición clínica</h3>
+                      <p>{{ clinical.text }}</p>
+                    }
+                    @if (!term.plainSummary && !term.clinicalDefinition) {
+                      <p class="grafo__ficha-vacia">
+                        Este término todavía no tiene una definición cargada en el catálogo.
+                      </p>
+                    }
+                    @if (term.synonyms.length > 0) {
+                      <h3 class="grafo__ficha-subtitulo">También se le llama</h3>
+                      <ul class="grafo__sinonimos">
+                        @for (synonym of term.synonyms; track $index) {
+                          <li>{{ synonym.value }}</li>
+                        }
+                      </ul>
+                    }
+                    <div class="grafo__ficha-acciones">
+                      @if (term.conceptId !== focusId()) {
+                        <button
+                          app-button
+                          variant="outline"
+                          size="sm"
+                          type="button"
+                          data-testid="grafo-centrar"
+                          (click)="focusOn(term.conceptId)"
+                        >
+                          Poner al centro
+                        </button>
+                      }
+                      <a app-button variant="ghost" size="sm" [routerLink]="['/glossary', term.conceptId]">
+                        Ver ficha completa
+                      </a>
+                    </div>
+                  }
+                </app-view-state-host>
+              } @else {
+                <p class="grafo__ficha-vacia">
+                  Elija un término del árbol para leer su definición completa.
+                </p>
+              }
+            </aside>
+          </div>
+
+          <p class="grafo__leyenda">
+            El color agrupa el tipo de relación; el nombre del grupo siempre está escrito. Las relaciones vienen del
+            catálogo de terminología: el árbol no agrega ninguna.
+          </p>
+        }
+      </app-view-state-host>
+    }
+  </section>
+</main>
+
+<!-- La lista anidada: la misma información que el dibujo, en el orden en que se lee. -->
+<ng-template #rama let-node>
+  @if (node) {
+    <li>
+        @switch (node.kind) {
+          @case ('term') {
+            <button
+              type="button"
+              class="grafo__item"
+              [class.grafo__item--elegido]="isSelected(node)"
+              [attr.aria-expanded]="node.expanded"
+              data-testid="grafo-item"
+              (click)="activate(node)"
+            >
+              <span class="grafo__item-marca" aria-hidden="true">{{ node.loading ? '…' : node.expanded ? '−' : '+' }}</span>
+              <span class="grafo__item-texto">
+                <strong>{{ node.label }}</strong>
+                @if (node.sublabel) {
+                  <span class="grafo__item-sub">{{ node.sublabel }}</span>
+                }
+                @if (node.definition) {
+                  <span class="grafo__item-def">{{ node.definition }}</span>
+                }
+              </span>
+            </button>
+          }
+          @case ('group') {
+            <p class="grafo__grupo">
+              <strong>{{ node.label }}</strong>
+              <span class="grafo__item-sub">{{ node.sublabel }}</span>
+            </p>
+          }
+          @default {
+            <button type="button" class="grafo__mas" (click)="activate(node)">{{ node.label }}</button>
+          }
+        }
+        @if (node.children.length > 0) {
+          <ul class="grafo__rama">
+            @for (child of node.children; track child.key) {
+              <ng-container *ngTemplateOutlet="rama; context: { $implicit: child }" />
+            }
+          </ul>
+        }
+    </li>
+  }
+</ng-template>

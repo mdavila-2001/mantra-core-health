@@ -38,7 +38,10 @@ import {
   comoMotivoDeConsulta,
 } from '../../../core/symptom-notes/symptom-observations.store';
 import { AGENDA_ROUTE } from '../agenda.routes';
+import { MotivoFigura } from './motivo-figura/motivo-figura';
+import type { TenantScope } from '../../../core/data-access/scheduling/tenant-scope';
 import { FLEXIBLE_PARAM, releerHoraFlexible, retenerHoraFlexible } from './flexible-booking';
+import { bookingToast } from './booking-toast';
 
 /** Largo que declara `ConfirmBookingDto` para el motivo. */
 const MAX_MOTIVO = 500;
@@ -110,6 +113,7 @@ type Entrada = 'DESK' | 'PORTAL';
     FormActions,
     FormField,
     FormSection,
+    MotivoFigura,
     PageHeader,
     ReactiveFormsModule,
     ReferenceCombobox,
@@ -191,6 +195,23 @@ export class BookingNew {
 
   private readonly slotId = this.route.snapshot.paramMap.get('slotId') ?? '';
   private readonly resourceId = this.route.snapshot.queryParamMap.get('recurso');
+
+  /**
+   * La organización de la agenda que se reserva.
+   *
+   * Un paciente pide cita con la organización que tiene a su profesional, que
+   * puede no ser la activa de su sesión: «Agendar una cita» la manda en `org`.
+   * Sólo cuenta para el autoservicio —la API sólo deja a una cuenta de paciente
+   * hablar como una organización que no es la suya—; el mostrador sigue
+   * trabajando con la de su sesión.
+   */
+  private readonly tenantDeLaAgenda =
+    (this.esAutoservicio ? this.route.snapshot.queryParamMap.get('org') : null) ??
+    this.auth.activeTenantId();
+
+  /** Como qué organización se habla con la agenda: la de la reserva, no la activa. */
+  private readonly alcance: TenantScope =
+    this.tenantDeLaAgenda === null ? {} : { tenantId: this.tenantDeLaAgenda };
 
   /**
    * La oferta de servicio que se está reservando (v4.2.40), o `null` si es una
@@ -406,11 +427,11 @@ export class BookingNew {
    * funcionalidad.
    */
   private cargarSede(): void {
-    const tenantId = this.auth.activeTenantId();
+    const tenantId = this.tenantDeLaAgenda;
     if (tenantId === null || this.resourceId === null) {
       return;
     }
-    this.scheduling.listResources({ tenantId }).subscribe({
+    this.scheduling.listResources({ tenantId }, this.alcance).subscribe({
       next: (pagina) => {
         const recurso = pagina.items.find((item) => item.id === this.resourceId);
         this.sede.set(recurso?.site ?? null);
@@ -454,7 +475,7 @@ export class BookingNew {
     }
 
     this.scheduling
-      .listSlots({ resourceId: this.resourceId, from: this.desde, to: this.hasta })
+      .listSlots({ resourceId: this.resourceId, from: this.desde, to: this.hasta }, this.alcance)
       .subscribe({
         next: (pagina) => {
           const cupo = pagina.items.find((slot) => slot.id === this.slotId);
@@ -527,8 +548,18 @@ export class BookingNew {
     // otro la tomó y se relee la lista, igual que en {@link retenerServicio}.
     const retencion$ =
       this.esFlexible && this.resourceId !== null && this.desde !== null
-        ? retenerHoraFlexible(this.scheduling, this.resourceId, this.desde, paciente.value)
-        : this.scheduling.placeHold(this.slotId, { patientProfileId: paciente.value });
+        ? retenerHoraFlexible(
+            this.scheduling,
+            this.resourceId,
+            this.desde,
+            paciente.value,
+            this.alcance,
+          )
+        : this.scheduling.placeHold(
+            this.slotId,
+            { patientProfileId: paciente.value },
+            this.alcance,
+          );
     retencion$.subscribe({
       next: (retencion) => {
         this.state.set(ready(null));
@@ -549,6 +580,7 @@ export class BookingNew {
       resourceId,
       desde,
       MARGEN_DE_RELECTURA_MS,
+      this.alcance,
     ).subscribe({
       next: (hora) =>
         this.cupo.set(
@@ -579,7 +611,11 @@ export class BookingNew {
     pacienteId: string,
   ): void {
     this.scheduling
-      .placeServiceHold(ofertaId, { resourceId, startAt: inicio, patientProfileId: pacienteId })
+      .placeServiceHold(
+        ofertaId,
+        { resourceId, startAt: inicio, patientProfileId: pacienteId },
+        this.alcance,
+      )
       .subscribe({
         next: (retencion) => {
           this.state.set(ready(null));
@@ -613,12 +649,15 @@ export class BookingNew {
     hasta: Date,
   ): void {
     this.scheduling
-      .getServiceAvailability({
-        offeringId: ofertaId,
-        resourceId,
-        from: new Date(desde.getTime() - MARGEN_DE_RELECTURA_MS),
-        to: new Date(hasta.getTime() + MARGEN_DE_RELECTURA_MS),
-      })
+      .getServiceAvailability(
+        {
+          offeringId: ofertaId,
+          resourceId,
+          from: new Date(desde.getTime() - MARGEN_DE_RELECTURA_MS),
+          to: new Date(hasta.getTime() + MARGEN_DE_RELECTURA_MS),
+        },
+        this.alcance,
+      )
       .subscribe({
         next: (disponibilidad) => {
           const horario = disponibilidad.items.find(
@@ -655,7 +694,7 @@ export class BookingNew {
 
   /** El nombre, el precio y la duración del servicio, de las ofertas del profesional. */
   private cargarServicio(practitionerProfileId: string): void {
-    this.scheduling.listServiceOfferings(practitionerProfileId).subscribe({
+    this.scheduling.listServiceOfferings(practitionerProfileId, this.alcance).subscribe({
       next: (lista) => this.servicio.set(lista.find((o) => o.id === this.ofertaId) ?? null),
       // Es contexto: perder la reserva por no poder leer el precio sería cambiar
       // una comodidad por una funcionalidad.
@@ -666,7 +705,7 @@ export class BookingNew {
   protected confirmar(): void {
     const retencion = this.retencion();
     const paciente = this.paciente();
-    const tenantId = this.auth.activeTenantId();
+    const tenantId = this.tenantDeLaAgenda;
     if (this.enviando() || retencion === null || paciente === null || tenantId === null) {
       return;
     }
@@ -686,18 +725,14 @@ export class BookingNew {
     // comprometer la agenda de nadie, así que su turno nace pendiente de que el
     // profesional lo acepte. El mostrador sí compromete, porque para eso está.
     const peticion = this.esAutoservicio
-      ? this.scheduling.requestHold(retencion.holdToken, cuerpo)
-      : this.scheduling.confirmHold(retencion.holdToken, cuerpo);
+      ? this.scheduling.requestHold(retencion.holdToken, cuerpo, this.alcance)
+      : this.scheduling.confirmHold(retencion.holdToken, cuerpo, undefined, this.alcance);
 
     peticion.subscribe({
-      next: () => {
+      next: (result) => {
         this.state.set(ready(null));
-        this.toast.success(
-          this.esAutoservicio
-            ? 'Enviamos su solicitud. El profesional la confirma o le propone otro horario.'
-            : `La cita de ${paciente.label} quedó confirmada.`,
-          this.esAutoservicio ? 'Cita solicitada' : 'Reserva confirmada',
-        );
+        const notice = bookingToast(this.esAutoservicio, result, paciente.label);
+        this.toast.success(notice.message, notice.title);
         if (this.esAutoservicio) {
           const precargada = this.observacionPrecargada;
           if (precargada !== null && motivo !== '') {

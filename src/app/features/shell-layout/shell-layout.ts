@@ -1,3 +1,5 @@
+import { OwnPhotoStore } from '../../core/data-access/profiles/own-photo.store';
+import { personInitials } from '../../shared/text/initials';
 import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -58,6 +60,8 @@ import { PHARMACY_CART_ROUTE } from '../account/pharmacy/pharmacy.routes';
 import { MIS_CUESTIONARIOS_ROUTE } from '../account/questionnaires/questionnaires.routes';
 import { PHARMACY_TESTIDS } from '../account/pharmacy/pharmacy.testids';
 import { DeniedTenantsBanner } from './denied-tenants-banner/denied-tenants-banner';
+import { TenantMenu } from './tenant-menu/tenant-menu';
+import { UxConsentNotice } from '../ux-consent/ux-consent-notice';
 import { NewDeviceBanner } from './new-device-banner/new-device-banner';
 
 /**
@@ -144,7 +148,9 @@ const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
     NavIcon,
     NewDeviceBanner,
     DeniedTenantsBanner,
+    TenantMenu,
     Tooltip,
+    UxConsentNotice,
   ],
   templateUrl: './shell-layout.html',
   styleUrl: './shell-layout.css',
@@ -383,6 +389,12 @@ export class ShellLayout {
        inicio le muestre el avance. Sólo para el paciente —a quien atiende no se
        le ofrece la lista— y sólo en el navegador, donde hay dónde guardarlo. */
     const destroyRef = inject(DestroyRef);
+    const fotoPropia = this.fotoPropia;
+    effect(() => {
+      if (this.esPacienteDelCarrito() || this.auth.practitionerProfileId() !== null) {
+        untracked(() => fotoPropia.load());
+      }
+    });
     effect(() => {
       if (this.esPacienteDelCarrito()) {
         untracked(() => this.firstSteps.track(this.router, destroyRef));
@@ -659,62 +671,12 @@ export class ShellLayout {
   );
 
   /**
-   * El menú del área autenticada, más la vitrina.
-   *
-   * Los grupos de dominio los arma `NavigationService` desde el registro de secciones, que es
-   * también de donde salen las rutas: no hay forma de ofrecer acá un destino que el router no
-   * declare —«un ítem que lleva a una ruta vacía es peor que no tenerlo»— porque son la misma
-   * lista.
-   *
-   * La vitrina se agrega aparte porque **no es una sección del producto**: vive fuera del armazón,
-   * no tiene módulo del modelo que la respalde y es una herramienta de quien construye. Meterla en
-   * el registro la volvería una sección más, con su ficha de vista inexistente. Por lo mismo no se
-   * le ofrece al paciente: es una herramienta de desarrollo, no algo de su cuenta.
+   * The authenticated-area menu. Domain groups come from `NavigationService`
+   * (the same registry that declares the routes); the shell adds nothing of its
+   * own. The «Herramientas» group (design-system showcase) was removed on
+   * 2026-11-05 at the owner's request: `/design-system` stays reachable by URL.
    */
-  protected readonly sections = computed<readonly NavSection[]>(() => {
-    const menu = this.navigation.menu();
-    const roles = this.auth.roles();
-    // El médico tampoco la ve, y por el mismo motivo que el paciente aunque
-    // sea otro: su menú es la lista cerrada de ocho del cliente (§4.H del plan
-    // de UX), y una novena entrada que además es una herramienta de quien
-    // construye la rompe. Quien la usa de verdad —diseño y desarrollo— entra
-    // por `/design-system`, que sigue en pie.
-    //
-    // Tampoco la aseguradora (2026-09-25, pedido del propietario, junto con
-    // `navigation.map.ts`): es una sesión `USER` con tenant `PAYER`, y
-    // «Sistema de diseño» es tan ajena a su trabajo como al del médico. No se
-    // generaliza a «toda cuenta sin rol de plataforma» —eso habría sido tocar
-    // también farmacia, el visitador y cualquier `USER` sin organización, que
-    // el pedido no incluía—: se agrega sólo la condición de tipo que el
-    // registro de procesos pide cerrar.
-    //
-    // Ni la farmacia (2026-09-29): su menú es el del mostrador y nada más.
-    // Ni el laboratorio (2026-09-30), por lo mismo.
-    if (
-      esPaciente(roles) ||
-      roles.includes('PRACTITIONER') ||
-      this.auth.activeTenantType() === 'PAYER' ||
-      this.auth.activeTenantType() === 'PHARMACY' ||
-      this.auth.activeTenantType() === 'DIAGNOSTIC_CENTER'
-    ) {
-      return menu;
-    }
-    const vitrina = { label: 'Sistema de diseño', route: '/design-system', icon: 'settings' } as const;
-    return [
-      ...menu,
-      {
-        label: 'Herramientas',
-        // La llave inglesa del set: es la única entrada del producto que no
-        // configura nada ni atiende a nadie — se usa para construirlo.
-        icon: 'sliders',
-        items: [vitrina],
-        // Un bloque de uno, que el marcado dibuja suelto. Se arma igual que los
-        // del registro para que la vitrina no sea el caso especial que el
-        // marcado tenga que contemplar aparte.
-        blocks: [{ label: 'Herramientas', icon: 'sliders', items: [vitrina] }],
-      },
-    ];
-  });
+  protected readonly sections = computed<readonly NavSection[]>(() => this.navigation.menu());
 
   /**
    * Los dos destinos que van sueltos arriba de la barra: «Mi perfil» y
@@ -730,18 +692,27 @@ export class ShellLayout {
   /** Nombre de la organización activa, para el rótulo del selector. */
   protected readonly organizacionActiva = computed(() => {
     const id = this.activeTenantId();
-    return id ? this.auth.tenantName(id) : 'Sin organización';
+    return id ? this.auth.tenantName(id) : this.auth.platformWide() ? 'Toda la plataforma' : 'Sin organización';
   });
 
   /** Iniciales para el avatar: dos, que es lo que entra en el círculo. */
-  protected readonly iniciales = computed(() =>
-    (this.user()?.displayName ?? '')
-      .trim()
+  protected readonly iniciales = computed(() => {
+    const nombre = (this.user()?.displayName ?? '').trim();
+    // Una persona: primer nombre y primer apellido, igual que en su perfil. Una
+    // organización conserva las dos primeras palabras de su nombre.
+    if (!this.auth.isOrganizationAccount()) {
+      return personInitials(nombre);
+    }
+    return nombre
       .split(/\s+/)
       .slice(0, 2)
       .map((parte) => parte[0]?.toUpperCase() ?? '')
-      .join(''),
-  );
+      .join('');
+  });
+
+  /** La foto de perfil de la persona, si la tiene; ver `OwnPhotoStore`. */
+  private readonly fotoPropia = inject(OwnPhotoStore);
+  protected readonly fotoDePerfil = this.fotoPropia.url;
 
   /**
    * Los roles del token, en una línea legible para el menú de la cuenta.
@@ -778,6 +749,7 @@ export class ShellLayout {
   }
 
   protected logout(): void {
+    this.fotoPropia.reset();
     this.auth.logout();
     void this.router.navigateByUrl(LOGIN_ROUTE);
   }
@@ -787,8 +759,12 @@ export class ShellLayout {
    * corresponde a la anterior. Se vuelve al panel en vez de recargar la vista actual, que podría
    * ser el detalle de un recurso que en esta organización no existe.
    */
-  protected changeTenant(tenantId: string): void {
-    this.auth.selectTenant(tenantId);
+  protected changeTenant(tenantId: string | null): void {
+    if (tenantId === null) {
+      this.auth.clearSelectedTenant();
+    } else {
+      this.auth.selectTenant(tenantId);
+    }
     void this.router.navigateByUrl('/dashboard');
   }
 

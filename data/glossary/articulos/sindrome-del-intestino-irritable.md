@@ -1,5 +1,6 @@
 ---
 slug: sindrome-del-intestino-irritable
+image: sindrome-del-intestino-irritable.svg | Colon, eje intestino-cerebro y claves del intestino irritable | Esquema del colon con zonas de espasmo y gases y el eje intestino-cerebro en el centro, junto a los síntomas, las señales de alarma y las medidas que ayudan
 ---
 
 ## [definition] Introducción

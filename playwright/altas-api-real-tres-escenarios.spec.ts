@@ -118,6 +118,7 @@ async function altaPaciente(page: Page, datos: DatosPaciente): Promise<Response>
   await continuarHasta(page, 'Resto de datos');
   await page.getByTestId('registro-correo').fill(datos.correo);
   await page.getByTestId('registro-password').fill(datos.password);
+  await page.getByTestId('registro-password-confirm').fill(datos.password);
   return enviar(page, '/iam/auth/register-patient');
 }
 
@@ -214,6 +215,7 @@ async function altaMedico(page: Page, datos: DatosMedico): Promise<Response> {
   await page.getByTestId('registro-pro-credencial').fill(datos.sedes);
   await continuarHasta(page, 'Su contraseña');
   await page.getByTestId('registro-pro-password').fill(datos.password);
+  await page.getByTestId('registro-pro-password-confirm').fill(datos.password);
   return enviar(page, '/iam/auth/register-practitioner');
 }
 
@@ -260,7 +262,7 @@ interface Organizacion {
   readonly prefijo: string;
   readonly exito: string;
   readonly error: string;
-  /** El selector del poder notariado (obligatorio salvo unipersonal). */
+  /** El selector del poder notariado (obligatorio para toda organización). */
   readonly poder: { readonly testId: string; readonly quitar: string };
   /** Lo que la organización exige antes de «Dónde está la central». */
   readonly antesDeLaCentral: (page: Page) => Promise<void>;
@@ -335,7 +337,7 @@ async function altaOrganizacion(
     correo: string;
     password: string;
     documento?: string;
-    /** `S.R.L.` por omisión; `Unipersonal` es el único que puede omitir el poder. */
+    /** `S.R.L.` por omisión; `Unipersonal` omite la constitución, pero no el poder. */
     tipo?: 'S.R.L.' | 'Unipersonal';
   },
 ): Promise<Response> {
@@ -353,10 +355,10 @@ async function altaOrganizacion(
   // La API exige el documento del representante (4 a 50 caracteres).
   await page.getByTestId(`${org.prefijo}-representante-documento`).fill(datos.documento ?? `CI${RUN}`);
   await page.getByTestId(`${org.prefijo}-representante-correo`).fill(datos.correo);
-  if ((datos.tipo ?? 'S.R.L.') !== 'Unipersonal') {
-    await subirPdf(page, org.poder.testId, 'poder-notariado');
-    await expect(page.getByTestId(org.poder.quitar)).toBeVisible({ timeout: 15_000 });
-  }
+  // El poder es obligatorio para toda organización, también la unipersonal
+  // (decisión del propietario, 05/11/2026).
+  await subirPdf(page, org.poder.testId, 'poder-notariado');
+  await expect(page.getByTestId(org.poder.quitar)).toBeVisible({ timeout: 15_000 });
   await continuarHasta(page, 'Su acceso');
   await page.getByTestId(`${org.prefijo}-password`).fill(datos.password);
   return enviar(page, '/iam/auth/register-organization');
@@ -374,7 +376,7 @@ for (const org of ORGANIZACIONES) {
       expect(await loginReal({ email: datos.correo, password: datos.password })).toBe(200);
     });
 
-    test('límite: unipersonal sin poder, CI de 4 caracteres y contraseña de 8 se aceptan', async ({ page }) => {
+    test('límite: unipersonal con poder, CI de 4 caracteres y contraseña de 8 se aceptan', async ({ page }) => {
       const r = await altaOrganizacion(page, org, {
         razonSocial: `${org.nombre} límite ${RUN}`,
         nit: `20${Date.now() % 1e8}`,

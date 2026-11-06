@@ -167,8 +167,8 @@
                         [required]="true"
                         [errorMessage]="errorDe('loadedAt')"
                       >
-                        <app-input
-                          type="date"
+                        <app-date-string-picker
+                          
                           [value]="fechaDeCarga()"
                           (valueChange)="escribir('loadedAt', $event)"
                           [hasError]="errorDe('loadedAt') !== null"
@@ -208,7 +208,7 @@
                     accept=".csv,.json"
                     [maxSizeBytes]="maximoDeBytes()"
                     [maxFiles]="1"
-                    [disabled]="revisando()"
+                    [uploading]="revisando()"
                     [files]="archivos()"
                     [showList]="false"
                     [hasError]="errorDeArchivo() !== null"

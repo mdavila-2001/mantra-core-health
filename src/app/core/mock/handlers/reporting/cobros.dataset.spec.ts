@@ -43,6 +43,7 @@ function numbersOf(datos: DatosGrafico): (number | null)[] {
     case 'mapa-calor': return datos.celdas.map((c) => c[2]);
     case 'medidor': return [datos.valor];
     case 'cascada': return datos.pasos.map((p) => p.valor);
+    case 'histograma': return [...datos.conteos];
   }
 }
 

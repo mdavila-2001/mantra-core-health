@@ -12,13 +12,15 @@ import {
 } from './support/registro-paciente';
 
 /**
- * Espera el panel tras entrar. Una cuenta que administra Y tiene reportería
- * aterriza en la elección de portal (`/portal-selector`): estas pruebas
- * recorren la aplicación de administración, así que se elige ese portal.
+ * Espera el panel tras entrar. Con la maqueta de reportería encendida (`PW_REPORTING_MOCK=1`) una cuenta que
+ * administra Y tiene reportería aterriza en la elección de portal (`/portal-selector`): estas pruebas recorren la
+ * aplicación de administración, así que se elige ese portal. Con la maqueta apagada (por defecto) el selector no
+ * existe y sólo se acepta el panel.
  */
 async function esperarPanel(page: Page): Promise<void> {
-  await page.waitForURL(/\/(dashboard|portal-selector)/, { timeout: 15000 });
-  if (page.url().includes('/portal-selector')) {
+  const withMock = process.env['PW_REPORTING_MOCK'] === '1';
+  await page.waitForURL(withMock ? /\/(dashboard|portal-selector)/ : /\/dashboard/, { timeout: 15000 });
+  if (withMock && page.url().includes('/portal-selector')) {
     await page.getByRole('link', { name: /Portal de administración/ }).click();
     await page.waitForURL(/\/dashboard/, { timeout: 15000 });
   }
@@ -96,6 +98,7 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
     await avanzarHasta(page, PASOS_DEL_ALTA.resto);
     await page.getByTestId('registro-correo').fill(emailPrueba);
     await page.getByTestId('registro-password').fill('P@ssword1234!');
+    await page.getByTestId('registro-password-confirm').fill('P@ssword1234!');
     await page.getByTestId('registro-nit').fill('9988776655');
     await page.getByTestId('registro-razon-social').fill('Audit Corp SRL');
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso5-resto.png') });

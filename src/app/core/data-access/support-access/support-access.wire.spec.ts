@@ -402,6 +402,80 @@ describe('el equipo del doctor', () => {
   });
 });
 
+describe('«Mi equipo» con lo que manda la API real (SupportLinkViewDto)', () => {
+  const vinculo = {
+    id: 'v-1',
+    kind: 'PRACTITIONER',
+    userId: 'u-ana',
+    personName: 'Ana Gutiérrez',
+    organizationName: 'Clínica Norte',
+    practitionerRoleAssignmentId: 'ra-1',
+    status: 'ACTIVE',
+    initiatedBy: 'PRACTITIONER',
+    awaiting: null,
+    targetName: 'Dr. Pérez',
+    createdAt: '2026-11-01T10:00:00Z',
+  };
+
+  it('usa `id` como `delegateId` y completa lo que la API no manda, sin dejar nada en `undefined`', () => {
+    const [m] = fromWireTeam({ items: [vinculo] } as never).items;
+    expect(m).toMatchObject({
+      delegateId: 'v-1',
+      personName: 'Ana Gutiérrez',
+      organizationName: 'Clínica Norte',
+      practitionerRoleAssignmentId: 'ra-1',
+      roleTemplate: 'SECRETARY',
+      status: 'ACTIVE',
+      delegateStatus: 'ACTIVE',
+      mayReplyOnBehalf: false,
+      replyDisclosure: 'HIDE',
+      coverageSummary: '',
+      actions: [],
+      pendingClinicalRequests: [],
+    });
+    expect('targetName' in m!).toBe(false);
+  });
+
+  it('un vínculo `PENDING` que le toca decidir al doctor espera su aceptación; una invitación suya sin responder sigue `PENDING`', () => {
+    const { items } = fromWireTeam({
+      items: [
+        { ...vinculo, id: 'v-2', userId: 'u-b', status: 'PENDING', awaiting: 'PRACTITIONER', initiatedBy: 'SUPPORT_STAFF' },
+        { ...vinculo, id: 'v-3', userId: 'u-c', status: 'PENDING', awaiting: 'SUPPORT_STAFF' },
+      ],
+    } as never);
+    expect(items.map((m) => m.status as string)).toEqual(['PENDING_ACCEPTANCE', 'PENDING']);
+  });
+
+  it('un vínculo terminado o rechazado se ve como retirado', () => {
+    const { items } = fromWireTeam({
+      items: [{ ...vinculo, status: 'ENDED' }],
+    } as never);
+    expect(items[0]).toMatchObject({ status: 'REVOKED', delegateStatus: 'REVOKED' });
+  });
+
+  it('la misma persona en la misma vinculación sale una sola vez, y gana el vínculo activo', () => {
+    const { items } = fromWireTeam({
+      items: [
+        { ...vinculo, id: 'v-p', status: 'PENDING', awaiting: 'PRACTITIONER' },
+        { ...vinculo, id: 'v-a' },
+        { ...vinculo, id: 'v-z' },
+        { ...vinculo, id: 'v-o', userId: 'u-otra' },
+      ],
+    } as never);
+    expect(items.map((m) => m.delegateId)).toEqual(['v-a', 'v-o']);
+  });
+
+  it('un integrante sin persona identificable (simulador) no se funde con otro', () => {
+    const { items } = fromWireTeam({
+      items: [
+        { delegateId: 'd-1', personName: 'A', status: 'ACTIVE' },
+        { delegateId: 'd-2', personName: 'B', status: 'ACTIVE' },
+      ],
+    } as never);
+    expect(items.map((m) => m.delegateId)).toEqual(['d-1', 'd-2']);
+  });
+});
+
 describe('el catálogo de la API real (B7c)', () => {
   const sede = 'ff4d09cd-e920-57c2-815f-d262dfd9f221';
   const edificio = '6b1b7b48-0ed5-5f2e-9165-c1aa25e4aa2c';

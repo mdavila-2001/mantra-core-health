@@ -37,37 +37,117 @@
     <app-alert tone="success" title="Sincronización terminada" data-testid="integration-sync-result">
       <dl class="sync__summary">
         <div class="sync__figure">
-          <dt>Recibidos</dt>
+          <dt>Recibidas</dt>
           <dd data-testid="integration-sync-received">{{ summary.received }}</dd>
         </div>
         <div class="sync__figure">
-          <dt>Vinculados</dt>
+          <dt>Vinculadas</dt>
           <dd data-testid="integration-sync-mapped">{{ summary.mapped }}</dd>
         </div>
         <div class="sync__figure">
-          <dt>Aplicados</dt>
+          <dt>Sin vínculo</dt>
+          <dd data-testid="integration-sync-unmapped-lines">{{ unmappedLines() }}</dd>
+        </div>
+        <div class="sync__figure">
+          <dt>Aplicadas</dt>
           <dd data-testid="integration-sync-applied">{{ summary.applied }}</dd>
         </div>
       </dl>
+      <p class="sync__note" data-testid="integration-sync-lines-note">
+        Cada línea es un código en una sede: con dos sedes, un producto cuenta dos veces. Recibidas = vinculadas + sin
+        vínculo.
+      </p>
       @if (summary.applied === 0) {
         <p class="sync__note">Ninguna existencia cambió: ya estaban al día.</p>
       }
     </app-alert>
 
+    @if (hasSites()) {
+      <app-data-table
+        caption="Resultado por sede"
+        [state]="sites()"
+        [columns]="siteColumns()"
+        [trackBy]="siteRowId"
+        [rowLabel]="siteRowLabel"
+        stackedOnMobile
+        data-testid="integration-sync-sites"
+      />
+    }
+
+    @if (skipped().length > 0) {
+      <div class="sync__unmapped" data-testid="integration-sync-skipped">
+        <h3 class="sync__subtitle">
+          {{ skipped().length === 1 ? '1 línea vinculada no se aplicó' : skipped().length + ' líneas vinculadas no se aplicaron' }}
+        </h3>
+        <p class="sync__note">La sede conserva el stock que tenía.</p>
+        <ul class="sync__list sync__list--single">
+          @for (line of skipped(); track line.siteId + line.externalCode) {
+            <li data-testid="integration-sync-skipped-line">
+              <code class="sync__code">{{ line.externalCode }}</code>
+              <span class="sync__site">{{ siteLabel(line) }} · cantidad informada: {{ line.quantity }}</span>
+              <span class="sync__reason">{{ skipMessage(line) }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    @if (notSent().length > 0) {
+      <div class="sync__unmapped" data-testid="integration-sync-not-sent">
+        <h3 class="sync__subtitle">
+          {{ notSent().length === 1 ? '1 código vinculado no vino' : notSent().length + ' códigos vinculados no vinieron' }}
+        </h3>
+        <ul class="sync__list">
+          @for (line of notSent(); track line.siteId + line.externalCode) {
+            <li data-testid="integration-sync-not-sent-line">
+              <code class="sync__code">{{ line.externalCode }}</code>
+              <span class="sync__site">{{ siteLabel(line) }}</span>
+              <span class="sync__reason">El sistema ya no lo manda; conserva su stock.</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
     @if (summary.unmapped.length > 0) {
       <div class="sync__unmapped" data-testid="integration-sync-unmapped">
         <h3 class="sync__subtitle">
-          {{ summary.unmapped.length === 1 ? '1 producto sin vincular' : summary.unmapped.length + ' productos sin vincular' }}
+          @if (ambiguousCount() > 0) {
+            {{ summary.unmapped.length === 1 ? '1 código sin vínculo único' : summary.unmapped.length + ' códigos sin vínculo único' }}
+          } @else {
+            {{ summary.unmapped.length === 1 ? '1 producto sin vincular' : summary.unmapped.length + ' productos sin vincular' }}
+          }
         </h3>
         <p class="sync__note">
-          El sistema de la farmacia los mandó, pero no tienen un producto del catálogo vinculado: sus existencias no se
-          aplicaron. Vincúlelos abajo con «Vincular producto».
+          El sistema de la farmacia los mandó, pero no se sabe a qué producto del catálogo corresponden: sus existencias no
+          se aplicaron.
+          @if (ambiguousCount() > 0) {
+            Un código «Ambiguo» está vinculado a más de un producto: deshaga en «Productos vinculados» los vínculos que
+            sobran.
+          }
         </p>
         <ul class="sync__list">
           @for (item of summary.unmapped; track item.externalCode) {
-            <li>
+            <li data-testid="integration-sync-unmapped-item">
               <code class="sync__code">{{ item.externalCode }}</code>
               <span>{{ item.name }}</span>
+              <!-- Sin `reason` (API anterior) no se sabe si falta el vínculo o sobra: no se ofrece nada. -->
+              @if (item.reason === 'AMBIGUOUS_MAPPING') {
+                <app-badge variant="warning">Ambiguo · {{ item.productIds?.length ?? 0 }} productos</app-badge>
+              } @else if (item.reason === 'NO_MAPPING') {
+                <app-badge variant="info">Sin vincular</app-badge>
+                <button
+                  app-button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  [attr.aria-label]="'Vincular ' + item.externalCode"
+                  (clicked)="linkRequested.emit(item.externalCode)"
+                  data-testid="integration-sync-link"
+                >
+                  Vincular
+                </button>
+              }
             </li>
           }
         </ul>
@@ -107,3 +187,10 @@
 <ng-template #itemsCell let-batch>{{ batch.itemCount }}</ng-template>
 
 <ng-template #discrepanciesCell let-batch>{{ batch.discrepancies }}</ng-template>
+
+<ng-template #siteCell let-site>
+  <span class="sync__cell">
+    <span>{{ site.siteName }}</span>
+    <code class="sync__code">{{ site.siteCode }}</code>
+  </span>
+</ng-template>

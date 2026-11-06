@@ -1,113 +1,173 @@
 <app-card variant="outlined" padding="lg" class="bloqueo">
-  <h3 class="bloqueo__titulo">
-    {{ esEdicion() ? 'Cambiar este bloqueo' : 'Bloquear días u horarios' }}
-  </h3>
-  <p class="bloqueo__texto">
-    Los horarios libres del período dejan de ofrecerse. Las citas ya reservadas
-    <strong>no se tocan</strong>: si quiere cancelarlas, hágalo una por una desde el día.
-  </p>
+  <header class="bloqueo__cabecera">
+    <h3 class="bloqueo__titulo">
+      {{ esEdicion() ? 'Cambiar este bloqueo' : 'Bloquear días u horarios' }}
+    </h3>
+    <p class="bloqueo__texto">
+      Los horarios libres del período dejan de ofrecerse. Las citas ya reservadas
+      <strong>no se tocan</strong>: si quiere cancelarlas, hágalo una por una desde el día.
+    </p>
+  </header>
 
-  <form class="bloqueo__form" (submit)="$event.preventDefault(); enviar()">
-    <div class="bloqueo__fechas">
-      <app-date-picker
-        label="Primer día"
-        [value]="desde()"
-        (valueChange)="desde.set($event)"
-      />
-      <app-date-picker
-        label="Último día"
-        [value]="hasta()"
-        (valueChange)="hasta.set($event)"
-      />
-    </div>
+  <form class="bloqueo__form" novalidate (submit)="$event.preventDefault(); enviar()">
+    <!-- ── When ────────────────────────────────────────────────────────── -->
+    <section class="bloqueo__seccion" aria-labelledby="bloqueo-cuando">
+      <h4 class="bloqueo__subtitulo" id="bloqueo-cuando">Cuándo</h4>
 
-    @if (dias() > 0) {
-      <!-- El número se muestra ANTES de confirmar: «del 10 al 24» son quince
-           días y no catorce, y equivocarse ahí se descubre volviendo de
-           vacaciones. -->
-      <p class="bloqueo__cuenta" role="status">
-        {{ dias() }} {{ dias() === 1 ? 'día' : 'días' }}, los dos extremos incluidos.
-      </p>
-    }
-
-    <fieldset class="bloqueo__alcance">
-      <legend class="bloqueo__leyenda">¿Todo el día o sólo un rato?</legend>
-      <label class="bloqueo__opcion">
-        <input
-          type="radio"
-          name="alcance"
-          [checked]="!porFranja()"
-          (change)="porFranja.set(false)"
-        />
-        <span>Los días enteros</span>
-      </label>
-      <label class="bloqueo__opcion">
-        <input
-          type="radio"
-          name="alcance"
-          [checked]="porFranja()"
-          (change)="porFranja.set(true)"
-        />
-        <span>Sólo una franja de cada día</span>
-      </label>
-    </fieldset>
-
-    @if (porFranja()) {
-      <div class="bloqueo__horas">
-        <app-form-field label="Desde" hint="HH:MM — a partir de qué hora deja de atender.">
-          <app-input type="text" [value]="horaDesde()" (valueChange)="fijarHoraDesde($event)" />
+      <!-- Date pickers sit inside `app-form-field`: they used to get `label`
+           as a bare attribute the date-picker never reads, so they had no
+           visible label nor accessible name. -->
+      <div class="bloqueo__par">
+        <app-form-field label="Primer día" [required]="true">
+          <app-date-picker
+            data-testid="bloqueo-desde"
+            [value]="desde()"
+            (valueChange)="elegirDesde($event)"
+          />
         </app-form-field>
-        <app-form-field label="Hasta" hint="HH:MM — a partir de qué hora vuelve.">
-          <app-input type="text" [value]="horaHasta()" (valueChange)="fijarHoraHasta($event)" />
+        <app-form-field label="Último día" [required]="true">
+          <app-date-picker
+            data-testid="bloqueo-hasta"
+            [minDate]="desde()"
+            [value]="hasta()"
+            (valueChange)="hasta.set($event)"
+          />
         </app-form-field>
       </div>
-      <p class="bloqueo__nota">
-        Se bloquea esa franja <strong>en cada uno de los días</strong> del rango, no de corrido
-        desde el primero hasta el último.
-      </p>
-    }
 
-    @if (opcionesDeMotivo().length > 0) {
-      <app-form-field
-        label="¿Por qué?"
-        hint="El motivo se guarda con el bloqueo y es lo que ve su paciente."
-      >
-        <app-select
-          [options]="opcionesDeMotivo()"
-          [value]="tipo()"
-          (valueChange)="elegirTipo($event)"
+      <div class="bloqueo__alcance">
+        <span class="bloqueo__leyenda" id="bloqueo-alcance">¿Todo el día o sólo un rato?</span>
+        <app-segmented-control
+          size="md"
+          wrap
+          ariaLabel="¿Todo el día o sólo un rato?"
+          [options]="opcionesDeAlcance"
+          [value]="alcance()"
+          (valueChange)="elegirAlcance($event)"
         />
-      </app-form-field>
+      </div>
+
+      @if (porFranja()) {
+        <div class="bloqueo__franja">
+          <!-- Presets: the most requested ranges, one tap away. They only fill
+               the two times below, which stay editable. -->
+          <div class="bloqueo__atajos" role="group" aria-label="Franjas frecuentes">
+            @for (a of atajos; track a.rotulo) {
+              <button
+                app-button
+                type="button"
+                size="sm"
+                [variant]="atajoActivo() === a.rotulo ? 'secondary' : 'ghost'"
+                [attr.aria-pressed]="atajoActivo() === a.rotulo"
+                [attr.data-testid]="'bloqueo-atajo-' + a.desde"
+                (clicked)="aplicarAtajo(a)"
+              >
+                {{ a.rotulo }}
+                <span class="bloqueo__atajo-horas">{{ a.desde }}–{{ a.hasta }}</span>
+              </button>
+            }
+          </div>
+
+          <div class="bloqueo__par">
+            <app-form-field
+              label="Desde"
+              hint="Hora en que empieza el bloqueo."
+              [errorMessage]="errorHoraDesde()"
+              [required]="true"
+            >
+              <app-input
+                type="time"
+                testId="bloqueo-hora-desde"
+                [step]="pasoDeHora"
+                [value]="horaDesde()"
+                (valueChange)="fijarHoraDesde($event)"
+              />
+            </app-form-field>
+            <app-form-field
+              label="Hasta"
+              hint="Hora en que vuelve a atender."
+              [errorMessage]="errorHoraHasta()"
+              [required]="true"
+            >
+              <app-input
+                type="time"
+                testId="bloqueo-hora-hasta"
+                [step]="pasoDeHora"
+                [value]="horaHasta()"
+                (valueChange)="fijarHoraHasta($event)"
+              />
+            </app-form-field>
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- ── Why ─────────────────────────────────────────────────────────── -->
+    <section class="bloqueo__seccion" aria-labelledby="bloqueo-porque">
+      <h4 class="bloqueo__subtitulo" id="bloqueo-porque">Por qué</h4>
+
+      <div class="bloqueo__par">
+        @if (opcionesDeMotivo().length > 0) {
+          <app-form-field
+            label="Motivo"
+            hint="Se guarda con el bloqueo y es lo que ve su paciente."
+          >
+            <app-select
+              [options]="opcionesDeMotivo()"
+              [value]="tipo()"
+              (valueChange)="elegirTipo($event)"
+            />
+          </app-form-field>
+        }
+
+        <!-- The description is a SEPARATE field from the reason (the original
+             request asks for a catalogued reason AND a description). Optional
+             unless the reason requires text; the patient never sees it. -->
+        <app-form-field
+          [label]="exigeTexto() ? 'Cuente de qué se trata' : 'Descripción'"
+          [hint]="
+            exigeTexto()
+              ? 'Eligió «Otro»: hace falta para que se entienda.'
+              : 'Opcional. Sólo la ven usted y quien administra la agenda.'
+          "
+          [required]="exigeTexto()"
+        >
+          <app-input
+            type="text"
+            data-testid="bloqueo-descripcion"
+            placeholder="Trámite en el banco, mudanza…"
+            [value]="motivo()"
+            (valueChange)="fijarMotivo($event)"
+          />
+        </app-form-field>
+      </div>
+    </section>
+
+    <!-- What will happen, in one sentence, BEFORE confirming: "10th to 24th"
+         is fifteen days, not fourteen, and that mistake is found on the way
+         back from holidays. -->
+    @if (resumen(); as r) {
+      <div class="bloqueo__resumen" role="status" data-testid="bloqueo-resumen">
+        <svg class="bloqueo__resumen-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="17" rx="2" />
+          <path d="M3 9h18M8 2v4M16 2v4" />
+        </svg>
+        <div>
+          <p class="bloqueo__resumen-cuando">{{ r.cuando }}</p>
+          <p class="bloqueo__resumen-cuanto">{{ r.cuanto }}</p>
+          @if (porFranja() && dias() > 1) {
+            <p class="bloqueo__resumen-nota">
+              Se cierra esa franja <strong>en cada uno de los días</strong>, no de corrido desde el
+              primero hasta el último.
+            </p>
+          }
+        </div>
+      </div>
     }
 
-    <!-- El texto libre aparece SÓLO cuando el motivo elegido lo exige. Es lo
-         único de este formulario que el paciente no ve, y por eso se dice acá
-         y no en un aviso aparte. -->
-    <!-- La descripción es un campo APARTE del motivo, y el pedido original lo
-         dice así: «quiero un motivo (catalogable) **y** una descripción». Se
-         había hecho excluyente —texto sólo con «Otro»— y eso no era lo pedido.
-         Sigue siendo opcional salvo que el motivo elegido exija explicación. -->
-    <app-form-field
-      [label]="exigeTexto() ? 'Cuente de qué se trata' : 'Descripción'"
-      [hint]="
-        exigeTexto()
-          ? 'Eligió «Otro»: hace falta para que se entienda.'
-          : 'Opcional. Queda para usted y para quien administre la agenda: su paciente ve el motivo, no esto.'
-      "
-      [required]="exigeTexto()"
-    >
-      <app-input
-        type="text"
-        data-testid="bloqueo-descripcion"
-        placeholder="Trámite en el banco, mudanza…"
-        [value]="motivo()"
-        (valueChange)="fijarMotivo($event)"
-      />
-    </app-form-field>
-
-    <!-- La consecuencia real de editar, dicha antes de guardar: es la P-11-3
-         resuelta, y si no se dijera, achicar un bloqueo dejaría al profesional
-         esperando turnos que no van a volver. -->
+    <!-- The real consequence of editing, said before saving (P-11-3):
+         shrinking a block does not bring closed slots back. -->
     @if (esEdicion()) {
       <p class="bloqueo__nota">
         Si <strong>agranda</strong> el rango se cierran los horarios nuevos que queden adentro. Si
@@ -121,9 +181,11 @@
     }
 
     <div class="bloqueo__acciones">
-      <button app-button type="submit" variant="primary">{{ esEdicion() ? 'Guardar cambios' : 'Bloquear' }}</button>
       <button app-button type="button" variant="ghost" (clicked)="cancelar.emit()">
         Cancelar
+      </button>
+      <button app-button type="submit" variant="primary" data-testid="bloqueo-enviar">
+        {{ esEdicion() ? 'Guardar cambios' : 'Bloquear' }}
       </button>
     </div>
   </form>

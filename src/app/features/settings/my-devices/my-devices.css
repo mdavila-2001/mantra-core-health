@@ -1,0 +1,121 @@
+/* Ajustes › Dispositivos: one bordered row per device, full panel width. */
+.dispositivos__titulo {
+  margin: 0 0 var(--e3);
+  font-size: var(--fs-body-lg);
+}
+
+.dispositivos__detalle {
+  margin: 0 0 var(--e2);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+}
+
+.dispositivos__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin: var(--e3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Same row as Ajustes › Permisos: icon on the left, what it is in the middle
+   (it grows and pushes), the action at the end. */
+.dispositivos__fila {
+  padding: var(--e3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.dispositivos__renglon {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.dispositivos__icono {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.dispositivos__cuerpo {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.dispositivos__detalle--fila {
+  margin: 0;
+}
+
+.dispositivos__accion {
+  flex-shrink: 0;
+}
+
+/* The code form sits under the text column, past the icon. */
+.dispositivos__formulario {
+  display: block;
+  margin-inline-start: calc(1.25rem + var(--e3));
+}
+
+/* On a phone the button drops under the text instead of squeezing it. */
+@media (width < 36rem) {
+  .dispositivos__renglon {
+    flex-wrap: wrap;
+  }
+
+  .dispositivos__cuerpo {
+    flex-basis: 0;
+  }
+
+  .dispositivos__accion {
+    max-inline-size: 100%;
+    white-space: normal;
+  }
+
+  .dispositivos__formulario {
+    margin-inline-start: 0;
+  }
+}
+
+.dispositivos__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin-bottom: var(--e1);
+}
+
+.dispositivos__nombre {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.dispositivos__verificar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin-top: var(--e2);
+  max-inline-size: 28rem;
+}
+
+.dispositivos__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+}
+
+.dispositivos__fallo {
+  margin: 0;
+  color: var(--st-error-fg);
+  font-size: var(--fs-body);
+}
+
+.dispositivos__vacio,
+.dispositivos__nota {
+  margin: var(--e3) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-body);
+}

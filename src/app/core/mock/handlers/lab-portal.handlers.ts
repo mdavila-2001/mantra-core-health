@@ -6,6 +6,7 @@ import {
   forbidden,
   noContent,
   notFound,
+  preconditionFailed,
   reply,
   validation,
   type MockRequest,
@@ -17,6 +18,7 @@ import { labInboxOrders } from './diagnostics.handlers';
 import { ordenProcesada } from './lab-orders.handlers';
 import { pdfMinimo } from './files.handlers';
 import { emitirNotificacion } from './notifications.handlers';
+import { kindOf, servicioDeRespuesta as respuestaDe, type ServicioSimulado } from './lab-portal-services.mapping';
 import type {
   LabActivityKind,
   LabImportMode,
@@ -58,25 +60,6 @@ interface CategoriaSimulada {
   readonly id: string;
   readonly tenantId: string;
   readonly name: string;
-}
-
-interface ServicioSimulado {
-  readonly id: string;
-  readonly tenantId: string;
-  readonly code: string;
-  readonly name: string;
-  readonly categoryId: string | null;
-  readonly sampleType: string | null;
-  readonly preparation: string | null;
-  readonly description: string | null;
-  readonly turnaroundHours: number | null;
-  readonly requiresMedicalOrder: boolean;
-  readonly homeCollection: boolean;
-  readonly price: string;
-  readonly alovidaDiscountPercent: number | null;
-  readonly status: LabServiceStatus;
-  readonly available: boolean;
-  readonly updatedAt: string;
 }
 
 const CATEGORIAS_INICIALES = [
@@ -130,8 +113,27 @@ const ESTUDIOS_SEMBRADOS: readonly {
   { code: 'STUDY-VITAMINA-D', categoria: 'Hormonas', muestra: 'Sangre venosa', preparacion: null, horas: 48 },
 ];
 
-export const serviciosDeLaboratorio = new Coleccion<ServicioSimulado>(
-  ESTUDIOS_SEMBRADOS.map((e, i) => ({
+export const serviciosDeLaboratorio = new Coleccion<ServicioSimulado>([
+  // The placeholder the registration creates per declared modality: no price, like the API.
+  {
+    id: uuid(`lab-service-${TENANT_LABORATORIO}-MODALITY_LABORATORY`),
+    tenantId: TENANT_LABORATORIO,
+    code: 'MODALITY_LABORATORY',
+    name: 'Laboratorio',
+    categoryId: null,
+    sampleType: null,
+    preparation: null,
+    description: null,
+    turnaroundHours: null,
+    requiresMedicalOrder: false,
+    homeCollection: false,
+    price: null,
+    alovidaDiscountPercent: null,
+    status: 'PUBLISHED',
+    available: true,
+    updatedAt: iso(-30),
+  },
+  ...ESTUDIOS_SEMBRADOS.map((e, i): ServicioSimulado => ({
     id: uuid(`lab-service-${TENANT_LABORATORIO}-${e.code}`),
     tenantId: TENANT_LABORATORIO,
     code: e.code.replace('STUDY-', ''),
@@ -153,22 +155,10 @@ export const serviciosDeLaboratorio = new Coleccion<ServicioSimulado>(
     available: i !== 8,
     updatedAt: iso(-(20 - i)),
   })),
-);
-
-function precioAloVida(s: ServicioSimulado): string {
-  const descuento = s.alovidaDiscountPercent ?? 0;
-  return ((Number(s.price) * (100 - descuento)) / 100).toFixed(2);
-}
+]);
 
 function servicioDeRespuesta(s: ServicioSimulado) {
-  const { tenantId: _t, ...resto } = s;
-  return {
-    ...resto,
-    categoryName:
-      s.categoryId === null ? null : (categoriasDeLaboratorio.get(s.categoryId)?.name ?? null),
-    alovidaPrice: precioAloVida(s),
-    currency: 'BOB' as const,
-  };
+  return respuestaDe(s, s.categoryId === null ? null : (categoriasDeLaboratorio.get(s.categoryId)?.name ?? null));
 }
 
 function categoriaDeRespuesta(c: CategoriaSimulada) {
@@ -535,6 +525,11 @@ function leerDeDisco(id: string): Promise<Blob | undefined> {
 
 /* ---- rutas --------------------------------------------------------------- */
 
+/** Una orden con la fecha de pedido en el futuro (la entrante) todavía no llegó. */
+function yaPedida(requestedAt: string): boolean {
+  return Date.parse(requestedAt) <= Date.parse(ahora());
+}
+
 export function registrarPortalDeLaboratorio(router: MockRouter): void {
   /* servicios */
 
@@ -647,6 +642,10 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
     const datos = cuerpo<LabServiceDraft & { status: LabServiceStatus }>(request);
     const problema = problemaDe(tenantId, datos, true, s.id);
     if (problema !== null) return validation(problema);
+    // Same refusal as the API: a registration placeholder is not a sellable study.
+    if (kindOf(s) === 'MODALITY' && (datos.price !== undefined || datos.alovidaDiscountPercent !== undefined)) {
+      return preconditionFailed(`«${s.name}» es una modalidad declarada al registrarse, no un estudio: cargue los estudios concretos de esa modalidad con su precio.`);
+    }
     const actualizado = serviciosDeLaboratorio.actualizar(s.id, { ...cambiosDe(datos), updatedAt: ahora() })!;
     anotar(tenantId, 'SERVICE_UPDATED', `Actualizó «${actualizado.name}».`);
     return servicioDeRespuesta(actualizado);
@@ -713,7 +712,7 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
     if (c === undefined || c.tenantId !== tenantId) return notFound('Categoría no encontrada');
     const enUso = categoriaDeRespuesta(c).serviceCount;
     if (enUso > 0) {
-      return conflict(`«${c.name}» tiene ${enUso} servicios. Muévalos a otra categoría antes de borrarla.`);
+      return conflict(`«${c.name}» tiene ${enUso} servicios. Muévalos a otra categoría antes de borrarla.`, { serviceCount: enUso });
     }
     categoriasDeLaboratorio.borrar(c.id);
     return { ok: true };
@@ -728,7 +727,7 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
     const vigentes = servicios.filter((s) => s.status !== 'WITHDRAWN');
     const archivos = resultadosDeLaboratorio.filtrar((r) => r.tenantId === tenantId && r.status === 'AVAILABLE');
     const conResultado = new Set(archivos.map((r) => r.orderId));
-    const ordenes = labInboxOrders.filtrar((o) => o.performerTenantId === tenantId);
+    const ordenes = labInboxOrders.filtrar((o) => o.performerTenantId === tenantId && yaPedida(o.requestedAt));
     const porCategoria = new Map<string, number>();
     for (const s of vigentes) {
       const nombre =
@@ -775,7 +774,7 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
     const tenantId = laboratorioDe(request);
     if (tenantId === null) return forbidden();
     const items = labInboxOrders
-      .filtrar((o) => o.performerTenantId === tenantId)
+      .filtrar((o) => o.performerTenantId === tenantId && yaPedida(o.requestedAt))
       .map((o) => {
         const destino = destinoDeOrden(o.id)!;
         return {

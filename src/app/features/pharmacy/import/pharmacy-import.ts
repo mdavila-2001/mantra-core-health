@@ -12,17 +12,17 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { Router } from '@angular/router';
-import { catchError, map, of, type Subscription } from 'rxjs';
+import { catchError, map, of, takeLast, type Subscription } from 'rxjs';
 
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Progress } from '../../../shared/components/atoms/progress/progress';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import { Spinner } from '../../../shared/components/atoms/spinner/spinner';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
 import {
   FileInput,
   type RejectedFile,
@@ -36,20 +36,17 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { CsvExportService, type CsvColumn } from '../../../shared/utils/csv-export/csv-export';
-
 import { PharmacyBulkClient } from '../../../core/data-access/pharmacy/pharmacy-bulk.client';
 import { PharmacyClient } from '../../../core/data-access/pharmacy/pharmacy.client';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-
 import {
   ArchivoInvalido,
   FILE_MAX_BYTES,
   CATEGORIES,
   CSV_COLUMNS,
   FIELD_LABELS,
-  EXAMPLE_ROWS,
   MAX_ROWS_BY_LOAD,
   decodificarCsv,
   readCsv,
@@ -61,18 +58,26 @@ import {
   type CsvReading,
   type LoadMode,
 } from '../catalog-rules/catalog.rules';
-import { PharmacyScope } from '../pharmacy-scope';
+import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import {
   OUTCOME_BADGE,
   bulkFailureMessage,
   countOutcomes,
   nameOfFields,
   productResultRows,
+  readyRowsOf,
   sendProducts,
   type FileRowResult,
   type ResultRow,
   type RowOutcome,
 } from './bulk-publish';
+import { ImportColumnsHelp } from './import-columns-help/import-columns-help';
+import {
+  PRICE_UPDATE_NOTE,
+  PRODUCT_TEMPLATES,
+  downloadProductTemplate,
+  productHelpColumns,
+} from './product-templates';
 
 /** Tope del catálogo que se relee para comparar códigos: el máximo de `GET /pharmacy/products`. */
 const CATALOG_READ_LIMIT = 500;
@@ -109,19 +114,13 @@ type ServerPreview =
   | { readonly status: 'ready'; readonly results: readonly FileRowResult[] }
   | { readonly status: 'failed'; readonly message: string };
 
-const MODE_OPTIONS: readonly SelectOption<LoadMode>[] = [
-  { value: 'CREAR_Y_ACTUALIZAR', label: 'Crear y actualizar' },
-  { value: 'SOLO_CREAR', label: 'Sólo crear' },
-  { value: 'SOLO_ACTUALIZAR', label: 'Sólo actualizar' },
-];
-
-const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
-  CREAR_Y_ACTUALIZAR:
-    'Los códigos nuevos se crean y los que ya están en su catálogo se actualizan con lo que traiga el archivo.',
-  SOLO_CREAR: 'Sólo se crean los códigos nuevos; los que ya están en su catálogo se rechazan.',
-  SOLO_ACTUALIZAR:
-    'Sólo se actualizan los productos que ya están en su catálogo; los códigos nuevos se rechazan.',
-};
+/**
+ * The import is always an upsert: new codes are created and codes already in
+ * the catalog are updated with the file's data. There is no «create only» or
+ * «update only»: with a single path, uploading the same file twice leaves the
+ * catalog unchanged.
+ */
+const UPSERT: LoadMode = 'CREAR_Y_ACTUALIZAR';
 
 /**
  * **Importación masiva** del catálogo de la farmacia: un CSV con una fila por
@@ -137,15 +136,15 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
  * relee el catálogo con `managed: true` (con borradores y retirados, que también
  * reservan el código) para saber qué fila es un alta y cuál un cambio.
  *
- * ## El modo, las categorías y la farmacia
+ * ## Upsert, categories and pharmacy
  *
- * Cada modo lo describe `MODE_HINTS`. Las categorías son de cada farmacia
- * (`GET /pharmacies/:id/categories`): se cargan al elegir la farmacia y la
- * revisión valida contra ellas; hasta que llegan no se puede subir el archivo,
- * porque revisar contra otra lista daría errores falsos. La farmacia la elige
- * {@link PharmacyScope}: con una sola queda elegida sola.
+ * Always an upsert ({@link UPSERT}). Categories belong to each pharmacy
+ * (`GET /pharmacies/:id/categories`): they load when the pharmacy is chosen and
+ * the review validates against them; until they arrive no file can be
+ * uploaded, because checking against another list would raise false errors.
+ * {@link PharmacyScope} picks the pharmacy: with only one it is chosen alone.
  *
- * Es la pestaña «Importación» de `PharmacyCatalogHub` (`embedded`).
+ * Mounted inside the «Importar CSV» modal of `PharmacyCatalogHub` (`embedded`).
  */
 @Component({
   selector: 'app-pharmacy-import',
@@ -153,18 +152,20 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
     Alert,
     AppButton,
     Badge,
-    Card,
     DataTable,
     DecimalPipe,
     FileInput,
+    ImportColumnsHelp,
+    NgTemplateOutlet,
     FormField,
     PageHeader,
     Progress,
     Select,
+    Spinner,
     Stepper,
     ViewStateHost,
   ],
-  providers: [PharmacyScope],
+  providers: [providePharmacyScope()],
   templateUrl: './pharmacy-import.html',
   styleUrl: './pharmacy-import.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -186,7 +187,6 @@ export class PharmacyImport {
 
   protected readonly maxRows = MAX_ROWS_BY_LOAD;
   protected readonly maxBytes = FILE_MAX_BYTES;
-  protected readonly modeOptions = MODE_OPTIONS;
 
   protected readonly pharmacyOptions = computed<readonly SelectOption<string>[]>(
     () => dataOf(this.scope.options()) ?? [],
@@ -207,13 +207,10 @@ export class PharmacyImport {
 
   /* ─── El recorrido ────────────────────────────────────────────────────── */
 
-  protected readonly mode = signal<LoadMode>('CREAR_Y_ACTUALIZAR');
-  protected readonly modeHint = computed(() => MODE_HINTS[this.mode()]);
-  protected readonly modeLabel = computed(
-    () => MODE_OPTIONS.find((option) => option.value === this.mode())?.label ?? '',
-  );
 
   protected readonly step = signal<ImportStep>('file');
+  /** A write is in flight: closing the import modal now would cut it. */
+  readonly busy = computed(() => this.step() === 'publishing');
   protected readonly files = signal<readonly File[]>([]);
   protected readonly fileName = signal('');
   protected readonly analyzing = signal(false);
@@ -235,7 +232,7 @@ export class PharmacyImport {
     const reading = this.reading();
     return reading === null
       ? []
-      : reviewLoad(reading.filas, this.catalog(), this.mode(), this.allowedCategories());
+      : reviewLoad(reading.filas, this.catalog(), UPSERT, this.allowedCategories());
   });
 
   protected readonly mappings = computed<readonly CsvColumnMapping[]>(
@@ -259,16 +256,16 @@ export class PharmacyImport {
   });
 
   /**
-   * Sin la columna «disponible», toda fila se lee como «disponible» (vacío =
-   * sí) y una actualización volvería a poner a la venta un producto marcado sin
-   * stock. Se avisa en el paso de columnas.
+   * Without an availability column (e.g. a `codigo,precio` price list) new
+   * products enter as available and existing ones keep their current
+   * availability (`readyRowsOf`). The columns step says so.
    */
   protected readonly lacksAvailability = computed(
     () => this.reading() !== null && !this.mappings().some((mapping) => mapping.field === 'disponible'),
   );
 
   protected readonly readyRows = computed(() =>
-    this.reviewed().flatMap((row) => (row.lista ? [row] : [])),
+    readyRowsOf(this.reviewed(), !this.lacksAvailability()),
   );
   /** Las primeras filas listas, para ver antes de publicar que se leyeron bien. */
   protected readonly sample = computed(() => this.readyRows().slice(0, 5));
@@ -279,12 +276,6 @@ export class PharmacyImport {
   protected readonly withProblems = computed(() => this.reviewed().length - this.readyRows().length);
   protected readonly duplicatedInFile = computed(
     () => this.reviewed().filter((row) => !row.lista && row.motivo === 'REPETIDA_EN_EL_ARCHIVO').length,
-  );
-  protected readonly notInCatalog = computed(
-    () => this.reviewed().filter((row) => !row.lista && row.motivo === 'NO_EN_EL_CATALOGO').length,
-  );
-  protected readonly alreadyInCatalog = computed(
-    () => this.reviewed().filter((row) => !row.lista && row.motivo === 'YA_EN_EL_CATALOGO').length,
   );
 
   protected readonly problemRows = computed<ViewState<readonly RowWithProblem[]>>(() => {
@@ -358,6 +349,13 @@ export class PharmacyImport {
     const rows = productResultRows(this.reviewed(), rejected).filter((row) => row.outcome === 'REJECTED');
     return rows.length === 0 ? empty({ label: 'Cargar' }) : ready(rows);
   });
+  /** Cuántas filas se cargarían con un aviso (p. ej. «pide receta y no tiene medicamento»). */
+  protected readonly previewWarned = computed(() => {
+    const preview = this.serverPreview();
+    return preview.status === 'ready'
+      ? preview.results.filter((r) => r.outcome !== 'REJECTED' && r.message !== '').length
+      : 0;
+  });
 
   protected readonly steps = computed<readonly StepperStep[]>(() => {
     const current = VISIBLE_STEPS.findIndex((visible) => visible.steps.includes(this.step()));
@@ -411,31 +409,10 @@ export class PharmacyImport {
 
   /* ─── Lo que la plantilla del archivo y la ayuda necesitan ────────────── */
 
-  /** Las columnas de la ayuda; la categoría dice las de **esta** farmacia. */
-  protected readonly csvColumns = computed(() => {
-    const categories = dataOf(this.categories());
-    return CSV_COLUMNS.map((column) =>
-      column.campo !== 'categoria' || categories === null
-        ? column
-        : {
-            ...column,
-            descripcion:
-              categories.length === 0
-                ? 'Su farmacia todavía no tiene categorías: déjela vacía.'
-                : `Una de las suyas: ${categories.join(' · ')}.`,
-          },
-    );
-  });
-
-  /**
-   * Las filas de ejemplo de la plantilla. Su categoría es la primera de la
-   * farmacia (o ninguna): con la de siempre, la plantilla bajada y subida tal
-   * cual se rechazaría en una farmacia que no la tiene.
-   */
-  private readonly templateRows = computed<readonly ProductFields[]>(() => {
-    const first = dataOf(this.categories())?.[0] ?? '';
-    return EXAMPLE_ROWS.map((row) => ({ ...row, categoria: first }));
-  });
+  /** The format guide: columns (with this pharmacy's categories) and templates. */
+  protected readonly helpColumns = computed(() => productHelpColumns(dataOf(this.categories())));
+  protected readonly templates = PRODUCT_TEMPLATES;
+  protected readonly priceNote = PRICE_UPDATE_NOTE;
 
   protected readonly fieldLabel = (field: keyof ProductFields | null): string =>
     field === null ? '—' : FIELD_LABELS[field];
@@ -498,8 +475,8 @@ export class PharmacyImport {
 
   /* ─── Paso 1: el archivo ──────────────────────────────────────────────── */
 
-  protected downloadTemplate(): void {
-    this.csv.download(this.templateRows(), templateColumns(), 'plantilla-catalogo-farmacia.csv');
+  protected downloadTemplate(kind: string): void {
+    downloadProductTemplate(this.csv, kind, dataOf(this.categories())?.[0] ?? '');
   }
 
   protected showRejection(rejections: readonly RejectedFile[]): void {
@@ -512,13 +489,6 @@ export class PharmacyImport {
         ? 'El archivo pasa de 1 MB. Divídalo en varios.'
         : 'Suba un archivo .csv (en Excel: Guardar como → CSV UTF-8).',
     );
-  }
-
-  protected setMode(mode: LoadMode | null): void {
-    this.mode.set(mode ?? 'CREAR_Y_ACTUALIZAR');
-    if (this.step() === 'review') {
-      this.requestPreview();
-    }
   }
 
   protected async onFilesChange(files: readonly File[]): Promise<void> {
@@ -619,6 +589,10 @@ export class PharmacyImport {
   /**
    * Pide al servidor qué pasaría con cada fila lista (`dryRun`: no escribe
    * nada). Se repite al cambiar el modo; una vista previa vieja se descarta.
+   *
+   * Va en lotes, y la vista previa queda lista sólo con **todos** los lotes
+   * contestados y una respuesta por fila: con el primero de tres, «Cargar»
+   * publicaría filas que el servidor todavía no revisó.
    */
   protected requestPreview(): void {
     const pharmacyId = this.scope.pharmacyId();
@@ -629,9 +603,15 @@ export class PharmacyImport {
       return;
     }
     this.serverPreview.set({ status: 'loading' });
-    this.previewRequest = sendProducts(this.bulk, pharmacyId, this.mode(), rows, { dryRun: true })
+    this.previewRequest = sendProducts(this.bulk, pharmacyId, UPSERT, rows, { dryRun: true })
+      .pipe(takeLast(1))
       .subscribe({
-        next: (results) => this.serverPreview.set({ status: 'ready', results }),
+        next: (results) =>
+          this.serverPreview.set(
+            results.length === rows.length
+              ? { status: 'ready', results }
+              : { status: 'failed', message: 'La revisión del servidor llegó incompleta. Pruebe de nuevo.' },
+          ),
         error: (error: unknown) =>
           this.serverPreview.set({ status: 'failed', message: bulkFailureMessage(error) }),
       });
@@ -654,7 +634,7 @@ export class PharmacyImport {
     this.publishing.set(true);
     this.step.set('publishing');
 
-    this.publication = sendProducts(this.bulk, pharmacyId, this.mode(), rows, {
+    this.publication = sendProducts(this.bulk, pharmacyId, UPSERT, rows, {
       proceed: () => !this.stopRequested,
     }).subscribe({
       next: (results) => this.results.set(results),
@@ -709,7 +689,7 @@ export class PharmacyImport {
     const columns: CsvColumn<{ campos: ProductFields; problema: string }>[] = [
       ...CSV_COLUMNS.map((column) => ({
         header: column.encabezado,
-        value: (row: { campos: ProductFields }) => row.campos[column.campo],
+        value: (row: { campos: ProductFields }) => row.campos[column.campo] ?? '',
       })),
       { header: 'problema', value: (row) => row.problema },
     ];
@@ -749,9 +729,3 @@ export class PharmacyImport {
 }
 
 /** Las columnas de la plantilla: el encabezado canónico de cada una. */
-function templateColumns(): CsvColumn<ProductFields>[] {
-  return CSV_COLUMNS.map((column) => ({
-    header: column.encabezado,
-    value: (row: ProductFields) => row[column.campo],
-  }));
-}

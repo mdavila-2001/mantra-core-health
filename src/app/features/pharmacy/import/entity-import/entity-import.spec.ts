@@ -21,7 +21,6 @@ const DIRECTORY: PharmacyDirectoryPage = {
 
 interface Internal {
   onFilesChange: (files: readonly File[]) => Promise<void>;
-  setMode: (mode: 'CREATE' | 'UPDATE' | 'UPSERT' | null) => void;
 }
 
 describe('EntityImport', () => {
@@ -78,48 +77,49 @@ describe('EntityImport', () => {
   afterEach(() => http.verify());
 
   it('«Descargar plantilla» baja el CSV de la entidad con sus encabezados en castellano', () => {
-    mount('sites');
+    mount('categories');
 
     click('entity-import-template');
 
     const [rows, columns, filename] = download.mock.calls[0]!;
-    expect(filename).toBe('plantilla-sucursales.csv');
-    expect((columns as { header: string }[]).map((column) => column.header)).toEqual([
-      'codigo',
-      'nombre',
-      'direccion',
-      'latitud',
-      'longitud',
-      'retiro',
-      'envio',
-    ]);
+    expect(filename).toBe('plantilla-categorias.csv');
+    expect((columns as { header: string }[]).map((column) => column.header)).toEqual(['nombre']);
     const first = (rows as string[][])[0]!;
-    expect((columns as { value: (row: string[]) => string }[])[5]!.value(first)).toBe('si');
+    expect((columns as { value: (row: string[]) => string }[])[0]!.value(first)).toBe('Vitaminas');
   });
 
-  it('sucursales: avisa que se crean como sedes de venta y no en «Sucursales»', () => {
-    mount('sites');
+  it('sin farmacia publicada igual muestra las columnas y la plantilla: el formato no depende de ella', () => {
+    fixture = TestBed.createComponent(EntityImport);
+    fixture.componentRef.setInput('entity', 'categories');
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/pharmacy/pharmacies')).flush({ items: [], count: 0 });
+    fixture.detectChanges();
 
-    expect(textOf('entity-import-note')).toContain('sedes de venta');
-    expect(textOf('entity-import-note')).toContain('Horario y turnos');
-    expect(textOf('entity-import-note')).toContain('no en la pantalla «Sucursales»');
+    expect(root().textContent).toContain('Su organización todavía no tiene una farmacia publicada.');
+    expect(byId('entity-import-categories')).toBeNull();
+    expect(root().querySelector('app-import-columns-help')?.textContent).toContain('nombre');
+    click('entity-import-template');
+    expect(download.mock.calls[0]![2]).toBe('plantilla-categorias.csv');
   });
 
   it('subir el archivo pide la vista previa con dryRun y muestra el resultado y el motivo de cada fila', async () => {
     mount('categories');
-    await upload('nombre;nota\nVitaminas;\n;vacía\nvitaminas;\n');
+    await upload('nombre;nota\nVitaminas;\n;vacía\nTercera;\nvitaminas;\nOtra;\n');
 
+    // While the dry run is in flight the dropzone shows its upload spinner.
+    expect(fixture.nativeElement.querySelector('[data-testid="file-input-uploading"]')).not.toBeNull();
+    // «Vitaminas» y «vitaminas» son la misma clave: no viaja ninguna de las dos.
     const preview = http.expectOne(bulkUrl('categories'));
     expect(preview.request.method).toBe('POST');
     expect(preview.request.body).toEqual({
       mode: 'UPSERT',
       dryRun: true,
-      rows: [{ name: 'Vitaminas' }, { name: '' }, { name: 'vitaminas' }],
+      rows: [{ name: '' }, { name: 'Tercera' }, { name: 'Otra' }],
     });
     answer(preview, (index) =>
-      index === 1
+      index === 0
         ? { outcome: 'REJECTED', errors: [{ field: 'name', reason: 'REQUIRED', message: 'El nombre es obligatorio' }] }
-        : index === 2
+        : index === 1
           ? { outcome: 'REJECTED', errors: [{ field: 'name', reason: 'DUPLICATE_IN_FILE' }] }
           : {},
     );
@@ -130,6 +130,7 @@ describe('EntityImport', () => {
     expect(table).toContain('Creado');
     expect(table).toContain('El nombre es obligatorio');
     expect(table).toContain('La clave aparece más de una vez en el archivo.');
+    expect(table).toContain('La misma clave está en las líneas 2, 5: no se envía ninguna.');
     expect(textOf('entity-import-ignored')).toContain('nota');
   });
 
@@ -148,52 +149,42 @@ describe('EntityImport', () => {
   });
 
   it('«Aplicar» manda lo mismo sin dryRun y muestra el resultado escrito', async () => {
-    mount('prices');
+    mount('categories');
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
-    await upload('codigo,precio\nF05B-1,"12,50"\nF05B-X,3\nF05B-2,doce\n');
-    answer(http.expectOne(bulkUrl('prices')));
+    await upload('nombre\nVitaminas\nBebés\n');
+    answer(http.expectOne(bulkUrl('categories')));
     expect(textOf('entity-import-apply')).toContain('Aplicar 2 filas');
 
     click('entity-import-apply');
+    expect(byId('entity-import-apply')?.getAttribute('aria-busy')).toBe('true');
 
-    const write = http.expectOne(bulkUrl('prices'));
-    expect(write.request.body).toEqual({
-      mode: 'UPSERT',
-      rows: [
-        { productCode: 'F05B-1', unitPrice: 12.5 },
-        { productCode: 'F05B-X', unitPrice: 3 },
-      ],
-    });
+    const write = http.expectOne(bulkUrl('categories'));
+    expect(write.request.body).toEqual({ mode: 'UPSERT', rows: [{ name: 'Vitaminas' }, { name: 'Bebés' }] });
     answer(write, (index) =>
       index === 0
-        ? { outcome: 'UPDATED', id: 'pr-1' }
-        : { outcome: 'REJECTED', errors: [{ field: 'productCode', reason: 'PRODUCT_NOT_FOUND', message: 'No hay un producto con ese código' }] },
+        ? { outcome: 'UPDATED', id: 'c-1' }
+        : { outcome: 'REJECTED', errors: [{ field: 'name', reason: 'TOO_LONG', message: 'El nombre es muy largo' }] },
     );
 
     expect(textOf('entity-import-figures')).toMatch(/1\s+actualizadas/);
-    expect(textOf('entity-import-figures')).toMatch(/1\s+no enviadas por errores del archivo/);
     const table = textOf('entity-import-rows');
     expect(table).toContain('Actualizado');
-    expect(table).toContain('No hay un producto con ese código');
-    expect(table).toContain('No enviada');
+    expect(table).toContain('El nombre es muy largo');
     expect(byId('entity-import-apply')).toBeNull();
 
     click('entity-import-done');
-    expect(navigate).toHaveBeenCalledWith('/administration/pharmacy-catalog?tab=prices');
+    expect(navigate).toHaveBeenCalledWith('/administration/pharmacy-catalog?tab=categories');
   });
 
-  it('cambiar el modo vuelve a pedir la vista previa con el modo nuevo', async () => {
-    mount('sites');
-    await upload('codigo,nombre\nSUR,Sucursal Sur\n');
-    answer(http.expectOne(bulkUrl('sites')));
+  it('no ofrece elegir el modo: siempre manda `UPSERT` y lo dice', async () => {
+    mount('categories');
+    expect(root().querySelector('[aria-label="Qué hacer con las filas del archivo"]')).toBeNull();
+    expect(textOf('entity-import-upsert')).toContain('Lo nuevo se crea y lo que ya existe se actualiza');
 
-    internal().setMode('UPDATE');
-    fixture.detectChanges();
-
-    const again = http.expectOne(bulkUrl('sites'));
-    expect(again.request.body).toEqual({ mode: 'UPDATE', dryRun: true, rows: [{ code: 'SUR', name: 'Sucursal Sur' }] });
-    answer(again, () => ({ outcome: 'REJECTED', errors: [{ field: 'code', reason: 'NOT_FOUND' }] }));
-    expect(textOf('entity-import-rows')).toContain('No existe: eligió sólo actualizar.');
+    await upload('nombre\nVitaminas\n');
+    const preview = http.expectOne(bulkUrl('categories'));
+    expect(preview.request.body).toEqual({ mode: 'UPSERT', dryRun: true, rows: [{ name: 'Vitaminas' }] });
+    answer(preview);
   });
 
   it('un 413 se dice en pantalla y no deja aplicar', async () => {
@@ -223,11 +214,11 @@ describe('EntityImport', () => {
   });
 
   it('un archivo sin la columna obligatoria no se manda', async () => {
-    mount('prices');
-    await upload('codigo\nP-1\n');
+    mount('categories');
+    await upload('categoria\nVitaminas\n');
 
-    expect(textOf('entity-import-file-error')).toContain('Falta la columna «precio»');
-    http.expectNone(bulkUrl('prices'));
+    expect(textOf('entity-import-file-error')).toContain('Falta la columna «nombre»');
+    http.expectNone(bulkUrl('categories'));
     expect(byId('entity-import-review')).toBeNull();
   });
 });

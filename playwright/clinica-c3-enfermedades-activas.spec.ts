@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 
 import type { Actor } from './support/actores';
 import { entrar, estable, irA } from './support/sesion';
+import { abrirExpedienteDelPrimero } from './support/expediente';
 
 /**
  * C3 (reducido tras la colisión con el PR #708, ya mergeado): la tarjeta
@@ -33,7 +34,7 @@ test('el expediente muestra Enfermedades activas y el sello coloreado por estado
   await irA(page, '/medical-records');
   await estable(page);
   await page.getByLabel('Nombre o código').fill('Ana');
-  await page.getByTestId('paciente-ver-expediente').first().click();
+  await abrirExpedienteDelPrimero(page);
   await page.waitForURL(/\/medical-records\/[^/]+$/, { timeout: 60_000 });
   await estable(page);
 

@@ -448,7 +448,7 @@ describe('Messaging', () => {
       fixture.detectChanges();
 
       expect(consultar('bandeja-vacia')).toBeNull();
-      expect(texto()).not.toContain('Todavía no tiene chats');
+      expect(texto()).not.toContain('No tiene chats disponibles');
       expect(consultar('mensajeria-todo-archivado')?.textContent).toContain('Tiene 2 chats archivados.');
 
       consultar('mensajeria-ver-archivados')?.click();

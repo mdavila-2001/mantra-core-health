@@ -1,5 +1,6 @@
 ---
 slug: hepatitis-a-igm
+image: hepatitis-a-igm.svg | Qué indica la IgM contra la hepatitis A | Curvas de anticuerpos en el tiempo en las que la IgM sube pronto y desaparece mientras la IgG se mantiene, con los pasos del análisis y las vías de contagio del virus
 ---
 
 ## [definition] Introducción

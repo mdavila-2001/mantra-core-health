@@ -66,6 +66,8 @@ import {
   type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
+import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
 import { medicalCenterBody } from './medical-center-body';
 import {
   CLAVES_DE_PAPELES,
@@ -77,6 +79,7 @@ import {
   medicalOrganizationTypeOptions,
 } from './medical-organization-types';
 import { medicalCenterPages, TEST_ID } from './medical-center-pages';
+import { RegistrationOpeningHours } from '../shared-registration/opening-hours';
 import { AYUDA_ALTA_MEDICA } from './medical-center.help';
 import {
   AVISO_CATALOGO,
@@ -89,11 +92,9 @@ import {
 export { documentosOpcionales, entreLasOpciones, signupErrorMessage };
 export { DOCUMENTOS_OPCIONALES_POR_TIPO } from './medical-center-rules';
 
-/** Dónde se leen el país y la jurisdicción: los mismos catálogos públicos del alta de laboratorio. */
+/** Dónde se leen el país y la jurisdicción (los catálogos públicos del alta de laboratorio) y sus códigos estables. */
 const DESTINO_PAIS = 'directory.tenants.country_concept_id';
 const DESTINO_JURISDICCION = 'profiles.jurisdiction_authorizations.jurisdiction_concept_id';
-
-/** Los códigos estables de esos conceptos. */
 const COUNTRY_CODE = 'BO';
 const JURISDICTION_CODE = 'JURISDICTION_NATIONAL';
 
@@ -148,6 +149,7 @@ const AVISO_GERENCIAS =
 @Component({
   selector: 'app-register-medical-center',
   imports: [
+    AccountExistsDialog,
     Alert,
     AnnounceOnAppear,
     AppButton,
@@ -163,6 +165,7 @@ const AVISO_GERENCIAS =
     PaginatedForm,
     RegistrationBadge,
     RegistrationHelp,
+    RegistrationOpeningHours,
     RouterLink,
   ],
   templateUrl: './register-medical-center.html',
@@ -175,6 +178,7 @@ export class RegisterMedicalCenter {
   private readonly context = inject(SystemContextClient);
   private readonly legalEntityTypes = inject(LegalEntityTypesCatalog);
   private readonly router = inject(Router);
+  private readonly cuentaExistente = inject(AccountExistsCheck);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly draftService = inject(OnboardingDraftService);
 
@@ -230,6 +234,7 @@ export class RegisterMedicalCenter {
     const opcionales = documentosOpcionales(this.tipoSocietario());
     const lang = uiLanguage();
     return medicalCenterPages({
+      alSalirNombre: (valor) => this.cuentaExistente.verificar('ORG_NAME', valor),
       tiposDeOrganizacion: this.tiposDeOrganizacion(),
       tiposSocietarios: this.tiposSocietarios(),
       // Los que el tipo societario permite omitir salen «(opcional)» y sin mensaje de obligatorio.
@@ -239,7 +244,7 @@ export class RegisterMedicalCenter {
         return { ...resto, label: `${campo.label} (opcional)` };
       }),
       gerenciasEnUso: this.gerenciasEnUso(),
-      campoDePoder: notarizedPowerField(COUNTRY_CODE, lang, !opcionales.includes(KEY_NOTARIZED_POWER)),
+      campoDePoder: notarizedPowerField(COUNTRY_CODE, lang),
     });
   });
 
@@ -312,7 +317,7 @@ export class RegisterMedicalCenter {
       // Una contraseña no se guarda en ningún borrador: ni en el navegador ni
       // en el servidor. `OnboardingDraftService` también la quita, pero esta
       // pantalla no depende de que otro se acuerde.
-      delete datos['password'];
+      for (const secret of ['password', 'confirmPassword']) delete datos[secret];
       this.draftService.saveProgress(
         FORM_TYPE,
         indice,

@@ -25,13 +25,25 @@
 
       @if (estado().status === 'ready') {
         @if (doctor(); as m) {
-          <a
-            app-button
-            variant="ghost"
-            size="sm"
-            data-testid="mi-salud-cabecera-ficha"
-            [routerLink]="['/directory', m.practitionerProfileId]"
-          >{{ copy.verFicha }}</a>
+          <!-- Reservar exige elegir un cupo, y los cupos viven en la ficha del
+               médico: el botón cae directo en «Sedes y horarios». -->
+          <div class="mi-cabecera__acciones">
+            <a
+              app-button
+              variant="primary"
+              size="sm"
+              data-testid="mi-salud-cabecera-reservar"
+              [routerLink]="['/directory', m.practitionerProfileId]"
+              [fragment]="anclaHorarios"
+            >{{ copy.reservar }}</a>
+            <a
+              app-button
+              variant="ghost"
+              size="sm"
+              data-testid="mi-salud-cabecera-ficha"
+              [routerLink]="['/directory', m.practitionerProfileId]"
+            >{{ copy.verFicha }}</a>
+          </div>
         } @else {
           <a app-button variant="primary" size="sm" data-testid="mi-salud-cabecera-buscar" routerLink="/directory">
             {{ copy.buscar }}

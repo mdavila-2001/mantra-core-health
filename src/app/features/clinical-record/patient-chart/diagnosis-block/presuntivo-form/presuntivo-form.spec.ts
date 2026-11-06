@@ -408,6 +408,9 @@ describe('PresuntivoForm', () => {
       http
         .expectOne((r) => r.url === '/terminology/concepts' && r.params.get('q') === 'COND_PROVISIONAL')
         .flush({ items: [], count: 0, limit: 50 });
+      http
+        .expectOne((r) => r.url === '/terminology/concepts' && r.params.get('q') === 'CONDITION_PROVISIONAL')
+        .flush({ items: [], count: 0, limit: 50 });
       fixture.detectChanges();
 
       await esperarElEnvio();

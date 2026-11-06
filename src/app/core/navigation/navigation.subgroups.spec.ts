@@ -55,10 +55,19 @@ describe('NAV_SUBGROUPS', () => {
     // clínico; un subgrupo para envolverla sería el escalón de más.
     'my-primary-patients',
     'psychological-help',
+    // «Buzón de solicitudes» (2026-11-02): drawn loose for every role. Whether it
+    // belongs under «Mi privacidad» is a product decision still open.
+    'my-account/access-requests',
     // La portada de «Superadministración» (17/10/2026): es el tablero con el que
     // se abre el dominio, no una pantalla más de una lista; envolverla en un
     // bloque la escondería detrás de un desplegable.
     'superadmin/observability',
+    // «Configurar práctica» (2026-11-05): owner request, it leaves «Administración»
+    // and sits loose in «Atención», not inside any block.
+    'administration/medical-center-setup',
+    // «Sucursales» de la organización médica (06/11/2026): suelta en «Atención»,
+    // junto a «Configurar práctica», como en el menú plano de farmacia y laboratorio.
+    'administration/medical-branches',
   ];
 
   it('reparte el registro entero: ninguna sección se queda sin bloque por descuido', () => {

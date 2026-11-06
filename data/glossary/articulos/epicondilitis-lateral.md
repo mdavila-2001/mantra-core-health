@@ -1,5 +1,6 @@
 ---
 slug: epicondilitis-lateral
+image: epicondilitis-lateral.svg | La epicondilitis lateral daña el tendón extensor donde se une al epicóndilo del codo. | Codo de perfil con el epicóndilo lateral resaltado y el tendón de los músculos extensores con microlesiones por sobrecarga, junto a sus causas, síntomas y tratamiento.
 ---
 
 ## [definition] Introducción

@@ -25,7 +25,8 @@ interface TipoDeCuenta {
 }
 
 /**
- * Las cuentas de persona que se dan de alta solas: paciente y médico.
+ * Las cuentas de persona que se dan de alta solas: paciente, médico y
+ * secretaria (personal de apoyo).
  *
  * **No hay «Otro».** Cada tarjeta lleva a una pantalla de alta que existe. Una
  * que no llevara a ningún lado sería peor que no ofrecerla: quien la pulsa ya
@@ -71,6 +72,17 @@ const CUENTAS_PERSONALES: readonly TipoDeCuenta[] = [
     detalle: 'Atienda, recete y lleve su agenda. Necesita matrícula y colegio.',
     ruta: '/auth/register/practitioner',
     testId: 'tipo-profesional',
+  },
+  {
+    // La secretaria (personal de apoyo). La cuenta se crea sola; trabajar para un
+    // hospital o un doctor llega después, cuando la invitan y acepta o pide
+    // sumarse y la aceptan.
+    icono: 'support',
+    tone: 'info',
+    titulo: 'Secretaria o personal de apoyo',
+    detalle: 'Lleve la agenda y reciba a los pacientes de los doctores y pisos que le asignen.',
+    ruta: '/auth/register/support-staff',
+    testId: 'tipo-personal-apoyo',
   },
 ];
 

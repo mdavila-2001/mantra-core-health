@@ -1,5 +1,6 @@
 ---
 slug: vdrl
+image: vdrl.svg | La VDRL busca anticuerpos de la sífilis mediante una reacción de floculación. | Esquema de la prueba VDRL con muestra de suero, antígeno de cardiolipina y dos campos de microscopio, reactivo con grumos y no reactivo, junto a la secuencia de cribado, confirmación y seguimiento.
 ---
 
 ## [definition] Introducción

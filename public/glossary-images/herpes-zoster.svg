@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Herpes zóster: reactivación en un dermatoma</title>
+  <desc id="d">Médula espinal con un ganglio donde el virus de la varicela queda dormido y un nervio que lleva la reactivación hasta una franja de piel con ampollas en un solo lado. A la derecha, síntomas, complicaciones, tratamiento y vacuna.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="220.0" y="50" text-anchor="middle" class="title">Del ganglio a la piel</text>
+<rect x="180" y="60" width="40" height="280" rx="18" fill="var(--tissue)" stroke="var(--line)" stroke-width="1"/>
+<text x="200" y="356" text-anchor="middle" class="small">Médula espinal</text>
+<ellipse cx="250" cy="170" rx="16" ry="12" fill="var(--beam)" stroke="var(--warn)" stroke-width="2"/>
+<text x="276" y="150" class="small">Ganglio de la raíz</text>
+<text x="276" y="166" class="small" style="fill:var(--muted)">(virus dormido)</text>
+<path d="M220,170 L234,170 M266,170 Q340,170 360,220 Q370,260 340,300" fill="none" stroke="var(--warn)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="360" cy="232" r="6" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1.5"/>
+<circle cx="366" cy="252" r="6" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1.5"/>
+<circle cx="356" cy="272" r="6" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1.5"/>
+<circle cx="346" cy="290" r="6" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1.5"/>
+<text x="290" y="320" class="step">Dermatoma:</text>
+<text x="290" y="338" class="small">banda de piel</text>
+<text x="290" y="354" class="small">de ese nervio</text>
+<rect x="40" y="380" width="360" height="36" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="52" y="402" class="small">Varicela en la infancia → reactivación años después</text>
+<text x="60" y="110" class="step">1 · Latencia</text>
+<text x="60" y="200" class="step">2 · Reactivación</text>
+<text x="60" y="280" class="step">3 · Erupción</text>
+<text x="60" y="128" class="small">tras la varicela</text>
+<text x="60" y="218" class="small">con la edad o</text>
+<text x="60" y="234" class="small">defensas bajas</text>
+<text x="60" y="298" class="small">en un solo lado</text>
+<rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="608.0" y="50" text-anchor="middle" class="title">Claves</text>
+<text x="456" y="72" class="lab">• Dolor o ardor antes de la erupción</text>
+<text x="456" y="96" class="lab">• Ampollas en franja, en un lado</text>
+<text x="456" y="120" class="lab">• Contagia varicela a no inmunes</text>
+<rect x="456" y="148" width="304" height="100" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="468" y="170" class="step">Complicaciones</text>
+<text x="468" y="194" class="lab">Neuralgia posherpética (dolor</text>
+<text x="468" y="216" class="lab">persistente), sobre todo en mayores</text>
+<text x="468" y="238" class="lab">Afectación del ojo si es en la frente</text>
+<rect x="456" y="270" width="304" height="64" rx="10" fill="var(--ok-l)" stroke-width="1"/>
+<text x="470" y="294" class="lab">Antivirales en los primeros días</text>
+<text x="470" y="316" class="lab">Existe vacuna para adultos</text>
+<rect x="456" y="350" width="304" height="78" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+<text x="468" y="372" class="step" style="fill:var(--warn)">Consultar pronto si:</text>
+<text x="468" y="394" class="lab">• Erupción cerca del ojo o la nariz</text>
+<text x="468" y="416" class="lab">• Defensas muy bajas</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

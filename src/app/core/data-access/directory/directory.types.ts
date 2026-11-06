@@ -1,3 +1,5 @@
+import type { BranchCategory } from './branch-category';
+
 /**
  * Tipos de la vista para `directory`: organizaciones (tenants). **No son los
  * DTOs de la API**: se mapean en el cliente, y las fechas ya son `Date`.
@@ -55,17 +57,9 @@ export interface MyOrganization extends TenantListItem {
    * decodificar `tenantTypeConceptId` — mismo principio que `isVerified`.
    */
   readonly payer?: PayerProfile;
-  /**
-   * Quién representa legalmente a la organización (subtarea 1.4). Al nivel
-   * de la organización y no dentro de `payer`: no es dato de aseguradora — el
-   * registro de procesos pide el mismo bloque para farmacia, laboratorio e
-   * imagenología.
-   *
-   * Sólo tipos por ahora: la pantalla «Mi organización» todavía no lo dibuja
-   * (deuda declarada en la tarjeta T-34 de la bóveda).
-   */
+  /** Quién representa legalmente a la organización (subtarea 1.4); de toda organización, no sólo de `payer`. */
   readonly legalRepresentative?: OrganizationContactPerson;
-  /** Las gerencias de contacto declaradas, en orden canónico. Ver {@link legalRepresentative}. */
+  /** Las gerencias de contacto declaradas, en orden canónico. */
   readonly executives?: readonly OrganizationContactPerson[];
   /**
    * Código de la forma societaria (`SRL`, `SA`, `US_LLC`…). Ausente si la
@@ -95,14 +89,18 @@ export interface OrganizationLegalDocument {
 }
 
 /**
- * Una persona que la organización declara como contacto: su representante
- * legal o una de sus gerencias (subtarea 1.4). No es una cuenta de la
- * plataforma: es a quién llamar.
+ * Una persona de contacto de la organización: su representante legal o una gerencia (subtarea 1.4).
+ * No es una cuenta de la plataforma: es a quién llamar.
  */
 export interface OrganizationContactPerson {
   /** El cargo, en su código canónico (`LEGAL_REPRESENTATIVE`, `GENERAL_MANAGER`…). */
   readonly role: string;
   readonly fullName: string;
+  /** Partes del nombre, si el alta las declaró (las filas antiguas sólo traen `fullName`). */
+  readonly name?: string;
+  readonly middleName?: string;
+  readonly lastName?: string;
+  readonly motherLastName?: string;
   readonly email?: string;
   readonly phone?: string;
   /** Documento de identidad, si se declaró (sólo el representante legal). */
@@ -448,6 +446,7 @@ export interface BranchListItem {
   /** El punto en el mapa, si se conoce. Van juntas o no van. */
   readonly latitude?: number;
   readonly longitude?: number;
+  readonly category?: BranchCategory; // v4.2.91: read via `branchCategoryOf`
   readonly createdAt: Date;
 }
 
@@ -464,6 +463,7 @@ export interface BranchChanges {
   readonly locationUrl?: string | null;
   readonly latitude?: number | null;
   readonly longitude?: number | null;
+  readonly category?: BranchCategory;
 }
 
 /** Respuesta plana de sucursales: sin cursor, con recuento. */
@@ -474,7 +474,6 @@ export interface BranchList {
 
 /** Tipos de sede que acepta el alta. */
 export type BranchTypeCode = 'CLINIC' | 'OFFICE';
-
 
 /**
  * Alta de una sucursal (`POST /tenants/{id}/branches`, UC-04-04).
@@ -494,23 +493,24 @@ export interface NewBranch {
   readonly timeZone?: string;
   readonly latitude?: number;
   readonly longitude?: number;
-  /** Suma de la carga masiva; la API todavía no la declara (P54). */
+  /** Description and map link as pasted (P54); category since v4.2.91. */
   readonly description?: string;
-  /** El enlace de mapa tal como lo pegaron; ídem. */
   readonly locationUrl?: string;
+  readonly category?: BranchCategory;
 }
 
 /**
- * Una membresía (`GET /tenants/{id}/memberships`).
- *
- * `primaryBranchId`, `startDate` y `endDate` llegan como `null` explícito
- * cuando no hay dato: son nulos del contrato, no ausencias, y se normalizan a
- * `undefined` en la frontera como manda `wire.ts`.
+ * Una membresía (`GET /tenants/{id}/memberships`). Los nulos del contrato
+ * (`primaryBranchId`, fechas, `userName`) se normalizan a `undefined` en la frontera (`wire.ts`).
  */
 export interface MembershipListItem {
   readonly id: string;
   readonly userId: string;
+  /** Nombre de la persona, para mostrarlo en vez del uuid. */
+  readonly userName?: string;
   readonly tenantRoleConceptId: string;
+  /** El rol por su código (`OWNER`, `ADMIN`, `STAFF`); ausente si la API no lo rotula. */
+  readonly tenantRoleCode?: string;
   readonly statusConceptId: string;
   readonly accessScopeConceptId?: string;
   readonly primaryBranchId?: string;

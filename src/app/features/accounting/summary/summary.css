@@ -624,6 +624,7 @@
 /* La contabilidad simple va primero y separada de las cuatro preguntas del
    resumen, que siguen debajo como estaban. */
 .contabilidad-simple {
+  min-inline-size: 0;
   margin-block: var(--sp-5) var(--sp-8);
 }
 
@@ -639,6 +640,8 @@
 
 .pestana {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-inline-size: 0;
   gap: var(--sp-6);
   padding-block-start: var(--sp-4);
 }

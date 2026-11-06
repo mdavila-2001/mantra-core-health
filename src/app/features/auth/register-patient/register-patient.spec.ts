@@ -376,6 +376,7 @@ describe('RegisterPatient', () => {
       lastName: 'Paz',
       motherLastName: extra.motherLastName ?? '',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
       // Los cinco que AC-03-3 volvió obligatorios se completan acá: sin ellos
       // el formulario es inválido y `submit()` no llega a salir, así que toda
       // prueba de envío los necesita. El que comprueba que cada uno frena el
@@ -543,6 +544,7 @@ describe('RegisterPatient', () => {
       expect(porClave('misc')).toEqual([
         'email',
         'password',
+        'confirmPassword',
         'privateInsurancePlanId',
         'publicInsurancePlanId',
         'billingTaxId',
@@ -916,6 +918,8 @@ describe('RegisterPatient', () => {
       'name',
       'lastName',
       'password',
+      // Typed twice so a typo cannot lock the owner out (user request, 04/11/2026).
+      'confirmPassword',
     ] as const;
 
     const OPCIONALES = [
@@ -1028,7 +1032,7 @@ describe('RegisterPatient', () => {
      * `register-patient.ts` junto a `name`/`lastName`), esta prueba falla acá,
      * antes de que vuelva a ser un finding.
      */
-    it('el excedente sobre los seis obligatorios de la fuente literal (TAREA 03 §1.2) es exactamente name/lastName/password, documentado por contrato (AC-03-4/P-03-2)', () => {
+    it('el excedente sobre los seis obligatorios de la fuente literal (TAREA 03 §1.2) es exactamente name/lastName/password más su confirmación, documentado por contrato (AC-03-4/P-03-2)', () => {
       const SEIS_DE_LA_FUENTE_LITERAL = [
         'nationalId',
         'email',
@@ -1037,7 +1041,7 @@ describe('RegisterPatient', () => {
         'birthDate',
         'residenceMunicipalityConceptId',
       ] as const;
-      const EXCEDENTE_JUSTIFICADO_POR_CONTRATO = ['name', 'lastName', 'password'] as const;
+      const EXCEDENTE_JUSTIFICADO_POR_CONTRATO = ['name', 'lastName', 'password', 'confirmPassword'] as const;
 
       expect(new Set(OBLIGATORIOS)).toEqual(
         new Set([...SEIS_DE_LA_FUENTE_LITERAL, ...EXCEDENTE_JUSTIFICADO_POR_CONTRATO]),
@@ -2134,8 +2138,18 @@ describe('RegisterPatient', () => {
         email: '',
       });
 
-      // Mismo `@Matches` que el DTO: letras, dígitos, punto y guion.
+      // The document allows letters, digits, dot and hyphen only (see `national-id.ts`).
       expect(component.formPaciente.controls.nationalId.invalid).toBe(true);
+    });
+
+    // Product decision pending (see `national-id.ts`): the strict cédula is NOT wired in. The form
+    // takes the backend's floor, so a passport or a `CI-…` document goes through.
+    it('el documento no es la cédula estricta: acepta pasaportes y «QA-123», a la espera de la decisión de producto', () => {
+      const control = component.formPaciente.controls.nationalId;
+      for (const valido of ['QA-123', '1234', '1234567890', '1.234.567', '0000000']) {
+        control.setValue(valido);
+        expect(control.valid, `«${valido}» pasa con el piso del backend`).toBe(true);
+      }
     });
 
     it('valida el documento: letras, dígitos, punto y guion, mínimo 4', () => {
@@ -2828,11 +2842,13 @@ describe('RegisterPatient', () => {
     it('nunca escribe la contraseña en localStorage', () => {
       component.formPaciente.controls.name.setValue('Carlos');
       component.formPaciente.controls.password.setValue('secreto12');
+      component.formPaciente.controls.confirmPassword.setValue('secreto12');
       component.recordarPaso({ titulo: '¿Dónde vive?', clave: 'residence', campos: [] });
 
       const guardado = localStorage.getItem(component.STORAGE_KEY)!;
       expect(guardado).not.toContain('secreto12');
       expect(JSON.parse(guardado).formValores.password).toBeUndefined();
+      expect(JSON.parse(guardado).formValores.confirmPassword).toBeUndefined();
     });
 
     it('un borrador viejo con contraseña se limpia y no se reinyecta', () => {

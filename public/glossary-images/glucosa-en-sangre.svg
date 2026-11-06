@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Glucosa en sangre: regulación y formas de medirla</title>
+  <desc id="d">A la izquierda, la glucosa de los alimentos pasa a la sangre y entra en las células gracias a la insulina del páncreas; el hígado la almacena y la libera en ayunas. A la derecha, las formas de medirla: en ayunas, al azar, con glucómetro capilar, con sobrecarga oral y con hemoglobina glicosilada.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">De la comida a la célula</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Formas de medirla</text>
+<rect x="40" y="70" width="130" height="40" rx="8" fill="var(--warn)"/>
+<text x="105.0" y="94.7" text-anchor="middle" class="lab" style="fill:var(--on)">Alimentos</text>
+<line x1="170" y1="90" x2="220" y2="90" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="224" y="70" width="136" height="40" rx="8" fill="var(--vessel)"/>
+<text x="292.0" y="94.7" text-anchor="middle" class="lab" style="fill:var(--on)">Glucosa en sangre</text>
+<line x1="292" y1="112" x2="292" y2="160" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<ellipse cx="110" cy="190" rx="54" ry="30" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="1.5"/>
+<text x="110" y="188" text-anchor="middle" class="lab">Páncreas</text>
+<text x="110" y="204" text-anchor="middle" class="small" style="fill:var(--muted)">insulina</text>
+<line x1="166" y1="190" x2="230" y2="190" stroke="var(--ok)" stroke-width="2" marker-end="url(#ar)"/>
+<ellipse cx="292" cy="190" rx="52" ry="34" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+<text x="292" y="188" text-anchor="middle" class="lab">Célula</text>
+<text x="292" y="204" text-anchor="middle" class="small" style="fill:var(--muted)">músculo, grasa</text>
+<text x="200" y="250" text-anchor="middle" class="small" style="fill:var(--muted)">La insulina abre la puerta de la célula</text>
+<ellipse cx="110" cy="300" rx="56" ry="30" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="1.5"/>
+<text x="110" y="304" text-anchor="middle" class="lab">Hígado</text>
+<line x1="170" y1="300" x2="226" y2="300" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<text x="240" y="296" class="lab">Reserva y libera</text>
+<text x="240" y="314" class="small" style="fill:var(--muted)">glucosa en ayunas</text>
+<rect x="40" y="350" width="320" height="74" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+<text x="56" y="374" class="lab" style="fill:var(--bad)">Alta: diabetes o prediabetes</text>
+<text x="56" y="398" class="lab" style="fill:var(--accent)">Baja: hipoglucemia</text>
+<text x="56" y="416" class="small" style="fill:var(--muted)">Se confirma con repetición o con otras pruebas</text>
+<rect x="418" y="70" width="30" height="14" rx="3" fill="var(--accent)"/>
+<path d="M420 84 V150 a13 13 0 0 0 26 0 V84 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+<path d="M421.5 110 V150 a11.5 11.5 0 0 0 23 0 V110 Z" fill="var(--vessel)"/>
+<text x="433" y="186" text-anchor="middle" class="small" style="fill:var(--muted)">Vena</text>
+<text x="470" y="88" class="h">En ayunas</text>
+<text x="470" y="106" class="small" style="fill:var(--muted)">tras 8 h sin comer</text>
+<text x="470" y="132" class="h">Al azar</text>
+<text x="470" y="150" class="small" style="fill:var(--muted)">en cualquier momento</text>
+<path d="M440 226 c-10 16 -14 24 -14 32 a14 14 0 0 0 28 0 c0 -8 -4 -16 -14 -32 Z" fill="var(--vessel)" stroke="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="470" y="236" class="h">Glucómetro capilar</text>
+<text x="470" y="254" class="small" style="fill:var(--muted)">gota del dedo, autocontrol</text>
+<rect x="426" y="290" width="36" height="26" rx="6" fill="var(--accent-l)" stroke="var(--accent)"/>
+<text x="470" y="300" class="h">Sobrecarga oral</text>
+<text x="470" y="318" class="small" style="fill:var(--muted)">mide antes y después de beber glucosa</text>
+<text x="470" y="352" class="h">Hemoglobina glicosilada</text>
+<text x="470" y="370" class="small" style="fill:var(--muted)">refleja el promedio de meses</text>
+<rect x="426" y="340" width="36" height="26" rx="6" fill="var(--purple-l)" stroke="var(--purple)"/>
+<text x="416" y="414" class="small" style="fill:var(--muted)">Cada prueba responde a una pregunta distinta.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

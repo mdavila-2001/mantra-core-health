@@ -268,7 +268,6 @@ describe('ShellLayout', () => {
       //
       // La verificación de identidad y su historial salieron del menú mientras
       // el producto no la ofrezca: ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
-      '/design-system',
     ]);
   });
 
@@ -280,8 +279,9 @@ describe('ShellLayout', () => {
     expect(rutasDelMenu()).toContain('/administration/users');
   });
 
-  it('la vitrina queda al final: es herramienta de quien construye, no del producto', () => {
-    expect(rutasDelMenu().at(-1)).toBe('/design-system');
+  it('el menú no trae el grupo «Herramientas» ni la vitrina (2026-11-05)', () => {
+    expect(rutasDelMenu()).not.toContain('/design-system');
+    expect(rotulosDelMenu()).not.toContain('Herramientas');
   });
 
   function rotulosDelMenu(): readonly string[] {
@@ -290,15 +290,13 @@ describe('ShellLayout', () => {
     return secciones.flatMap((s) => [...s.items].map((i) => i.label));
   }
 
-  it('al paciente no se le ofrece la vitrina; a quien administra, sí', () => {
-    // H-07: el paciente nunca ve vocabulario de sistema, y «Sistema de diseño»
-    // es una herramienta de desarrollo, no algo de su cuenta.
+  it('la vitrina no se ofrece a nadie, tampoco a quien administra (2026-11-05)', () => {
     abrirSesion({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
     expect(rotulosDelMenu()).not.toContain('Sistema de diseño');
     expect(rutasDelMenu()).not.toContain('/design-system');
 
     abrirSesion({ sub: 'u-2', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
-    expect(rotulosDelMenu()).toContain('Sistema de diseño');
+    expect(rotulosDelMenu()).not.toContain('Sistema de diseño');
   });
 
   it('tampoco a la aseguradora: es tan ajena a su trabajo como al del médico (2026-09-25)', () => {
@@ -353,6 +351,12 @@ describe('ShellLayout', () => {
    * en silencio: la geometría del marco —que es lo que la hoja de la bóveda
    * espera encontrar— y que el menú siga saliendo del registro de secciones.
    */
+  it('el aviso de consentimiento vive dentro del contenido (en el flujo), no suelto en la raíz de la app', () => {
+    fixture.detectChanges();
+    const main = (fixture.nativeElement as HTMLElement).querySelector('main#contenido-principal');
+    expect(main?.querySelector('app-ux-consent-notice')).not.toBeNull();
+  });
+
   describe('marco ALOVIDA', () => {
     function raiz(): HTMLElement {
       fixture.detectChanges();
@@ -903,7 +907,7 @@ describe('ShellLayout', () => {
       expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(
         secciones.filter((s) => s.aplanado === true).length,
       );
-      // Sin sesión sólo quedan las secciones sin roles, más la vitrina.
+      // Sin sesión sólo quedan las secciones sin roles.
       const destinos = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
         a.getAttribute('data-route'),
       );
@@ -911,10 +915,10 @@ describe('ShellLayout', () => {
       // del armazón ya lleva a `/dashboard`): no está entre los destinos
       // pintados, aunque la ruta sigue existiendo y siendo alcanzable.
       expect(destinos).not.toContain('/dashboard');
-      expect(destinos).toContain('/design-system');
+      expect(destinos).not.toContain('/design-system');
     });
 
-    it('la barra de la aseguradora: ocho renglones sueltos, ningún plegable (2026-09-25, +1 el 2026-09-27; aplanada el 2026-10-01; +1 el directorio de pacientes)', () => {
+    it('la barra de la aseguradora: ocho renglones sueltos, ningún plegable (2026-09-25, +1 el 2026-09-27; aplanada el 2026-10-01; +1 el directorio de pacientes; +1 el buzón de solicitudes el 2026-11-02)', () => {
       abrirSesion({
         sub: 'u-3',
         roles: ['USER'],
@@ -942,6 +946,8 @@ describe('ShellLayout', () => {
       // Pedido del propietario, 2026-10-01: «Administración» no se dibuja como
       // desplegable para esta cuenta; sus opciones van a nivel 0, sin `<details>`.
       expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(0);
+      // One loose block, «Administración»: the access-requests mailbox moved
+      // into «Mis solicitudes» on 04/11/2026, so «Mi cuenta» has nothing left.
       expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(1);
     });
 
@@ -1899,7 +1905,7 @@ describe('ShellLayout', () => {
     it('con una sola organización no se ofrece cambiarla', () => {
       abrirSesion({ sub: 'u-1', name: 'Ana Salas', roles: [], tenants: ['t-1'] });
 
-      expect(raiz().querySelector('[data-testid="header-organizacion"]')).toBeNull();
+      expect(raiz().querySelector('[data-testid="header-organization"]')).toBeNull();
       expect(raiz().querySelector('[data-testid="header-cuenta"]')).not.toBeNull();
     });
 
@@ -1920,7 +1926,7 @@ describe('ShellLayout', () => {
     it('con varias organizaciones el selector las lista todas, con su nombre legible', () => {
       sesionConDosOrganizaciones();
 
-      expect(raiz().querySelector('[data-testid="header-organizacion"]')).not.toBeNull();
+      expect(raiz().querySelector('[data-testid="header-organization"]')).not.toBeNull();
       expect(opcionesDeOrganizacion().map((o) => o.textContent?.trim())).toEqual([
         'Clínica Norte',
         'Clínica Sur',
@@ -1949,6 +1955,73 @@ describe('ShellLayout', () => {
       );
       expect(marcadas).toHaveLength(1);
       expect(marcadas[0].textContent?.trim()).toBe('Clínica Sur');
+    });
+
+    describe('alcance de plataforma (H3): «Toda la plataforma»', () => {
+      function platformSession(roles: string[], extra: Record<string, unknown> = {}) {
+        abrirSesion({
+          sub: 'u-1',
+          name: 'Ana Salas',
+          roles,
+          tenants: ['t-1', 't-2'],
+          tenantNames: { 't-1': 'Clínica Norte', 't-2': 'Clínica Sur' },
+          ...extra,
+        });
+      }
+      const rotulo = (): string => raiz().querySelector('[data-testid="header-organization"]')?.textContent?.trim() ?? '';
+      const opcionPlataforma = (): HTMLButtonElement | null =>
+        raiz().querySelector<HTMLButtonElement>('[data-testid="header-organization-platform"]');
+
+      it('ofrece «Toda la plataforma», marcada y como rótulo, mientras no se fije organización (no viaja X-Tenant-Id)', () => {
+        platformSession(['PLATFORM_ADMIN']);
+
+        expect(rotulo()).toContain('Toda la plataforma');
+        expect(opcionPlataforma()?.getAttribute('aria-current')).toBe('true');
+        expect(opcionesDeOrganizacion().map((o) => o.textContent?.trim())).toEqual(['Toda la plataforma', 'Clínica Norte', 'Clínica Sur']);
+        expect(session.activeTenantId()).toBeNull();
+      });
+
+      it('fijar una organización la manda como siempre; «Toda la plataforma» la suelta y no deja la recordada', () => {
+        platformSession(['PLATFORM_ADMIN']);
+        vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+        interno<(id: string | null) => void>('changeTenant')('t-2');
+        expect(session.activeTenantId()).toBe('t-2');
+        expect(rotulo()).toContain('Clínica Sur');
+        expect(opcionPlataforma()?.getAttribute('aria-current')).toBeNull();
+
+        opcionPlataforma()?.click();
+        expect(session.activeTenantId()).toBeNull();
+        expect(rotulo()).toContain('Toda la plataforma');
+      });
+
+      it('también se ofrece con una sola organización, porque se puede alternar con «toda la plataforma»', () => {
+        abrirSesion({ sub: 'u-1', roles: ['SUPERADMIN'], tenants: ['t-1'] });
+
+        expect(raiz().querySelector('[data-testid="header-organization"]')).not.toBeNull();
+      });
+
+      it('NEGATIVO: quien no tiene alcance de plataforma no ve la opción', () => {
+        platformSession(['SECURITY_ADMIN']);
+
+        expect(opcionPlataforma()).toBeNull();
+        expect(rotulo()).not.toContain('Toda la plataforma');
+      });
+
+      it('NEGATIVO: PLATFORM_ADMIN con ámbito de organización no ve la opción', () => {
+        platformSession(['PLATFORM_ADMIN'], { scopedRoles: { 't-1': ['PLATFORM_ADMIN'] } });
+
+        expect(opcionPlataforma()).toBeNull();
+      });
+
+      it('NEGATIVO: «Toda la plataforma» no hace nada para quien no tiene el alcance (la API manda)', () => {
+        sesionConDosOrganizaciones();
+        vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+        interno<(id: string) => void>('changeTenant')('t-1');
+
+        interno<(id: string | null) => void>('changeTenant')(null);
+        expect(session.activeTenantId()).toBe('t-1');
+      });
     });
 
     it('el avatar lleva las iniciales del nombre, no el nombre entero', () => {

@@ -102,7 +102,8 @@ import {
 } from '../../../core/profession/university-registry';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import { MAX_ATTACHMENT_BYTES } from '../shared-registration/doctor-credentials';
-import { passwordValidators } from '../shared-registration/password-policy';
+import { licenceRowControl } from '../shared-registration/licence-row';
+import { passwordWithConfirmation } from '../shared-registration/password-confirmation';
 import { identityDocumentValidators } from '../shared-registration/national-id';
 import {
   EMPTY_STUDY,
@@ -124,6 +125,8 @@ import type {
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { BoProfessionsCatalog } from '../../../core/data-access/terminology/bo-professions.service';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
+import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
 import { OfficeLogoField } from './office-logo/office-logo-field';
 import { OfficeLogoSelection } from './office-logo/office-logo-selection';
 import { ownSiteFromAnswers } from './own-site';
@@ -618,15 +621,15 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
     },
     {
       icono: 'history',
-      titulo: 'Lo opcional puede dejarlo para después',
+      titulo: 'Los tres datos de cada registro son obligatorios',
       texto:
-        'La fecha de inscripción y los respaldos no frenan su alta: se cargan cuando los tenga a mano, desde su perfil.',
+        'Cada registro lleva su número, su fecha de inscripción y su respaldo en PDF. Sin los tres no podemos continuar con su alta.',
     },
     {
       icono: 'folder',
       titulo: 'Cada documento se revisa por separado',
       texto:
-        'Puede registrarse sin subirlos y cargarlos después desde su perfil. Mientras no estén, su matrícula figura como declarada y no como verificada. Si falta algo, el equipo se lo pide y puede corregirlo y reenviar.',
+        'El equipo revisa cada respaldo por separado. Mientras no se resuelva, su matrícula figura como declarada y no como verificada. Si falta algo, el equipo se lo pide y puede corregirlo y reenviar.',
     },
   ],
   specialties: [
@@ -710,7 +713,7 @@ function sinTildes(texto: string): string {
 
 @Component({
   selector: 'app-register-practitioner',
-  imports: [RegistrationBadge, 
+  imports: [RegistrationBadge, AccountExistsDialog, 
     FileDropTarget,
     FileInput,
     DatePicker,
@@ -747,6 +750,7 @@ export class RegisterPractitioner {
   private readonly iam = inject(IamClient);
   private readonly officeLogo = inject(OfficeLogoSelection);
   private readonly router = inject(Router);
+  private readonly cuentaExistente = inject(AccountExistsCheck);
   private readonly systemContext = inject(SystemContextClient);
   private readonly draftService = inject(OnboardingDraftService);
 
@@ -1153,17 +1157,7 @@ export class RegisterPractitioner {
     thirdName: new FormControl('', { nonNullable: true }),
     lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     motherLastName: new FormControl('', { nonNullable: true }),
-    // El correo de TRABAJO. Dejó de ser la identidad de acceso —eso ahora es
-    // `personalEmail`— y con eso dejó de ser obligatorio: un médico puede no
-    // tener correo institucional, y el del consultorio lo pone la organización.
-    email: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.email],
-    }),
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [...passwordValidators],
-    }),
+    ...passwordWithConfirmation(),
     // Documento de identidad boliviano. Obligatorio en el alta de profesional:
     // la matrícula habilita a ejercer, pero es la cédula la que ata esa matrícula
     // a una persona verificable. Además del formato válido, ahora tiene que estar.
@@ -1171,24 +1165,18 @@ export class RegisterPractitioner {
       nonNullable: true,
       validators: [...identityDocumentValidators],
     }),
-    licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    sedesLicenseNumber: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-    // El registro del colegio de la profesión. Obligatorio sólo cuando el
-    // título elegido tiene un colegio conocido: el validador lee el título del
-    // mismo grupo y `syncCollegeWithProfession` lo vuelve a correr al cambiarlo.
-    collegeLicenseNumber: new FormControl('', {
-      nonNullable: true,
-      validators: [
-        (control) =>
-          titleCollege(String(control.parent?.get('professionalTitle')?.value ?? '')) ===
-          PROFESSION_COLLEGE
-            ? null
-            : Validators.required(control),
-      ],
-    }),
+    // Each licence row needs its number, registration date and PDF backup.
+    licenseNumber: licenceRowControl('licenseIssueDate', () => this.hasBackup('license')),
+    sedesLicenseNumber: licenceRowControl('sedesLicenseIssueDate', () => this.hasBackup('sedes')),
+    // Colegio: mandatory only when the chosen title has a known college;
+    // `syncCollegeWithProfession` re-runs it when the title changes.
+    collegeLicenseNumber: licenceRowControl(
+      'collegeLicenseIssueDate',
+      () => this.hasBackup('college'),
+      (control) =>
+        titleCollege(String(control.parent?.get('professionalTitle')?.value ?? '')) !==
+        PROFESSION_COLLEGE,
+    ),
     // Quién emitió la matrícula y con qué título ejerce: los dos salen de una
     // lista cerrada — ver `OPCIONES_AUTORIDAD_REGULADORA` y
     // `OPCIONES_TITULO_PROFESIONAL`. Siguen siendo controles de texto porque lo
@@ -1423,7 +1411,18 @@ export class RegisterPractitioner {
   /** Si el número de una habilitación va en rojo: obligatorio y vacío, ya tocado. */
   habilitacionEnRojo(control: ControlDeHabilitacion): boolean {
     const campo = this.formProfesional.controls[control];
-    return campo.touched && campo.invalid;
+    return campo.touched && campo.hasError('required');
+  }
+
+  /** What a touched row still lacks: `licenceDate` or `licenceFile`. */
+  faltaEnHabilitacion(control: ControlDeHabilitacion, que: 'licenceDate' | 'licenceFile'): boolean {
+    const campo = this.formProfesional.controls[control];
+    return campo.touched && campo.hasError(que);
+  }
+
+  /** Whether the backup PDF of a licence row is attached. */
+  hasBackup(clave: ClaveDeHabilitacion): boolean {
+    return (this.attachmentFiles()[clave]?.length ?? 0) > 0;
   }
 
   /** La fecha de inscripción de una habilitación. */
@@ -1436,6 +1435,13 @@ export class RegisterPractitioner {
     const control = this.formProfesional.controls[fecha];
     control.setValue(valor);
     control.markAsDirty();
+  }
+
+  /** Each number control answers for its date and file: re-run them when either changes. */
+  private revalidarHabilitaciones(): void {
+    for (const { control } of HABILITACIONES) {
+      this.formProfesional.controls[control].updateValueAndValidity({ emitEvent: false });
+    }
   }
 
   /** El día de hoy: una inscripción no puede ser del futuro. */
@@ -1677,6 +1683,7 @@ export class RegisterPractitioner {
     if (key === 'professional-title') this.fileIdTituloPrincipal.set(null);
     else this.fileIdDeHabilitacion.update((actual) => ({ ...actual, [key]: undefined }));
     this.destinoDelRespaldo(key).set(file ? { archivo: file.name, pesoBytes: file.size } : null);
+    this.revalidarHabilitaciones();
     this.errorAdjunto.set(null);
   }
 
@@ -2546,6 +2553,7 @@ export class RegisterPractitioner {
     practitionerFields({
       professionalTitle: this.tituloProfesionalElegido(),
       departmentIssuerField: (testId) => this.campoDepartamentoEmisor(testId),
+      alSalirCorreoPersonal: (valor) => this.cuentaExistente.verificar('EMAIL', valor),
     }),
   );
 
@@ -2756,6 +2764,7 @@ export class RegisterPractitioner {
     this.syncCollegeWithProfession();
 
     this.formProfesional.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.revalidarHabilitaciones();
       this.guardarBorrador();
     });
 
@@ -3213,7 +3222,6 @@ export class RegisterPractitioner {
     const celularTrabajo = raw.workMobilePhone.trim();
     const fijoTrabajo = raw.workLandline.trim();
     const correoPersonal = raw.personalEmail.trim();
-    const correoTrabajo = raw.email.trim();
     const segundoNombre = this.nombresAdicionales();
     const apellidoMaterno = raw.motherLastName.trim();
     const documento = raw.nationalId.trim();
@@ -3242,13 +3250,10 @@ export class RegisterPractitioner {
     const respaldos = this.fileIdDeHabilitacion();
 
     return {
-      // `email` del DTO es el campo de LOGIN de la API, y desde este cambio el
-      // login es el correo personal: es el que el profesional conserva aunque
-      // cambie de hospital. El institucional viaja aparte, en `workEmail`.
+      // `email` is the API login field: the personal email, the one the
+      // practitioner keeps when changing hospital. There is no separate work
+      // email: with `personalEmail === email` the API treats it as the only one.
       email: correoPersonal,
-      // El correo de acceso también viaja como personal: sin `workEmail` la API
-      // lo tomaba por institucional. Con `personalEmail === email` y sin
-      // `workEmail` sabe que es el único y no inventa un contacto de trabajo.
       personalEmail: correoPersonal,
       password: raw.password,
       name: raw.name.trim(),
@@ -3313,12 +3318,8 @@ export class RegisterPractitioner {
         : {
             collegeLicenseNumber: registroColegio,
             ...(colegio === PROFESSION_COLLEGE ? {} : { collegeName: colegio }),
-            ...(fechaColegio === null
-              ? {}
-              : { collegeLicenseIssueDate: fechaIso(fechaColegio) }),
-            ...(respaldos.college === undefined
-              ? {}
-              : { collegeLicenseFileId: respaldos.college }),
+            ...(fechaColegio === null ? {} : { collegeLicenseIssueDate: fechaIso(fechaColegio) }),
+            ...(respaldos.college === undefined ? {} : { collegeLicenseFileId: respaldos.college }),
           }),
       ...(titulo === '' ? {} : { professionalTitle: titulo }),
       // Los cuatro contactos por separado. `phone` ya no viaja: era el campo
@@ -3327,7 +3328,6 @@ export class RegisterPractitioner {
       ...(celularPersonal === '' ? {} : { mobilePhone: celularPersonal }),
       ...(celularTrabajo === '' ? {} : { workMobilePhone: celularTrabajo }),
       ...(fijoTrabajo === '' ? {} : { workLandline: fijoTrabajo }),
-      ...(correoTrabajo === '' ? {} : { workEmail: correoTrabajo }),
       ...(this.especialidadesElegidas().length === 0
         ? {}
         : { specialtyConceptIds: this.especialidadesElegidas() }),

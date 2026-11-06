@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q10384
+image: wikidata-especialidad-q10384.svg | La geriatría valora a la persona mayor en cuatro áreas para conservar su autonomía. | Diagrama de la valoración geriátrica integral con las áreas clínica, funcional, mental y social alrededor de la persona mayor, y los principales síndromes geriátricos.
 ---
 
 ## [definition] Introducción

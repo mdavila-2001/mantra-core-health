@@ -28,6 +28,8 @@ export interface NewPatientProfile {
   readonly sexAtBirthConceptId?: string;
   /** Código del índice maestro de pacientes. Único en toda la instalación. */
   readonly masterPatientIndexCode?: string;
+  /** The operator confirmed a homonym is another person (skips the 409). */
+  readonly allowHomonym?: boolean;
 }
 
 export interface PatientProfile {
@@ -516,16 +518,13 @@ export interface PatientListItem {
   readonly personId: string;
   readonly patientCode: string;
   readonly displayName?: string;
-  /**
-   * El documento de identidad y el teléfono, que es lo que el médico usa para
-   * reconocer y llamar a la persona (propietario, 19/09/2026).
-   *
-   * **Opcionales porque sólo los sirve la maqueta de `mockup`:**
-   * `PatientListItemDto` no los declara. Donde falten, la celda lo dice con
-   * palabras en vez de dejar el hueco.
-   */
+  /** Full document and phone: only the `mockup` build serves them. */
   readonly nationalId?: string;
   readonly phone?: string;
+  /** Masked document (last digits) the API serves to tell homonyms apart. */
+  readonly nationalIdMasked?: string;
+  /** Own portal account: without one a link request reaches nobody. */
+  readonly hasAccount?: boolean;
   readonly birthDate?: Date;
   readonly personStatusConceptId?: string;
   /**
@@ -1268,6 +1267,7 @@ export interface Dependent {
    */
   readonly ageYears?: number;
   readonly nationalId?: string;
+  readonly sexAtBirth?: BirthSexCode;
   readonly relationshipCode: DependentRelationshipCode;
   /** Cómo se dice ese parentesco en pantalla («Hijo/a»). */
   readonly relationshipDisplay: string;

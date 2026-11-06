@@ -1,5 +1,6 @@
 ---
 slug: bronquiolitis
+image: bronquiolitis.svg | Bronquiolo sano frente a bronquiolo inflamado y signos de alarma | Árbol bronquial con dos cortes de bronquiolo, uno abierto y otro estrechado por la inflamación y el moco, junto a los signos de alarma en lactantes
 ---
 
 ## [definition] Introducción

@@ -6,9 +6,10 @@
 
 <!-- Rama mockup: el recordatorio de que no hay API y las cuentas de prueba.
      Sólo con el simulador encendido (H1.S2.M1) — contra la API real no hay
-     nada que anunciar, y el `@defer` lo saca del paquete inicial. -->
-@defer (when mockBackend) {
-  <app-mock-banner />
+     nada que anunciar, y en esas compilaciones el cartel ni siquiera viaja en
+     el paquete (O3-4, ver `banner` en `app.ts`). -->
+@if (banner(); as cartel) {
+  <ng-container *ngComponentOutlet="cartel" />
 }
 
 <!-- El disparador de avisos flotante se quitó de acá: aparecía encima de TODAS

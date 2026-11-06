@@ -2,7 +2,9 @@
   title="Sumar a alguien"
   subtitle="Se le envía una invitación: hasta que la acepte no cuenta en la organización. Mientras nadie más forme parte, sólo quien la creó puede trabajar dentro."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <app-back-link page-actions [fallback]="rutaVolver()" label="Volver a la organización" />
+</app-page-header>
 
 @if (errorMessage(); as mensaje) {
   <app-alert appAnuncio tone="error" class="alta__alert" data-testid="alta-membresia-error">{{

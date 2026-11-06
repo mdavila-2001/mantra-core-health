@@ -33,12 +33,7 @@ import { InsurerProfileCard } from '../../insurance/insurer-profile-card/insurer
 import { OrganizationLogo } from '../organization-logo/organization-logo';
 import { LegalDocuments } from '../pharmacy-profile/legal-documents/legal-documents';
 import { PharmacyProfile, POSITION_BY_ROLE } from '../pharmacy-profile/pharmacy-profile';
-import type {
-  ContactoDeLaEmpresa,
-  DocumentoLegal,
-  EstadoDeVerificacion,
-  GenteDeLaEmpresa,
-} from '../pharmacy-profile/pharmacy-profile.types';
+import type { ContactoDeLaEmpresa, DocumentoLegal, EstadoDeVerificacion, GenteDeLaEmpresa } from '../pharmacy-profile/pharmacy-profile.types';
 import { RepresentativeAndManagers } from '../pharmacy-profile/representative-and-managers/representative-and-managers';
 
 /** Tipo de organización con ficha propia en «Mi perfil». */
@@ -54,7 +49,7 @@ const PROFILE_TITLE_BY_TENANT_TYPE: Readonly<Record<string, string>> = {
 /** Lo que la ficha dice cuando el dato no se registró: el renglón no se esconde. */
 const SIN_REGISTRAR = 'Sin registrar';
 
-/** Un día, para contar cuánto le falta a un papel para vencer. */
+/** Un día, para contar cuánto falta para vencer. */
 const UN_DIA_MS = 24 * 60 * 60 * 1000;
 
 /**
@@ -156,6 +151,7 @@ function contacto(persona: OrganizationContactPerson): ContactoDeLaEmpresa {
   return {
     cargo: POSITION_BY_ROLE[persona.role] ?? persona.role,
     nombre: persona.fullName,
+    partes: persona,
     celular: persona.phone ?? null,
     correo: persona.email ?? null,
     documento: persona.idNumber ?? null,

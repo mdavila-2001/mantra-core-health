@@ -145,6 +145,7 @@ test('1 · el alta lleva la institución y la aseguradora elegidas, y la API las
   await page.getByTestId('registro-pro-celular-personal').fill('70012345');
   await page.getByTestId('registro-pro-correo-personal').fill(MEDICO.identificador);
   await page.getByTestId('registro-pro-password').fill(MEDICO.clave);
+  await page.getByTestId('registro-pro-password-confirm').fill(MEDICO.clave);
   await continuar(page);
 
   await marcarCasa(page);

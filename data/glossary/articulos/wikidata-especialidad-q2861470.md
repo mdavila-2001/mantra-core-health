@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q2861470
+image: wikidata-especialidad-q2861470.svg | En urgencias se atiende primero a quien está más grave, siguiendo un orden ABCDE. | Escala de triaje de cinco niveles por colores, de resucitación a no urgente. A la derecha, la evaluación ordenada ABCDE: vía aérea, respiración, circulación, estado neurológico y exposición.
 ---
 
 ## [definition] Introducción

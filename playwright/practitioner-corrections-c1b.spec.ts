@@ -235,6 +235,7 @@ async function fillUntilOwnOffice(page: Page, applicant: Applicant): Promise<voi
   await page.getByTestId('registro-pro-celular-personal').fill('70012345');
   await page.getByTestId('registro-pro-correo-personal').fill(applicant.email);
   await page.getByTestId('registro-pro-password').fill('Medico-2026!');
+  await page.getByTestId('registro-pro-password-confirm').fill('Medico-2026!');
   await next(page);
 
   await onPage(page, '¿Dónde vive?');

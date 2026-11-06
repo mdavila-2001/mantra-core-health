@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -20,18 +21,16 @@ import { empty, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { Select } from '../../../../shared/components/atoms/select/select';
-import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../../shared/components/molecules/card/card';
 import { FileInput, type RejectedFile } from '../../../../shared/components/molecules/file-input/file-input';
+import { Select } from '../../../../shared/components/atoms/select/select';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { CsvExportService } from '../../../../shared/utils/csv-export/csv-export';
 import { ArchivoInvalido, FILE_MAX_BYTES, decodificarCsv } from '../../catalog-rules/catalog.rules';
-import { PharmacyScope } from '../../pharmacy-scope';
+import { PharmacyScope, providePharmacyScope } from '../../pharmacy-scope';
 import {
   OUTCOME_BADGE,
   bulkFailureMessage,
@@ -49,21 +48,16 @@ import {
   type EntityCsvReading,
   type ImportEntity,
 } from './entity-csv';
+import {
+  ImportColumnsHelp,
+  type ImportTemplateLink,
+} from '../import-columns-help/import-columns-help';
 
 /** Dónde está el paso que sigue: la carga sin escribir, la escrita y su resultado. */
 type Phase = 'file' | 'previewing' | 'preview' | 'applying' | 'result';
 
-const MODE_OPTIONS: readonly SelectOption<BulkMode>[] = [
-  { value: 'UPSERT', label: 'Crear y actualizar' },
-  { value: 'CREATE', label: 'Sólo crear' },
-  { value: 'UPDATE', label: 'Sólo actualizar' },
-];
-
-const MODE_HINTS: Readonly<Record<BulkMode, string>> = {
-  UPSERT: 'Lo nuevo se crea y lo que ya existe se actualiza con lo que traiga el archivo.',
-  CREATE: 'Sólo se crea lo nuevo; lo que ya existe se rechaza.',
-  UPDATE: 'Sólo se actualiza lo que ya existe; lo nuevo se rechaza.',
-};
+/** Always an upsert: new rows are created and existing ones updated. */
+const UPSERT: BulkMode = 'UPSERT';
 
 /** Lo que cambia de una entidad a otra en la pantalla. */
 interface EntityCopy {
@@ -80,23 +74,10 @@ const COPY: Readonly<Record<ImportEntity, EntityCopy>> = {
     note: 'Las categorías se reconocen por el nombre sin mayúsculas ni tildes: «analgesicos» renombra a «Analgésicos».',
     done: { label: 'Ver categorías', url: '/administration/pharmacy-catalog?tab=categories' },
   },
-  prices: {
-    title: 'Suba su archivo de precios',
-    keyHeader: 'Código',
-    note: 'Cambia el precio de venta vigente de cada producto de su catálogo. El mismo importe queda sin cambios.',
-    done: { label: 'Ver precios', url: '/administration/pharmacy-catalog?tab=prices' },
-  },
-  sites: {
-    title: 'Suba su archivo de sucursales',
-    keyHeader: 'Código',
-    note: 'Se crean como sedes de venta de su farmacia: aparecen en «Horario y turnos» y en «Dónde comprar», no en la pantalla «Sucursales» de su organización.',
-    done: { label: 'Ver horario y turnos', url: '/administration/pharmacy-hours' },
-  },
 };
 
 /**
- * **Importación de categorías, precios o sucursales** con un CSV, por la carga
- * masiva de la API (`POST /pharmacies/:id/{entity}/bulk`): plantilla para
+ * **Categories import** with a CSV, through the API bulk load (`POST /pharmacies/:id/{entity}/bulk`): plantilla para
  * descargar, el archivo, el modo, la vista previa del servidor (`dryRun`, no
  * escribe nada), «Aplicar» y el resultado fila por fila.
  *
@@ -106,8 +87,19 @@ const COPY: Readonly<Record<ImportEntity, EntityCopy>> = {
  */
 @Component({
   selector: 'app-entity-import',
-  imports: [Alert, AppButton, Badge, Card, DataTable, FileInput, FormField, Select, ViewStateHost],
-  providers: [PharmacyScope],
+  imports: [
+    Alert,
+    AppButton,
+    Badge,
+    DataTable,
+    FileInput,
+    FormField,
+    ImportColumnsHelp,
+    NgTemplateOutlet,
+    Select,
+    ViewStateHost,
+  ],
+  providers: [providePharmacyScope()],
   templateUrl: './entity-import.html',
   styleUrl: './entity-import.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -121,13 +113,15 @@ export class EntityImport {
   private readonly router = inject(Router);
 
   protected readonly maxBytes = FILE_MAX_BYTES;
-  protected readonly modeOptions = MODE_OPTIONS;
   protected readonly copy = computed(() => COPY[this.entity()]);
   protected readonly columns = computed(() => ENTITY_COLUMNS[this.entity()]);
+  protected readonly templates: readonly ImportTemplateLink[] = [
+    { value: 'template', label: 'Descargar plantilla', testId: 'entity-import-template' },
+  ];
 
-  protected readonly mode = signal<BulkMode>('UPSERT');
-  protected readonly modeHint = computed(() => MODE_HINTS[this.mode()]);
   protected readonly phase = signal<Phase>('file');
+  /** A write is in flight: closing the import modal now would cut it. */
+  readonly busy = computed(() => this.phase() === 'applying');
   protected readonly files = signal<readonly File[]>([]);
   protected readonly fileName = signal('');
   protected readonly fileError = signal<string | null>(null);
@@ -204,13 +198,6 @@ export class EntityImport {
     }
   }
 
-  protected setMode(mode: BulkMode | null): void {
-    this.mode.set(mode ?? 'UPSERT');
-    if (this.phase() === 'preview' || this.phase() === 'previewing') {
-      this.send(true);
-    }
-  }
-
   protected async onFilesChange(files: readonly File[]): Promise<void> {
     this.files.set(files);
     const file = files[0];
@@ -254,7 +241,7 @@ export class EntityImport {
     const lines = rows.map((row) => row.line);
     this.request = this.bulk
       .chunked(pharmacyId, this.entity(), {
-        mode: this.mode(),
+        mode: UPSERT,
         ...(dryRun ? { dryRun: true } : {}),
         rows: rows.map((row) => row.payload!),
       })

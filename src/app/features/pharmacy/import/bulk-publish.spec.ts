@@ -11,6 +11,7 @@ import {
   countOutcomes,
   productBulkRow,
   productResultRows,
+  readyRowsOf,
   sendProducts,
   toFileRows,
   type ReadyRow,
@@ -48,6 +49,23 @@ describe('bulk-publish', () => {
     });
     // El cambio no lleva lo que sólo admite el alta, ni borra lo que la fila dejó vacío.
     expect(productBulkRow(updated!)).toEqual({ productCode: 'PAR-500', brandName: 'Ya está', inStock: true });
+  });
+
+  // A price list (`codigo,precio`) used to send `inStock: true` for every
+  // existing product, putting out-of-stock ones back on sale.
+  it('un archivo sin «disponible» actualiza el precio y conserva la disponibilidad de lo que ya existe', () => {
+    const rows = readyRowsOf(reviewed('codigo;marca;precio\nPAR-500;;20\nNUEVO-1;Nuevo;5'), false);
+
+    expect(rows.map(productBulkRow)).toEqual([
+      { productCode: 'PAR-500', unitPrice: 20 },
+      { productCode: 'NUEVO-1', brandName: 'Nuevo', unitPrice: 5, inStock: true },
+    ]);
+  });
+
+  it('con «disponible» en el archivo, la disponibilidad viaja también en las actualizaciones', () => {
+    const rows = readyRowsOf(reviewed('codigo;precio;disponible\nPAR-500;20;agotado'), true);
+
+    expect(rows.map(productBulkRow)).toEqual([{ productCode: 'PAR-500', unitPrice: 20, inStock: false }]);
   });
 
   it('sendProducts manda las filas listas por la carga masiva y devuelve el resultado con la línea del archivo', () => {
@@ -121,6 +139,42 @@ describe('bulk-publish', () => {
     expect(rows.map((row) => row.number)).toEqual([5, 9, 12]);
     expect(rows.map((row) => row.message)).toEqual(['', '', 'No existe: eligió sólo actualizar.']);
     expect(countOutcomes(rows)).toEqual({ created: 1, updated: 0, unchanged: 1, rejected: 1 });
+  });
+
+  it('el medicamento por su nombre viaja en el alta y en el cambio; vacío, no viaja', () => {
+    const rows = reviewed(
+      [
+        'codigo;generico;receta;medicamento',
+        'AMX;Amoxicilina;sí;Amoxicilina',
+        'PAR-500;Paracetamol;;Paracetamol',
+        'B-1;Otro;no;',
+      ].join('\n'),
+    ).filter((row): row is ReadyRow => row.lista);
+
+    expect(productBulkRow(rows[0]!)).toMatchObject({ productCode: 'AMX', medicationName: 'Amoxicilina' });
+    expect(productBulkRow(rows[1]!)).toEqual({
+      productCode: 'PAR-500',
+      genericName: 'Paracetamol',
+      inStock: true,
+      medicationName: 'Paracetamol',
+    });
+    expect('medicationName' in productBulkRow(rows[2]!)).toBe(false);
+  });
+
+  it('una fila que se carga con un aviso lo lleva como motivo, para que se vea en la tabla', () => {
+    const rows = toFileRows([3, 4], [
+      {
+        row: 1,
+        outcome: 'CREATED',
+        warnings: [{ field: 'medicationConceptId', reason: 'MEDICATION_NOT_LINKED', message: 'Pide receta sin medicamento' }],
+      },
+      { row: 2, outcome: 'UPDATED', warnings: [{ field: 'medicationConceptId', reason: 'MEDICATION_NOT_LINKED' }] },
+    ]);
+
+    expect(rows.map((row) => row.message)).toEqual([
+      'Pide receta sin medicamento',
+      'Pide receta y no tiene medicamento vinculado: ninguna receta lo encuentra.',
+    ]);
   });
 
   it('un 413 se dice como tamaño; lo demás, con el mensaje de la farmacia', () => {

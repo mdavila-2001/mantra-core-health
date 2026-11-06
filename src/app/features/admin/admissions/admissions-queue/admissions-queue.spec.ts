@@ -198,8 +198,12 @@ describe('AdmissionsQueue', () => {
       harness.detectChanges();
       const req = pedida();
       expect(req.request.params.get('cursor')).toBe('c2');
+      harness.detectChanges();
+      // The previous rows stay visible, so a spinner says the next page is loading.
+      expect(q('admissions-page-loading')).not.toBeNull();
       req.flush(wirePage([wireSummary({ id: 'b' })], { nextCursor: null }));
       harness.detectChanges();
+      expect(q('admissions-page-loading')).toBeNull();
       expect(q('admissions-page')?.textContent).toContain('Página 2');
       const anterior = [...el().querySelectorAll('button')].find((b) => /anterior/i.test(b.textContent ?? '') || /anterior/i.test(b.getAttribute('aria-label') ?? ''))!;
       anterior.click();

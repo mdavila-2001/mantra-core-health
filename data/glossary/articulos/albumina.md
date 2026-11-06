@@ -1,5 +1,6 @@
 ---
 slug: albumina
+image: albumina.svg | La albúmina se fabrica en el hígado y mantiene el agua dentro de los vasos. | Esquema del hígado fabricando albúmina que circula por un vaso sanguíneo, y del análisis en sangre u orina con lo que ayuda a valorar: hígado, riñón, nutrición y edemas.
 ---
 
 ## [definition] Introducción

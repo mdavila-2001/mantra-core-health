@@ -9,13 +9,18 @@ import type {
   PharmacyProduct,
   PharmacyProductChanges,
 } from '../../../core/data-access/pharmacy/pharmacy.types';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
+import { CsvExportService, toCsv, type CsvColumn } from '../../../shared/utils/csv-export/csv-export';
 import { PharmacyPrices } from './pharmacy-prices';
 import { afterAll, beforeAll } from 'vitest';
 import { environment } from '../../../../environments/environment';
 
 /**
- * La pestaña «Precios» de la farmacia: se edita en la tabla, se manda sólo lo
- * que cambió, un precio mal escrito no sale y uno rechazado no frena al resto.
+ * The pharmacy «Precios» tab: each row has «Editar» (a modal with Save and
+ * Cancel) and, when priced, «Quitar precio». Both send a `PATCH` and re-read
+ * the table from the API.
  */
 const PHARMACY = 'f-1';
 
@@ -45,12 +50,8 @@ const CATALOG = [
 ];
 
 interface Internal {
-  setPrice: (product: PharmacyProduct, value: string) => void;
-  priceOf: (product: PharmacyProduct) => string;
-  dirtyCount: () => number;
-  save: () => void;
-  errors: () => readonly string[];
-  rejected: () => readonly { name: string; reason: string }[];
+  actionsOf: (product: PharmacyProduct) => readonly RowAction[];
+  onRowAction: (code: string, product: PharmacyProduct) => Promise<void>;
 }
 
 describe('PharmacyPrices', () => {
@@ -63,6 +64,7 @@ describe('PharmacyPrices', () => {
   let sent: { productId: string; changes: PharmacyProductChanges }[];
   let reply: (productId: string) => Observable<PharmacyProduct>;
   let searchProducts: ReturnType<typeof vi.fn>;
+  let confirm: ReturnType<typeof vi.fn>;
 
   const internal = (): Internal => fixture.componentInstance as unknown as Internal;
 
@@ -70,10 +72,12 @@ describe('PharmacyPrices', () => {
     sent = [];
     reply = () => of(CATALOG[0]!);
     searchProducts = vi.fn(() => of({ items: CATALOG, limit: 500, truncated: false }));
+    confirm = vi.fn(() => Promise.resolve(true));
 
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
+        { provide: DialogService, useValue: { confirm } },
         {
           provide: PharmacyClient,
           useValue: {
@@ -109,61 +113,163 @@ describe('PharmacyPrices', () => {
     expect(text).not.toContain('Retirado');
   });
 
-  it('volver al mismo valor, escrito de otra forma, no cuenta como cambio', () => {
-    internal().setPrice(CATALOG[0]!, '12,5');
-    expect(internal().dirtyCount()).toBe(0);
+  describe('acciones de la fila', () => {
+    const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
+    const dialog = (): HTMLElement | null => root().querySelector('[data-testid="price-dialog"]');
+    const byId = (id: string): HTMLElement => root().querySelector(`[data-testid="${id}"]`) as HTMLElement;
 
-    internal().setPrice(CATALOG[0]!, '13');
-    expect(internal().dirtyCount()).toBe(1);
-    expect(internal().priceOf(CATALOG[0]!)).toBe('13');
+    async function edit(target: PharmacyProduct): Promise<void> {
+      await internal().onRowAction('edit', target);
+      fixture.detectChanges();
+    }
+
+    function type(value: string): void {
+      const input = byId('price-dialog-input') as HTMLInputElement;
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+    }
+
+    function click(id: string): void {
+      byId(id).click();
+      fixture.detectChanges();
+    }
+
+    it('cada fila tiene la columna «Acciones»: Editar siempre y Quitar precio sólo si tiene precio', () => {
+      expect(root().querySelectorAll('app-row-actions')).toHaveLength(2);
+      expect(internal().actionsOf(CATALOG[0]!).map((action) => action.label)).toEqual(['Editar', 'Quitar precio']);
+      expect(internal().actionsOf(CATALOG[1]!).map((action) => action.label)).toEqual(['Editar']);
+      expect(root().querySelector('input[inputmode="decimal"]')).toBeNull();
+    });
+
+    it('«Editar» abre el modal con el precio actual; Guardar manda el número, cierra y relee la tabla', async () => {
+      await edit(CATALOG[0]!);
+      expect(dialog()?.textContent).toContain('Editar precio');
+      expect((byId('price-dialog-input') as HTMLInputElement).value).toBe('12.50');
+
+      type('8,90');
+      click('price-dialog-save');
+
+      expect(sent).toEqual([{ productId: 'p-1', changes: { unitPrice: 8.9 } }]);
+      expect(dialog()).toBeNull();
+      expect(searchProducts).toHaveBeenCalledTimes(2);
+    });
+
+    it('un precio mal escrito o vacío no sale y el modal lo dice', async () => {
+      await edit(CATALOG[1]!);
+
+      for (const value of ['12.345', '0', '']) {
+        type(value);
+        click('price-dialog-save');
+        expect(byId('price-dialog-error').textContent).toContain('Escriba el precio en bolivianos');
+      }
+      expect(sent).toEqual([]);
+      expect(dialog()).not.toBeNull();
+    });
+
+    it('si la API lo rechaza, el modal sigue abierto con el motivo', async () => {
+      reply = () =>
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 422,
+              error: {
+                statusCode: 422,
+                code: 'VALIDATION_FAILED',
+                message: 'Datos inválidos',
+                issues: [{ field: 'unitPrice', message: 'El precio no es válido.' }],
+              },
+            }),
+        );
+      await edit(CATALOG[0]!);
+      type('20');
+      click('price-dialog-save');
+
+      expect(dialog()).not.toBeNull();
+      expect(byId('price-dialog-error').textContent?.trim()).not.toBe('');
+      expect(searchProducts).toHaveBeenCalledTimes(1);
+    });
+
+    it('Cancelar cierra el modal sin mandar nada', async () => {
+      await edit(CATALOG[0]!);
+      type('99');
+      const cancel = [...dialog()!.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Cancelar');
+      cancel!.click();
+      fixture.detectChanges();
+
+      expect(dialog()).toBeNull();
+      expect(sent).toEqual([]);
+    });
+
+    it('«Quitar precio» pregunta y, si se acepta, manda `unitPrice: null` y relee', async () => {
+      await internal().onRowAction('clear', CATALOG[0]!);
+      fixture.detectChanges();
+
+      expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ destructive: true, confirmLabel: 'Quitar precio' }));
+      expect(sent).toEqual([{ productId: 'p-1', changes: { unitPrice: null } }]);
+      expect(searchProducts).toHaveBeenCalledTimes(2);
+    });
+
+    it('si la API rechaza «Quitar precio», lo avisa y no relee', async () => {
+      const error = vi.spyOn(TestBed.inject(ToastService), 'error');
+      reply = () => throwError(() => new HttpErrorResponse({ status: 500 }));
+
+      await internal().onRowAction('clear', CATALOG[0]!);
+
+      expect(error).toHaveBeenCalledTimes(1);
+      expect(searchProducts).toHaveBeenCalledTimes(1);
+    });
+
+    it('si no se acepta, no se quita nada', async () => {
+      confirm.mockResolvedValue(false);
+      await internal().onRowAction('clear', CATALOG[0]!);
+
+      expect(sent).toEqual([]);
+    });
   });
 
-  it('manda sólo las filas que cambiaron, con el precio como número; vacío es «sin precio»', () => {
-    internal().setPrice(CATALOG[0]!, '');
-    internal().setPrice(CATALOG[1]!, '8,90');
-    internal().save();
+  describe('catálogo de más de 500, exportar y ordenar', () => {
+    const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
-    expect(sent).toEqual([
-      { productId: 'p-1', changes: { unitPrice: null } },
-      { productId: 'p-2', changes: { unitPrice: 8.9 } },
-    ]);
-    // La tabla se relee de la API: es la prueba de lo que quedó.
-    expect(searchProducts).toHaveBeenCalledTimes(2);
-  });
+    function remount(truncated: boolean): void {
+      searchProducts.mockReturnValue(of({ items: CATALOG, limit: 500, truncated }));
+      fixture = TestBed.createComponent(PharmacyPrices);
+      fixture.detectChanges();
+    }
 
-  it('un precio mal escrito no sale y se dice cuál', () => {
-    internal().setPrice(CATALOG[0]!, '12.345');
-    internal().setPrice(CATALOG[1]!, '0');
-    internal().save();
+    it('con el listado cortado en 500 lo dice, como Productos', () => {
+      expect(root().querySelector('[data-testid="prices-truncated"]')).toBeNull();
 
-    expect(sent).toEqual([]);
-    expect(internal().errors()).toHaveLength(2);
-    expect(internal().errors()[0]).toContain('Paracetamol');
-  });
+      remount(true);
 
-  it('uno rechazado por la API no frena a los demás y queda dicho con su motivo', () => {
-    reply = (productId) =>
-      productId === 'p-1'
-        ? throwError(
-            () =>
-              new HttpErrorResponse({
-                status: 422,
-                error: {
-                  statusCode: 422,
-                  code: 'VALIDATION_FAILED',
-                  message: 'Datos inválidos',
-                  issues: [{ field: 'unitPrice', message: 'El precio no es válido.' }],
-                },
-              }),
-          )
-        : of(CATALOG[1]!);
+      expect(root().querySelector('[data-testid="prices-truncated"]')?.textContent).toContain(
+        'Se muestran los primeros 500',
+      );
+    });
 
-    internal().setPrice(CATALOG[0]!, '20');
-    internal().setPrice(CATALOG[1]!, '5');
-    internal().save();
+    it('«Exportar CSV» baja código y precio publicado con los encabezados de la importación', () => {
+      const download = vi.spyOn(TestBed.inject(CsvExportService), 'download').mockImplementation(() => undefined);
 
-    expect(sent.map((s) => s.productId)).toEqual(['p-1', 'p-2']);
-    expect(internal().rejected()).toHaveLength(1);
-    expect(internal().rejected()[0]!.name).toBe('Paracetamol');
+      (root().querySelector('[data-testid="prices-export"]') as HTMLButtonElement).click();
+
+      const [rows, columns, filename] = download.mock.calls[0]!;
+      expect(filename).toBe('precios-de-la-farmacia.csv');
+      expect(toCsv(rows as readonly PharmacyProduct[], columns as readonly CsvColumn<PharmacyProduct>[])).toBe(
+        'codigo,precio\r\nPAR-500,12.50\r\nIBU-400,',
+      );
+    });
+
+    it('se ordena desde el encabezado, sin perder las filas', async () => {
+      const header = root().querySelector('[data-testid="tabla-ordenar"][data-columna="name"]') as HTMLButtonElement;
+      const names = (): (string | undefined)[] =>
+        [...root().querySelectorAll('.prices__main')].map((name) => name.textContent?.trim());
+      expect(names()).toEqual(['Paracetamol', 'Ibuprofeno']);
+
+      header.click();
+      await fixture.whenStable();
+
+      expect(names()).toEqual(['Ibuprofeno', 'Paracetamol']);
+      expect(root().querySelector('app-data-table')?.classList).toContain('data-table--dense');
+    });
   });
 });

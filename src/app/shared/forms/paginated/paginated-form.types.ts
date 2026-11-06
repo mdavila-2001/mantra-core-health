@@ -99,6 +99,7 @@ export type TipoDeControl =
   | 'custom';
 
 import type { ConditionVisible } from './conditional-visibility';
+import type { FieldKind } from '../field-kinds';
 
 /** Un campo del formulario, tal como el motor necesita conocerlo para pintarlo. */
 export interface CampoDeFormulario {
@@ -192,11 +193,16 @@ export interface CampoDeFormulario {
   /** Sólo para `text` y familia: el `autocomplete` del navegador. */
   readonly autocomplete?: string;
 
-  /** Sólo para `text`: nombre de persona, no admite dígitos ni símbolos. */
-  readonly soloLetras?: boolean;
+  /** `text` only: data kind (filter, validator, message; see `@shared/forms/field-kinds`). */
+  readonly fieldKind?: FieldKind;
 
-  /** Sólo para `text`: documento, sólo letras y números, sin espacios ni símbolos. */
-  readonly soloAlfanumerico?: boolean;
+  /**
+   * Sólo para `text`: se llama con el valor del campo cada vez que la persona
+   * **sale** de él (`blur`). Sirve para verificaciones que no caben en un
+   * validador síncrono —por ejemplo, preguntarle a la API si el documento ya
+   * tiene cuenta—. El motor no espera el resultado ni lo interpreta.
+   */
+  readonly alSalir?: (valor: string) => void;
 
   /**
    * El glifo que va **dentro** del campo, del set cerrado del nav.
@@ -285,7 +291,7 @@ export interface CampoDeFormulario {
    *
    * Ese reemplazo es sólo de los controles que caen en el `@default`, el
    * `textarea` y el `select`. En `tel`, `date` y `datetime` el placeholder es
-   * **el formato del dato** —«7001 2345», «DD/MM/AAAA»— y se conserva: es lo
+   * **el formato del dato** —«70012345», «DD/MM/AAAA»— y se conserva: es lo
    * que dice cómo escribirlo, que no es lo mismo que explicar para qué se pide.
    */
   readonly description?: string;

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo se ve y se contagia el impétigo</title>
+  <desc id="d">Rostro esquemático con costras de color miel alrededor de la nariz y la boca, lugar típico del impétigo. A la derecha, las bacterias que lo causan, estafilococo y estreptococo, cómo se contagia y las medidas de higiene y tratamiento.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Impétigo: infección superficial y contagiosa de la piel</text>
+  <rect x="20" y="60" width="360" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="200.0" y="88" text-anchor="middle" class="h">Alrededor de nariz y boca</text>
+  <ellipse cx="200" cy="260" rx="110" ry="140" fill="var(--skin)" stroke="var(--muted)"/>
+  <ellipse cx="160" cy="220" rx="12" ry="8" fill="var(--ink)" stroke="none"/>
+  <ellipse cx="240" cy="220" rx="12" ry="8" fill="var(--ink)" stroke="none"/>
+  <path d="M200 230 L190 280 L210 280" fill="none" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M170 320 C190 334 210 334 230 320" fill="none" stroke="var(--muted)" stroke-width="3"/>
+  <circle cx="176" cy="296" r="10" fill="var(--beam)" stroke="var(--warn)" stroke-width="2"/>
+  <circle cx="162" cy="306" r="7" fill="var(--beam)" stroke="var(--warn)" stroke-width="2"/>
+  <circle cx="226" cy="300" r="9" fill="var(--beam)" stroke="var(--warn)" stroke-width="2"/>
+  <circle cx="240" cy="334" r="8" fill="var(--beam)" stroke="var(--warn)" stroke-width="2"/>
+  <circle cx="180" cy="344" r="7" fill="var(--beam)" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="250" y1="336" x2="320" y2="380" stroke="var(--muted)" stroke-width="1"/>
+  <text x="300" y="396" text-anchor="middle" class="small b">Costras color miel</text>
+  <text x="200" y="428" text-anchor="middle" class="small muted">Empieza como granitos o ampollas que se rompen</text>
+  <rect x="396" y="60" width="384" height="180" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588.0" y="88" text-anchor="middle" class="h">Causa y contagio</text>
+  <rect x="414" y="100" width="168" height="54" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="498.0" y="132.0" text-anchor="middle" class="small">Estafilococo</text>
+  <rect x="594" y="100" width="168" height="54" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="678.0" y="132.0" text-anchor="middle" class="small">Estreptococo</text>
+  <text x="588" y="184" text-anchor="middle" class="small">Se contagia al tocar las lesiones, toallas</text>
+  <text x="588" y="202" text-anchor="middle" class="small">o ropa; más en niños y en verano</text>
+  <rect x="396" y="256" width="384" height="184" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588.0" y="284" text-anchor="middle" class="h">Qué hacer</text>
+  <text x="414" y="304" class="small">• Lavar con agua y jabón</text>
+  <text x="414" y="328" class="small">• Antibiótico en crema o por boca</text>
+  <text x="414" y="352" class="small">• Uñas cortas, no rascar</text>
+  <text x="414" y="376" class="small">• Toallas propias</text>
+  <text x="414" y="400" class="small">• Volver al colegio según indique el médico</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

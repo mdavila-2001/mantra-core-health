@@ -225,22 +225,81 @@ type MiembroDeLaRed = Omit<DoctorTeamMember, 'roleTemplate'> & {
   readonly roleTemplateCode?: DoctorTeamMember['roleTemplate'];
 };
 
-/** `SupportTeamMemberDto`: trae `roleTemplateCode` y `roleTemplate` (el mismo valor). */
-export function fromWireTeamMember(fila: MiembroDeLaRed): DoctorTeamMember {
-  const { roleTemplateCode, roleTemplate, ...resto } = fila;
+/**
+ * `SupportLinkViewDto` (lo que manda hoy `GET /me/practitioner/support-team`): trae `id` en vez de `delegateId`, el estado
+ * del vínculo (`PENDING|ACTIVE|REJECTED|ENDED`) y ningún campo de delegación (`coverageSummary`, `actions`,
+ * `mayReplyOnBehalf`…). Los campos del integrante que no vienen se completan con valores neutros.
+ */
+type FilaDeLaRed = Partial<MiembroDeLaRed> & {
+  readonly id?: string;
+  readonly kind?: string;
+  readonly awaiting?: string | null;
+  readonly personName?: string | null;
+  readonly organizationName?: string | null;
+  readonly practitionerRoleAssignmentId?: string | null;
+  readonly targetName?: string | null;
+};
+
+/** El estado del integrante para el doctor, a partir del estado del vínculo de la API. */
+function estadoDeLaRed(fila: FilaDeLaRed): DoctorTeamMember['status'] | 'PENDING' {
+  switch (fila.status as string | undefined) {
+    case 'PENDING':
+      // Solo lo decide el doctor si es a él a quien le toca; una invitación suya sin responder sigue `PENDING`.
+      return fila.awaiting === 'PRACTITIONER' ? 'PENDING_ACCEPTANCE' : 'PENDING';
+    case 'REJECTED':
+    case 'ENDED':
+      return 'REVOKED';
+    case 'REVOKED':
+    case 'PENDING_ACCEPTANCE':
+    case 'ACTIVE':
+      return fila.status!;
+    default:
+      return 'ACTIVE';
+  }
+}
+
+/** `SupportTeamMemberDto` o `SupportLinkViewDto`: trae `roleTemplateCode` y `roleTemplate` (el mismo valor). */
+export function fromWireTeamMember(fila: FilaDeLaRed): DoctorTeamMember {
+  const { roleTemplateCode, roleTemplate, id, targetName: _destino, ...resto } = fila;
+  const status = estadoDeLaRed(fila);
   const delegateStatus: DelegateStatus =
-    resto.delegateStatus ?? (resto.status === 'REVOKED' ? 'REVOKED' : 'ACTIVE');
+    resto.delegateStatus ?? (status === 'REVOKED' ? 'REVOKED' : 'ACTIVE');
   return {
     ...resto,
-    roleTemplate: (roleTemplate ?? roleTemplateCode) as DoctorTeamMember['roleTemplate'],
+    delegateId: resto.delegateId ?? id ?? '',
+    practitionerRoleAssignmentId: resto.practitionerRoleAssignmentId ?? '',
+    personName: resto.personName ?? 'Persona sin nombre',
+    organizationName: resto.organizationName ?? '',
+    roleTemplate: (roleTemplate ?? roleTemplateCode ?? 'SECRETARY') as DoctorTeamMember['roleTemplate'],
+    status: status as DoctorTeamMember['status'],
     delegateStatus,
+    mayReplyOnBehalf: resto.mayReplyOnBehalf ?? false,
+    replyDisclosure: resto.replyDisclosure ?? 'HIDE',
+    coverageSummary: resto.coverageSummary ?? '',
     actions: resto.actions ?? [],
     pendingClinicalRequests: resto.pendingClinicalRequests ?? [],
   };
 }
 
-export function fromWireTeam(body: { readonly items?: readonly MiembroDeLaRed[] }): DoctorTeam {
-  return { items: (body.items ?? []).map(fromWireTeamMember) };
+/**
+ * La misma persona en la misma vinculación del doctor es **un** integrante: si la API repite el vínculo, queda el
+ * activo (o el primero). Sin persona identificable (el simulador), cada fila es suya.
+ */
+function sinRepetidos(miembros: readonly DoctorTeamMember[]): readonly DoctorTeamMember[] {
+  const vistos = new Map<string, DoctorTeamMember>();
+  for (const m of miembros) {
+    const clave =
+      m.userId === undefined || m.practitionerRoleAssignmentId === ''
+        ? `fila|${m.delegateId}`
+        : `${m.userId}|${m.practitionerRoleAssignmentId}`;
+    const previo = vistos.get(clave);
+    if (previo === undefined || (previo.status !== 'ACTIVE' && m.status === 'ACTIVE')) vistos.set(clave, m);
+  }
+  return [...vistos.values()];
+}
+
+export function fromWireTeam(body: { readonly items?: readonly FilaDeLaRed[] }): DoctorTeam {
+  return { items: sinRepetidos((body.items ?? []).map(fromWireTeamMember)) };
 }
 
 export function fromWireEngagementPage(page: SupportEngagementPage): SupportEngagementPage {

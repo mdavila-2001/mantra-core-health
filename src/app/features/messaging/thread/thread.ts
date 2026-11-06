@@ -64,6 +64,7 @@ import {
   VERBO_DE_CONTEXTO,
 } from './thread-context';
 import { ImageViewer, type ImagenDelVisor } from './image-viewer/image-viewer';
+import { VoiceNote } from './voice-note/voice-note';
 
 /**
  * Una línea del hilo: un separador —de día o de «no leídos»— o un mensaje con
@@ -308,6 +309,7 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
     RouterLink,
     EmojiPicker,
     Spinner,
+    VoiceNote,
   ],
   templateUrl: './thread.html',
   styleUrls: ['./thread.css', './thread-layers.css', './thread-media.css'],
@@ -1087,11 +1089,6 @@ export class Thread {
    */
   protected esSticker(mensaje: MensajeDelHilo): boolean {
     return mensaje.contentType === 'STICKER' || stickerDe(mensaje.attachmentFileId) !== undefined;
-  }
-
-  /** Respuesta automática de la IA, si nadie la editó después (editada, la etiqueta mentiría). */
-  protected esRespuestaDeIa(mensaje: MensajeDelHilo): boolean {
-    return mensaje.contentType === 'AUTO_REPLY_AI' && mensaje.isEdited !== true;
   }
 
   /** Cómo se anuncia el sticker a quien no lo ve. */

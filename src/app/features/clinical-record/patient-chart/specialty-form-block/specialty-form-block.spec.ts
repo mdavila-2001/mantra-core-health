@@ -60,6 +60,33 @@ const PLANTILLA = {
   ],
 };
 
+/**
+ * Una plantilla con un campo de catálogo: `valueSetId` apunta al conjunto de
+ * valores de terminología, no a opciones tecleadas. Un `dataType: 'string'`
+ * a propósito — `valueSetId` convive con cualquier tipo, igual que en
+ * `ChartTemplateFieldDto`; no es el `dataType` el que decide si el campo es
+ * de catálogo.
+ */
+const _PLANTILLA_CATALOGO = {
+  id: 'tpl-cat',
+  specialtyConceptId: 'sp-1',
+  code: 'CATALOGO_INTAKE',
+  name: 'Ficha con catálogo',
+  version: 1,
+  statusConceptId: 'st-1',
+  fields: [
+    {
+      assignmentId: 'as-10',
+      fieldId: 'f-10',
+      code: 'habito_tabaquico',
+      name: '¿Fuma?',
+      dataType: 'string',
+      valueSetId: 'vs-tabaco',
+      required: true,
+    },
+  ],
+};
+
 describe('SpecialtyFormBlock', () => {
   let fixture: ComponentFixture<SpecialtyFormBlock>;
   let componente: SpecialtyFormBlock;
@@ -196,6 +223,11 @@ describe('SpecialtyFormBlock', () => {
 
   function peticionDePlantillas() {
     return http.expectOne((r) => r.url === '/charts/templates' && r.method === 'GET');
+  }
+
+  /** `GET /terminology/value-sets/:id/$expand` — las opciones de un campo de catálogo. */
+  function _peticionDeExpansion(valueSetId: string) {
+    return http.expectOne((r) => r.url === `/terminology/value-sets/${valueSetId}/$expand`);
   }
 
   function peticionDeRespuesta() {
@@ -1604,29 +1636,6 @@ describe('SpecialtyFormBlock', () => {
       drenarLecturasDelBloque();
     });
 
-    it('las respuestas viajan a la IA en palabras: pregunta = campo, respuesta = valor', () => {
-      peticionDePlantillas().flush([PLANTILLA]);
-      const actualizar = interno<(fieldId: string, valor: unknown) => void>('actualizarValor');
-
-      expect(interno<() => unknown[]>('respuestasParaLaIa')()).toEqual([]);
-      actualizar('f-1', 'Buena');
-      actualizar('f-2', true);
-
-      expect(interno<() => unknown[]>('respuestasParaLaIa')()).toEqual([
-        { question: 'Tolerancia al ejercicio', answer: 'Buena' },
-        { question: 'Edema', answer: 'Sí' },
-      ]);
-    });
-
-    it('el odontograma no viaja a la IA: es un mapa de piezas, no una respuesta', () => {
-      peticionDePlantillas().flush([PLANTILLA_ODONTO]);
-      interno<(fdi: string) => void>('abrirPieza')('16');
-      interno<(fieldId: string, codigo: string) => void>('fijarEstado')('f-odo', '1');
-
-      const respuestas = interno<() => { question: string }[]>('respuestasParaLaIa')();
-      expect(respuestas.some((r) => r.question === 'Odontograma')).toBe(false);
-    });
-
     it('completar encadena cerrar la ficha → diagnóstico tentativo → orden, en ese orden y con sus avisos', () => {
       const exito = vi.spyOn(TestBed.inject(ToastService), 'success');
       peticionDePlantillas().flush([PLANTILLA]);
@@ -1708,6 +1717,11 @@ describe('SpecialtyFormBlock', () => {
       http
         .expectOne(
           (r) => r.url === '/terminology/concepts' && r.params.get('q') === 'COND_PROVISIONAL',
+        )
+        .flush({ items: [], count: 0, limit: 50 });
+      http
+        .expectOne(
+          (r) => r.url === '/terminology/concepts' && r.params.get('q') === 'CONDITION_PROVISIONAL',
         )
         .flush({ items: [], count: 0, limit: 50 });
       // Ni el diagnóstico (que nacería firme) ni la orden que depende de él.

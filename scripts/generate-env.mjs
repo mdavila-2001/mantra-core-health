@@ -70,15 +70,6 @@ const MANIFEST = [
     legacyKey: 'API_BASE_URL',
   },
 
-  // Servicio de triage por IA. Relativo (`/ai`) o absoluto, con las mismas
-  // reglas que el endpoint de trazas: sin credenciales y sin query. El servicio
-  // es público, así que no hay secreto que pueda viajar en esta variable.
-  {
-    key: 'PUBLIC_AI_BASE_URL',
-    field: 'aiBaseUrl',
-    validate: validateTracesEndpoint,
-  },
-
   // --- Telemetría ----------------------------------------------------------
   //
   // Ninguna de estas seis es un secreto, y no puede serlo: el endpoint de
@@ -210,6 +201,15 @@ const MANIFEST = [
   {
     key: 'PUBLIC_DESIGN_MOCKUPS',
     field: 'designMockups',
+    literal: true,
+    validate: validateBoolean,
+  },
+
+  // Maqueta comercial de reportería (datos de ejemplo). Apagada por defecto: sólo para las
+  // capturas del simulador (`PW_REPORTING_MOCK=1`). Ver `features/reporting/reporting-access.ts`.
+  {
+    key: 'PUBLIC_REPORTING_MOCK',
+    field: 'reportingMockEnabled',
     literal: true,
     validate: validateBoolean,
   },
@@ -465,7 +465,14 @@ function validateTracesEndpoint(key, value) {
  * El commit se lee de Git y cae en `'desconocido'` si el build no corre dentro
  * de un repositorio, que es el caso de una imagen construida desde un tarball.
  */
+let buildInfoCache = null;
+
 function readBuildInfo() {
+  buildInfoCache ??= computeBuildInfo();
+  return buildInfoCache;
+}
+
+function computeBuildInfo() {
   let version = '0.0.0';
   try {
     version = JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')).version ?? version;
@@ -482,6 +489,12 @@ function readBuildInfo() {
     }).trim();
   } catch {
     // Fuera de un repositorio, o sin git instalado.
+  }
+  // Coolify builds without `.git` but exposes the commit as SOURCE_COMMIT
+  // (Dockerfile ARG). Without it every support code read `E-desconocido-NNN`.
+  const delEntorno = (process.env['SOURCE_COMMIT'] ?? '').trim();
+  if (commit === 'desconocido' && /^[0-9a-f]{7,40}$/i.test(delEntorno)) {
+    commit = delEntorno.slice(0, 7);
   }
 
   return { version, commit, builtAt: new Date().toISOString() };
@@ -603,6 +616,7 @@ function main() {
   }
 
   const output = render(entries);
+  writeBuildVersionFile(readBuildInfo());
 
   // Solo se escribe si cambió: el archivo está bajo el ojo del compilador en
   // modo watch y reescribirlo igual dispararía una recompilación por orden.
@@ -620,6 +634,18 @@ function main() {
       : entries.map(({ key, value }) => `${key}=${value === '' ? '(vacío)' : value}`).join(', ');
 
   process.stdout.write(`[generate-env] src/environments/env.generated.ts · ${summary}\n`);
+}
+
+/**
+ * `public/build-version.json`: the same build identity as the bundle, in a file
+ * the server serves without cache. `core/build/build-version-watcher.ts` reads it
+ * so an open tab notices a redeploy. Git-ignored, like `env.generated.ts`.
+ */
+function writeBuildVersionFile({ commit, builtAt }) {
+  const file = join(REPO_ROOT, 'public', 'build-version.json');
+  const content = `${JSON.stringify({ commit, builtAt })}\n`;
+  if (existsSync(file) && readFileSync(file, 'utf8') === content) return;
+  writeFileSync(file, content, 'utf8');
 }
 
 main();

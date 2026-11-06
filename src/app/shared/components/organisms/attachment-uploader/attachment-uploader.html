@@ -59,7 +59,8 @@
     [showList]="false"
     [accept]="accept"
     [maxSizeBytes]="maxBytes"
-    [disabled]="enviando()"
+    [uploading]="enviando()"
+    uploadingLabel="Subiendo archivos…"
     (rejected)="alRechazar($event)"
   />
 </app-form-field>
@@ -79,7 +80,12 @@
             {{ archivo.file.name }}
           </span>
           <span class="adjuntar__tamano">{{ tamano(archivo.file) }}</span>
-          <span class="adjuntar__estado">{{ etiquetaDeEstado(archivo.estado) }}</span>
+          <span class="adjuntar__estado">
+            @if (archivo.estado === 'subiendo') {
+              <app-spinner size="sm" decorative />
+            }
+            {{ etiquetaDeEstado(archivo.estado) }}
+          </span>
 
           <!-- Un archivo ya adjuntado no se «quita»: quitarlo de esta lista no
                lo desadjunta del recurso, y ofrecer el botón daría a entender

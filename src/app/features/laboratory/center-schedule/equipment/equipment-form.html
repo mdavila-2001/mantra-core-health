@@ -1,0 +1,20 @@
+<form class="formulario" (submit)="enviar($event)" data-testid="centro-equipo-formulario" [attr.aria-label]="equipo() ? 'Editar equipo' : 'Agregar equipo'">
+  <app-form-field label="Nombre" [required]="true" hint="Como lo llaman en el centro: «Ecógrafo sala 2».">
+    <app-input [value]="nombre()" (valueChange)="nombre.set(aTexto($event))" testId="centro-equipo-nombre" ariaLabel="Nombre del equipo" />
+  </app-form-field>
+  <app-form-field label="Modalidad que atiende" [required]="true">
+    <app-select [options]="modalidades" [value]="modalidad()" (valueChange)="modalidad.set($event ?? 'ECO')" ariaLabel="Modalidad que atiende" data-testid="centro-equipo-modalidad" />
+  </app-form-field>
+  <app-form-field label="Fabricante">
+    <app-input [value]="fabricante()" (valueChange)="fabricante.set(aTexto($event))" ariaLabel="Fabricante" />
+  </app-form-field>
+  <app-form-field label="Nº de serie">
+    <app-input [value]="serie()" (valueChange)="serie.set(aTexto($event))" ariaLabel="Número de serie" />
+  </app-form-field>
+  <div class="formulario__acciones">
+    <button app-button type="button" variant="ghost" (click)="cancelar.emit()">Cancelar</button>
+    <button app-button type="submit" variant="primary" [disabled]="falta()" [isLoading]="guardando()" data-testid="centro-equipo-guardar">
+      {{ equipo() ? 'Guardar cambios' : 'Agregar equipo' }}
+    </button>
+  </div>
+</form>

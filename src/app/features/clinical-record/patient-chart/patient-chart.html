@@ -1,20 +1,24 @@
 <app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()">
   <!-- El PDF sale del bloque `[data-pdf-root]` de abajo, no de la página
-       entera: sin eso el documento se llevaría el menú lateral. -->
-  <app-pdf-export-button
-    page-actions
-    [filename]="'expediente-' + (pacienteDeLaFicha() || 'paciente')"
-    [title]="titulo()"
-    [subtitle]="subtitulo()"
-    kind="Expediente clínico"
-    [target]="raizExportable()"
-  />
+       entera: sin eso el documento se llevaría el menú lateral. Sólo con el
+       expediente leído: sin él no hay nada que exportar. -->
+  @if (expediente().status === 'ready') {
+    <app-pdf-export-button
+      page-actions
+      [filename]="'expediente-' + (pacienteDeLaFicha() || 'paciente')"
+      [title]="titulo()"
+      [subtitle]="subtitulo()"
+      kind="Expediente clínico"
+      [target]="raizExportable()"
+    />
+  }
 </app-page-header>
 
 <!-- El anfitrión resuelve los nueve estados del M34 sobre la lectura entera:
      mientras el expediente no esté, no hay pestañas que dibujar. -->
 <app-view-state-host [state]="expediente()" (retry)="recargar()">
   <div class="expediente" data-pdf-root #raizPdf>
+    <app-chart-access-scope [patientProfileId]="pacienteDeLaFicha()" />
     <!-- Un recorte silencioso en clínica se lee como «no hay antecedentes». -->
     @if (recorte()) {
       <app-alert tone="warning" title="Expediente recortado">
@@ -274,6 +278,7 @@
               [canWrite]="puedeEscribir()"
               [appointments]="citasParaElDiagnostico()"
               [referrals]="chartReferrals.state()"
+              [refreshError]="chartReferrals.refreshError()"
               (cambio)="chartReferrals.reload()"
               (retry)="chartReferrals.reload()"
             />
@@ -822,4 +827,3 @@
      dicen sigue estando en su pestaña —«Diagnósticos», donde se cargan las
      alergias desde el 02/10/2026, y «Encuentros»—: el toast avisa, no es el
      único lugar donde consta. -->
-

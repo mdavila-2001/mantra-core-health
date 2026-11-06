@@ -147,12 +147,12 @@ describe('OrganizationDetail', () => {
   }
 
   describe('los nueve estados de la organización', () => {
-    it('S5: un 403 dice «no tenés acceso» y no queda cargando', async () => {
+    it('S5: un 403 dice «no tiene acceso» y no queda cargando', async () => {
       await abrir(['SECURITY_ADMIN']);
       responder({
         fichaError: {
           status: 403,
-          body: { statusCode: 403, code: 'FORBIDDEN', message: 'No pertenecés a esta organización' },
+          body: { statusCode: 403, code: 'FORBIDDEN', message: 'No pertenece a esta organización' },
         },
       });
 
@@ -185,7 +185,9 @@ describe('OrganizationDetail', () => {
         fichaError: { status: 500, body: null, headers: { 'x-request-id': 'req-9f2' } },
       });
 
-      expect(texto()).toContain('Algo salió mal');
+      // Un 500 sin cuerpo dice qué pasó y que el fallo fue del servidor.
+      expect(texto()).toContain('No pudimos completar la operación');
+      expect(texto()).toContain('El fallo no está en lo que usted ingresó');
       expect(texto()).toContain('req-9f2');
     });
 
@@ -520,6 +522,8 @@ describe('OrganizationDetail · invitaciones pendientes', () => {
   let listMemberships: ReturnType<typeof vi.fn>;
 
   interface Internal {
+    esGestionable: (m: unknown) => boolean;
+    vistaDeMembresias: () => { status: string; data?: readonly { id: string }[] };
     esInvitacionPendiente: (m: unknown) => boolean;
     retirarInvitacion: (m: unknown) => Promise<void>;
     retirando: () => string | null;
@@ -528,13 +532,18 @@ describe('OrganizationDetail · invitaciones pendientes', () => {
   const etiqueta = (conceptId: string, code: string, display: string) => ({ conceptId, code, display, codeSystemVersionId: 'v' });
   const PENDIENTE = { id: 'm-1', userId: 'u-1', statusConceptId: 'st-pend', tenantRoleConceptId: 'r', accessScopeConceptId: 'a', createdAt: new Date('2026-10-01') };
   const ACTIVA = { ...PENDIENTE, id: 'm-2', statusConceptId: 'st-act' };
+  const TERMINADA = { ...PENDIENTE, id: 'm-3', statusConceptId: 'st-end' };
+  // Support staff is a ROLE in the API (DIR_ROLE_SUPPORT), not a status.
+  const APOYO = { ...PENDIENTE, id: 'm-4', statusConceptId: 'st-act', tenantRoleConceptId: 'r-sup' };
+  // The real API names the pending state DIR_MEMBERSHIP_INVITED (the simulator uses ..._PENDING_ACCEPTANCE).
+  const INVITADA_API = { ...PENDIENTE, id: 'm-5', statusConceptId: 'st-inv' };
 
-  async function abrir(): Promise<void> {
+  async function abrir(query: Record<string, string> = {}): Promise<void> {
     withdraw = vi.fn(() => of({ ok: true }));
     confirm = vi.fn(() => Promise.resolve(true));
     toastSuccess = vi.fn();
     toastError = vi.fn();
-    listMemberships = vi.fn(() => of({ items: [PENDIENTE, ACTIVA], count: 2, limit: 25, nextCursor: null }));
+    listMemberships = vi.fn(() => of({ items: [PENDIENTE, ACTIVA, TERMINADA, APOYO], count: 4, limit: 25, nextCursor: null }));
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -552,7 +561,7 @@ describe('OrganizationDetail · invitaciones pendientes', () => {
         {
           provide: TerminologyClient,
           useValue: {
-            readConceptLabels: () => of(new Map([['st-pend', etiqueta('st-pend', 'DIR_MEMBERSHIP_PENDING_ACCEPTANCE', 'Pendiente de aceptación')], ['st-act', etiqueta('st-act', 'ST-ACTIVE', 'Activa')]])),
+            readConceptLabels: () => of(new Map([['st-pend', etiqueta('st-pend', 'DIR_MEMBERSHIP_PENDING_ACCEPTANCE', 'Pendiente de aceptación')], ['st-act', etiqueta('st-act', 'ST-ACTIVE', 'Activa')], ['st-end', etiqueta('st-end', 'DIR_MEMBERSHIP_ENDED', 'Terminada')], ['r-sup', etiqueta('r-sup', 'DIR_ROLE_SUPPORT', 'Apoyo')], ['st-inv', etiqueta('st-inv', 'DIR_MEMBERSHIP_INVITED', 'Invitada')]])),
           },
         },
         { provide: MembershipInvitationsClient, useValue: { withdraw } },
@@ -565,7 +574,7 @@ describe('OrganizationDetail · invitaciones pendientes', () => {
           provide: ActivatedRoute,
           useValue: {
             paramMap: of(convertToParamMap({ tenantId: TENANT })),
-            queryParamMap: of(convertToParamMap({})),
+            queryParamMap: of(convertToParamMap(query)),
           },
         },
       ],
@@ -576,10 +585,38 @@ describe('OrganizationDetail · invitaciones pendientes', () => {
     fixture.detectChanges();
   }
 
+  it('la invitación con el nombre real de la API (DIR_MEMBERSHIP_INVITED) también es pendiente y sin acciones', async () => {
+    await abrir();
+    expect(internal().esInvitacionPendiente(INVITADA_API)).toBe(true);
+    expect(internal().esGestionable(INVITADA_API)).toBe(false);
+  });
+
+  it('el personal de soporte se reconoce por su rol, no por el estado', async () => {
+    await abrir();
+    expect(internal().esGestionable(APOYO)).toBe(false);
+    expect(internal().esGestionable(ACTIVA)).toBe(true);
+  });
+
   it('solo la membresía pendiente de aceptación es una invitación', async () => {
     await abrir();
     expect(internal().esInvitacionPendiente(PENDIENTE)).toBe(true);
     expect(internal().esInvitacionPendiente(ACTIVA)).toBe(false);
+  });
+
+  it('la plantilla no lista las membresías terminadas (una invitación rechazada) y marca las pendientes', async () => {
+    await abrir({ tab: 'plantilla' });
+    expect(internal().vistaDeMembresias().data?.map((m) => m.id)).toEqual(['m-1', 'm-2', 'm-4']);
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('[data-testid="membresia-estado-m-1"]')?.textContent?.trim()).toBe('Invitado · pendiente');
+    expect(root.querySelector('[data-testid="membresia-estado-m-2"]')?.textContent?.trim()).toBe('Activa');
+    expect(root.querySelector('[data-testid="membresia-estado-m-3"]')).toBeNull();
+  });
+
+  it('una invitación pendiente o un vínculo de apoyo no ofrecen acciones de miembro (la API respondería 412)', async () => {
+    await abrir();
+    expect(internal().esGestionable(PENDIENTE)).toBe(false);
+    expect(internal().esGestionable(APOYO)).toBe(false);
+    expect(internal().esGestionable(ACTIVA)).toBe(true);
   });
 
   it('retirar pide confirmación, llama a offboard con la membresía y vuelve a leer la lista', async () => {

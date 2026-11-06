@@ -1,6 +1,6 @@
 <app-file-input
   [files]="archivos()"
-  [label]="label()"
+  label="Elegir archivo PDF"
   [accessibleLabel]="label()"
   [required]="required()"
   [hasError]="hasError() || state().kind === 'error'"
@@ -9,6 +9,8 @@
   [showList]="false"
   [showFeedback]="false"
   [disabled]="disabled() || state().kind === 'uploading'"
+  [uploading]="state().kind === 'uploading'"
+  uploadingLabel="Subiendo PDF…"
   [testId]="testId()"
   (filesChange)="aceptar($event)"
   (rejected)="rechazar($event)"

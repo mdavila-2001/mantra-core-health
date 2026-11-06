@@ -1,5 +1,6 @@
 ---
 slug: fractura-de-muneca
+image: fractura-de-muneca.svg | La fractura de muñeca más frecuente afecta al extremo del radio. | Radio y cúbito con una línea de fractura en el extremo del radio junto a los huesos de la mano, y un esquema de caída sobre la mano extendida, con las señales, el diagnóstico y el tratamiento.
 ---
 
 ## [definition] Introducción

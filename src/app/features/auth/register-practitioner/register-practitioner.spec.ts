@@ -68,6 +68,8 @@ function archivoDe(nombre: string, tipo: string, bytes: number): File {
 const CATALOGO = '/terminology/value-sets?code=VS_BO_DEPARTMENT';
 /** Un punto de casa ya confirmado: el domicilio lo exige desde el 26/10/2026. */
 const PUNTO_CASA = { lat: -17.7833, lng: -63.1821 };
+/** A registration date for the licence rows, which are mandatory. */
+const FECHA_DE_INSCRIPCION = new Date(2010, 0, 15);
 const CATALOGO_ESPECIALIDADES = '/terminology/value-sets?code=VS_MEDICAL_SPECIALTY';
 
 describe('RegisterPractitioner', () => {
@@ -162,7 +164,6 @@ describe('RegisterPractitioner', () => {
         | 'workMobilePhone'
         | 'workLandline'
         | 'personalEmail'
-        | 'email'
         | 'middleName'
         | 'thirdName'
         | 'motherLastName'
@@ -178,6 +179,15 @@ describe('RegisterPractitioner', () => {
       >
     > & { birthDate?: Date | null; especialidadesExtra?: readonly string[] } = {},
   ): void {
+    // The backups are already uploaded, so the submit flow makes no extra requests.
+    const respaldo = new File(['%PDF'], 'respaldo.pdf', { type: 'application/pdf' });
+    component.attachmentFiles.update((a) => ({
+      ...a,
+      license: [respaldo],
+      sedes: [respaldo],
+      college: [respaldo],
+    }));
+    component['fileIdDeHabilitacion'].set({ license: 'f-1', sedes: 'f-2', college: 'f-3' });
     component.formProfesional.setValue({
       name: 'Ana',
       middleName: extra.middleName ?? '',
@@ -185,10 +195,8 @@ describe('RegisterPractitioner', () => {
       lastName: 'Paz',
       motherLastName: extra.motherLastName ?? '',
       nationalId: extra.nationalId ?? '1234567',
-      // `email` es el de TRABAJO, que dejó de ser el de acceso y es opcional;
-      // el de acceso es `personalEmail`, obligatorio, de acá abajo.
-      email: extra.email ?? '',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
       // Obligatorio para un título con colegio conocido, como el de por defecto.
@@ -238,9 +246,10 @@ describe('RegisterPractitioner', () => {
       // directo en `formProfesional.controls.sexAtBirth`.
       sexAtBirth:
         extra.sexAtBirth === undefined ? 'FEMALE' : (extra.sexAtBirth as BirthSexCode | null),
-      licenseIssueDate: null,
-      sedesLicenseIssueDate: null,
-      collegeLicenseIssueDate: null,
+      // Each licence row needs its date and PDF backup (04/11/2026).
+      licenseIssueDate: FECHA_DE_INSCRIPCION,
+      sedesLicenseIssueDate: FECHA_DE_INSCRIPCION,
+      collegeLicenseIssueDate: FECHA_DE_INSCRIPCION,
       issuerAdministrativeAreaConceptId: 'dep-1',
       profilePhotoBase64: extra.profilePhotoBase64 ?? null,
       signatureImageBase64: null,
@@ -353,6 +362,7 @@ describe('RegisterPractitioner', () => {
         'mobilePhone',
         'personalEmail',
         'password',
+        'confirmPassword',
       ]);
       // Pedido del cliente del 26/10/2026: en cada ubicación lo único que se
       // marca es el punto. La calle, la zona y el municipio salen de él: siguen
@@ -361,7 +371,6 @@ describe('RegisterPractitioner', () => {
       expect(camposDe('workplace-location')).toEqual([
         'workMobilePhone',
         'workLandline',
-        'email',
         'gpsTrabajo',
       ]);
       // El logo del consultorio (27/10/2026): opcional, cierra la página.
@@ -909,12 +918,18 @@ describe('RegisterPractitioner', () => {
       // es el único y que no lo guarde también como de trabajo (ID-12).
       personalEmail: 'ana.paz@gmail.test',
       password: 'secreto12',
+      // Each licence row travels with its date and backup (all mandatory).
       licenseNumber: 'MP-12345',
+      licenseIssueDate: '2010-01-15',
+      licenseFileId: 'f-1',
       sedesLicenseNumber: 'T.I. 538/14',
-      // El registro del colegio es obligatorio para un médico, y el colegio
-      // sale del título: nadie lo escribe.
+      sedesLicenseIssueDate: '2010-01-15',
+      sedesLicenseFileId: 'f-2',
+      // El colegio sale del título: nadie lo escribe.
       collegeLicenseNumber: 'CMB-4410',
       collegeName: 'Colegio Médico de Bolivia',
+      collegeLicenseIssueDate: '2010-01-15',
+      collegeLicenseFileId: 'f-3',
       sexAtBirth: 'FEMALE',
       birthDate: '1985-05-12',
       professionalTitle: 'Médico / Médica',
@@ -974,6 +989,23 @@ describe('RegisterPractitioner', () => {
   it('si se ingresa un documento de identidad con formato inválido, el control se invalida', () => {
     completarProfesional({ nationalId: 'CI Con Espacios!' });
     expect(component.formProfesional.controls.nationalId.invalid).toBe(true);
+  });
+
+  // Product decision pending (see `national-id.ts`): the strict cédula (5-9 digits, no filler) is
+  // NOT wired in. The form takes the backend's floor, so a passport or a `CI-…` document goes through.
+  it('el documento no es la cédula estricta: acepta pasaportes y «QA-123», a la espera de la decisión de producto', () => {
+    const control = component.formProfesional.controls.nationalId;
+    for (const valido of ['QA-123', '1234', '1234567890', '1.234.567', '0000000']) {
+      control.setValue(valido);
+      expect(control.valid, `«${valido}» pasa con el piso del backend`).toBe(true);
+    }
+  });
+
+  it('con un documento inválido no se puede enviar el alta', () => {
+    completarProfesional({ nationalId: 'CI#1234' });
+
+    component.submit();
+    http.expectNone('/iam/auth/register-practitioner');
   });
 
   it('el documento admite letras, dígitos, punto y guion, mínimo 4', () => {
@@ -1064,7 +1096,6 @@ describe('RegisterPractitioner', () => {
       workMobilePhone: '+591 70022222',
       workLandline: '+591 33456789',
       personalEmail: 'ana.paz@gmail.test',
-      email: 'ana@hospital.test',
     });
     component.submit();
 
@@ -1072,13 +1103,10 @@ describe('RegisterPractitioner', () => {
     expect(req.request.body.mobilePhone).toBe('+591 70011111');
     expect(req.request.body.workMobilePhone).toBe('+591 70022222');
     expect(req.request.body.workLandline).toBe('+591 33456789');
-    // El de acceso es el PERSONAL, y por eso ocupa el `email` del DTO, que es
-    // el campo de login. El institucional viaja aparte, en `workEmail`.
+    // The personal email is the login (`email`) and travels as `personalEmail`;
+    // there is no separate work email (04/11/2026).
     expect(req.request.body.email).toBe('ana.paz@gmail.test');
-    expect(req.request.body.workEmail).toBe('ana@hospital.test');
-    // El personal viaja también como `personalEmail`: con `workEmail` la API ya
-    // sabe cuál es cuál, y sin él lo necesita para no inventar un correo de
-    // trabajo (ID-12).
+    expect(req.request.body.workEmail).toBeUndefined();
     expect(req.request.body.personalEmail).toBe('ana.paz@gmail.test');
 
     req.flush(RESPUESTA_PRO);
@@ -1316,6 +1344,33 @@ describe('RegisterPractitioner', () => {
         http.expectNone('/iam/auth/register-practitioner');
       });
 
+      it.each([
+        ['licenseNumber', 'licenseIssueDate', 'license'],
+        ['sedesLicenseNumber', 'sedesLicenseIssueDate', 'sedes'],
+        ['collegeLicenseNumber', 'collegeLicenseIssueDate', 'college'],
+      ] as const)(
+        '%s exige también su fecha y su respaldo, y avisa cuál falta',
+        (control, fecha, clave) => {
+          completarProfesional();
+          const numero = component.formProfesional.controls[control];
+          numero.markAsTouched();
+          expect(numero.valid).toBe(true);
+
+          component.escribirFechaDeHabilitacion(fecha, null);
+          expect(numero.hasError('licenceDate')).toBe(true);
+          expect(component.faltaEnHabilitacion(control, 'licenceDate')).toBe(true);
+          expect(component.habilitacionEnRojo(control)).toBe(false);
+          component.submit();
+          http.expectNone('/iam/auth/register-practitioner');
+
+          component.escribirFechaDeHabilitacion(fecha, FECHA_DE_INSCRIPCION);
+          component.updateSupportFiles(clave, []);
+          expect(numero.hasError('licenceFile')).toBe(true);
+          component.updateSupportFiles(clave, [archivoDe('r.pdf', 'application/pdf', 1024)]);
+          expect(numero.valid).toBe(true);
+        },
+      );
+
       it('una profesión sin colegio conocido no exige el registro ni lo manda', () => {
         completarProfesional({
           professionalTitle: 'Técnico / Técnica en Radiología',
@@ -1353,7 +1408,7 @@ describe('RegisterPractitioner', () => {
         alta.flush(RESPUESTA_PRO);
       });
 
-      it('sube el PDF del colegio y manda su fileId, sin mezclarlo con los otros', () => {
+      it('sube sólo el PDF nuevo del colegio y no mezcla los fileId de los otros', () => {
         completarProfesional();
         const colegio = archivoDe('colegio.pdf', 'application/pdf', 1024);
         component.updateSupportFiles('college', [colegio]);
@@ -1366,8 +1421,10 @@ describe('RegisterPractitioner', () => {
         subida.flush({ fileId: 'pdf-colegio' });
         const alta = http.expectOne('/iam/auth/register-practitioner');
         expect(alta.request.body).toMatchObject({ collegeLicenseFileId: 'pdf-colegio' });
-        expect(alta.request.body).not.toHaveProperty('licenseFileId');
-        expect(alta.request.body).not.toHaveProperty('sedesLicenseFileId');
+        expect(alta.request.body).toMatchObject({
+          licenseFileId: 'f-1',
+          sedesLicenseFileId: 'f-2',
+        });
         alta.flush(RESPUESTA_PRO);
       });
     });
@@ -1409,15 +1466,14 @@ describe('RegisterPractitioner', () => {
         alta.flush(RESPUESTA_PRO);
       });
 
-      it('sin archivo el alta no sube nada ni manda los campos', () => {
+      it('sin el respaldo de una habilitación no se sube nada ni se crea la cuenta', () => {
         completarProfesional();
+        component.updateSupportFiles('license', []);
         component.submit();
 
         http.expectNone('/iam/auth/upload-registration-document');
-        const alta = http.expectOne('/iam/auth/register-practitioner');
-        expect(alta.request.body).not.toHaveProperty('licenseFileId');
-        expect(alta.request.body).not.toHaveProperty('sedesLicenseFileId');
-        alta.flush(RESPUESTA_PRO);
+        http.expectNone('/iam/auth/register-practitioner');
+        expect(component.formProfesional.controls.licenseNumber.hasError('licenceFile')).toBe(true);
       });
 
       it('si la subida falla no se crea la cuenta: el archivo no se pierde en silencio', () => {
@@ -2809,9 +2865,9 @@ describe('RegisterPractitioner', () => {
     expect(component.formProfesional.controls.personalEmail.invalid).toBe(true);
   });
 
-  it('el correo de trabajo es opcional y no viaja si está vacío', () => {
-    completarProfesional({ email: '' });
-    expect(component.formProfesional.controls.email.valid).toBe(true);
+  it('no hay correo de trabajo aparte: ni se pregunta ni viaja', () => {
+    completarProfesional();
+    expect('email' in component.formProfesional.controls).toBe(false);
     component.submit();
 
     const req = http.expectOne('/iam/auth/register-practitioner');
@@ -3193,7 +3249,11 @@ describe('RegisterPractitioner', () => {
       component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);
       component.formProfesional.controls.sealImageBase64.setValue(SELLO);
       component.submit();
-      http.expectOne('/iam/auth/upload-registration-signature-image').flush({ fileId: 'firma-id' });
+      const firma = http.expectOne('/iam/auth/upload-registration-signature-image');
+      // The real DTO rejects base64 on purpose: the image is pre-uploaded as multipart.
+      expect(firma.request.body).toBeInstanceOf(FormData);
+      expect((firma.request.body as FormData).get('file')).toBeInstanceOf(Blob);
+      firma.flush({ fileId: 'firma-id' });
       http
         .expectOne('/iam/auth/upload-registration-signature-image')
         .flush({}, { status: 503, statusText: 'Unavailable' });
@@ -3223,8 +3283,8 @@ describe('RegisterPractitioner', () => {
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.signatureImageBase64).toBeUndefined();
-      expect(req.request.body.sealImageBase64).toBeUndefined();
+      expect(req.request.body.signatureFileId).toBeUndefined();
+      expect(req.request.body.sealFileId).toBeUndefined();
       req.flush(RESPUESTA_PRO);
     });
 
@@ -3710,7 +3770,9 @@ describe('RegisterPractitioner', () => {
       input.dispatchEvent(new Event('change'));
       fixture.detectChanges();
 
-      const error = field.querySelector('[data-testid="registration-practitioner-office-logo-error"]');
+      const error = field.querySelector(
+        '[data-testid="registration-practitioner-office-logo-error"]',
+      );
       expect(error?.getAttribute('role')).toBe('alert');
       expect(error?.textContent).toContain('PNG, JPG o WebP');
       // Dentro de la página también: el motivo describe al selector.
@@ -3744,10 +3806,12 @@ describe('RegisterPractitioner', () => {
       logoSelection().choose(archivoDe('logo.png', 'image/png', 1024));
 
       component.submit();
-      http.expectOne(LOGO_UPLOAD).flush(
-        { statusCode: 422, code: 'PRECONDITION_FAILED', message: 'El logo supera los 2 MB' },
-        { status: 422, statusText: 'Unprocessable Entity' },
-      );
+      http
+        .expectOne(LOGO_UPLOAD)
+        .flush(
+          { statusCode: 422, code: 'PRECONDITION_FAILED', message: 'El logo supera los 2 MB' },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
 
       http.expectNone('/iam/auth/register-practitioner');
       expect(component.registered()).toBe(false);

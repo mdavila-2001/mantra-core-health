@@ -1,5 +1,6 @@
 ---
 slug: endometriosis
+image: endometriosis.svg | En la endometriosis crece tejido parecido al endometrio fuera del útero. | Útero, trompas y ovarios con puntos morados que marcan implantes de endometriosis en la pelvis, junto a listas de síntomas, diagnóstico y tratamiento.
 ---
 
 ## [definition] Introducción

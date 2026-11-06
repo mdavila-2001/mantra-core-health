@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">hCG cuantitativa en sangre</title>
+  <desc id="d">A la izquierda, un útero con un embrión y la placenta en formación que libera la hormona hCG a la sangre materna. A la derecha, un tubo de sangre, una curva que muestra cómo sube la hCG en las primeras semanas del embarazo y los usos de la prueba, sin valores numéricos.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">De dónde sale la hormona</text>
+  <path d="M110 90 C60 120 60 260 120 320 C160 360 240 360 280 320 C340 260 340 120 290 90 C250 70 150 70 110 90 Z" fill="var(--organ)" stroke="var(--line)" stroke-width="1.5" opacity=".55"/>
+  <text x="200" y="116" text-anchor="middle" class="lab">Útero</text>
+  <circle cx="200" cy="220" r="40" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+  <circle cx="200" cy="226" r="16" fill="var(--skin)"/>
+  <path d="M164 200 A40 40 0 0 1 236 200" fill="none" stroke="var(--purple)" stroke-width="8"/>
+  <text x="200" y="168" text-anchor="middle" class="small" style="fill:var(--purple)">Placenta en formación</text>
+  <circle cx="130" cy="290" r="9" fill="var(--purple)"/>
+  <text x="130" y="294" text-anchor="middle" class="small" style="fill:var(--on)">h</text>
+  <circle cx="270" cy="290" r="9" fill="var(--purple)"/>
+  <text x="270" y="294" text-anchor="middle" class="small" style="fill:var(--on)">h</text>
+  <circle cx="200" cy="330" r="9" fill="var(--purple)"/>
+  <text x="200" y="334" text-anchor="middle" class="small" style="fill:var(--on)">h</text>
+  <text x="200" y="380" text-anchor="middle" class="lab">Las células de la placenta liberan hCG</text>
+  <text x="200" y="402" text-anchor="middle" class="lab">a la sangre de la madre</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">La prueba cuantitativa</text>
+  <rect x="438" y="64" width="34" height="16" rx="4" fill="var(--vessel)"/>
+  <path d="M440 80 V144 a15 15 0 0 0 30 0 V80 Z" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <path d="M442 110 V144 a13 13 0 0 0 26 0 V110 Z" fill="var(--vessel)"/>
+  <text x="486" y="92" class="lab">Suero o plasma</text>
+  <text x="486" y="114" class="small muted">Da una cifra, no solo sí o no</text>
+  <text x="436" y="196" class="step">Cómo evoluciona al inicio</text>
+  <path d="M444 320 L740 320 M444 320 L444 214" fill="none" stroke="var(--muted)" stroke-width="1.5"/>
+  <path d="M450 314 C520 312 560 290 600 250 C630 222 660 222 700 236" fill="none" stroke="var(--purple)" stroke-width="3"/>
+  <text x="592" y="338" text-anchor="middle" class="small muted">Semanas de embarazo</text>
+  <text x="452" y="228" class="small muted">hCG</text>
+  <text x="436" y="368" class="step">Ayuda a valorar</text>
+  <text x="440" y="392" class="small">• Si el embarazo inicial progresa</text>
+  <text x="440" y="414" class="small">• Embarazo ectópico o aborto (con ecografía)</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

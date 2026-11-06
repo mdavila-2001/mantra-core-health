@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo trabaja la patología clínica</title>
+  <desc id="d">Tres fases del trabajo de laboratorio: preanalítica, con el pedido, la toma y el transporte de la muestra; analítica, con equipos automatizados y control de calidad; y posanalítica, con la validación, el informe y el aviso de valores críticos. Abajo, las áreas del laboratorio clínico.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Patología clínica: el laboratorio al servicio del diagnóstico</text>
+  <rect x="20" y="60" width="760" height="240" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="88" text-anchor="middle" class="title">Las tres fases del análisis</text>
+  <rect x="40" y="100" width="220" height="180" rx="12" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <text x="150" y="128" text-anchor="middle" class="h">Preanalítica</text>
+  <text x="56" y="196" class="small">• Pedido y preparación</text>
+  <text x="56" y="220" class="small">• Toma de la muestra</text>
+  <text x="56" y="244" class="small">• Identificación y transporte</text>
+  <line x1="262" y1="190" x2="288" y2="190" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="290" y="100" width="220" height="180" rx="12" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="400" y="128" text-anchor="middle" class="h">Analítica</text>
+  <text x="306" y="196" class="small">• Equipos automatizados</text>
+  <text x="306" y="220" class="small">• Control de calidad</text>
+  <text x="306" y="244" class="small">• Técnicas manuales</text>
+  <line x1="512" y1="190" x2="538" y2="190" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="540" y="100" width="220" height="180" rx="12" fill="var(--ok-l)" stroke="var(--ok)"/>
+  <text x="650" y="128" text-anchor="middle" class="h">Posanalítica</text>
+  <text x="556" y="196" class="small">• Validación del resultado</text>
+  <text x="556" y="220" class="small">• Informe al médico</text>
+  <text x="556" y="244" class="small">• Aviso de valores críticos</text>
+  <rect x="130" y="140" width="40" height="26" rx="6" fill="var(--panel)" stroke="var(--accent)"/>
+  <rect x="134" y="150" width="32" height="12" rx="3" fill="var(--red)" stroke="none"/>
+  <rect x="374" y="140" width="52" height="30" rx="6" fill="var(--panel)" stroke="var(--pur)"/>
+  <circle cx="400" cy="155" r="7" fill="var(--pur)" stroke="none"/>
+  <rect x="628" y="138" width="34" height="40" rx="4" fill="var(--panel)" stroke="var(--ok)"/>
+  <path d="M634 150 h22 M634 160 h22 M634 170 h14" fill="none" stroke="var(--ok)" stroke-width="2"/>
+  <rect x="20" y="316" width="760" height="124" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="344" text-anchor="middle" class="title">Áreas del laboratorio</text>
+  <rect x="40" y="362" width="136" height="50" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="108.0" y="392.0" text-anchor="middle" class="small">Bioquímica</text>
+  <rect x="188" y="362" width="136" height="50" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="256.0" y="392.0" text-anchor="middle" class="small">Hematología</text>
+  <rect x="336" y="362" width="136" height="50" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="404.0" y="392.0" text-anchor="middle" class="small">Microbiología</text>
+  <rect x="484" y="362" width="136" height="50" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="552.0" y="392.0" text-anchor="middle" class="small">Inmunología</text>
+  <rect x="632" y="362" width="136" height="50" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="700.0" y="392.0" text-anchor="middle" class="small">Banco de sangre</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo de la especialidad. Ilustración original de AloVida.</text>
+</svg>

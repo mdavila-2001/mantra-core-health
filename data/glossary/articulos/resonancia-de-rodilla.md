@@ -1,5 +1,6 @@
 ---
 slug: resonancia-de-rodilla
+image: resonancia-de-rodilla.svg | Equipo de resonancia y estructuras de la rodilla que muestra | Persona tumbada entrando en el imán con una bobina en la rodilla, junto a un esquema de la rodilla con el fémur, la tibia, la rótula, los meniscos y los ligamentos cruzados
 ---
 
 ## [definition] Introducción

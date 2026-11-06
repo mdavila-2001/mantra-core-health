@@ -58,3 +58,31 @@ export function initialsOf(nombre: string): string {
     .map((parte) => withoutAdornments(parte)[0]?.toUpperCase() ?? '')
     .join('');
 }
+
+/**
+ * Las iniciales de una **persona**: primer nombre y primer apellido.
+ *
+ * El nombre compuesto del backend es `nombre [segundo nombre] apellido
+ * [apellido materno]` y no trae las partes por separado, así que se deduce por
+ * la cantidad de palabras (sin contar el tratamiento):
+ *
+ * - 1 palabra → una inicial.
+ * - 2 o 3 palabras → la primera y la segunda («Danny Dávila» → `DD`).
+ * - 4 o más → la primera y la tercera («Danny Marcelo Dávila Barrancos» → `DD`).
+ *
+ * Con tres palabras es una suposición —«Ana Pérez Quiroga» da `AP`, pero «Ana
+ * Lucía Pérez» daría `AL`—; con las partes a mano hay que usarlas en vez de esto.
+ *
+ * El avatar del encabezado y el del perfil usan **esta** función, para que
+ * muestren las mismas dos letras (pedido del 01/11/2026).
+ */
+export function personInitials(nombre: string): string {
+  const partes = nombre.split(/\s+/).filter((parte) => /^[\p{L}(]/u.test(parte));
+  const sinTratamiento = partes.filter((parte) => !TREATMENTS.has(withoutAdornments(parte)));
+  const palabras = sinTratamiento.length > 0 ? sinTratamiento : partes;
+
+  const apellido = palabras.length >= 4 ? palabras[2] : palabras[1];
+  return [palabras[0], apellido]
+    .map((parte) => (parte === undefined ? '' : ([...withoutAdornments(parte)][0] ?? '').toUpperCase()))
+    .join('');
+}

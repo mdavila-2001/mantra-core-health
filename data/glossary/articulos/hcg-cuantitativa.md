@@ -1,5 +1,6 @@
 ---
 slug: hcg-cuantitativa
+image: hcg-cuantitativa.svg | La hCG la produce la placenta; la prueba cuantitativa mide cuánta hay en sangre. | Útero con un embrión y la placenta que libera hCG, un tubo de sangre y una curva que muestra cómo asciende la hormona en las primeras semanas de embarazo.
 ---
 
 ## [definition] Introducción

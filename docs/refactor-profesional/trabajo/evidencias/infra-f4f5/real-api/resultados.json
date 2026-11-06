@@ -1,0 +1,651 @@
+{
+  "date": "2026-10-31T13:28:34.318Z",
+  "seed": {
+    "tag": "F4WBDA842",
+    "tenantId": "61e9b168-0a70-4674-8e2b-36baecfbc633"
+  },
+  "log": [
+    {
+      "what": "programar caso 10:00",
+      "data": {
+        "status": 201,
+        "body": {
+          "id": "e076224d-5bbf-4332-89c2-b7f438398c7f",
+          "caseNumber": "CQ-000007",
+          "statusConceptId": "6fe38139-ad1d-5214-84c1-8c184e4e58fb",
+          "operatingRoomId": "6f1bd946-e978-4d75-9133-9e64a8ee3d2a",
+          "milestoneId": "ccf2ca4b-03bc-40af-a47f-aa23f0afd5c9"
+        },
+        "request": {
+          "custodianTenantId": "61e9b168-0a70-4674-8e2b-36baecfbc633",
+          "patientProfileId": "511db0f0-ff53-47f2-bda4-296a57f7a2d3",
+          "caseType": "ELECTIVE",
+          "priority": "ROUTINE",
+          "primarySurgeonProfileId": "7dfde9bd-50be-4d42-bb8a-b44fd2783c15",
+          "practiceSiteId": "de931112-df0e-4a19-9038-e80fecb1bc83",
+          "operatingRoomId": "6f1bd946-e978-4d75-9133-9e64a8ee3d2a",
+          "scheduledStartAt": "2026-11-15T14:00:00.000Z",
+          "scheduledEndAt": "2026-11-15T15:30:00.000Z"
+        },
+        "path": "/procedure-cases",
+        "ifMatch": null
+      }
+    },
+    {
+      "what": "SELECT procedure_cases",
+      "data": [
+        [
+          "6f1bd946-e978-4d75-9133-9e64a8ee3d2a",
+          "2026-11-15 13:40:00+00",
+          "2026-11-15 16:00:00+00",
+          "20",
+          "30"
+        ]
+      ]
+    },
+    {
+      "what": "crear check-list",
+      "data": {
+        "status": 201,
+        "body": {
+          "id": "e03ce538-f537-485a-a97b-c6b3f38d5e40",
+          "version": "2009",
+          "phases": [
+            {
+              "phase": "SIGN_IN",
+              "completedAt": null,
+              "items": [
+                {
+                  "id": "6dc2d36f-4ddc-498f-8ab9-13e9888b55b8",
+                  "code": "SI_IDENTITY",
+                  "prompt": "El paciente confirmó identidad, sitio, procedimiento y consentimiento",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "5f408450-944d-4202-8f31-f4cc72df5a5a",
+                  "code": "SI_SITE_MARKED",
+                  "prompt": "Sitio marcado o no aplica",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "e34b1c27-0de5-47ce-8ae9-bdad9ec4f8f1",
+                  "code": "SI_ANESTHESIA_CHECK",
+                  "prompt": "Control de seguridad de la anestesia completo",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "67f8a3ef-a48d-4c9b-baa2-56700600aa1d",
+                  "code": "SI_PULSE_OXIMETER",
+                  "prompt": "Pulsioxímetro colocado y funcionando",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "5194757b-e093-4fa3-be1c-8ea8c92231af",
+                  "code": "SI_ALLERGY",
+                  "prompt": "¿Alergias conocidas?",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "93f3f39a-7146-46ba-90e2-fc9388637b4b",
+                  "code": "SI_AIRWAY",
+                  "prompt": "¿Vía aérea difícil o riesgo de aspiración?",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "84140a26-3ee1-49c7-9419-0d89635a8132",
+                  "code": "SI_BLOOD_LOSS",
+                  "prompt": "¿Riesgo de hemorragia > 500 ml (7 ml/kg en niños)?",
+                  "mandatory": true,
+                  "response": null
+                }
+              ]
+            },
+            {
+              "phase": "TIME_OUT",
+              "completedAt": null,
+              "items": [
+                {
+                  "id": "d8e1d447-6bf7-40b6-b778-184f30ade8fe",
+                  "code": "TO_TEAM_INTRO",
+                  "prompt": "Todos los miembros del equipo se presentaron por nombre y función",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "dfdd7a58-a605-42a9-ba39-77d9ab54dd2e",
+                  "code": "TO_CONFIRM",
+                  "prompt": "Confirmación de paciente, sitio y procedimiento",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "5688ca85-6991-4b1d-8b44-5ff092972eb6",
+                  "code": "TO_ANTIBIOTIC",
+                  "prompt": "Profilaxis antibiótica en los últimos 60 minutos",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "5a58ed4e-8e58-42c9-bd58-ceabd7f1ea07",
+                  "code": "TO_SURGEON_EVENTS",
+                  "prompt": "Cirujano: pasos críticos, duración y pérdida de sangre previstas",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "0941e0b5-fbc0-4f45-8b45-ec8199829dbe",
+                  "code": "TO_ANESTHESIA_CONCERNS",
+                  "prompt": "Anestesia: problemas específicos del paciente",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "9ca01029-871f-4b1e-af9a-0a60a6135edd",
+                  "code": "TO_NURSING_STERILITY",
+                  "prompt": "Enfermería: esterilidad confirmada y equipos en condiciones",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "a6f91958-87fb-4227-bf8b-ab1d8affdfe9",
+                  "code": "TO_IMAGING",
+                  "prompt": "Imágenes diagnósticas esenciales visibles",
+                  "mandatory": true,
+                  "response": null
+                }
+              ]
+            },
+            {
+              "phase": "SIGN_OUT",
+              "completedAt": null,
+              "items": [
+                {
+                  "id": "d75861b2-5b21-4aa4-a494-9be226455027",
+                  "code": "SO_PROCEDURE_NAME",
+                  "prompt": "Nombre del procedimiento registrado",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "5ed73c8b-215d-41ec-99cd-daa9e73e3906",
+                  "code": "SO_COUNTS",
+                  "prompt": "Recuento de instrumentos, gasas y agujas correcto",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "30f333d1-ec95-4fd8-81fe-afb183403c5e",
+                  "code": "SO_SPECIMEN",
+                  "prompt": "Etiquetado de las muestras",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "87cab78f-0655-480f-8e28-390341e89ce8",
+                  "code": "SO_EQUIPMENT",
+                  "prompt": "Problemas con el instrumental o los equipos",
+                  "mandatory": true,
+                  "response": null
+                },
+                {
+                  "id": "b1f9e581-01a2-46c0-99bb-5dbaf199acb0",
+                  "code": "SO_RECOVERY",
+                  "prompt": "Aspectos críticos de la recuperación y el tratamiento del paciente",
+                  "mandatory": true,
+                  "response": null
+                }
+              ]
+            }
+          ]
+        },
+        "request": {},
+        "path": "/procedure-cases/e076224d-5bbf-4332-89c2-b7f438398c7f/safety-checklists",
+        "ifMatch": null
+      }
+    },
+    {
+      "what": "fase SIGN_IN",
+      "data": {
+        "status": 201,
+        "body": {
+          "checklistId": "e03ce538-f537-485a-a97b-c6b3f38d5e40",
+          "recorded": 7,
+          "phaseCompleted": true,
+          "statusConceptId": "bef50818-832a-5a9f-8dc2-82c35bacac80"
+        },
+        "request": {
+          "phase": "SIGN_IN",
+          "respondedByProfileId": "7dfde9bd-50be-4d42-bb8a-b44fd2783c15",
+          "responses": [
+            {
+              "itemId": "6dc2d36f-4ddc-498f-8ab9-13e9888b55b8",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "5f408450-944d-4202-8f31-f4cc72df5a5a",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "e34b1c27-0de5-47ce-8ae9-bdad9ec4f8f1",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "67f8a3ef-a48d-4c9b-baa2-56700600aa1d",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "5194757b-e093-4fa3-be1c-8ea8c92231af",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "93f3f39a-7146-46ba-90e2-fc9388637b4b",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "84140a26-3ee1-49c7-9419-0d89635a8132",
+              "status": "CONFIRMED"
+            }
+          ]
+        },
+        "path": "/procedure-cases/e076224d-5bbf-4332-89c2-b7f438398c7f/safety-checklists/e03ce538-f537-485a-a97b-c6b3f38d5e40/responses",
+        "ifMatch": null
+      }
+    },
+    {
+      "what": "fase TIME_OUT",
+      "data": {
+        "status": 201,
+        "body": {
+          "checklistId": "e03ce538-f537-485a-a97b-c6b3f38d5e40",
+          "recorded": 7,
+          "phaseCompleted": true,
+          "statusConceptId": "bef50818-832a-5a9f-8dc2-82c35bacac80",
+          "milestoneId": "040eae34-ad39-4856-96ed-49029ae3a9e0"
+        },
+        "request": {
+          "phase": "TIME_OUT",
+          "respondedByProfileId": "7dfde9bd-50be-4d42-bb8a-b44fd2783c15",
+          "responses": [
+            {
+              "itemId": "d8e1d447-6bf7-40b6-b778-184f30ade8fe",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "dfdd7a58-a605-42a9-ba39-77d9ab54dd2e",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "5688ca85-6991-4b1d-8b44-5ff092972eb6",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "5a58ed4e-8e58-42c9-bd58-ceabd7f1ea07",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "0941e0b5-fbc0-4f45-8b45-ec8199829dbe",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "9ca01029-871f-4b1e-af9a-0a60a6135edd",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "a6f91958-87fb-4227-bf8b-ab1d8affdfe9",
+              "status": "CONFIRMED"
+            }
+          ]
+        },
+        "path": "/procedure-cases/e076224d-5bbf-4332-89c2-b7f438398c7f/safety-checklists/e03ce538-f537-485a-a97b-c6b3f38d5e40/responses",
+        "ifMatch": null
+      }
+    },
+    {
+      "what": "fase SIGN_OUT",
+      "data": {
+        "status": 201,
+        "body": {
+          "checklistId": "e03ce538-f537-485a-a97b-c6b3f38d5e40",
+          "recorded": 5,
+          "phaseCompleted": true,
+          "statusConceptId": "a85cacb5-7890-51be-ad76-62c1f7f3d011"
+        },
+        "request": {
+          "phase": "SIGN_OUT",
+          "respondedByProfileId": "7dfde9bd-50be-4d42-bb8a-b44fd2783c15",
+          "responses": [
+            {
+              "itemId": "d75861b2-5b21-4aa4-a494-9be226455027",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "5ed73c8b-215d-41ec-99cd-daa9e73e3906",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "30f333d1-ec95-4fd8-81fe-afb183403c5e",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "87cab78f-0655-480f-8e28-390341e89ce8",
+              "status": "CONFIRMED"
+            },
+            {
+              "itemId": "b1f9e581-01a2-46c0-99bb-5dbaf199acb0",
+              "status": "CONFIRMED"
+            }
+          ]
+        },
+        "path": "/procedure-cases/e076224d-5bbf-4332-89c2-b7f438398c7f/safety-checklists/e03ce538-f537-485a-a97b-c6b3f38d5e40/responses",
+        "ifMatch": null
+      }
+    },
+    {
+      "what": "SELECT surgical_safety_checklists",
+      "data": [
+        [
+          "t",
+          "t",
+          "t"
+        ]
+      ]
+    },
+    {
+      "what": "evento PATIENT_IN_ROOM",
+      "data": {
+        "status": 201,
+        "body": {
+          "utilizationEventId": "befdd84c-1ee0-426e-8f61-7b14b86fcd14",
+          "milestoneId": "f42e3e69-1a04-463d-a352-116d41a281e8",
+          "cleaningOrderId": null
+        },
+        "request": {
+          "eventCode": "PATIENT_IN_ROOM",
+          "occurredAt": "2026-10-31T13:28:06.593Z"
+        },
+        "path": "/procedure-cases/e076224d-5bbf-4332-89c2-b7f438398c7f/room-events",
+        "ifMatch": null
+      }
+    },
+    {
+      "what": "evento ANESTHESIA_START",
+      "data": {
+        "status": 201,
+        "body": {
+          "utilizationEventId": "b0dc5fd5-f1e7-46fa-a6c3-d1cc3dd5663f",
+          "milestoneId": null,
+          "cleaningOrderId": null
+        },
+        "request": {
+          "eventCode": "ANESTHESIA_START",
+          "occurredAt": "2026-10-31T13:28:07.903Z"
+        },
+        "path": "/procedure-cases/e076224d-5bbf-4332-89c2-b7f438398c7f/room-events",
+        "ifMatch": null
+      }
+    },
+    {
+      "what": "evento INCISION",
+      "data": {
+        "status": 201,
+        "body": {
+          "utilizationEventId": "77eb4f28-8441-45e3-9326-e3f3c4292a53",
+          "milestoneId": "4e79869c-e074-418f-82d9-86aff2a89082",
+          "cleaningOrderId": null
+        },
+        "request": {
+          "eventCode": "INCISION",
+          "occurredAt": "2026-10-31T13:28:09.202Z"
+        },
+        "path": "/procedure-cases/e076224d-5bbf-4332-89c2-b7f438398c7f/room-events",
+        "ifMatch": null
+      }
+    },
+    {
+      "what": "evento CLOSURE",
+      "data": {
+        "status": 201,
+        "body": {
+          "utilizationEventId": "0d3c0596-b08f-407d-9461-3a03c856b4a0",
+          "milestoneId": null,
+          "cleaningOrderId": null
+        },
+        "request": {
+          "eventCode": "CLOSURE",
+          "occurredAt": "2026-10-31T13:28:10.519Z"
+        },
+        "path": "/procedure-cases/e076224d-5bbf-4332-89c2-b7f438398c7f/room-events",
+        "ifMatch": null
+      }
+    },
+    {
+      "what": "evento PATIENT_OUT_OF_ROOM",
+      "data": {
+        "status": 201,
+        "body": {
+          "utilizationEventId": "b2aff920-9020-42be-81cf-d440111e4557",
+          "milestoneId": "eb7e92df-a7eb-4e72-9b4f-f3c8894b7704",
+          "cleaningOrderId": "893c6669-3fd8-46f5-ab37-3d54203083eb"
+        },
+        "request": {
+          "eventCode": "PATIENT_OUT_OF_ROOM",
+          "occurredAt": "2026-10-31T13:28:11.822Z"
+        },
+        "path": "/procedure-cases/e076224d-5bbf-4332-89c2-b7f438398c7f/room-events",
+        "ifMatch": null
+      }
+    },
+    {
+      "what": "SELECT operating_room_utilization_events",
+      "data": [
+        [
+          "b64456ec-4827-59b9-971c-fd11660565c0",
+          "OR_RESERVED",
+          "2026-10-31 13:28:01.117+00"
+        ],
+        [
+          "8de7de38-e48e-5a75-bd08-ee5dd13dd739",
+          "procedures_perioperative:OR_EVENT_PATIENT_IN_ROOM",
+          "2026-10-31 13:28:06.593+00"
+        ],
+        [
+          "ffc6d791-a040-52b5-a20a-b6afbf5f0389",
+          "procedures_perioperative:OR_EVENT_ANESTHESIA_START",
+          "2026-10-31 13:28:07.903+00"
+        ],
+        [
+          "d0d988f5-a9a5-54a8-9b69-68f1787b4204",
+          "procedures_perioperative:OR_EVENT_INCISION",
+          "2026-10-31 13:28:09.202+00"
+        ],
+        [
+          "4b3ca669-8ce5-587a-a39e-667ec6316c13",
+          "procedures_perioperative:OR_EVENT_CLOSURE",
+          "2026-10-31 13:28:10.519+00"
+        ],
+        [
+          "cbcc4be0-85b2-5094-ba42-8a3c08a58257",
+          "procedures_perioperative:OR_EVENT_PATIENT_OUT_OF_ROOM",
+          "2026-10-31 13:28:11.822+00"
+        ]
+      ]
+    },
+    {
+      "what": "orden de recambio de la sala",
+      "data": {
+        "orderId": "893c6669-3fd8-46f5-ab37-3d54203083eb",
+        "ownerCaseId": "e076224d-5bbf-4332-89c2-b7f438398c7f",
+        "sameCase": true
+      }
+    },
+    {
+      "what": "recambio start",
+      "data": {
+        "status": 200,
+        "body": {
+          "id": "893c6669-3fd8-46f5-ab37-3d54203083eb",
+          "careSpaceId": "6f1bd946-e978-4d75-9133-9e64a8ee3d2a",
+          "careSpaceCode": "QX-F4W",
+          "careSpaceName": "Quirófano F4W",
+          "clinicalUnitId": null,
+          "typeCode": "CLEAN_OR_TURNOVER",
+          "triggerCode": "CLN_TRG_OR_TURNOVER",
+          "priorityCode": "CLN_PRIO_URGENT",
+          "statusCode": "CLN_IN_PROGRESS",
+          "requestedAt": "2026-10-31T13:28:11.869Z",
+          "dueAt": null,
+          "assignedUserId": "15be8570-13cd-4c55-98c2-600dc5154cc8",
+          "startedAt": "2026-10-31T13:28:15.422Z",
+          "finishedAt": null,
+          "finishedByUserId": null,
+          "inspectedAt": null,
+          "inspectionResult": null,
+          "rejectionReason": null,
+          "previousOrderId": null,
+          "ageMinutes": 0,
+          "rowVersion": 2,
+          "allowedTransitions": [
+            "assign",
+            "finish",
+            "cancel"
+          ],
+          "inspectionRequired": false,
+          "requestId": "c955e240-387b-4d2d-a315-4b08efef2156"
+        },
+        "request": {},
+        "path": "/cleaning-orders/893c6669-3fd8-46f5-ab37-3d54203083eb/start",
+        "ifMatch": "\"1\""
+      }
+    },
+    {
+      "what": "recambio finish",
+      "data": {
+        "status": 200,
+        "body": {
+          "id": "893c6669-3fd8-46f5-ab37-3d54203083eb",
+          "careSpaceId": "6f1bd946-e978-4d75-9133-9e64a8ee3d2a",
+          "careSpaceCode": "QX-F4W",
+          "careSpaceName": "Quirófano F4W",
+          "clinicalUnitId": null,
+          "typeCode": "CLEAN_OR_TURNOVER",
+          "triggerCode": "CLN_TRG_OR_TURNOVER",
+          "priorityCode": "CLN_PRIO_URGENT",
+          "statusCode": "CLN_DONE",
+          "requestedAt": "2026-10-31T13:28:11.869Z",
+          "dueAt": null,
+          "assignedUserId": "15be8570-13cd-4c55-98c2-600dc5154cc8",
+          "startedAt": "2026-10-31T13:28:15.422Z",
+          "finishedAt": "2026-10-31T13:28:17.059Z",
+          "finishedByUserId": "15be8570-13cd-4c55-98c2-600dc5154cc8",
+          "inspectedAt": null,
+          "inspectionResult": null,
+          "rejectionReason": null,
+          "previousOrderId": null,
+          "ageMinutes": 0,
+          "rowVersion": 3,
+          "allowedTransitions": [
+            "inspect",
+            "cancel"
+          ],
+          "inspectionRequired": false,
+          "requestId": "8d6b1098-6489-4d86-860f-725d358c0230"
+        },
+        "request": {},
+        "path": "/cleaning-orders/893c6669-3fd8-46f5-ab37-3d54203083eb/finish",
+        "ifMatch": "\"2\""
+      }
+    },
+    {
+      "what": "recambio inspect por quien limpió (422)",
+      "data": {
+        "status": 422,
+        "body": {
+          "code": "PRECONDITION_FAILED",
+          "message": "Quien terminó la limpieza no puede inspeccionarla",
+          "correlationId": "c59c20f9-d42a-4394-86e4-57e01e628704",
+          "details": {},
+          "reason": "INSPECTION_BY_CLEANER_NOT_ALLOWED",
+          "timestamp": "2026-10-31T13:28:18.706Z",
+          "path": "/cleaning-orders/893c6669-3fd8-46f5-ab37-3d54203083eb/inspect",
+          "diagnostics": {
+            "exception": "PreconditionFailedException",
+            "message": "Quien terminó la limpieza no puede inspeccionarla",
+            "where": [
+              "src/modules/practice/services/ops/ops-errors.ts:107:10",
+              "src/modules/practice/services/ops/ops-errors.ts:116:26",
+              "src/modules/practice/services/ops/use-cases/cleaning-order.use-cases.ts:393:14"
+            ]
+          }
+        },
+        "request": {
+          "result": "PASS"
+        },
+        "path": "/cleaning-orders/893c6669-3fd8-46f5-ab37-3d54203083eb/inspect",
+        "ifMatch": "\"3\""
+      }
+    },
+    {
+      "what": "recambio inspect (supervisión)",
+      "data": {
+        "status": 200,
+        "body": {
+          "order": {
+            "id": "893c6669-3fd8-46f5-ab37-3d54203083eb",
+            "careSpaceId": "6f1bd946-e978-4d75-9133-9e64a8ee3d2a",
+            "careSpaceCode": "QX-F4W",
+            "careSpaceName": "Quirófano F4W",
+            "clinicalUnitId": null,
+            "typeCode": "CLEAN_OR_TURNOVER",
+            "triggerCode": "CLN_TRG_OR_TURNOVER",
+            "priorityCode": "CLN_PRIO_URGENT",
+            "statusCode": "CLN_INSPECTED",
+            "requestedAt": "2026-10-31T13:28:11.869Z",
+            "dueAt": null,
+            "assignedUserId": "15be8570-13cd-4c55-98c2-600dc5154cc8",
+            "startedAt": "2026-10-31T13:28:15.422Z",
+            "finishedAt": "2026-10-31T13:28:17.059Z",
+            "finishedByUserId": "15be8570-13cd-4c55-98c2-600dc5154cc8",
+            "inspectedAt": "2026-10-31T13:28:23.472Z",
+            "inspectionResult": "PASS",
+            "rejectionReason": null,
+            "previousOrderId": null,
+            "ageMinutes": 0,
+            "rowVersion": 4,
+            "allowedTransitions": [],
+            "inspectionRequired": false
+          },
+          "nextOrderId": null,
+          "requestId": "cdc990de-1ff0-4ba0-912a-9010bfb180ea"
+        },
+        "request": {
+          "result": "PASS"
+        },
+        "path": "/cleaning-orders/893c6669-3fd8-46f5-ab37-3d54203083eb/inspect",
+        "ifMatch": "\"3\""
+      }
+    },
+    {
+      "what": "SELECT cleaning_orders",
+      "data": [
+        [
+          "4",
+          "practice:CLN_INSPECTED"
+        ]
+      ]
+    },
+    {
+      "what": "día-cama: texto de la pantalla",
+      "data": "S-F4WBDA842 · Sede F4WBDA842\n\nTodavía no hay nada acá\n\nLa sede no tiene personas internadas ahora.\n\nVolver a las tarifas"
+    }
+  ],
+  "consoleErrors": [
+    "http://127.0.0.1:4374/interventions/e076224d-5bbf-4332-89c2-b7f438398c7f?tab=room :: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)",
+    "http://127.0.0.1:4374/interventions/e076224d-5bbf-4332-89c2-b7f438398c7f?tab=room :: [API] POST /cleaning-orders/893c6669-3fd8-46f5-ab37-3d54203083eb/inspect → 422 · PRECONDITION_FAILED · «Quien terminó la limpieza no puede inspeccionarla» · correlationId=c59c20f9-d42a-4394-86e4-57e01e628704 {status: 422, code: PRECONDITION_FAILED, message: Quien terminó la limpieza no puede inspeccionarla, correlationId: c59c20f9-d42a-4394-86e4-57e01e628704, details: Object}"
+  ]
+}

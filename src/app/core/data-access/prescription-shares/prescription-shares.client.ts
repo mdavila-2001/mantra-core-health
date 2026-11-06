@@ -8,6 +8,7 @@ import type {
   PrescriberLicense,
   PrescriptionShareOwnership,
   PrescriptionShareResourceType,
+  PrescriptionShareEndedReason,
   PrescriptionShareStatus,
   PrescriptionShareSummary,
   PrescriptionShareTarget,
@@ -32,6 +33,7 @@ interface WireShareSummary {
   readonly createdAt: string;
   readonly expiresAt: string;
   readonly status: string;
+  readonly endedReason?: string | null;
   readonly uses: number;
 }
 
@@ -45,6 +47,7 @@ interface WireLicense {
 /** `PublicPrescriptionShareDto` de la API. */
 interface WirePublicShare {
   readonly status: string;
+  readonly endedReason?: string | null;
   readonly issuedAt: string | null;
   readonly prescriberName: string | null;
   readonly prescriberLicense: WireLicense | null;
@@ -70,6 +73,11 @@ function toStatus(status: string): PrescriptionShareStatus {
     return status;
   }
   return 'EXPIRED';
+}
+
+/** El motivo de un enlace vencido; lo que no se reconoce queda sin motivo. */
+function toEndedReason(reason: string | null | undefined): PrescriptionShareEndedReason | null {
+  return reason === 'LINK_EXPIRED' || reason === 'PRESCRIPTION_NOT_ACTIVE' ? reason : null;
 }
 
 /** La matrícula, copiada clave por clave: nada más que lo que declara el DTO. */
@@ -99,6 +107,7 @@ function toSummary(body: WireShareSummary): PrescriptionShareSummary {
     createdAt: new Date(body.createdAt),
     expiresAt: new Date(body.expiresAt),
     status: toStatus(body.status),
+    endedReason: toEndedReason(body.endedReason),
     uses: body.uses,
   };
 }
@@ -111,6 +120,7 @@ function toSummary(body: WireShareSummary): PrescriptionShareSummary {
 function toPublicShare(body: WirePublicShare): PublicPrescriptionShare {
   return {
     status: toStatus(body.status),
+    endedReason: toEndedReason(body.endedReason),
     issuedAt: toDateOrNull(body.issuedAt),
     prescriberName: body.prescriberName,
     prescriberLicense: toLicense(body.prescriberLicense),

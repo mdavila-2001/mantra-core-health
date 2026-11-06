@@ -1,0 +1,147 @@
+/* Shared look of the four home blocks: a card that fills its grid cell, a
+   compact list of rows and the footer link. Tokens only. */
+
+:host {
+  display: block;
+  min-inline-size: 0;
+  /* Inherited: balances the empty-state titles; running text opts out below. */
+  text-wrap: balance;
+}
+
+/* Header / body / footer as grid rows: the body takes the free height, so the
+   footers of cards in the same row line up at the bottom. */
+app-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto;
+  block-size: 100%;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.rows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+  padding-block: var(--sp-2);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.row:last-child {
+  border-block-end: 0;
+}
+
+.row__main {
+  display: grid;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.row__title {
+  text-wrap: pretty;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.row__meta {
+  text-wrap: pretty;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.row__time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+
+.note {
+  text-wrap: pretty;
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.footer app-nav-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+/* The count never shrinks and «último:» stays readable: only the study name is
+   cut with an ellipsis. On phones the activity wraps to its own line (its basis
+   is wider than what the count leaves) and the name gets the whole width. */
+.footer__line {
+  display: flex;
+  flex: 1 1 0;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-1);
+  min-inline-size: 0;
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.footer__count {
+  flex: none;
+}
+
+.footer__last {
+  display: flex;
+  flex: 1 1 18rem;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.footer__sep,
+.footer__label {
+  flex: none;
+}
+
+.footer__name {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tap targets of 44px: the text link centers its line in a taller box (no new
+   ink); the small buttons take the button's own minimum-height hook on phones. */
+.more {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  color: var(--text-link);
+}
+
+@media (max-width: 779px) {
+  a[app-button] {
+    --btn-min-block: 44px;
+  }
+}
+

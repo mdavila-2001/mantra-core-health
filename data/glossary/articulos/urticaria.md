@@ -1,5 +1,6 @@
 ---
 slug: urticaria
+image: urticaria.svg | La histamina de los mastocitos produce habones y, más profundo, angioedema. | Corte de la piel con un mastocito que libera histamina, un habón en la superficie y angioedema en la capa profunda, junto a desencadenantes y señales de urgencia.
 ---
 
 ## [definition] Introducción

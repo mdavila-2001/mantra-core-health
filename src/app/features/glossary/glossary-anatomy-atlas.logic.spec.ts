@@ -51,10 +51,23 @@ const PIEZAS: readonly AnatomyPart[] = [
 ];
 
 describe('glossary-anatomy-atlas.logic', () => {
-  it('la vista «Mujer» sólo quita lo exclusivo del cuerpo masculino, no agrega nada', () => {
+  it('cada cuerpo dibuja lo compartido y lo suyo, nunca lo del otro', () => {
+    const utero = pieza('VH_F_body_of_uterus', 'UBERON:0009853', { layer: 'organs', sex: 'female', match: 'hra_exact' });
     expect(partVisibleFor(PIEZAS[3], 'female')).toBe(false);
     expect(partVisibleFor(PIEZAS[3], 'male')).toBe(true);
     expect(partVisibleFor(PIEZAS[0], 'female')).toBe(true);
+    expect(partVisibleFor(PIEZAS[0], 'male')).toBe(true);
+    expect(partVisibleFor(utero, 'female')).toBe(true);
+    expect(partVisibleFor(utero, 'male')).toBe(false);
+  });
+
+  it('en «Mujer» el sacro resalta el femenino y no el de referencia, y en «Hombre» al revés', () => {
+    const sacros = [
+      pieza('FMA16202', 'UBERON:0003690', { sex: 'male' }),
+      pieza('VH_F_sacrum', 'UBERON:0003690', { sex: 'female', match: 'hra_exact' }),
+    ];
+    expect(meshesOf(sacros, 'UBERON:0003690', 'female')).toEqual(['VH_F_sacrum']);
+    expect(meshesOf(sacros, 'UBERON:0003690', 'male')).toEqual(['FMA16202']);
   });
 
   it('una estructura par resalta sus dos mallas', () => {

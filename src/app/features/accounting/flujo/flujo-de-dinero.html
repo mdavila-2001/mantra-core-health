@@ -1,0 +1,221 @@
+<!-- Flujo de dinero: la cuenta, sus tres cifras y una tarjeta con tres
+     pestañas, cada una con buscador, tabla, paginación y descarga. -->
+<div class="flujo__cuenta">
+  <app-form-field
+    label="Cuenta"
+    hint="Caja es el efectivo del consultorio; Banco, su cuenta bancaria."
+  >
+    <app-select
+      testId="flujo-cuenta"
+      [options]="opcionesDeCaja()"
+      [value]="cajaId()"
+      (valueChange)="elegirCaja($event)"
+      placeholder="Elija una cuenta"
+    />
+  </app-form-field>
+</div>
+
+@if (totales(); as t) {
+  <dl class="flujo__cifras" data-testid="flujo-de-dinero">
+    <div class="flujo__cifra">
+      <dt>Ingresó</dt>
+      <dd>{{ importe(t.entro) }}</dd>
+    </div>
+    <div class="flujo__cifra">
+      <dt>Salió</dt>
+      <dd>{{ importe(t.salio) }}</dd>
+    </div>
+    <div class="flujo__cifra flujo__cifra--neto">
+      <dt>Saldo actual</dt>
+      <dd>{{ importe(t.neto) }}</dd>
+    </div>
+  </dl>
+}
+
+<app-card variant="outlined" padding="lg" class="flujo__tarjeta">
+  <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
+    <!-- ═══ 1 · Cobros facturados ═════════════════════════════════════════ -->
+    <app-tab [label]="'Cobros facturados (' + cuantosCobros() + ')'">
+      @if (pestana() === 0) {
+        <div class="flujo__panel" data-testid="flujo-cobros">
+          <p class="flujo__explicacion">
+            Cada vez que emite una factura, el sistema anota solo el ingreso en su caja. Aquí está
+            cada cobro con su factura: puede descargarla en PDF o XML.
+          </p>
+
+          @if (!facturacionDisponible) {
+            <p class="flujo__nota" role="note">La facturación no está conectada en este entorno.</p>
+          } @else {
+            <div class="flujo__barra">
+              <app-filter-bar
+                class="flujo__buscador"
+                searchLabel="Buscar un cobro"
+                searchPlaceholder="Número de factura, paciente o concepto"
+                [searchInUrl]="false"
+                [searchValue]="qCobros()"
+                (searchChanged)="buscarCobros($event)"
+              />
+              <button
+                app-button
+                variant="outline"
+                type="button"
+                data-testid="flujo-cobros-descargar"
+                [disabled]="cuantosCobros() === 0"
+                (clicked)="descargarListaDeCobros()"
+              >
+                Descargar lista (Excel)
+              </button>
+            </div>
+
+            <p class="flujo__resumen" aria-live="polite">
+              {{ cuantosCobros() }} {{ cuantosCobros() === 1 ? 'cobro' : 'cobros' }} · ingresó
+              <strong>{{ importe(totalFacturado()) }}</strong> por facturas vigentes
+            </p>
+
+            <app-data-table
+              caption="Cobros facturados"
+              [state]="tablaDeCobros()"
+              [columns]="columnasDeCobros()"
+              [trackBy]="porId"
+              (retry)="cargarFacturas()"
+              data-testid="flujo-tabla-cobros"
+            />
+            @if (cuantosCobros() > 0) {
+              <app-pagination
+                [totalItems]="cuantosCobros()"
+                [(page)]="paginaCobros"
+                [(pageSize)]="tamanoCobros"
+                data-testid="flujo-cobros-paginacion"
+              />
+            }
+          }
+        </div>
+      }
+    </app-tab>
+
+    <!-- ═══ 2 · Historial de comprobantes ═════════════════════════════════ -->
+    <app-tab [label]="'Comprobantes (' + cuantosComprobantes() + ')'">
+      @if (pestana() === 1) {
+        <div class="flujo__panel" data-testid="flujo-comprobantes">
+          <p class="flujo__explicacion">
+            Un comprobante es el respaldo de cada movimiento de dinero: cuándo fue, por qué y por
+            cuánto. Descargue cualquiera en PDF, o la lista completa para su contador.
+          </p>
+
+          <div class="flujo__barra">
+            <app-filter-bar
+              class="flujo__buscador"
+              searchLabel="Buscar un comprobante"
+              searchPlaceholder="Número, concepto o fecha"
+              [searchInUrl]="false"
+              [searchValue]="qComprobantes()"
+              (searchChanged)="buscarComprobantes($event)"
+            />
+            <button
+              app-button
+              variant="outline"
+              type="button"
+              data-testid="flujo-comprobantes-descargar"
+              [disabled]="cuantosComprobantes() === 0"
+              (clicked)="descargarListaDeComprobantes()"
+            >
+              Descargar historial (Excel)
+            </button>
+          </div>
+
+          <app-data-table
+            caption="Historial de comprobantes"
+            [state]="tablaDeComprobantes()"
+            [columns]="columnasDeComprobantes()"
+            [trackBy]="porId"
+            (retry)="cargarComprobantes()"
+            data-testid="flujo-tabla-comprobantes"
+          />
+          @if (cuantosComprobantes() > 0) {
+            <app-pagination
+              [totalItems]="cuantosComprobantes()"
+              [(page)]="paginaComprobantes"
+              [(pageSize)]="tamanoComprobantes"
+              data-testid="flujo-comprobantes-paginacion"
+            />
+          }
+        </div>
+      }
+    </app-tab>
+
+    <!-- ═══ 3 · Movimientos de la cuenta ══════════════════════════════════ -->
+    <app-tab [label]="'Movimientos de la cuenta (' + cuantosMovimientos() + ')'">
+      @if (pestana() === 2) {
+        <div class="flujo__panel" data-testid="flujo-movimientos">
+          <p class="flujo__explicacion">
+            Todo lo que entró y salió de la cuenta elegida arriba, del más reciente al más antiguo.
+            El saldo es lo que quedó en la cuenta después de cada movimiento.
+          </p>
+
+          <div class="flujo__barra">
+            <app-filter-bar
+              class="flujo__buscador"
+              searchLabel="Buscar un movimiento"
+              searchPlaceholder="Comprobante, detalle o fecha"
+              [searchInUrl]="false"
+              [searchValue]="qMovimientos()"
+              (searchChanged)="buscarMovimientos($event)"
+            />
+            <button
+              app-button
+              variant="outline"
+              type="button"
+              data-testid="flujo-movimientos-descargar"
+              [disabled]="cuantosMovimientos() === 0"
+              (clicked)="descargarListaDeMovimientos()"
+            >
+              Descargar movimientos (Excel)
+            </button>
+          </div>
+
+          <app-data-table
+            caption="Movimientos de la cuenta"
+            [state]="tablaDeMovimientos()"
+            [columns]="columnasDeMovimientos"
+            [trackBy]="porId"
+            data-testid="flujo-tabla-movimientos"
+          />
+          @if (cuantosMovimientos() > 0) {
+            <app-pagination
+              [totalItems]="cuantosMovimientos()"
+              [(page)]="paginaMovimientos"
+              [(pageSize)]="tamanoMovimientos"
+              data-testid="flujo-movimientos-paginacion"
+            />
+          }
+        </div>
+      }
+    </app-tab>
+  </app-tabs>
+</app-card>
+
+<!-- ─── Celdas ──────────────────────────────────────────────────────────── -->
+
+<ng-template #celdaEstadoCobro let-fila>
+  <app-chip size="sm" [variant]="fila.tono">{{ fila.estado }}</app-chip>
+</ng-template>
+
+<ng-template #celdaAccionesCobro let-fila>
+  <app-row-actions
+    [actions]="accionesDeCobro(fila)"
+    [fila]="'Factura ' + fila.numero"
+    (actionSelected)="chargeAction(fila, $event)"
+  />
+</ng-template>
+
+<ng-template #celdaEstadoComprobante let-fila>
+  <app-chip size="sm" [variant]="fila.tono">{{ fila.estado }}</app-chip>
+</ng-template>
+
+<ng-template #celdaAccionesComprobante let-fila>
+  <app-row-actions
+    [actions]="accionesDeComprobante"
+    [fila]="'Comprobante ' + fila.numero"
+    (actionSelected)="accionDeComprobante(fila)"
+  />
+</ng-template>

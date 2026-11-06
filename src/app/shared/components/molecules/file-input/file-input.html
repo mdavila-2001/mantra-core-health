@@ -3,7 +3,8 @@
     class="dropzone"
     [class.is-dragging]="isDragging()"
     [class.has-files]="files().length > 0"
-    [class.is-disabled]="disabled()"
+    [class.is-disabled]="locked()"
+    [class.is-picker-open]="pickerOpen()"
     (dragover)="handleDragOver($event)"
     (dragleave)="handleDragLeave($event)"
     (drop)="handleDrop($event)"
@@ -14,6 +15,7 @@
     <input
       type="file"
       class="native-file-input"
+      appNativeFilePicker
       [id]="controlId()"
       [attr.data-testid]="testId()"
       [attr.aria-labelledby]="labelId()"
@@ -21,7 +23,7 @@
       [attr.aria-invalid]="invalid()"
       [attr.aria-required]="isRequired()"
       [multiple]="multiple()"
-      [disabled]="disabled()"
+      [disabled]="locked()"
       [attr.accept]="accept() || null"
       [attr.aria-describedby]="describedBy()"
       (change)="handleFileSelect($event)"
@@ -56,6 +58,12 @@
         }
       </span>
     </label>
+    @if (uploading()) {
+      <div class="dropzone-uploading" role="status" data-testid="file-input-uploading">
+        <app-spinner size="md" decorative />
+        <span>{{ uploadingLabel() }}</span>
+      </div>
+    }
   </div>
 
   @if (showFeedback() && feedback().length) {
@@ -90,7 +98,7 @@
           <button
             type="button"
             class="remove-file-btn"
-            [disabled]="disabled()"
+            [disabled]="locked()"
             [attr.data-testid]="removeTestId()"
             (click)="removeFile($index)"
             [attr.aria-label]="'Quitar ' + file.name"

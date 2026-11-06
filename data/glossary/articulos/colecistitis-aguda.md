@@ -1,5 +1,6 @@
 ---
 slug: colecistitis-aguda
+image: colecistitis-aguda.svg | Un cálculo bloquea la salida de la vesícula, que se inflama. | Hígado con la vesícula biliar inflamada y cálculos, uno de ellos tapando el conducto de salida, y una silueta con el dolor señalado en la parte superior derecha del abdomen.
 ---
 
 ## [definition] Introducción

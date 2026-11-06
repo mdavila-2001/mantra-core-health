@@ -1,0 +1,7 @@
+/* The hero and shortcut styles come from the practitioner welcome sheet; this
+   one only lays out the aside, which holds the counter panel. */
+.welcome__aside {
+  display: grid;
+  align-content: start;
+  min-inline-size: 0;
+}

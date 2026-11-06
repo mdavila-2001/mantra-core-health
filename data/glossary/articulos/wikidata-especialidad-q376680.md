@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q376680
+image: wikidata-especialidad-q376680.svg | La traumatología trata lesiones de huesos, articulaciones, ligamentos y tendones. | Cinco dibujos de hueso que muestran una fractura y sus formas de reparación con yeso, placa y tornillos, clavo intramedular y prótesis articular.
 ---
 
 ## [definition] Introducción

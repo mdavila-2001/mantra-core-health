@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Ámbito de la neurología</title>
+  <desc id="d">Silueta humana con el encéfalo, la médula espinal, los nervios y los músculos señalados. A la derecha, las enfermedades más frecuentes que atiende la neurología y sus herramientas diagnósticas.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="210.0" y="50" text-anchor="middle" class="title">Qué estudia la neurología</text>
+<path d="M150.0,137.5 Q112.5,140.0 107.5,178.8 L95.0,322.5 Q100.0,337.5 112.5,325.0 L122.5,197.5 L125.0,347.5 Q125.0,387.5 145.0,400.0 L255.0,400.0 Q275.0,387.5 275.0,347.5 L277.5,197.5 L287.5,325.0 Q300.0,337.5 305.0,322.5 L292.5,178.8 Q287.5,140.0 250.0,137.5 L215.0,132.5 L215.0,117.5 L185.0,117.5 L185.0,132.5 Z" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="200" cy="90.0" r="30.0" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5"/>
+<circle cx="200" cy="90" r="26" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2"/>
+<path d="M200,118 L200,300" fill="none" stroke="var(--beam)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M200,150 Q150,160 120,190 M200,150 Q250,160 280,190" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M200,190 Q150,200 120,230 M200,190 Q250,200 280,230" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M200,230 Q150,240 120,270 M200,230 Q250,240 280,270" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M200,270 Q150,280 120,310 M200,270 Q250,280 280,310" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M120,190 L100,320 M280,190 L300,320" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="40" y="84" class="lab">Encéfalo</text>
+<line x1="100" y1="80" x2="172" y2="88" stroke="var(--muted)" stroke-width="1.5"/>
+<text x="40" y="150" class="lab">Médula</text>
+<text x="40" y="166" class="lab">espinal</text>
+<line x1="96" y1="156" x2="194" y2="170" stroke="var(--muted)" stroke-width="1.5"/>
+<text x="318" y="226" class="lab">Nervios</text>
+<line x1="316" y1="222" x2="284" y2="232" stroke="var(--muted)" stroke-width="1.5"/>
+<text x="300" y="350" class="lab">Músculos</text>
+<line x1="298" y1="346" x2="272" y2="330" stroke="var(--muted)" stroke-width="1.5"/>
+<rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="598.0" y="50" text-anchor="middle" class="title">Enfermedades frecuentes</text>
+<rect x="436" y="58" width="156" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="514.0" y="79.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Ictus</text>
+<rect x="602" y="58" width="156" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="680.0" y="79.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Epilepsia</text>
+<rect x="436" y="102" width="156" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="514.0" y="123.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Migraña</text>
+<rect x="602" y="102" width="156" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="680.0" y="123.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Párkinson</text>
+<rect x="436" y="146" width="156" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="514.0" y="167.6" text-anchor="middle" class="lab" style="fill:var(--ink)">Demencias</text>
+<rect x="602" y="146" width="156" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="680.0" y="167.6" text-anchor="middle" class="lab" style="fill:var(--ink)">Esclerosis múltiple</text>
+<rect x="436" y="190" width="156" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="514.0" y="211.6" text-anchor="middle" class="lab" style="fill:var(--ink)">Neuropatías</text>
+<rect x="602" y="190" width="156" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="680.0" y="211.6" text-anchor="middle" class="lab" style="fill:var(--ink)">ELA y miopatías</text>
+<rect x="436" y="250" width="324" height="122" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="448" y="272" class="step">Herramientas</text>
+<text x="448" y="296" class="lab">• Exploración neurológica</text>
+<text x="448" y="318" class="lab">• Resonancia o TAC</text>
+<text x="448" y="340" class="lab">• Electroencefalograma (EEG)</text>
+<text x="448" y="362" class="lab">• Electromiograma (EMG)</text>
+<text x="436" y="416" class="small" style="fill:var(--muted)">Si requiere cirugía: neurocirugía.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

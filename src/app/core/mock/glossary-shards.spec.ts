@@ -3,12 +3,14 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { registrarTerminologia } from './handlers/terminology.handlers';
+import { imageOf } from './inline-glossary';
 import {
   AlmacenDeGlosario,
   ArchivoAusente,
   idDeConjunto,
   raicesEsperadasDelGlosario,
   type LectorDeArchivos,
+  type FilaDeGlosario,
   type ManifiestoDelGlosario,
 } from './glossary-shards';
 import { MockRouter } from './mock-router';
@@ -77,6 +79,19 @@ interface Pagina {
 }
 
 describe('glosario de la maqueta en shards (semilla commiteada)', () => {
+  it('oculta una foto licenciada sin revisión de pertinencia y admite su aprobación explícita', () => {
+    const rows = JSON.parse(
+      readFileSync(join(PUBLICO, 'glossary-seed/shards/anatomy/page-1.json'), 'utf8'),
+    ) as FilaDeGlosario[];
+    const row = rows.find((item) => item.slug === 'wikidata-anatomia-q17120946');
+    expect(row?.imageUrl).toContain('Bone');
+    expect(imageOf(row!)).toBeUndefined();
+    expect(
+      imageOf({ ...row!, properties: { ...row!.properties, image_review_status: 'approved' } })
+        ?.source,
+    ).toBe(row?.imageUrl);
+  });
+
   it('sin el glosario completo, cae a la semilla', async () => {
     const { almacen } = montar();
     expect(await almacen.origen()).toBe('glossary-seed');
@@ -183,12 +198,12 @@ describe('glosario de la maqueta en shards (semilla commiteada)', () => {
     expect(primera.items.every((t) => t.translated)).toBe(true);
     expect(ultima.items.every((t) => t.translated)).toBe(true);
 
-    const conjuntos = await get<{ items: readonly { internalCode: string; translatedMemberCount?: number }[] }>(
-      '/terminology/value-sets',
-      { limit: '200' },
-    );
+    const conjuntos = await get<{
+      items: readonly { internalCode: string; translatedMemberCount?: number }[];
+    }>('/terminology/value-sets', { limit: '200' });
     expect(
-      conjuntos.items.find((c) => c.internalCode === enfermedades.internalCode)?.translatedMemberCount,
+      conjuntos.items.find((c) => c.internalCode === enfermedades.internalCode)
+        ?.translatedMemberCount,
     ).toBe(enfermedades.translatedCount);
   });
 
@@ -213,6 +228,22 @@ describe('glosario de la maqueta en shards (semilla commiteada)', () => {
     });
     expect(conTilde.total).toBeGreaterThan(0);
     expect(sinTilde.items.map((t) => t.conceptId)).toEqual(conTilde.items.map((t) => t.conceptId));
+  });
+
+  it('la búsqueda ordena por relevancia: lo que empieza con lo escrito va antes que lo que lo contiene', async () => {
+    const { get } = montar();
+    const pagina = await get<Pagina>('/terminology/concepts', {
+      includeValueSets: 'true',
+      q: 'hipertension',
+      limit: '48',
+    });
+    const norm = (t: string) => t.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+    const empiezan = pagina.items.map((t) => norm(t.display).startsWith('hipertension'));
+    expect(empiezan.length).toBeGreaterThan(0);
+    // Ningún resultado que empiece con lo buscado puede aparecer después de uno que no.
+    const primeroQueNo = empiezan.indexOf(false);
+    if (primeroQueNo >= 0) expect(empiezan.slice(primeroQueNo)).not.toContain(true);
+    expect(empiezan[0]).toBe(true);
   });
 
   it('la etiqueta se intersecta con la categoría en el servidor, no en la pantalla', async () => {
@@ -255,6 +286,25 @@ describe('glosario de la maqueta en shards (semilla commiteada)', () => {
     expect(ficha['display']).toMatch(/^Cólera debido a Vibrio cholerae/);
     expect(ficha['clinicalDefinition']).toBeUndefined();
     expect(ficha['translated']).toBe(true);
+  });
+
+  it('una plantilla repetida en cientos de términos no se presenta como la definición de ninguno', async () => {
+    const { almacen, get } = montar();
+    const manifiesto = await almacen.manifiesto();
+    const genericos = manifiesto.genericSummaries ?? [];
+    expect(genericos).toContain(
+      'Estructura anatómica del organismo que cumple una función específica de soporte, conexión o protección en el cuerpo humano.',
+    );
+
+    const pagina = await get<{ items: readonly { display: string; shortDefinition: string }[] }>(
+      '/terminology/concepts',
+      { includeValueSets: 'true', q: 'humero', limit: '48' },
+    );
+    expect(pagina.items.length).toBeGreaterThan(0);
+    for (const t of pagina.items) expect(genericos).not.toContain(t.shortDefinition);
+    // «Húmero» no tiene resumen propio: cae a la descripción verbatim de la fuente.
+    const humero = pagina.items.find((t) => t.display === 'Húmero');
+    expect(humero?.shortDefinition).toMatch(/hueso/i);
   });
 
   it('un id que no es de nadie es 404, no una ficha vacía', async () => {

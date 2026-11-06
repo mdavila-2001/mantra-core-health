@@ -1,5 +1,6 @@
 ---
 slug: vih
+image: vih.svg | El VIH infecta los linfocitos CD4 y el tratamiento antirretroviral detiene su daño. | Virus VIH acercándose a un linfocito CD4, una gráfica de los CD4 que caen sin tratamiento y se recuperan con él, y la lista de vías de transmisión y medidas de prevención y control.
 ---
 
 ## [definition] Introducción

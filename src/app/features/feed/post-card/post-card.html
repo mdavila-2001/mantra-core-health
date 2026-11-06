@@ -164,6 +164,7 @@
             type="button"
             variant="secondary"
             size="sm"
+            [isLoading]="comentando()"
             [disabled]="comentando() || nuevoComentario().trim().length === 0"
             (clicked)="comentar()"
           >

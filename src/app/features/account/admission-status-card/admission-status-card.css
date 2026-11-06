@@ -7,8 +7,17 @@
 }
 
 .verificacion__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
   margin: 0 0 var(--sp-3);
   font-size: var(--fs-h3);
+}
+
+.verificacion__titulo app-nav-icon {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  color: var(--brand-primary);
 }
 
 .verificacion__estado {
@@ -63,6 +72,15 @@
   margin-block-start: var(--sp-4);
   padding-block-start: var(--sp-3);
   border-block-start: 1px solid var(--border-default);
+}
+
+/* The first request: the declaration and the button, without the resubmission's divider. */
+.verificacion__submit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-3);
 }
 
 .verificacion__problema {

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Embolia pulmonar</title>
+  <desc id="d">A la izquierda, una silueta humana con un coágulo que se forma en una vena de la pierna, sube por la vena cava, atraviesa el corazón y se atasca en una arteria pulmonar. A la derecha, los síntomas de urgencia, como la falta de aire repentina y el dolor en el pecho, y los factores de riesgo, como la inmovilidad, la cirugía o el embarazo.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="420" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230.0" y="50" text-anchor="middle" class="title">Recorrido del coágulo</text>
+  <g transform="translate(150 60) scale(1.05)" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5">
+    <circle cx="0" cy="26" r="24"/>
+    <rect x="-9" y="48" width="18" height="12"/>
+    <path d="M-52 62 Q0 52 52 62 L56 200 Q0 214 -56 200 Z"/>
+    <path d="M-52 64 Q-70 70 -74 120 L-80 200 Q-82 210 -72 210 L-64 130 L-56 100 Z"/>
+    <path d="M52 64 Q70 70 74 120 L80 200 Q82 210 72 210 L64 130 L56 100 Z"/>
+    <path d="M-54 198 L-50 320 Q-48 330 -36 330 L-28 330 L-6 214 Z"/>
+    <path d="M54 198 L50 320 Q48 330 36 330 L28 330 L6 214 Z"/>
+  </g>
+  <path d="M180 386.5 C184 333.0 170 285.75 158 259.5 L156 186.0" fill="none" stroke="var(--vein)" stroke-width="5"/>
+  <ellipse cx="182" cy="364.5" rx="6" ry="10" fill="var(--ink)"/>
+  <path d="M156 181.8 c0 -10 14 -10 14 0 c0 8 -14 16 -14 16 c0 0 -14 -8 -14 -16 c0 -10 14 -10 14 0 Z" fill="var(--vessel)" transform="translate(0 -6)"/>
+  <ellipse cx="126" cy="160.8" rx="18" ry="28" fill="var(--accent-l)" stroke="var(--accent)"/><ellipse cx="174" cy="160.8" rx="18" ry="28" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <circle cx="126" cy="156.60000000000002" r="6" fill="var(--ink)"/>
+  <text x="252" y="120" class="small">Bloquea una</text>
+  <text x="252" y="136" class="small">arteria pulmonar</text>
+  <text x="252" y="186" class="small">Atraviesa el</text>
+  <text x="252" y="202" class="small">corazón</text>
+  <text x="252" y="256" class="small">Sube por la</text>
+  <text x="252" y="272" class="small">vena cava</text>
+  <text x="252" y="356" class="small">Nace en una</text>
+  <text x="252" y="372" class="small">vena de la pierna</text>
+  <path d="M250 365 L186 365" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <path d="M250 265 L168 265" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <path d="M250 195 L170 186" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <path d="M250 130 L132 154" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <text x="230" y="436" text-anchor="middle" class="small muted">Trombosis venosa profunda → embolia</text>
+  <rect x="460" y="20" width="320" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="620.0" y="50" text-anchor="middle" class="title">Reconocerla</text>
+  <text x="480" y="62" text-anchor="fill:var(--bad)" class="step">Síntomas de urgencia</text>
+  <rect x="480" y="76" width="280" height="34" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="620.0" y="98.0" text-anchor="middle" class="lab">Falta de aire repentina</text>
+  <rect x="480" y="120" width="280" height="34" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="620.0" y="142.0" text-anchor="middle" class="lab">Dolor en el pecho al respirar</text>
+  <rect x="480" y="164" width="280" height="34" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="620.0" y="186.0" text-anchor="middle" class="lab">Pulso rápido, mareo</text>
+  <rect x="480" y="208" width="280" height="34" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="620.0" y="230.0" text-anchor="middle" class="lab">Tos con sangre</text>
+  <text x="480" y="280" class="step">Factores de riesgo</text>
+  <text x="480" y="306" class="small">• Inmovilidad, viajes largos</text>
+  <text x="480" y="330" class="small">• Cirugía reciente, cáncer</text>
+  <text x="480" y="354" class="small">• Embarazo, anticonceptivos</text>
+  <text x="480" y="378" class="small">• Trombosis previa</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

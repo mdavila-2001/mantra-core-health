@@ -57,16 +57,17 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # VACÍA a propósito, y es la decisión de arquitectura de todo el
-        # montaje: la API vive detrás del MISMO dominio que el frontend, así
-        # que las peticiones salen relativas. Sin CORS que negociar y con la
-        # CSP en `connect-src 'self'`. Quien hace que eso sea verdad es el
-        # `proxy` de abajo.
+        # VACÍA a propósito: la API vive detrás del MISMO dominio que el
+        # frontend.
         PUBLIC_API_BASE_URL: ''
         # Sin esto el Dockerfile construye `production`, que es la maqueta
         # (`mockBackend: true`): el front de `test` salía sin una sola llamada
         # a la API aunque el proxy la tuviera en pie.
         BUILD_CONFIGURATION: production-api
+        # Coolify la define en cada despliegue. Es el respaldo del commit que se
+        # estampa en el paquete cuando el contexto llega sin `.git`; sin ella
+        # los códigos de soporte salían `E-desconocido-NNN`.
+        SOURCE_COMMIT: '${SOURCE_COMMIT:-}'
     restart: always
     environment:
       PORT: '4000'

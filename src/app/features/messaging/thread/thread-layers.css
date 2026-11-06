@@ -119,6 +119,15 @@
   background: var(--velo);
 }
 
+/* A failed sticker has no bubble behind it: the retry line gets its own
+   error surface so it reads in both themes. */
+.hilo__burbuja.is-propio.is-sticker .hilo__reintento {
+  padding-inline-start: var(--e2);
+  border-radius: var(--r-pill);
+  background: var(--error-bg);
+  color: var(--error-tinta);
+}
+
 .hilo__menu {
   position: absolute;
   inset-block-start: 20px;
@@ -417,22 +426,6 @@
 }
 
 /* --- La etiqueta de la respuesta que redactó la IA ------------------------ */
-
-.hilo__etiqueta-ia {
-  display: flex;
-  align-items: center;
-  gap: var(--e1);
-  margin-block-end: 2px;
-  color: var(--tinta-marca);
-  font-size: var(--fs-overline);
-  font-weight: 700;
-}
-
-.hilo__etiqueta-ia svg {
-  flex: none;
-  inline-size: 14px;
-  block-size: 14px;
-}
 
 /* «Respondido por su equipo»: lo que el paciente ve si el doctor lo decidió, y,
    para el doctor, quién de su equipo escribió de verdad. Va bajo el texto, con la

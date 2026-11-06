@@ -73,6 +73,8 @@ describe('AvisoDeHuecoLibre', () => {
   afterEach(() => {
     servicio.stop();
     vi.useRealTimers();
+    // The service remembers what it already showed for the whole session: forget it between cases.
+    sessionStorage.removeItem('mock.avisos-de-hueco.mostrados');
   });
 
   it('levanta el toast cuando llega un hueco libre', () => {
@@ -107,6 +109,28 @@ describe('AvisoDeHuecoLibre', () => {
     // Tres vueltas del reloj, un solo toast.
     expect(listMine.mock.calls.length).toBeGreaterThan(1);
     expect(toasts.show).toHaveBeenCalledTimes(1);
+  });
+
+  it('tras recargar la aplicación, el mismo hueco no vuelve a saltar', () => {
+    montar(true);
+    servicio.start();
+    servicio.stop();
+    expect(toasts.show).toHaveBeenCalledTimes(1);
+
+    // Una aplicación nueva —lo que pasa al recargar— con la misma sesión.
+    TestBed.resetTestingModule();
+    montar(true);
+    servicio.start();
+    expect(toasts.show).not.toHaveBeenCalled();
+  });
+
+  it('con varios huecos a la vez, levanta un solo toast: el más nuevo', () => {
+    const viejo = { ...HUECO, id: 'n-viejo', availableAt: new Date('2026-10-06T10:00:00Z') };
+    const nuevo = { ...HUECO, id: 'n-nuevo', bodyText: 'el nuevo', availableAt: new Date('2026-10-06T11:00:00Z') };
+    montar(true, of(pagina([viejo, nuevo])));
+    servicio.start();
+    expect(toasts.show).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(toasts.show).mock.calls[0]![0]).toMatchObject({ message: 'el nuevo' });
   });
 
   it('sin sesión no pregunta nada', () => {

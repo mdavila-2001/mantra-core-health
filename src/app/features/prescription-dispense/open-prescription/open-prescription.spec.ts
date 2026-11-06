@@ -237,10 +237,10 @@ describe('OpenPrescription', () => {
     expect(byTestId(fixture, IDS.closed)[0].textContent).toContain('Esta cuenta no puede abrir recetas');
   });
 
-  it('error inesperado: «Algo salió mal» con su requestId', () => {
+  it('error inesperado: dice qué pasó, con su requestId', () => {
     const fixture = failWith(500, apiError('INTERNAL', 'Error interno', { correlationId: 'req-500-b' }));
 
-    expect(text(fixture)).toContain('Algo salió mal');
+    expect(text(fixture)).toContain('No pudimos completar la operación');
     expect(text(fixture)).toContain('req-500-b');
   });
 

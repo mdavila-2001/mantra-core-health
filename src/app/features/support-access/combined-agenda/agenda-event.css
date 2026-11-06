@@ -172,5 +172,5 @@
 :host(.celda--densa.celda--libre) {
   border-inline-start-width: 3px;
   border-color: var(--border-strong);
-  border-inline-start-color: var(--doctor-color);
+  border-inline-start-color: var(--doctor-color, var(--c-petrol-600));
 }

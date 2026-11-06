@@ -5,11 +5,11 @@ import { EMPTY, concatMap, from, map, scan, takeLast, type Observable } from 'rx
 import { API_BASE_URL, apiUrl } from '../api';
 import {
   BULK_BATCH_SIZE,
-  type BulkEntity,
   type BulkProgress,
   type BulkRequest,
   type BulkResponse,
   type BulkRowResult,
+  type BulkTarget,
 } from './pharmacy-bulk.types';
 
 /** Cómo se parte una carga larga. */
@@ -44,11 +44,15 @@ export class PharmacyBulkClient {
    */
   bulk<Row extends object>(
     pharmacyId: string,
-    entity: BulkEntity,
+    entity: BulkTarget,
     request: BulkRequest<Row>,
   ): Observable<BulkResponse> {
+    const target =
+      typeof entity === 'string'
+        ? entity
+        : `sites/${encodeURIComponent(entity.siteAvailability)}/availability`;
     return this.http.post<BulkResponse>(
-      apiUrl(this.baseUrl, `/pharmacies/${encodeURIComponent(pharmacyId)}/${entity}/bulk`),
+      apiUrl(this.baseUrl, `/pharmacies/${encodeURIComponent(pharmacyId)}/${target}/bulk`),
       {
         mode: request.mode,
         ...(request.dryRun === undefined ? {} : { dryRun: request.dryRun }),
@@ -67,7 +71,7 @@ export class PharmacyBulkClient {
    */
   chunked<Row extends object>(
     pharmacyId: string,
-    entity: BulkEntity,
+    entity: BulkTarget,
     request: BulkRequest<Row>,
     options: BulkBatchOptions = {},
   ): Observable<BulkProgress> {
@@ -105,7 +109,7 @@ export class PharmacyBulkClient {
   /** Lo mismo que {@link chunked}, pero sólo el resultado final, unido. */
   bulkAll<Row extends object>(
     pharmacyId: string,
-    entity: BulkEntity,
+    entity: BulkTarget,
     request: BulkRequest<Row>,
     options: BulkBatchOptions = {},
   ): Observable<BulkResponse> {

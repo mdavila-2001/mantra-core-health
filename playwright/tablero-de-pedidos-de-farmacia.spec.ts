@@ -1,5 +1,5 @@
 /* ============================================================================
-    El tablero de «Solicitudes de retiro» de la farmacia, en un navegador.
+    El tablero de «Pedidos» de la farmacia, en un navegador.
 
     Corre contra la **maqueta** (`mockBackend`): entra `farmacia@alovida.mock`
     por la pantalla de ingreso y prueba lo que pidió el propietario:

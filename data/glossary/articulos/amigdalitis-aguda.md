@@ -1,5 +1,6 @@
 ---
 slug: amigdalitis-aguda
+image: amigdalitis-aguda.svg | Amígdalas inflamadas con exudado en el fondo de la garganta. | Garganta con la boca abierta que muestra dos amígdalas rojas e hinchadas con puntos blancos, la úvula y la lengua, junto a causas, síntomas y signos de alarma.
 ---
 
 ## [definition] Introducción

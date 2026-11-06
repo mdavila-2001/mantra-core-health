@@ -67,6 +67,7 @@ import { historialDeCursor } from '../../../shared/components/organisms/data-tab
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 const PAGE_SIZE = 25;
 const DEFAULT_DURATION_DAYS = 60;
@@ -146,7 +147,7 @@ function twoDecimalsValidator(control: AbstractControl): ValidationErrors | null
  */
 @Component({
   selector: 'app-insurance-campaigns',
-  imports: [PaginatedForm, CustomField,
+  imports: [DateStringPicker, PaginatedForm, CustomField,
     Alert,
     AnnounceOnAppear,
     AppButton,
@@ -533,7 +534,7 @@ export class InsuranceCampaigns {
       case 'offline':
         return 'No pudimos conectarnos. Revise su conexión y reintente.';
       case 'error':
-        return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+        return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
       default:
         return 'No se pudo completar la operación.';
     }

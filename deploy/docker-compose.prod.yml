@@ -54,6 +54,7 @@ services:
       # `open() "/etc/nginx/api-locations.conf" failed` y el contenedor entra en bucle.
       - ./api-locations.conf:/etc/nginx/api-locations.conf:ro
       - ./api-proxy.conf:/etc/nginx/api-proxy.conf:ro
+      - ./log-redaction.conf:/etc/nginx/log-redaction.conf:ro
     restart: unless-stopped
 
 # La red por defecto alcanza mientras la API viva en este mismo compose. Si vive

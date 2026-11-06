@@ -170,7 +170,7 @@ test.describe('alta pública de aseguradora — documentación legal en PDF (sub
     // fondo por `carril-registro-aseguradora-representante.spec.ts` — acá
     // sólo se completan para que el flujo llegue a la confirmación.
     await expect(page.locator('.paginated-form__titulo')).toContainText(
-      'Representante legal (1 de 2)',
+      'Representante legal',
     );
     await completarRepresentanteLegal(page);
     await expect(page.locator('.paginated-form__titulo')).toContainText('Directorio ejecutivo');

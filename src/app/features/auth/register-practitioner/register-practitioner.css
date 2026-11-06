@@ -112,6 +112,12 @@
   transition: opacity var(--dur-base) var(--ease-standard);
 }
 
+.registro-foto__label-btn--secundario {
+  background-color: transparent;
+  color: var(--brand-primary);
+  border: 1px solid var(--brand-primary);
+}
+
 .registro-foto__label-btn:hover {
   opacity: 0.9;
 }
@@ -142,10 +148,9 @@
 
 
 /* ---------------------------------------------------------- habilitación
-   Matrícula, SEDES y colegio: cada registro es un renglón con su número, su
-   fecha de inscripción y su respaldo. En una tarjeta ancha, las tres casillas
-   en una fila; angosta, una debajo de la otra. Se mide el renglón y no la
-   ventana: el formulario comparte pantalla con la ayuda lateral. */
+   Matrícula, SEDES y colegio: un renglón con número, fecha y respaldo. Ancho:
+   número y fecha en una fila, respaldo debajo a todo el ancho; angosto, uno
+   debajo de otro. Se mide el renglón, no la ventana (hay ayuda lateral). */
 
 .registro-habilitacion {
   container: habilitacion / inline-size;
@@ -164,9 +169,10 @@
 
 @container habilitacion (min-width: 44rem) {
   .registro-habilitacion__grilla {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
   }
+  .registro-habilitacion__respaldo { grid-column: 1 / -1; }
 }
 
 .registro-habilitacion__icono {

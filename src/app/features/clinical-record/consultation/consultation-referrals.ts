@@ -1,10 +1,14 @@
-import { effect, inject, signal, untracked, type Signal } from '@angular/core';
+import { computed, effect, inject, signal, untracked, type Signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { concat, defer, of, Subject, type Observable } from 'rxjs';
+import { catchError, filter, map, switchMap } from 'rxjs/operators';
 
 import { ReferralsClient } from '../../../core/data-access/referrals/referrals.client';
 import type { Referral } from '../../../core/data-access/referrals/referrals.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { dataOf, loading, ready } from '../../../core/view-state/view-state';
+import { dataOf, loading, ready, stale } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { writeFailureParts, type FailureParts } from '../write-message';
 
 /**
  * Las derivaciones de la persona que se atiende, leídas **una vez** para dos
@@ -15,16 +19,61 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
  * módulo, y un fallo acá no puede vaciar la rejilla. Se crea en el contexto
  * de inyección de la consulta (un campo del componente) y lee sola cada vez
  * que cambia la persona.
+ *
+ * ## Una lectura a la vez
+ *
+ * Cada lectura cancela la anterior (`switchMap`): si la persona cambia con una
+ * lectura en vuelo, la respuesta vieja no pisa a la nueva.
+ *
+ * ## Releer sin borrar
+ *
+ * Releer a la **misma** persona no vuelve a S2: la lista sigue a la vista
+ * como S7 (`stale`, con la hora de la lectura anterior) hasta que llega la
+ * nueva, para que el modal no salte. Otra persona sí arranca en S2: mostrar
+ * las derivaciones de la anterior sería mostrar datos ajenos.
+ *
+ * ## Se relee sola al emitir
+ *
+ * Escucha `ReferralsClient.issued`: una derivación emitida para esta persona
+ * la relee aunque el bloque que la emitió ya se haya desmontado (el médico
+ * cerró el modal con el envío en vuelo).
  */
 export class ConsultationReferrals {
   private readonly referrals = inject(ReferralsClient);
 
   readonly state = signal<ViewState<readonly Referral[]>>(loading());
 
+  /**
+   * Una relectura de la misma persona falló con la lista ya a la vista: la
+   * lista sigue como S7 (con la hora de la última buena) y esto dice qué
+   * pasó, para mostrarlo en línea. `null` mientras no haya fallo.
+   */
+  readonly refreshError = signal<FailureParts | null>(null);
+
+  /** Cada pedido de lectura, con la persona que hay que leer. */
+  private readonly reads = new Subject<string>();
+
+  /** De quién son los datos que hay en `state`, y de cuándo. */
+  private lastRead: { readonly profileId: string; readonly at: Date } | null = null;
+
   constructor(private readonly profileId: Signal<string>) {
+    this.reads
+      .pipe(
+        switchMap((id) => this.read(id)),
+        takeUntilDestroyed(),
+      )
+      .subscribe((state) => this.state.set(state));
+
+    this.referrals.issued
+      .pipe(
+        filter((created) => created.patientProfileId === untracked(() => this.profileId())),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.reload());
+
     effect(() => {
       const id = this.profileId();
-      untracked(() => (id === '' ? this.state.set(loading()) : this.reload()));
+      untracked(() => this.reads.next(id));
     });
   }
 
@@ -36,12 +85,82 @@ export class ConsultationReferrals {
     return dataOf(this.state())?.length ?? null;
   }
 
-  /** Relee: tras emitir una derivación y al reintentar. */
+  /**
+   * Qué tan confiable es la cifra: `loading` mientras se lee sin datos,
+   * `failed` si la lectura falló sin datos, `stale` si hay cifra pero la
+   * última relectura falló (puede haber más: una emitida que no se releyó), y
+   * `null` con cifra al día (también mientras relee con datos, S7).
+   */
+  readonly missingCount = computed<'loading' | 'failed' | 'stale' | null>(() => {
+    const state = this.state();
+    if (dataOf(state) !== null) return this.refreshError() === null ? null : 'stale';
+    return state.status === 'loading' ? 'loading' : 'failed';
+  });
+
+  /** Relee: tras responder o anular desde el detalle, y al reintentar. */
   reload(): void {
-    this.state.set(loading());
-    this.referrals.listByPatient(this.profileId()).subscribe({
-      next: (rows) => this.state.set(ready(rows)),
-      error: (error: unknown) => this.state.set(errorToViewState<readonly Referral[]>(error)),
+    this.reads.next(this.profileId());
+  }
+
+  private read(id: string): Observable<ViewState<readonly Referral[]>> {
+    if (id === '') {
+      this.lastRead = null;
+      return of(loading());
+    }
+    return defer(() => {
+      // Reintentar: mientras viaja, «Actualizando», no el fallo anterior.
+      this.refreshError.set(null);
+      return concat(
+        of(this.whileReading(id)),
+        this.referrals.listByPatient(id).pipe(
+          map((rows) => {
+            this.lastRead = { profileId: id, at: new Date() };
+            return ready(rows) as ViewState<readonly Referral[]>;
+          }),
+          catchError((error: unknown) => of(this.afterFailure(id, error))),
+        ),
+      );
     });
   }
+
+  /**
+   * Con datos de esta persona, el fallo no los borra (ni la cifra de la
+   * casilla): quedan como S7 y el fallo va aparte, en `refreshError`. Sin
+   * datos, el fallo es el estado.
+   */
+  private afterFailure(id: string, error: unknown): ViewState<readonly Referral[]> {
+    const failure = errorToViewState<readonly Referral[]>(error);
+    const previous = dataOf(untracked(() => this.state()));
+    // Una lista vacía no es «datos para conservar»: mostrarla como S7 la
+    // convertía en «todavía no tiene derivaciones» (dato clínico falso tras
+    // emitir la primera y fallar la relectura). Sin filas, vale el fallo.
+    if (previous === null || previous.length === 0 || this.lastRead?.profileId !== id) {
+      this.refreshError.set(null);
+      return failure;
+    }
+    this.refreshError.set(
+      writeFailureParts(errorToViewState<null>(error), {
+        accion: 'actualizar la lista',
+        yaNoExiste: 'No pudimos actualizar la lista.',
+      }) ?? { text: 'No pudimos actualizar la lista.', code: null },
+    );
+    return stale(previous, this.lastRead.at);
+  }
+
+  /**
+   * Lo que se ve mientras viaja la lectura: lo anterior como S7, o S2. Una
+   * lista vacía no se conserva: como S7 se leía «todavía no tiene
+   * derivaciones» y la casilla «0» justo después de emitir la primera.
+   */
+  private whileReading(id: string): ViewState<readonly Referral[]> {
+    const previous = dataOf(untracked(() => this.state()));
+    return previous !== null && previous.length > 0 && this.lastRead?.profileId === id
+      ? stale(previous, this.lastRead.at)
+      : loading();
+  }
+}
+
+/** Lo que acompaña a la cifra en la casilla: las derivaciones no son «de la historia». */
+export function referralCountLabel(count: number | null): string {
+  return count === 1 ? 'derivación' : 'derivaciones';
 }

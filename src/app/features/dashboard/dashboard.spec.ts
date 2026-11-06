@@ -78,6 +78,10 @@ describe('Dashboard', () => {
     )) {
       pedido.flush(null, { status: 422, statusText: 'Unprocessable Entity' });
     }
+    // El inicio de una cuenta de organización lee su propia ficha; en estas pruebas no es lo que se mira.
+    for (const pedido of http.match((request) => request.url.endsWith('/tenants/me'))) {
+      pedido.flush({ items: [] });
+    }
     http.verify();
   });
 
@@ -195,7 +199,7 @@ describe('Dashboard', () => {
 
     it('quien atiende ve «Mis verificaciones» debajo del saludo, no encima', () => {
       crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'], hpid: 'hp-1' });
-      const enlace = franja('panel-mis-verificaciones');
+      const enlace = franja('dashboard-my-verifications');
       const titulo = raiz().querySelector('h1');
 
       expect(enlace?.querySelector('a')?.getAttribute('href')).toBe('/my-account/verifications');
@@ -207,7 +211,7 @@ describe('Dashboard', () => {
 
     it('con perfil profesional pero sin rol de quien atiende, no se ofrece una puerta que la ruta cierra', () => {
       crear({ sub: 'u-1', roles: ['INSURANCE_ANALYST'], tenants: ['t-1'], hpid: 'hp-1' });
-      expect(franja('panel-mis-verificaciones')).toBeNull();
+      expect(franja('dashboard-my-verifications')).toBeNull();
     });
 
     it('la aseguradora activa ve la puerta a los profesionales que piden sumarse', () => {
@@ -220,7 +224,7 @@ describe('Dashboard', () => {
       expect(
         franja('panel-profesionales-que-piden')?.querySelector('a')?.getAttribute('href'),
       ).toBe('/administration/insurer-practitioner-requests');
-      expect(franja('panel-mis-verificaciones')).toBeNull();
+      expect(franja('dashboard-my-verifications')).toBeNull();
     });
 
     it('una clínica no la ve: el mismo filtro por tipo de organización que el menú', () => {
@@ -379,6 +383,18 @@ describe('Dashboard', () => {
         .flush({ items: [], count: 0, limit: 5, nextCursor: null });
 
       http.expectNone((request) => request.url.endsWith('/practitioners/me/onboarding'));
+    });
+  });
+  describe('la cuenta de una organización', () => {
+    it('suma su propio inicio —estado, equipo y actividad— al panel; no lo reemplaza', () => {
+      crear({ sub: 'u-1', roles: ['USER'], tenants: ['t-1'], tenantTypes: { 't-1': 'MEDICAL_OFFICE' } });
+
+      const raizDelPanel = raiz();
+
+      expect(raizDelPanel.querySelector('app-organization-home')).not.toBeNull();
+      expect(raizDelPanel.querySelector('app-patient-home')).toBeNull();
+      expect(raizDelPanel.querySelector('[data-testid="panel-ultimos-pacientes"]')).toBeNull();
+      expect(raizDelPanel.querySelector('[data-testid="panel-profesionales-que-piden"]')).toBeNull();
     });
   });
 });

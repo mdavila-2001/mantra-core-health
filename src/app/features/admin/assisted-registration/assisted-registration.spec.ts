@@ -160,6 +160,30 @@ describe('AssistedRegistration', () => {
     ).not.toBeNull();
   });
 
+  it('un homónimo avisa y confirmar reenvía con allowHomonym', () => {
+    completarFormulario();
+    enviar();
+
+    http.expectOne('/iam/users/assisted-registration').flush(
+      {
+        code: 'CONFLICT',
+        message: 'Ya hay un paciente registrado con ese nombre',
+        reason: 'POSSIBLE_DUPLICATE_PATIENT',
+      },
+      { status: 409, statusText: 'Conflict' },
+    );
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="alta-homonimo"]')).not.toBeNull();
+    expect(interno<() => string | null>('errorMessage')()).toBeNull();
+
+    html.querySelector<HTMLButtonElement>('[data-testid="alta-homonimo-confirmar"]')?.click();
+    const req = http.expectOne('/iam/users/assisted-registration');
+    expect(req.request.body.allowHomonym).toBe(true);
+    req.flush(RESPUESTA);
+  });
+
   it('sin permiso lo dice con el mensaje del backend, no con un error genérico', () => {
     completarFormulario();
     enviar();

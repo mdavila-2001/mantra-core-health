@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Hemorroides internas y externas</title>
+  <desc id="d">Corte del canal anal con el recto arriba y la línea dentada marcada, una hemorroide interna por encima, que suele sangrar sin dolor, y una externa por debajo, que puede doler. A la derecha, los síntomas, los cuidados y cuándo consultar.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Hemorroides: cojinetes vasculares del canal anal</text>
+  <rect x="20" y="60" width="400" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="88" text-anchor="middle" class="title">Corte del canal anal</text>
+  <path d="M120 100 L120 300 C120 340 160 380 180 420 M320 100 L320 300 C320 340 280 380 260 420" fill="none" stroke="var(--muted)" stroke-width="3"/>
+  <rect x="122" y="100" width="196" height="200" rx="0" fill="var(--organ)" stroke="none" opacity=".35"/>
+  <path d="M122 300 C150 340 290 340 318 300" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="220" y="140" text-anchor="middle" class="lab b">Recto</text>
+  <ellipse cx="140" cy="260" rx="18" ry="26" fill="var(--pur)" stroke="none" opacity=".7"/>
+  <ellipse cx="300" cy="250" rx="18" ry="26" fill="var(--pur)" stroke="none" opacity=".7"/>
+  <ellipse cx="166" cy="396" rx="16" ry="14" fill="var(--pur)" stroke="none" opacity=".7"/>
+  <line x1="152" y1="240" x2="210" y2="196" stroke="var(--muted)" stroke-width="1"/>
+  <text x="214" y="186" class="small b">Interna:</text>
+  <text x="214" y="202" class="small">no duele, sangra</text>
+  <line x1="150" y1="398" x2="80" y2="380" stroke="var(--muted)" stroke-width="1"/>
+  <text x="40" y="354" class="small b">Externa:</text>
+  <text x="40" y="370" class="small">puede doler</text>
+  <text x="330" y="350" class="small muted">Línea</text>
+  <text x="330" y="366" class="small muted">dentada</text>
+  <rect x="436" y="60" width="344" height="216" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="88" text-anchor="middle" class="h">Síntomas y cuidados</text>
+  <text x="454" y="110" class="small">• Sangre roja brillante al defecar</text>
+  <text x="454" y="136" class="small">• Picor o bulto anal</text>
+  <text x="454" y="162" class="small">• Fibra y agua: heces blandas</text>
+  <text x="454" y="188" class="small">• No hacer fuerza ni tardar</text>
+  <text x="454" y="214" class="small">• Baños de asiento tibios</text>
+  <rect x="436" y="292" width="344" height="148" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="450" y="316" class="lab b" style="fill:var(--red)">Consultar si</text>
+  <text x="450" y="340" class="small">• Sangrado abundante o mareo</text>
+  <text x="450" y="362" class="small">• Sangre oscura o mezclada</text>
+  <text x="450" y="384" class="small">• Dolor intenso y bulto duro</text>
+  <text x="450" y="406" class="small">• Cambio del hábito intestinal</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

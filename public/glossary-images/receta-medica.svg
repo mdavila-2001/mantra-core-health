@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Partes de una receta médica</title>
+  <desc id="d">A la izquierda, una hoja de receta con sus partes señaladas: datos del paciente, medicamento con su principio activo y presentación, forma de uso, duración, fecha y firma del profesional. A la derecha, el recorrido de la receta: consulta con el profesional, receta en papel o electrónica, farmacia donde se revisa y se entrega el medicamento, y uso en casa siguiendo las indicaciones y el prospecto.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --paper:#fffdf6; --ok:#1f8a5b; --warm:#d9822b; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --paper:#232d38; --ok:#4cc38a; --warm:#e8a560; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+
+  <!-- Receta -->
+  <rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230" y="50" text-anchor="middle" class="title">Qué contiene</text>
+  <rect x="50" y="70" width="210" height="350" rx="6" fill="var(--paper)" stroke="var(--line)" stroke-width="2"/>
+  <text x="66" y="100" class="step" style="fill:var(--accent)">Rp/</text>
+  <rect x="66" y="112" width="178" height="30" rx="4" fill="var(--accent-l)"/>
+  <line x1="74" y1="124" x2="200" y2="124" stroke="var(--muted)" stroke-width="3"/>
+  <line x1="74" y1="134" x2="160" y2="134" stroke="var(--muted)" stroke-width="2"/>
+  <rect x="66" y="156" width="178" height="44" rx="4" fill="none" stroke="var(--warm)" stroke-width="2"/>
+  <line x1="74" y1="170" x2="226" y2="170" stroke="var(--ink)" stroke-width="3"/>
+  <line x1="74" y1="186" x2="190" y2="186" stroke="var(--muted)" stroke-width="2"/>
+  <rect x="66" y="214" width="178" height="62" rx="4" fill="none" stroke="var(--ok)" stroke-width="2"/>
+  <line x1="74" y1="230" x2="224" y2="230" stroke="var(--muted)" stroke-width="2"/>
+  <line x1="74" y1="246" x2="210" y2="246" stroke="var(--muted)" stroke-width="2"/>
+  <line x1="74" y1="262" x2="180" y2="262" stroke="var(--muted)" stroke-width="2"/>
+  <line x1="66" y1="330" x2="140" y2="330" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M160 350 C175 320 185 360 200 335 C210 320 220 345 236 330" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+  <line x1="150" y1="362" x2="244" y2="362" stroke="var(--muted)" stroke-width="1.5"/>
+  <circle cx="110" cy="392" r="14" fill="none" stroke="var(--accent)" stroke-width="2"/>
+
+  <!-- etiquetas -->
+  <line x1="244" y1="127" x2="276" y2="127" stroke="var(--muted)"/>
+  <text x="280" y="124" class="lab">Datos del paciente</text>
+  <text x="280" y="140" class="small muted">nombre, documento</text>
+  <line x1="244" y1="178" x2="276" y2="178" stroke="var(--muted)"/>
+  <text x="280" y="175" class="lab" style="fill:var(--warm)">Medicamento</text>
+  <text x="280" y="191" class="small muted">principio activo, forma</text>
+  <line x1="244" y1="245" x2="276" y2="245" stroke="var(--muted)"/>
+  <text x="280" y="242" class="lab" style="fill:var(--ok)">Cómo usarlo</text>
+  <text x="280" y="258" class="small muted">cuándo y por cuánto tiempo</text>
+  <line x1="140" y1="330" x2="276" y2="316" stroke="var(--muted)"/>
+  <text x="280" y="314" class="lab">Fecha</text>
+  <line x1="244" y1="350" x2="276" y2="358" stroke="var(--muted)"/>
+  <text x="280" y="356" class="lab">Firma y matrícula</text>
+  <text x="280" y="372" class="small muted">del profesional</text>
+
+  <!-- Recorrido -->
+  <rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618" y="50" text-anchor="middle" class="title">Su recorrido</text>
+  <rect x="486" y="74" width="264" height="58" rx="10" fill="var(--accent)"/>
+  <text x="618" y="100" text-anchor="middle" class="step" style="fill:var(--on)">1 · Consulta</text>
+  <text x="618" y="120" text-anchor="middle" class="small" style="fill:var(--on)">valoración y explicación</text>
+  <path d="M618 134 V158" stroke="var(--muted)" stroke-width="3"/><polygon points="618,166 611,154 625,154" fill="var(--muted)"/>
+  <rect x="486" y="170" width="264" height="58" rx="10" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <text x="618" y="196" text-anchor="middle" class="step">2 · Receta</text>
+  <text x="618" y="216" text-anchor="middle" class="small muted">en papel o electrónica</text>
+  <path d="M618 230 V254" stroke="var(--muted)" stroke-width="3"/><polygon points="618,262 611,250 625,250" fill="var(--muted)"/>
+  <rect x="486" y="266" width="264" height="58" rx="10" fill="none" stroke="var(--ok)" stroke-width="2"/>
+  <text x="618" y="292" text-anchor="middle" class="step">3 · Farmacia</text>
+  <text x="618" y="312" text-anchor="middle" class="small muted">revisión y entrega</text>
+  <path d="M618 326 V350" stroke="var(--muted)" stroke-width="3"/><polygon points="618,358 611,346 625,346" fill="var(--muted)"/>
+  <rect x="486" y="362" width="264" height="58" rx="10" fill="none" stroke="var(--warm)" stroke-width="2"/>
+  <text x="618" y="388" text-anchor="middle" class="step">4 · En casa</text>
+  <text x="618" y="408" text-anchor="middle" class="small muted">seguir indicaciones y prospecto</text>
+
+  <text x="400" y="464" text-anchor="middle" class="small muted">Esquema ilustrativo; el formato cambia según el país. Ilustración original de AloVida.</text>
+</svg>

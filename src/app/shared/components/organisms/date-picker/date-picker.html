@@ -10,6 +10,8 @@
         [disabled]="disabled()"
         [attr.aria-invalid]="invalid()"
         [attr.aria-describedby]="describedBy()"
+        [attr.aria-label]="accessibleLabel()"
+        [attr.data-testid]="testId()"
         [placeholder]="placeholder()"
         [value]="inputText()"
         (focus)="handleFocus()"

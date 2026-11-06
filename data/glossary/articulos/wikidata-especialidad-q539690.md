@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q539690
+image: wikidata-especialidad-q539690.svg | La angiología trata las enfermedades de arterias, venas y vasos linfáticos fuera del corazón y del cerebro. | Pierna con arterias en rojo, venas en azul y vasos linfáticos en verde, junto a una lista de enfermedades vasculares y una pantalla de eco-Doppler.
 ---
 
 ## [definition] Introducción

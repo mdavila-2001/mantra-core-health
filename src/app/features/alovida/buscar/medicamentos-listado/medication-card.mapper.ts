@@ -34,9 +34,13 @@ export interface MedicationCard {
  * `Number` y volver perdería el centavo que la farmacia publicó, que es
  * justamente el dato que la pantalla promete mostrar sin tocar.
  */
-export function formatMoney(value: string, currency: string): string {
-  return `${displayCurrency(currency)} ${value.replace('.', ',')}`;
+export function formatMoney(value: string | null, currency: string | null): string {
+  if (value === null) return SIN_PRECIO;
+  return `${displayCurrency(currency ?? '')} ${value.replace('.', ',')}`;
 }
+
+/** What a card says when no pharmacy of the network publishes it. */
+export const SIN_PRECIO = 'Ninguna farmacia de la red lo publica todavía';
 
 /** «1,2 km», con coma decimal. `null` sin origen. */
 export function formatDistance(km: number | null): string | null {
@@ -45,7 +49,7 @@ export function formatDistance(km: number | null): string | null {
 
 /** `true` si las farmacias no coinciden en el precio. */
 export function hasPriceRange(medication: TarjetaDeMedicamento): boolean {
-  return medication.priceFrom !== medication.priceTo;
+  return medication.priceFrom !== null && medication.priceFrom !== medication.priceTo;
 }
 
 /**
@@ -70,6 +74,10 @@ export function priceText(medication: TarjetaDeMedicamento): string {
  * porque eso es lo que `nearestKm` mide.
  */
 function medicationAttributes(medication: TarjetaDeMedicamento): CentroAtributo[] {
+  if (medication.pharmacyCount === 0) {
+    // From the vademécum, with no offer: it exists, nobody sells it here yet.
+    return [...useAttribute(medication), { clave: 'farmacias', texto: SIN_PRECIO }];
+  }
   const attributes: CentroAtributo[] = [
     {
       clave: 'precio',
@@ -87,6 +95,8 @@ function medicationAttributes(medication: TarjetaDeMedicamento): CentroAtributo[
     },
   ];
 
+  attributes.unshift(...useAttribute(medication));
+
   const nearest = formatDistance(medication.nearestKm);
   if (nearest !== null) {
     attributes.push({
@@ -99,10 +109,31 @@ function medicationAttributes(medication: TarjetaDeMedicamento): CentroAtributo[
   return attributes;
 }
 
+/**
+ * What it is for, from its ATC group: the use that found it when the search
+ * was by symptom, else its most specific group. Classification, not advice.
+ */
+function useAttribute(medication: TarjetaDeMedicamento): CentroAtributo[] {
+  const use = medication.matchedUse ?? medication.uses?.[0];
+  if (!use) return [];
+  return [
+    {
+      clave: 'grupo',
+      texto: `Sirve para: ${use}`,
+      etiqueta: `Grupo terapéutico según la clasificación ATC de la OMS: ${use}`,
+    },
+  ];
+}
+
 function medicationRows(medication: TarjetaDeMedicamento): CardDetailRow[] {
   const rows: CardDetailRow[] = [];
   addRow(rows, 'Código ATC', medication.atcCode);
   addRow(rows, 'Grupo terapéutico', medication.therapeuticGroup);
+  addRow(
+    rows,
+    'Se usa para (ATC, OMS)',
+    medication.uses && medication.uses.length > 0 ? medication.uses.join(' · ') : null,
+  );
   addRow(
     rows,
     'Marcas publicadas',

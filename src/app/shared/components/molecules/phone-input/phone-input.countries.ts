@@ -47,7 +47,7 @@ export interface PhoneCountry {
   readonly digitos: number;
 
   /**
-   * Cómo se agrupan esos dígitos al mostrarlos: `[4, 4]` pinta `7001 2345`.
+   * Cómo se agrupan esos dígitos al mostrarlos: `[3, 3, 2]` pinta `700 123 45`; Bolivia usa `[8]` y se muestra seguido, `70012345`.
    *
    * Es ayuda de lectura y no dato — se muestra agrupado y se guarda seguido—,
    * y va por país porque cada uno agrupa distinto: un número boliviano se lee
@@ -64,7 +64,7 @@ export interface PhoneCountry {
  * que a Bolivia en un producto boliviano.
  */
 export const PHONE_COUNTRIES: readonly PhoneCountry[] = [
-  { iso: 'BO', nombre: 'Bolivia', prefijo: '+591', digitos: 8, grupos: [4, 4] },
+  { iso: 'BO', nombre: 'Bolivia', prefijo: '+591', digitos: 8, grupos: [8] },
   { iso: 'AR', nombre: 'Argentina', prefijo: '+54', digitos: 10, grupos: [3, 3, 4] },
   { iso: 'BR', nombre: 'Brasil', prefijo: '+55', digitos: 11, grupos: [2, 5, 4] },
   { iso: 'CL', nombre: 'Chile', prefijo: '+56', digitos: 9, grupos: [1, 4, 4] },
@@ -159,7 +159,7 @@ export function isCompletePhone(valor: string): boolean {
   });
 }
 
-/** `70012345` + `[4,4]` -> `7001 2345`. Ayuda de lectura, no dato. */
+/** `70012345` + `[3,3,2]` -> `700 123 45`; con `[8]` queda `70012345`. Ayuda de lectura, no dato. */
 export function group(digitos: string, grupos: readonly number[]): string {
   const partes: string[] = [];
   let resto = digitos;

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Epilepsia</title>
+  <desc id="d">A la izquierda, un cerebro con un foco del que parte actividad excesiva y un trazado eléctrico que pasa de normal a una descarga de crisis y vuelve a la normalidad. A la derecha, la definición de epilepsia, los tipos de crisis focal y generalizada, qué hacer ante una crisis convulsiva y cuándo llamar a emergencias.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Qué ocurre en una crisis</text>
+  <path d="M74.00000000000001 174.0 C60.0 90.0 144.0 48.0 214.0 62.0 C298.0 62.0 340.0 118.0 326.0 188.0 C317.6 230.0 270.0 238.39999999999998 228.0 230.0 C200 244.0 158.0 238.39999999999998 130.0 227.2 C88.0 221.6 76.80000000000001 202.0 74.00000000000001 174.0 Z" fill="var(--organ)" stroke="var(--line)" stroke-width="1.5"/>
+  <path d="M130.0 104.0 q28.0 28.0 7.0 56.0 M200 76.0 q28.0 35.0 -7.0 70.0 M263.0 97.0 q-21.0 42.0 14.0 77.0" fill="none" stroke="var(--line)" stroke-width="2"/>
+  <line x1="150" y1="130" x2="139.548703644118" y2="174.79699102039697" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="150" y1="130" x2="130.85724551883146" y2="171.82768163398134" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="150" y1="130" x2="122.9289486062541" y2="167.19083457570116" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="150" y1="130" x2="116.0798890851027" y2="161.07130630535295" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="150" y1="130" x2="110.58311734502843" y2="153.71306310378736" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="150" y1="130" x2="106.65777232924174" y2="145.40945490717164" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="150" y1="130" x2="104.4603451563795" y2="136.4915203707539" stroke="var(--warn)" stroke-width="2"/>
+  <circle cx="150" cy="130" r="14" fill="var(--warn)"/>
+  <text x="200" y="268" text-anchor="middle" class="lab">Grupos de neuronas se activan</text>
+  <text x="200" y="288" text-anchor="middle" class="lab">a la vez, de forma excesiva</text>
+  <rect x="40" y="312" width="340" height="110" rx="10" fill="var(--tissue)"/>
+  <text x="56" y="334" class="small muted">Actividad eléctrica</text>
+  <path d="M56 380 l10 -6 l10 6 l10 -6 l10 6 l10 -6 l10 6 l10 -6 l10 6" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <path d="M146 376 l6 -26 l6 40 l6 -36 l6 30 l6 -30 l6 34 l6 -26 l6 20 l6 -22 l6 24 l6 -18 l6 10" fill="none" stroke="var(--warn)" stroke-width="2"/>
+  <path d="M302 380 l10 -6 l10 6 l10 -6 l10 6 l10 -6 l10 6" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <text x="90" y="410" text-anchor="middle" class="small">Normal</text>
+  <text x="220" y="410" text-anchor="middle" class="small" style="fill:var(--warn)">Crisis</text>
+  <text x="330" y="410" text-anchor="middle" class="small">Normal</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">La enfermedad y qué hacer</text>
+  <text x="436" y="76" class="lab">Epilepsia = tendencia duradera a crisis</text>
+  <rect x="436" y="88" width="156" height="36" rx="8" fill="var(--accent)"/>
+  <text x="514.0" y="110.68" text-anchor="middle" class="lab" style="fill:var(--on)">Crisis focal</text>
+  <rect x="604" y="88" width="156" height="36" rx="8" fill="var(--purple)"/>
+  <text x="682.0" y="110.32" text-anchor="middle" class="small" style="fill:var(--on)">Crisis generalizada</text>
+  <text x="514" y="140" text-anchor="middle" class="small muted">una zona</text>
+  <text x="682" y="140" text-anchor="middle" class="small muted">ambos hemisferios</text>
+  <text x="436" y="176" class="step">Ante una crisis convulsiva</text>
+  <text x="440" y="202" class="lab">• Proteger la cabeza y retirar objetos</text>
+  <text x="440" y="226" class="lab">• Ponerlo de lado al acabar</text>
+  <text x="440" y="250" class="lab">• No meter nada en la boca</text>
+  <text x="440" y="274" class="lab">• Contar el tiempo</text>
+  <rect x="436" y="312" width="324" height="108" rx="10" fill="var(--warn-l)"/>
+  <text x="452" y="336" class="step" style="fill:var(--warn)">Llamar a emergencias si</text>
+  <text x="456" y="362" class="small">• Dura más de 5 minutos</text>
+  <text x="456" y="384" class="small">• Se repite sin recuperarse</text>
+  <text x="456" y="406" class="small">• Hay lesión o es la primera vez</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

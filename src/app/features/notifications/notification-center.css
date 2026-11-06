@@ -37,6 +37,9 @@
 
 .avisos__dia + .avisos__dia {
   border-block-start: 1px solid var(--border-default);
+  /* Los días van pegados dentro de UNA tarjeta y los separa el filete: el ritmo
+     vertical de `app-view-state-host` (alovida.css) les abriría aire encima de él. */
+  margin-block-start: 0;
 }
 
 .avisos__dia-titulo {
@@ -143,7 +146,7 @@ button.avisos__item:focus-visible {
 
 .avisos__detalle {
   color: var(--text-secondary, var(--tinta-2));
-  font-size: 0.9rem;
+  font-size: var(--fs-body);
   overflow-wrap: anywhere;
 }
 
@@ -153,7 +156,7 @@ button.avisos__item:focus-visible {
   align-items: center;
   gap: 0.4rem;
   color: var(--text-muted, var(--tinta-3));
-  font-size: 0.8rem;
+  font-size: var(--fs-caption);
 }
 
 .avisos__categoria {

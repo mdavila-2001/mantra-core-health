@@ -49,6 +49,8 @@
             <app-representative-and-managers
               [state]="gente()"
               [readOnly]="true"
+              [editableTenantId]="org.canAdminister ? org.id : null"
+              (nameSaved)="cargar()"
               (retry)="cargar()"
             />
           </app-tab>

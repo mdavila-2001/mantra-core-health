@@ -75,6 +75,7 @@
         }
 
         <div class="registro__body">
+          <app-account-exists-dialog />
           <app-paginated-form
             data-testid="registro-form-imagenologia"
             [paginas]="paginas"
@@ -266,6 +267,9 @@
                   />
                 }
               </div>
+            </ng-template>
+            <ng-template appCampoPersonalizado="openingHours">
+              <app-registration-opening-hours testId="registration-imaging-hours" [value]="form.controls.openingHours.value" (valueChange)="form.controls.openingHours.setValue($event); guardarBorrador()" />
             </ng-template>
           </app-paginated-form>
 

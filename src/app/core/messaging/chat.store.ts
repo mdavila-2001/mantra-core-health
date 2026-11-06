@@ -309,7 +309,7 @@ export interface MensajeDelHilo {
   readonly estado: 'enviando' | 'fallado' | 'enviado';
   /** Si su texto se cambió después de mandarlo — se dice en la burbuja. */
   readonly isEdited?: boolean;
-  /** `STICKER` (propio) o `AUTO_REPLY_AI` (lo redactó la IA); ver `DirectMessage`. */
+  /** `STICKER` (propio); ver `DirectMessage`. */
   readonly contentType?: DirectMessageContentType;
   readonly reactions?: readonly MessageReaction[];
   readonly receipts?: readonly MessageReceipt[];
@@ -1928,7 +1928,8 @@ export class ChatStore {
     this.community
       .sendMessage(pendiente.conversationId, {
         senderProfileId: propio,
-        bodyText: pendiente.bodyText,
+        // Uncaptioned attachment: no `bodyText` at all, `''` is not a text.
+        ...(pendiente.bodyText.trim() ? { bodyText: pendiente.bodyText } : {}),
         ...(pendiente.replyToMessageId
           ? { replyToMessageId: pendiente.replyToMessageId }
           : {}),
@@ -2078,7 +2079,8 @@ export class ChatStore {
         },
       };
       this.archivosSinSubir.set(pendiente.claveTemporal, archivo);
-      if (esImagen && !yaLeida) {
+      // Audio too: a voice note is playable while it goes out, or if it fails.
+      if ((esImagen || archivo.type.startsWith('audio/')) && !yaLeida) {
         this.ponerVistaPrevia(pendiente.claveTemporal, archivo);
       }
       return { pendiente, archivo };
@@ -2328,8 +2330,6 @@ export class ChatStore {
     if (propio === null || mensaje.senderProfileId === propio) {
       return;
     }
-    // Con IA guardada en el servidor contesta él (dos respuestas, no); si no la tiene, sale el respaldo.
-    if (this.autoReply.configuracion().conIa && this.autoReply.enElServidor()) return;
     const ahora = Date.now();
     const ultimo = this.ultimoAvisoPorConversacion.get(mensaje.conversationId) ?? null;
     if (!this.autoReply.corresponde(ahora, ultimo)) {

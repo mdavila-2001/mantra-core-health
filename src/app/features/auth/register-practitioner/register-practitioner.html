@@ -67,6 +67,7 @@
            con búsqueda— y el aviso del departamento, sólo cuando su lectura
            falló, que es cuando el campo deja de ser un `select`. -->
         <div class="registro__body">
+          <app-account-exists-dialog />
           <app-paginated-form
             data-testid="registro-form-profesional"
             [paginas]="paginasProfesional()"
@@ -89,7 +90,7 @@
               <div class="registro__nombres">
                 <app-form-field class="registro__nombre" label="Primer nombre" [required]="true">
                   <app-input
-                    testId="registro-pro-nombre"
+                    testId="registro-pro-nombre" fieldKind="personName"
                     autocomplete="given-name"
                     placeholder="Ana"
                     [value]="valorDeNombre('name')"
@@ -104,7 +105,7 @@
                   hint="Si no tiene, déjelo vacío."
                 >
                   <app-input
-                    testId="registro-pro-segundo-nombre"
+                    testId="registro-pro-segundo-nombre" fieldKind="personName"
                     autocomplete="additional-name"
                     placeholder="Lucía"
                     [value]="valorDeNombre('middleName')"
@@ -114,7 +115,7 @@
 
                 <app-form-field class="registro__nombre" label="Tercer nombre">
                   <app-input
-                    testId="registro-pro-tercer-nombre"
+                    testId="registro-pro-tercer-nombre" fieldKind="personName"
                     placeholder="María"
                     [value]="valorDeNombre('thirdName')"
                     (valueChange)="escribirNombre('thirdName', $event)"
@@ -127,7 +128,7 @@
                   <app-form-field class="registro__nombre" [label]="'Nombre ' + ($index + 4)">
                     <div class="registro__nombre-extra">
                       <app-input
-                        [testId]="'registro-pro-nombre-extra-' + $index"
+                        [testId]="'registro-pro-nombre-extra-' + $index" fieldKind="personName"
                         placeholder="Otro nombre"
                         [value]="extra"
                         (valueChange)="escribirNombreExtra($index, $event)"
@@ -359,6 +360,24 @@
                       {{ fotoBase64() ? 'Cambiar foto' : 'Subir foto de perfil' }}
                     </span>
                   </label>
+                  <!-- El selector de fotos de Android (con `accept` de imágenes) no
+                       ofrece la cámara. Un segundo control con `capture` la abre
+                       directo; en escritorio el navegador lo trata como un
+                       selector de archivos más. -->
+                  <label class="registro-foto__boton-subir">
+                    <input
+                      #inputCamara
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      capture="user"
+                      class="sr-only"
+                      data-testid="registro-pro-foto-camara"
+                      (change)="alSeleccionarFoto($event)"
+                    />
+                    <span class="registro-foto__label-btn registro-foto__label-btn--secundario">
+                      Tomar foto con la cámara
+                    </span>
+                  </label>
                   @if (fotoBase64()) {
                     <button
                       type="button"
@@ -469,12 +488,9 @@
             </ng-template>
 
             <!--
-              Las tres habilitaciones —matrícula, SEDES y colegio de la
-              profesión—, cada una en SU renglón: número, fecha de inscripción y
-              respaldo. Una fecha o un archivo sueltos no dicen de cuál de los
-              tres registros son, y quien verifica tiene que saberlo sin
-              abrirlos. El rótulo, el asterisco y el error del número los pone
-              el motor; el renglón es el mismo para los tres.
+              One row per licence —matrícula, SEDES, profession college—: number and
+              date side by side, the backup file below. All three fields are
+              mandatory; label, asterisk and page-level error come from the engine.
             -->
             <ng-template #renglonDeHabilitacion let-renglon>
               <div class="registro-habilitacion" [attr.data-habilitacion]="renglon.clave">
@@ -497,8 +513,9 @@
                   </app-form-field>
                   <app-form-field
                     class="registro-habilitacion__fecha"
-                    label="Fecha de inscripción (opcional)"
+                    label="Fecha de inscripción"
                     hint="Cuándo se registró, no cuándo vence."
+                    [errorMessage]="faltaEnHabilitacion(renglon.control, 'licenceDate') ? 'Ingrese la fecha de inscripción.' : ''"
                   >
                     <app-date-picker
                       [attr.data-testid]="'registro-pro-fecha-' + renglon.clave"
@@ -507,8 +524,10 @@
                       [maxDate]="hoy"
                     />
                   </app-form-field>
-                  <!-- Sin `hint`: la zona de carga ya dice «PDF · Máximo 5 MB». -->
-                  <app-form-field class="registro-habilitacion__respaldo" label="Respaldo (opcional)">
+                  <!-- No `hint`: the upload zone already says «PDF · Máximo 5 MB». -->
+                  <app-form-field class="registro-habilitacion__respaldo" label="Respaldo"
+                    [errorMessage]="faltaEnHabilitacion(renglon.control, 'licenceFile') ? 'Adjunte el respaldo en PDF.' : ''"
+                  >
                     <app-file-input
                       [files]="attachmentFiles()[renglon.clave] ?? []"
                       [accept]="formatosDeRespaldo"

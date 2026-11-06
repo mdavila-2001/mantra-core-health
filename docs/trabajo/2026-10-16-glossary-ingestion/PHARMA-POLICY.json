@@ -1,0 +1,13 @@
+{
+  "sources": {
+    "aemps-cima": {
+      "license": "AEMPS — reproducción autorizada citando el origen y la fecha de la última actualización del documento (https://www.aemps.gob.es/aviso-legal/)",
+      "hosts": ["cima.aemps.es"],
+      "requireVersionDate": true
+    },
+    "wikidata": {
+      "license": "CC0 1.0 (dominio público)",
+      "hosts": ["www.wikidata.org"]
+    }
+  }
+}

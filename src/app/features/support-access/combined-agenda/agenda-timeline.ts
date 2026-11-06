@@ -29,6 +29,8 @@ interface RowView {
 }
 
 const ALTO_BARRA = 34;
+/** En el celular la barra es un blanco táctil: 44 px, como el resto de los controles. */
+const ALTO_BARRA_TACTIL = 44;
 const SEPARACION = 3;
 const MARGEN = 4;
 
@@ -55,6 +57,8 @@ export class AgendaTimeline {
   readonly multiOrg = input(false);
   readonly selectedId = input<string | null>(null);
   readonly pxPerMinute = input(2.2);
+  /** Pantalla táctil: las barras miden 44 px de alto en vez de 34. */
+  readonly touch = input(false);
   readonly ariaLabel = input.required<string>();
   readonly dragSourceId = input<string | null>(null);
   readonly dragOverId = input<string | null>(null);
@@ -77,19 +81,22 @@ export class AgendaTimeline {
     return this.groups().map((g) => ({ ...g, items: g.items.filter((e) => dias.has(dayKeyOf(e.start))) }));
   });
 
-  protected readonly rows = computed<readonly RowView[]>(() =>
-    this.inRange().map((group) => {
+  protected readonly barHeight = computed(() => (this.touch() ? ALTO_BARRA_TACTIL : ALTO_BARRA));
+
+  protected readonly rows = computed<readonly RowView[]>(() => {
+    const alto = this.barHeight();
+    return this.inRange().map((group) => {
       const { bars, lanes } = layoutRow(group.items, this.days(), this.window(), this.pxPerMinute());
       return {
         key: group.key,
         label: group.label,
         ...(group.sub === undefined ? {} : { sub: group.sub }),
         bars,
-        height: MARGEN * 2 + lanes * ALTO_BARRA + (lanes - 1) * SEPARACION,
+        height: MARGEN * 2 + lanes * alto + (lanes - 1) * SEPARACION,
         occupancy: occupancyOf(group.items),
       };
-    }),
-  );
+    });
+  });
 
   protected readonly heat = computed<readonly HourHeat[]>(() =>
     hourlyHeat(
@@ -145,7 +152,7 @@ export class AgendaTimeline {
   }
 
   protected barTop(bar: TimelineBar): number {
-    return MARGEN + bar.lane * (ALTO_BARRA + SEPARACION);
+    return MARGEN + bar.lane * (this.barHeight() + SEPARACION);
   }
 
   protected heatLeft(celda: HourHeat): number {

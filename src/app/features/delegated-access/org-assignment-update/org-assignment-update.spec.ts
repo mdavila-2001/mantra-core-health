@@ -85,4 +85,15 @@ describe('OrgAssignmentUpdate', () => {
     expect(req.request.body).not.toHaveProperty('accessScope');
     req.flush({ ok: true });
   });
+
+  it('M6: «Espacio» no se ofrece ni viaja en la actualización (el PATCH no lleva destino)', () => {
+    const paginas = interno<readonly { campos: readonly { key: string; options?: readonly { value: string }[] }[] }[]>('paginas');
+    const scope = paginas.flatMap((p) => p.campos).find((c) => c.key === 'accessScope');
+    expect(scope?.options?.map((o) => o.value)).toEqual(['TENANT', 'PRACTICE', 'SITE', 'UNIT']);
+    conAsignacion({ accessScope: 'SPACE' });
+    interno<() => void>('submit')();
+    const req = http.expectOne(`/org/user-assignments/${ASIGNACION}`);
+    expect(req.request.body).not.toHaveProperty('accessScope');
+    req.flush({ ok: true });
+  });
 });

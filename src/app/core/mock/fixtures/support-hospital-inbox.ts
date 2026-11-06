@@ -97,9 +97,17 @@ const DELEGADO_MARIELA: FilaDelegado = {
   replyDisclosure: 'SHOW',
   acceptedAt: iso(-15),
 };
-if (!vinculos.has(VINCULO_MARIELA.id)) vinculos.agregar(VINCULO_MARIELA);
-if (!permisos.has(PERMISO_MARIELA.id)) permisos.agregar(PERMISO_MARIELA);
-if (!delegados.has(DELEGADO_MARIELA.id)) delegados.agregar(DELEGADO_MARIELA);
+/**
+ * Registra a Mariela (vínculo, permiso y delegación) si falta. Corre al cargar el módulo y otra vez desde
+ * `reiniciarElGobiernoDeAccesos`: ese reinicio devuelve `vinculos` y `permisos` a las filas de su constructor, que no la
+ * traen, y sin su vínculo las políticas de sesión del personal dejaban de alcanzarla en el resto del worker.
+ */
+export function registrarLaOtraSecretaria(): void {
+  if (!vinculos.has(VINCULO_MARIELA.id)) vinculos.agregar(VINCULO_MARIELA);
+  if (!permisos.has(PERMISO_MARIELA.id)) permisos.agregar(PERMISO_MARIELA);
+  if (!delegados.has(DELEGADO_MARIELA.id)) delegados.agregar(DELEGADO_MARIELA);
+}
+registrarLaOtraSecretaria();
 
 /* ---- los perfiles de chat de los doctores --------------------------------------- */
 

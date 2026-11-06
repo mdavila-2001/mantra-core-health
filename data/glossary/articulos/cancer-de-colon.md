@@ -1,5 +1,6 @@
 ---
 slug: cancer-de-colon
+image: cancer-de-colon.svg | La mayoría de los cánceres de colon nacen de pólipos que crecen durante años. | A la izquierda, el colon y el recto con sus tramos y dos pólipos marcados. A la derecha, cuatro etapas de la mucosa, de normal a pólipo, adenoma y cáncer invasivo, las pruebas de cribado y los signos que motivan consulta.
 ---
 
 ## [definition] Introducción

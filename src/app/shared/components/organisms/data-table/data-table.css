@@ -314,6 +314,19 @@ thead .data-table__cell {
     }
 }
 
+/* `dense` (opt-in): la mitad del relleno vertical en cada celda. Va después
+   del `@media` de 780 px para ganarle con la misma especificidad. */
+:host(.data-table--dense) .data-table__cell,
+:host(.data-table--dense) .data-table__select-cell {
+    padding-block: var(--sp-1);
+}
+
+@media (min-width: 780px) {
+    :host(.data-table--dense) .data-table__cell {
+        padding: var(--sp-1) var(--sp-2);
+    }
+}
+
 /* `fitContainer` (opt-in): la tabla es su propio *container* y, con menos de
    52rem de caja (≈ 728 px: la raíz es de 14 px, `--fs-body`) pliega las
    secundarias como en el teléfono aunque el viewport sea de escritorio.

@@ -140,7 +140,7 @@ export function horarioDeFarmacias(FARMACIAS: readonly SedeConHorario[]): Horari
   }
 
   /** El horario de una sede como lo sirve la API (`SiteOpeningHoursDto`). */
-  function horarioDeSede(f: FarmaciaSimulada) {
+  function horarioDeSede(f: Pick<FarmaciaSimulada, 'siteId' | 'siteName'>) {
     const ahoraMs = Date.now();
     return {
       siteId: f.siteId,
@@ -167,15 +167,15 @@ export function horarioDeFarmacias(FARMACIAS: readonly SedeConHorario[]): Horari
       // P34 · el horario declarado de las sedes (24 h y turnos), mismo contrato
       // que `GET /pharmacies/:pharmacyId/opening-hours`.
       router.get('/pharmacies/:pharmacyId/opening-hours', ({ params }) => {
-        const f = FARMACIAS.find((farmacia) => farmacia.id === params['pharmacyId']);
-        if (f === undefined) return notFound('Farmacia no disponible');
-        return { pharmacyId: f.id, asOf: ahora(), sites: [horarioDeSede(f)] };
+        const sedes = FARMACIAS.filter((farmacia) => farmacia.id === params['pharmacyId']);
+        if (sedes.length === 0) return notFound('Farmacia no disponible');
+        return { pharmacyId: sedes[0]!.id, asOf: ahora(), sites: sedes.map(horarioDeSede) };
       });
 
       router.put('/pharmacies/:pharmacyId/sites/:siteId/open-24h', (request) => {
-        const f = FARMACIAS.find((farmacia) => farmacia.id === request.params['pharmacyId']);
-        if (f === undefined) return notFound('Farmacia no disponible');
-        if (f.siteId !== request.params['siteId']) return notFound('Referencia no disponible');
+        const { pharmacyId, siteId } = request.params;
+        const f = FARMACIAS.find((x) => x.id === pharmacyId && x.siteId === siteId);
+        if (f === undefined) return notFound('Referencia no disponible');
         const valor = cuerpo<{ open24h?: unknown }>(request).open24h;
         if (valor !== true && valor !== false && valor !== null) {
           return validation('open24h debe ser true, false o null', [
@@ -188,9 +188,9 @@ export function horarioDeFarmacias(FARMACIAS: readonly SedeConHorario[]): Horari
       });
 
       router.post('/pharmacies/:pharmacyId/sites/:siteId/on-call-shifts', (request) => {
-        const f = FARMACIAS.find((farmacia) => farmacia.id === request.params['pharmacyId']);
-        if (f === undefined) return notFound('Farmacia no disponible');
-        if (f.siteId !== request.params['siteId']) return notFound('Referencia no disponible');
+        const { pharmacyId, siteId } = request.params;
+        const f = FARMACIAS.find((x) => x.id === pharmacyId && x.siteId === siteId);
+        if (f === undefined) return notFound('Referencia no disponible');
         const { startsAt, endsAt } = cuerpo<{ startsAt?: unknown; endsAt?: unknown }>(request);
         if (
           typeof startsAt !== 'string' ||

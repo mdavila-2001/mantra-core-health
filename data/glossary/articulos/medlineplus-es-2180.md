@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-2180
+image: medlineplus-es-2180.svg | Toda cirugía tiene una preparación, la operación y una recuperación. | Tres columnas con las etapas antes, durante y después de una cirugía, y debajo las formas de acceso y la clasificación por urgencia y por objetivo.
 ---
 
 ## [definition] Introducción

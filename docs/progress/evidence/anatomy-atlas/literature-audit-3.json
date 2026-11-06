@@ -1,0 +1,819 @@
+{
+  "auditor": "literature-audit-3",
+  "items": [
+    {
+      "id": "FMA:4685",
+      "sentence": 1,
+      "es": "Un caso clínico describe una disección coronaria espontánea del tronco principal izquierdo, con hematoma intramural extenso y oclusión, en una mujer de 30 años al día siguiente del parto, que requirió cirugía cardíaca urgente.",
+      "cites": [
+        "PMID:35891630"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'30-year-old woman... 1 day postpartum... LMS SCAD with extensive IMH and resultant LMS occlusion... emergency cardiac surgery'."
+    },
+    {
+      "id": "FMA:79979",
+      "sentence": 1,
+      "es": "La agenesia de la porción esternocostal del pectoral mayor es la anomalía constante del síndrome de Poland, y la maniobra de aducción forzada la pone en evidencia.",
+      "cites": [
+        "PMID:27567946"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Constant anomaly of Poland syndrome is agenesis of sternocostal part of pectoralis major'; 'forced adduction maneuver highlighting pectoralis major agenesis'. Afirmación general, no específica del lado derecho, pero correcta."
+    },
+    {
+      "id": "UBERON:0001122",
+      "sentence": 1,
+      "es": "En 15 cadáveres frescos, los ramos de C5 y C6 del nervio torácico largo se unían por debajo del escaleno medio para constituir la división superior de ese nervio.",
+      "cites": [
+        "PMID:15866961"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'fifteen fresh cadavera... C5 and C6 branches joined beneath the scalenus medius muscle to form the upper division'."
+    },
+    {
+      "id": "UBERON:0001122",
+      "sentence": 2,
+      "es": "En seis hombros cadavéricos, una banda fascial tensa salía de la parte inferior del plexo braquial y pasaba inmediatamente por encima de la inserción del escaleno medio en la primera costilla.",
+      "cites": [
+        "PMID:10717860"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Six fresh cadaveric shoulders... tight fascial band... arose from the inferior aspect of the brachial plexus, extended just superior to the middle scalene muscle insertion on the first rib'."
+    },
+    {
+      "id": "UBERON:0001122",
+      "sentence": 3,
+      "es": "Un estudio con resonancia magnética observó que el escaleno medio se reclutaba durante la extensión submáxima de la cabeza antes de un entrenamiento de resistencia específico y dejaba de hacerlo después.",
+      "cites": [
+        "PMID:9390988"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'20% or more of their CSA was engaged pretraining' y 'no contrast shift... posttraining' en el grupo ResX (resistencia + extensión cefálica)."
+    },
+    {
+      "id": "UBERON:0001122",
+      "sentence": 4,
+      "es": "Una banda fibrosa del escaleno medio, cuando está presente, une la apófisis transversa de C7 con la primera costilla y en un caso comprimía el tronco inferior del plexo braquial.",
+      "cites": [
+        "PMID:7297393"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'The band, when present, connects the transverse process of the seventh cervical vertebra, to the first rib'; 'A case... compression of the lowest trunk'."
+    },
+    {
+      "id": "UBERON:0001122",
+      "sentence": 5,
+      "es": "En un estudio de 55 pacientes con dolor interescapular unilateral, se propuso que el atrapamiento del nervio escapular dorsal en el escaleno medio, o su estiramiento al elevar los brazos, contribuye a ese dolor.",
+      "cites": [
+        "PMID:23220342"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "n=55 con dolor interescapular unilateral; 'Nerve entrapment at the scalenus medius or its stretch during overhead activities induces nerve trunk pain'."
+    },
+    {
+      "id": "UBERON:0001212",
+      "sentence": 1,
+      "es": "En un estudio histopatológico de 88 estómagos resecados, la zona de glándulas duodenales se prolongaba sobre el antro pilórico en el 90 % de las piezas.",
+      "cites": [
+        "PMID:7409378"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'88 surgically resected stomachs... duodenal gland area extended over the pyloric antrum in 90 per cent of the specimens'."
+    },
+    {
+      "id": "UBERON:0001529",
+      "sentence": 1,
+      "es": "Un tronco braquiocefálico alto, que puede llegar hasta la glándula tiroides, es una anomalía rara que conviene reconocer para evitar hemorragias graves en procedimientos sobre la tráquea y el cuello.",
+      "cites": [
+        "PMID:17527129"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'high brachiocephalic artery extending as far superiorly as the thyroid gland. Recognition of this rare anomaly is necessary to avoid potential catastrophic hemorrhage... trachea and neck'. Parafraseo cercano."
+    },
+    {
+      "id": "UBERON:0001529",
+      "sentence": 2,
+      "es": "En una paciente sometida a traqueostomía percutánea, el tronco, situado anormalmente alto y oblicuo sobre la tráquea, fue lesionado y causó una hemorragia profusa.",
+      "cites": [
+        "PMID:25723674"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "Mujer de 69 años, traqueostomía percutánea, 'profuse bleeding'; 'abnormally high and lying in an oblique fashion over the trachea'; reparación del defecto arterial."
+    },
+    {
+      "id": "UBERON:0001529",
+      "sentence": 3,
+      "es": "En una serie de 104 pacientes con nervio laríngeo inferior no recurrente, todos presentaban ausencia del tronco braquiocefálico y una arteria subclavia aberrante.",
+      "cites": [
+        "PMID:12819946"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'100% of 104 patients with a NRILN were shown to have these abnormalities' (ausencia del tronco y arteria lusoria)."
+    },
+    {
+      "id": "UBERON:0001529",
+      "sentence": 4,
+      "es": "La disección aislada del tronco braquiocefálico es excepcional y puede manifestarse como un ictus agudo.",
+      "cites": [
+        "PMID:26315357"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Isolated brachiocephalic artery dissection is an extremely rare condition... presentation as an acute stroke'."
+    },
+    {
+      "id": "UBERON:0001685",
+      "sentence": 1,
+      "es": "En radiografías de tórax del primer mes de vida de lactantes con cardiopatía congénita, el centro de osificación del cuerpo del hioides fue visible en el 71 % del grupo control.",
+      "cites": [
+        "PMID:2947657"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'HOC in the control group was 71%'. Omite que eran 63 lactantes autopsiados y que el 'grupo control' eran cardiópatas sin TGV/asplenia/Down; tal como está redactado, 'grupo control' puede leerse como lactantes sanos. Aspecto 'parts' aceptable (cuerpo del hioides), aunque es más bien desarrollo."
+    },
+    {
+      "id": "UBERON:0001685",
+      "sentence": 2,
+      "es": "En cefalometrías de 239 personas de 7 a 27 años, la posición vertical del hioides se relacionó con la forma y la posición de la mandíbula, y difirió entre sexos en la etapa de dentición permanente.",
+      "cites": [
+        "PMID:19413400"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "239 taiwaneses de 7-27 años; 'vertical position of the hyoid bone was associated with the mandibular morphology and position'; 'obvious difference in the permanent dentition stages between genders'. Omite que la relación se invierte entre sexos, matiz menor."
+    },
+    {
+      "id": "UBERON:0001685",
+      "sentence": 3,
+      "es": "En un estudio preliminar, la estimulación eléctrica de los puntos motores de los músculos elevadores de la laringe consiguió elevar el hioides junto con la laringe.",
+      "cites": [
+        "PMID:21992253"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'preliminary study'; 'The hyoid bone and larynx were elevated by electrically stimulating the motor points of the laryngeal elevation muscles'."
+    },
+    {
+      "id": "UBERON:0001685",
+      "sentence": 4,
+      "es": "La fractura del hioides es una lesión poco documentada que puede comprometer de forma importante la vía aérea.",
+      "cites": [
+        "PMID:17195888"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'may cause significant airway concerns if fractured'; 'scant literature concerning hyoid fractures'."
+    },
+    {
+      "id": "UBERON:0001685",
+      "sentence": 5,
+      "es": "El tumor de células gigantes rara vez asienta en el hioides; se ha publicado un caso que se presentó como tumefacción submandibular.",
+      "cites": [
+        "PMID:35381802"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'rarely involve hyoid bone... presented with swelling in left submandibular region'."
+    },
+    {
+      "id": "UBERON:0002016",
+      "sentence": 1,
+      "es": "Las venas pulmonares desembocan habitualmente en la aurícula izquierda, y las superiores suelen quedar por delante y por debajo de las arterias pulmonares derechas.",
+      "cites": [
+        "PMID:39220351"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "Traducción literal de la primera oración: 'normally drain into the left atrium, with the superior pulmonary veins typically situated anterior and inferior to the right pulmonary arteries'."
+    },
+    {
+      "id": "UBERON:0002016",
+      "sentence": 2,
+      "es": "En un estudio de resonancia magnética previo a la ablación de la fibrilación auricular, el 38 % de los pacientes mostró una disposición venosa pulmonar variante.",
+      "cites": [
+        "PMID:12681994"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Variant PV anatomy was observed in 38% of patients' en estudio con RM previa a la ablación de FA."
+    },
+    {
+      "id": "UBERON:0002016",
+      "sentence": 3,
+      "es": "En esa misma serie, los orificios venosos tenían forma oblonga, con un diámetro anteroposterior menor que el superoinferior.",
+      "cites": [
+        "PMID:12681994"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "Traducción literal de 'The PV ostia were oblong in shape with an anteroposterior dimension less than the superoinferior dimension'."
+    },
+    {
+      "id": "UBERON:0002016",
+      "sentence": 4,
+      "es": "Las venas pulmonares están envueltas por vainas de miocardio con abundante inervación autonómica, según un análisis inmunohistoquímico de corazones de autopsia.",
+      "cites": [
+        "PMID:36154512"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Myocardial sleeves around PVs are highly innervated structures' es la frase de contexto del resumen, no un resultado del análisis inmunohistoquímico (37 corazones de autopsia); 'autonómica' y 'según un análisis' atribuyen al estudio algo que es premisa. El resultado real es distribución heterogénea, con ostia sin nervios parasimpáticos detectables en algunos sujetos."
+    },
+    {
+      "id": "UBERON:0002016",
+      "sentence": 5,
+      "es": "En 154 donantes vivos estudiados con tomografía tridimensional, el 12,3 % presentó variaciones de las venas pulmonares que podían condicionar la lobectomía inferior derecha; no se hallaron variaciones de ese tipo para el lado izquierdo.",
+      "cites": [
+        "PMID:31605611"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Among 154 donors, 21 PV variations that could influence... right lower lobectomy were found in 19 (12.3%) donors, whereas no such variations for a left lower lobectomy'."
+    },
+    {
+      "id": "UBERON:0002016",
+      "sentence": 6,
+      "es": "El aislamiento eléctrico de las venas pulmonares mediante catéter es una técnica de ablación empleada en la fibrilación auricular paroxística.",
+      "cites": [
+        "PMID:26041872",
+        "PMID:19109353"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "Ambos resúmenes describen aislamiento de venas pulmonares por catéter (RF o crioglobo) en FA paroxística."
+    },
+    {
+      "id": "UBERON:0002437",
+      "sentence": 1,
+      "es": "El centro semioval forma parte de la sustancia blanca de los hemisferios cerebrales.",
+      "cites": [
+        "PMID:24285616"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'cerebral hemisphere white matter (centrum semiovale)'."
+    },
+    {
+      "id": "UBERON:0002437",
+      "sentence": 2,
+      "es": "En la revisión de las TC craneales de 7921 pacientes de 50 a 98 años, se encontró una atenuación periventricular de la sustancia blanca hemisférica en 761.",
+      "cites": [
+        "PMID:3220419"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'7.921 patients aging between 50 and 98 years... WMLA was established in 761 cases'."
+    },
+    {
+      "id": "UBERON:0002437",
+      "sentence": 3,
+      "es": "Los espacios perivasculares graves del centro semioval, más de 20, aparecieron en 12 de 14 pacientes con angiopatía amiloide cerebral confirmada y en ninguno de 10 con hemorragia intracerebral de otro origen.",
+      "cites": [
+        "PMID:24285616"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Severe (>20) centrum semiovale PVS... 12/14... vs 0/10'; controles con HIC sin AAC patológicamente demostrada."
+    },
+    {
+      "id": "UBERON:0002437",
+      "sentence": 4,
+      "es": "En un caso clínico, un infarto isquémico limitado a la sustancia blanca del hemisferio derecho, localizado en el fascículo arqueado, produjo una negligencia visual izquierda grave.",
+      "cites": [
+        "PMID:22551209"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'severe acute left visual neglect due to ischemic infarct limited to the right cerebral hemisphere white matter'; 'right arcuate fasciculus'."
+    },
+    {
+      "id": "UBERON:0002437",
+      "sentence": 5,
+      "es": "En la panencefalitis esclerosante subaguda, el patrón más habitual en resonancia es la afectación de la sustancia blanca hemisférica en secuencias T2.",
+      "cites": [
+        "PMID:11198212"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "Traducción casi literal de 'The most common pattern in subacute sclerosing panencephalitis, is in the cerebral hemisphere white matter on T2-weighted images' (omite 'with or without atrophy')."
+    },
+    {
+      "id": "UBERON:0002807",
+      "sentence": 1,
+      "es": "En 26 hemisferios disecados, 24 (92%) mostraban surcos de trayecto transversal en la cara lateral del lóbulo occipital, y en todos se halló un surco transverso en su tercio inferior.",
+      "cites": [
+        "PMID:12244393"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Twenty-four hemispheres (92%) showed sulci with evident transverse trajectories in the lateral surface'; 'All of the specimen presented a transverse sulcus in the inferior third'. Datos de 26 hemisferios sin distinción de lado: válido para el lóbulo derecho pero no específico."
+    },
+    {
+      "id": "UBERON:0002807",
+      "sentence": 2,
+      "es": "En esa serie, un surco transverso en el tercio superior apareció en el 69% de los casos y surcos longitudinales marcados en 16 hemisferios (61%).",
+      "cites": [
+        "PMID:12244393"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'69% of the cases showed a transverse sulcus in the superior third'; 'marked longitudinal sulci in 16 (61%)'."
+    },
+    {
+      "id": "UBERON:0002807",
+      "sentence": 3,
+      "es": "El asta occipital del ventrículo lateral, presente a la altura del límite anterior del lóbulo en el 53% de los especímenes, tenía forma de media luna, con el calcar avis en su pared medial y fibras del tapetum en el resto de sus paredes.",
+      "cites": [
+        "PMID:12244393"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'occipital horn was present in 53%... at level of the anterior boundary... half moon shaped... medial wall formed by the calcar avis and the lateral wall, roof and floor formed by fibers of the tapetum'."
+    },
+    {
+      "id": "UBERON:0002807",
+      "sentence": 4,
+      "es": "La resonancia funcional describe en el lóbulo occipital una secuencia de etapas del procesamiento de objetos, desde las áreas retinotópicas V1 a V3 hasta el complejo occipital lateral, en gran medida no retinotópico.",
+      "cites": [
+        "PMID:9704268"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'stagewise decrease in retinotopy'; 'Retinotopic primary areas V1-3'; 'essentially nonretinotopic lateral occipital complex'."
+    },
+    {
+      "id": "UBERON:0002807",
+      "sentence": 5,
+      "es": "Los límites anatómicos entre los lóbulos occipital y parietal son arbitrarios, y las crisis de origen occipital suelen dar síntomas visuales como amaurosis, alucinaciones o ilusiones.",
+      "cites": [
+        "PMID:8504783"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'arbitrary anatomical borders' está. Pero el resumen enumera la sintomatología de las epilepsias parietales y occipitales en conjunto; no dice que las crisis occipitales 'suelen' dar síntomas visuales, y además advierte que los síntomas pueden reflejar propagación y no el foco."
+    },
+    {
+      "id": "UBERON:0002807",
+      "sentence": 6,
+      "es": "En 42 pacientes operados de epilepsia parietal u occipital, la resonancia coincidió con el diagnóstico histopatológico en 36 lesiones (86%).",
+      "cites": [
+        "PMID:17560810"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'MRI was concordant with histopathology in 36 of 42 (86%) lesions'."
+    },
+    {
+      "id": "UBERON:0004720",
+      "sentence": 1,
+      "es": "El vermis cerebeloso forma, junto con el núcleo fastigio, la zona corticonuclear medial del cerebelo.",
+      "cites": [
+        "PMID:21911381"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'medial, cortico-nuclear zone consisting of the cerebellar vermis and the fastigial nucleus'. Término 'núcleo fastigio' correcto (también 'del techo')."
+    },
+    {
+      "id": "UBERON:0004720",
+      "sentence": 2,
+      "es": "Esa zona medial se ocupa clásicamente de la postura de todo el cuerpo y de la locomoción.",
+      "cites": [
+        "PMID:21911381"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Functionally, this zone is concerned with whole-body posture and locomotion' (frase de contexto, no hallazgo del estudio con virus de la rabia, que no es en humanos; la frase no lo atribuye a humanos)."
+    },
+    {
+      "id": "UBERON:0004720",
+      "sentence": 3,
+      "es": "En el feto, la fisura primaria y el punto fastigial sirven como marcadores del desarrollo normal del vermis, cuyo crecimiento se valora con biometría y con la relación entre sus lóbulos superior e inferior.",
+      "cites": [
+        "PMID:17805192"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'2 markers of normal vermian development: the primary fissure and fastigial point'; 'vermian biometry and the relationship between the superior and inferior lobes'."
+    },
+    {
+      "id": "UBERON:0004720",
+      "sentence": 4,
+      "es": "En 43 fetos con defectos del vermis, el microarray cromosómico halló alteraciones relevantes en el 23.3%, y su combinación con la secuenciación del exoma permitió un diagnóstico genético en el 42%.",
+      "cites": [
+        "PMID:32386258"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'23.3% (10/43)'; 'genetic diagnoses in 42% (18/43)'. Castellano: decimal con punto ('23.3%'); debería ser '23,3 %' como en el resto del atlas."
+    },
+    {
+      "id": "UBERON:0004720",
+      "sentence": 5,
+      "es": "En 18 pacientes coreanos con síndrome CHARGE, 5 de 17 (29.4%) tenían hipoplasia del vermis sin signos de disfunción cerebelosa.",
+      "cites": [
+        "PMID:26538304"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Five patients had cerebellar vermis hypoplasia (5/17, 29.4%) with no clinical symptoms or signs of cerebellar dysfunction'. Mismo problema de separador decimal ('29.4%')."
+    },
+    {
+      "id": "UBERON:0004720",
+      "sentence": 6,
+      "es": "En un estudio de resonancia con 8 niños autistas de alto funcionamiento y 21 controles, el área de los lobulillos VIII a X del vermis fue menor en el grupo con autismo, aunque el cociente intelectual actuó como factor de confusión.",
+      "cites": [
+        "PMID:10390721"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "8 autistas de alto funcionamiento, 21 controles; 'lobules VIII-X was significantly smaller'; 'confounding effect of IQ'."
+    },
+    {
+      "id": "UBERON:0006682",
+      "sentence": 1,
+      "es": "Por él pasa el nervio hipogloso, que inerva los músculos de la lengua.",
+      "cites": [
+        "PMID:9560291"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "Traducción casi literal de 'transmits the nerve that supplies the muscles of the tongue'."
+    },
+    {
+      "id": "UBERON:0006682",
+      "sentence": 2,
+      "es": "Es absoluta y relativamente mayor en el ser humano actual que en los grandes simios africanos.",
+      "cites": [
+        "PMID:9560291"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": false,
+      "note": "Traducción literal de 'absolutely and relatively larger in modern humans than it is in the African apes'. Aspecto 'parts' inadecuado: es un dato de tamaño comparado/evolución, no de partes."
+    },
+    {
+      "id": "UBERON:0006682",
+      "sentence": 3,
+      "es": "El nervio entra por la parte superomedial del conducto en dos haces, que se reúnen en un solo tronco antes de salir por su parte inferolateral.",
+      "cites": [
+        "PMID:10853319"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'enters the superomedial part... as two bundles... unite as one trunk before exiting'; 'exits through the inferolateral part'."
+    },
+    {
+      "id": "UBERON:0006682",
+      "sentence": 4,
+      "es": "Un plexo venoso rodea los haces del nervio en toda la longitud del conducto.",
+      "cites": [
+        "PMID:10853319"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "Traducción literal de 'A venous plexus surrounds the entire length of the nerve bundles in the canal'. Aspecto 'irrigation' aceptable (drenaje venoso)."
+    },
+    {
+      "id": "UBERON:0006682",
+      "sentence": 5,
+      "es": "En 492 cráneos secos se observó un conducto hipogloso doble en 97, sin diferencias significativas por sexo ni por grupo étnico.",
+      "cites": [
+        "PMID:2135329"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'492 human dried skulls... double hypoglossal canal was observed in 97'; 'no significative difference... race... sex'. 'Grupo étnico' por 'race (White/no White)' aceptable."
+    },
+    {
+      "id": "UBERON:0006682",
+      "sentence": 6,
+      "es": "En 31 pacientes con tumores del glomus yugular, la imagen mostró invasión del conducto en 22 (71,0 %).",
+      "cites": [
+        "PMID:25043533"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Imaging studies identified involvement in 22 tumors (22/31, 71.0%)'."
+    },
+    {
+      "id": "UBERON:0008529",
+      "sentence": 1,
+      "es": "En 294 miembros de 147 cadáveres, la relación entre el nervio ciático y el piriforme siguió el patrón típico en el 93,6 % de los casos.",
+      "cites": [
+        "PMID:23900507"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'147 Caucasian cadavers (294 limbs)... typical anatomical pattern in 275 limbs (93.6 %)'."
+    },
+    {
+      "id": "UBERON:0008529",
+      "sentence": 2,
+      "es": "En 91 cadáveres, el nervio ciático salía por debajo del piriforme en el 79,1 %, y en el 14,3 % se dividía por encima, con una rama que lo atravesaba y otra que pasaba por debajo.",
+      "cites": [
+        "PMID:16311716"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "91 cadáveres; 'exits below the piriformis muscle in 79.1%'; 'separates into two divisions above the piriformis, one branch passing through the muscle, the other below it (14.3%)'."
+    },
+    {
+      "id": "UBERON:0008529",
+      "sentence": 3,
+      "es": "En 20 miembros de 10 cadáveres adultos, el borde inferior del piriforme medía 95,49 ± 6,21 mm.",
+      "cites": [
+        "PMID:18458807"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'20 right and left lower limbs of ten adult cadavers'; 'length of the lower edge of the PM was 95.49 +/- 6.21 mm'."
+    },
+    {
+      "id": "UBERON:0008529",
+      "sentence": 4,
+      "es": "En esa misma serie, el nervio ciático cruzaba el músculo con más frecuencia en su segundo cuarto medial.",
+      "cites": [
+        "PMID:18458807"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'The SN intersected the PM most commonly in its medial second quarter'."
+    },
+    {
+      "id": "UBERON:0008529",
+      "sentence": 5,
+      "es": "El síndrome del piriforme es una causa no discógena de ciática atribuida a la compresión del nervio ciático por este músculo.",
+      "cites": [
+        "PMID:18458807"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'The piriformis syndrome is one of the non-discogenics causes of sciatica. It results from the compression of the sciatic nerve (SN) by the piriformis muscle'."
+    },
+    {
+      "id": "UBERON:0008529",
+      "sentence": 6,
+      "es": "Cuando el piriforme es doble puede existir un segundo tendón, inferior o profundo al primero, que debe buscarse al descomprimir el nervio.",
+      "cites": [
+        "PMID:23900507"
+      ],
+      "verdict": "infiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "El resumen dice: 'When dissection of the entire piriformis is necessary for adequate sciatic nerve decompression, the surgeon should explore for the possible existence of a second tendon, which may be found either inferior or deep'. No liga el segundo tendón al piriforme doble (eso es otra oración, sobre la disposición de dos cabezas) y la frase sustituye la condición real (disección completa del músculo) por otra no dicha, restringiendo la recomendación."
+    },
+    {
+      "id": "UBERON:0013767",
+      "sentence": 1,
+      "es": "La sutura premaxilar o incisiva separa en ella una parte premaxilar y otra maxilar.",
+      "cites": [
+        "PMID:32239084"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'the premaxillary (incisive) suture... separates the premaxillary and maxillary parts of the frontal process of maxilla'."
+    },
+    {
+      "id": "UBERON:0013767",
+      "sentence": 2,
+      "es": "Delante de la cresta lagrimal anterior presenta de manera constante un surco poco profundo, la sutura notha, perforado por una hilera de orificios descritos por Macalister.",
+      "cites": [
+        "PMID:32239084"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "Traducción prácticamente literal: 'constantly present, shallow groove in front of the anterior lacrimal crest, being perforated by a row of holes first described... by Macalister'."
+    },
+    {
+      "id": "UBERON:0013767",
+      "sentence": 3,
+      "es": "En tomografía de haz cónico, los conductos que parten de esos orificios se comunican, en general mediante una delicada red intraósea, con el conducto sinuoso de Wood Jones.",
+      "cites": [
+        "PMID:32239084"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "Traducción literal: 'these canals... are connected, usually through a delicate intraosseous network, with Wood Jones canalis sinuosus' (en CBCT)."
+    },
+    {
+      "id": "UBERON:0013767",
+      "sentence": 4,
+      "es": "En 24 dacriocistorrinostomías fallidas, el hueso lagrimal seguía cubriendo la parte posterior del saco en 9 lados (37,5 %) pese a la resección de la apófisis ascendente del maxilar.",
+      "cites": [
+        "PMID:30482034"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'The lacrimal bone was detected covering the posterior sac despite removal of the anterior ascending process of maxilla in 9 sides (37.5%)' de 24 DCR fallidas. 'Apófisis ascendente' es sinónimo correcto de apófisis frontal."
+    },
+    {
+      "id": "UBERON:0036216",
+      "sentence": 1,
+      "es": "En 10 cadáveres adultos, el nervio se encontraba a 1,60 ± 0,86 mm del nicho de la ventana redonda y a 1,55 ± 0,38 mm de la ventana oval.",
+      "cites": [
+        "PMID:36718036"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'10 adult cadavers... 1.60 ± 0.86 mm... and 1.55 ± 0.38 mm away from round window niche and oval window'."
+    },
+    {
+      "id": "UBERON:0036216",
+      "sentence": 2,
+      "es": "En esa serie se identificó en todos los huesos temporales, con variaciones muy marcadas de forma y de ramificación.",
+      "cites": [
+        "PMID:36718036"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Tympanic nerve was observed in all temporal bones... extreme variations' en forma y ramas. Aspecto 'parts' aceptable (ramificación)."
+    },
+    {
+      "id": "UBERON:0036216",
+      "sentence": 3,
+      "es": "En 30 huesos temporales de fetos, distaba 1,21 ± 0,60 mm de la ventana redonda y 1,18 ± 0,54 mm de la ventana oval.",
+      "cites": [
+        "PMID:33438111"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "30 huesos temporales de 15 fetos humanos; 'JN was found 1.21 ± 0.60 and 1.18 ± 0.54 mm away from the RW and OW'."
+    },
+    {
+      "id": "UBERON:0036216",
+      "sentence": 4,
+      "es": "Su lesión puede acompañarse de un síndrome de desnervación de la glándula parótida.",
+      "cites": [
+        "PMID:3725336",
+        "PMID:6824439"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "3725336 habla de la diplejía (parálisis bilateral, 6 de 110) que 'may be accompanied by a variety of the features of the postdenervational syndrome'; 6824439 es un caso único postraumático. 'Su lesión' generaliza un poco desde parálisis bilateral/caso aislado a cualquier lesión; el 'puede' lo atenúa."
+    },
+    {
+      "id": "UBERON:0036216",
+      "sentence": 5,
+      "es": "Se ha comunicado un caso de neuralgia posherpética refractaria tras un síndrome de Ramsay Hunt que mejoró con la neurectomía de este nervio.",
+      "cites": [
+        "PMID:37522354"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "Caso de 45 años, neuralgia posherpética refractaria tras Ramsay Hunt, 'significant pain reduction after the right tympanic neurectomy'."
+    },
+    {
+      "id": "UBERON:8600066",
+      "sentence": 1,
+      "es": "En cortes por criomicrotomía de 26 adultos, una vena basivertebral voluminosa originada en el espacio epidural anterior fue característica de los niveles torácicos inferiores y lumbares superiores.",
+      "cites": [
+        "PMID:8895998"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'26 adults... A large basivertebral vein with its origin in the anterior epidural space is typical of the lower thoracic and upper lumbar levels'."
+    },
+    {
+      "id": "UBERON:8600066",
+      "sentence": 2,
+      "es": "Un modelo de elementos finitos de L4 calculó que la compresión reduce hasta un 1,54 % el área de sección de la vena basivertebral, cambio que podría iniciar un reflujo de sangre desde el sistema venoso epidural.",
+      "cites": [
+        "PMID:17192194"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "Modelo FE de L4; 'maximum cross-sectional area reductions of the basivertebral vein... 1.54%... for uniform compression'; 'could initiate the reverse flow of blood from the epidural venous system'. El 1,54 % es el máximo con compresión uniforme; matiz aceptable con 'hasta'."
+    },
+    {
+      "id": "UBERON:8600066",
+      "sentence": 3,
+      "es": "La lesión de las venas basivertebrales sacras durante la proctectomía puede provocar una hemorragia presacra grave, en ocasiones mortal.",
+      "cites": [
+        "PMID:3896196"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'injury of the sacral basivertebral vein also caused this serious complication... more dangerous... sometimes it is fatal'."
+    },
+    {
+      "id": "UBERON:8600066",
+      "sentence": 4,
+      "es": "En las fístulas entre el líquido cefalorraquídeo y las venas que drenan hacia el plexo venoso vertebral interno, una vena basivertebral hiperdensa se ha propuesto como signo de imagen.",
+      "cites": [
+        "PMID:35106631"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'In case of a central drainage toward the internal vertebral venous plexus, it is the hyperdense basivertebral vein which should be searched for'. Redacción algo forzada ('fístulas entre el LCR y las venas que drenan...') pero fiel."
+    },
+    {
+      "id": "UBERON:8600066",
+      "sentence": 5,
+      "es": "En 111 vértebras tratadas con vertebroplastia por fractura osteoporótica, la fuga de cemento hacia la vena basivertebral fue del 6,6 % con control de la viscosidad y del 11,1 % sin él.",
+      "cites": [
+        "PMID:22143046"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "111 vértebras, fracturas osteoporóticas; 'basivertebral vein (type B), was detected in 6.6% with and in 11.1% without viscosimetry'."
+    },
+    {
+      "id": "UBERON:8600066",
+      "sentence": 6,
+      "es": "En una serie pediátrica de 12 pacientes, la obliteración de la vena basivertebral se observó en las 9 metástasis vertebrales y en ninguna de las 3 lesiones indolentes que las simulaban.",
+      "cites": [
+        "PMID:35110660"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "12 pacientes pediátricos/jóvenes; 'obliteration of the basivertebral vein... (0/3, 0%) vs. (9/9, 100%)'."
+    }
+  ],
+  "summary": {
+    "sentences": 67,
+    "fiel": 62,
+    "parcial": 4,
+    "infiel": 1,
+    "copied": 8,
+    "aspectWrong": 1
+  }
+}

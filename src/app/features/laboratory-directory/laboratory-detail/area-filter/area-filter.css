@@ -1,0 +1,22 @@
+/* Chips wrap instead of scrolling sideways: a carousel hides options behind
+   a gesture nobody sees. */
+.area-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* A plain text button: it reveals options, it does not filter. */
+.area-filter__more {
+  min-block-size: 44px; /* WCAG target size, independent of the 14 px root */
+  padding: 0 var(--sp-2);
+  border: 0;
+  border-radius: var(--r-full);
+  background: none;
+  color: var(--text-link);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}

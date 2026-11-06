@@ -1,0 +1,128 @@
+/* Centrado y a lo ancho del área de contenido (regla 6 de CLAUDE.md): sin tope propio de ancho. */
+:host {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.invitar {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.invitar__cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.invitar__texto {
+  flex: 1 1 24rem;
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.invitar__titulo,
+.enviadas__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.invitar__nota,
+.invitar__codigo {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.invitar__form {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* Móvil: una columna. Los campos se reparten en dos desde 780 px, como pide la regla 6. */
+.invitar__campos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+}
+
+.invitar__acciones,
+.invitar__acciones-alerta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* Objetivos táctiles de 44 px como mínimo, en cualquier ancho. En px y no en rem: con 1 rem = 14 px, 2.75rem da 38,5. */
+.invitar__abrir,
+.invitar__acciones button,
+.invitar__acciones-alerta button {
+  min-block-size: 44px;
+}
+
+.invitar__abrir {
+  inline-size: 100%;
+}
+
+.enviadas {
+  display: grid;
+  gap: var(--sp-2);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.enviadas__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.enviadas__fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding-block-end: var(--sp-2);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.enviadas__quien {
+  display: grid;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.enviadas__nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 780px) {
+  .invitar__campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .invitar__abrir {
+    inline-size: auto;
+  }
+
+  .invitar__acciones,
+  .invitar__acciones-alerta {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .invitar__acciones-alerta {
+    justify-content: flex-start;
+  }
+}

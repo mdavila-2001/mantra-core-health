@@ -1,5 +1,6 @@
 ---
 slug: fibrilacion-auricular
+image: fibrilacion-auricular.svg | Actividad caótica de las aurículas y latido irregular en el ECG. | Corazón con impulsos eléctricos desordenados en las aurículas y la orejuela, junto a un electrocardiograma normal y otro irregular, con riesgos y tratamiento.
 ---
 
 ## [definition] Introducción

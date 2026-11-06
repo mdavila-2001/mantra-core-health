@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q932510
+image: wikidata-especialidad-q932510.svg | La cirugía general opera sobre todo el abdomen, por vía abierta o laparoscópica. | Abdomen esquemático con hígado, vesícula, estómago, colon, apéndice y una hernia señalados, y dos dibujos que comparan la cirugía abierta con una incisión y la laparoscopia con tres pequeñas incisiones.
 ---
 
 ## [definition] Introducción

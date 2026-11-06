@@ -35,6 +35,7 @@ import type {
   VerifiedEmail,
 } from './iam.types';
 import { cuerpoDeCentroDiagnostico } from './diagnostic-center.body';
+import { laboratoryBody } from './laboratory.body';
 
 /** Respuestas de la API tal como viajan: las fechas son texto. */
 interface TokenResponseBody {
@@ -125,12 +126,8 @@ export class IamClient {
         : { motherLastName: registration.motherLastName }),
       ...(registration.email === undefined ? {} : { email: registration.email }),
       ...(registration.birthDate === undefined ? {} : { birthDate: registration.birthDate }),
-      // El cuerpo se re-proyecta campo por campo y no con un `...registration`
-      // a propósito: `forbidNonWhitelisted` del backend rechaza toda propiedad
-      // que el DTO no declare, así que lo que viaja es exactamente lo acordado
-      // y no lo que alguien haya dejado colgando del objeto de dominio. El
-      // precio es éste: un campo nuevo en `PatientRegistration` no llega solo,
-      // hay que listarlo acá.
+      // Field by field on purpose: the backend's `forbidNonWhitelisted` rejects
+      // undeclared keys, so a new `PatientRegistration` field must be listed here.
       ...(registration.issuerAdministrativeAreaConceptId === undefined
         ? {}
         : {
@@ -436,6 +433,9 @@ export class IamClient {
           ? {}
           : { legalRepresentative: registration.legalRepresentative }),
         ...(registration.executives === undefined ? {} : { executives: registration.executives }),
+        ...(registration.openingHours === undefined
+          ? {}
+          : { openingHours: registration.openingHours }),
       },
       owner: {
         email: registration.owner.email,
@@ -475,6 +475,7 @@ export class IamClient {
       organization: {
         code: registration.code,
         legalName: registration.legalName,
+        ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
         taxIdentifier: registration.taxIdentifier,
         legalEntityType: registration.legalEntityType,
         tenantType: 'PHARMACY',
@@ -492,6 +493,9 @@ export class IamClient {
           ? {}
           : { legalDocuments: registration.legalDocuments }),
         ...(registration.executives === undefined ? {} : { executives: registration.executives }),
+        ...(registration.openingHours === undefined
+          ? {}
+          : { openingHours: registration.openingHours }),
         // `pharmacy`: el bloque `RegisterPharmacyBlockDto` del DTO real (P50).
         // Viaja siempre: la dirección legal es la de la casa central, que la
         // API crea en toda alta de farmacia; el punto y las sucursales, si los
@@ -534,68 +538,10 @@ export class IamClient {
   registerLaboratoryOrganization(
     registration: LaboratoryOrganizationRegistration,
   ): Observable<RegisteredOrganization> {
-    const { diagnosticUnit } = registration;
-    const { address } = diagnosticUnit.primarySite;
-    return this.http.post<RegisteredOrganization>(this.url('/iam/auth/register-organization'), {
-      organization: {
-        code: registration.code,
-        legalName: registration.legalName,
-        legalEntityType: registration.legalEntityType,
-        tenantType: 'DIAGNOSTIC_CENTER',
-        countryConceptId: registration.countryConceptId,
-        jurisdictionConceptId: registration.jurisdictionConceptId,
-        diagnosticUnit: {
-          name: diagnosticUnit.name,
-          diagnosticUnitTypeConceptId: diagnosticUnit.diagnosticUnitTypeConceptId,
-          modalityConceptIds: [...diagnosticUnit.modalityConceptIds],
-          primarySite: {
-            name: diagnosticUnit.primarySite.name,
-            address: {
-              lines: [...address.lines],
-              ...(address.latitude === undefined || address.longitude === undefined
-                ? {}
-                : { latitude: address.latitude, longitude: address.longitude }),
-            },
-          },
-          ...(diagnosticUnit.branches === undefined || diagnosticUnit.branches.length === 0
-            ? {}
-            : {
-                branches: diagnosticUnit.branches.map((branch) => ({
-                  name: branch.name,
-                  address: {
-                    lines: [...branch.addressLines],
-                    ...(branch.location === undefined
-                      ? {}
-                      : { latitude: branch.location.latitude, longitude: branch.location.longitude }),
-                  },
-                  ...(branch.description === undefined
-                    ? {}
-                    : { description: branch.description }),
-                  ...(branch.locationUrl === undefined
-                    ? {}
-                    : { locationUrl: branch.locationUrl }),
-                })),
-              }),
-        },
-        legalRepresentative: {
-          fullName: registration.legalRepresentative.fullName,
-          idNumber: registration.legalRepresentative.idNumber,
-          email: registration.legalRepresentative.email,
-          ...(registration.legalRepresentative.powerOfAttorneyFileId === undefined
-            ? {}
-            : { powerOfAttorneyFileId: registration.legalRepresentative.powerOfAttorneyFileId }),
-        },
-        ...(registration.legalDocuments === undefined
-          ? {}
-          : { legalDocuments: registration.legalDocuments }),
-        ...(registration.executives === undefined ? {} : { executives: registration.executives }),
-      },
-      owner: {
-        email: registration.owner.email,
-        password: registration.owner.password,
-        displayName: registration.owner.displayName,
-      },
-    });
+    return this.http.post<RegisteredOrganization>(
+      this.url('/iam/auth/register-organization'),
+      laboratoryBody(registration),
+    );
   }
 
   /**
@@ -715,13 +661,12 @@ export class IamClient {
    * orquestación ni reanudación que hacer.
    */
   assistedRegistration(
-    registration: AssistedPatientRegistration,
+    registration: AssistedPatientRegistration & { readonly allowHomonym?: boolean },
   ): Observable<AssistedRegistrationResult> {
     return this.http
       .post<AssistedRegistrationBody>(this.url('/iam/users/assisted-registration'), {
-        // El nombre viaja en partes y el backend compone el que se muestra: si
-        // el front lo compusiera, la cuenta guardaría una versión y el contrato
-        // otra.
+        // The name travels in parts and the backend composes the visible one:
+        // composing it here would leave the account and the contract disagreeing.
         name: registration.name,
         lastName: registration.lastName,
         ...(registration.middleName === undefined ? {} : { middleName: registration.middleName }),
@@ -737,6 +682,7 @@ export class IamClient {
         ...(registration.legalRepresentativeUserId === undefined
           ? {}
           : { legalRepresentativeUserId: registration.legalRepresentativeUserId }),
+        ...(registration.allowHomonym ? { allowHomonym: true } : {}),
       })
       .pipe(map(toAssistedResult));
   }
@@ -777,6 +723,20 @@ export class IamClient {
    * quien no lo tiene recibe `403`, y la pantalla tiene que degradar a «nombre
    * no disponible», nunca al uuid.
    */
+  /**
+   * `GET /iam/auth/identifier-exists?kind=…&value=…`. Pregunta, **antes** de
+   * enviar el alta, si ese documento, correo o nombre de institución ya tiene
+   * cuenta. Es público (se usa sin sesión) y sólo responde `{ exists }`: no
+   * devuelve de quién es, para no filtrar datos de terceros.
+   */
+  identifierExists(kind: IdentifierKind, value: string): Observable<boolean> {
+    return this.http
+      .get<{ exists: boolean }>(this.url('/iam/auth/identifier-exists'), {
+        params: { kind, value },
+      })
+      .pipe(map((respuesta) => respuesta.exists === true));
+  }
+
   getUser(userId: string): Observable<UserListItem> {
     return this.http
       .get<ConNulos<WireUserListItem>>(this.url(`/iam/users/${encodeURIComponent(userId)}`))
@@ -787,6 +747,9 @@ export class IamClient {
     return apiUrl(this.baseUrl, path);
   }
 }
+
+/** Qué se pregunta en {@link IamClient.identifierExists}. */
+export type IdentifierKind = 'NATIONAL_ID' | 'EMAIL' | 'ORG_NAME';
 
 /* ---- transporte del listado de usuarios ---------------------------------- */
 
@@ -824,7 +787,9 @@ function toSession(body: TokenResponseBody): Session {
     expiresAt: new Date(body.expiresAt),
     ...newDeviceOf(body.newDevice),
     ...(body.mfaEnrollmentRequired === true ? { mfaEnrollmentRequired: true } : {}),
-    ...(deniedTenantsOfBody(body.deniedTenants).length === 0 ? {} : { deniedTenants: deniedTenantsOfBody(body.deniedTenants) }),
+    ...(deniedTenantsOfBody(body.deniedTenants).length === 0
+      ? {}
+      : { deniedTenants: deniedTenantsOfBody(body.deniedTenants) }),
   };
 }
 

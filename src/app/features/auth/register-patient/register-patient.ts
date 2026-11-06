@@ -8,7 +8,6 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
-import { soloLetrasDeNombre } from '../../../shared/forms/input-filters';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Subject, catchError, map, of, switchMap, timeout } from 'rxjs';
 import {
@@ -23,7 +22,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import { CORREO_CON_DOMINIO } from '../../../core/data-access/iam/strict-email';
+import { CORREO_ESTRICTO } from '../../../core/data-access/iam/strict-email';
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import {
   BoEmployersCatalog,
@@ -78,10 +77,7 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import {
-  MESSAGE_SHORT_PASSWORD,
-  passwordValidators,
-} from '../shared-registration/password-policy';
+import { accessPasswordFields, passwordWithConfirmation } from '../shared-registration/password-confirmation';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
@@ -105,6 +101,8 @@ import { OnboardingDraftBanner } from '../../../shared/components/molecules/onbo
 import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
 import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
+import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
 
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
 function fechaIso(fecha: Date): string {
@@ -576,7 +574,7 @@ interface BorradorLocal {
 
 @Component({
   selector: 'app-register-patient',
-  imports: [RegistrationBadge, 
+  imports: [RegistrationBadge, AccountExistsDialog, 
     RouterLink,
     AppButton,
     NavIcon,
@@ -605,12 +603,11 @@ interface BorradorLocal {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPatient {
-  /** Nombres y apellidos no admiten dígitos. Ver `Input.inputFilter`. */
-  protected readonly soloLetras = soloLetrasDeNombre;
 
   private readonly platformId = inject(PLATFORM_ID);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly cuentaExistente = inject(AccountExistsCheck);
   private readonly ambulanciaDeConfianza = inject(TrustedAmbulanceStore);
   private readonly draftService = inject(OnboardingDraftService);
   private readonly dialogs = inject(DialogService);
@@ -747,10 +744,7 @@ export class RegisterPatient {
       // arriba.
       lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
       motherLastName: new FormControl('', { nonNullable: true }),
-      password: new FormControl('', {
-        nonNullable: true,
-        validators: [...passwordValidators],
-      }),
+      ...passwordWithConfirmation(),
       // **Obligatorio desde la TAREA 03 (AC-03-3).** Invierte una decisión
       // escrita: el correo era opcional a propósito —«podés entrar sin él, con
       // tu documento»— y el documento sigue siendo el identificador de acceso.
@@ -763,7 +757,7 @@ export class RegisterPatient {
         validators: [
           Validators.required,
           Validators.email,
-          Validators.pattern(CORREO_CON_DOMINIO),
+          Validators.pattern(CORREO_ESTRICTO),
         ],
       }),
       // El control guarda lo que `app-phone-input` compone —el prefijo del país
@@ -1436,8 +1430,7 @@ export class RegisterPatient {
           key: 'lastName',
           label: 'Apellido paterno',
           description: 'El apellido de su papá, como figura en su documento.',
-          control: 'text',
-          soloLetras: true,
+          control: 'text', fieldKind: 'personName',
           required: true,
           autocomplete: 'family-name',
           placeholder: 'Mamani',
@@ -1451,8 +1444,7 @@ export class RegisterPatient {
           label: 'Apellido materno',
           hint: 'Si no lleva, déjelo vacío.',
           description: 'El apellido de su mamá, tal como aparece en su documento.',
-          control: 'text',
-          soloLetras: true,
+          control: 'text', fieldKind: 'personName',
           autocomplete: 'family-name',
           placeholder: 'Quispe',
           testId: 'registro-apellido-materno',
@@ -1461,6 +1453,7 @@ export class RegisterPatient {
         },
         {
           key: 'nationalId',
+          alSalir: (valor: string) => this.cuentaExistente.verificar('NATIONAL_ID', valor),
           label: 'Documento de identidad',
           hint: 'Con este número va a iniciar sesión.',
           description:
@@ -1470,10 +1463,10 @@ export class RegisterPatient {
           autocomplete: 'username',
           placeholder: '1234567',
           testId: 'registro-documento',
-          soloAlfanumerico: true,
+          fieldKind: 'identityDocument',
           icono: 'patients',
           ancho: 'mitad',
-          mensajeDeError: 'Ingrese su documento: solo letras y números, sin espacios.',
+          mensajeDeError: 'Ingrese su documento: letras, números, punto y guion, sin espacios.',
         },
         this.campoDepartamentoEmisor('registro-departamento-ci'),
         {
@@ -1568,8 +1561,7 @@ export class RegisterPatient {
           label: 'Contacto de emergencia (opcional)',
           hint: 'A quién llamamos si pasa algo, o quién le acompaña si es menor.',
           description: 'A quién llamamos si le pasa algo y no puede responder usted.',
-          control: 'text',
-          soloLetras: true,
+          control: 'text', fieldKind: 'personName',
           placeholder: 'Rosa Quispe',
           testId: 'registro-tutor-nombre',
           icono: 'people',
@@ -1667,23 +1659,13 @@ export class RegisterPatient {
           testId: 'registro-correo',
           icono: 'mail',
           mensajeDeError: 'Ingrese un correo válido.',
-          ancho: 'mitad',
         },
-        {
-          key: 'password',
-          label: 'Contraseña',
-          hint: 'Al menos 8 caracteres.',
+        ...accessPasswordFields('registro-password', {
           description:
             'Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca se la vamos a pedir por teléfono ni por correo.',
-          control: 'password',
-          required: true,
-          autocomplete: 'new-password',
           placeholder: 'Su contraseña',
-          testId: 'registro-password',
-          icono: 'lock',
-          mensajeDeError: MESSAGE_SHORT_PASSWORD,
           ancho: 'mitad',
-        },
+        }),
         this.campoSeguro('privado'),
         this.campoSeguro('publico'),
         {
@@ -1692,7 +1674,7 @@ export class RegisterPatient {
           hint: 'Sólo el número.',
           description:
             'Lo usamos cuando hay que emitir una factura. Si no lo tiene a mano, déjelo vacío.',
-          control: 'text',
+          control: 'text', fieldKind: 'digits',
           placeholder: '1023456789',
           testId: 'registro-nit',
           icono: 'billing',
@@ -2837,7 +2819,7 @@ export class RegisterPatient {
       return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     }
     return null;
   });

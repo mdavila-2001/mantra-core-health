@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q2522100
+image: wikidata-especialidad-q2522100.svg | Este especialista atiende la salud de las personas con discapacidad intelectual durante toda la vida. | Línea de vida con figuras en la infancia, la adolescencia, la adultez y el envejecimiento, y dos paneles con los problemas de salud que vigila y su forma de trabajar.
 ---
 
 ## [definition] Introducción

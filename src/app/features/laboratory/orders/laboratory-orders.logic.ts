@@ -1,7 +1,11 @@
+import { HttpErrorResponse } from '@angular/common/http';
+
+import { readApiError } from '../../../core/http/api-error';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import type {
   LabOrder,
+  LabOrderAction,
   LabOrderStatus,
 } from '../../../core/data-access/lab-portal/lab-portal.types';
 
@@ -55,13 +59,17 @@ export const ORDER_STATUS_BADGE: Readonly<
   REJECTED: { label: 'Rechazada', variant: 'error' },
 };
 
-/** Los códigos estables de las cuatro acciones de la fila. */
-export type OrderActionCode = 'receive' | 'process' | 'upload' | 'download';
+/** Los códigos estables de las acciones de la fila. */
+export type OrderActionCode = 'receive' | 'process' | 'upload' | 'download' | 'reject';
 
 /**
- * Las cuatro acciones, y nada más: recibir, marcar como procesada, subir
- * resultados y descargar. Cada una sólo está habilitada en el paso del camino
- * que le toca; una orden cancelada o rechazada no tiene ninguna.
+ * Recibir, marcar como procesada, subir resultados, descargar y rechazar (con
+ * motivo; sólo si la API dice `canReject`: lo registra contra la muestra, así
+ * que una orden de imagenología nunca lo trae). Cada una sólo está habilitada
+ * en el paso del camino que le toca; una orden cancelada o rechazada no tiene
+ * ninguna. Cancelar no se ofrece: la orden es de quien la pidió y la API
+ * responde 422 (`DIAGNOSTICS_LAB_ORDER_ACTION_UNSUPPORTED`) si el laboratorio
+ * intenta anularla.
  *
  * Es presentación: la API revalida cada paso y responde 409 si no corresponde.
  */
@@ -87,10 +95,59 @@ export function actionsOf(order: LabOrder): readonly RowAction[] {
       icon: 'download',
       disabled: order.status !== 'UPLOADED' || order.files.length === 0,
     },
+    // Only when the API says so: rejecting is recorded against the specimen, which imaging orders lack.
+    ...(order.canReject === true
+      ? [{ code: 'reject', label: 'Rechazar', icon: 'remove', destructive: true } satisfies RowAction]
+      : []),
   ];
 }
+
+/** The reason box of the reject dialog: three characters at least. */
+export const REASON_FIELD = {
+  label: 'Motivo del rechazo',
+  placeholder: 'Por ejemplo: muestra hemolizada o insuficiente',
+  minLength: 3,
+  maxLength: 300,
+} as const;
+
+/** What the reject step asks, and what it says when it is done. */
+export const REASON_STEPS: Readonly<
+  Record<
+    'reject',
+    {
+      readonly action: LabOrderAction;
+      readonly done: string;
+      readonly dialog: (order: LabOrder) => {
+        title: string;
+        message: string;
+        confirmLabel: string;
+        destructive: true;
+      };
+    }
+  >
+> = {
+  reject: {
+    action: 'REJECT',
+    done: 'Orden rechazada.',
+    dialog: (order) => ({
+      title: 'Rechazar la orden',
+      message: `Rechaza «${order.studyName}» de ${order.patientName}. La orden queda rechazada con el motivo que escriba y ya no admite más pasos.`,
+      confirmLabel: 'Rechazar la orden',
+      destructive: true,
+    }),
+  },
+};
 
 /** Las mismas acciones sin poder usarse: mientras una está en vuelo no se manda otra. */
 export function disabledAll(actions: readonly RowAction[]): readonly RowAction[] {
   return actions.map((action) => ({ ...action, disabled: true }));
+}
+
+/** The API's own readable message of a failed request (409, 422…), or the fallback. */
+export function apiMessageOf(error: unknown, fallback: string): string {
+  if (error instanceof HttpErrorResponse) {
+    const message = readApiError(error)?.message;
+    if (message !== undefined && message !== '') return message;
+  }
+  return fallback;
 }

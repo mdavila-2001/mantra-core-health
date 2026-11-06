@@ -1,0 +1,31 @@
+<app-radio-group
+  [attr.aria-label]="'Decisión para ' + line().medicamento"
+  [attr.data-testid]="'mostrador-decision-' + index()"
+  [value]="adjustment().decision"
+  (valueChange)="decisionChange.emit($event)"
+>
+  @if (line().porConfirmar) {
+    <app-radio value="CONFIRMAR_STOCK" label="Confirmar disponibilidad de la sucursal" />
+  } @else {
+    <app-radio value="TAL_CUAL" label="Tal cual" />
+  }
+  <app-radio value="PROPONER_GENERICO" label="Proponer sustituto" />
+  <app-radio value="NO_DISPONIBLE" label="No disponible" />
+</app-radio-group>
+@if (adjustment().decision === 'CONFIRMAR_STOCK') {
+  <app-form-field
+    label="Unidades disponibles en la sucursal"
+    [required]="true"
+    [errorMessage]="quantityError()"
+    hint="Indique un entero entre 1 y 1.000.000. Son unidades disponibles para vender; confirmar no sustituye un recuento en Inventario."
+  >
+    <app-input
+      type="number"
+      inputMode="numeric"
+      [step]="1"
+      [testId]="'mostrador-cantidad-confirmada-' + index()"
+      [value]="adjustment().quantity ?? ''"
+      (valueChange)="quantityChange.emit($event)"
+    />
+  </app-form-field>
+}

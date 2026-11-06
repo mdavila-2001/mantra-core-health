@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-2063
+image: medlineplus-es-2063.svg | Una sola persona donante puede ceder varios órganos y tejidos. | Silueta humana con los órganos y tejidos que pueden donarse señalados con líneas, y una secuencia de cuatro pasos desde el donante hasta el trasplante.
 ---
 
 ## [definition] Introducción

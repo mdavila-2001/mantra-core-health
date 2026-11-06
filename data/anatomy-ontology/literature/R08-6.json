@@ -1,0 +1,2110 @@
+{
+  "UBERON:0002016": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Respecto de las arterias pulmonares derechas, las venas pulmonares superiores suelen situarse en un plano anterior e inferior, y el conjunto drena normalmente en la aurícula izquierda.",
+        "cites": [
+          "PMID:39220351"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En una serie con resonancia magnética de 28 pacientes sometidos a ablación de la fibrilación auricular y 27 controles, el 38 % de los pacientes tenía una anatomía venosa pulmonar variante.",
+        "cites": [
+          "PMID:12681994"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa serie, el orificio de cada vena era oblongo, más extenso en sentido superoinferior que en el anteroposterior.",
+        "cites": [
+          "PMID:12681994"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En corazones de autopsia (37 con venas pulmonares y 17 con orificios venoatriales), la inmunohistoquímica mostró una distribución heterogénea de los nervios autonómicos en las vainas miocárdicas; en el grupo de orificios, los sujetos fallecidos por causa no cardiovascular no tenían nervios parasimpáticos detectables.",
+        "cites": [
+          "PMID:36154512"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Ningún donante vivo presentó variaciones venosas relevantes para la lobectomía inferior izquierda, mientras que 19 de 154 (12,3 %), evaluados con tomografía tridimensional, tenían alguna que podía influir en la derecha.",
+        "cites": [
+          "PMID:31605611"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El aislamiento eléctrico de las venas pulmonares mediante catéter es una técnica de ablación empleada en la fibrilación auricular paroxística.",
+        "cites": [
+          "PMID:26041872",
+          "PMID:19109353"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002022": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Oculta en lo profundo del surco lateral se encuentra la corteza insular, también llamada ínsula de Reil.",
+        "cites": [
+          "PMID:28644199"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "El número de subdivisiones descritas oscila entre 2 y 13, según se parcele por citoarquitectura, por referencias de los surcos o por conectividad.",
+        "cites": [
+          "PMID:28644199"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Al agrupar 1768 experimentos de neuroimagen, un metaanálisis separó cuatro regiones: la anterodorsal respondía a tareas cognitivas, la anteroventral a socioemocionales, la central a estímulos olfativos y gustativos y la mediposterior a tareas sensitivomotoras.",
+        "cites": [
+          "PMID:20512376"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Un modelo de redes propone que la ínsula anterior, junto con la corteza cingulada anterior, constituye una red de saliencia encargada de seleccionar, entre los estímulos internos y los del entorno, los que deben guiar la conducta.",
+        "cites": [
+          "PMID:20512370"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Se ha propuesto que la corteza insular anterior, donde se encuentran las neuronas de von Economo, sustente los sentimientos subjetivos mediante la re-representación de la interocepción y que podría ser un correlato neural de la conciencia.",
+        "cites": [
+          "PMID:19096369"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 138 pacientes con fibromialgia, el volumen de la ínsula anterior derecha disminuía a medida que aumentaba el número de regiones dolorosas.",
+        "cites": [
+          "PMID:34433774"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002023": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "Es un núcleo subcortical rico en receptores serotoninérgicos 5-HT2A.",
+        "cites": [
+          "PMID:32454209"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Sus proyecciones glutamatérgicas llegarían, posiblemente, a casi toda la corteza cerebral.",
+        "cites": [
+          "PMID:32454209"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Queda flanqueado por la ínsula y el putamen.",
+        "cites": [
+          "PMID:32454209"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 15 voluntarios sanos, la psilocibina redujo la conectividad funcional del claustro derecho con las redes auditiva y neuronal por defecto.",
+        "cites": [
+          "PMID:32454209"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002032": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "La relación pezón-areola fue de 1:3 y la areola-mama de 1:3,4 en las mediciones de 37 mujeres de 20 a 64 años.",
+        "cites": [
+          "PMID:12792541"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "El cuarto nervio intercostal, por sus ramos cutáneos anterior y lateral, fue la inervación constante del complejo areola-pezón en 12 mamas de 7 cadáveres, completada por ramos del tercero y del quinto.",
+        "cites": [
+          "PMID:9215081"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Bajo la areola se forma un plexo al que llegan los nervios del pezón tras discurrir por la fascia superficial y atravesar el tejido subdérmico areolar, según la disección de 15 mamas de cadáver (12 femeninas y 3 masculinas).",
+        "cites": [
+          "PMID:8785595"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "De las seis fuentes arteriales de la mama, cuatro dominaban el aporte al complejo areola-pezón en la microdisección de 14 mamas de 7 cadáveres: por orden de constancia, la torácica lateral, la mamaria interna, los ramos anteriores de las intercostales y la torácica suprema.",
+        "cites": [
+          "PMID:17496587"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Entre las complicaciones más temidas de la mamoplastia de reducción está la necrosis del complejo areola-pezón.",
+        "cites": [
+          "PMID:31586218"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Cuando un cáncer de mama intraductal queda a 2 cm o menos del complejo areola-pezón, puede recurrirse a una mastectomía que conserva la areola y vacía el pezón.",
+        "cites": [
+          "PMID:34732445"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002037": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Situado detrás del tronco del encéfalo, el cerebelo ocupa la fosa craneal posterior.",
+        "cites": [
+          "PMID:25439284"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Su organización es muy regular: unidades neuronales que comparten un mismo microcircuito básico se repiten en conjuntos ordenados.",
+        "cites": [
+          "PMID:25439284"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Por vías diversas se comunica con la médula espinal, el tronco del encéfalo y el cerebro.",
+        "cites": [
+          "PMID:25439284"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Además de las áreas motoras, la eferencia cerebelosa alcanza varias regiones no motoras de las cortezas prefrontal y parietal posterior, a través de canales distintos de los núcleos cerebelosos.",
+        "cites": [
+          "PMID:19555291"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Aunque es clave para controlar y aprender movimientos, cada vez se le reconoce más un papel en procesos cognitivos y afectivos.",
+        "cites": [
+          "PMID:25439284"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un estudio de conectividad funcional en reposo con 1000 sujetos, la mayor parte del cerebelo se vinculaba con áreas corticales de asociación y la corteza visual primaria carecía de representación.",
+        "cites": [
+          "PMID:21795627"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002040": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En el estudio angiográfico de 75 pacientes con hemoptisis se identificaron diez disposiciones diferentes de las arterias bronquiales.",
+        "cites": [
+          "PMID:4059552"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Tratamiento hoy aceptado de la hemoptisis masiva, la embolización de las arterias bronquiales se describió por primera vez en 1973.",
+        "cites": [
+          "PMID:2258991"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una revisión sistemática de 22 estudios situó el éxito clínico inmediato de esta embolización entre el 70 % y el 99 %, con recidivas de entre el 10 % y el 57 %.",
+        "cites": [
+          "PMID:28703105"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 101 pacientes con hemoptisis secundaria a enfermedades benignas, la hemorragia se detuvo en 94 tras embolizar las arterias bronquiales.",
+        "cites": [
+          "PMID:11060364"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 187 pacientes con cáncer de pulmón avanzado y hemoptisis, la quimioembolización por vía arterial bronquial logró un éxito clínico del 86,6 %.",
+        "cites": [
+          "PMID:34824012"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002060": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Medido con ecografía Doppler, su diámetro rondaba los 10,8 ± 0,2 mm y no variaba entre el reposo y un ejercicio dinámico de extensión de rodilla.",
+        "cites": [
+          "PMID:9338449"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una placa con repercusión hemodinámica en el origen de la femoral profunda puede aparecer en la isquemia avanzada del miembro inferior, en la que esa arteria rara vez llega a ocluirse por completo.",
+        "cites": [
+          "PMID:707705"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 322 participantes aparentemente sanos, las placas ateroscleróticas fueron más prevalentes en la femoral común que en la carótida común (40,7 % frente a 30,4 %).",
+        "cites": [
+          "PMID:27235457"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un ensayo con 104 pacientes con estenosis u oclusión de la femoral superficial, la reestenosis a 12 meses fue del 37 % con stent de nitinol primario y del 63 % con angioplastia con stent secundario opcional.",
+        "cites": [
+          "PMID:16672699"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La compresión guiada por ecografía eliminó 27 de 29 lesiones femorales secundarias a cateterismo, en su mayoría seudoaneurismas.",
+        "cites": [
+          "PMID:1994400"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un ensayo aleatorizado de 116 abordajes inguinales a los vasos femorales, las complicaciones de la herida afectaron al 47,5 % de las incisiones verticales y al 12,7 % de las transversales.",
+        "cites": [
+          "PMID:19962270"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002114": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "La región ampular es un punto de encuentro de epitelios: allí confluyen el duodenal, el biliar y el pancreático, y de cualquiera de ellos puede nacer un carcinoma.",
+        "cites": [
+          "PMID:33797636"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Poco frecuentes, los carcinomas ampulares son difíciles de estadificar, sobre todo en la categoría T, por la complejidad anatómica de la zona y la variedad de subtipos histológicos.",
+        "cites": [
+          "PMID:33797636"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "De 167 tumores duodenales de músculo liso o estromales, 156 eran tumores del estroma gastrointestinal, frente a solo 6 leiomiomas y 5 leiomiosarcomas.",
+        "cites": [
+          "PMID:12717247"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Aunque el duodeno se explora sobre todo por endoscopia, la tomografía computarizada es la técnica de imagen de primera línea para detectar y caracterizar sus lesiones con efecto de masa.",
+        "cites": [
+          "PMID:28185840"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El dolor abdominal crónico, de causa no aclarada, es la forma de presentación habitual del duodeno invertido, anomalía que puede coincidir con una rotación intestinal incompleta.",
+        "cites": [
+          "PMID:448763"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En biopsias duodenales de 13 pacientes con giardiasis crónica, la superficie mucosa por unidad de serosa se redujo al 75 % de la de los controles.",
+        "cites": [
+          "PMID:16935925"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002115": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El intervalo normal de linfocitos intraepiteliales yeyunales, fijado con 160 biopsias de pacientes no celíacos, va de 6 a 40 por cada 100 células epiteliales de las vellosidades.",
+        "cites": [
+          "PMID:5157137"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En esa misma serie, los recuentos de linfocitos intraepiteliales yeyunales eran altos en la enfermedad celíaca no tratada.",
+        "cites": [
+          "PMID:5157137"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "De 1091 tumores del intestino delgado, yeyuno o íleon, catalogados inicialmente como de músculo liso, 906 (83 %) resultaron ser tumores del estroma gastrointestinal.",
+        "cites": [
+          "PMID:16625094"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie pediátrica de 55 pacientes en los que se interpuso yeyuno para sustituir el esófago, el 78 % se alimentaba sobre todo por boca tras una mediana de seguimiento de 1,9 años.",
+        "cites": [
+          "PMID:33812755"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En biopsias yeyunales de 20 pacientes con síndrome del intestino irritable con predominio de diarrea se contaron más mastocitos en la lámina propia que en 14 voluntarios sanos.",
+        "cites": [
+          "PMID:17005763"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002116": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En las criptas intestinales del íleon se encuentran las células de Paneth.",
+        "cites": [
+          "PMID:37377591"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Divertículo de Meckel, duplicación, atresia o malposición ileal: la mayoría de las anomalías congénitas del tubo digestivo asientan en las asas del íleon.",
+        "cites": [
+          "PMID:36401130"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Aproximadamente uno de cada tres pacientes con enfermedad de Crohn tiene una forma limitada al íleon, segmento que esta enfermedad afecta con frecuencia.",
+        "cites": [
+          "PMID:37377591"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En muestras quirúrgicas de íleon distal de 12 pacientes con enfermedad de Crohn, las uniones estrechas de la mucosa no inflamada reaccionaron con más intensidad a un estímulo luminal que en los controles.",
+        "cites": [
+          "PMID:11839706"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El adenocarcinoma del íleon, poco frecuente, se ha estudiado en relación con la metaplasia de glándulas pilóricas, reconocida como posible lesión precursora de varios tumores digestivos.",
+        "cites": [
+          "PMID:39957020"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 906 tumores del estroma gastrointestinal de yeyuno e íleon, la mortalidad relacionada con el tumor fue del 39 %, el doble que la de los gástricos.",
+        "cites": [
+          "PMID:16625094"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002131": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "Según un estudio con tomografía por emisión de positrones, el lóbulo anterior derecho del cerebelo fue la única región que respondió más al reconocer formas palpándolas de forma activa que al recibirlas pasivamente.",
+        "cites": [
+          "PMID:11502261"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un estudio de resonancia funcional, los sujetos sanos de edad avanzada mostraron, al ejecutar de forma automática secuencias de movimientos de los dedos, más actividad en ambos lóbulos anteriores del cerebelo que los jóvenes.",
+        "cites": [
+          "PMID:15513939"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una comparación de 20 pacientes con blefaroespasmo y 11 controles mediante tensor de difusión halló una anisotropía fraccional reducida en el lóbulo anterior izquierdo del cerebelo.",
+        "cites": [
+          "PMID:24792726"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002132": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "En lo profundo del cerebelo se sitúan los núcleos dentados.",
+        "cites": [
+          "PMID:20107778"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Es un núcleo cerebeloso profundo rico en hierro.",
+        "cites": [
+          "PMID:27192177"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Se le atribuye un papel destacado en las vías de la coordinación y del control motor fino.",
+        "cites": [
+          "PMID:20107778"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La conectividad funcional en reposo separa dos redes: una motora, que une el dentado dorsal con el cerebelo anterior y el giro precentral, y otra cognitiva, que enlaza el dentado ventral con el Crus I y la corteza prefrontal.",
+        "cites": [
+          "PMID:23513045"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 13 participantes jóvenes estudiados con resonancia funcional, las tareas motoras activaron la región dorsorrostral del núcleo y las cognitivas, sobre todo su región caudal.",
+        "cites": [
+          "PMID:21081171"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio de 43 pacientes con enfermedad de Parkinson, el subgrupo con predominio de temblor presentó mayor susceptibilidad magnética en ambos núcleos dentados que los controles sanos, lo que sugiere más carga de hierro.",
+        "cites": [
+          "PMID:27192177"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002148": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Se trata de un núcleo pigmentado del tronco del encéfalo, rico en neuronas noradrenérgicas.",
+        "cites": [
+          "PMID:3044009"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En una serie morfométrica de 39 encéfalos de 11 a 94 años, que incluía pacientes con esquizofrenia y leucotomizados, el núcleo perdía con la edad neuronas, volumen y tamaño celular, mientras la neuromelanina ocupaba una fracción mayor del área neuronal.",
+        "cites": [
+          "PMID:3044009"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En encéfalos post mortem con enfermedad de Alzheimer o demencia con cuerpos de Lewy se observó una pérdida neuronal intensa en el locus cerúleo.",
+        "cites": [
+          "PMID:16407544"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En esos mismos casos, las neuronas noradrenérgicas remanentes mostraban signos compatibles con compensación, como un aumento del ARNm de la tirosina hidroxilasa.",
+        "cites": [
+          "PMID:16407544"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 13 pacientes con enfermedad de Parkinson sin Alzheimer asociado, la presencia de demencia se relacionó con recuentos neuronales más bajos en el locus cerúleo.",
+        "cites": [
+          "PMID:8492957"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 154 encéfalos de autopsias rutinarias, la patología por tau fosforilada del locus cerúleo se asoció estrechamente con la del hipocampo, y no pudo confirmarse que se iniciara en el locus cerúleo.",
+        "cites": [
+          "PMID:28168741"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002152": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Los pedúnculos cerebelosos superior, medio e inferior son los principales haces de sustancia blanca del cerebelo.",
+        "cites": [
+          "PMID:20191336"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "El pedúnculo cerebeloso medio forma parte de los sistemas de fibras aferentes que llegan al cerebelo.",
+        "cites": [
+          "PMID:16219826"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Al quedar entre los territorios de la cerebelosa anteroinferior y la cerebelosa superior, es una zona limítrofe, y su infarto sugiere hipoperfusión.",
+        "cites": [
+          "PMID:23635919"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Solo alrededor del 0,12 % de los ictus agudos corresponde a un infarto limitado a este pedúnculo.",
+        "cites": [
+          "PMID:23635919"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de resonancia, el ancho medio del pedúnculo fue de 6,10 ± 1,18 mm en 16 pacientes con atrofia multisistémica y de 9,32 ± 0,77 mm en 26 con enfermedad de Parkinson.",
+        "cites": [
+          "PMID:16714464"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Entre 26 pacientes con lesiones bilaterales del pedúnculo medio en resonancia, los diagnósticos más frecuentes fueron el infarto cerebral agudo, la degeneración walleriana y la atrofia multisistémica.",
+        "cites": [
+          "PMID:32755074"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002185": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El pulmón adulto sano carece de tejido linfoide asociado a los bronquios, que en personas sin enfermedad solo aparece durante la infancia y la adolescencia.",
+        "cites": [
+          "PMID:10859525"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un tejido linfoide inducible bien desarrollado en torno a los bronquios puede hallarse en varias neumopatías intersticiales, pero predomina en las complicaciones pulmonares de la artritis reumatoide y del síndrome de Sjögren.",
+        "cites": [
+          "PMID:17143328"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Poco reconocido y casi siempre sin síntomas, el bronquio cardíaco accesorio es una anomalía congénita del árbol bronquial.",
+        "cites": [
+          "PMID:25001980"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Reconocer las anomalías bronquiales importa porque se asocian con infecciones recurrentes, hemoptisis y, a veces, malignidad.",
+        "cites": [
+          "PMID:25001980"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Infrecuente, el bronquio traqueal congénito puede coexistir con otras anomalías traqueobronquiales, a veces de relevancia clínica.",
+        "cites": [
+          "PMID:760149"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se considera que el carcinoma epidermoide bronquial surge a partir de lesiones preinvasoras.",
+        "cites": [
+          "PMID:19279508"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002196": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "La prolactina, ligada a la lactancia, se produce y secreta sobre todo en los lactotropos de la adenohipófisis.",
+        "cites": [
+          "PMID:35085394"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En un estudio de 140 hipófisis fetales humanas, la corticotropina, la betaendorfina y la hormona del crecimiento fueron las primeras hormonas identificadas, hacia la octava semana de gestación.",
+        "cites": [
+          "PMID:3016583"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Casi desde que surgen, los tipos celulares de la pars distalis se ordenan por zonas, según el estudio de 21 fetos de 6 a 23 semanas.",
+        "cites": [
+          "PMID:167574"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esos fetos, los somatotropos se concentraban en las zonas laterales y justo delante de la hendidura residual.",
+        "cites": [
+          "PMID:167574"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "De conducta benigna (grado I de la OMS), el oncocitoma de células fusiformes es un tumor raro de la adenohipófisis que, a diferencia de los adenomas, no expresa marcadores neuroendocrinos ni hormonas hipofisarias.",
+        "cites": [
+          "PMID:21833579"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En autopsias de 5 pacientes con síndrome respiratorio agudo grave, las células adenohipofisarias inmunorreactivas para hormona del crecimiento, tirotropina y corticotropina disminuyeron, y aumentaron las de prolactina, FSH y LH.",
+        "cites": [
+          "PMID:20651845"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002198": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Formada por fibras nerviosas, la neurohipófisis corresponde al lóbulo posterior de la hipófisis.",
+        "cites": [
+          "PMID:3070505"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Su vínculo con el hipotálamo es estrecho tanto en lo morfológico como en lo funcional.",
+        "cites": [
+          "PMID:3070505"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Es una de las principales interfaces neuroendocrinas del sistema nervioso central y participa en la regulación del equilibrio hídrico y de la reproducción.",
+        "cites": [
+          "PMID:41466085"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Entre las manifestaciones de su patología figura la diabetes insípida, que pueden provocar infecciones, accidentes vasculares, complicaciones quirúrgicas, tumores benignos o malignos y metástasis.",
+        "cites": [
+          "PMID:3070505"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Sus tumores primarios son raros; en una serie de 8 casos, con predominio de pituicitomas, se comportaron como tumores de grado I de la OMS.",
+        "cites": [
+          "PMID:31734425"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 20 pacientes con neurohipófisis ectópica no sindrómica, 3 (15 %) presentaban anomalías renales.",
+        "cites": [
+          "PMID:21750632"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002206": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Dentro del circuito límbico medial, el cuerpo mamilar actúa como un nodo subcortical.",
+        "cites": [
+          "PMID:37075128"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El diagnóstico anatomopatológico de enfermedad de Alzheimer guarda correlación con el depósito de amiloide en el cuerpo mamilar, según tejido cerebral humano post mortem.",
+        "cites": [
+          "PMID:37075128"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La atrofia de los cuerpos mamilares obedece con más frecuencia a la falta de tiamina que a cualquier otra causa.",
+        "cites": [
+          "PMID:19308712"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio de resonancia, el volumen de los cuerpos mamilares estaba reducido en la insuficiencia hepática aguda y aguda sobre crónica de origen no alcohólico, pero no en la crónica.",
+        "cites": [
+          "PMID:19308712"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 12 pacientes con anorexia nerviosa y bajo peso, los cuerpos mamilares tenían un volumen significativamente menor que en controles sanos.",
+        "cites": [
+          "PMID:27414055"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002251": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "En la disección de 8 cadáveres, cuando el ramo posterior de un nervio espinal toracolumbar se dividía en tres ramas, la rama lateral se distribuía por el compartimento del músculo iliocostal.",
+        "cites": [
+          "PMID:31119410"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 12 lados de 6 cadáveres, los nervios clúneos superiores perforaban el iliocostal en el 58,3 % de los lados en L1 y en L2, y en el 83,3 % en L3.",
+        "cites": [
+          "PMID:29787877"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio en cadáveres del bloqueo ecoguiado del plano del erector de la columna a nivel torácico, el colorante llegó lateralmente al iliocostal en 5 de 7 inyecciones sobre la parte medial de la apófisis transversa y en todas las aplicadas entre apófisis transversas.",
+        "cites": [
+          "PMID:36797037"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002260": {
+    "sentences": []
+  },
+  "UBERON:0002261": {
+    "sentences": []
+  },
+  "UBERON:0002262": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 46 disecciones post mortem del ganglio celíaco humano, la forma triangular fue la observada con más frecuencia.",
+        "cites": [
+          "PMID:2816261"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esa serie, al envolver juntas las arterias celíaca y mesentérica superior, los ganglios formaban con ellas un complejo celiacomesentérico parecido al del cerdo.",
+        "cites": [
+          "PMID:2816261"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Para atravesar el diafragma, los nervios esplácnicos usaban en el 70-91 % de los casos un orificio triangular propio, lateral al pilar.",
+        "cites": [
+          "PMID:2816261"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un ensayo aleatorizado con 26 pacientes con cáncer de páncreas, la ablación por radiofrecuencia guiada por ecoendoscopia dirigida al plexo o a los ganglios celíacos redujo más el dolor que la neurólisis del plexo celíaco.",
+        "cites": [
+          "PMID:30120957"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En casos de autopsia de amiloidosis sistémica, el depósito de amiloide dentro del ganglio celíaco fue intenso en la polineuropatía amiloidótica familiar de tipo 1 y escaso en la amiloidosis AL.",
+        "cites": [
+          "PMID:3039063"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002283": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "Como la uña se genera en la matriz, cualquier daño de este epitelio germinativo deja huella en la lámina que crece después.",
+        "cites": [
+          "PMID:11982563"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Al contrario que la piel, donde los gránulos de queratohialina son normales, la matriz ungueal sana carece de capa granulosa.",
+        "cites": [
+          "PMID:7532379"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 16 dedos de cadáver, el borde proximal de la matriz germinal distaba en promedio 1,2 mm de la inserción ósea del tendón extensor terminal.",
+        "cites": [
+          "PMID:11119671"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una revisión de 150 biopsias ungueales longitudinales, aparecieron gránulos de queratohialina en la matriz en casos de liquen plano, traquioniquia espongiótica, psoriasis y acrodermatitis de Hallopeau.",
+        "cites": [
+          "PMID:7532379"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "De 100 pacientes de piel blanca biopsiados por una banda única de melanoniquia longitudinal, 22 tenían un nevo de la matriz ungueal.",
+        "cites": [
+          "PMID:8632071"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Entre los tumores raros que nacen en la matriz ungueal está el onicomatricoma.",
+        "cites": [
+          "PMID:27081273"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002285": {
+    "sentences": []
+  },
+  "UBERON:0002286": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "La región infundibulotuberal forma parte del suelo del tercer ventrículo.",
+        "cites": [
+          "PMID:35472085"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Benignos y a menudo hallados por casualidad en una TC o resonancia craneal, los quistes coloides del tercer ventrículo pueden, sin embargo, causar hidrocefalia obstructiva con cefalea y pérdida de conciencia.",
+        "cites": [
+          "PMID:39932086"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 11 pacientes con lesiones del tercer ventrículo, el abordaje transcalloso interfornicial permitió ver todo el ventrículo sin necesidad de hidrocefalia que ampliara la exposición.",
+        "cites": [
+          "PMID:7099406"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Que el tercer ventrículo quede aislado es excepcional y se ha descrito casi siempre en hidrocefalias muy complejas.",
+        "cites": [
+          "PMID:11731869"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una revisión de craneofaringiomas con un receso en su base, el 82 % se situaba estrictamente dentro del tercer ventrículo y el 18 % en la región infundibulotuberal de su suelo.",
+        "cites": [
+          "PMID:35472085"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 40 pacientes con esclerosis múltiple remitente-recurrente, el ancho del tercer ventrículo medido por resonancia, usado como indicador de atrofia central, se relacionó con la capacidad de identificar olores.",
+        "cites": [
+          "PMID:31766000"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002288": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "El papiloma del plexo coroideo del tercer ventrículo es infrecuente: un informe de caso lo sumaba a otros 27 recogidos en la literatura médica.",
+        "cites": [
+          "PMID:6463833"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En ese caso, un lactante de 4 meses, el tumor se manifestó con hidrocefalia supratentorial y su volumen se multiplicó por cuatro o cinco en menos de 4 meses tras una derivación.",
+        "cites": [
+          "PMID:6463833"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002290": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En la ecografía del primer trimestre, la estructura ecogénica interpuesta entre el cuarto ventrículo y la cisterna magna corresponde a este plexo coroideo.",
+        "cites": [
+          "PMID:28236314"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio de 92 volúmenes ecográficos fetales, 12 de los 28 fetos (43 %) en los que no se visualizaba este plexo presentaron después una malformación del sistema nervioso central.",
+        "cites": [
+          "PMID:28236314"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En ese mismo grupo de 28 fetos, 20 (71 %) tenían una aneuploidía, sobre todo trisomía 18.",
+        "cites": [
+          "PMID:28236314"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002292": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "Desde el punto de vista mecánico, este complejo articular sirve a la vez a la respiración y a la estabilidad de la columna torácica.",
+        "cites": [
+          "PMID:24529962"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un análisis cinemático por TC de 12 sujetos asintomáticos en decúbito supino, la amplitud de movimiento de las diez primeras articulaciones costovertebrales disminuía progresivamente al descender de nivel.",
+        "cites": [
+          "PMID:27421681"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "La cápsula anterior y los tejidos sinoviales estaban inervados en todos los complejos costovertebrales humanos de autopsia examinados.",
+        "cites": [
+          "PMID:10951309"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Cuatro de esas piezas tenían además meniscoides, grandes inclusiones sinoviales intraarticulares que alojaban pequeños haces axónicos inmunorreactivos a la sustancia P.",
+        "cites": [
+          "PMID:10951309"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la TC de 17 pacientes con espondilitis anquilosante y dolor torácico bajo, 14 (82 %) presentaban alteraciones costovertebrales como erosiones, esclerosis o ensanchamiento articular.",
+        "cites": [
+          "PMID:1596705"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie anatomopatológica de 114 pacientes con artritis reumatoide, 8 tenían una discitis torácica originada en la afectación reumatoide de las articulaciones costovertebrales.",
+        "cites": [
+          "PMID:7346966"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002293": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Poco común y de causa desconocida, el síndrome de Tietze produce dolor y sensibilidad en las articulaciones paraesternales; en un caso publicado, la ecografía mostró además tumefacción de la tercera articulación costocondral izquierda.",
+        "cites": [
+          "PMID:30362978"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 9 pacientes con síndrome de Tietze, la ecografía mostró un aumento heterogéneo de la ecogenicidad del cartílago costal con sombra acústica posterior, que desapareció tras la infiltración local de corticoides.",
+        "cites": [
+          "PMID:9189056"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 514 pacientes hospitalizados, el osteofito de la primera articulación costocondral resultó muy común en adultos, con una prevalencia del 73,16 % en presencia de enfermedad coronaria frente al 60,33 % sin ella.",
+        "cites": [
+          "PMID:39991316"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Por su relación anatómica relativamente fija con la arteria mamaria interna izquierda, ese osteofito se ha propuesto como referencia para la extracción robótica de dicha arteria.",
+        "cites": [
+          "PMID:39991316"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002307": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En un estudio morfométrico de personas de 22 a 89 años, las células epiteliales de las vellosidades coroideas alcanzaban su mayor altura y área citoplasmática en el plexo del ventrículo lateral, en comparación con los del tercero y el cuarto.",
+        "cites": [
+          "PMID:17201317"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En ese mismo estudio, el tamaño de esas células epiteliales y de sus núcleos disminuía con la edad.",
+        "cites": [
+          "PMID:17201317"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Lo habitual es que un xantogranuloma del plexo coroideo no dé síntomas.",
+        "cites": [
+          "PMID:3267294"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un caso de metástasis de carcinoma renal en el plexo coroideo del ventrículo lateral, la angiografía mostró que el tumor recibía sangre de la arteria coroidea posterior izquierda.",
+        "cites": [
+          "PMID:1570073"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El teratoma neonatal del ventrículo lateral es una entidad muy rara; en un caso publicado, un teratoma de gran tamaño surgido del plexo coroideo se manifestó al nacer con una hidrocefalia congénita voluminosa.",
+        "cites": [
+          "PMID:20422330"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 142 embarazos evaluados con ecografía tridimensional entre las semanas 11 y 13, el cociente entre el volumen del plexo coroideo y el del ventrículo lateral fue menor en la trisomía 21 (0,317) y en la 18 (0,270) que en los fetos euploides (0,458).",
+        "cites": [
+          "PMID:42770039"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002310": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Las disecciones microquirúrgicas de cadáveres adultos agrupan la fimbria con el hipocampo, la amígdala y la fisura coroidea como componentes intraventriculares del lóbulo temporal medial.",
+        "cites": [
+          "PMID:10493377",
+          "PMID:17064506"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Entre la fimbria y el tálamo queda la fisura coroidea, que forma la pared medial de los dos tercios posteriores del asta temporal.",
+        "cites": [
+          "PMID:10493377"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La fimbria integra el circuito de Papez, que enlaza las cortezas cinguladas anterior y posterior, la corteza entorrinal, el hipocampo, el fórnix, los cuerpos mamilares y el tálamo anterior.",
+        "cites": [
+          "PMID:32971283"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Gracias a su correlación con piezas anatómicas, el plano sagital de la resonancia clínica habitual ofrece criterios fiables para localizar la fimbria.",
+        "cites": [
+          "PMID:3809490"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002333": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "En 78 gestaciones normales estudiadas con Doppler entre las semanas 12 y 25, la velocidad sistólica máxima en el tronco pulmonar fetal aumentaba de forma lineal con la edad gestacional, aunque más despacio que en el conducto arterioso.",
+        "cites": [
+          "PMID:8310549"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La aorta es asiento de muchas más enfermedades no neoplásicas que el tronco pulmonar y las arterias pulmonares principales.",
+        "cites": [
+          "PMID:9383591"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se han comunicado casos aislados de sarcomas originados en el tronco pulmonar, entre ellos un leiomiosarcoma acompañado de derrame pericárdico.",
+        "cites": [
+          "PMID:4277552",
+          "PMID:18286521"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En tres lactantes con origen anómalo de la coronaria izquierda en el tronco pulmonar, la ecocardiografía mostró una imagen que simulaba una coronaria normal desde la aorta y que correspondía, casi con certeza, al seno transverso del pericardio.",
+        "cites": [
+          "PMID:6466513"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 102 lactantes con atresia tricuspídea o ventrículo de doble entrada y conexión ventriculoarterial discordante, 55 recibieron un cerclaje paliativo del tronco pulmonar.",
+        "cites": [
+          "PMID:1699983"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "A partir de resonancias de 12 pacientes se fabricaron modelos rígidos del tracto de salida del ventrículo derecho y del tronco pulmonar para valorar la idoneidad del implante percutáneo de válvula pulmonar.",
+        "cites": [
+          "PMID:17255420"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002336": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Ninguna otra comisura del prosencéfalo ni otra estructura de sustancia blanca del encéfalo humano supera en tamaño al cuerpo calloso.",
+        "cites": [
+          "PMID:27010176",
+          "PMID:21530590"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Las callosotomías y las lesiones callosas indican que su papel, al conectar regiones corticales de ambos lados, es facilitar la comunicación entre los hemisferios.",
+        "cites": [
+          "PMID:21530590"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En una referencia biométrica por resonancia de 622 niños de 1 día a 15 años, sus dimensiones crecían con rapidez hasta los 3 años, y el cuerpo y el istmo terminaban de crecer hacia los 7-8 años.",
+        "cites": [
+          "PMID:21799035"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 50 encéfalos de autopsia, quienes no tenían una preferencia diestra constante mostraron un área callosa mediosagital mayor, sobre todo en el istmo; en el cuerpo posterior, esa diferencia dependía del sexo y solo se observó en varones.",
+        "cites": [
+          "PMID:2731030"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Aunque hasta dos tercios de los pacientes con agenesia callosa completa o parcial tienen epilepsia, la agenesia en sí no la explica: las malformaciones del desarrollo cortical asociadas serían las causantes.",
+        "cites": [
+          "PMID:27010176"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En epilepsias farmacorresistentes con crisis de caída, la sección quirúrgica de las fibras callosas puede reducir las crisis.",
+        "cites": [
+          "PMID:27010176"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002361": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Vista con microscopía electrónica, la piamadre normal forma una capa continua: una lámina plana de células trabadas entre sí por complejos de unión.",
+        "cites": [
+          "PMID:3734882"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "A un lado de esa lámina queda el espacio subaracnoideo y al otro los espacios subpial y perivasculares; en la corteza, los perivasculares confluyen con el subpial y no con el subaracnoideo.",
+        "cites": [
+          "PMID:3734882"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Los vasos meníngeos del espacio subaracnoideo reciben su cubierta externa de la piamadre, que se refleja sobre ellos desde la superficie encefálica.",
+        "cites": [
+          "PMID:3734882"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Con la piamadre se fusionan las trabéculas que atraviesan el espacio subaracnoideo desde la capa interna de la aracnoides, formadas por haces de colágeno revestidos de células leptomeníngeas.",
+        "cites": [
+          "PMID:3374751"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En biopsias corticales de 6 adultos, una fina vaina de células piales envolvía por completo arterias y arteriolas cerebrales, pero no se observó alrededor de las vénulas.",
+        "cites": [
+          "PMID:2254158"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Las arterias piales humanas de 60 a 450 µm de diámetro poseen inervación aferente y plexos eferentes adrenérgicos y colinérgicos, que en la aterosclerosis preclínica se alteran sobre todo en las de mayor calibre.",
+        "cites": [
+          "PMID:1965369"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002362": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Delicada y desprovista de vasos, la aracnoides es una de las capas meníngeas.",
+        "cites": [
+          "PMID:22961357"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Contacta directamente con la duramadre, mientras que de la piamadre la separa el espacio subaracnoideo, lleno de líquido cefalorraquídeo.",
+        "cites": [
+          "PMID:22961357"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Las cisternas en que se divide el espacio subaracnoideo toman su nombre de las estructuras encefálicas vecinas.",
+        "cites": [
+          "PMID:22961357"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En la médula espinal humana, su porción más externa, la llamada capa de células barrera, está hecha de células muy compactas, ricas en uniones estrechas y sin colágeno entre ellas.",
+        "cites": [
+          "PMID:8886963"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Esas uniones estrechas la convierten en una barrera eficaz que aísla el líquido cefalorraquídeo subaracnoideo de la sangre que circula por la duramadre.",
+        "cites": [
+          "PMID:8886963"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En un estudio de plastinación y disección de 38 cadáveres, la membrana de Liliequist resultó ser un pliegue avascular de doble capa de la aracnoides, sin orificios.",
+        "cites": [
+          "PMID:11014430"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002363": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "Durante mielografías, el saco dural espinal se ensanchaba o colapsaba en parte al variar el volumen de sangre intracraneal y de líquido cefalorraquídeo, lo que indica que su capacidad responde a la presión que soportan sus paredes.",
+        "cites": [
+          "PMID:5049806"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Esa capacidad variable le permite servir de reservorio: el líquido cefalorraquídeo entra y sale por el agujero magno al compás del flujo sanguíneo cerebral.",
+        "cites": [
+          "PMID:5049806"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En muestras de duramadre de 17 autopsias pediátricas sin neomembrana subdural se hallaron células CD68 positivas en todos los casos, incluso en la capa limítrofe dural.",
+        "cites": [
+          "PMID:28851096"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En esas mismas muestras, el 59 % contenía células con hierro, un dato que debe considerarse al estimar la antigüedad de un hematoma subdural.",
+        "cites": [
+          "PMID:28851096"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En neurocirugía se emplea fascia lata humana alogénica como sustituto de la duramadre, lo que conlleva riesgo de transmitir virus y bacterias si no se trata previamente.",
+        "cites": [
+          "PMID:12069340"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002366": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Vistas al microscopio óptico, las células secretoras de la glándula de Cowper humana tienen forma cúbica o cilíndrica, citoplasma claro y un núcleo redondo, algo denso, desplazado hacia la periferia.",
+        "cites": [
+          "PMID:7143518"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "El microscopio electrónico revela en su citoplasma abundantes gránulos de secreción envueltos por membrana y de centro denso; entre el tejido secretor hay además células mioepiteliales.",
+        "cites": [
+          "PMID:7143518"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Como también se hallaron gránulos de secreción en los capilares que la rodean, se ha sugerido que la glándula tenga además una función endocrina.",
+        "cites": [
+          "PMID:7143518"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un estudio histológico del aparato genital masculino, la actividad fibrinolítica ligada al epitelio fue máxima en la glándula bulbouretral y en la uretra terminal.",
+        "cites": [
+          "PMID:5130539"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La dilatación quística de los conductos de la glándula de Cowper, o siringocele, es poco común y a menudo no da síntomas; en una serie de 14 pacientes, 8 refirieron sobre todo goteo posmiccional y estranguria.",
+        "cites": [
+          "PMID:3347785"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002367": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En resonancias de la pelvis de 55 varones, las secuencias potenciadas en T2 permitieron distinguir las zonas periférica, central y de transición de la próstata, con la periférica más hiperintensa.",
+        "cites": [
+          "PMID:3491523"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa misma serie, la zona central se identificó en 31 de 32 varones de 25 a 35 años, pero sólo en 8 de 23 de 40 años o más.",
+        "cites": [
+          "PMID:3491523"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Un estudio de 12 cadáveres y 200 prostatectomías robóticas describió alrededor de la próstata una organización nerviosa en tres zonas: la placa neurovascular proximal, el haz neurovascular predominante y vías nerviosas accesorias.",
+        "cites": [
+          "PMID:16879671"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En ese trabajo, la placa neurovascular proximal quedaba en promedio a 5 mm (3-10 mm) por fuera de las vesículas seminales.",
+        "cites": [
+          "PMID:16879671"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La inmunoperoxidasa ha demostrado Trichomonas vaginalis no solo en la uretra prostática y la luz glandular, sino también por debajo del epitelio, en la submucosa y el estroma, lo que cuestiona que sea un parásito estrictamente superficial.",
+        "cites": [
+          "PMID:2421689"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Como la ecografía transrectal sola es poco sensible para el cáncer de próstata, la elastografía la complementa, aunque la referencia diagnóstica sigue siendo la biopsia transrectal ecoguiada.",
+        "cites": [
+          "PMID:30534661"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002370": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "La selección del repertorio que ocurre en el timo da lugar a un conjunto de linfocitos T vírgenes capaces de responder y tolerantes a lo propio.",
+        "cites": [
+          "PMID:30476234"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Corteza y médula tímicas se reparten la tarea: la primera aloja la selección positiva de los linfocitos T y la segunda una selección posterior que ayuda a frenar la autorreactividad.",
+        "cites": [
+          "PMID:30476234"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El trasplante de timo alogénico posnatal cultivado lleva más de 20 años resultando eficaz contra la atimia, sobre todo la del síndrome de DiGeorge completo.",
+        "cites": [
+          "PMID:33044341"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Raras y poco documentadas, las neoplasias neuroendocrinas tímicas abarcan el carcinoide típico y el atípico y los carcinomas neuroendocrinos de células grandes y de células pequeñas.",
+        "cites": [
+          "PMID:39267733"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los timomas A, AB y B1 a B3 y el carcinoma epidermoide tímico recibieron criterios diagnósticos más precisos en la clasificación de la OMS de 2015.",
+        "cites": [
+          "PMID:26295375"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002383": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Al disecar cinco cadáveres no embalsamados, su origen posterolateral resultó más lateral que en las descripciones clásicas.",
+        "cites": [
+          "PMID:8873337"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En la resonancia de 15 sujetos sanos, el músculo podía nacer tan lateralmente como el corte en «Y» de la escápula en el 53 % de los casos.",
+        "cites": [
+          "PMID:8873337"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Además de su inserción principal en el tubérculo mayor del húmero, en 10 hombros de cadáver sin lesiones macroscópicas el supraespinoso se fijaba en parte al tubérculo menor.",
+        "cites": [
+          "PMID:1389774"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Un estudio con elastografía en 12 varones jóvenes atribuyó a las subregiones anteriores la fuerza de abducción, a la posterior profunda la de rotación externa y a las posteriores superficial y media el mantenimiento de la tensión.",
+        "cites": [
+          "PMID:28192875"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 1688 pacientes con rotura del manguito rotador, la infiltración grasa moderada del supraespinoso apareció de media 3 años después del inicio de los síntomas, y la grave, a los 5 años.",
+        "cites": [
+          "PMID:20094853"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 10 hombros de cadáver, el avance artroscópico del músculo y su tendón permitió reinsertarlo en su huella original, con un deslizamiento medio de 38,8 ± 3,6 mm.",
+        "cites": [
+          "PMID:36574836"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002422": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En su mitad inferior, el techo del cuarto ventrículo se reduce a dos delicadas láminas: la tela coroidea y el velo medular inferior.",
+        "cites": [
+          "PMID:10794296"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 50 especímenes de cadáver, la apertura de la tela coroidea dio acceso al suelo y al cuerpo del ventrículo, desde el acueducto hasta el óbex.",
+        "cites": [
+          "PMID:10794296"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En su suelo se han descrito dos zonas de entrada al tronco del encéfalo, los triángulos suprafacial e infrafacial, delimitados por el fascículo longitudinal medial, el nervio facial, el pedúnculo cerebeloso y las estrías medulares.",
+        "cites": [
+          "PMID:8487085"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En adultos, el ependimoma del cuarto ventrículo es raro y su único tratamiento eficaz es la cirugía, con la que una resección radical a menudo logra la curación.",
+        "cites": [
+          "PMID:38769107"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 25 pacientes operados por cuarto ventrículo aislado, 19 recibieron un stent en el acueducto y 6 una derivación ventriculoperitoneal desde el cuarto ventrículo.",
+        "cites": [
+          "PMID:28633490"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002434": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "El tallo hipofisario une el hipotálamo con la glándula hipófisis.",
+        "cites": [
+          "PMID:31480013"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En cortes histológicos de 8 fetos, una vaina aracnoidea con un componente fibroso compacto y otro trabecular laxo envolvía el tallo, que se dividía en cuatro segmentos según sus pliegues.",
+        "cites": [
+          "PMID:21271263"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Para menores de 19 años, una guía británica de consenso fija el umbral de posible patología en 4 mm junto al quiasma óptico o 3 mm en la inserción hipofisaria, sobre todo si coexisten una endocrinopatía o un trastorno visual.",
+        "cites": [
+          "PMID:34214482"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un metaanálisis de 18 estudios con 1368 pacientes con engrosamiento del tallo, la proporción combinada de neoplasias fue del 45,2 %, con predominio de los tumores de células germinales.",
+        "cites": [
+          "PMID:34614160"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las lesiones neoplásicas encabezan las grandes series del tallo hipofisario, por delante de las inflamatorias, infecciosas y congénitas, aunque en las series pequeñas y los casos aislados dominan las inflamatorias.",
+        "cites": [
+          "PMID:26950774"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Tres rasgos definen el síndrome de interrupción del tallo hipofisario: un tallo interrumpido o de menos de 1 mm, la ausencia de lóbulo posterior en su sitio y un lóbulo anterior hipoplásico o ausente.",
+        "cites": [
+          "PMID:31480013"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002435": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Este centro subcortical concentra conexiones de gran alcance y se ha vinculado con una amplia gama de funciones motoras y cognitivas.",
+        "cites": [
+          "PMID:34848302"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Una parcelación microestructural por resonancia en 329 adultos jóvenes identificó en cada hemisferio cinco componentes estriatales espacialmente distintos y en gran medida simétricos.",
+        "cites": [
+          "PMID:34848302"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En especímenes fetales de 14 a 22 semanas estudiados con resonancia de 7 T, el volumen absoluto del núcleo caudado y del putamen crecía linealmente con la edad gestacional.",
+        "cites": [
+          "PMID:35078212"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esos fetos, el caudado derecho era mayor que el izquierdo, sin asimetría significativa entre ambos putámenes.",
+        "cites": [
+          "PMID:35078212"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Según la evidencia revisada en roedores, primates y humanos, el estriado dorsal contribuiría directamente a decidir, sobre todo a seleccionar e iniciar acciones, integrando información sensitivomotora, cognitiva y emocional.",
+        "cites": [
+          "PMID:17670959"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Dentro de la red de recompensa, el estriado ventral ocupa la posición central.",
+        "cites": [
+          "PMID:35358647"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002437": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El centro semioval forma parte de la sustancia blanca de los hemisferios cerebrales.",
+        "cites": [
+          "PMID:24285616"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la revisión de las TC craneales de 7921 pacientes de 50 a 98 años, se encontró una atenuación periventricular de la sustancia blanca hemisférica en 761.",
+        "cites": [
+          "PMID:3220419"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los espacios perivasculares graves del centro semioval, más de 20, aparecieron en 12 de 14 pacientes con angiopatía amiloide cerebral confirmada y en ninguno de 10 con hemorragia intracerebral de otro origen.",
+        "cites": [
+          "PMID:24285616"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un caso clínico, un infarto isquémico limitado a la sustancia blanca del hemisferio derecho, localizado en el fascículo arqueado, produjo una negligencia visual izquierda grave.",
+        "cites": [
+          "PMID:22551209"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la panencefalitis esclerosante subaguda, las lesiones visibles en T2 asientan con mayor frecuencia en la sustancia blanca de los hemisferios, con atrofia o sin ella, mientras que el tronco del encéfalo rara vez se afecta.",
+        "cites": [
+          "PMID:11198212"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002439": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "En 10 niños sanos bajo anestesia general, la estimulación eléctrica del plexo mientérico rectal desencadenó la relajación del esfínter anal interno.",
+        "cites": [
+          "PMID:6666366"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En ese mismo estudio, la respuesta sólo se obtuvo en 2 de 7 pacientes con enfermedad de Hirschsprung, y con un voltaje mayor.",
+        "cites": [
+          "PMID:6666366"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La inmunofluorescencia para la proteína S-100 en cortes planos permitió apreciar una reducción de los plexos ganglionares del intestino delgado en la seudoenfermedad de Hirschsprung.",
+        "cites": [
+          "PMID:7844726"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito un caso de íleo adinámico causado por la invasión del plexo mientérico del intestino delgado y grueso por un mesotelioma peritoneal.",
+        "cites": [
+          "PMID:3625800"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002456": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Ninguno de 100 cadáveres carecía de arteria torácica interna, que salía de la subclavia directamente o a través de un tronco compartido con otras arterias.",
+        "cites": [
+          "PMID:9354524"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Medía en promedio 20,4 cm y solía terminar en el sexto espacio intercostal, casi siempre bifurcándose (93 %) y a veces trifurcándose (7 %).",
+        "cites": [
+          "PMID:9354524"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esa serie, el nervio frénico pasaba por delante de ella en el 70,0 % de los casos, y el transverso del tórax la recubría en un tramo medio de 7,5 cm.",
+        "cites": [
+          "PMID:9354524"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "La pericardiofrénica era rama suya en el 89 % de esos cadáveres, y en el 15 % existía además una rama costal lateral.",
+        "cites": [
+          "PMID:9354524"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 48 arterias obtenidas en autopsias, el grosor de la íntima y de la media aumentaba con la edad, sin diferencias según el lado ni el sexo.",
+        "cites": [
+          "PMID:23575651"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 3527 cirugías de revascularización coronaria de un centro, el uso de ambas arterias torácicas internas como injerto se asoció con mejor supervivencia a largo plazo que el de una sola, también en pacientes diabéticos.",
+        "cites": [
+          "PMID:22677228"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002462": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Dentro del grupo erector, el espinoso ocupa la posición medial y suele dividirse en porciones torácica, cervical y de la cabeza.",
+        "cites": [
+          "PMID:15125051"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Sus porciones cervical y de la cabeza pueden aparecer como unidades independientes, confundidas con el semiespinoso o ausentes, sin que estas variantes se relacionen con el sexo ni con el lado.",
+        "cites": [
+          "PMID:15125051"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un modelo biomecánico, representar el erector de la columna con mayor detalle anatómico redujo hasta en un 35 % la compresión estimada sobre el disco L4/L5.",
+        "cites": [
+          "PMID:3611135"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002469": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "La disfagia domina el cuadro de la esofagitis eosinofílica en adultos, y su diagnóstico se confirma al comprobar en la biopsia el infiltrado eosinofílico típico de la mucosa esofágica.",
+        "cites": [
+          "PMID:28192821"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La mucosa de Barrett destruida por vía endoscópica cede su lugar a un epitelio escamoso nuevo, la mucosa neoescamosa, aunque lograr una ablación completa puede ser difícil.",
+        "cites": [
+          "PMID:23061708"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En piezas de adenocarcinoma esofágico, el ligando Indian hedgehog y Gli-1 se expresaban en la mitad de los tumores, mientras que la mucosa esofágica sana correspondiente era negativa para ambos.",
+        "cites": [
+          "PMID:25435423"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002497": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Según la forma de su superficie inferior se distinguen tres tipos de acromion: plano (1), suavemente curvo (2) y en gancho (3).",
+        "cites": [
+          "PMID:8475294"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Una cuarta variante, propuesta después, presenta una cara inferior convexa en las proximidades de su extremo distal.",
+        "cites": [
+          "PMID:10150316"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 9 hombros de cadáver, la zona de contacto subacromial con el manguito, situada en el borde anterolateral del acromion con el brazo sin elevar, migraba hacia medial a medida que el brazo se elevaba.",
+        "cites": [
+          "PMID:7856802"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esos especímenes, el intervalo acromiohumeral medio pasaba de 11,1 mm a 0° de elevación a 5,7 mm a 90°.",
+        "cites": [
+          "PMID:7856802"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En resonancias de hombros dolorosos, el acromion de tipo 3 fue mucho más prevalente en pacientes con rotura completa del manguito rotador que en controles (62 % frente a 13 %).",
+        "cites": [
+          "PMID:8475294"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 200 hombros de cadáver, toda lesión del tercio anterior de la cara inferior del acromion se acompañaba de rotura del manguito, aunque no todas las roturas se acompañaban de esa lesión.",
+        "cites": [
+          "PMID:3417708"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002516": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 25 pares de caderas obtenidas post mortem de niños de 5 días a casi 16 años, la resistencia al cizallamiento de la placa epifisaria de la cabeza femoral variaba con la edad y dependía mucho del complejo pericondral en la lactancia y la primera infancia.",
+        "cites": [
+          "PMID:1249118"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En ese estudio, las fuerzas capaces de provocar el deslizamiento epifisario estaban dentro del rango fisiológico generado por niños con sobrepeso.",
+        "cites": [
+          "PMID:1249118"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 25 niños con osteosarcoma y fisis abiertas, la invasión de la placa epifisaria se reconoció en la radiología en 11 (44 %), pero en la histología en 21 (84 %).",
+        "cites": [
+          "PMID:10810460"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 22 niños con insuficiencia renal terminal en diálisis o trasplantados, el 64 % presentó retraso del crecimiento y de la maduración esquelética, y 3 sufrieron epifisiólisis de la cabeza femoral.",
+        "cites": [
+          "PMID:8928559"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un paciente con síndrome de Morquio A, la placa epifisaria había perdido su ordenación proliferativa habitual y apenas calcificaba, con condrocitos vacuolados en grado variable.",
+        "cites": [
+          "PMID:3093960"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002520": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "El miofibroblastoma intraganglionar, que suele asentar en ganglios inguinales, también se ha descrito en ganglios linfáticos submandibulares.",
+        "cites": [
+          "PMID:1728866",
+          "PMID:29225986"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha comunicado un hamartoma angiomiomatoso en un ganglio submandibular de una mujer de 51 años, inicialmente tomado por una adenopatía.",
+        "cites": [
+          "PMID:19291632"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un caso publicado, un adenocarcinoma de páncreas metastatizó en el ganglio submandibular izquierdo sin otras localizaciones confirmadas.",
+        "cites": [
+          "PMID:30715906"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una niña de 7 años, la punción-aspiración con aguja fina de un ganglio submandibular aumentado de tamaño permitió diagnosticar una cisticercosis.",
+        "cites": [
+          "PMID:15119372"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002525": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito una paciente con dos recidivas sucesivas en ganglios linfáticos braquiales tras mastectomía y vaciamiento axilar por un cáncer de mama localmente avanzado.",
+        "cites": [
+          "PMID:36157692"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los autores de ese caso plantean que la sustitución de los ganglios regionales por tumor podría redirigir el flujo linfático hacia el brazo y favorecer metástasis braquiales.",
+        "cites": [
+          "PMID:36157692"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una mujer con artritis reumatoide, la biopsia de un ganglio braquial derecho aumentado mostró hiperplasia folicular con abundantes células plasmáticas IgG4 positivas, lo que simulaba una enfermedad relacionada con IgG4.",
+        "cites": [
+          "PMID:22706532"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002576": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Esta porción anterior del lóbulo temporal se describió históricamente como una estructura única: el área 38 de Brodmann o el área temporopolar TG de Von Economo.",
+        "cites": [
+          "PMID:33582250"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En un estudio de 1113 adultos jóvenes, el polo temporal presentó la asimetría de grosor cortical con mayor predominio derecho de toda la corteza.",
+        "cites": [
+          "PMID:39550055"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Una revisión de 112 artículos lo vincula con procesos cognitivos de alto nivel: reconocer caras y objetos complejos, evocar la memoria autobiográfica, nombrar, procesar el significado en cualquier modalidad y procesar lo socioemocional.",
+        "cites": [
+          "PMID:33582250"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un estudio con tomografía por emisión de positrones, nombrar entidades únicas, tanto personas como monumentos famosos, aumentó la actividad del polo temporal izquierdo.",
+        "cites": [
+          "PMID:11410949"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En dos muestras de 16 y 28 pacientes con la variante semántica de la afasia progresiva primaria, la atrofia máxima se situó en la misma región del polo temporal izquierdo en todos los casos.",
+        "cites": [
+          "PMID:28040670"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un aumento de la señal T2 de la sustancia blanca temporopolar, que borra el límite con la sustancia gris, aparece en la resonancia de entre un tercio y dos tercios de los pacientes con epilepsia temporal criptogénica.",
+        "cites": [
+          "PMID:12424089"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002580": {
+    "sentences": []
+  },
+  "UBERON:0002581": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "En pacientes con resecciones parietales, las lesiones que alcanzaban el área de la cara de la corteza sensitiva primaria provocaron a menudo déficits sensitivos de leves a graves en la hemicara contralateral.",
+        "cites": [
+          "PMID:9226657"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Esos déficits faciales fueron con menos frecuencia graves y persistentes que los descritos en la mano tras lesionar su área, lo que se atribuiría a la representación bilateral de la cara.",
+        "cites": [
+          "PMID:9226657"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En resonancia funcional, un estímulo táctil en movimiento sobre la mano derecha activó el giro poscentral izquierdo, la única de las áreas activadas que mantuvo la respuesta durante la ilusión de movimiento posterior.",
+        "cites": [
+          "PMID:22120108"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Bajo la corteza del opérculo poscentral discurren vías motoras procedentes del giro precentral, en un territorio que nutren las arterias medulares.",
+        "cites": [
+          "PMID:33537863"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 34 pacientes con gliomas operculares frontoparietales, la resección del giro poscentral se asoció con déficits motores posoperatorios.",
+        "cites": [
+          "PMID:33537863"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Mediante estimulación con electrodos subdurales en 50 pacientes jóvenes con epilepsia focal, el área motora primaria de la mano se localizó sólo en el giro poscentral en 24 de ellos.",
+        "cites": [
+          "PMID:17723289"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002620": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Esta sustancia gris del hipotálamo forma la porción anterior del suelo del tercer ventrículo.",
+        "cites": [
+          "PMID:28058452"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En la resonancia con gadolinio de 92 pacientes se reconoció en todos como una estructura lineal que realza en el corte mediosagital, con una inclinación muy variable, de 0,5° a 56°.",
+        "cites": [
+          "PMID:28058452"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "El realce con gadolinio de la mayor parte de su porción media lleva a pensar que podría funcionar como un órgano circunventricular.",
+        "cites": [
+          "PMID:28058452"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Los osteolipomas de esta región se ubican de forma constante entre los cuerpos mamilares y el tallo hipofisario.",
+        "cites": [
+          "PMID:577392"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 5 niños con hamartomas del túber cinereum confirmados por biopsia, los que tenían pubertad precoz presentaban lesiones pediculadas, mientras que los que tenían crisis epilépticas mostraban lesiones sésiles.",
+        "cites": [
+          "PMID:1902033"
+        ]
+      }
+    ]
+  }
+}

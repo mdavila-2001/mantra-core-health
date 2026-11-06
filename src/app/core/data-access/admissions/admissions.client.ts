@@ -28,7 +28,6 @@ import type {
   RequirementSource,
   RequirementStateCode,
   RequirementStatusCode,
-  ResubmitCommand,
   SourceTypeCode,
   SubmittedFormField,
   SubmittedFormSection,
@@ -363,7 +362,8 @@ function toDetail(wire: WireAdmissionDetail): AdmissionDetail {
   };
 }
 
-function toMine(wire: WireMyAdmission): MyAdmission {
+/** The practitioner's own request, as `OwnAdmissionClient` hands it to the screens. */
+export function toMine(wire: WireMyAdmission): MyAdmission {
   const status = normalizeStatus(wire.status);
   return {
     id: wire.id,
@@ -448,8 +448,10 @@ async function reasonOfBlobError(error: HttpErrorResponse): Promise<string | nul
 }
 
 /**
- * Admisiones (`/admissions`): la bandeja de quien revisa y resuelve, y la
- * lectura del propio médico (`/profiles/practitioners/me/admission`).
+ * Admisiones (`/admissions`): la bandeja de quien revisa y resuelve.
+ *
+ * The practitioner's own request (`/profiles/practitioners/me/admission`)
+ * lives in `OwnAdmissionClient`, which reuses `toMine` from here.
  *
  * La autoridad es la API: cada ruta exige su rol (revisor, aprobador o
  * administrador de seguridad) y las que escriben piden `expectedRowVersion`.
@@ -624,33 +626,6 @@ export class AdmissionsClient {
         originalName: nombreDe(respuesta.headers.get('Content-Disposition')),
       })),
     );
-  }
-
-  /** `GET /profiles/practitioners/me/admission` — 404 si la persona no tiene admisión. */
-  myAdmission(): Observable<MyAdmission> {
-    return this.http
-      .get<WireMyAdmission>(this.url('/profiles/practitioners/me/admission'))
-      .pipe(map(toMine));
-  }
-
-  /**
-   * `POST /profiles/practitioners/me/admission/resubmit` — corregir y reenviar.
-   * El sujeto sale de la sesión; el cuerpo lleva la atestación de la persona
-   * (`attested: true` y la versión del texto que vio). Sin ella la API
-   * responde 412 `ADMISSION_ATTESTATION_REQUIRED`. La API decide además si
-   * corresponde (estado y tope de reenvíos) y responde la admisión actualizada.
-   */
-  resubmitMyAdmission(command: ResubmitCommand): Observable<MyAdmission> {
-    return this.http
-      .post<WireMyAdmission>(this.url('/profiles/practitioners/me/admission/resubmit'), command)
-      .pipe(map(toMine));
-  }
-
-  /** `POST /profiles/practitioners/me/admission/withdraw` — retirar la solicitud (enviada o con información pedida). */
-  withdrawMyAdmission(): Observable<MyAdmission> {
-    return this.http
-      .post<WireMyAdmission>(this.url('/profiles/practitioners/me/admission/withdraw'), {})
-      .pipe(map(toMine));
   }
 }
 

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q77604
+image: wikidata-especialidad-q77604.svg | La radiología obtiene e interpreta imágenes del interior del cuerpo. | Cinco tarjetas con iconos de radiografía, ecografía, tomografía, resonancia y radiología intervencionista, junto a las tareas del radiólogo y lo que avisar antes de una prueba de imagen.
 ---
 
 ## [definition] Introducción

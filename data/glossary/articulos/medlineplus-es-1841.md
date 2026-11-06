@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-1841
+image: medlineplus-es-1841.svg | Equipos de una cama de UCI y cuándo se necesita | Cama de cuidados intensivos con un paciente conectado a respirador, monitor, sueros y bombas de infusión, junto a las situaciones que requieren ingreso y el equipo que atiende
 ---
 
 ## [definition] Introducción

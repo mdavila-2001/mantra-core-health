@@ -8,7 +8,7 @@ import {
   type OnInit,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of, throwError, type Observable } from 'rxjs';
 
 import { AccessApprovalsClient } from '../../../../core/data-access/access-governance/access-approvals.client';
 import { AccessGovernanceClient } from '../../../../core/data-access/access-governance/access-governance.client';
@@ -17,7 +17,10 @@ import {
   type AnomalyKind,
   type GovernancePanel,
 } from '../../../../core/data-access/access-governance/access-governance.types';
-import type { SupportApproval } from '../../../../core/data-access/access-governance/access-reviews.types';
+import type {
+  SupportApproval,
+  SupportApprovalList,
+} from '../../../../core/data-access/access-governance/access-reviews.types';
 import type { DoctorTeamMember } from '../../../../core/data-access/support-access/support-access.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../../core/view-state/view-state';
@@ -30,6 +33,21 @@ import { formatDateTime } from '../../support-labels';
 interface Attention {
   readonly panel: GovernancePanel;
   readonly approvals: readonly SupportApproval[];
+}
+
+const PANEL_VACIO: GovernancePanel = { generatedAt: '', team: [], pendingReviews: 0, openAnomalies: [] };
+const APROBACIONES_VACIAS: SupportApprovalList = { items: [], count: 0, nextCursor: null };
+
+/**
+ * Una fuente de «Para su atención» que el servidor todavía no publica (404) cuenta como «sin pendientes»: no tapa lo que
+ * sí responde las otras. Cualquier otro error sigue siendo un error.
+ */
+function sinEndpoint<T>(fuente: Observable<T>, vacio: T): Observable<T> {
+  return fuente.pipe(
+    catchError((failure: unknown) =>
+      (failure as { status?: number } | null)?.status === 404 ? of(vacio) : throwError(() => failure),
+    ),
+  );
 }
 
 /** El texto de una cantidad: «1 aprobación espera», «3 aprobaciones esperan». */
@@ -86,8 +104,8 @@ export class TeamAttention implements OnInit {
   protected load(): void {
     this.state.set(loading());
     forkJoin({
-      panel: this.governance.getPractitionerPanel(),
-      approvals: this.approvalsClient.listPending(),
+      panel: sinEndpoint(this.governance.getPractitionerPanel(), PANEL_VACIO),
+      approvals: sinEndpoint(this.approvalsClient.listPending(), APROBACIONES_VACIAS),
     }).subscribe({
       next: ({ panel, approvals }) =>
         this.state.set(

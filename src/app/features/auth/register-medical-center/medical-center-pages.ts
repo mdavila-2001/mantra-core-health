@@ -5,7 +5,9 @@ import type {
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { executivesPages } from '../shared-registration/executives';
-import { MESSAGE_SHORT_PASSWORD, MIN_CHARACTERS_PASSWORD } from '../shared-registration/password-policy';
+import { openingHoursSection } from '../shared-registration/opening-hours';
+import { accessPasswordFields } from '../shared-registration/password-confirmation';
+import { MIN_CHARACTERS_PASSWORD } from '../shared-registration/password-policy';
 import { MAX_LEGAL_NAME } from './medical-center-form';
 
 /** Prefijo de los `data-testid` de toda la pantalla (los de antes de la ampliación lo conservan). */
@@ -13,11 +15,13 @@ export const TEST_ID = 'medical-center-signup';
 
 /** Lo que las páginas necesitan saber del momento: catálogos y papeles según el tipo societario. */
 export interface PaginasDeAlta {
+  /** Se llama al salir de la razón social: la pantalla pregunta si ya existe. */
+  readonly alSalirNombre?: (valor: string) => void;
   readonly tiposDeOrganizacion: readonly SelectOption<string>[];
   readonly tiposSocietarios: readonly SelectOption<string>[];
   /** Los cinco papeles de la empresa, con los que el tipo societario omite marcados «(opcional)». */
   readonly camposDeDocumentos: readonly CampoDeFormulario[];
-  /** El poder del representante, opcional sólo para una unipersonal. */
+  /** El poder del representante, obligatorio para toda organización. */
   readonly campoDePoder: CampoDeFormulario;
   /** Si ya hay algo escrito en las gerencias: entonces las tres van completas y sus campos llevan asterisco. */
   readonly gerenciasEnUso: boolean;
@@ -40,9 +44,8 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       clave: 'organizacion',
       icon: 'building' as const,
       hint: 'Qué tipo de institución es, cómo se llama y qué figura jurídica tiene.',
-      // Tres campos cortos en un renglón desde 1120 px, de a dos desde 672 px
-      // (`composition-rules.md` §5): sin casillas kilométricas.
-      disposicion: 'tres-columnas' as const,
+      // Cuatro campos cortos, de a dos desde 672 px (`composition-rules.md` §5).
+      disposicion: 'dos-columnas' as const,
       campos: [
         {
           key: 'tenantType',
@@ -55,14 +58,24 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
         },
         {
           key: 'legalName',
+          alSalir: ctx.alSalirNombre,
           label: 'Razón social',
           control: 'text' as const,
           required: true,
+          placeholder: 'Centro Médico Norte S.R.L.',
           hint: `Hasta ${MAX_LEGAL_NAME} caracteres.`,
           testId: `${TEST_ID}-legal-name`,
-          // Sólo el vacío lleva mensaje propio: el tope de 300 lo dice el
-          // motor con su número, que es lo que la persona necesita leer.
+          // Only an empty value has its own message: the engine states the 300 cap.
           mensajeSiFalta: 'Escriba la razón social de la organización.',
+        },
+        {
+          key: 'tradeName',
+          label: 'Nombre comercial (opcional)',
+          hint: 'Con el que la conocen sus pacientes. Es el que se ve en el directorio.',
+          control: 'text' as const,
+          placeholder: 'Clínica Norte',
+          testId: `${TEST_ID}-trade-name`,
+          mensajeDeError: `El nombre comercial no puede pasar de ${MAX_LEGAL_NAME} caracteres.`,
         },
         {
           key: 'legalEntityType',
@@ -90,7 +103,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           key: 'taxId',
           label: 'Número de NIT',
           hint: 'Sólo números, con o sin guiones. Es el que sale en las facturas.',
-          control: 'text' as const,
+          control: 'text' as const, fieldKind: 'taxId',
           required: true,
           icono: 'billing' as const,
           placeholder: '1023456789',
@@ -146,6 +159,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           control: 'email' as const,
           required: true,
           icono: 'mail' as const,
+          placeholder: 'director@centro.com',
           testId: `${TEST_ID}-director-email`,
           mensajeDeError: 'Escriba un correo válido para el director médico.',
         },
@@ -160,8 +174,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       ],
     },
     {
-      // Sin «obligatoria»: según el tipo societario, la escritura y la
-      // matrícula pueden ser opcionales (decisión del propietario, 30/10/2026).
+      // Not marked «obligatoria»: some company types may omit two papers (owner, 30/10/2026).
       titulo: 'Documentación legal (PDF)',
       clave: 'documentos-legales',
       icon: 'folder' as const,
@@ -202,6 +215,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
         },
       ],
     },
+    openingHoursSection(true),
     {
       titulo: 'Representante legal',
       clave: 'representante',
@@ -222,9 +236,10 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           key: 'legalRepIdNumber',
           label: 'Documento de identidad del representante',
           hint: 'Cédula de identidad o documento equivalente.',
-          control: 'text' as const,
+          control: 'text' as const, fieldKind: 'identityDocumentWithComplement',
           required: true,
           icono: 'people' as const,
+          placeholder: '1234567',
           testId: `${TEST_ID}-legal-rep-id`,
           mensajeDeError: 'Escriba el documento del representante (al menos cuatro caracteres).',
         },
@@ -244,7 +259,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       titulo: 'Poder del representante legal',
       clave: 'poder',
       icon: 'folder' as const,
-      hint: 'Solo PDF. Una empresa unipersonal no lo necesita: el titular se representa a sí mismo.',
+      hint: 'Solo PDF. Es obligatorio para toda organización, cualquiera sea su tipo de sociedad.',
       campos: [ctx.campoDePoder],
     },
     ...executivesPages(TEST_ID, ctx.gerenciasEnUso),
@@ -253,32 +268,27 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       clave: 'acceso',
       icon: 'lock' as const,
       hint: 'Entra con el correo del representante legal y esta contraseña.',
-      // Usuario y contraseña, uno al lado del otro: una página de un solo campo dejaba la
-      // casilla de 1.600 px de ancho a 1920.
+      // Email across the row, then password and its confirmation side by side: a
+      // single-field page left a 1,600 px wide box at 1920.
       disposicion: 'dos-columnas' as const,
       campos: [
         {
           key: 'legalRepEmail',
-          label: 'Correo del representante legal',
-          hint: 'Con este correo va a entrar a la plataforma.',
+          ancho: 'completo' as const,
+          label: 'Correo de acceso',
+          hint: 'El del representante legal: con este correo va a entrar a la plataforma.',
           control: 'email' as const,
           required: true,
           icono: 'mail' as const,
           autocomplete: 'username',
+          placeholder: 'representante@centro.com',
           testId: `${TEST_ID}-legal-rep-email`,
           mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
         },
-        {
-          key: 'password',
-          label: 'Contraseña',
-          control: 'password' as const,
-          required: true,
-          icono: 'lock' as const,
-          autocomplete: 'new-password',
+        ...accessPasswordFields(`${TEST_ID}-password`, {
           hint: `Mínimo ${MIN_CHARACTERS_PASSWORD} caracteres.`,
-          testId: `${TEST_ID}-password`,
-          mensajeDeError: MESSAGE_SHORT_PASSWORD,
-        },
+          placeholder: 'Mínimo 8 caracteres',
+        }),
       ],
     },
   ]);

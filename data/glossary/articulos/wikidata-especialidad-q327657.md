@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q327657
+image: wikidata-especialidad-q327657.svg | La reumatología trata sin cirugía las enfermedades de articulaciones, huesos y tejidos, y las autoinmunes. | Silueta humana con las articulaciones señaladas y una lista de los seis grandes grupos de enfermedades que atiende la reumatología con ejemplos.
 ---
 
 ## [definition] Introducción

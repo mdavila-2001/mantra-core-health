@@ -1,0 +1,80 @@
+.piezas {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.piezas__cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-block: var(--sp-3) var(--sp-4);
+}
+
+.piezas__estados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.piezas__ayuda {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.piezas__seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-block: var(--sp-4);
+}
+
+/* Varios renglones en una celda: el contenedor en columna sobrevive a la tabla
+   apilada de teléfono, donde la celda es un flex en fila. */
+.piezas__celda {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.piezas__nombre,
+.piezas__causa {
+  display: block;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.piezas__codigo {
+  display: block;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.piezas__codigo code {
+  font-family: var(--font-mono);
+}
+
+.piezas__lista {
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+}
+
+app-alert,
+app-tabs {
+  display: block;
+}
+
+app-alert + app-alert,
+app-view-state-host + app-tabs,
+app-tabs + app-alert {
+  margin-block-start: var(--sp-3);
+}

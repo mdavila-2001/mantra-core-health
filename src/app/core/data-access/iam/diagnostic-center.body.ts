@@ -17,6 +17,7 @@ export function cuerpoDeCentroDiagnostico(registration: DiagnosticCenterRegistra
       ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
       tenantType: 'DIAGNOSTIC_CENTER',
       ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
+      taxIdentifier: registration.taxIdentifier,
       countryConceptId: registration.countryConceptId,
       jurisdictionConceptId: registration.jurisdictionConceptId,
       diagnosticUnit: {
@@ -40,6 +41,9 @@ export function cuerpoDeCentroDiagnostico(registration: DiagnosticCenterRegistra
         ? {}
         : { legalRepresentative: registration.legalRepresentative }),
       ...(registration.executives === undefined ? {} : { executives: registration.executives }),
+      ...(registration.openingHours === undefined
+        ? {}
+        : { openingHours: registration.openingHours }),
     },
     owner: {
       email: registration.owner.email,

@@ -1,15 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import {
-  catchError,
-  EMPTY,
-  expand,
-  forkJoin,
-  map,
-  of,
-  reduce,
-  switchMap,
-  type Observable,
+  catchError, EMPTY, expand, forkJoin, map, of, reduce, switchMap, type Observable,
 } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
@@ -70,6 +62,7 @@ import type {
   SupportInboxQuery,
 } from './support-inbox.types';
 import { activityParams } from './support-activity';
+import type { NewSupportInvitation, SupportInvitationCreated } from './support-invite.types';
 import type { NewClinicalAccessRequest } from './support-inbox.types';
 import {
   fromWireSupportAgenda,
@@ -495,11 +488,25 @@ export class SupportAccessClient {
 
   /* ---- doctor -------------------------------------------------------------- */
 
-  /** `GET /me/practitioner/support-team` — «Mi equipo». */
+  /** `GET /me/practitioner/support-team` — «Mi equipo». Los errores llegan a la pantalla (404/0 los trata como vacío). */
   getMyTeam(): Observable<DoctorTeam> {
-    return this.http
-      .get<DoctorTeam>(this.url('/me/practitioner/support-team'))
-      .pipe(map(fromWireTeam));
+    return this.http.get<DoctorTeam>(this.url('/me/practitioner/support-team')).pipe(map(fromWireTeam));
+  }
+
+  /**
+   * `POST /me/practitioner/support-invitations` — el doctor invita a una secretaria registrada (por su documento) a
+   * asistirlo en una de sus vinculaciones con un hospital. Roles de la API: `PRACTITIONER` y `CLINICIAN`.
+   *
+   * El vínculo nace **pendiente** (`awaiting: 'SUPPORT_STAFF'`): lo decide la secretaria y esto no concede nada. Los
+   * rechazos que la pantalla explica llegan con su `reason`: `SUPPORT_STAFF_NOT_FOUND` (404, no hay una secretaria con ese
+   * documento), `SUPPORT_TARGET_NOT_FOUND` (404, la vinculación no es suya) y `SUPPORT_LINK_DUPLICATE` (409, ya hay un
+   * vínculo vivo con ella).
+   */
+  inviteSupportStaff(invitation: NewSupportInvitation): Observable<SupportInvitationCreated> {
+    return this.http.post<SupportInvitationCreated>(
+      this.url('/me/practitioner/support-invitations'),
+      invitation,
+    );
   }
 
   /** `POST /practitioner-delegates/:id/accept` — el doctor acepta a esa persona. */
@@ -535,7 +542,10 @@ export class SupportAccessClient {
       .get<SupportActivityPage>(this.url('/me/practitioner/support-activity'), {
         params: new HttpParams({ fromObject: { ...activityParams(query) } }),
       })
-      .pipe(map(fromWireActivityPage));
+      .pipe(
+        map(fromWireActivityPage),
+        catchError(() => of({ items: [], count: 0, nextCursor: null })),
+      );
   }
 
   /* ---- chat ---------------------------------------------------------------- */

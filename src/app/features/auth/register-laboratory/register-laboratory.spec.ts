@@ -20,6 +20,11 @@ import type { EnrollmentDocumentKey } from '../shared-registration/legal-documen
 import { DiagnosisCenterEnrollment } from '../shared-registration/diagnostic-center-enrollment';
 import { RegisterLaboratory, TIPOS_DE_SOCIEDAD } from './register-laboratory';
 
+import { defaultWeekHours, toShifts } from '../shared-registration/opening-hours/opening-hours';
+
+/** The pre-filled week every sign-up starts with, as it travels to the API. */
+const HORARIO_PLANTILLA = toShifts(defaultWeekHours());
+
 /**
  * Catálogo fijo para el alta: país, jurisdicción, tipo de unidad y modalidad
  * que la API exige como conceptos. Cada id es «concepto-<código>».
@@ -138,6 +143,7 @@ describe('RegisterLaboratory', () => {
       // Una S.R.L. no puede omitir el poder (BR-09): la API responde 422.
       powerOfAttorneyFileId: 'file-poder',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
     });
     // El punto de la central es obligatorio (pedido del cliente del 26/10/2026).
     component.fijarGpsCentral(PUNTO_CENTRAL);
@@ -204,6 +210,25 @@ describe('RegisterLaboratory', () => {
     expect(component.form.touched).toBe(true);
   });
 
+  it('pregunta el nombre comercial junto a la razón social, y lo manda sólo si se escribió', () => {
+    // "Mi perfil" shows the trade name, so the sign-up must ask for it.
+    const empresa = component.paginas().find((p) => p.clave === 'empresa');
+    expect(empresa?.campos.map((c) => c.key)).toEqual([
+      'legalName',
+      'tradeName',
+      'companyType',
+      'taxId',
+    ]);
+    expect(empresa?.campos.find((c) => c.key === 'tradeName')?.required).toBeFalsy();
+
+    completarLoObligatorio();
+    component.form.controls.tradeName.setValue('  Laboratorio del Sur  ');
+
+    const cuerpo = enviarConExito();
+
+    expect(cuerpo.organization['tradeName']).toBe('Laboratorio del Sur');
+  });
+
   it('se envía con lo básico y nada más, como DIAGNOSTIC_CENTER', () => {
     completarLoObligatorio();
     expect(component.form.valid).toBe(true);
@@ -215,6 +240,8 @@ describe('RegisterLaboratory', () => {
       legalName: 'Laboratorio Clínico del Sur S.R.L.',
       legalEntityType: 'SRL',
       tenantType: 'DIAGNOSTIC_CENTER',
+      // The written NIT travels on its own, as in the pharmacy sign-up.
+      taxIdentifier: '1023456789',
       // País y jurisdicción: sin ellos la API responde 422 «exige país y jurisdicción».
       countryConceptId: 'concepto-BO',
       jurisdictionConceptId: 'concepto-JURISDICTION_NATIONAL',
@@ -234,13 +261,15 @@ describe('RegisterLaboratory', () => {
         address: { lines: ['Av. Cañoto esq. Ballivián 234'], latitude: -17.7833, longitude: -63.1821 },
       },
     });
+    // No trade name, no key: the legal name acts as the name.
+    expect('tradeName' in cuerpo.organization).toBe(false);
     expect(cuerpo.owner).toEqual({
       email: 'ana.paz@labsur.test',
       password: 'secreto12',
       displayName: 'Ana Paz Rojas',
     });
     // Lo opcional que no se completó no viaja: ni papeles ni cargos. El poder sí:
-    // una S.R.L. no puede omitirlo (BR-09).
+    // es obligatorio para toda organización (decisión del propietario, 05/11/2026).
     expect(cuerpo.organization).not.toHaveProperty('legalDocuments');
     expect(cuerpo.organization).not.toHaveProperty('executives');
     expect(component.registered()).toBe(true);
@@ -265,6 +294,7 @@ describe('RegisterLaboratory', () => {
     'legalRepIdNumber',
     'legalRepEmail',
     'password',
+    'confirmPassword',
   ] as const)('sin %s no se envía', (clave) => {
     completarLoObligatorio();
     // `patchValue` y no `controls[clave].setValue`: el tipo de sociedad se
@@ -312,10 +342,11 @@ describe('RegisterLaboratory', () => {
     expect(pagina('representante')?.campos.map((c) => c.key)).toEqual([
       'legalRepName',
       'legalRepIdNumber',
-      'legalRepEmail',
       'powerOfAttorneyFileId',
     ]);
     expect(pagina('documentos')?.campos.map((c) => c.key)).not.toContain('powerOfAttorneyFileId');
+    // The access email sits with the password and its confirmation.
+    expect(pagina('acceso')?.campos.map((c) => c.key)).toEqual(['legalRepEmail', 'password', 'confirmPassword']);
   });
 
   it('con papeles a medias no viaja el bloque: el DTO lo pide todo o nada', () => {
@@ -410,6 +441,7 @@ describe('RegisterLaboratory', () => {
       {
         name: 'Equipetrol',
         address: { lines: ['Av. San Martín 456'], latitude: -17.76, longitude: -63.19 },
+        openingHours: HORARIO_PLANTILLA,
       },
     ]);
   });
@@ -451,11 +483,13 @@ describe('RegisterLaboratory', () => {
         address: { lines: ['Av. Banzer 100'], latitude: -17.76, longitude: -63.19 },
         description: 'Planta baja',
         locationUrl: 'https://www.google.com/maps?q=-17.76,-63.19',
+        openingHours: HORARIO_PLANTILLA,
       },
       {
         name: 'Sur',
         address: { lines: [], latitude: -17.8, longitude: -63.2 },
         locationUrl: 'https://maps.app.goo.gl/abc',
+        openingHours: HORARIO_PLANTILLA,
       },
     ]);
   });
@@ -700,26 +734,30 @@ describe('RegisterLaboratory', () => {
       mimeType: 'application/pdf',
     };
 
-    it('keeps all six papers optional for UNIPERSONAL', () => {
+    it('keeps the five company papers optional for UNIPERSONAL, but still requires the power of attorney', () => {
       completarLoObligatorio();
       component.form.controls.companyType.setValue('UNIPERSONAL');
-      component.form.controls.powerOfAttorneyFileId.setValue('');
       for (const key of documentKeys) {
+        if (key === 'powerOfAttorneyFileId') continue;
         expect(component.form.controls[key].value).toBe('');
         expect(component.form.controls[key].valid).toBe(true);
       }
       expect(component.form.valid).toBe(true);
       const body = enviarConExito();
       expect(body.organization).not.toHaveProperty('legalDocuments');
-      expect(body.organization['legalRepresentative']).not.toHaveProperty('powerOfAttorneyFileId');
+      expect(body.organization['legalRepresentative']).toHaveProperty(
+        'powerOfAttorneyFileId',
+        'file-poder',
+      );
       // La API exige el documento del representante en toda alta de organización.
       expect(body.organization['legalRepresentative']).toHaveProperty('idNumber', '4872190');
     });
 
-    // BR-09: la API rechaza con 422 una S.R.L. sin poder notariado.
-    it('requires the power of attorney for SRL, as the API does', () => {
+    // Decisión del propietario (05/11/2026): el poder es obligatorio para toda
+    // organización, también la unipersonal que la API (BR-09) dejaría pasar sin él.
+    it.each(['SRL', 'UNIPERSONAL'])('requires the power of attorney for %s', (tipo) => {
       completarLoObligatorio();
-      component.form.controls.companyType.setValue('SRL');
+      component.form.controls.companyType.setValue(tipo);
       component.form.controls.powerOfAttorneyFileId.setValue('');
       expect(component.form.controls.powerOfAttorneyFileId.valid).toBe(false);
       expect(component.form.valid).toBe(false);

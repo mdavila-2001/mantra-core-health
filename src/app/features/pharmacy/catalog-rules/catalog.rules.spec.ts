@@ -13,12 +13,24 @@ import {
   reviewProduct,
   type ProductFields,
 } from './catalog.rules';
+import { EXAMPLE_ROWS } from './catalog-example-rows';
 
 function campos(parciales: Partial<ProductFields>): ProductFields {
   return { ...EMPTY_FIELDS, ...parciales };
 }
 
 describe('revisarProducto', () => {
+  // Prices travel in the products file: `codigo,precio` updates existing
+  // products, so a name is only required to create one.
+  it('una lista de precios (`codigo,precio`) actualiza lo que ya existe y pide nombre sólo para crear', () => {
+    const lectura = readCsv('codigo;precio\nPAR-500;20\nNUEVO-1;5\n');
+    const [existente, nuevo] = reviewLoad(lectura.filas, new Map([['PAR-500', 'p-1']]));
+
+    expect(existente).toMatchObject({ lista: true, accion: 'ACTUALIZAR', borrador: { productCode: 'PAR-500', unitPrice: 20 } });
+    expect(nuevo).toMatchObject({ lista: false, motivo: 'INVALIDA' });
+    expect(nuevo!.lista === false && nuevo!.errores[0]).toContain('Ponga la marca, el nombre genérico');
+  });
+
   it('arma el alta con sólo lo que se escribió', () => {
     const revision = reviewProduct(
       campos({ codigo: ' PAR-500 ', generico: 'Paracetamol', concentracion: '500 mg' }),
@@ -128,6 +140,45 @@ describe('revisarProducto · vinculado al catálogo oficial', () => {
     if (!resultado.valido) throw new Error('debía ser válido');
     const cambios = draftChanges(resultado.borrador, true);
     expect(cambios).toHaveProperty('brandName', null);
+  });
+});
+
+describe('revisarProducto · medicamento de la receta (columna «medicamento»)', () => {
+  it('la plantilla trae la columna, después de «receta», y el ejemplo recetable la usa', () => {
+    const headers = CSV_COLUMNS.map((columna) => columna.encabezado);
+    expect(headers.indexOf('medicamento')).toBe(headers.indexOf('receta') + 1);
+    expect(EXAMPLE_ROWS.find((fila) => fila.codigo === 'AMX-500-21')?.medicamento).toBe('Amoxicilina');
+  });
+
+  it('el CSV lleva el nombre tal cual, sin espacios de más, para que lo resuelva el servidor', () => {
+    const lectura = readCsv('codigo;generico;receta;medicamento\nAMX;Amoxicilina;sí;  Amoxicilina \n');
+    const revision = reviewProduct(lectura.filas[0]!.campos);
+
+    expect(revision).toEqual({
+      valido: true,
+      borrador: {
+        productCode: 'AMX',
+        genericName: 'Amoxicilina',
+        requiresPrescription: true,
+        medicationName: 'Amoxicilina',
+        inStock: true,
+      },
+    });
+  });
+
+  it('vacía o sin la columna no manda nada: el producto queda como estaba', () => {
+    for (const fila of [campos({ codigo: 'A1', marca: 'x' }), campos({ codigo: 'A1', marca: 'x', medicamento: '  ' })]) {
+      const revision = reviewProduct(fila);
+      expect(revision.valido && 'medicationName' in revision.borrador).toBe(false);
+    }
+  });
+
+  it('un producto del catálogo oficial no la manda: su medicamento lo trae el registro', () => {
+    const revision = reviewProduct(campos({ codigo: 'A1', medicamento: 'Amoxicilina' }), CATEGORIES, {
+      catalogProductId: 'cat-1',
+    });
+
+    expect(revision.valido && 'medicationName' in revision.borrador).toBe(false);
   });
 });
 

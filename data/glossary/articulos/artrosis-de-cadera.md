@@ -1,5 +1,6 @@
 ---
 slug: artrosis-de-cadera
+image: artrosis-de-cadera.svg | En la artrosis el cartílago se adelgaza y aparecen osteofitos. | Dos caderas lado a lado, una sana con cartílago grueso y otra con artrosis con cartílago fino, osteofitos y espacio estrecho, junto a síntomas y tratamiento.
 ---
 
 ## [definition] Introducción

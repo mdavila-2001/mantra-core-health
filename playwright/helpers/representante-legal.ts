@@ -3,31 +3,20 @@ import type { Page } from '@playwright/test';
 import { esperarSubidaLista, pdfDePrueba, subirArchivo } from './documentos-legales';
 
 /**
- * Completa las dos páginas del representante legal (subtarea 1.4 + desglose
- * de nombre): las cinco partes del nombre, CI, correo y contraseña en
- * «(1 de 2)», el poder notariado en «(2 de 2)». Deja el asistente en
- * «Directorio ejecutivo».
+ * Completa la página del representante legal (subtarea 1.4 + desglose de
+ * nombre): las cinco partes del nombre, la CI y el poder notariado. Deja el
+ * asistente en «Directorio ejecutivo».
  *
- * El representante legal es también el owner: es la única persona que inicia
- * sesión por la aseguradora, así que el correo y la contraseña de acá son los
- * del login. No hay una página «Tu cuenta» aparte.
+ * El representante legal es también el owner, pero su correo de acceso y la
+ * contraseña van en «Su acceso», la última página: ver `completarGerencias`.
  */
-export async function completarRepresentanteLegal(
-  page: Page,
-  opciones: { readonly email?: string } = {},
-): Promise<void> {
+export async function completarRepresentanteLegal(page: Page): Promise<void> {
   await page.getByTestId('registro-organizacion-representante-nombre').fill('Mariana');
   await page.getByTestId('registro-organizacion-representante-apellido-paterno').fill('Siles');
   await page
     .getByTestId('registro-organizacion-representante-apellido-materno')
     .fill('Justiniano');
   await page.getByTestId('registro-organizacion-representante-ci').fill('4872190 SC');
-  await page
-    .getByTestId('registro-organizacion-representante-correo')
-    .fill(opciones.email ?? 'legal@andina.test');
-  await page.getByTestId('registro-organizacion-representante-password').fill('secreto12');
-  await page.getByTestId('paginated-form-continuar').click();
-
   await subirArchivo(page, 'powerOfAttorneyFileId', pdfDePrueba('poder-notariado'));
   await esperarSubidaLista(page, 'powerOfAttorneyFileId');
   await page.getByTestId('paginated-form-continuar').click();
@@ -38,9 +27,9 @@ export async function completarRepresentanteLegal(
  * nombre): la General ya está abierta y trae las cinco partes del nombre
  * (AC-01); Comercial y Marketing se abren por su cabecera antes de escribir
  * y sólo llevan nombre y apellido paterno, las dos partes obligatorias
- * (AC-02). Es la última página del alta: su «Continuar» **envía** el alta.
+ * (AC-02). Deja el asistente en «Su acceso».
  */
-export async function completarGerencias(page: Page): Promise<void> {
+export async function completarDirectorio(page: Page): Promise<void> {
   // La General trae las cinco partes (AC-01): es la que demuestra el
   // desglose completo, comercial y marketing sólo las dos obligatorias.
   await page
@@ -92,6 +81,22 @@ export async function completarGerencias(page: Page): Promise<void> {
   await page
     .getByTestId('registro-organizacion-executives-marketing-manager-email')
     .fill('mm@andina.test');
+  await page.getByTestId('paginated-form-continuar').click();
+}
 
+/**
+ * Las tres gerencias y después «Su acceso» —el correo de acceso del
+ * representante legal, la contraseña y su confirmación—, que **envía** el alta.
+ */
+export async function completarGerencias(
+  page: Page,
+  opciones: { readonly email?: string } = {},
+): Promise<void> {
+  await completarDirectorio(page);
+  await page
+    .getByTestId('registro-organizacion-representante-correo')
+    .fill(opciones.email ?? 'legal@andina.test');
+  await page.getByTestId('registro-organizacion-representante-password').fill('secreto12');
+  await page.getByTestId('registro-organizacion-representante-password-confirm').fill('secreto12');
   await page.getByTestId('paginated-form-continuar').click();
 }

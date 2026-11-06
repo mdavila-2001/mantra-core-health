@@ -11,8 +11,6 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
-
 import { PharmacyClient } from '../../../core/data-access/pharmacy/pharmacy.client';
 import type { PharmacyProduct } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -21,49 +19,50 @@ import { dataOf, empty, loading, mapData, ready } from '../../../core/view-state
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
+import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type {
   ColumnDef,
   CursorState,
+  SortState,
 } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { CsvExportService, type CsvColumn } from '../../../shared/utils/csv-export/csv-export';
 
-import { MAX_PRICE, parsePrice } from '../catalog-rules/catalog.rules';
+import { sortRows } from '../catalog/catalog-sort';
+import { PRICE_HEADERS } from '../import/product-templates';
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
-import { PharmacyScope } from '../pharmacy-scope';
-import { productName, productStatus } from '../products/product-view';
+import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
+import { PRODUCT_SORT_ACCESSORS, productName, productStatus } from '../products/product-view';
+import { PriceDialog } from './price-dialog/price-dialog';
 
 /** Tope del listado: el máximo que acepta `GET /pharmacy/products`. */
 const LIST_LIMIT = 500;
-/** Filas por página. */
-const PAGE_SIZE = 10;
+/** Filas por página: con filas compactas, las que entran en una pantalla. */
+const PAGE_SIZE = 25;
 
-/** Un producto que no se pudo guardar, con su motivo. */
-interface PriceRejection {
-  readonly name: string;
-  readonly reason: string;
-}
+const EDIT: RowAction = { code: 'edit', label: 'Editar', icon: 'edit' };
+const CLEAR: RowAction = { code: 'clear', label: 'Quitar precio', icon: 'remove', destructive: true };
 
 /**
- * **Precios** de la farmacia: el precio de venta de cada producto cargado,
- * editable en la tabla y guardado junto con «Guardar cambios».
+ * Pharmacy **Prices**: the selling price of every loaded product.
  *
- * Es el precio que ven los pacientes en la vitrina y en «dónde comprar la
- * receta». Guardar manda **sólo** las filas que cambiaron, una por una y en
- * serie, con `PATCH /pharmacies/:id/products/:productId` (el mismo que usa el
- * diálogo del producto; P47, sólo simulador). Una que falla no frena a las
- * demás: al final se dice cuáles no entraron y por qué.
+ * It is the price patients see in the showcase and in «dónde comprar la
+ * receta». Each row has its actions: «Editar» opens {@link PriceDialog}
+ * (Save / Cancel) and «Quitar precio» clears it after confirming. Both save
+ * through `PATCH /pharmacies/:id/products/:productId` and re-read the table
+ * from the API. Bulk changes go through the prices CSV.
  *
- * Un precio vacío es «sin precio»: el producto sigue publicado, pero la
- * vitrina no muestra cuánto cuesta. Los retirados no aparecen.
+ * Without a price the product stays published, but the showcase does not show
+ * what it costs. Withdrawn products are not listed.
  */
 @Component({
   selector: 'app-pharmacy-prices',
@@ -71,16 +70,16 @@ interface PriceRejection {
     Alert,
     AppButton,
     Badge,
-    Card,
     DataTable,
     FormField,
-    Input,
     PageHeader,
+    PriceDialog,
+    RowActions,
     SearchField,
     Select,
     ViewStateHost,
   ],
-  providers: [PharmacyScope],
+  providers: [providePharmacyScope()],
   templateUrl: './pharmacy-prices.html',
   styleUrl: './pharmacy-prices.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -92,17 +91,19 @@ export class PharmacyPrices {
   protected readonly scope = inject(PharmacyScope);
   private readonly pharmacy = inject(PharmacyClient);
   private readonly toasts = inject(ToastService);
+  private readonly dialogs = inject(DialogService);
+  private readonly csv = inject(CsvExportService);
 
   protected readonly products = signal<ViewState<readonly PharmacyProduct[]>>(loading());
-  /** Lo escrito y sin guardar, por producto. */
-  protected readonly edits = signal<Readonly<Record<string, string>>>({});
+  /** La API cortó el listado en 500: lo que no entró no se ve ni se exporta. */
+  protected readonly truncated = signal(false);
+  protected readonly sort = signal<SortState | null>(null);
   protected readonly term = signal('');
-  protected readonly errors = signal<readonly string[]>([]);
-  protected readonly rejected = signal<readonly PriceRejection[]>([]);
-  protected readonly saving = signal(false);
   protected readonly offset = signal(0);
-
-  protected readonly dirtyCount = computed(() => Object.keys(this.edits()).length);
+  /** Product whose price is being edited in the modal; `null` while closed. */
+  protected readonly editing = signal<PharmacyProduct | null>(null);
+  /** Rows with a «Quitar precio» request in flight. */
+  protected readonly busy = signal<ReadonlySet<string>>(new Set());
 
   private readonly visible = computed<ViewState<readonly PharmacyProduct[]>>(() => {
     const state = this.products();
@@ -118,7 +119,7 @@ export class PharmacyPrices {
         ),
     );
     return list.length > 0
-      ? ready(list)
+      ? ready(sortRows(list, this.sort(), PRODUCT_SORT_ACCESSORS))
       : empty({ label: 'Pruebe con otra palabra' }, `Nada coincide con «${this.term().trim()}».`);
   });
 
@@ -137,15 +138,16 @@ export class PharmacyPrices {
   private readonly nameCell = viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('nameCell');
   private readonly currentCell =
     viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('currentCell');
-  private readonly priceCell = viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('priceCell');
   private readonly statusCell =
     viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('statusCell');
+  private readonly actionsCell =
+    viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('actionsCell');
 
   protected readonly columns = computed<readonly ColumnDef<PharmacyProduct>[]>(() => [
-    { key: 'name', header: 'Producto', priority: 1, cell: this.nameCell() },
-    { key: 'current', header: 'Precio publicado', priority: 2, cell: this.currentCell() },
-    { key: 'price', header: 'Nuevo precio (Bs)', priority: 1, cell: this.priceCell() },
-    { key: 'status', header: 'En la vitrina', priority: 3, cell: this.statusCell() },
+    { key: 'name', header: 'Producto', priority: 1, sortable: true, cell: this.nameCell() },
+    { key: 'current', header: 'Precio publicado', priority: 2, sortable: true, cell: this.currentCell() },
+    { key: 'status', header: 'En la vitrina', priority: 3, sortable: true, cell: this.statusCell() },
+    { key: 'actions', header: 'Acciones', priority: 1, align: 'end', sticky: 'end', cell: this.actionsCell() },
   ]);
 
   protected readonly rowId = (product: PharmacyProduct): string => product.id;
@@ -156,24 +158,30 @@ export class PharmacyPrices {
   constructor() {
     effect(() => {
       if (this.scope.pharmacyId() !== null) {
-        untracked(() => {
-          this.edits.set({});
-          this.reload();
-        });
+        untracked(() => this.reload());
       }
     });
   }
 
-  protected reload(): void {
+  /**
+   * Reads the catalog. `keepPage` (after a row action) keeps the current page
+   * and the table on screen while it re-reads, instead of jumping to page 1.
+   */
+  protected reload(keepPage = false): void {
     const pharmacyId = this.scope.pharmacyId();
     if (pharmacyId === null) {
       return;
     }
-    this.products.set(loading());
-    this.offset.set(0);
+    if (!keepPage) {
+      this.products.set(loading());
+      this.truncated.set(false);
+      this.offset.set(0);
+    }
     this.pharmacy.searchProducts({ pharmacyId, managed: true, limit: LIST_LIMIT }).subscribe({
       next: (page) => {
+        this.truncated.set(page.truncated);
         const alive = page.items.filter((product) => productStatus(product) !== 'WITHDRAWN');
+        this.offset.update((offset) => (offset < alive.length ? offset : 0));
         this.products.set(
           alive.length > 0
             ? ready(alive)
@@ -197,106 +205,77 @@ export class PharmacyPrices {
     this.offset.set(0);
   }
 
-  /* ─── Lo escrito ──────────────────────────────────────────────────────── */
+  protected sortBy(sort: SortState): void {
+    this.sort.set(sort);
+    this.offset.set(0);
+  }
 
-  protected priceOf(product: PharmacyProduct): string {
-    return this.edits()[product.id] ?? product.unitPrice ?? '';
+  /**
+   * Descarga los precios publicados de lo que la búsqueda deja a la vista, con
+   * los encabezados de la plantilla de precios: se corrige en una planilla y
+   * se vuelve a subir con «Importar CSV» → «Productos y precios».
+   */
+  protected exportCsv(): void {
+    const [code, price] = PRICE_HEADERS;
+    const columns: CsvColumn<PharmacyProduct>[] = [
+      { header: code, value: (product) => product.productCode },
+      { header: price, value: (product) => product.unitPrice ?? '' },
+    ];
+    this.csv.download(dataOf(this.visible()) ?? [], columns, 'precios-de-la-farmacia.csv');
+  }
+
+  /* ─── Acciones de la fila ────────────────────────────────────────────── */
+
+  protected actionsOf(product: PharmacyProduct): readonly RowAction[] {
+    return product.unitPrice ? [EDIT, CLEAR] : [EDIT];
   }
 
   protected publishedPrice(product: PharmacyProduct): string | null {
     return product.unitPrice ? withDisplayCurrency(product.unitPrice) : null;
   }
 
-  protected setPrice(product: PharmacyProduct, value: string | number | null): void {
-    const text = value === null ? '' : String(value);
-    this.edits.update((current) => {
-      const next = { ...current };
-      // Volver al valor de origen deja la fila como no editada.
-      if (samePrice(text, product.unitPrice ?? '')) {
-        delete next[product.id];
-      } else {
-        next[product.id] = text;
-      }
-      return next;
+  protected async onRowAction(code: string, product: PharmacyProduct): Promise<void> {
+    if (code === EDIT.code) {
+      this.editing.set(product);
+      return;
+    }
+    if (code === CLEAR.code) {
+      await this.clearPrice(product);
+    }
+  }
+
+  /** The modal saved: close it and re-read the table from the API. */
+  protected onSaved(): void {
+    this.editing.set(null);
+    this.reload(true);
+  }
+
+  private async clearPrice(product: PharmacyProduct): Promise<void> {
+    const pharmacyId = this.scope.pharmacyId();
+    if (pharmacyId === null) {
+      return;
+    }
+    const confirmed = await this.dialogs.confirm({
+      title: '¿Quitar el precio?',
+      message: `«${productName(product)}» sigue publicado, pero la vitrina deja de mostrar cuánto cuesta.`,
+      confirmLabel: 'Quitar precio',
+      destructive: true,
+    });
+    if (!confirmed) {
+      return;
+    }
+    const release = (): void => this.busy.update((set) => new Set([...set].filter((id) => id !== product.id)));
+    this.busy.update((set) => new Set(set).add(product.id));
+    this.pharmacy.updateProduct(pharmacyId, product.id, { unitPrice: null }).subscribe({
+      next: () => {
+        release();
+        this.toasts.success(`Quitó el precio de «${productName(product)}».`);
+        this.reload(true);
+      },
+      error: (error: unknown) => {
+        release();
+        this.toasts.error(pharmacyErrorMessage(error, 'No se pudo quitar el precio.'));
+      },
     });
   }
-
-  protected isEdited(product: PharmacyProduct): boolean {
-    return this.edits()[product.id] !== undefined;
-  }
-
-  protected discard(): void {
-    this.edits.set({});
-    this.errors.set([]);
-  }
-
-  /* ─── Guardar ─────────────────────────────────────────────────────────── */
-
-  protected save(): void {
-    const pharmacyId = this.scope.pharmacyId();
-    if (pharmacyId === null || this.saving() || this.dirtyCount() === 0) {
-      return;
-    }
-    const changes: { product: PharmacyProduct; unitPrice: number | null }[] = [];
-    const problems: string[] = [];
-    for (const product of dataOf(this.products()) ?? []) {
-      const text = this.edits()[product.id];
-      if (text === undefined) {
-        continue;
-      }
-      const unitPrice = parsePrice(text);
-      if (unitPrice === 'invalido') {
-        problems.push(
-          `«${productName(product)}»: el precio va en bolivianos, mayor que 0 y hasta ${MAX_PRICE.toLocaleString('es-BO')}, con hasta dos decimales.`,
-        );
-        continue;
-      }
-      changes.push({ product, unitPrice });
-    }
-    this.errors.set(problems);
-    this.rejected.set([]);
-    if (problems.length > 0) {
-      return;
-    }
-    this.saving.set(true);
-    from(changes)
-      .pipe(
-        concatMap(({ product, unitPrice }) =>
-          this.pharmacy.updateProduct(pharmacyId, product.id, { unitPrice }).pipe(
-            map(() => null),
-            catchError((error: unknown) =>
-              of({
-                name: productName(product),
-                reason: pharmacyErrorMessage(error, 'No se pudo guardar el precio.'),
-              }),
-            ),
-          ),
-        ),
-        toArray(),
-      )
-      .subscribe((results) => {
-        this.saving.set(false);
-        const rejected = results.filter((result): result is PriceRejection => result !== null);
-        const saved = results.length - rejected.length;
-        if (saved > 0) {
-          this.toasts.success(
-            saved === 1 ? 'Guardó el precio de 1 producto.' : `Guardó el precio de ${saved} productos.`,
-          );
-        }
-        this.rejected.set(rejected);
-        this.edits.set({});
-        // La prueba es la tabla releída de la API.
-        this.reload();
-      });
-  }
-}
-
-/** Dos precios escritos son el mismo si valen lo mismo («12,5» = «12.50»). */
-function samePrice(a: string, b: string): boolean {
-  const left = parsePrice(a);
-  const right = parsePrice(b);
-  if (left === 'invalido' || right === 'invalido') {
-    return a.trim() === b.trim();
-  }
-  return left === right;
 }

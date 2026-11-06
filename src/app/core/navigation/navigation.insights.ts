@@ -22,7 +22,7 @@ export const INSIGHTS_SECTIONS: readonly AppSection[] = [
     // redirección resuelva y para los subgrupos del menú.
     fueraDelMenuPara: [ANY_ROLE],
     label: 'AloVida Insights',
-    group: 'Administración',
+    group: 'General',
     icon: 'chart',
     roles: ['MARKETING_MANAGER', 'PLATFORM_ADMIN', 'DATA_PLATFORM_ADMIN'],
     availability: 'disponible',

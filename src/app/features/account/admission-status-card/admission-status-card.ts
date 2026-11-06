@@ -1,17 +1,18 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { AdmissionsClient } from '@core/data-access/admissions/admissions.client';
 import { ATTESTATION_VERSION, type MyAdmission } from '@core/data-access/admissions/admissions.types';
-import { readAdmissionError } from '@shared/admissions/admission-error';
+import { OwnAdmissionClient } from '@core/data-access/admissions/own-admission.client';
+import { readAdmissionError, type AdmissionError } from '@shared/admissions/admission-error';
 import {
   admissionStatusVariant,
   doctorStatusCopy,
   requirementStatusLabel,
 } from '@shared/admissions/admission-presentation';
 import { AppButton } from '@shared/components/atoms/button/button';
+import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { Checkbox } from '@shared/components/atoms/checkbox/checkbox';
 import { Skeleton } from '@shared/components/atoms/skeleton/skeleton';
@@ -33,6 +34,10 @@ type CardState = 'loading' | 'none' | 'ready' | 'error';
  * error, porque no hay nada que decirle. Un fallo de red sí se dice, en chico y
  * con reintento: callar haría creer que no hay solicitud.
  *
+ * Except where the screen offers to send one (`allowSubmit`, «Mis
+ * verificaciones»): there, no request means the card «Enviar a verificación»,
+ * with the same declaration text and version as the resubmission.
+ *
  * > [!note] La insignia azul de «verificado» y el estado «en proceso de
  * > verificación» de la guía y el chat los pinta un átomo compartido que
  * > mantiene otro equipo (`app-verification-badge`). Cuando exista se importa
@@ -40,17 +45,21 @@ type CardState = 'loading' | 'none' | 'ready' | 'error';
  */
 @Component({
   selector: 'app-admission-status-card',
-  imports: [Alert, AppButton, Badge, Card, Checkbox, DatePipe, RouterLink, Skeleton],
+  imports: [Alert, AppButton, Badge, Card, Checkbox, DatePipe, NavIcon, RouterLink, Skeleton],
   templateUrl: './admission-status-card.html',
   styleUrl: './admission-status-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdmissionStatusCard {
-  private readonly client = inject(AdmissionsClient);
+  private readonly client = inject(OwnAdmissionClient);
   private readonly toast = inject(ToastService);
 
   /** En el panel de inicio, una solicitud ya verificada no ocupa lugar. */
   readonly hideWhenVerified = input(false, { transform: booleanAttribute });
+  /** Without a request (404), offer to send the first one instead of drawing nothing. */
+  readonly allowSubmit = input(false, { transform: booleanAttribute });
+  /** The API says the profile is no longer pending: the host rereads what it shows. */
+  readonly profileChanged = output<void>();
 
   protected readonly state = signal<CardState>('loading');
   protected readonly admission = signal<MyAdmission | null>(null);
@@ -61,7 +70,7 @@ export class AdmissionStatusCard {
   protected readonly copy = computed(() => doctorStatusCopy(this.admission()?.status.code ?? ''));
   protected readonly variant = computed(() => admissionStatusVariant(this.admission()?.status.code ?? ''));
   protected readonly visible = computed(() => {
-    if (this.state() === 'none') return false;
+    if (this.state() === 'none') return this.allowSubmit();
     return !(this.hideWhenVerified() && this.admission()?.status.code === 'VERIFIED');
   });
   protected readonly isOpen = computed(() => ['SUBMITTED', 'IN_REVIEW'].includes(this.admission()?.status.code ?? ''));
@@ -77,7 +86,18 @@ export class AdmissionStatusCard {
   protected readonly canWithdraw = computed(() => this.admission()?.canWithdraw === true);
   protected readonly confirmingWithdraw = signal(false);
   protected readonly attestationVersion = ATTESTATION_VERSION;
+  /** The declaration the person marks, the same for the first request and the resubmission. */
+  protected readonly attestationText = 'Declaro que los datos y documentos son verídicos.';
   protected readonly profileRoute = '/my-account';
+
+  /** Why the first request did not go, in words; `null` when nothing failed. */
+  protected readonly submitError = signal<string | null>(null);
+  /** The API did not receive the declaration: the checkbox says so. */
+  protected readonly attestationRefused = signal(false);
+  /** The profile stopped being pending meanwhile: nothing left to send. */
+  protected readonly notPending = signal(false);
+  /** The card is «Enviar a verificación»: no request, and still something to send. */
+  protected readonly offersSubmit = computed(() => this.state() === 'none' && !this.notPending());
 
   constructor() {
     this.load();
@@ -103,6 +123,58 @@ export class AdmissionStatusCard {
 
   protected onAttest(valor: boolean): void {
     this.attested.set(valor);
+    if (valor) this.attestationRefused.set(false);
+  }
+
+  /** The first request: same attestation and version as the resubmission, never by default. */
+  protected submit(): void {
+    if (this.submitting() || !this.attested()) return;
+    this.submitting.set(true);
+    this.submitError.set(null);
+    this.client.submitMyAdmission({ attested: true, attestationVersion: ATTESTATION_VERSION }).subscribe({
+      next: (mine) => {
+        this.admission.set(mine);
+        this.state.set('ready');
+        this.attested.set(false);
+        this.submitting.set(false);
+        this.toast.success('Enviamos su solicitud. Le avisaremos cuando haya una decisión.');
+      },
+      error: (error: unknown) => this.submitRefused(readAdmissionError(error)),
+    });
+  }
+
+  /**
+   * Each refusal means something different, told by its `reason` and never by
+   * the HTTP status. The ones that say the screen is out of date reread: a
+   * request that already exists is shown; a profile no longer pending makes
+   * the host reread its summary.
+   */
+  private submitRefused(error: AdmissionError): void {
+    this.submitting.set(false);
+    switch (error.reason) {
+      case 'ADMISSION_ALREADY_EXISTS':
+        // The attestation went with a request that was not created: it does
+        // not carry over to whatever the existing one asks for next.
+        this.attested.set(false);
+        this.toast.info('Ya tenía una solicitud de verificación: le mostramos su estado.');
+        this.load();
+        return;
+      case 'ADMISSION_NOT_PENDING':
+        this.notPending.set(true);
+        this.profileChanged.emit();
+        return;
+      case 'ADMISSION_ATTESTATION_REQUIRED':
+        this.attested.set(false);
+        this.attestationRefused.set(true);
+        return;
+      case 'ADMISSION_NOT_FOUND':
+        this.submitError.set(
+          'Su cuenta no tiene un perfil profesional que verificar. Complete su perfil y vuelva a intentarlo.',
+        );
+        return;
+      default:
+        this.submitError.set(error.message);
+    }
   }
 
   protected resubmit(): void {

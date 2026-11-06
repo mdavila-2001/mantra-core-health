@@ -5,7 +5,11 @@ import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angul
 import { BehaviorSubject, of } from 'rxjs';
 import { vi } from 'vitest';
 
+import { NavigationService } from '../../../core/navigation/navigation.service';
 import { LaboratoryDetail } from './laboratory-detail';
+
+/** Sections the stubbed navigation shows; a patient has «Mis órdenes». */
+let visibleSections: { path: string }[] = [];
 
 const UNIT_ID = '11111111-1111-4111-8111-111111111111';
 const SITE_ID = '22222222-2222-4222-8222-222222222222';
@@ -90,6 +94,7 @@ describe('LaboratoryDetail', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: NavigationService, useValue: { visibleSections: () => visibleSections } },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -148,7 +153,10 @@ describe('LaboratoryDetail', () => {
     vi.spyOn(Router.prototype, 'navigate').mockResolvedValue(true);
   });
 
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    visibleSections = [];
+  });
 
   afterEach(() => http?.verify());
 
@@ -439,7 +447,150 @@ describe('LaboratoryDetail', () => {
       expect(pestanaAbierta()).toBe('Estudios (0)');
       expect(host().textContent).toContain('todavía no publicó su lista de estudios');
       expect(host().textContent).toContain('Vuelva al directorio');
+      // Y ofrece la salida, no sólo la nombra; la nota de precios no se dibuja sobre nada.
+      const salida = host().querySelector<HTMLAnchorElement>('[data-testid="unit-studies-empty"] a');
+      expect(salida?.getAttribute('href')).toBe('/laboratory-directory');
+      expect(host().querySelector('details')).toBeNull();
     });
+  });
+
+  describe('el filtro por área', () => {
+    function conAreas() {
+      const base = DETAIL.studies[0]!;
+      const areas = ['Hematología', 'Hematología', 'Bioquímica'];
+      return {
+        ...DETAIL,
+        studies: areas.map((area, i) => ({
+          ...base,
+          id: `4444444${i}-4444-4444-8444-44444444444${i}`,
+          code: `EST-${i}`,
+          name: `Estudio ${i}`,
+          modality: { code: `M${i}`, display: area },
+        })),
+      };
+    }
+    const chips = (): HTMLElement[] => [...host().querySelectorAll<HTMLElement>('app-chip')];
+
+    it('no aparece con una sola área', () => {
+      mountLoaded();
+      expect(chips()).toHaveLength(0);
+    });
+
+    it('ofrece cada área con su cuenta, de la más grande a la más chica, y acota la rejilla', () => {
+      mountLoaded(conAreas());
+
+      expect(chips().map((c) => c.textContent?.trim())).toEqual([
+        'Todas',
+        'Hematología · 2',
+        'Bioquímica · 1',
+      ]);
+
+      chips()[2]!.click();
+      fixture.detectChanges();
+      expect(host().querySelectorAll('[data-testid="unit-study"]')).toHaveLength(1);
+
+      // Otro clic en la misma área vuelve a mostrar todas.
+      chips()[2]!.click();
+      fixture.detectChanges();
+      expect(host().querySelectorAll('[data-testid="unit-study"]')).toHaveLength(3);
+    });
+
+    it('«Todas» sigue marcado aunque se lo vuelva a tocar', () => {
+      mountLoaded(conAreas());
+
+      chips()[0]!.click();
+      fixture.detectChanges();
+      expect(chips()[0]!.getAttribute('aria-pressed')).toBe('true');
+      expect(host().querySelectorAll('[data-testid="unit-study"]')).toHaveLength(3);
+    });
+
+    it('con un área y una búsqueda sin resultados, nombra el área y ofrece buscar en todas', () => {
+      mountLoaded(conAreas());
+      chips()[2]!.click();
+      const componente = fixture.componentInstance as unknown as { terminoDeEstudio: { set: (v: string) => void } };
+      componente.terminoDeEstudio.set('Estudio 0');
+      fixture.detectChanges();
+
+      expect(host().textContent).toContain('Ningún estudio de Bioquímica coincide con «Estudio 0»');
+      const todas = [...host().querySelectorAll('button')].find((b) => /todas las áreas/.test(b.textContent ?? ''));
+      todas!.click();
+      fixture.detectChanges();
+      expect(host().querySelectorAll('[data-testid="unit-study"]')).toHaveLength(1);
+    });
+  });
+
+  describe('la cabecera', () => {
+    it('ofrece reservar desde «Mis órdenes» sólo a quien la tiene, como enlace', () => {
+      visibleSections = [{ path: 'my-account/diagnostic-orders' }];
+      mountLoaded();
+      const enlace = host().querySelector<HTMLAnchorElement>('a[data-testid="unit-book"]');
+      expect(enlace).not.toBeNull();
+      expect(enlace!.getAttribute('href')).toBe('/my-account/diagnostic-orders');
+      // Proyectado en el encabezado, no perdido por el control de flujo.
+      expect(enlace!.closest('app-page-header')).not.toBeNull();
+    });
+
+    it('no ofrece reservar a quien no tiene «Mis órdenes» (médico, organización)', () => {
+      mountLoaded();
+      expect(host().querySelector('[data-testid="unit-book"]')).toBeNull();
+    });
+
+    it('muestra el sello de centro acreditado en el encabezado, y no sin acreditaciones', () => {
+      mountLoaded();
+      expect(host().querySelector('app-page-header [data-testid="unit-trust"]')?.textContent).toContain(
+        'Centro acreditado',
+      );
+      fixture.destroy();
+      TestBed.resetTestingModule();
+      mountLoaded({ ...DETAIL, accreditations: [] });
+      expect(host().querySelector('[data-testid="unit-trust"]')).toBeNull();
+    });
+  });
+
+  it('dibuja los estudios por tandas de 24 y sigue con «Mostrar más»', () => {
+    const base = DETAIL.studies[0]!;
+    mountLoaded({
+      ...DETAIL,
+      studies: Array.from({ length: 30 }, (_, i) => ({ ...base, id: `id-${i}`, code: `E-${i}`, name: `Estudio ${i}` })),
+    });
+
+    expect(host().querySelectorAll('[data-testid="unit-study"]')).toHaveLength(24);
+    expect(host().textContent).toContain('Mostrando 24 de 30 estudios');
+    host().querySelector<HTMLButtonElement>('[data-testid="unit-studies-more"]')!.click();
+    fixture.detectChanges();
+    expect(host().querySelectorAll('[data-testid="unit-study"]')).toHaveLength(30);
+    expect(host().querySelector('[data-testid="unit-studies-more"]')).toBeNull();
+  });
+
+  it('al abrir otro centro empieza sin búsqueda ni área', () => {
+    const params = new BehaviorSubject(convertToParamMap({ unitId: UNIT_ID }));
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: NavigationService, useValue: { visibleSections: () => [] } },
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: params, queryParamMap: of(convertToParamMap({})), snapshot: { fragment: null } },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(LaboratoryDetail);
+    fixture.detectChanges();
+    http.expectOne(`/diagnostic-units/${UNIT_ID}`).flush(DETAIL);
+    const componente = fixture.componentInstance as unknown as {
+      terminoDeEstudio: { set: (v: string) => void; (): string };
+      selectedArea: { set: (v: string | null) => void; (): string | null };
+    };
+    componente.terminoDeEstudio.set('glucosa');
+    componente.selectedArea.set('Bioquímica');
+
+    params.next(convertToParamMap({ unitId: SITE_ID }));
+    http.expectOne(`/diagnostic-units/${SITE_ID}`).flush(DETAIL);
+    expect(componente.terminoDeEstudio()).toBe('');
+    expect(componente.selectedArea()).toBeNull();
   });
 
   it('maps a cross-tenant/not-found response to the neutral not-found state', () => {

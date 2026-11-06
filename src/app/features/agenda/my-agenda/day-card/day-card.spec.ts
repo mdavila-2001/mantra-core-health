@@ -319,6 +319,9 @@ describe('TarjetaDelDia', () => {
       expect(raiz.querySelector('[data-testid="tarjeta-franja-del-cupo"]')?.textContent).toContain(
         '10:00–10:45',
       );
+      expect(raiz.querySelector('.tarjeta__franja-nota')?.textContent).toBe(
+        'La pone el horario publicado.',
+      );
       // Ni un solo campo de texto para la hora en este camino.
       expect(raiz.querySelector('.tarjeta__rango')).toBeNull();
     });
@@ -1208,7 +1211,7 @@ describe('TarjetaDelDia', () => {
 
     expect(api().candidates()).toEqual([]);
     expect(api().failedSearch()).toBe(
-      'No se pudo buscar pacientes. (Código de soporte: corr-busca-1)',
+      'No se pudo buscar pacientes. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-busca-1)',
     );
     http.verify();
   });

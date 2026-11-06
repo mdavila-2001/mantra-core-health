@@ -7,6 +7,8 @@ import type { ConceptLabels } from '../../../core/data-access/terminology/termin
 import type { StatusSealVariant } from '../../../shared/components/organisms/status-seal/status-seal.types';
 import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { sello } from '../my-profile/practitioner-profile/practitioner-seal';
+import { optionalCredentialsNote, splitCredentials } from './roadmap-credentials';
+import { ROADMAP_LINKS, untilApproved, type RoadmapLink } from './roadmap-links';
 
 /* ============================================================================
     «Mis verificaciones»: lo que hay que mostrar, armado sin DOM.
@@ -37,7 +39,7 @@ export interface RoadmapStep {
   /** Qué hay detrás del estado, en una frase. */
   readonly detail: string;
   /** La salida, cuando el tramo depende de algo que la persona puede hacer. */
-  readonly action?: { readonly label: string; readonly route: string };
+  readonly action?: RoadmapLink;
   /** Los tramos que no impiden atender no frenan la hoja de ruta. */
   readonly optional: boolean;
 }
@@ -149,14 +151,7 @@ export function buildRoadmap(
 ): readonly RoadmapStep[] {
   const perfilEstado = sello(etiquetas, perfil.verificationStatusConceptId);
   const matriculas = perfil.licenses.map((l) => sello(etiquetas, l.stateConceptId));
-  // Del concepto de estado, como en «Mi perfil»: `verifiedAt` también se
-  // escribe cuando se RECHAZA, así que leerlo daría «Verificado» a un título
-  // rechazado. El vencimiento cambia el sello, no la decisión.
-  const titulos = perfil.credentials.map((c): StatusSealVariant =>
-    c.expiryDate !== undefined && c.expiryDate < ahora
-      ? 'expired'
-      : sello(etiquetas, c.stateConceptId),
-  );
+  const credentials = splitCredentials(perfil.credentials, etiquetas, ahora);
   const especialidades = perfil.specialties
     .filter((s) => s.validTo === undefined)
     .map((s) => sello(etiquetas, s.verificationStatusConceptId));
@@ -181,7 +176,7 @@ export function buildRoadmap(
       title: 'Su cuenta',
       icon: 'people',
       state: 'approved',
-      detail: 'Creada. Entra con su correo personal y su contraseña.',
+      detail: 'Activa. Ingresa con su correo personal y su contraseña.',
       optional: false,
     }),
     paso({
@@ -191,11 +186,9 @@ export function buildRoadmap(
       state: perfilEstado,
       detail:
         perfilEstado === 'approved'
-          ? 'AloVida comprobó su identidad profesional: su ficha lleva el sello.'
-          : 'Un equipo de AloVida revisa sus datos y su matrícula antes de dar el sello.',
-      ...(perfilEstado === 'approved'
-        ? {}
-        : { action: { label: 'Ver qué me falta', route: '/onboarding' } }),
+          ? 'AloVida verificó su identidad profesional: su perfil ya muestra el sello.'
+          : 'El equipo de AloVida revisa sus datos y su matrícula. Con el sello, sus pacientes saben que su perfil fue verificado.',
+      ...untilApproved(perfilEstado, ROADMAP_LINKS.profile),
       optional: false,
     }),
     paso({
@@ -207,28 +200,32 @@ export function buildRoadmap(
         matriculas,
         'habilitación',
         'habilitaciones',
-        'Todavía no cargó su matrícula.',
+        'Cargue su matrícula para que podamos verificarla.',
       ),
-      ...(combineStates(matriculas) === 'approved'
-        ? {}
-        : { action: { label: 'Revisar mis habilitaciones', route: '/my-account/edit' } }),
+      ...untilApproved(combineStates(matriculas), ROADMAP_LINKS.licenses),
       optional: false,
     }),
+    // Required: the API's admission catalog asks every practitioner for a
+    // university degree, and only for that one (`splitCredentials`).
     paso({
       key: 'credentials',
       title: 'Títulos',
       icon: 'teach',
-      state: combineStates(titulos),
-      detail: cuenta(
-        titulos,
-        'título',
-        'títulos',
-        'Opcional. Puede cargar sus diplomas desde su perfil.',
+      state: combineStates(credentials.required),
+      detail:
+        cuenta(
+          credentials.required,
+          'título universitario',
+          'títulos universitarios',
+          'Cargue su título universitario para que podamos verificarlo.',
+        ) + optionalCredentialsNote(credentials.optional),
+      ...untilApproved(
+        combineStates(credentials.required),
+        credentials.required.length === 0
+          ? ROADMAP_LINKS.firstCredential
+          : ROADMAP_LINKS.credentials,
       ),
-      ...(titulos.length === 0
-        ? { action: { label: 'Cargar un título', route: '/my-account/edit' } }
-        : {}),
-      optional: true,
+      optional: false,
     }),
     paso({
       key: 'specialties',
@@ -239,8 +236,9 @@ export function buildRoadmap(
         especialidades,
         'especialidad',
         'especialidades',
-        'Opcional. Sin especialidad figura como medicina general.',
+        'Opcional. Sin especialidad, figura como medicina general.',
       ),
+      ...untilApproved(combineStates(especialidades), ROADMAP_LINKS.specialties),
       optional: true,
     }),
     paso({
@@ -252,7 +250,7 @@ export function buildRoadmap(
         instituciones,
         'institución',
         'instituciones',
-        'Opcional. Cada institución que elija confirma su vínculo con su sello oficial.',
+        'Opcional. Cada institución donde atiende confirma el vínculo con su sello.',
       ),
       optional: true,
     }),

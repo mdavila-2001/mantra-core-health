@@ -29,10 +29,7 @@ import {
   type HelpCard,
 } from '../../../shared/components/organisms/registration-help/registration-help';
 import { MAX_ATTACHMENT_BYTES } from '../shared-registration/doctor-credentials';
-import {
-  MESSAGE_SHORT_PASSWORD,
-  passwordValidators,
-} from '../shared-registration/password-policy';
+import { accessPasswordFields, passwordWithConfirmation } from '../shared-registration/password-confirmation';
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
@@ -45,11 +42,8 @@ import { addressFromPoint, pointLabel } from '../shared-registration/address-fro
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { generateReadableCode } from '../../../core/readable-code/readable-code';
 import { IamClient } from '../../../core/data-access/iam/iam.client';
-import type {
-  DiagnosticCenterRegistration,
-  OrganizationContactPerson,
-  OrganizationExecutives,
-} from '../../../core/data-access/iam/iam.types';
+import type { DiagnosticCenterRegistration } from '../../../core/data-access/iam/iam.types';
+import { MESSAGE_REQUIRED_DOCUMENT } from '../shared-registration/legal-documents';
 import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -64,6 +58,11 @@ import {
 import { InlineNameFields } from '../shared-registration/inline-name-fields/inline-name-fields';
 import { nameGroup, completeName } from '../shared-registration/name-fields/person-name';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { tradeNameControl, tradeNameField, tradeNameOf } from '../shared-registration/trade-name';
+import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
+import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
+import { RegistrationOpeningHours, openingHoursControl, openingHoursSection, toShifts } from '../shared-registration/opening-hours';
+import { executivesFrom } from '../shared-registration/executives';
 
 /* ============================================================================
     Alta del centro de imagenología — «MODULO ANALISIS MEDICOS (RAYOS X,
@@ -307,16 +306,10 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
   ],
   representante: [
     {
-      icono: 'mail',
-      titulo: 'Con este correo se entra',
-      texto:
-        'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
-    },
-    {
       icono: 'folder',
       titulo: 'El poder va con quien lo firma',
       texto:
-        'Adjúntelo acá, junto a los datos del representante. Es opcional: si el dueño se representa a sí mismo, no hace falta.',
+        'Adjúntelo acá, junto a los datos del representante. Es obligatorio para toda organización, cualquiera sea su tipo de sociedad.',
     },
   ],
   'gerencia-general': [
@@ -344,6 +337,12 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
     },
   ],
   acceso: [
+    {
+      icono: 'mail',
+      titulo: 'Con este correo se entra',
+      texto:
+        'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
+    },
     {
       icono: 'lock',
       titulo: 'Una clave nueva, no la del correo',
@@ -420,10 +419,10 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
  *   que la plataforma puede hacer hoy. Opcional no es «cualquier cosa»: un
  *   correo escrito a medias sigue frenando, porque un correo inválido cargado
  *   es peor que el campo vacío —parece que hay a quién escribirle—.
- * - **Constitución de la empresa y poder del representante**: una
- *   **unipersonal** no tiene ninguno de los dos —no constituye sociedad y el
- *   titular se representa a sí mismo—. Exigirlos dejaría afuera a un tipo
- *   societario que la propia lista ofrece.
+ * - **Constitución de la empresa**: una **unipersonal** no la tiene —no
+ *   constituye sociedad—. Exigirla dejaría afuera a un tipo societario que la
+ *   propia lista ofrece. El **poder del representante**, en cambio, sí frena
+ *   a todas: decisión del propietario (05/11/2026), ver `notarizedPowerField`.
  * - **NIT en PDF**: el número ya se pide escrito; el papel es respaldo.
  * - **Autorización de radioprotección**: no la necesita un centro que sólo
  *   hace ecografía o resonancia, que no usan radiación ionizante.
@@ -433,7 +432,7 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
  */
 @Component({
   selector: 'app-register-imaging-center',
-  imports: [RegistrationBadge, 
+  imports: [RegistrationBadge, AccountExistsDialog, 
     BranchBulkImport,
     FileInput,
     NgTemplateOutlet,
@@ -453,6 +452,7 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
     MapLocationPicker,
     InlineNameFields,
     OnboardingDraftBanner,
+    RegistrationOpeningHours,
   ],
   templateUrl: './register-imaging-center.html',
   styleUrls: ['../shared-registration/registration.css', './register-imaging-center.css'],
@@ -462,6 +462,7 @@ export class RegisterImagingCenter {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly draftService = inject(OnboardingDraftService);
   private readonly router = inject(Router);
+  private readonly cuentaExistente = inject(AccountExistsCheck);
   private readonly iam = inject(IamClient);
   private readonly alta = inject(DiagnosisCenterEnrollment);
 
@@ -556,20 +557,15 @@ export class RegisterImagingCenter {
       this.draftService.trackEvent('start', 'imaging-center', 0);
     }
 
-    // La constitución de la empresa (y el poder de su representante) se exigen
-    // salvo a una unipersonal.
+    // La constitución se exige salvo a una unipersonal; el poder es obligatorio siempre.
     this.form.controls.companyType.valueChanges.pipe(takeUntilDestroyed()).subscribe((tipo) => {
       const constitucion = this.form.controls.constitucionFile;
-      const poder = this.form.controls.poderFile;
       if (tipo === 'UNIPERSONAL' || tipo === null) {
         constitucion.removeValidators(Validators.required);
-        poder.removeValidators(Validators.required);
       } else {
         constitucion.addValidators(Validators.required);
-        poder.addValidators(Validators.required);
       }
       constitucion.updateValueAndValidity();
-      poder.updateValueAndValidity();
     });
 
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
@@ -585,6 +581,7 @@ export class RegisterImagingCenter {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_NOMBRE)],
     }),
+    tradeName: tradeNameControl(),
     companyType: new FormControl<string | null>(null, {
       validators: [Validators.required],
     }),
@@ -625,17 +622,12 @@ export class RegisterImagingCenter {
     // dónde guardarla (`legalDocuments` no la declara) y ofrecer un papel que se
     // tira es peor que no pedirlo. Se pide después, desde el panel (D-BR09-1).
     // --- 1.6 · dirección legal de la central -------------------------------
-    // No se escribe (pedido del cliente del 26/10/2026): la deduce el punto de
-    // la central, ver `escribirLocalidadCentral`. Sigue obligatoria porque la
-    // API la exige, y nunca queda vacía con un punto puesto.
+    // Derived from the HQ pin (`escribirLocalidadCentral`, client 26/10/2026); the API requires it.
     addressLines: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
     }),
-    // **El punto de la central es obligatorio** (mismo pedido). Vive en el
-    // formulario porque el motor valida de a una página y sólo frena lo que
-    // está en el `FormGroup`. Lo escribe `fijarGpsCentral` con el punto
-    // CONFIRMADO, y vuelve a `null` si se quita o se mueve el pin.
+    // Required HQ pin, kept in the FormGroup so the page validator blocks; set by `fijarGpsCentral`.
     gpsCentral: new FormControl<Coordinates | null>(null, {
       validators: [Validators.required],
     }),
@@ -651,7 +643,9 @@ export class RegisterImagingCenter {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(4), Validators.maxLength(50)],
     }),
-    poderFile: new FormControl<AdjuntoDeclarado | null>(null),
+    poderFile: new FormControl<AdjuntoDeclarado | null>(null, {
+      validators: [Validators.required],
+    }),
     // --- 1.9 a 1.17 · los tres cargos, todos opcionales --------------------
     generalManagerName: nameGroup(false),
     generalManagerPhone: new FormControl('', {
@@ -680,11 +674,9 @@ export class RegisterImagingCenter {
       nonNullable: true,
       validators: [Validators.email],
     }),
+    openingHours: openingHoursControl(),
     // --- la cuenta ---------------------------------------------------------
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [...passwordValidators],
-    }),
+    ...passwordWithConfirmation(),
   });
 
   /**
@@ -707,6 +699,7 @@ export class RegisterImagingCenter {
       campos: [
         {
           key: 'legalName',
+          alSalir: (valor: string) => this.cuentaExistente.verificar('ORG_NAME', valor),
           label: 'Nombre o razón social',
           control: 'text' as const,
           required: true,
@@ -715,6 +708,7 @@ export class RegisterImagingCenter {
           testId: 'registro-imagen-razon-social',
           mensajeDeError: 'Escriba el nombre o la razón social de la empresa.',
         },
+        tradeNameField('registro-imagen-nombre-comercial', 'Imágenes del Oriente'),
         {
           key: 'companyType',
           label: 'Tipo de sociedad',
@@ -731,7 +725,7 @@ export class RegisterImagingCenter {
           key: 'taxId',
           label: 'Número de NIT',
           hint: 'Sólo números. Es el que va a salir en las facturas.',
-          control: 'text' as const,
+          control: 'text' as const, fieldKind: 'taxId',
           required: true,
           icono: 'billing' as const,
           placeholder: '1023456789',
@@ -848,6 +842,7 @@ export class RegisterImagingCenter {
         },
       ],
     },
+    openingHoursSection(false),
     {
       titulo: 'Representante legal',
       clave: 'representante',
@@ -865,29 +860,20 @@ export class RegisterImagingCenter {
           key: 'legalRepIdNumber',
           label: 'Documento de identidad del representante',
           hint: 'Cédula de identidad o documento equivalente.',
-          control: 'text' as const,
+          control: 'text' as const, fieldKind: 'identityDocumentWithComplement',
           required: true,
           icono: 'people' as const,
           testId: 'registro-imagen-representante-documento',
           mensajeDeError: 'Escriba el documento del representante (al menos cuatro caracteres).',
         },
-        {
-          key: 'legalRepEmail',
-          label: 'Correo del representante legal',
-          hint: 'Con este correo va a entrar a la plataforma.',
-          control: 'email' as const,
-          required: true,
-          icono: 'mail' as const,
-          autocomplete: 'username',
-          testId: 'registro-imagen-representante-correo',
-          mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
-        },
-        // El poder (1.8.1) se pide junto a quien lo firma, no con los papeles de la empresa.
+        // El poder (1.8.1) va con quien lo firma. Obligatorio para todas (propietario, 05/11/2026).
         {
           key: 'poderFile',
-          label: 'Poder del representante legal (opcional)',
-          hint: 'No hace falta si el titular se representa a sí mismo.',
+          label: 'Poder del representante legal',
+          hint: 'Otorgado ante notaría e inscrito en SEPREC.',
           control: 'custom' as const,
+          required: true,
+          mensajeDeError: MESSAGE_REQUIRED_DOCUMENT,
         },
       ],
     },
@@ -986,18 +972,21 @@ export class RegisterImagingCenter {
       clave: 'acceso',
       icon: 'lock' as const,
       hint: 'Entra con el correo del representante legal y esta contraseña.',
+      disposicion: 'dos-columnas' as const,
       campos: [
         {
-          key: 'password',
-          label: 'Contraseña',
-          hint: 'Al menos 8 caracteres.',
-          control: 'password' as const,
+          key: 'legalRepEmail',
+          ancho: 'completo' as const,
+          label: 'Correo de acceso',
+          hint: 'El del representante legal: con este correo va a entrar a la plataforma.',
+          control: 'email' as const,
           required: true,
-          icono: 'lock' as const,
-          autocomplete: 'new-password',
-          testId: 'registro-imagen-password',
-          mensajeDeError: MESSAGE_SHORT_PASSWORD,
+          icono: 'mail' as const,
+          autocomplete: 'username',
+          testId: 'registro-imagen-representante-correo',
+          mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
         },
+        ...accessPasswordFields('registro-imagen-password'),
       ],
     },
   ]);
@@ -1302,7 +1291,7 @@ export class RegisterImagingCenter {
   ): DiagnosticCenterRegistration {
     const raw = this.form.getRawValue();
     const gps = this.gpsCentral();
-    const gerencias = this.gerencias();
+    const gerencias = executivesFrom(raw);
     const nombre = raw.legalName.trim();
     const { taxIdentifierFileId, commerceRegistryFileId } = ids;
     const { operatingLicenseFileId, healthAuthorityCertificateFileId } = ids;
@@ -1321,8 +1310,11 @@ export class RegisterImagingCenter {
       tenantType: 'DIAGNOSTIC_CENTER',
       code: `${codeFromAcronym(nombre).slice(0, 60)}_${this.sufijoDeCodigo}`,
       legalName: nombre,
+      ...tradeNameOf(raw.tradeName),
       legalEntityType: raw.companyType ?? '',
       timeZone: 'America/La_Paz',
+      openingHours: toShifts(raw.openingHours.headquarters),
+      taxIdentifier: raw.taxId.trim(),
       countryConceptId: conceptos.pais,
       jurisdictionConceptId: conceptos.jurisdiccion,
       diagnosticUnit: {
@@ -1364,29 +1356,6 @@ export class RegisterImagingCenter {
       // entero. Viajan sólo si están las tres completas.
       ...(gerencias === null ? {} : { executives: gerencias }),
     };
-  }
-
-  /** Las tres gerencias, o `null` si alguna no está completa (nombre, celular y correo). */
-  private gerencias(): OrganizationExecutives | null {
-    const raw = this.form.getRawValue();
-    const contacto = (
-      fullName: string,
-      phone: string,
-      email: string,
-    ): OrganizationContactPerson | null =>
-      fullName.trim() === '' || phone.trim() === '' || email.trim() === ''
-        ? null
-        : { fullName: fullName.trim(), phone: phone.trim(), email: email.trim() };
-    const general = contacto(completeName(raw.generalManagerName), raw.generalManagerPhone, raw.generalManagerEmail);
-    const comercial = contacto(completeName(raw.salesManagerName), raw.salesManagerPhone, raw.salesManagerEmail);
-    const marketing = contacto(
-      completeName(raw.marketingManagerName),
-      raw.marketingManagerPhone,
-      raw.marketingManagerEmail,
-    );
-    return general === null || comercial === null || marketing === null
-      ? null
-      : { generalManager: general, commercialManager: comercial, marketingManager: marketing };
   }
 
   /** Traduce lo que falló a un estado que la pantalla sabe decir. */

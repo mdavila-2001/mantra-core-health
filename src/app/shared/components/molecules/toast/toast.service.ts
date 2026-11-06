@@ -49,9 +49,19 @@ export class ToastService {
       durationMs,
       ...(input.title === undefined ? {} : { title: input.title }),
       ...(input.action === undefined ? {} : { action: input.action }),
+      ...(input.key === undefined ? {} : { key: input.key }),
     };
 
-    this.items.update((current) => [...current, toast]);
+    // El aviso anterior del mismo origen ya no aplica: se reemplaza.
+    const replaced =
+      input.key === undefined ? [] : this.items().filter((current) => current.key === input.key);
+    for (const old of replaced) {
+      this.clearTimer(old.id);
+    }
+    this.items.update((current) => [
+      ...current.filter((existing) => !replaced.includes(existing)),
+      toast,
+    ]);
     this.scheduleDismissal(toast);
 
     return id;

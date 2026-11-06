@@ -1,16 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
-import { CATALOG_TABS, CATALOG_TAB_LABELS, tabIndexOf, tabKeyOf } from './catalog-tabs';
+import {
+  CATALOG_TABS,
+  CATALOG_TAB_LABELS,
+  IMPORT_TARGET_BY_TAB,
+  tabIndexOf,
+  tabKeyOf,
+} from './catalog-tabs';
 
 describe('pestañas del catálogo', () => {
-  it('son seis, en el orden en que se dibujan', () => {
-    expect(CATALOG_TABS).toEqual(['products', 'categories', 'prices', 'inventory', 'import', 'integration']);
+  it('son cinco, en el orden en que se dibujan: importar es un botón, no una pestaña', () => {
+    expect(CATALOG_TABS).toEqual(['products', 'categories', 'prices', 'inventory', 'integration']);
     expect(CATALOG_TABS.map((tab) => CATALOG_TAB_LABELS[tab])).toEqual([
       'Productos',
       'Categorías',
       'Precios',
       'Inventario',
-      'Importación',
       'Integración',
     ]);
   });
@@ -22,12 +27,12 @@ describe('pestañas del catálogo', () => {
     });
   });
 
-  it('`integration` abre la sexta pestaña, Integración', () => {
-    expect(tabIndexOf('integration')).toBe(5);
-    expect(CATALOG_TAB_LABELS[tabKeyOf(5)]).toBe('Integración');
+  it('`integration` abre la quinta pestaña, Integración', () => {
+    expect(tabIndexOf('integration')).toBe(4);
+    expect(CATALOG_TAB_LABELS[tabKeyOf(4)]).toBe('Integración');
   });
 
-  it.each([null, undefined, '', 'foo', 'INTEGRATION', 'PRODUCTS'])(
+  it.each([null, undefined, '', 'foo', 'import', 'INTEGRATION', 'PRODUCTS'])(
     'con %s abre Productos',
     (raw) => {
       expect(tabIndexOf(raw)).toBe(0);
@@ -37,5 +42,15 @@ describe('pestañas del catálogo', () => {
   it('un índice fuera de rango da Productos', () => {
     expect(tabKeyOf(-1)).toBe('products');
     expect(tabKeyOf(CATALOG_TABS.length)).toBe('products');
+  });
+
+  it('el modal de importar propone lo de la pestaña abierta, o productos', () => {
+    expect(IMPORT_TARGET_BY_TAB).toEqual({
+      products: 'products',
+      categories: 'categories',
+      prices: 'products',
+      inventory: 'products',
+      integration: 'products',
+    });
   });
 });

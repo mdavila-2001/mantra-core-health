@@ -1,0 +1,36 @@
+<app-content-dialog
+  heading="Editar precio"
+  [description]="name(product()) + ' · ' + product().productCode"
+  size="sm"
+  [dismissible]="!saving()"
+  data-testid="price-dialog"
+  (closed)="closed.emit()"
+>
+  @if (error(); as message) {
+    <app-alert tone="error" data-testid="price-dialog-error">{{ message }}</app-alert>
+  }
+  <app-form-field label="Precio de venta (Bs)" [required]="true" hint="Es el que ven los pacientes. Ej. 18,50.">
+    <app-input
+      inputMode="decimal"
+      placeholder="0,00"
+      [value]="draft()"
+      (valueChange)="setDraft($event)"
+      testId="price-dialog-input"
+    />
+  </app-form-field>
+
+  <button dialog-actions app-button type="button" variant="ghost" [disabled]="saving()" (clicked)="closed.emit()">
+    Cancelar
+  </button>
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    [isLoading]="saving()"
+    [disabled]="saving()"
+    data-testid="price-dialog-save"
+    (clicked)="save()"
+  >
+    Guardar
+  </button>
+</app-content-dialog>

@@ -1,0 +1,55 @@
+<section class="ajustes__bloque" aria-labelledby="agenda-prefs-title">
+  <h2 class="ajustes__titulo" id="agenda-prefs-title">Solicitudes de consulta</h2>
+  <p class="ajustes__detalle">
+    Qué pasa cuando un paciente le pide cita desde el portal: usted la acepta una por una, o su
+    agenda la confirma en el acto.
+  </p>
+
+  @if (saveError(); as message) {
+    <app-alert tone="error" class="agenda-prefs__alert" data-testid="agenda-prefs-error">{{
+      message
+    }}</app-alert>
+  }
+
+  @if (saved(); as message) {
+    <app-alert tone="success" class="agenda-prefs__alert" data-testid="agenda-prefs-saved">{{
+      message
+    }}</app-alert>
+  }
+
+  <!-- The host renders loading, empty (with its next action) and error with retry. -->
+  <app-view-state-host [state]="state()" (retry)="load()">
+    @if (state().status === 'ready') {
+      <ul class="ajustes__lista" data-testid="agenda-prefs-list">
+        @for (agenda of agendas(); track agenda.id) {
+          <li class="ajustes__fila" [attr.data-testid]="'agenda-prefs-' + agenda.id">
+            <app-nav-icon class="ajustes__icono" name="calendar" />
+            <span class="ajustes__texto">
+              <span class="ajustes__nombre">{{ agenda.name }}</span>
+              <span class="ajustes__detalle" data-testid="agenda-prefs-caption">{{
+                captionOf(agenda)
+              }}</span>
+            </span>
+            <!-- On = the agenda confirms requests. Inert while a change travels.
+                 No visible label, like the other Settings switches: the row's
+                 caption tells the state and the accessible name tells the action. -->
+            <app-switch
+              class="ajustes__interruptor"
+              [ariaLabel]="'Confirmar automáticamente las solicitudes de ' + agenda.name"
+              [checked]="autoConfirms(agenda)"
+              [disabled]="isSaving(agenda)"
+              [attr.data-testid]="'agenda-prefs-switch-' + agenda.id"
+              (checkedChange)="change(agenda, $event)"
+            />
+          </li>
+        }
+      </ul>
+
+      <p class="ajustes__nota">
+        Rige para las solicitudes que entren desde ahora: las que ya están pendientes siguen
+        esperando su respuesta. Los servicios con duración propia se rigen por su propia opción
+        «requiere aprobación», en «Mis servicios».
+      </p>
+    }
+  </app-view-state-host>
+</section>

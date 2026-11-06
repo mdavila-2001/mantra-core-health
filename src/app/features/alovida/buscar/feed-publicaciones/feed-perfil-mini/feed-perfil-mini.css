@@ -76,7 +76,7 @@ a.mini__nombre:hover {
 .mini__titular,
 .mini__ciudad {
   margin: 2px 0 0;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   line-height: 16px;
   color: var(--tinta-2);
 }
@@ -100,7 +100,7 @@ a.mini__nombre:hover {
   display: flex;
   justify-content: space-between;
   gap: var(--e2);
-  font-size: 12px;
+  font-size: var(--fs-caption);
   line-height: 20px;
 }
 

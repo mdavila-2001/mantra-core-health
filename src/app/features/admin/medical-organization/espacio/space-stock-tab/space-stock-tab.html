@@ -1,0 +1,71 @@
+@if (canWrite() && pharmacySite(); as site) {
+  <form class="space-tab__bar" (submit)="$event.preventDefault(); create()" novalidate data-testid="space-stock-form">
+    <app-form-field label="Código de la ubicación" class="space-tab__field">
+      <app-input [value]="code()" testId="space-stock-code" (valueChange)="code.set($any($event) ?? '')" />
+    </app-form-field>
+    <app-form-field label="Nombre" class="space-tab__field" [hint]="'Farmacia: ' + site.name">
+      <app-input [value]="name()" testId="space-stock-name" (valueChange)="name.set($any($event) ?? '')" />
+    </app-form-field>
+    <button app-button size="sm" type="submit" [disabled]="!code().trim() || !name().trim() || saving()" [isLoading]="saving()" data-testid="space-stock-create">
+      {{ space().clinicalUnitId ? 'Crear botiquín de la unidad' : 'Crear ubicación' }}
+    </button>
+  </form>
+}
+
+@if (relocating(); as loc) {
+  <div class="space-tab__bar" data-testid="space-stock-relocate">
+    <app-form-field [label]="'Reubicar «' + loc.name + '» en'" class="space-tab__field" hint="El stock sigue a la ubicación: no se mueve ninguna línea.">
+      <app-select [options]="targetOptions()" [value]="target()" placeholder="Elija el espacio de destino" ariaLabel="Espacio de destino" [searchable]="true" (valueChange)="target.set($event)" />
+    </app-form-field>
+    <button app-button size="sm" [disabled]="target() === null || saving()" [isLoading]="saving()" (clicked)="confirmRelocate()">Reubicar</button>
+    <button app-button variant="ghost" size="sm" (clicked)="relocating.set(null)">Volver</button>
+  </div>
+}
+
+@if (failure(); as f) {
+  <app-view-state-host [state]="f" data-testid="space-stock-failure" />
+}
+
+<app-view-state-host [state]="state()">
+  @if (state().status === 'ready') {
+    <ul class="space-tab__list" data-testid="space-stock-list">
+      @for (loc of $any(state()).data; track loc.id) {
+        <li class="space-tab__item">
+          <span class="space-tab__strong">{{ loc.name }}</span>
+          <span class="space-tab__chips">
+            <app-badge variant="secondary" size="sm">{{ loc.code }}</app-badge>
+            <app-badge variant="info" size="sm">{{ loc.locationType.display }}</app-badge>
+            @if (loc.clinicalUnit) {
+              <app-badge variant="secondary" size="sm">{{ loc.clinicalUnit.name }}</app-badge>
+            }
+          </span>
+          @if (loc.lines.length === 0) {
+            <span class="space-tab__muted">Sin existencias.</span>
+          } @else {
+            <div class="space-tab__scroll">
+              <table class="space-tab__lines">
+                <caption class="space-tab__muted">Existencias de {{ loc.name }}</caption>
+                <thead>
+                  <tr><th scope="col">Producto</th><th scope="col">Lote · vence</th><th scope="col" class="space-tab__num">En mano</th><th scope="col" class="space-tab__num">Disponible</th></tr>
+                </thead>
+                <tbody>
+                  @for (l of loc.lines; track l.productName + l.lotNumber) {
+                    <tr>
+                      <td>{{ l.productName }}</td>
+                      <td>{{ l.lotNumber ?? '—' }} · {{ l.expiryDate ?? '—' }}</td>
+                      <td class="space-tab__num">{{ l.onHandQuantity }} {{ l.unit }}</td>
+                      <td class="space-tab__num">{{ l.availableQuantity }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+          @if (canWrite()) {
+            <div><button app-button variant="ghost" size="sm" (clicked)="relocating.set(loc)">Reubicar</button></div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</app-view-state-host>

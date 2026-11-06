@@ -1,5 +1,6 @@
 ---
 slug: gota
+image: gota.svg | Los cristales de urato inflaman la articulación del dedo gordo. | Pie con la articulación del dedo gordo inflamada y cristales en forma de aguja, junto a la secuencia purinas, ácido úrico y cristales, y sus desencadenantes.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,21 @@
+:host {
+  display: block;
+}
+
+.support-code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
+}
+
+/* El código se distingue y se selecciona fácil: es lo que se dicta por
+   teléfono. Nunca se corta en dos renglones. */
+.support-code__value {
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-xs);
+  background: color-mix(in srgb, var(--tone-fg, currentColor) 12%, transparent);
+  white-space: nowrap;
+  user-select: all;
+}

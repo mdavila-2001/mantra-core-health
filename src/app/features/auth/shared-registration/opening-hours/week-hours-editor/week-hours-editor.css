@@ -1,0 +1,97 @@
+/* One site's week: a list of days, each one row on wide screens and stacked
+   on a phone. Container query, so it adapts to its card, not the viewport. */
+:host {
+  display: block;
+  container: week-hours / inline-size;
+}
+
+.week-hours {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.week-hours__all-day,
+.week-hours__closed {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.week-hours__days {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.week-hours__day {
+  display: grid;
+  grid-template-columns: 7rem 15rem 1fr;
+  gap: var(--sp-2) var(--sp-3);
+  align-items: center;
+  padding-block: var(--sp-2);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+/* An open day reads by weight, not only by color. */
+.week-hours__name {
+  font-weight: 400;
+}
+
+.week-hours__day--open .week-hours__name {
+  font-weight: 600;
+}
+
+.week-hours__shifts {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.week-hours__shift {
+  display: grid;
+  grid-template-columns: minmax(9.5rem, 11rem) auto minmax(9.5rem, 11rem) auto;
+  justify-content: start;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Open/Closed never truncates: it takes its whole column. */
+.week-hours__day > app-segmented-control {
+  inline-size: 100%;
+}
+
+.week-hours__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+}
+
+.week-hours__error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text-danger);
+  font-size: var(--fs-caption);
+}
+
+/* Phone and narrow cards: the day and its Open/Closed on one line, the
+   shifts below at full width. */
+@container week-hours (max-width: 640px) {
+  .week-hours__day {
+    grid-template-columns: 1fr 13rem;
+  }
+
+  .week-hours__shifts,
+  .week-hours__closed {
+    grid-column: 1 / -1;
+  }
+
+  /* Two time fields share the row; «Quitar turno» goes below them. */
+  .week-hours__shift {
+    grid-template-columns: 1fr auto 1fr;
+  }
+
+  .week-hours__shift > button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}

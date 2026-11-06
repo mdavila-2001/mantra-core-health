@@ -92,19 +92,21 @@
                 }
               ],
               "outputHashing": "all",
-              "prerender": false,
-              "fileReplacements": [
-                {
-                  "replace": "src/app/core/mock/mock-backend.interceptor.ts",
-                  "with": "src/app/core/mock/mock-backend.interceptor.disabled.ts"
-                }
-              ]
+              "prerender": false
             },
             "development": {
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true,
               "fileReplacements": [
+                {
+                  "replace": "src/app/core/simulator/simulator.ts",
+                  "with": "src/app/core/mock/simulator.enabled.ts"
+                },
+                {
+                  "replace": "src/app/simulator-routes.ts",
+                  "with": "src/app/simulator-routes.enabled.ts"
+                },
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.development.ts"
@@ -195,6 +197,14 @@
               "outputMode": "static",
               "prerender": false,
               "fileReplacements": [
+                {
+                  "replace": "src/app/core/simulator/simulator.ts",
+                  "with": "src/app/core/mock/simulator.enabled.ts"
+                },
+                {
+                  "replace": "src/app/simulator-routes.ts",
+                  "with": "src/app/simulator-routes.enabled.ts"
+                },
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.demo.ts"

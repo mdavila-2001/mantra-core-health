@@ -29,6 +29,8 @@ describe('AppointmentNew', () => {
   let fixture: ComponentFixture<AppointmentNew>;
   let http: HttpTestingController;
 
+  let organizationNames: Record<string, string> = { [TENANT]: 'Clínica Norte' };
+
   function crear(): void {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
@@ -41,6 +43,7 @@ describe('AppointmentNew', () => {
           useValue: {
             practitionerProfileId: signal<string | null>(PERFIL),
             activeTenantId: signal<string | null>(TENANT),
+            tenantName: (id: string) => organizationNames[id] ?? id,
             roles: signal<readonly string[]>(['PRACTITIONER']),
           },
         },
@@ -59,7 +62,9 @@ describe('AppointmentNew', () => {
   afterEach(() => http?.verify());
 
   /** Responde el listado de recursos con las agendas dadas. */
-  function conAgendas(agendas: readonly { id: string; name: string }[]): void {
+  function conAgendas(
+    agendas: readonly { id: string; name: string; site?: unknown }[],
+  ): void {
     http.expectOne(RECURSOS).flush({
       items: agendas.map((a) => ({
         id: a.id,
@@ -67,9 +72,62 @@ describe('AppointmentNew', () => {
         resourceTypeConceptId: 'rt-1',
         resourceRefType: 'health_practitioner_profiles',
         resourceRefId: PERFIL,
+        site: a.site ?? null,
       })),
       count: agendas.length,
     });
+    fixture.detectChanges();
+  }
+
+  /**
+   * Responde la lectura de cupos del día con los horarios dados, de 30 minutos,
+   * y la de horas del horario flexible (P36) con las dadas, de `minutosFlexibles`.
+   */
+  function conCupos(
+    horas: readonly string[] = ['09:30'],
+    flexibles: readonly string[] = [],
+    minutosFlexibles = 30,
+  ): void {
+    fixture.detectChanges();
+    for (const lectura of http.match((r) => r.url.endsWith('/flexible-availability'))) {
+      // La de un intento anterior que falló queda cancelada: no se responde.
+      if (lectura.cancelled) continue;
+      lectura.flush({
+        resourceId: 'res-1',
+        stepMinutes: 15,
+        items: flexibles.map((hora) => {
+          const [hh, mm] = hora.split(':').map(Number);
+          const inicio = new Date(2099, 0, 5, hh, mm);
+          return {
+            templateId: 'tpl-flex',
+            startAt: inicio.toISOString(),
+            endAt: new Date(inicio.getTime() + minutosFlexibles * 60_000).toISOString(),
+          };
+        }),
+      });
+    }
+    for (const lectura of http.match((r) => r.url === '/scheduling/slots')) {
+      lectura.flush({
+        items: horas.map((hora, i) => {
+          const [hh, mm] = hora.split(':').map(Number);
+          const inicio = new Date(2026, 8, 10, hh, mm);
+          return {
+            id: `slot-${i}`,
+            resourceId: 'res-1',
+            scheduleTemplateId: null,
+            startAt: inicio.toISOString(),
+            endAt: new Date(inicio.getTime() + 30 * 60_000).toISOString(),
+            capacity: 1,
+            remainingCapacity: 1,
+            statusConceptId: 'st-open',
+            serviceConceptId: null,
+          };
+        }),
+        count: horas.length,
+        limit: 200,
+        truncated: false,
+      });
+    }
     fixture.detectChanges();
   }
 
@@ -124,6 +182,66 @@ describe('AppointmentNew', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="cita-agenda"]')).not.toBeNull();
   });
 
+  describe('dónde queda la cita', () => {
+    const SEDE_CENTRO = { id: 's-1', name: 'Sede Centro', code: 'C', addressText: 'Av. Busch 100', timeZone: null };
+    const SEDE_NORTE = { id: 's-2', name: 'Sede Norte', code: 'N', addressText: null, timeZone: null };
+
+    function locationText(): string {
+      const nodo: HTMLElement = fixture.nativeElement.querySelector('[data-testid="cita-location"]');
+      return nodo.textContent.replace(/\s+/g, ' ').trim();
+    }
+
+    afterEach(() => {
+      organizationNames = { [TENANT]: 'Clínica Norte' };
+    });
+
+    it('con una sola agenda, dice la organización, la sede y la dirección', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Agenda', site: SEDE_CENTRO }]);
+
+      expect(locationText()).toBe('Esta cita queda en Clínica Norte · Sede Centro Av. Busch 100');
+    });
+
+    it('cambia con la agenda elegida', () => {
+      crear();
+      conAgendas([
+        { id: 'res-1', name: 'Agenda A', site: SEDE_CENTRO },
+        { id: 'res-2', name: 'Agenda B', site: SEDE_NORTE },
+      ]);
+
+      (
+        fixture.componentInstance as unknown as { agendaElegida: { set(id: string): void } }
+      ).agendaElegida.set('res-2');
+      fixture.detectChanges();
+
+      expect(locationText()).toBe('Esta cita queda en Clínica Norte · Sede Norte');
+    });
+
+    it('sin sede vigente lo dice, en vez de dejar el hueco', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Agenda' }]);
+
+      expect(locationText()).toBe('Esta cita queda en Clínica Norte · Sin consultorio registrado');
+    });
+
+    it('no repite la organización si la sede ya la nombra', () => {
+      crear();
+      conAgendas([
+        { id: 'res-1', name: 'Agenda', site: { ...SEDE_NORTE, name: 'CLÍNICA NORTE · Sede Central' } },
+      ]);
+
+      expect(locationText()).toBe('Esta cita queda en CLÍNICA NORTE · Sede Central');
+    });
+
+    it('sin nombre de organización en el token, no muestra el id', () => {
+      organizationNames = {};
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Agenda', site: SEDE_NORTE }]);
+
+      expect(locationText()).toBe('Esta cita queda en Sede Norte');
+    });
+  });
+
   /** Sin ninguna agenda publicada, no hay dónde poner la cita: se dice, no se adivina. */
   it('sin ninguna agenda, avisa y no dibuja el formulario', () => {
     crear();
@@ -163,7 +281,7 @@ describe('AppointmentNew', () => {
       c.paciente.set({ value: 'pac-1', label: 'Ana Pérez' });
       c.dia.set(new Date(2026, 8, 10));
       c.hora.set('09:30');
-      fixture.detectChanges();
+      conCupos();
 
       const boton: HTMLButtonElement = fixture.nativeElement.querySelector(
         '[data-testid="cita-guardar"]',
@@ -171,20 +289,172 @@ describe('AppointmentNew', () => {
       expect(boton.getAttribute('aria-disabled')).toBe('false');
     });
 
-    it('una hora mal escrita no habilita el botón', () => {
+    it('una hora que no es un horario libre no habilita el botón', () => {
       crear();
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
 
       const c = instancia();
       c.paciente.set({ value: 'pac-1', label: 'Ana Pérez' });
       c.dia.set(new Date(2026, 8, 10));
-      c.hora.set('9:5');
-      fixture.detectChanges();
+      c.hora.set('07:00');
+      conCupos();
 
       const boton: HTMLButtonElement = fixture.nativeElement.querySelector(
         '[data-testid="cita-guardar"]',
       );
       expect(boton.getAttribute('aria-disabled')).toBe('true');
+    });
+  });
+
+  describe('los horarios', () => {
+    function instancia(): {
+      elegirDia(d: Date | null): void;
+      elegirHora(h: string | null): void;
+      hora: () => string;
+      duracion: () => string;
+      opcionesDeHora: () => readonly { value: string; label: string }[];
+      opcionesDeDuracion: () => readonly { value: string }[];
+      reintentarCupos(): void;
+    } {
+      return fixture.componentInstance as unknown as ReturnType<typeof instancia>;
+    }
+
+    it('no hay campo de texto: la hora es un select sin opciones hasta elegir el día', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+
+      expect(fixture.nativeElement.querySelector('app-input[data-testid="cita-hora"]')).toBeNull();
+      expect(fixture.nativeElement.querySelector('app-select[data-testid="cita-hora"]')).not.toBeNull();
+      expect(instancia().opcionesDeHora()).toEqual([]);
+      http.expectNone((r) => r.url === '/scheduling/slots');
+    });
+
+    it('pide sólo los cupos libres de esa agenda ese día y los ofrece', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+      instancia().elegirDia(new Date(2099, 0, 5));
+      fixture.detectChanges();
+
+      const lectura = http.expectOne((r) => r.url === '/scheduling/slots');
+      expect(lectura.request.params.get('resourceId')).toBe('res-1');
+      expect(lectura.request.params.get('onlyAvailable')).toBe('true');
+      expect(lectura.request.params.get('from')).toBe(new Date(2099, 0, 5).toISOString());
+      expect(lectura.request.params.get('to')).toBe(new Date(2099, 0, 6).toISOString());
+      lectura.flush({ items: [], count: 0, limit: 200, truncated: false });
+      conCupos();
+    });
+
+    it('sin cupos ese día lo dice y no deja guardar', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+      instancia().elegirDia(new Date(2099, 0, 5));
+      conCupos([]);
+
+      expect(fixture.nativeElement.textContent).toContain('No tiene horarios libres ese día');
+      expect(instancia().opcionesDeHora()).toEqual([]);
+    });
+
+    it('la duración arranca en la del cupo y no pasa de los cupos seguidos', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+      instancia().elegirDia(new Date(2099, 0, 5));
+      // 09:00 y 09:30 están pegados; 11:00 queda después de un hueco.
+      conCupos(['09:00', '09:30', '11:00']);
+
+      instancia().elegirHora('09:00');
+      fixture.detectChanges();
+
+      expect(instancia().duracion()).toBe('30');
+      expect(instancia().opcionesDeDuracion().map((o) => o.value)).toEqual([
+        '15', '20', '30', '45', '60',
+      ]);
+    });
+
+    /*
+     * Un día «Horario flexible» no tiene cupos fijos: sus horas las calcula la
+     * API al leer. Antes la hora salía «Sin horarios libres» ese día.
+     */
+    it('un día de horario flexible ofrece sus horas aunque no tenga cupos fijos', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+      instancia().elegirDia(new Date(2099, 0, 5));
+      fixture.detectChanges();
+
+      const [flexible] = http.match(
+        (r) => r.url === '/scheduling/resources/res-1/flexible-availability',
+      );
+      expect(flexible!.request.params.get('from')).toBe(new Date(2099, 0, 5).toISOString());
+      expect(flexible!.request.params.get('to')).toBe(new Date(2099, 0, 6).toISOString());
+      // Cada 15 min con 30 por paciente; 10:00 y 10:15 ocupados por otra cita.
+      flexible!.flush({
+        resourceId: 'res-1',
+        stepMinutes: 15,
+        items: ['09:00', '09:15', '09:30', '10:30'].map((hora) => {
+          const [hh, mm] = hora.split(':').map(Number);
+          const inicio = new Date(2099, 0, 5, hh, mm);
+          return {
+            templateId: 'tpl-flex',
+            startAt: inicio.toISOString(),
+            endAt: new Date(inicio.getTime() + 30 * 60_000).toISOString(),
+          };
+        }),
+      });
+      conCupos([]);
+
+      expect(instancia().opcionesDeHora().map((o) => o.value)).toEqual([
+        '09:00', '09:15', '09:30', '10:30',
+      ]);
+      expect(fixture.nativeElement.textContent).not.toContain('No tiene horarios libres ese día');
+
+      // 09:00 → 10:00 libre de corrido (la última hora, 09:30, termina a las 10:00).
+      instancia().elegirHora('09:00');
+      expect(instancia().duracion()).toBe('30');
+      expect(instancia().opcionesDeDuracion().map((o) => o.value)).toEqual([
+        '15', '20', '30', '45', '60',
+      ]);
+    });
+
+    it('si falla la lectura de horas flexibles igual ofrece los cupos fijos', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+      instancia().elegirDia(new Date(2099, 0, 5));
+      fixture.detectChanges();
+      http
+        .expectOne((r) => r.url.endsWith('/flexible-availability'))
+        .flush({}, { status: 500, statusText: 'Server Error' });
+      conCupos(['09:00']);
+
+      expect(instancia().opcionesDeHora().map((o) => o.value)).toEqual(['09:00']);
+      expect(fixture.nativeElement.querySelector('[data-testid="cita-hora-caida"]')).toBeNull();
+    });
+
+    it('cambiar el día suelta la hora elegida', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+      instancia().elegirDia(new Date(2099, 0, 5));
+      conCupos(['09:00']);
+      instancia().elegirHora('09:00');
+
+      instancia().elegirDia(new Date(2099, 0, 6));
+      conCupos(['10:00']);
+
+      expect(instancia().hora()).toBe('');
+    });
+
+    it('si la lectura falla lo dice y deja reintentar', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+      instancia().elegirDia(new Date(2099, 0, 5));
+      fixture.detectChanges();
+      http
+        .expectOne((r) => r.url === '/scheduling/slots')
+        .flush({}, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[data-testid="cita-hora-caida"]')).not.toBeNull();
+
+      instancia().reintentarCupos();
+      conCupos();
+      expect(fixture.nativeElement.querySelector('[data-testid="cita-hora-caida"]')).toBeNull();
     });
   });
 
@@ -199,7 +469,7 @@ describe('AppointmentNew', () => {
       c.paciente.set({ value: 'pac-1', label: 'Ana Pérez' });
       c.dia.set(new Date(2026, 8, 10));
       c.hora.set('09:30');
-      fixture.detectChanges();
+      conCupos();
       c.guardar();
     }
 
@@ -338,7 +608,7 @@ describe('AppointmentNew', () => {
       c.dia.set(new Date(2026, 8, 10));
       c.hora.set(hora);
       c.modalidad.set('TELECONSULTA');
-      fixture.detectChanges();
+      conCupos([hora]);
       return c;
     }
 
@@ -480,7 +750,7 @@ describe('AppointmentNew', () => {
       c.nuevoCelular.set('+591 71234567');
       c.dia.set(new Date(2026, 8, 10));
       c.hora.set('09:30');
-      fixture.detectChanges();
+      conCupos();
     }
 
     /**
@@ -606,7 +876,7 @@ describe('AppointmentNew', () => {
       c.nuevoApellidoPaterno.set('Ticona');
       c.dia.set(new Date(2026, 8, 10));
       c.hora.set('09:30');
-      fixture.detectChanges();
+      conCupos();
 
       const boton: HTMLButtonElement = fixture.nativeElement.querySelector(
         '[data-testid="cita-guardar"]',
@@ -657,7 +927,7 @@ describe('AppointmentNew', () => {
       });
     });
 
-    it('registra y atiende en una sola petición al walk-in', () => {
+    it('registra y agenda en una sola petición al walk-in, sin abrir la atención', () => {
       crear();
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
 
@@ -689,6 +959,9 @@ describe('AppointmentNew', () => {
       expect(turno.request.body.resourceId).toBe('res-1');
       expect(typeof turno.request.body.startAt).toBe('string');
       expect(turno.request.body.durationMinutes).toBeGreaterThan(0);
+      // Esta pantalla agenda, no atiende: sin esto la cita de otro día nacía
+      // con la atención abierta hoy.
+      expect(turno.request.body.startAttention).toBe(false);
 
       turno.flush({
         patientProfileId: 'pac-nuevo',

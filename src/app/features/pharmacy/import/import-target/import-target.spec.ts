@@ -1,7 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 
 import { ImportTargetPicker } from './import-target';
 
@@ -26,24 +27,18 @@ describe('ImportTargetPicker', () => {
   // Las pantallas montadas piden sus datos; acá sólo importa cuál se monta.
   afterEach(() => http.match(() => true));
 
-  it('pregunta «Qué va a importar» con cuatro opciones y abre el asistente de productos', () => {
+  it('pregunta «Qué va a importar» con dos opciones —precios van con productos— y abre el asistente', () => {
     expect(root().textContent).toContain('Qué va a importar');
     expect(root().querySelector('[role="radiogroup"]')?.getAttribute('aria-label')).toBe('Qué va a importar');
     expect(options().map((option) => option.textContent?.trim())).toEqual([
-      'Productos',
+      'Productos y precios',
       'Categorías',
-      'Precios',
-      'Sucursales',
     ]);
     expect(root().querySelector('app-pharmacy-import')).not.toBeNull();
     expect(root().querySelector('app-entity-import')).toBeNull();
   });
 
-  it.each([
-    [1, 'categories'],
-    [2, 'prices'],
-    [3, 'sites'],
-  ] as const)('la opción %i monta la importación de %s en lugar del asistente', (index, entity) => {
+  it.each([[1, 'categories']] as const)('la opción %i monta la importación de %s en lugar del asistente', (index, entity) => {
     options()[index]!.click();
     fixture.detectChanges();
 
@@ -57,5 +52,58 @@ describe('ImportTargetPicker', () => {
     );
     fixture.detectChanges();
     expect(root().querySelector(`[data-testid="entity-import-${entity}"]`)).not.toBeNull();
+  });
+
+  describe('«Qué va a importar» en la URL', () => {
+    let harness: RouterTestingHarness;
+
+    beforeEach(async () => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([{ path: 'catalog', component: ImportTargetPicker }]),
+        ],
+      });
+      http = TestBed.inject(HttpTestingController);
+      harness = await RouterTestingHarness.create();
+    });
+
+    const harnessRoot = (): HTMLElement => harness.routeNativeElement as HTMLElement;
+
+    it('`?target=categories` abre directo la importación de categorías', async () => {
+      await harness.navigateByUrl('/catalog?tab=import&target=categories', ImportTargetPicker);
+      harness.detectChanges();
+
+      expect(harnessRoot().querySelector('app-pharmacy-import')).toBeNull();
+      expect(harnessRoot().querySelector('app-entity-import')?.getAttribute('entity')).toBe('categories');
+    });
+
+    it.each(['prices', 'sites'])('el enlace viejo `?target=%s` abre productos y precios', async (old) => {
+      await harness.navigateByUrl(`/catalog?tab=import&target=${old}`, ImportTargetPicker);
+      harness.detectChanges();
+
+      expect(harnessRoot().querySelector('app-pharmacy-import')).not.toBeNull();
+      expect(harnessRoot().querySelector('app-entity-import')).toBeNull();
+    });
+
+    it('con un valor desconocido abre productos', async () => {
+      await harness.navigateByUrl('/catalog?target=nada', ImportTargetPicker);
+      harness.detectChanges();
+
+      expect(harnessRoot().querySelector('app-pharmacy-import')).not.toBeNull();
+    });
+
+    it('elegir una opción la escribe en la URL sin perder la pestaña', async () => {
+      await harness.navigateByUrl('/catalog?tab=import', ImportTargetPicker);
+      harness.detectChanges();
+
+      const radios = [...harnessRoot().querySelectorAll<HTMLButtonElement>('[data-testid="import-target"] [role="radio"]')];
+      radios[1]!.click();
+      await harness.fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).toBe('/catalog?tab=import&target=categories');
+    });
   });
 });

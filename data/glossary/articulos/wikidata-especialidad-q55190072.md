@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q55190072
+image: wikidata-especialidad-q55190072.svg | La adicción altera el circuito de recompensa del cerebro y es una enfermedad tratable. | Cerebro visto de lado con el circuito de recompensa: área tegmental ventral, núcleo accumbens y corteza prefrontal unidos por flechas de dopamina. A la derecha, el ciclo de consumo, abstinencia y deseo intenso, y las opciones de tratamiento.
 ---
 
 ## [definition] Introducción

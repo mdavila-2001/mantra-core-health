@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Radiografía de tobillo</title>
+  <desc id="d">A la izquierda, una radiografía esquemática del tobillo con la tibia, el peroné, los maléolos, el astrágalo y el calcáneo en blanco sobre fondo oscuro. A la derecha, cuándo se pide tras una torcedura, qué muestra y sus proyecciones.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230.0" y="50" text-anchor="middle" class="title">Huesos del tobillo</text>
+  <rect x="40" y="60" width="380" height="330" rx="8" fill="var(--ink)" stroke="none" stroke-width="2" opacity=".9"/>
+  <path d="M150 70 L230 70 L232 250 C236 270 220 280 200 278 L160 276 C148 270 146 260 148 250 Z" fill="var(--panel)" stroke="none" stroke-width="2"/>
+  <path d="M250 80 L276 80 L280 290 C282 304 262 306 258 296 L252 250 Z" fill="var(--panel)" stroke="none" stroke-width="2"/>
+  <path d="M150 282 C160 270 250 270 262 290 C266 310 250 320 220 320 H170 C150 318 142 300 150 282 Z" fill="var(--bone)" stroke="none" stroke-width="2"/>
+  <path d="M130 330 C130 316 250 316 260 330 L262 370 H120 Z" fill="var(--bone)" stroke="none" stroke-width="2"/>
+  <text x="190" y="160" text-anchor="middle" class="small" style="fill:var(--ink)">Tibia</text>
+  <text x="300" y="160" class="small" style="fill:var(--on)">Peroné</text>
+  <text x="56" y="300" class="small" style="fill:var(--on)">Astrágalo</text>
+  <text x="56" y="360" class="small" style="fill:var(--on)">Calcáneo</text>
+  <circle cx="144" cy="258" r="12" fill="none" stroke="var(--warn)" stroke-width="2"/>
+  <circle cx="274" cy="284" r="12" fill="none" stroke="var(--warn)" stroke-width="2"/>
+  <text x="330" y="300" class="small" style="fill:var(--warn)">Maléolos</text>
+  <text x="230" y="414" text-anchor="middle" class="small" style="fill:var(--muted)">Vista frontal (de mortaja)</text>
+  <rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="50" text-anchor="middle" class="title">Cuándo se pide</text>
+  <text x="476" y="74" class="step">Tras una torcedura, si hay</text>
+  <text x="484" y="98" class="small">• Dolor al presionar el borde</text>
+  <text x="484" y="120" class="small">• de los maléolos</text>
+  <text x="484" y="142" class="small">• Imposible apoyar el pie</text>
+  <text x="484" y="164" class="small">• y dar cuatro pasos</text>
+  <text x="476" y="200" class="step">Qué muestra</text>
+  <text x="484" y="224" class="small">• Fracturas</text>
+  <text x="484" y="246" class="small">• Alineación de la articulación</text>
+  <text x="484" y="268" class="small">• Artrosis o cuerpos libres</text>
+  <rect x="476" y="300" width="284" height="122" rx="10" fill="var(--accent-l)" stroke="none" stroke-width="2"/>
+  <text x="492" y="326" class="step">Proyecciones</text>
+  <text x="500" y="350" class="small">• Frontal</text>
+  <text x="500" y="370" class="small">• Lateral</text>
+  <text x="500" y="390" class="small">• De mortaja (algo girada)</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

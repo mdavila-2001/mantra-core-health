@@ -1,19 +1,24 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { PharmacyCategories } from '../categories/pharmacy-categories';
+import { ImportTargetPicker } from '../import/import-target/import-target';
 import { PharmacyInventory } from '../inventory/pharmacy-inventory';
 import { PharmacyProducts } from '../products/pharmacy-products';
 import { PharmacyCatalogHub } from './pharmacy-catalog-hub';
 
 /**
- * «Catálogo» de la farmacia: seis pantallas en una tarjeta con pestañas, con
- * la pestaña en `?tab=` en las dos direcciones. Las pantallas son las reales;
- * sus peticiones quedan sin contestar porque acá sólo importa cuál se monta.
+ * Pharmacy «Catálogo»: five screens in one tabbed card, with the tab in
+ * `?tab=` both ways, and the import in a modal opened from the header button
+ * (`?tab=import`). The screens are the real ones; their requests stay
+ * unanswered because only which one is mounted matters here.
  */
 const ROUTE = '/administration/pharmacy-catalog';
 
@@ -22,7 +27,6 @@ const SCREENS = [
   'app-pharmacy-categories',
   'app-pharmacy-prices',
   'app-pharmacy-inventory',
-  'app-pharmacy-import',
   'app-pharmacy-integration',
 ] as const;
 
@@ -56,7 +60,7 @@ describe('PharmacyCatalogHub', () => {
     router = TestBed.inject(Router);
   });
 
-  it('dibuja un membrete «Catálogo» y UNA tarjeta con seis pestañas de marco de ventana, en orden', async () => {
+  it('dibuja un membrete «Catálogo» y UNA tarjeta con cinco pestañas de marco de ventana, en orden', async () => {
     await open(ROUTE);
 
     const headers = root().querySelectorAll('app-page-header');
@@ -70,7 +74,6 @@ describe('PharmacyCatalogHub', () => {
       'Categorías',
       'Precios',
       'Inventario',
-      'Importación',
       'Integración',
     ]);
   });
@@ -105,7 +108,7 @@ describe('PharmacyCatalogHub', () => {
   });
 
   it('ninguna pantalla montada dibuja su propio membrete', async () => {
-    for (const tab of ['products', 'categories', 'prices', 'inventory', 'import', 'integration']) {
+    for (const tab of ['products', 'categories', 'prices', 'inventory', 'integration']) {
       await open(`${ROUTE}?tab=${tab}`);
       expect(root().querySelectorAll('app-page-header'), tab).toHaveLength(1);
     }
@@ -144,16 +147,145 @@ describe('PharmacyCatalogHub', () => {
   it('un cambio de query a la misma ruta cambia de pestaña sin recrear el hub', async () => {
     const hub = await open(`${ROUTE}?tab=inventory`);
 
-    const again = await harness.navigateByUrl(`${ROUTE}?tab=import`, PharmacyCatalogHub);
+    const again = await harness.navigateByUrl(`${ROUTE}?tab=prices`, PharmacyCatalogHub);
     harness.detectChanges();
     expect(again).toBe(hub);
-    expect(selectedLabel()).toBe('Importación');
-    expect(mountedScreens()).toEqual(['app-pharmacy-import']);
+    expect(selectedLabel()).toBe('Precios');
+    expect(mountedScreens()).toEqual(['app-pharmacy-prices']);
+  });
 
-    // «Ver productos» al terminar una importación: la misma ruta, sin query.
-    await harness.navigateByUrl(ROUTE, PharmacyCatalogHub);
-    harness.detectChanges();
-    expect(selectedLabel()).toBe('Productos');
-    expect(mountedScreens()).toEqual(['app-pharmacy-products']);
+  describe('«Importar CSV» del membrete', () => {
+    const importButton = (): HTMLButtonElement =>
+      root().querySelector<HTMLButtonElement>('[data-testid="catalog-import"] button, button[data-testid="catalog-import"]')!;
+    const dialog = (): Element | null => root().querySelector('[data-testid="catalog-import-dialog"]');
+    const target = (): string | null => router.parseUrl(router.url).queryParamMap.get('target');
+
+    it('está en el membrete, no hay pestaña «Importación» y el modal arranca cerrado', async () => {
+      await open(ROUTE);
+
+      expect(root().querySelector('app-page-header [data-testid="catalog-import"]')).not.toBeNull();
+      expect(tabButtons().map((button) => button.textContent?.trim())).not.toContain('Importación');
+      expect(dialog()).toBeNull();
+    });
+
+    it.each([
+      ['categories', 'categories', 'app-pharmacy-categories'],
+      ['prices', 'products', 'app-pharmacy-prices'],
+      ['inventory', 'products', 'app-pharmacy-inventory'],
+    ])('desde `?tab=%s` abre el modal con «%s» y deja la pestaña debajo', async (tab, expected, screen) => {
+      await open(`${ROUTE}?tab=${tab}`);
+
+      importButton().click();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(router.url).toContain('tab=import');
+      expect(target()).toBe(expected);
+      expect(dialog()).not.toBeNull();
+      expect(dialog()!.querySelector('app-import-target')).not.toBeNull();
+      expect(mountedScreens()).toEqual([screen]);
+    });
+
+    it('el enlace viejo `?tab=import&target=prices` abre el modal sobre Productos', async () => {
+      await open(`${ROUTE}?tab=import&target=prices`);
+
+      expect(dialog()).not.toBeNull();
+      expect(selectedLabel()).toBe('Productos');
+      expect(mountedScreens()).toEqual(['app-pharmacy-products']);
+    });
+
+    it('cerrar el modal (X, Esc o fondo) deja sólo la pestaña de abajo en la URL', async () => {
+      await open(`${ROUTE}?tab=categories`);
+      importButton().click();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      harness.fixture.debugElement.query(By.directive(ContentDialog)).triggerEventHandler('closed');
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(router.url).toBe(`${ROUTE}?tab=categories`);
+      expect(dialog()).toBeNull();
+      expect(mountedScreens()).toEqual(['app-pharmacy-categories']);
+    });
+
+    it('con una carga escribiéndose, el modal no se deja cerrar y lo avisa', async () => {
+      const info = vi.spyOn(TestBed.inject(ToastService), 'info');
+      const hub = await open(`${ROUTE}?tab=import&target=prices`);
+      const picker = harness.fixture.debugElement.query(By.directive(ImportTargetPicker))
+        .componentInstance as { busy: () => boolean };
+      const guard = (hub as unknown as { importGuard: () => boolean }).importGuard;
+
+      expect(guard()).toBe(true);
+      Object.defineProperty(picker, 'busy', { value: () => true });
+      expect(guard()).toBe(false);
+      expect(info).toHaveBeenCalledWith(expect.stringContaining('Espere a que termine la carga'));
+    });
+
+    it('«Ver productos» (la ruta sin query) cierra el modal y abre Productos', async () => {
+      await open(`${ROUTE}?tab=import&target=categories`);
+
+      await harness.navigateByUrl(ROUTE, PharmacyCatalogHub);
+      harness.detectChanges();
+
+      expect(dialog()).toBeNull();
+      expect(selectedLabel()).toBe('Productos');
+      expect(mountedScreens()).toEqual(['app-pharmacy-products']);
+    });
+
+    it('«Ver precios» al terminar cierra el modal, abre la pestaña y la vuelve a montar', async () => {
+      await open(`${ROUTE}?tab=prices`);
+      const before = harness.fixture.debugElement.query(By.css('app-pharmacy-prices')).componentInstance;
+      importButton().click();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      await harness.navigateByUrl(`${ROUTE}?tab=prices`, PharmacyCatalogHub);
+      harness.detectChanges();
+
+      expect(dialog()).toBeNull();
+      expect(selectedLabel()).toBe('Precios');
+      const after = harness.fixture.debugElement.query(By.css('app-pharmacy-prices')).componentInstance;
+      expect(after).not.toBe(before);
+    });
+  });
+
+  describe('pestañas que comparten la farmacia', () => {
+    const FARMACIAS = [
+      { id: 'f-1', name: 'Farmacia Uno', code: 'F1', siteCount: 1, productCount: 1 },
+      { id: 'f-2', name: 'Farmacia Dos', code: 'F2', siteCount: 1, productCount: 1 },
+    ];
+
+    let http: HttpTestingController;
+
+    beforeEach(() => {
+      http = TestBed.inject(HttpTestingController);
+    });
+
+    function flushPharmacies(items: readonly unknown[]): void {
+      http.match((r) => r.url.endsWith('/pharmacy/pharmacies')).forEach((r) => r.flush({ items, count: items.length }));
+      harness.detectChanges();
+    }
+
+    it('la farmacia elegida en una pestaña sigue elegida en la siguiente, sin volver a pedir la lista', async () => {
+      await open(`${ROUTE}?tab=categories`);
+      flushPharmacies(FARMACIAS);
+      const choose = (): void =>
+        (
+          harness.fixture.debugElement.query(By.directive(PharmacyCategories)).componentInstance as unknown as {
+            scope: { choose: (id: string) => void };
+          }
+        ).scope.choose('f-2');
+      choose();
+      harness.detectChanges();
+
+      tabButtons()[2]!.click();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(http.match((r) => r.url.endsWith('/pharmacy/pharmacies'))).toHaveLength(0);
+      const listing = http.match((r) => r.url.endsWith('/pharmacy/products'));
+      expect(listing.map((r) => r.request.params.get('pharmacyId'))).toEqual(['f-2']);
+    });
   });
 });

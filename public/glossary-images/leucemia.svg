@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Leucemia: médula ósea invadida</title>
+  <desc id="d">Hueso con la médula ósea llena de blastos inmaduros que desplazan a las células sanas, con sus consecuencias: anemia, sangrado por falta de plaquetas e infecciones. A la derecha, los cuatro tipos principales: mieloide o linfoide, aguda o crónica.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="230.0" y="50" text-anchor="middle" class="title">Médula ósea invadida</text>
+<path d="M60,120 Q40,80 80,70 Q110,64 120,90 L330,90 Q340,64 370,70 Q410,80 390,120 Q410,160 370,170 Q340,176 330,150 L120,150 Q110,176 80,170 Q40,160 60,120 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="126" y="100" width="198" height="40" rx="16" fill="var(--vessel-l)" stroke-width="1"/>
+<circle cx="136" cy="110" r="5" fill="var(--vessel)" stroke="none" stroke-width="1"/>
+<circle cx="146" cy="120" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="157" cy="130" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="168" cy="110" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="178" cy="120" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="188" cy="130" r="5" fill="var(--vessel)" stroke="none" stroke-width="1"/>
+<circle cx="199" cy="110" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="210" cy="120" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="220" cy="130" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="230" cy="110" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="241" cy="120" r="5" fill="var(--vessel)" stroke="none" stroke-width="1"/>
+<circle cx="252" cy="130" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="262" cy="110" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="272" cy="120" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="283" cy="130" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="294" cy="110" r="5" fill="var(--vessel)" stroke="none" stroke-width="1"/>
+<circle cx="304" cy="120" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="314" cy="130" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<text x="225" y="184" text-anchor="middle" class="lab">Blastos (células inmaduras) desplazan</text>
+<text x="225" y="202" text-anchor="middle" class="lab">a las células sanas de la médula</text>
+<circle cx="70" cy="256" r="16" fill="var(--vessel)" stroke="var(--line)" stroke-width="1"/>
+<text x="100" y="252" class="step">Menos glóbulos rojos</text>
+<text x="100" y="272" class="lab">anemia: cansancio, palidez</text>
+<circle cx="70" cy="318" r="16" fill="var(--beam)" stroke="var(--line)" stroke-width="1"/>
+<text x="100" y="314" class="step">Menos plaquetas</text>
+<text x="100" y="334" class="lab">moretones, sangrado</text>
+<circle cx="70" cy="380" r="16" fill="var(--accent)" stroke="var(--line)" stroke-width="1"/>
+<text x="100" y="376" class="step">Menos leucocitos útiles</text>
+<text x="100" y="396" class="lab">infecciones, fiebre</text>
+<rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="618.0" y="50" text-anchor="middle" class="title">Tipos principales</text>
+<text x="578" y="74" text-anchor="middle" class="step">Mieloide</text>
+<text x="690" y="74" text-anchor="middle" class="step">Linfoide</text>
+<text x="470" y="118" class="step">Aguda</text>
+<text x="470" y="192" class="step">Crónica</text>
+<rect x="530" y="90" width="100" height="56" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="580.0" y="123.2" text-anchor="middle" class="sub" style="fill:var(--ink)">LMA</text>
+<rect x="642" y="90" width="100" height="56" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="692.0" y="123.2" text-anchor="middle" class="sub" style="fill:var(--ink)">LLA</text>
+<rect x="530" y="164" width="100" height="56" rx="8" fill="var(--purple-l)" stroke-width="1"/>
+<text x="580.0" y="197.2" text-anchor="middle" class="sub" style="fill:var(--ink)">LMC</text>
+<rect x="642" y="164" width="100" height="56" rx="8" fill="var(--purple-l)" stroke-width="1"/>
+<text x="692.0" y="197.2" text-anchor="middle" class="sub" style="fill:var(--ink)">LLC</text>
+<text x="476" y="262" class="lab">Aguda: avanza rápido, urge tratar.</text>
+<text x="476" y="284" class="lab">Crónica: evoluciona más despacio.</text>
+<text x="476" y="318" class="lab">Diagnóstico: hemograma, frotis</text>
+<text x="476" y="338" class="lab">y estudio de médula ósea.</text>
+<text x="476" y="372" class="lab">Tratamiento: quimioterapia,</text>
+<text x="476" y="392" class="lab">terapias dirigidas, trasplante.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

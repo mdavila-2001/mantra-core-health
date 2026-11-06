@@ -1,0 +1,13 @@
+:host { display: block; }
+.id__warn { margin: 0 0 var(--sp-3); padding: var(--sp-3); color: var(--st-warning-fg); background: var(--st-warning-bg); border-radius: var(--r-sm); font-size: var(--fs-caption); }
+.id__list { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--sp-4); margin: 0; padding: 0; list-style: none; }
+.id__card { display: grid; gap: var(--sp-2); align-content: start; padding: var(--sp-4); border: 1px solid var(--border-default); border-radius: var(--r-md); min-inline-size: 0; }
+.id__top { display: flex; justify-content: space-between; gap: var(--sp-2); font-size: var(--fs-caption); color: var(--text-secondary); }
+.id__prio { font-weight: 600; color: var(--text-primary); }
+.id__title { margin: 0; font-family: var(--font-display); font-size: var(--fs-h3); }
+.id__facts { display: grid; gap: var(--sp-2); margin: 0; }
+.id__facts dt { font-size: var(--fs-caption); font-weight: 600; color: var(--text-secondary); }
+.id__facts dd { margin: 0; }
+.id__facts ul { margin: 0; padding-inline-start: var(--sp-5); }
+.id__foot { margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); }
+.id__new { font-weight: 600; }

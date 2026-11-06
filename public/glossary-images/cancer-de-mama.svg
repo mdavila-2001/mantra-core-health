@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cáncer de mama</title>
+  <desc id="d">A la izquierda, un corte lateral de la mama con lóbulos y conductos que van al pezón, un tumor en un conducto y los ganglios de la axila hacia donde puede extenderse. A la derecha, los signos que conviene consultar y las claves de la detección precoz.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="200.0" y="50" text-anchor="middle" class="title">Dónde se origina</text>
+  <path d="M70 80 C150 80 240 120 290 200 C320 250 320 290 296 320 C260 370 170 380 110 360 L70 350 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+  <line x1="70" y1="80" x2="70" y2="350" stroke="var(--bone)" stroke-width="6"/>
+  <text x="78" y="368" class="small" style="fill:var(--muted)">Pared del tórax</text>
+  <circle cx="306" cy="280" r="9" fill="var(--organ-d)" stroke="none" stroke-width="2"/>
+  <path d="M300 280 Q220.0 207.0 140 150" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+  <circle cx="140" cy="150" r="14" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1.5"/>
+  <path d="M300 280 Q245.0 217.0 190 170" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+  <circle cx="190" cy="170" r="14" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1.5"/>
+  <path d="M300 280 Q260.0 242.0 220 220" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+  <circle cx="220" cy="220" r="14" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1.5"/>
+  <path d="M300 280 Q250.0 282.0 200 300" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+  <circle cx="200" cy="300" r="14" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1.5"/>
+  <path d="M300 280 Q220.0 287.0 140 310" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+  <circle cx="140" cy="310" r="14" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1.5"/>
+  <circle cx="262" cy="254" r="11" fill="var(--vessel)" stroke="none" stroke-width="2"/>
+  <text x="140" y="124" text-anchor="middle" class="small" style="fill:var(--accent)">Lóbulos</text>
+  <text x="266" y="234" text-anchor="middle" class="small" style="fill:var(--vessel)">Tumor</text>
+  <text x="248" y="330" class="small" style="fill:var(--accent)">Conductos</text>
+  <text x="316" y="268" class="small" style="fill:var(--muted)">Pezón</text>
+  <circle cx="110" cy="92" r="6" fill="var(--ok)" stroke="var(--ok)" stroke-width="1"/>
+  <circle cx="132" cy="84" r="6" fill="var(--ok)" stroke="var(--ok)" stroke-width="1"/>
+  <circle cx="96" cy="104" r="6" fill="var(--ok)" stroke="var(--ok)" stroke-width="1"/>
+  <text x="150" y="76" class="small" style="fill:var(--ok)">Ganglios de la axila</text>
+  <path d="M256 246 C200 180 160 130 134 96" fill="none" stroke="var(--vessel)" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <text x="200" y="416" text-anchor="middle" class="small" style="fill:var(--muted)">Puede extenderse a los ganglios de la axila</text>
+  <rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588.0" y="50" text-anchor="middle" class="title">Signos que conviene consultar</text>
+  <circle cx="426" cy="78" r="6" fill="var(--vessel)" stroke="none" stroke-width="2"/>
+  <text x="442" y="82" class="lab">Bulto o endurecimiento nuevo</text>
+  <circle cx="426" cy="112" r="6" fill="var(--vessel)" stroke="none" stroke-width="2"/>
+  <text x="442" y="116" class="lab">Cambio de tamaño o forma de la mama</text>
+  <circle cx="426" cy="146" r="6" fill="var(--vessel)" stroke="none" stroke-width="2"/>
+  <text x="442" y="150" class="lab">Piel retraída o como piel de naranja</text>
+  <circle cx="426" cy="180" r="6" fill="var(--vessel)" stroke="none" stroke-width="2"/>
+  <text x="442" y="184" class="lab">Pezón hundido o con secreción</text>
+  <circle cx="426" cy="214" r="6" fill="var(--vessel)" stroke="none" stroke-width="2"/>
+  <text x="442" y="218" class="lab">Bulto en la axila</text>
+  <rect x="416" y="260" width="344" height="160" rx="10" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+  <text x="432" y="288" class="step">Detección precoz</text>
+  <text x="440" y="314" class="small">• Mamografía según la edad y el riesgo</text>
+  <text x="440" y="338" class="small">• Conocer el aspecto habitual de las mamas</text>
+  <text x="440" y="362" class="small">• Biopsia para confirmar el diagnóstico</text>
+  <text x="432" y="400" class="small">Detectado pronto, el tratamiento es más eficaz.</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

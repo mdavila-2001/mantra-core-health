@@ -11,14 +11,14 @@
         <span class="fb__range">{{ rangeText() }}</span>
       </div>
       @if (ctx.state().period === 'custom') {
-        <label class="fb__c fb__date">
+        <div class="fb__c fb__date">
           <span class="fb__label">Desde</span>
-          <input type="date" [value]="ctx.state().custom.from" [max]="ctx.state().custom.to" (change)="setCustom('from', $event)" />
-        </label>
-        <label class="fb__c fb__date">
+          <app-date-string-picker [value]="ctx.state().custom.from" [max]="ctx.state().custom.to" ariaLabel="Desde" (valueChange)="setCustom('from', $event)" />
+        </div>
+        <div class="fb__c fb__date">
           <span class="fb__label">Hasta</span>
-          <input type="date" [value]="ctx.state().custom.to" [min]="ctx.state().custom.from" (change)="setCustom('to', $event)" />
-        </label>
+          <app-date-string-picker [value]="ctx.state().custom.to" [min]="ctx.state().custom.from" ariaLabel="Hasta" (valueChange)="setCustom('to', $event)" />
+        </div>
       }
     }
     @if (has('channel')) {

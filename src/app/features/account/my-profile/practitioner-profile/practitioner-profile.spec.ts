@@ -713,7 +713,11 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
         provideRouter([]),
         {
           provide: AuthService,
-          useValue: { practitionerProfileId: signal(profileId), userId: signal('u-1') },
+          useValue: {
+            practitionerProfileId: signal(profileId),
+            userId: signal('u-1'),
+            roles: signal<readonly string[]>([]),
+          },
         },
         { provide: DialogService, useValue: dialogs },
       ],
@@ -939,7 +943,7 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
 
     expect(operacion<() => string>('errorDeVitrina')()).toBe(
       'Su perfil público sigue mostrando la foto anterior. Puede volver a intentarlo desde aquí. ' +
-        '(Código de soporte: corr-vit-1)',
+        'El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-vit-1)',
     );
     responderLoQueDibujoLaFicha();
   });
@@ -1164,7 +1168,10 @@ describe('PractitionerProfile · el logo del consultorio', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: AuthService, useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1') } },
+        {
+          provide: AuthService,
+          useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1'), roles: signal<readonly string[]>([]) },
+        },
         { provide: DialogService, useValue: { confirm: vi.fn() } },
       ],
     });
@@ -1244,7 +1251,10 @@ describe('PractitionerProfile · la firma y el sello', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: AuthService, useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1') } },
+        {
+          provide: AuthService,
+          useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1'), roles: signal<readonly string[]>([]) },
+        },
         { provide: DialogService, useValue: { confirm: vi.fn() } },
       ],
     });

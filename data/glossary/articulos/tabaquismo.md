@@ -1,5 +1,6 @@
 ---
 slug: tabaquismo
+image: tabaquismo.svg | Fumar daña casi todos los órganos; dejarlo tiene beneficios desde el primer día. | Silueta humana con los órganos dañados por el tabaco señalados y una línea de tiempo con los beneficios de dejar de fumar.
 ---
 
 ## [definition] Introducción

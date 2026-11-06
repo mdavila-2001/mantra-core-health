@@ -14,7 +14,7 @@
   }
 
   @if (scope.pharmacyId() !== null) {
-    <app-card class="entity-import" padding="lg" [attr.data-testid]="'entity-import-' + entity()">
+    <div class="entity-import" [attr.data-testid]="'entity-import-' + entity()">
       <div class="entity-import__panel">
         <div class="entity-import__upload">
           <div class="entity-import__main">
@@ -26,15 +26,9 @@
               guardar nada; recién «Aplicar» escribe.
             </p>
 
-            <app-form-field label="¿Qué hago con las filas del archivo?" [hint]="modeHint()">
-              <app-select
-                [options]="modeOptions"
-                [value]="mode()"
-                (valueChange)="setMode($event)"
-                [disabled]="phase() === 'applying' || applied()"
-                ariaLabel="Qué hacer con las filas del archivo"
-              />
-            </app-form-field>
+            <p class="entity-import__secondary" data-testid="entity-import-upsert">
+              Lo nuevo se crea y lo que ya existe se actualiza con lo que traiga el archivo.
+            </p>
 
             <app-file-input
               label="Elegir archivo CSV"
@@ -42,6 +36,8 @@
               [maxSizeBytes]="maxBytes"
               [maxFiles]="1"
               [disabled]="phase() === 'applying' || phase() === 'previewing'"
+              [uploading]="phase() === 'previewing'"
+              uploadingLabel="Enviando el archivo…"
               [files]="files()"
               (filesChange)="onFilesChange($event)"
               (rejected)="showRejection($event)"
@@ -55,26 +51,7 @@
             }
           </div>
 
-          <aside class="entity-import__help" aria-labelledby="entity-import-columns">
-            <h2 id="entity-import-columns" class="entity-import__subtitle">Las columnas</h2>
-            <dl class="entity-import__columns">
-              @for (column of columns(); track column.header) {
-                <div>
-                  <dt><code>{{ column.header }}</code></dt>
-                  <dd>{{ column.description }}</dd>
-                </div>
-              }
-            </dl>
-            <button
-              app-button
-              variant="outline"
-              type="button"
-              (clicked)="downloadTemplate()"
-              data-testid="entity-import-template"
-            >
-              Descargar plantilla
-            </button>
-          </aside>
+          <ng-container [ngTemplateOutlet]="formatHelp" />
         </div>
 
         @if (reading(); as current) {
@@ -149,6 +126,7 @@
                   app-button
                   type="button"
                   [disabled]="phase() !== 'preview' || failure() !== null || sendableCount() === 0"
+                  [isLoading]="phase() === 'applying'"
                   (clicked)="apply()"
                   data-testid="entity-import-apply"
                 >
@@ -159,9 +137,23 @@
           </section>
         }
       </div>
-    </app-card>
+    </div>
   }
 </app-view-state-host>
+
+<!-- The format does not depend on the pharmacy: with none chosen (or none at all) it still shows. -->
+@if (scope.pharmacyId() === null && scope.options().status !== 'loading') {
+  <ng-container [ngTemplateOutlet]="formatHelp" />
+}
+
+<ng-template #formatHelp>
+  <app-import-columns-help
+    headingId="entity-import-columns"
+    [columns]="columns()"
+    [templates]="templates"
+    (download)="downloadTemplate()"
+  />
+</ng-template>
 
 <ng-template #outcomeCell let-row>
   <app-badge [variant]="badgeOf(row.outcome).variant">{{ badgeOf(row.outcome).label }}</app-badge>

@@ -99,11 +99,15 @@ describe('RegisterImagingCenter', () => {
       legalRepEmail: 'ana.paz@imagenoriente.test',
       legalRepIdNumber: '4872190',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
     });
     component.updateAttachment('nitFile', [archivo('nit.pdf', 'application/pdf', 10)]);
     component.updateAttachment('seprecFile', [archivo('seprec.pdf', 'application/pdf', 10)]);
     component.updateAttachment('licenciaFile', [archivo('licencia.pdf', 'application/pdf', 10)]);
     component.updateAttachment('sedesFile', [archivo('sedes.pdf', 'application/pdf', 10)]);
+    // El poder del representante es obligatorio para toda organización, también
+    // una unipersonal (decisión del propietario del 05/11/2026).
+    component.updateAttachment('poderFile', [archivo('poder.pdf', 'application/pdf', 10)]);
     // El punto de la central es obligatorio (pedido del cliente del 26/10/2026).
     component.fijarGpsCentral(PUNTO_CENTRAL);
   }
@@ -199,7 +203,7 @@ describe('RegisterImagingCenter', () => {
     completarLoObligatorio();
 
     component.submit();
-    atenderElEnvio(4);
+    atenderElEnvio(5);
 
     expect(component.form.valid).toBe(true);
     expect(component.enviada()).toBe(true);
@@ -211,11 +215,13 @@ describe('RegisterImagingCenter', () => {
     completarLoObligatorio();
 
     component.submit();
-    const { cuerpo } = atenderElEnvio(4);
+    const { cuerpo } = atenderElEnvio(5);
 
     expect(cuerpo.organization).toMatchObject({
       tenantType: 'DIAGNOSTIC_CENTER',
       legalEntityType: 'UNIPERSONAL',
+      // The written NIT travels on its own; the API stores it on the tax document.
+      taxIdentifier: '1023456789',
       countryConceptId: idDeConcepto(DIAGNOSIS_CODES.pais),
       diagnosticUnit: {
         diagnosticUnitTypeConceptId: idDeConcepto(DIAGNOSIS_CODES.imagenes),
@@ -226,12 +232,34 @@ describe('RegisterImagingCenter', () => {
       },
     });
     expect(cuerpo.organization.payer).toBeUndefined();
+    // No trade name, no key: the legal name acts as the name.
+    expect('tradeName' in cuerpo.organization).toBe(false);
     // La central viaja con su dirección y su punto, que es obligatorio.
     expect(cuerpo.organization.diagnosticUnit.primarySite.address).toEqual({
       lines: ['Av. Cañoto esq. Ballivián 234'],
       latitude: -17.7833,
       longitude: -63.1821,
     });
+  });
+
+  it('pregunta el nombre comercial junto a la razón social, y lo manda sólo si se escribió', () => {
+    // "Mi perfil" shows the trade name, so the sign-up must ask for it.
+    const empresa = component.paginas.find((p) => p.clave === 'empresa');
+    expect(empresa?.campos.map((c) => c.key)).toEqual([
+      'legalName',
+      'tradeName',
+      'companyType',
+      'taxId',
+    ]);
+    expect(empresa?.campos.find((c) => c.key === 'tradeName')?.required).toBeFalsy();
+
+    completarLoObligatorio();
+    component.form.controls.tradeName.setValue('  Imágenes del Oriente  ');
+
+    component.submit();
+    const { cuerpo } = atenderElEnvio(5);
+
+    expect(cuerpo.organization.tradeName).toBe('Imágenes del Oriente');
   });
 
   it('sin el punto de la central no sale', () => {
@@ -257,7 +285,7 @@ describe('RegisterImagingCenter', () => {
     component.form.controls.modalidades.setValue([etiqueta]);
 
     component.submit();
-    const { cuerpo } = atenderElEnvio(4);
+    const { cuerpo } = atenderElEnvio(5);
 
     expect(cuerpo.organization.diagnosticUnit.modalityConceptIds).toEqual([
       idDeConcepto(
@@ -336,18 +364,39 @@ describe('RegisterImagingCenter', () => {
     },
   );
 
-  it.each(['constitucionFile', 'poderFile'] as const)(
-    '%s no frena: una unipersonal no tiene constitución ni poder',
-    (clave) => {
-      completarLoObligatorio();
-      component.form.controls[clave].setValue(null);
+  it('constitucionFile no frena: una unipersonal no tiene constitución', () => {
+    completarLoObligatorio();
+    component.form.controls.constitucionFile.setValue(null);
+
+    component.submit();
+    atenderElEnvio(5);
+
+    expect(component.enviada()).toBe(true);
+  });
+
+  it.each(['UNIPERSONAL', 'SRL'] as const)(
+    'sin el poder del representante no sale, ni siendo %s: es obligatorio para toda organización',
+    (tipo) => {
+      // Decisión del propietario (05/11/2026): el poder no distingue tipo societario.
+      completarLoObligatorio(tipo);
+      component.form.controls.poderFile.setValue(null);
 
       component.submit();
-      atenderElEnvio(4);
 
-      expect(component.enviada()).toBe(true);
+      expect(component.form.controls.poderFile.invalid).toBe(true);
+      expect(component.enviada()).toBe(false);
     },
   );
+
+  it('el poder se rotula obligatorio, nunca «(opcional)»', () => {
+    const poder = component.paginas
+      .flatMap((p) => p.campos)
+      .find((c) => c.key === 'poderFile');
+
+    expect(poder?.label).toBe('Poder del representante legal');
+    expect(poder?.label).not.toMatch(/opcional/);
+    expect(poder?.required).toBe(true);
+  });
 
   it('el poder se pide en la página del representante, no con la constitución', () => {
     const pagina = (clave: string) => component.paginas.find((p) => p.clave === clave);
@@ -356,10 +405,11 @@ describe('RegisterImagingCenter', () => {
     expect(pagina('representante')?.campos.map((c) => c.key)).toEqual([
       'legalRepName',
       'legalRepIdNumber',
-      'legalRepEmail',
       'poderFile',
     ]);
     expect(pagina('radioproteccion')?.campos.map((c) => c.key)).not.toContain('poderFile');
+    // The access email sits with the password and its confirmation.
+    expect(pagina('acceso')?.campos.map((c) => c.key)).toEqual(['legalRepEmail', 'password', 'confirmPassword']);
   });
 
   it('el NIT en PDF frena el alta: viaja junto con los otros papeles', () => {
@@ -384,7 +434,7 @@ describe('RegisterImagingCenter', () => {
     completarLoObligatorio();
 
     component.submit();
-    atenderElEnvio(4);
+    atenderElEnvio(5);
 
     // Ninguno de los nueve campos de gerencia se tocó, y el alta sale igual.
     expect(component.form.controls.generalManagerName.value.name).toBe('');
@@ -494,7 +544,7 @@ describe('RegisterImagingCenter', () => {
     completarLoObligatorio();
 
     component.submit();
-    atenderElEnvio(4);
+    atenderElEnvio(5);
     await fixture.whenStable();
     fixture.detectChanges();
 

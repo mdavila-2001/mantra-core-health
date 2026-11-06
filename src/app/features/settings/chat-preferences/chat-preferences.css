@@ -20,7 +20,7 @@
 
 .ajustes__titulo {
   margin: 0 0 var(--e3);
-  font-size: 1.05rem;
+  font-size: var(--fs-body-lg);
 }
 
 .ajustes__nombre {
@@ -29,12 +29,12 @@
 
 .ajustes__detalle {
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: var(--fs-body);
 }
 
 .ajustes__nota {
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: var(--fs-body);
 }
 
 .chat-prefs__aviso {
@@ -68,8 +68,7 @@
    quedaba flotando contra el párrafo de arriba. */
 .chat-prefs__interruptor {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--e3);
   padding: var(--e3);
   border: 1px solid var(--filete);
@@ -86,6 +85,7 @@
 }
 
 .chat-prefs__interruptor-texto {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -227,13 +227,18 @@
 .chat-prefs__plantilla {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--e3);
   padding: var(--e2) var(--e3);
   border: 1px solid var(--filete);
   border-radius: var(--r-ctrl);
   font-size: var(--fs-body);
   color: var(--tinta-2);
+}
+
+.chat-prefs__plantilla-texto {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
 }
 
 .chat-prefs__quitar {
@@ -316,9 +321,11 @@
 
 /* Cada opción es una tarjeta entera que se toca: el radio y su explicación
    son un solo destino, de 44 px como mínimo. */
+/* Same row as Ajustes › Permisos: icon, what it does, and the control (here
+   the radio) at the end. */
 .chat-prefs__modo {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--e3);
   min-block-size: 44px;
   padding: var(--e3) var(--e4);
@@ -338,20 +345,11 @@
   background: var(--info-bg);
 }
 
-.chat-prefs__modo.is-apagado {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.chat-prefs__modo.is-apagado:hover {
-  background: var(--sup-tarjeta);
-}
-
 .chat-prefs__modo input {
   flex: none;
   inline-size: 20px;
   block-size: 20px;
-  margin: 2px 0 0;
+  margin: 0;
   accent-color: var(--petroleo);
 }
 
@@ -361,6 +359,7 @@
 }
 
 .chat-prefs__modo-texto {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -370,17 +369,6 @@
 .chat-prefs__modo-nombre {
   font-weight: 600;
   color: var(--tinta);
-}
-
-/* Lo que la IA no hace: visible, en el color de los avisos de cuidado. */
-.chat-prefs__limites {
-  margin: 0;
-  padding: var(--e3);
-  border-radius: var(--r-ctrl);
-  background: var(--aviso-bg);
-  color: var(--aviso-tinta);
-  font-size: var(--fs-caption);
-  font-weight: 600;
 }
 
 .chat-prefs__error {
@@ -506,16 +494,6 @@
   white-space: normal;
 }
 
-.chat-prefs__etiqueta--ia {
-  color: var(--tinta-marca);
-}
-
-.chat-prefs__etiqueta svg {
-  flex: none;
-  inline-size: 14px;
-  block-size: 14px;
-}
-
 .chat-prefs__previa-nota {
   margin: 0;
   color: var(--tinta-3);
@@ -527,4 +505,17 @@
   .chat-prefs__modo {
     transition: none;
   }
+}
+
+/* Decorative icon at the start of every row, as in Ajustes › Permisos.
+   `app-nav-icon` is `aria-hidden`: it never adds to the accessible name. */
+.chat-prefs__icono {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  flex: none;
+  color: var(--text-secondary);
+}
+
+.chat-prefs__modo.is-elegido .chat-prefs__icono {
+  color: var(--petroleo);
 }

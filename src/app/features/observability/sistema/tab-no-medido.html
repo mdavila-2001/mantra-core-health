@@ -1,0 +1,43 @@
+<div class="obs-tab" data-testid="obs-tab-no-medido">
+  <app-view-state-host [state]="cobertura.state()" (retry)="cargar()" (refresh)="cargar()">
+    @if (datos(); as c) {
+      <section class="obs-seccion" aria-labelledby="obs-nm-t">
+        <h2 class="obs-seccion__titulo" id="obs-nm-t">Esto no está medido (no es cero)</h2>
+        <app-alert tone="info" title="Límites declarados por la API">
+          <ul class="obs-lista" data-testid="obs-not-measured">
+            @for (n of c.notMeasured; track n.metric) {
+              <li><strong>{{ nombre(n.metric) }}:</strong> {{ n.reason }}</li>
+            }
+          </ul>
+        </app-alert>
+      </section>
+
+      <section class="obs-seccion" aria-labelledby="obs-sal-t">
+        <h2 class="obs-seccion__titulo" id="obs-sal-t">¿Está sana la propia medición?</h2>
+        <dl class="obs-dl" data-testid="obs-coverage">
+          <dt>Medición de observabilidad</dt><dd>{{ si(c.flags.observability) }}</dd>
+          <dt>Medición HTTP</dt><dd>{{ si(c.flags.httpSli) }}</dd>
+          <dt>Personas afectadas</dt><dd>{{ c.flags.actorHash ? 'Se miden (con identificador anonimizado)' : 'No se miden: falta el secreto de anonimización' }}</dd>
+          <dt>Último volcado</dt><dd>{{ fecha(c.flush.lastAt) }} · {{ entero(c.flush.lastRows) }} filas · cada {{ c.flush.intervalSeconds }} s</dd>
+          <dt>Volcados descartados</dt><dd data-testid="obs-dropped-flushes">{{ entero(c.flush.droppedFlushes) }}</dd>
+          <dt>Pendiente de volcar</dt><dd>{{ entero(c.flush.pendingErrorEvents) }} eventos de error · {{ entero(c.flush.pendingErrorGroups) }} grupos</dd>
+          <dt>Eventos de error no guardados</dt><dd>{{ entero(c.sampling.droppedErrorEvents) }} por tope · {{ entero(c.sampling.sampledOutErrorEvents) }} por muestreo</dd>
+          <dt>Catálogo de operaciones</dt><dd>{{ entero(c.catalog.operations) }} operaciones cargadas</dd>
+        </dl>
+      </section>
+
+      <section class="obs-seccion" aria-labelledby="obs-ins-t">
+        <h2 class="obs-seccion__titulo" id="obs-ins-t">Instancias que reportan</h2>
+        @if (c.instances.length === 0) {
+          <p class="obs-nota">Ninguna instancia se ha registrado todavía.</p>
+        } @else {
+          <ul class="obs-lista" data-testid="obs-instancias">
+            @for (i of c.instances; track i.id) {
+              <li><strong>{{ i.name }}</strong> ({{ i.kind }}) · {{ i.status }} · última señal {{ fecha(i.lastSeenAt) }}{{ i.buildVersion ? ' · versión ' + i.buildVersion : '' }}</li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  </app-view-state-host>
+</div>

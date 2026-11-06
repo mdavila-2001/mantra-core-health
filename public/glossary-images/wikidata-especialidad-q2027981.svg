@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cirugía oral y maxilofacial</title>
+  <desc id="d">Esquema del maxilar superior y la mandíbula con sus dientes y una muela del juicio incluida. A la derecha, los problemas que trata la especialidad, desde extracciones e implantes hasta fracturas y malformaciones.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="230.0" y="50" text-anchor="middle" class="title">Boca, maxilares y cara</text>
+<path d="M80,120 Q120,60 240,64 Q350,70 380,140 Q396,200 360,230 L120,230 Q70,200 80,120 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M120,250 L360,250 Q370,330 300,370 Q240,392 180,370 Q120,340 120,250 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="140" y="206" width="22" height="30" rx="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1"/>
+<rect x="140" y="252" width="22" height="30" rx="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1"/>
+<rect x="170" y="206" width="22" height="30" rx="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1"/>
+<rect x="170" y="252" width="22" height="30" rx="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1"/>
+<rect x="200" y="206" width="22" height="30" rx="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1"/>
+<rect x="200" y="252" width="22" height="30" rx="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1"/>
+<rect x="230" y="206" width="22" height="30" rx="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1"/>
+<rect x="230" y="252" width="22" height="30" rx="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1"/>
+<rect x="260" y="206" width="22" height="30" rx="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1"/>
+<rect x="260" y="252" width="22" height="30" rx="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1"/>
+<rect x="290" y="206" width="22" height="30" rx="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1"/>
+<rect x="290" y="252" width="22" height="30" rx="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1"/>
+<rect x="320" y="206" width="22" height="30" rx="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1"/>
+<rect x="320" y="252" width="22" height="30" rx="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1"/>
+<rect x="352" y="262" width="24" height="30" rx="6" fill="var(--beam)" stroke="var(--warn)" stroke-width="2" transform="rotate(35 364 277)"/>
+<text x="240" y="150" text-anchor="middle" class="lab">Maxilar superior</text>
+<text x="240" y="330" text-anchor="middle" class="lab">Mandíbula</text>
+<text x="300" y="412" class="small">Cordal incluida</text>
+<line x1="401.2" y1="408" x2="364" y2="292" stroke="var(--muted)" stroke-width="1"/>
+<text x="60" y="412" class="small">Articulación temporomandibular</text>
+<rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="618.0" y="50" text-anchor="middle" class="title">Qué trata</text>
+<text x="476" y="76" class="lab">• Extracción de muelas del juicio</text>
+<text x="476" y="102" class="lab">• Implantes y injertos de hueso</text>
+<text x="476" y="128" class="lab">• Quistes y tumores de los maxilares</text>
+<text x="476" y="154" class="lab">• Fracturas de la cara</text>
+<text x="476" y="180" class="lab">• Malformaciones (labio y paladar)</text>
+<text x="476" y="206" class="lab">• Cirugía para corregir la mordida</text>
+<text x="476" y="232" class="lab">• Problemas de la articulación</text>
+<text x="476" y="258" class="lab">• Infecciones de origen dental</text>
+<text x="476" y="306" class="lab">Trabaja con anestesia local,</text>
+<text x="476" y="326" class="lab">sedación o general según el caso.</text>
+<text x="476" y="364" class="small" style="fill:var(--muted)">Tras la cirugía: frío local,</text>
+<text x="476" y="382" class="small" style="fill:var(--muted)">dieta blanda e higiene cuidadosa.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

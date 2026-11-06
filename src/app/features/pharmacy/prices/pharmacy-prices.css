@@ -11,9 +11,18 @@
   gap: var(--sp-4);
 }
 
-.prices__list {
-  margin: 0;
-  padding-left: var(--sp-5);
+/* Buscar y la barra de exportar comparten renglón desde 780 px. */
+.prices__tools {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 780px) {
+  .prices__tools {
+    grid-template-columns: minmax(16rem, 1fr) auto;
+    align-items: center;
+    gap: var(--sp-4);
+  }
 }
 
 .prices__bar {
@@ -30,20 +39,8 @@
   color: var(--text-secondary);
 }
 
-.prices__save {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-3);
-}
-
-.prices__dirty {
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
-}
-
 .prices__main {
-  display: block;
+  margin-inline-end: var(--sp-2);
   font-weight: 600;
   color: var(--text-primary);
 }

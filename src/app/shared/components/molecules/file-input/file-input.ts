@@ -7,11 +7,14 @@ import {
   model,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 
 import { FORM_CONTROL_CONTEXT, nextControlId } from '@shared/forms/form-control.context';
+import { NativeFilePicker } from '@shared/forms/native-file-picker';
 
 import { matchesFileAccept } from '../../../forms/file-accept';
+import { Spinner } from '../../atoms/spinner/spinner';
 import { FilePreview } from '../file-preview/file-preview';
 
 const BYTES_PER_UNIT = 1024;
@@ -27,17 +30,21 @@ export interface RejectedFile {
  * Carga de archivos con área de soltar. `accept`, `maxSizeBytes` y `maxFiles`
  * se validan **también al soltar**: el atributo `accept` nativo solo filtra el
  * diálogo del sistema, y arrastrar lo esquiva por completo.
+ *
+ * Mientras el diálogo del sistema está abierto no se acepta arrastrar
+ * (`NativeFilePicker`): quien eligió «desde su dispositivo» termina por ahí.
  */
 @Component({
   selector: 'app-file-input',
   standalone: true,
-  imports: [FilePreview],
+  imports: [FilePreview, NativeFilePicker, Spinner],
   templateUrl: './file-input.html',
   styleUrl: './file-input.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class.app-file-input-host]': 'true',
-    '[class.is-disabled]': 'disabled()',
+    '[class.is-disabled]': 'locked()',
+    '[class.is-uploading]': 'uploading()',
   },
 })
 export class FileInput {
@@ -53,6 +60,10 @@ export class FileInput {
   readonly feedback = signal<readonly string[]>([]);
   readonly multiple = input<boolean>(false);
   readonly disabled = input<boolean>(false);
+  /** An upload is in flight: the zone locks and shows a spinner over itself. */
+  readonly uploading = input<boolean>(false);
+  readonly uploadingLabel = input('Subiendo archivo…');
+  protected readonly locked = computed(() => this.disabled() || this.uploading());
   /** Lista al estilo del atributo nativo: `image/*,.pdf`. */
   readonly accept = input<string>('');
   readonly maxSizeBytes = input<number | null>(null);
@@ -82,6 +93,10 @@ export class FileInput {
 
   protected readonly isDragging = signal(false);
 
+  private readonly picker = viewChild(NativeFilePicker);
+  /** `true` mientras el diálogo nativo está abierto: la zona no acepta soltar. */
+  protected readonly pickerOpen = computed(() => this.picker()?.open() ?? false);
+
   /* -- Los textos, en plural cuando corresponde (§9.9 de la corrección) ----- */
 
   /**
@@ -98,17 +113,25 @@ export class FileInput {
   );
 
   protected readonly textoDeArrastre = computed(() => {
+    if (this.pickerOpen()) {
+      return this.multiple()
+        ? 'Elija los archivos en la ventana de su dispositivo'
+        : 'Elija el archivo en la ventana de su dispositivo';
+    }
     if (this.isDragging()) {
       return this.multiple() ? 'Suelte los archivos acá' : 'Suelte el archivo acá';
     }
     return this.multiple() ? 'Arrastre uno o varios archivos acá' : 'Arrastre su archivo acá';
   });
 
-  protected readonly textoSecundario = computed(() =>
-    this.multiple()
+  protected readonly textoSecundario = computed(() => {
+    if (this.pickerOpen()) {
+      return 'mientras esté abierta, acá no se puede soltar';
+    }
+    return this.multiple()
       ? 'o seleccione archivos desde su dispositivo'
-      : 'o seleccione desde su dispositivo',
-  );
+      : 'o seleccione desde su dispositivo';
+  });
 
   /**
    * El rótulo del control nativo.
@@ -151,11 +174,20 @@ export class FileInput {
     target.value = '';
   }
 
+  /**
+   * Siempre `preventDefault`: sin él, soltar sobre la página la reemplaza por
+   * el archivo. Cuando no se puede soltar —deshabilitado o con el diálogo
+   * nativo abierto— el cursor lo dice (`dropEffect = 'none'`) y la zona no se
+   * ilumina.
+   */
   protected handleDragOver(event: DragEvent): void {
     event.preventDefault();
-    if (!this.disabled()) {
-      this.isDragging.set(true);
+    // Blocked while disabled, uploading, or with the native picker open.
+    const blocked = this.locked() || this.pickerOpen();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = blocked ? 'none' : 'copy';
     }
+    this.isDragging.set(!blocked);
   }
 
   protected handleDragLeave(event: DragEvent): void {
@@ -166,11 +198,14 @@ export class FileInput {
   protected handleDrop(event: DragEvent): void {
     event.preventDefault();
     this.isDragging.set(false);
+    if (this.pickerOpen() || this.locked()) {
+      return;
+    }
     this.acceptFiles(Array.from(event.dataTransfer?.files ?? []));
   }
 
   protected removeFile(index: number): void {
-    if (this.disabled()) {
+    if (this.locked()) {
       return;
     }
     this.feedback.set([]);
@@ -190,7 +225,7 @@ export class FileInput {
   }
 
   private acceptFiles(incoming: File[]): void {
-    if (this.disabled() || incoming.length === 0) {
+    if (this.locked() || incoming.length === 0) {
       return;
     }
 

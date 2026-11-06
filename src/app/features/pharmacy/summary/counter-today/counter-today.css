@@ -1,0 +1,73 @@
+:host {
+  display: block;
+}
+
+.counter {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xl);
+  background: var(--bg-surface);
+}
+
+.counter__title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.counter__title app-nav-icon {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  color: var(--brand-primary);
+}
+
+.counter__lead {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}
+
+.counter__lead--alert {
+  font-weight: 600;
+  color: var(--st-info-fg);
+}
+
+.counter__queues {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+}
+
+.counter__queue {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+  color: var(--text-primary);
+}
+
+/* New requests race the clock: the only queue that stands out. */
+.counter__queue--fresh {
+  background: var(--st-info-bg);
+  font-weight: 600;
+}
+
+.counter__count {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-variant-numeric: tabular-nums;
+}

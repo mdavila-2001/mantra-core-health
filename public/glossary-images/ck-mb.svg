@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Qué mide la prueba de CK-MB</title>
+  <desc id="d">A la izquierda, una célula del músculo cardíaco sana con la enzima CK-MB dentro y una célula dañada que la libera a un vaso sanguíneo. A la derecha, una curva cualitativa que muestra cómo la CK-MB sube y luego baja en los días siguientes a un infarto.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">CK-MB: una enzima que sale del músculo cardíaco dañado</text>
+  <rect x="20" y="60" width="370" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="205.0" y="88" text-anchor="middle" class="h">De la célula a la sangre</text>
+  <rect x="50" y="110" width="140" height="90" rx="16" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
+  <text x="120" y="160" text-anchor="middle" class="lab b">Célula sana</text>
+  <circle cx="70" cy="182" r="5" fill="var(--pur)"/>
+  <circle cx="92" cy="182" r="5" fill="var(--pur)"/>
+  <circle cx="114" cy="182" r="5" fill="var(--pur)"/>
+  <circle cx="136" cy="182" r="5" fill="var(--pur)"/>
+  <circle cx="158" cy="182" r="5" fill="var(--pur)"/>
+  <path d="M220 110 h140 v90 h-60 l-12 -14 l-12 14 h-56 z" fill="var(--organ)" stroke="var(--red)" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="290" y="150" text-anchor="middle" class="lab b">Célula dañada</text>
+  <circle cx="270" cy="225" r="5" fill="var(--pur)"/>
+  <circle cx="290" cy="240" r="5" fill="var(--pur)"/>
+  <circle cx="310" cy="228" r="5" fill="var(--pur)"/>
+  <circle cx="296" cy="262" r="5" fill="var(--pur)"/>
+  <circle cx="276" cy="252" r="5" fill="var(--pur)"/>
+  <rect x="50" y="290" width="310" height="44" rx="22" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="205" y="317" text-anchor="middle" class="lab">Vaso sanguíneo: la CK-MB circula</text>
+  <line x1="290" y1="270" x2="290" y2="288" stroke="var(--pur)" stroke-width="2" marker-end="url(#ar)"/>
+  <circle cx="60" cy="370" r="6" fill="var(--pur)"/>
+  <text x="74" y="375" class="small">CK-MB (isoenzima de la creatina quinasa)</text>
+  <text x="40" y="410" class="small muted">Abunda en el corazón; hay algo también</text>
+  <text x="40" y="426" class="small muted">en el músculo esquelético.</text>
+  <rect x="406" y="60" width="374" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="593.0" y="88" text-anchor="middle" class="h">Cómo cambia tras un infarto</text>
+  <line x1="440" y1="330" x2="760" y2="330" stroke="var(--line)" stroke-width="2"/>
+  <line x1="440" y1="330" x2="440" y2="120" stroke="var(--line)" stroke-width="2"/>
+  <path d="M440 325 C480 322 500 160 540 150 C580 145 600 300 680 322 L760 325" fill="none" stroke="var(--pur)" stroke-width="3"/>
+  <text x="600" y="350" text-anchor="middle" class="small muted">Tiempo desde el inicio del dolor</text>
+  <text x="548" y="136" text-anchor="middle" class="small">Sube y luego baja</text>
+  <text x="424" y="384" class="small">• Hoy se prefiere la troponina, más específica.</text>
+  <text x="424" y="406" class="small">• Útil para ver un nuevo daño a los pocos días.</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

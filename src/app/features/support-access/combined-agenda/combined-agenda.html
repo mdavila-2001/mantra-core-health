@@ -51,10 +51,10 @@
         <button app-button variant="outline" size="sm" type="button" (clicked)="goToday()" aria-keyshortcuts="T" data-testid="agenda-hoy">Hoy</button>
         <button app-button variant="outline" size="sm" type="button" (clicked)="step(1)" [attr.aria-label]="days().length > 1 ? 'Semana siguiente' : 'Día siguiente'" data-testid="agenda-dia-siguiente">›</button>
         <h2 class="barra__titulo" aria-live="polite" data-testid="agenda-titulo">{{ title() }}</h2>
-        <label class="fecha">
+        <div class="fecha">
           <span class="sr-only">Ir a una fecha</span>
-          <input type="date" [value]="url().date" (change)="onDateInput($event)" data-testid="agenda-fecha" />
-        </label>
+          <app-date-string-picker [value]="url().date" ariaLabel="Ir a una fecha" testId="agenda-fecha" (valueChange)="onDateInput($event)" />
+        </div>
       </div>
       <div class="barra__acciones">
         <button app-button size="sm" type="button" (clicked)="openFinder('new')" aria-keyshortcuts="N" data-testid="agenda-nueva-cita">Nueva cita <kbd>N</kbd></button>
@@ -74,9 +74,9 @@
     </div>
 
     <div class="barra barra--vista">
-      <app-segmented-control [options]="vistas" [value]="url().view" (valueChange)="setView($event)" ariaLabel="Cómo ver la agenda" data-testid="agenda-vista" />
+      <app-segmented-control [options]="vistas" [value]="url().view" [wrap]="isMobile()" (valueChange)="setView($event)" ariaLabel="Cómo ver la agenda" data-testid="agenda-vista" />
       @if (url().view !== 'WEEK') {
-        <app-segmented-control [options]="agrupaciones" [value]="url().group" (valueChange)="setGroup($event)" ariaLabel="Cómo agrupar" data-testid="agenda-agrupar" />
+        <app-segmented-control [options]="agrupaciones" [value]="url().group" [wrap]="isMobile()" (valueChange)="setGroup($event)" ariaLabel="Cómo agrupar" data-testid="agenda-agrupar" />
       }
       @if (url().view === 'TIMELINE') {
         <app-segmented-control [options]="rangos" [value]="url().span === 7 ? '7' : '1'" (valueChange)="setSpan($event)" ariaLabel="Cuántos días mostrar" data-testid="agenda-rango" />
@@ -181,6 +181,7 @@
           [multiOrg]="multiOrg()"
           [selectedId]="selectedId()"
           [pxPerMinute]="url().span === 7 ? 0.9 : 2.2"
+          [touch]="isMobile()"
           [ariaLabel]="regionLabel()"
           [rowKind]="rowKind()"
           [dragSourceId]="dragSourceId()"
@@ -198,7 +199,7 @@
           [doctors]="doctors()"
           [multiOrg]="multiOrg()"
           [selectedId]="selectedId()"
-          [pxPerMinute]="url().view === 'WEEK' ? 1.15 : 1.4"
+          [pxPerMinute]="isMobile() ? 1.5 : url().view === 'WEEK' ? 1.15 : 1.4"
           [subline]="url().view === 'WEEK' ? 'DOCTOR_SPACE' : url().group === 'DOCTOR' ? 'SPACE' : url().group === 'SPACE' ? 'DOCTOR' : 'DOCTOR_SPACE'"
           [snap]="isMobile() && url().view === 'DAY'"
           [dense]="url().view === 'WEEK'"

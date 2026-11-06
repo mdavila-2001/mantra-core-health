@@ -77,7 +77,7 @@ export class UserRegistration {
       campos: [
         { key: 'displayName', testId: 'alta-usuario-nombre', label: 'Nombre visible', control: 'text', required: true, mensajeDeError: 'Escriba el nombre con el que se va a mostrar la cuenta.' },
         { key: 'email', testId: 'alta-usuario-correo', label: 'Correo', autocomplete: 'off', hint: 'Es el identificador con el que va a iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingrese un correo válido.' },
-        { key: 'phone', testId: 'alta-usuario-telefono', label: 'Teléfono', autocomplete: 'tel', hint: 'Opcional. Queda como punto de contacto.', control: 'text', mensajeDeError: 'El teléfono sólo admite dígitos, espacios, paréntesis, + y guion.' },
+        { key: 'phone', testId: 'alta-usuario-telefono', label: 'Teléfono', autocomplete: 'tel', hint: 'Opcional. Queda como punto de contacto.', control: 'text', fieldKind: 'phone', mensajeDeError: 'El teléfono sólo admite dígitos, espacios, paréntesis, + y guion.' },
       ],
     },
     {
@@ -132,7 +132,7 @@ export class UserRegistration {
     if (state.status === 'error') {
       // El identificador es lo único que conecta este fallo con los registros
       // del servidor: va siempre, aunque el mensaje sea genérico.
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     }
     return null;
   });

@@ -59,6 +59,7 @@
       </ng-template>
 
       <div class="registro__body">
+        <app-account-exists-dialog />
         <app-paginated-form
           [paginas]="paginas()"
           [form]="form"
@@ -166,6 +167,7 @@
                         } @else {
                           <app-input
                             [type]="campo.control"
+                            fieldKind="email"
                             [formControl]="controlDeGerencia(gerencia.key, campo.key)"
                             [hasError]="errorDeGerencia(gerencia.key, campo) !== ''"
                             [autocomplete]="campo.autocomplete ?? null"
@@ -183,6 +185,14 @@
                 </app-accordion-panel>
               }
             </app-accordion>
+          </ng-template>
+
+          <ng-template appCampoPersonalizado="openingHours">
+            <app-registration-opening-hours
+              testId="registration-insurer-hours"
+              [value]="form.controls.openingHours.value"
+              (valueChange)="form.controls.openingHours.setValue($event); guardarBorrador()"
+            />
           </ng-template>
         </app-paginated-form>
       </div>

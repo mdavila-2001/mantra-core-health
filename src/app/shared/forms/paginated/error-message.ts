@@ -1,6 +1,7 @@
 import type { AbstractControl } from '@angular/forms';
 
 import type { DateTextProblem } from '../../components/organisms/date-picker/date-picker.types';
+import { fieldKindErrorMessage } from '../field-kinds';
 
 import type { CampoDeFormulario } from './paginated-form.types';
 
@@ -38,6 +39,11 @@ export function mensajeDeError(
   }
 
   const errores = control.errors ?? {};
+  // Before `email` and `pattern`: the field-kind message is more precise.
+  const porTipo = fieldKindErrorMessage(errores);
+  if (porTipo !== null) {
+    return porTipo;
+  }
 
   if ('required' in errores) {
     return campo.mensajeSiFalta ?? 'Este dato es obligatorio.';
@@ -63,6 +69,10 @@ export function mensajeDeError(
   }
   if ('pattern' in errores) {
     return 'Revise el formato.';
+  }
+  // Password confirmation: see `passwordWithConfirmation` in shared-registration.
+  if ('passwordMismatch' in errores) {
+    return 'Las contraseñas no coinciden. Escríbala igual en los dos campos.';
   }
   // Los topes de un campo de varias respuestas: ver `validadoresDeSeleccion`.
   // «Exactamente» va primero porque es el caso en que los otros dos coinciden.

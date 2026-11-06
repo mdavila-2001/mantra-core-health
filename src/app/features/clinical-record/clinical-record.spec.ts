@@ -124,6 +124,24 @@ describe('ClinicalRecord', () => {
     expect(html.querySelector('a[href="tel:+591 70011223"]')).not.toBeNull();
   });
 
+  /**
+   * Propietario, 02/11/2026: «Ver expediente» respondía 403 sin turno ni
+   * vínculo y salía al lado del de vincular. En la fila queda sólo el de
+   * vincular, y apunta a la pantalla de solicitud de ESA persona.
+   */
+  it('cada fila ofrece sólo «Solicitar vinculación», sin botón de expediente', async () => {
+    interno<(texto: string) => void>('buscar')('peña');
+    await harness.fixture.whenStable();
+    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+    harness.detectChanges();
+
+    const html = harness.fixture.nativeElement as HTMLElement;
+    const vincular = html.querySelectorAll('[data-testid="paciente-solicitar-vinculacion"]');
+    expect(vincular.length).toBe(1);
+    expect(vincular[0]?.getAttribute('href')).toBe('/medical-records/p-001/request-access');
+    expect(html.querySelector('[data-testid="paciente-ver-expediente"]')).toBeNull();
+  });
+
   it('dice con palabras cuando falta el documento o el teléfono', async () => {
     interno<(texto: string) => void>('buscar')('peña');
     await harness.fixture.whenStable();
@@ -133,6 +151,31 @@ describe('ClinicalRecord', () => {
     const texto = (harness.fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(texto).toContain('Sin documento registrado');
     expect(texto).toContain('Sin teléfono registrado');
+  });
+
+  it('homónimos: muestra el documento enmascarado y quién no tiene cuenta', async () => {
+    interno<(texto: string) => void>('buscar')('leo');
+    await harness.fixture.whenStable();
+    peticion().flush({
+      items: [
+        { ...PACIENTE, nationalIdMasked: '•••321', hasAccount: true },
+        { ...PACIENTE, profileId: 'p-002', personId: 'per-002', hasAccount: false },
+      ],
+      count: 2,
+      limit: 25,
+      nextCursor: null,
+    });
+    harness.detectChanges();
+
+    const html = harness.fixture.nativeElement as HTMLElement;
+    expect(html.textContent).toContain('•••321');
+    expect(html.querySelectorAll('[data-testid="paciente-sin-cuenta"]').length).toBe(1);
+    // With an account the request is offered; without one it is disabled.
+    expect(html.querySelectorAll('[data-testid="paciente-solicitar-vinculacion"]').length).toBe(1);
+    const sinCuenta = html.querySelector(
+      '[data-testid="paciente-solicitar-vinculacion-sin-cuenta"]',
+    );
+    expect(sinCuenta?.getAttribute('aria-disabled')).toBe('true');
   });
 
   it('buscar pide con `q` en el cuerpo y no publica el texto en la URL', async () => {
