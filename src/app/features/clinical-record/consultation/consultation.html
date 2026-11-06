@@ -241,6 +241,7 @@
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
           [ofreceRespuesta]="true"
+          [diagnosticos]="diagnosticosParaReceta()"
           (cambio)="altaRegistrada()"
         />
       }
@@ -264,6 +265,7 @@
         <app-referral-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
+          [appointments]="citas()"
           [referrals]="referrals.state()"
           (cambio)="referrals.reload()"
           (retry)="referrals.reload()"

@@ -22,6 +22,7 @@ import {
 import { Coleccion, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 import { servicios, serviciosPublicadosDe } from './practice.handlers';
 import { mergeTransfer, transferProblem, type SimulatedTransfer } from './referral-transfer.rules';
+import { networkReferrals } from '../fixtures/patient-network.data';
 
 /* ============================================================================
     Derivaciones (`/referrals`, módulo `clinical_ext` de la API).
@@ -101,7 +102,7 @@ const ORGANIZATIONS: readonly { readonly id: string; readonly subtitle: string }
   { id: TENANT_LABORATORIO, subtitle: 'Laboratorio · Santa Cruz de la Sierra' },
 ];
 
-interface SimulatedReferral {
+export interface SimulatedReferral {
   readonly id: string;
   readonly patientProfileId: string;
   readonly sourceEncounterId: string | null;
@@ -132,6 +133,8 @@ interface SimulatedReferral {
   readonly informedConsentId?: string | null;
   // v4274 — el traslado, anidado como viaja (`referral-transfer.rules.ts`).
   readonly transfer?: SimulatedTransfer | null;
+  // Patch v4291: la atención en la que el destino recibió a la persona.
+  readonly targetEncounterId?: string | null;
 }
 
 interface TargetService {
@@ -298,6 +301,7 @@ export const referralList = new Coleccion<SimulatedReferral>([
     counterReferralText: 'LDL 96 mg/dL, HbA1c 7,1 %. Se envían resultados firmados.',
     counterReferralAt: iso(-15, 12),
   },
+  ...networkReferrals({ completed: REFERRAL_STATUS['REF_COMPLETED']!, rejected: REFERRAL_STATUS['REF_REJECTED']! }),
 ]).persistirEn('mock.clinical.derivaciones');
 
 /**

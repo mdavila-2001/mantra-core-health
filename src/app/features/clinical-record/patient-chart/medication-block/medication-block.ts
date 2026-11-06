@@ -25,6 +25,7 @@ import { fieldIssueOf, loading, ready } from '../../../../core/view-state/view-s
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import {
   CODIGO_CONFIRMADO,
+  CODIGO_DESCARTADO,
   normalizarCodigoDx,
   type ResolverCodigo,
 } from '../../../../shared/clinical/diagnosis-state';
@@ -140,6 +141,8 @@ export interface DiagnosisOption {
    * ya confirmados—: es un confirmado sin fecha, no un presuntivo.
    */
   readonly confirmadoEl?: string | null;
+  /** Descartado (REFUTED): no se ofrece como vínculo de nada (red clínica, v4291). */
+  readonly descartado?: boolean;
 }
 
 /**
@@ -176,6 +179,10 @@ export function diagnosticoParaReceta(
     etiqueta: condicion.resolvedAt === undefined ? etiqueta : `${etiqueta} · Resuelto`,
     confirmado,
     confirmadoEl: confirmado && decision?.outcome === 'CONFIRMED' ? decision.decidedAt : null,
+    // Sólo cuando lo es: el resto de las opciones no cambia de forma.
+    ...((certeza !== undefined ? certeza === normalizarCodigoDx(CODIGO_DESCARTADO) : decision?.outcome === 'REFUTED')
+      ? { descartado: true }
+      : {}),
   };
 }
 

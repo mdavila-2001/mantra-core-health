@@ -39,6 +39,9 @@ import { ConceptSelect } from '../../../../shared/components/molecules/concept-s
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
+import { Select } from '../../../../shared/components/atoms/select/select';
+import { diagnosisLinkOptions, linkFailureMessage } from '../diagnosis-link-options';
+import type { DiagnosisOption } from '../medication-block/medication-block';
 import { writeFailureMessage } from '../../write-message';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { consentTargetState } from '../informed-consent/consent-target';
@@ -144,6 +147,7 @@ const TOPE = 25;
     FormActions,
     FormField,
     PerformerSelector,
+    Select,
     InformedConsentBadge,
     InformedConsentDialog,
   ],
@@ -180,6 +184,22 @@ export class AnalysisOrderBlock {
 
   /** Ofrece la respuesta sin exigirla (30/10/2026): se emite sin formulario, no sin encuentro. */
   readonly ofreceRespuesta = input(false);
+
+  /**
+   * Los diagnósticos de la persona, para «Para qué diagnóstico» (patch v4291).
+   * Los arma quien ya leyó el resumen —igual que para la receta— y bajan
+   * hechos: el bloque no vuelve a pedir el resumen. Sin ellos el selector no
+   * se dibuja y la orden sale sin vínculo, que el contrato permite.
+   */
+  readonly diagnosticos = input<readonly DiagnosisOption[]>([]);
+
+  /** El diagnóstico elegido, o `null`: opcional, un control no cuelga de ninguno. */
+  protected readonly paraDiagnostico = signal<string | null>(null);
+
+  protected readonly opcionesDeDiagnostico = computed(() => diagnosisLinkOptions(this.diagnosticos()));
+
+  /** El 422 `SERVICE_REQUEST_REASON_CONDITION_INVALID`, en el selector que lo corrige. */
+  protected readonly errorDelDiagnostico = signal('');
 
   /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
   protected readonly respuestaDelFormulario = signal<string | null>(null);
@@ -495,6 +515,7 @@ export class AnalysisOrderBlock {
     }
 
     const prioridad = this.prioridad();
+    const paraDiagnostico = this.paraDiagnostico();
     // Una recomendación a medias (sin sede) no se manda: la API la rechazaría con 422.
     const performerFields = this.performer.fields();
     if (performerFields === null) {
@@ -503,6 +524,7 @@ export class AnalysisOrderBlock {
 
     this.pidiendo.set(true);
     this.registro.set(loading());
+    this.errorDelDiagnostico.set('');
 
     const cuerpo: NewDiagnosticOrder = {
       custodianTenantId,
@@ -519,6 +541,7 @@ export class AnalysisOrderBlock {
       // Los opcionales sin elegir se **omiten**: el backend valida con
       // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
       ...(prioridad === null ? {} : { priorityConceptId: prioridad }),
+      ...(paraDiagnostico === null ? {} : { reasonConditionId: paraDiagnostico }),
       ...performerFields,
       ...decision,
     };
@@ -551,6 +574,12 @@ export class AnalysisOrderBlock {
    * error, en vez de mandar a pedir el estudio otra vez desde cero.
    */
   private handleSubmitError(error: unknown): void {
+    const vinculo = linkFailureMessage(error, ['SERVICE_REQUEST_REASON_CONDITION_INVALID']);
+    if (vinculo !== null) {
+      this.registro.set(ready(null));
+      this.errorDelDiagnostico.set(vinculo);
+      return;
+    }
     if (error instanceof HttpErrorResponse) {
       const body = readApiError(error);
       if (body?.code === 'PRECONDITION_FAILED' && body.details?.['reason'] === 'DUPLICATE_STUDY_DETECTED') {
@@ -609,6 +638,7 @@ export class AnalysisOrderBlock {
   private limpiar(): void {
     this.estudio.set(null);
     this.prioridad.set(null);
+    this.paraDiagnostico.set(null);
     this.performer.reset();
   }
 
@@ -645,7 +675,15 @@ export class AnalysisOrderBlock {
           : null,
       justificacion: orden.duplicateOverrideReason ?? null,
       ...(orden.encounterId === undefined ? {} : { encounterId: orden.encounterId }),
+      ...this.diagnosticoDe(orden.reasonConditionId),
     };
+  }
+
+  /** «Para: Hipotiroidismo»; un id fuera de la lista se dice, no se calla. */
+  private diagnosticoDe(reasonConditionId: string | undefined): { paraDiagnostico?: string } {
+    if (reasonConditionId === undefined) return {};
+    const dx = this.diagnosticos().find((d) => d.id === reasonConditionId);
+    return { paraDiagnostico: dx?.etiqueta ?? 'Diagnóstico de la historia' };
   }
 
   private cargar(patientProfileId: string): void {

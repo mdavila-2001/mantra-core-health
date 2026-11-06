@@ -47,6 +47,11 @@ export interface EstudioEnFicha {
   readonly justificacion: string | null;
   /** La consulta en la que se pidió, si la orden la trae. Ata su consentimiento informado. */
   readonly encounterId?: string;
+  /**
+   * Para qué diagnóstico se pidió (`reasonConditionId`, patch v4291), en
+   * palabras. Ausente si la orden no lo trae.
+   */
+  readonly paraDiagnostico?: string;
 }
 
 /**
