@@ -22,7 +22,7 @@ import { DiagnosticsClient } from '../../../../../core/data-access/diagnostics/d
 import { FileDownloadService } from '../../../../../shared/utils/file-download/file-download.service';
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
 import { ready } from '../../../../../core/view-state/view-state';
-import { Breakpoints } from '../../../../../core/layout/breakpoints';
+import { AnchoDelCajon } from '../ancho-del-cajon';
 import type { ViewState } from '../../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
@@ -88,7 +88,7 @@ export type PresentacionDelPanel = 'auto' | 'lateral' | 'hoja';
 export class RedClinicaPanel {
   private readonly document = inject(DOCUMENT);
   private readonly injector = inject(Injector);
-  private readonly breakpoints = inject(Breakpoints);
+  private readonly cajon = inject(AnchoDelCajon);
   private readonly diagnostics = inject(DiagnosticsClient);
   protected readonly descarga = new DescargaDelInforme(this.diagnostics, inject(FileDownloadService));
 
@@ -132,7 +132,7 @@ export class RedClinicaPanel {
 
   protected readonly esHoja = computed(() => {
     const modo = this.presentacion();
-    return modo === 'hoja' || (modo === 'auto' && this.breakpoints.isNavDrawer());
+    return modo === 'hoja' || (modo === 'auto' && this.cajon.isNavDrawer());
   });
 
   protected readonly vinculos = computed(() => {

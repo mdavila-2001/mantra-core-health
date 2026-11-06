@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
-import { Breakpoints } from '../../../../../core/layout/breakpoints';
+import { AnchoDelCajon } from '../ancho-del-cajon';
 import type { ViewState } from '../../../../../core/view-state/view-state.types';
 import { dataOf } from '../../../../../core/view-state/view-state';
 import { CLASE_DEL_TIPO } from '../../recorrido-clinico/red-clinica.adaptador';
@@ -24,7 +24,7 @@ import { RedDelExpediente } from './red-del-expediente';
 @Injectable()
 export class SeleccionDeLaRed {
   private readonly red = inject(RedDelExpediente);
-  private readonly breakpoints = inject(Breakpoints);
+  private readonly cajon = inject(AnchoDelCajon);
 
   /**
    * The filter by type, over the network: the ids that are drawn. Empty
@@ -117,7 +117,7 @@ export class SeleccionDeLaRed {
   });
 
   /** ≥ 780 px the panel goes next to the map; below, as a sheet. */
-  readonly panelAlLado = computed(() => this.nodoAbierto() !== null && !this.breakpoints.isNavDrawer());
+  readonly panelAlLado = computed(() => this.nodoAbierto() !== null && !this.cajon.isNavDrawer());
 
   /** The record the open panel can open in the usual detail (the blocks' ones). */
   readonly filaDelNodoAbierto = computed(() => {
