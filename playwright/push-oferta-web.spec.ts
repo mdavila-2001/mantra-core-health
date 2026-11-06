@@ -50,6 +50,8 @@ async function start(
   await ctx.addInitScript((mode) => localStorage.setItem('mantra-core-health.theme', mode), theme);
   await fakeBrowserPush(ctx, { permission, answer, push });
   const page = await ctx.newPage();
+  page.on('pageerror', (e) => console.log(`[pageerror] ${e.message}`));
+  page.on('requestfailed', (r) => console.log(`[requestfailed] ${r.url()} ${r.failure()?.errorText}`));
   await routeApi(page, api);
   await openSignedIn(page, origin, api);
   return page;

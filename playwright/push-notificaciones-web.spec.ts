@@ -20,10 +20,12 @@ test.skip(pushBuildMissing, `Falta el build en ${PUSH_DIST}. No es un verde.`);
 // the full Chromium build (new headless) shows them.
 test.use({ channel: 'chromium' });
 
+// A fresh origin per run: the browser's notification store outlives a closed context,
+// and a tag from an earlier repeat on the same origin would collide.
 let origin = '';
 let close: () => void = () => undefined;
-test.beforeAll(async () => ({ origin, close } = await serveBuild()));
-test.afterAll(() => close());
+test.beforeEach(async () => ({ origin, close } = await serveBuild()));
+test.afterEach(() => close());
 
 async function registeredWorker(context: BrowserContext, page: Page): Promise<Worker> {
   await page.goto(`${origin}/e2e-blank`);
@@ -52,13 +54,23 @@ test('el aviso push real muestra un aviso por notificación con su ruta, y al to
   );
   await cdp.send('ServiceWorker.enable');
   const id = await registrationId;
-  for (const n of ['n-1', 'n-2']) {
-    await cdp.send('ServiceWorker.deliverPushMessage', {
-      origin, registrationId: id,
-      data: JSON.stringify({ notificationId: n, route: `/notification-center`, destinationType: '', destinationId: '', category: 'SCHEDULING' }),
+  const tags = () =>
+    worker.evaluate(async () => {
+      const registration = (self as unknown as { registration: ServiceWorkerRegistration }).registration;
+      return (await registration.getNotifications()).map((x) => x.tag);
     });
+  // One push at a time, waiting for its notice. The DevTools delivery occasionally drops
+  // a message (seen 2 in ~40 runs); it is re-sent once, which tests the handler, not CDP.
+  const deliver = async (payload: object, tag: string) => {
+    for (let attempt = 0; attempt < 2 && !(await tags()).includes(tag); attempt++) {
+      await cdp.send('ServiceWorker.deliverPushMessage', { origin, registrationId: id, data: JSON.stringify(payload) });
+      await expect.poll(tags, { timeout: 5_000 }).toContain(tag).catch(() => undefined);
+    }
+  };
+  for (const n of ['n-1', 'n-2']) {
+    await deliver({ notificationId: n, route: '/notification-center', destinationType: '', destinationId: '', category: 'SCHEDULING' }, `alovida-${n}`);
   }
-  await cdp.send('ServiceWorker.deliverPushMessage', { origin, registrationId: id, data: JSON.stringify({ route: '//evil.example/x' }) });
+  await deliver({ route: '//evil.example/x' }, 'alovida-aviso');
 
   await expect
     .poll(() =>

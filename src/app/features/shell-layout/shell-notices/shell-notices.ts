@@ -13,8 +13,9 @@ import { WebPushOffer } from '../web-push-offer/web-push-offer';
  * order: new device, denied organizations, usage-measurement consent, push offer.
  *
  * The push offer is the only optional one, so it waits while any of the others is
- * up: never two calls to action at once. It is a deferred chunk because nobody needs
- * it to paint the first screen.
+ * up: never two calls to action at once. The shell loads this whole component as its
+ * own chunk (`@defer (on immediate)`): none of the notices is needed to paint the first
+ * screen, and keeping them out of the initial bundle pays for the push offer.
  */
 @Component({
   selector: 'app-shell-notices',
