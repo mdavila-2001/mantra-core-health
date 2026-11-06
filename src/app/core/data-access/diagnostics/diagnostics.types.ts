@@ -1,6 +1,7 @@
 import type { OrderAppointment } from '../diagnostic-units/center-schedule.types';
 import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
 import type { CollectionPointRef } from './sample-collection.types';
+import type { StudyDetailFields, StudyDetailRead } from './study-detail.types';
 import type {
   ServiceRequestPerformerFields,
   ServiceRequestPerformerInput,
@@ -43,7 +44,7 @@ export type AnalysisCategory = 'LAB' | 'IMAGING' | 'OTHER';
  * contrato: una orden vieja puede no tenerla. Quien la muestre trata la
  * ausencia como «sin clasificar», nunca la adivina por el código.
  */
-export interface DiagnosticOrder {
+export interface DiagnosticOrder extends StudyDetailRead {
   readonly id: string;
   /** F5b: el punto de toma sugerido, ya resuelto. */
   readonly suggestedCareSpace?: CollectionPointRef | null;
@@ -115,15 +116,14 @@ export interface PatientDiagnostics {
 }
 
 /**
- * Lo que hace falta para pedir un estudio (UC-08-05).
- *
- * Tres campos obligatorios y ninguno inventado: los tres los declara así el DTO
+ * Lo que hace falta para pedir un estudio (UC-08-05). Tres campos obligatorios
+ * y ninguno inventado: los tres los declara así el DTO
  * del backend. `encounterId` es opcional en el contrato —se puede pedir un
  * estudio fuera de una consulta— pero la ficha sólo ofrece el formulario con un
  * encuentro abierto, por la misma razón que la receta: un pedido suelto, sin la
  * consulta que lo motivó, es un dato que después nadie sabe explicar.
  */
-export interface NewDiagnosticOrder extends ServiceRequestPerformerInput {
+export interface NewDiagnosticOrder extends ServiceRequestPerformerInput, StudyDetailFields {
   readonly custodianTenantId: string;
   readonly patientProfileId: string;
   readonly codeConceptId: string;
@@ -337,7 +337,7 @@ export interface PatientDiagnosticResults {
  * `hasReleasedResult` lo decide el servidor y no se recalcula acá: que exista un
  * informe no quiere decir que haya un resultado que esta persona pueda leer.
  */
-export interface PatientOrder extends PatientSettlementFields, ServiceRequestPerformerFields {
+export interface PatientOrder extends PatientSettlementFields, ServiceRequestPerformerFields, StudyDetailRead {
   readonly id: string;
   readonly encounterId?: string;
   readonly codeConceptId: string;

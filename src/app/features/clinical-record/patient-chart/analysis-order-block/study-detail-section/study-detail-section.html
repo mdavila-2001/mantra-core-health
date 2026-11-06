@@ -1,0 +1,110 @@
+@if (isLab()) {
+  <app-form-field
+   
+    label="Muestra"
+    hint="Qué se analiza: sangre, orina… La elige usted; no se completa sola."
+    [required]="true"
+    [errorMessage]="errors()['specimen']"
+  >
+    <app-concept-select
+      [target]="targets.specimen"
+      [value]="specimen()"
+      (valueChange)="specimen.set($event); clearError('specimen')"
+      [clearable]="false"
+      placeholder="Elija la muestra"
+      data-testid="order-specimen"
+    />
+  </app-form-field>
+  @if (!canSubmit()) {
+    <p class="detalle__falta" role="status" data-testid="order-detail-missing">Elija la muestra para poder pedir el estudio.</p>
+  }
+}
+
+@if (isImaging()) {
+  <fieldset class="detalle" data-testid="order-imaging-detail">
+    <legend class="detalle__titulo">Parte del cuerpo</legend>
+
+    <app-body-site-picker
+      [parts]="atlas.parts()"
+      [index]="atlas.index()"
+      [indexFailed]="atlas.indexFailed()"
+      [modelUrls]="atlas.modelUrls"
+      [status]="atlas.status() === 'ready' ? 'ready' : atlas.status() === 'error' ? 'error' : 'loading'"
+      [value]="selection()"
+      (valueChange)="pick($event)"
+      (retry)="atlas.load()"
+    />
+    @if (errors()['structure']; as mensaje) {
+      <p class="detalle__error" role="alert" data-testid="order-structure-error">{{ mensaje }}</p>
+    }
+    @if (regionNote(); as nota) {
+      <p class="detalle__falta" role="status" data-testid="order-region-note">{{ nota }}</p>
+    }
+
+    <div class="detalle__campos">
+      <app-form-field
+        label="Región del estudio"
+        hint="Del catálogo. La parte marcada en el cuerpo la propone; puede cambiarla."
+        [required]="true"
+        [errorMessage]="errors()['bodySite']"
+      >
+        <app-concept-select
+          [target]="targets.bodySite"
+          [value]="bodySite()"
+          (valueChange)="bodySite.set($event); clearError('bodySite')"
+          [clearable]="false"
+          placeholder="Elija la región"
+          data-testid="order-body-site"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Lado"
+        [hint]="selection()?.side ? 'Propuesto por la parte marcada; puede cambiarlo.' : 'Opcional. Sólo si la región tiene lado.'"
+        [errorMessage]="errors()['laterality']"
+      >
+        <app-concept-select
+          [target]="targets.laterality"
+          [value]="laterality()"
+          (valueChange)="laterality.set($event); clearError('laterality')"
+          [labels]="lateralityLabels"
+          placeholder="Sin especificar"
+          data-testid="order-laterality"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Modalidad"
+        hint="Opcional: si el estudio ya fija una, se usa la del estudio."
+        [errorMessage]="errors()['modality']"
+      >
+        <app-concept-select
+          [target]="targets.modality"
+          [value]="modality()"
+          (valueChange)="modality.set($event); clearError('modality')"
+          placeholder="La del estudio"
+          data-testid="order-modality"
+        />
+      </app-form-field>
+
+      @if (isBone()) {
+        <app-form-field
+          label="Tipo de hueso"
+          hint="Lo marcado es un hueso: indique su tipo. No se deduce del modelo."
+          [errorMessage]="errors()['boneType']"
+        >
+          <app-concept-select
+            [target]="targets.boneType"
+            [value]="boneType()"
+            (valueChange)="boneType.set($event); clearError('boneType')"
+            placeholder="Sin especificar"
+            data-testid="order-bone-type"
+          />
+        </app-form-field>
+      }
+    </div>
+    @if (!canSubmit()) {
+      <p class="detalle__falta" role="status" data-testid="order-detail-missing">Elija la región del estudio para poder pedirlo.</p>
+    }
+  </fieldset>
+}

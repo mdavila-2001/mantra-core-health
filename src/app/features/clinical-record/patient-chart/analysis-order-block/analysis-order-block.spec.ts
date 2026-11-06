@@ -1,9 +1,13 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import type { Signal, WritableSignal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
 import { SessionStore } from '../../../../core/auth/session.store';
+import type { BodySiteSelection } from '../../../../shared/components/organisms/body-site-picker/body-site-picker';
+import { MESH_TO_REGION } from '../../../../core/data-access/anatomy-atlas/body-regions.data';
+import { STUDY_DETAIL_TARGETS } from '../../../../core/data-access/diagnostics/study-detail.types';
 import { AnalysisOrderBlock, TARGET_CATEGORIA, TARGET_ESTUDIO } from './analysis-order-block';
 
 /**
@@ -24,6 +28,19 @@ import { AnalysisOrderBlock, TARGET_CATEGORIA, TARGET_ESTUDIO } from './analysis
  * 5. **Después de pedir se relee.** El bloque no pinta lo que el servidor no le
  *    confirmó.
  */
+
+/** Lo que estas pruebas leen y escriben del hijo `StudyDetailSection`, que mantiene sus señales como protegidas. */
+interface DetalleEnPrueba {
+  readonly specimen: WritableSignal<string | null>;
+  readonly bodySite: WritableSignal<string | null>;
+  readonly modality: WritableSignal<string | null>;
+  readonly laterality: WritableSignal<string | null>;
+  readonly boneType: WritableSignal<string | null>;
+  readonly selection: WritableSignal<BodySiteSelection | null>;
+  readonly errors: Signal<Readonly<Record<string, string | undefined>>>;
+  fields(): Readonly<Record<string, string | undefined>>;
+  canSubmit(): boolean;
+}
 
 const CATALOGO = {
   code: 'service-request-code',
@@ -827,11 +844,230 @@ describe('AnalysisOrderBlock', () => {
 
     it('una orden de laboratorio no lleva ninguna clave de ejecutor', () => {
       abrir('cat-lab');
+      elegirMuestra('sp-orina');
 
       const { body } = pedirYLeerCuerpo();
       for (const clave of ['performerSelectionConceptId', 'performerPractitionerProfileId', 'suggestedPracticeSiteId', 'performerTenantId']) {
         expect(clave in body, clave).toBe(false);
       }
+    });
+
+    /** El detalle del estudio (muestra / parte del cuerpo) es un hijo del formulario. */
+    function detalle(): DetalleEnPrueba {
+      return componente['detail']() as unknown as DetalleEnPrueba;
+    }
+
+    function elegirMuestra(conceptId: string): void {
+      fixture.detectChanges();
+      detalle()['specimen'].set(conceptId);
+      fixture.detectChanges();
+    }
+
+    /** Abre el formulario con una radiografía: el catálogo del cuerpo se pide en el navegador y se responde vacío. */
+    function abrirImagen(): void {
+      fixture.detectChanges();
+      responderCategorias('SR_PROCEDURE');
+      responderCircuito();
+      fixture.detectChanges();
+      componente['estudio'].set('code-rx');
+      fixture.detectChanges();
+      for (const atlas of http.match((r) => r.url.startsWith('/anatomy-atlas-3d'))) {
+        atlas.flush(atlas.request.url.endsWith('index.json') ? { shards: 1, entries: [] } : []);
+      }
+      fixture.detectChanges();
+    }
+
+    describe('detalle del estudio: muestra o parte del cuerpo', () => {
+      it('laboratorio exige la muestra: sin ella no deja pedir, con ella viaja plana y sin datos de imagen', () => {
+        abrir('cat-lab');
+        fixture.detectChanges();
+
+        expect(componente['puedePedir']()).toBe(false);
+        elegirMuestra('sp-orina');
+        expect(componente['puedePedir']()).toBe(true);
+
+        const { body } = pedirYLeerCuerpo();
+        expect(body['specimenTypeConceptId']).toBe('sp-orina');
+        expect('imaging' in body).toBe(false);
+      });
+
+      it('dice por qué «Pedir estudio» está gris, junto al campo que falta, y lo retira al completarlo', () => {
+        abrir('cat-lab');
+        fixture.detectChanges();
+        const falta = () => fixture.nativeElement.querySelector('[data-testid="order-detail-missing"]') as HTMLElement | null;
+        expect(falta()?.textContent).toContain('Elija la muestra');
+        elegirMuestra('sp-orina');
+        expect(falta()).toBeNull();
+      });
+
+      it('imagen exige la región del catálogo; manda el 3D, el lado, la modalidad y el tipo de hueso dentro de `imaging`, y nunca la muestra', () => {
+        abrirImagen();
+
+        expect(componente['puedePedir']()).toBe(false);
+        const d = detalle();
+        d['bodySite'].set('reg-mano');
+        d['modality'].set('mod-rx');
+        d['laterality'].set('lat-izq');
+        d['selection'].set({ meshId: 'BP1234', structureId: 'UBERON:0002398', layer: 'skeleton', side: 'left' });
+        d['boneType'].set('hueso-largo');
+        fixture.detectChanges();
+        expect(componente['puedePedir']()).toBe(true);
+
+        const { body } = pedirYLeerCuerpo();
+        expect(body['imaging']).toEqual({
+          bodySiteConceptId: 'reg-mano',
+          modalityConceptId: 'mod-rx',
+          lateralityConceptId: 'lat-izq',
+          bodyStructureUberon: 'UBERON:0002398',
+          bodyMeshId: 'BP1234',
+          boneTypeConceptId: 'hueso-largo',
+        });
+        expect('specimenTypeConceptId' in body).toBe(false);
+        expect('bodySiteConceptId' in body).toBe(false);
+      });
+
+      /** Responde el catálogo de regiones (y el de lados) con códigos del catálogo real, para ejercitar el cruce. */
+      function responderRegiones(): void {
+        const opciones = (codigos: readonly string[]) => codigos.map((code, i) => ({ conceptId: `id-${code}`, code, display: code, ordinal: i + 1 }));
+        for (const req of http.match((r) => r.url === '/system-context/dynamic-enums')) {
+          const target = req.request.params.get('target') ?? '';
+          if (target === STUDY_DETAIL_TARGETS.bodySite) req.flush({ ...CATALOGO, options: opciones(['IMG_REGION_FEMUR', 'IMG_REGION_SACRO']) });
+          else if (target === STUDY_DETAIL_TARGETS.laterality) req.flush({ ...CATALOGO, options: opciones(['COND_LAT_LEFT', 'COND_LAT_RIGHT']) });
+          else req.flush(CATALOGO);
+        }
+      }
+
+      async function esperar(condicion: () => boolean): Promise<void> {
+        for (let i = 0; i < 100 && !condicion(); i++) await new Promise((r) => setTimeout(r, 10));
+      }
+
+      const MALLA_DE = (region: string): string => Object.entries(MESH_TO_REGION).find(([, r]) => r === region)![0];
+
+      it('la parte marcada en el 3D propone la región del catálogo y el lado; lo cambiado a mano se respeta hasta la próxima pieza', async () => {
+        abrirImagen();
+        responderRegiones();
+        const d = detalle();
+        await esperar(() => d['selection'] !== undefined);
+        // correcto: una pieza del fémur izquierdo → región «Fémur» (admite lado) y lado izquierdo
+        d['selection'].set({ meshId: MALLA_DE('FEMUR'), structureId: 'UBERON:0000981', layer: 'skeleton', side: 'left' });
+        await esperar(() => d['bodySite']() === 'id-IMG_REGION_FEMUR');
+        expect(d['bodySite']()).toBe('id-IMG_REGION_FEMUR');
+        expect(d['laterality']()).toBe('id-COND_LAT_LEFT');
+        expect(d['fields']()['bodyMeshId']).toBe(MALLA_DE('FEMUR'));
+        // el médico cambia el lado: se respeta
+        d['laterality'].set('id-COND_LAT_RIGHT');
+        fixture.detectChanges();
+        expect(d['laterality']()).toBe('id-COND_LAT_RIGHT');
+        // límite: una región única (sacro) no admite lado: no se propone ninguno
+        d['selection'].set({ meshId: MALLA_DE('SACRO'), structureId: 'UBERON:9', layer: 'skeleton', side: 'right' });
+        await esperar(() => d['bodySite']() === 'id-IMG_REGION_SACRO');
+        expect(d['bodySite']()).toBe('id-IMG_REGION_SACRO');
+        expect(d['laterality']()).toBeNull();
+      });
+
+      it('inválido: una pieza sin región equivalente no inventa una; lo dice y deja elegir a mano', async () => {
+        abrirImagen();
+        responderRegiones();
+        const d = detalle();
+        d['bodySite'].set('id-IMG_REGION_SACRO');
+        d['selection'].set({ meshId: 'MALLA_SIN_REGION', structureId: 'UBERON:0', layer: 'organs', side: null });
+        await esperar(() => fixture.nativeElement.querySelector('[data-testid="order-region-note"]') !== null || (fixture.detectChanges(), false));
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="order-region-note"]')?.textContent).toContain('no tiene una región equivalente');
+        expect(d['bodySite']()).toBe('id-IMG_REGION_SACRO');
+      });
+
+      it('el tipo de hueso sólo viaja si lo marcado es del esqueleto', () => {
+        abrirImagen();
+        const d = detalle();
+        d['bodySite'].set('reg-abdomen');
+        d['boneType'].set('hueso-largo');
+        d['selection'].set({ meshId: 'LIVER', structureId: 'UBERON:0002107', layer: 'organs', side: null });
+        fixture.detectChanges();
+
+        expect(d['fields']()['boneTypeConceptId']).toBeUndefined();
+        expect(d['fields']()['bodyStructureUberon']).toBe('UBERON:0002107');
+      });
+
+      it('laboratorio e imagen son excluyentes: cambiar de estudio no arrastra lo del otro', () => {
+        abrir('cat-lab');
+        elegirMuestra('sp-orina');
+        componente['estudio'].set('code-rx');
+        fixture.detectChanges();
+        for (const atlas of http.match((r) => r.url.startsWith('/anatomy-atlas-3d'))) atlas.flush([]);
+
+        expect(detalle()['fields']()).toEqual({});
+        expect(componente['puedePedir']()).toBe(false);
+      });
+
+      it('un estudio que no es de laboratorio ni de imagen no pide nada del detalle', () => {
+        abrir('cat-proc');
+        responderSedes();
+        expect(detalle()['fields']()).toEqual({});
+        expect(detalle()['canSubmit']()).toBe(true);
+      });
+
+      it('un 422 de la API se muestra en su campo, conserva lo cargado y no bloquea el reintento', () => {
+        abrir('cat-lab');
+        elegirMuestra('sp-orina');
+
+        const { alta } = pedirYLeerCuerpo();
+        alta.flush(
+          {
+            statusCode: 422,
+            code: 'PRECONDITION_FAILED',
+            message: 'La muestra no es de `specimen-type`',
+            reason: 'SPECIMEN_TYPE_NOT_IN_CATALOG',
+            details: { reason: 'SPECIMEN_TYPE_NOT_IN_CATALOG', field: 'specimenTypeConceptId' },
+            timestamp: '2026-11-06T10:00:00Z',
+            path: '/clinical/service-requests',
+          },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
+        fixture.detectChanges();
+
+        const campo = fixture.nativeElement.querySelector('[data-testid="order-specimen"]')?.closest('app-form-field');
+        expect(campo?.textContent).toContain('no está en el catálogo');
+        expect(fixture.nativeElement.querySelector('[data-testid="estudios-error"]')).toBeNull();
+        expect(componente['estudio']()).toBe('code-hemograma');
+        expect(detalle()['specimen']()).toBe('sp-orina');
+        expect(componente['pidiendo']()).toBe(false);
+        expect(componente['puedePedir']()).toBe(true);
+      });
+
+      it('un 422 que no es del detalle sigue siendo el error general del pedido', () => {
+        abrir('cat-lab');
+        elegirMuestra('sp-orina');
+        const { alta } = pedirYLeerCuerpo();
+        alta.flush(
+          { statusCode: 422, code: 'PRECONDITION_FAILED', message: 'x', reason: 'OTRA', details: { reason: 'OTRA' }, timestamp: 't', path: 'p' },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
+        fixture.detectChanges();
+        expect(detalle()['errors']()).toEqual({});
+        expect(componente['registro']().status).not.toBe('ready');
+      });
+
+      it('el histórico muestra la muestra o la parte del cuerpo de cada orden, y nada si la orden no la trae', () => {
+        fixture.detectChanges();
+        responderCatalogos();
+        responderCircuito({
+          ...CIRCUITO_VACIO,
+          orders: [
+            { ...ORDEN, id: 'sr-lab', specimenTypeConceptId: 'sp-orina', specimenTypeDisplay: 'Orina' },
+            { ...ORDEN, id: 'sr-img', imaging: { bodySiteConceptId: 'r', bodySiteDisplay: 'Mano', lateralityConceptId: 'l', lateralityDisplay: 'Izquierda', bodyStructureUberon: 'UBERON:1' } },
+            { ...ORDEN, id: 'sr-vieja' },
+          ],
+        });
+        fixture.detectChanges();
+
+        expect(componente['estudios']().map((e) => e.detalle)).toEqual([
+          'Muestra: Orina',
+          'Región: Mano · Izquierda · marcada en el cuerpo 3D',
+          null,
+        ]);
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="study-detail"]').length).toBe(2);
+      });
     });
 
     it('no deja pedir con un modo de sede sin sede elegida, y nada se manda', () => {
