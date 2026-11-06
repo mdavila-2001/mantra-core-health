@@ -34,10 +34,7 @@ import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-
 import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import { mensajeDeError } from '../../../shared/forms/paginated/error-message';
-import {
-  MESSAGE_SHORT_PASSWORD,
-  passwordValidators,
-} from '../shared-registration/password-policy';
+import { accessPasswordFields, passwordWithConfirmation } from '../shared-registration/password-confirmation';
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
@@ -70,6 +67,8 @@ import { codeFromAcronym, MAX_ACRONYM, MIN_ACRONYM, codeDriftAcronym } from './c
 import { RegistrationBadge } from '../shared-registration/registration-badge';
 import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
 import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
+import { EXECUTIVE_CONTACT_FIELDS, insurerExecutives } from './insurer-executives';
+import { RegistrationOpeningHours, openingHoursControl, openingHoursSection, toShifts } from '../shared-registration/opening-hours';
 
 /** Largos que declara el bloque `organization` de `RegisterOrganizationDto`. */
 const MAX_NOMBRE = 300;
@@ -188,6 +187,7 @@ function grupoDeGerente() {
     PhoneInput,
     InlineNameFields,
     OnboardingDraftBanner,
+    RegistrationOpeningHours,
   ],
   templateUrl: './register-organization.html',
   styleUrls: ['../shared-registration/registration.css', './register-organization.css'],
@@ -327,15 +327,13 @@ export class RegisterOrganization {
       commercialManager: grupoDeGerente(),
       marketingManager: grupoDeGerente(),
     }),
+    openingHours: openingHoursControl(),
     // La contraseña del representante legal. El representante ES el owner:
     // es la única persona que inicia sesión por la aseguradora, así que ya
     // no hay un segundo juego de nombre y correo («Tu cuenta»). El nombre y
     // el correo salen de `legalRepresentative` y `legalRepresentativeEmail`;
     // acá sólo falta la clave con la que va a entrar. Ver `datos()`.
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [...passwordValidators],
-    }),
+    ...passwordWithConfirmation(),
   });
 
   /** Las opciones crudas del catálogo, sin filtrar por país. */
@@ -506,6 +504,7 @@ export class RegisterOrganization {
           },
         ],
       },
+      openingHoursSection(false),
       {
         titulo: 'Documentación legal obligatoria (PDF)',
         clave: 'documentos-legales',
@@ -540,26 +539,6 @@ export class RegisterOrganization {
             mensajeDeError: 'Escriba el número de cédula.',
           },
           {
-            key: 'legalRepresentativeEmail',
-            label: 'Correo',
-            hint: 'Con este correo y la contraseña de abajo se inicia sesión. También recibe las notificaciones oficiales.',
-            control: 'email' as const,
-            required: true,
-            autocomplete: 'username',
-            testId: 'registro-organizacion-representante-correo',
-            mensajeDeError: 'Ingrese un correo válido.',
-          },
-          {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            control: 'password' as const,
-            required: true,
-            autocomplete: 'new-password',
-            testId: 'registro-organizacion-representante-password',
-            mensajeDeError: MESSAGE_SHORT_PASSWORD,
-          },
-          {
             key: 'legalRepresentativePhone',
             label: 'Teléfono de contacto (opcional)',
             control: 'tel' as const,
@@ -586,6 +565,27 @@ export class RegisterOrganization {
             ancho: 'completo' as const,
             mensajeDeError: 'Complete nombre, celular y correo de las tres gerencias.',
           },
+        ],
+      },
+      {
+        titulo: 'Su acceso',
+        clave: 'acceso',
+        hint: 'Entra con el correo del representante legal y esta contraseña.',
+        disposicion: 'dos-columnas' as const,
+        campos: [
+          {
+            key: 'legalRepresentativeEmail',
+            ancho: 'completo' as const,
+            label: 'Correo de acceso',
+            hint: 'El del representante legal: con este correo y la contraseña se inicia sesión. También recibe las notificaciones oficiales.',
+            control: 'email' as const,
+            required: true,
+            icono: 'mail' as const,
+            autocomplete: 'username',
+            testId: 'registro-organizacion-representante-correo',
+            mensajeDeError: 'Ingrese un correo válido.',
+          },
+          ...accessPasswordFields('registro-organizacion-representante-password'),
         ],
       },
     ]),
@@ -876,52 +876,9 @@ export class RegisterOrganization {
   }
 
   /** Las tres gerencias del acordeón (subtarea 1.4), en el orden del registro de procesos. */
-  protected readonly gerencias: readonly {
-    readonly key: 'generalManager' | 'commercialManager' | 'marketingManager';
-    readonly heading: string;
-    readonly testId: string;
-    readonly expanded: ReturnType<typeof signal<boolean>>;
-  }[] = [
-    {
-      key: 'generalManager',
-      heading: '1. Gerente General',
-      testId: 'general-manager',
-      // Abierta por defecto: es la primera que se completa, y un acordeón que
-      // arranca con las tres plegadas obligaría a un clic antes de escribir
-      // nada.
-      expanded: signal(true),
-    },
-    {
-      key: 'commercialManager',
-      heading: '2. Gerente Comercial',
-      testId: 'commercial-manager',
-      expanded: signal(false),
-    },
-    {
-      key: 'marketingManager',
-      heading: '3. Gerente de Marketing',
-      testId: 'marketing-manager',
-      expanded: signal(false),
-    },
-  ];
-
+  protected readonly gerencias = insurerExecutives();
   /** Celular y correo de una gerencia (subtarea 1.4): lo único que no es nombre. */
-  protected readonly camposDeContactoDeGerencia: readonly {
-    readonly key: 'phone' | 'email';
-    readonly label: string;
-    readonly hint?: string;
-    readonly control: 'tel' | 'email';
-    readonly autocomplete?: string;
-  }[] = [
-    {
-      key: 'phone',
-      label: 'Celular',
-      hint: 'Con WhatsApp activo.',
-      control: 'tel',
-      autocomplete: 'tel',
-    },
-    { key: 'email', label: 'Correo corporativo', control: 'email', autocomplete: 'email' },
-  ];
+  protected readonly camposDeContactoDeGerencia = EXECUTIVE_CONTACT_FIELDS;
 
   /** El `FormControl` de celular o correo de una gerencia, dentro del grupo `executives`. */
   protected controlDeGerencia(
@@ -1042,6 +999,7 @@ export class RegisterOrganization {
       legalEntityType: raw.legalEntityType,
       ...(tradeName === '' ? {} : { tradeName }),
       timeZone,
+      openingHours: toShifts(raw.openingHours.headquarters),
       payer: {
         carrierCode: codigo,
         regulatorIdentifier: raw.regulatorIdentifier.trim(),

@@ -7,6 +7,7 @@ import { ViewStateHost } from '../../../../shared/components/organisms/view-stat
 import { dataOf } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { ContactSheet } from './contact-sheet/contact-sheet';
+import { RepresentativeNameEditor } from './representative-name-editor/representative-name-editor';
 import { NOTA_DE_DATOS_DE_EJEMPLO } from '../pharmacy-profile.fixtures';
 import type { GenteDeLaEmpresa } from '../pharmacy-profile.types';
 
@@ -22,7 +23,7 @@ import type { GenteDeLaEmpresa } from '../pharmacy-profile.types';
  */
 @Component({
   selector: 'app-representative-and-managers',
-  imports: [AppButton, Chip, ContactSheet, Skeleton, ViewStateHost],
+  imports: [AppButton, Chip, ContactSheet, RepresentativeNameEditor, Skeleton, ViewStateHost],
   templateUrl: './representative-and-managers.html',
   styleUrl: './representative-and-managers.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +42,15 @@ export class RepresentativeAndManagers {
    * poder, que no está entre las licencias de la carpeta.
    */
   readonly readOnly = input(false);
+
+  /**
+   * La organización cuyo representante se puede corregir desde acá. Sin ella (o sin permiso de
+   * quien mira) la ficha es sólo de lectura; la API vuelve a comprobarlo al guardar.
+   */
+  readonly editableTenantId = input<string | null>(null);
+
+  /** El nombre quedó guardado: el dueño de los datos los vuelve a leer. */
+  readonly nameSaved = output<void>();
 
   protected readonly exampleNote = NOTA_DE_DATOS_DE_EJEMPLO;
 

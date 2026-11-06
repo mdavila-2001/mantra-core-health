@@ -1,47 +1,62 @@
 <app-page-header
   title="Catálogo"
-  subtitle="Productos, categorías, precios, inventario, importación e integración con el sistema de su farmacia, en una sola pantalla."
-/>
+  subtitle="Productos, categorías, precios, inventario e integración con el sistema de su farmacia, en una sola pantalla."
+>
+  <button app-button page-actions type="button" (clicked)="openImport()" data-testid="catalog-import">
+    Importar CSV
+  </button>
+</app-page-header>
 
-<!-- UNA tarjeta con pestañas, a lo ancho y centrada: la regla de la casa
-     (`docs/components/composition-rules.md` §5). Cada pantalla se monta sólo
-     mientras su pestaña está abierta. -->
+<!-- ONE tabbed card, full width and centered: the house rule
+     (`docs/components/composition-rules.md` §5). Each screen is mounted only
+     while its tab is open; `generation` remounts it when the import closes so
+     it re-reads what was just loaded. -->
 <app-card padding="md" class="catalog__card" data-testid="pharmacy-catalog-card">
   <app-tabs
     appearance="browser"
     [selectedIndex]="selected()"
-    (selectedIndexChange)="requestTab($event)"
+    (selectedIndexChange)="select($event)"
     data-testid="pharmacy-catalog-tabs"
   >
-    <app-tab [label]="labels[tabs[0]]">
-      @if (selected() === 0) {
-        <app-pharmacy-products [embedded]="true" />
-      }
-    </app-tab>
-    <app-tab [label]="labels[tabs[1]]">
-      @if (selected() === 1) {
-        <app-pharmacy-categories [embedded]="true" />
-      }
-    </app-tab>
-    <app-tab [label]="labels[tabs[2]]">
-      @if (selected() === 2) {
-        <app-pharmacy-prices [embedded]="true" />
-      }
-    </app-tab>
-    <app-tab [label]="labels[tabs[3]]">
-      @if (selected() === 3) {
-        <app-pharmacy-inventory [embedded]="true" />
-      }
-    </app-tab>
-    <app-tab [label]="labels[tabs[4]]">
-      @if (selected() === 4) {
-        <app-import-target />
-      }
-    </app-tab>
-    <app-tab [label]="labels[tabs[5]]">
-      @if (selected() === 5) {
-        <app-pharmacy-integration />
-      }
-    </app-tab>
+    @for (mount of [generation()]; track mount) {
+      <app-tab [label]="labels[tabs[0]]">
+        @if (selected() === 0) {
+          <app-pharmacy-products [embedded]="true" />
+        }
+      </app-tab>
+      <app-tab [label]="labels[tabs[1]]">
+        @if (selected() === 1) {
+          <app-pharmacy-categories [embedded]="true" />
+        }
+      </app-tab>
+      <app-tab [label]="labels[tabs[2]]">
+        @if (selected() === 2) {
+          <app-pharmacy-prices [embedded]="true" />
+        }
+      </app-tab>
+      <app-tab [label]="labels[tabs[3]]">
+        @if (selected() === 3) {
+          <app-pharmacy-inventory [embedded]="true" />
+        }
+      </app-tab>
+      <app-tab [label]="labels[tabs[4]]">
+        @if (selected() === 4) {
+          <app-pharmacy-integration />
+        }
+      </app-tab>
+    }
   </app-tabs>
 </app-card>
+
+@if (importOpen()) {
+  <app-content-dialog
+    heading="Importar CSV"
+    description="Productos, categorías, precios o sucursales: lo que ya existe se actualiza y lo nuevo se crea."
+    size="xl"
+    [closeGuard]="importGuard"
+    data-testid="catalog-import-dialog"
+    (closed)="closeImport()"
+  >
+    <app-import-target />
+  </app-content-dialog>
+}

@@ -1,0 +1,31 @@
+<div class="area-filter" id="lab-study-areas" role="group" aria-label="Filtrar por área">
+  <app-chip
+    #allChip
+    selectable
+    [variant]="selected() === null ? 'primary' : 'neutral'"
+    [label]="'Todas las áreas, ' + total() + ' estudios'"
+    [selected]="selected() === null"
+    (selectedChange)="pickAll(allChip)"
+  >Todas</app-chip>
+
+  @for (area of shown(); track area.name) {
+    <app-chip
+      selectable
+      [variant]="selected() === area.name ? 'primary' : 'neutral'"
+      [label]="area.name + ', ' + area.count + ' estudios'"
+      [selected]="selected() === area.name"
+      (selectedChange)="pick(area.name)"
+    >{{ area.name }} · {{ area.count }}</app-chip>
+  }
+
+  <!-- One button that toggles, so focus stays on it when the list folds back. -->
+  @if (foldable()) {
+    <button
+      type="button"
+      class="area-filter__more"
+      aria-controls="lab-study-areas"
+      [attr.aria-expanded]="expanded()"
+      (click)="toggle()"
+    >{{ expanded() ? 'Ver menos' : '+' + hidden() + ' áreas' }}</button>
+  }
+</div>

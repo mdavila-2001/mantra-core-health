@@ -8,7 +8,6 @@ import { Router, RouterLink } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
-  DiagnosticUnitBranchRegistration,
   LaboratoryOrganizationRegistration,
 } from '../../../core/data-access/iam/iam.types';
 import { registrationErrorToViewState } from '../shared-registration/registration-errors';
@@ -54,10 +53,7 @@ import {
   RECORD_LEGAL_DOCUMENTS,
   type EnrollmentDocumentKey,
 } from '../shared-registration/legal-documents';
-import {
-  MESSAGE_SHORT_PASSWORD,
-  passwordValidators,
-} from '../shared-registration/password-policy';
+import { accessPasswordFields, passwordWithConfirmation } from '../shared-registration/password-confirmation';
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
@@ -77,6 +73,7 @@ import { RegistrationBadge } from '../shared-registration/registration-badge';
 import { tradeNameControl, tradeNameField, tradeNameOf } from '../shared-registration/trade-name';
 import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
 import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
+import { RegistrationOpeningHours, laboratoryBranches, openingHoursControl, openingHoursSection, toShifts } from '../shared-registration/opening-hours';
 
 /* ============================================================================
     Alta del laboratorio de sangre — proceso 4.1 del registro del stakeholder.
@@ -200,12 +197,6 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
   ],
   representante: [
     {
-      icono: 'mail',
-      titulo: 'Con este correo se entra',
-      texto:
-        'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
-    },
-    {
       icono: 'folder',
       titulo: 'El poder va con quien lo firma',
       texto:
@@ -237,6 +228,12 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
     },
   ],
   acceso: [
+    {
+      icono: 'mail',
+      titulo: 'Con este correo se entra',
+      texto:
+        'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
+    },
     {
       icono: 'lock',
       titulo: 'Una clave nueva, no la del correo',
@@ -319,6 +316,7 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
     DropzonePdf,
     InlineNameFields,
     OnboardingDraftBanner,
+    RegistrationOpeningHours,
   ],
   templateUrl: './register-laboratory.html',
   styleUrls: ['../shared-registration/registration.css', './register-laboratory.css'],
@@ -418,11 +416,9 @@ export class RegisterLaboratory {
       nonNullable: true,
       validators: [Validators.email],
     }),
+    openingHours: openingHoursControl(),
     // --- la cuenta ---------------------------------------------------------
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [...passwordValidators],
-    }),
+    ...passwordWithConfirmation(),
   });
 
   /**
@@ -516,6 +512,7 @@ export class RegisterLaboratory {
           },
         ],
       },
+      openingHoursSection(true),
       {
         titulo: 'Representante legal',
         clave: 'representante',
@@ -538,17 +535,6 @@ export class RegisterLaboratory {
             icono: 'people' as const,
             testId: 'registro-lab-representante-documento',
             mensajeDeError: 'Escriba el documento del representante (al menos cuatro caracteres).',
-          },
-          {
-            key: 'legalRepEmail',
-            label: 'Correo del representante legal',
-            hint: 'Con este correo va a entrar a la plataforma.',
-            control: 'email' as const,
-            required: true,
-            icono: 'mail' as const,
-            autocomplete: 'username',
-            testId: 'registro-lab-representante-correo',
-            mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
           },
           // El poder (4.1.8.1) se pide junto a quien lo firma, no con los papeles de la empresa.
           notarizedPowerField(PAIS, uiLanguage()),
@@ -649,18 +635,21 @@ export class RegisterLaboratory {
         clave: 'acceso',
         icon: 'lock' as const,
         hint: 'Entra con el correo del representante legal y esta contraseña.',
+        disposicion: 'dos-columnas' as const,
         campos: [
           {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            control: 'password' as const,
+            key: 'legalRepEmail',
+            ancho: 'completo' as const,
+            label: 'Correo de acceso',
+            hint: 'El del representante legal: con este correo va a entrar a la plataforma.',
+            control: 'email' as const,
             required: true,
-            icono: 'lock' as const,
-            autocomplete: 'new-password',
-            testId: 'registro-lab-password',
-            mensajeDeError: MESSAGE_SHORT_PASSWORD,
+            icono: 'mail' as const,
+            autocomplete: 'username',
+            testId: 'registro-lab-representante-correo',
+            mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
           },
+          ...accessPasswordFields('registro-lab-password'),
         ],
       },
     ]),
@@ -1067,16 +1056,7 @@ export class RegisterLaboratory {
     const raw = this.form.getRawValue();
     const central = this.gpsCentral();
 
-    // Una sucursal sin nombre no es una sucursal todavía: no viaja.
-    const sucursales: readonly DiagnosticUnitBranchRegistration[] = this.sucursales()
-      .filter((s) => s.nombre.trim() !== '')
-      .map((s) => ({
-        name: s.nombre.trim(),
-        addressLines: s.direccion.trim() === '' ? [] : [s.direccion.trim()],
-        ...(s.gps === null ? {} : { location: { latitude: s.gps.lat, longitude: s.gps.lng } }),
-        ...(s.descripcion.trim() === '' ? {} : { description: s.descripcion.trim() }),
-        ...(s.urlUbicacion === '' ? {} : { locationUrl: s.urlUbicacion }),
-      }));
+    const sucursales = laboratoryBranches(this.sucursales(), raw.openingHours);
 
     const cargos = {
       generalManager: {
@@ -1157,6 +1137,7 @@ export class RegisterLaboratory {
           ? {}
           : { powerOfAttorneyFileId: raw.powerOfAttorneyFileId }),
       },
+      openingHours: toShifts(raw.openingHours.headquarters),
       ...(documentosCompletos ? { legalDocuments: documentos } : {}),
       ...(cargosCompletos
         ? {

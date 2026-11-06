@@ -12,6 +12,8 @@ import { Router, RouterLink } from '@angular/router';
 import { catchError, map, of, switchMap, type Observable } from 'rxjs';
 
 import { ProfilesClient } from '@core/data-access/profiles/profiles.client';
+import { PatientContextService } from '@core/patient-context/patient-context.service';
+import { patientSilhouetteSex } from '@core/patient-context/patient-silhouette-sex';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import { TerminologyClient } from '@core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '@core/data-access/terminology/terminology.types';
@@ -31,7 +33,6 @@ import { FormField } from '@shared/components/molecules/form-field/form-field';
 import {
   BodyMap,
   ZONAS_CON_SILUETA,
-  type SexoDeLaSilueta,
   type ZonaElegible,
 } from '@shared/components/organisms/body-map/body-map';
 
@@ -58,7 +59,6 @@ import { SymptomRecommendations } from './symptom-recommendations/symptom-recomm
 import { ultimaFrase } from './text';
 import { fitsSex, withSpecialtiesForSex } from './sex-filter';
 import { EmergencyPanel } from '../emergency/emergency-panel/emergency-panel';
-
 
 /** Tope por página del listado de profesionales. */
 const POR_PAGINA = 50;
@@ -136,6 +136,7 @@ const VACIO: ReadonlyMap<string, string> = new Map();
 })
 export class SymptomCheck {
   private readonly profiles = inject(ProfilesClient);
+  private readonly contexto = inject(PatientContextService);
   private readonly publico = inject(PublicDirectoryClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly router = inject(Router);
@@ -213,26 +214,13 @@ export class SymptomCheck {
   );
 
   /**
-   * El sexo asignado al nacer del propio perfil (P-04, 2026-09-25).
-   *
-   * Se pide **al abrir**, a diferencia de las especialidades: cambia qué
-   * silueta se dibuja desde el primer instante, así que esperar a la primera
-   * tecla se vería como que la figura «cambia sola» a mitad de la pantalla.
-   * Sin sesión no se pide —no hay perfil propio que leer—, y un fallo o un
-   * perfil `INTERSEX`/`UNKNOWN` **no rompen el flujo**: se sigue mostrando la
-   * silueta neutra y la lista completa, que es mejor que arriesgar esconder
-   * un síntoma real por un dato que no se pudo confirmar.
+   * Sex of the active patient (own profile or the dependent being acted for),
+   * trimmed to what the silhouette draws (P-04). Unknown or failed → neutral
+   * figure and the full symptom list: better than hiding a real symptom.
    */
-  private readonly sexoAlNacer = toSignal(
-    this.sinSesion() ? of(undefined) : this.leerSexoPropio(),
-    { initialValue: undefined as 'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN' | undefined },
+  protected readonly siluetaSexo = patientSilhouetteSex(() =>
+    this.sinSesion() ? null : this.contexto.activePatientProfileId(),
   );
-
-  /** El sexo, recortado a lo que la silueta sabe dibujar (ver `BodyMap`). */
-  protected readonly siluetaSexo = computed<SexoDeLaSilueta | undefined>(() => {
-    const sexo = this.sexoAlNacer();
-    return sexo === 'MALE' || sexo === 'FEMALE' ? sexo : undefined;
-  });
 
   /** Si un síntoma corresponde al sexo del propio perfil; sin sexo conocido no se filtra (ver `sex-filter.ts`). */
   private sintomaVisible(sintoma: Sintoma): boolean {
@@ -278,7 +266,11 @@ export class SymptomCheck {
       if (deLaTabla !== undefined) marcadas.add(deLaTabla.madre ?? deLaTabla.id); // no invented side
     }
     // Parts named in the text are exact («rodilla derecha») and narrow the symptom's coarse zone.
-    return withNamedParts(bodyPartsIn(this.texto()), [...marcadas], (id) => BODY_ZONES.find((z) => z.id === id)?.madre);
+    return withNamedParts(
+      bodyPartsIn(this.texto()),
+      [...marcadas],
+      (id) => BODY_ZONES.find((z) => z.id === id)?.madre,
+    );
   });
 
   protected estaMarcada(idDeZona: string): boolean {
@@ -292,9 +284,7 @@ export class SymptomCheck {
    */
   protected readonly sintomas = computed<readonly Sintoma[]>(() => {
     const quitados = this.quitados();
-    const delTexto = recognize(this.texto()).filter(
-      (s) => !quitados.has(s.id),
-    );
+    const delTexto = recognize(this.texto()).filter((s) => !quitados.has(s.id));
     const yaEstan = new Set(delTexto.map((s) => s.id));
     const todos = [...delTexto, ...this.agregados().filter((s) => !yaEstan.has(s.id))];
     // «Salud íntima» no ofrece lo que no corresponde al sexo del propio
@@ -332,7 +322,10 @@ export class SymptomCheck {
   }
 
   protected fechaDe(observacion: ObservacionDeSintomas): string {
-    return new Date(observacion.creada).toLocaleString('es-BO', { dateStyle: 'medium', timeStyle: 'short' });
+    return new Date(observacion.creada).toLocaleString('es-BO', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
   }
 
   protected nombresDe(observacion: ObservacionDeSintomas): string {
@@ -363,7 +356,10 @@ export class SymptomCheck {
     const disponibles = new Set(this.especialidadesDisponibles().keys());
     // A man's account is never sent to Gynecology/Obstetrics, even for shared symptoms.
     const sexo = this.siluetaSexo();
-    const lista = recommend(this.sintomas().map((s) => withSpecialtiesForSex(s, sexo)), disponibles);
+    const lista = recommend(
+      this.sintomas().map((s) => withSpecialtiesForSex(s, sexo)),
+      disponibles,
+    );
     const motivo = this.faltaDeCerteza();
     if (lista.length === 0 && motivo === null) {
       return lista;
@@ -395,7 +391,13 @@ export class SymptomCheck {
   protected alternarAyudaManual(): void {
     this.ayudaManualAbierta.update((v) => !v);
     if (this.ayudaManualAbierta() && typeof window !== 'undefined') {
-      setTimeout(() => document.querySelector('[data-testid="sintomas-crisis-soporte"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+      setTimeout(
+        () =>
+          document
+            .querySelector('[data-testid="sintomas-crisis-soporte"]')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+        50,
+      );
     }
   }
 
@@ -511,7 +513,8 @@ export class SymptomCheck {
       return [];
     }
     const disponibles = new Set(this.especialidadesDisponibles().keys());
-    const lista = recommend(this.sintomasDeLaZona(), disponibles);
+    const sexo = this.siluetaSexo();
+    const lista = recommend(this.sintomasDeLaZona().map((s) => withSpecialtiesForSex(s, sexo)), disponibles);
     const breves = lista.map((r) => ({ ...r, porque: r.porque.slice(0, 2) }));
     return withMedicineFirstGeneral(breves, FIRST_GENERAL, disponibles);
   });
@@ -637,19 +640,6 @@ export class SymptomCheck {
       queryParams:
         conceptId === undefined || conceptId === '' ? { q: nombre } : { especialidad: conceptId },
     });
-  }
-
-  /**
-   * El sexo asignado al nacer del propio perfil, tolerante a fallo.
-   *
-   * Sólo se llama con sesión (ver {@link sexoAlNacer}): sin ella no hay
-   * `/profiles/patients/me` que leer.
-   */
-  private leerSexoPropio(): Observable<'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN' | undefined> {
-    return this.profiles.getOwnPatientProfile().pipe(
-      map((perfil) => perfil.sexAtBirth),
-      catchError(() => of(undefined)),
-    );
   }
 
   /**

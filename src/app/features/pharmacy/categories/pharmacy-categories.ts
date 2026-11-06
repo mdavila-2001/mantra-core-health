@@ -49,7 +49,7 @@ const SORT_ACCESSORS: SortAccessors<PharmacyCategory> = {
 };
 
 const ROW_ACTIONS: readonly RowAction[] = [
-  { code: 'rename', label: 'Renombrar', icon: 'edit' },
+  { code: 'rename', label: 'Editar', icon: 'edit' },
   { code: 'delete', label: 'Eliminar', icon: 'remove', destructive: true },
 ];
 
@@ -112,7 +112,7 @@ export class PharmacyCategories {
 
   protected readonly rowActions = ROW_ACTIONS;
   protected readonly dialogHeading = computed(() =>
-    this.dialogTarget() === null ? 'Nueva categoría' : 'Renombrar la categoría',
+    this.dialogTarget() === null ? 'Nueva categoría' : 'Editar categoría',
   );
 
   private readonly nameCell = viewChild.required<TemplateRef<{ $implicit: PharmacyCategory }>>('nameCell');
@@ -156,7 +156,7 @@ export class PharmacyCategories {
 
   /**
    * Descarga las categorías con el encabezado de su importación (`nombre`):
-   * se editan en una planilla y se vuelven a subir desde «Importación».
+   * se editan en una planilla y se vuelven a subir con «Importar CSV».
    */
   protected exportCsv(): void {
     const [name] = ENTITY_COLUMNS.categories;

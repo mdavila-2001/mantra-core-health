@@ -7,6 +7,7 @@ import { executivesFrom, type ExecutivesRaw } from '../shared-registration/execu
 import type { Coordinates } from '../shared-registration/map-location-picker/map-location-picker';
 import { completeName, nameParts, type NameValue } from '../shared-registration/name-fields/person-name';
 import { medicalCenterCodeFromName } from './medical-center-code';
+import { branchShifts, toShifts, type RegistrationHours } from '../shared-registration/opening-hours/opening-hours';
 
 /** La zona horaria del alta pública: Bolivia. */
 export const TIME_ZONE = 'America/La_Paz';
@@ -30,6 +31,7 @@ export interface MedicalCenterRaw extends ExecutivesRaw {
   readonly powerOfAttorneyFileId: string;
   readonly addressLines: string;
   readonly sucursales: readonly SucursalDeclarada[];
+  readonly openingHours: RegistrationHours;
   readonly legalRepName: NameValue;
   readonly legalRepIdNumber: string;
   readonly legalRepEmail: string;
@@ -74,7 +76,10 @@ export function medicalCenterBody(
   const telefonoRepresentante = raw.legalRepPhone.trim();
   const telefonoDirector = raw.medicalDirectorPhone.trim();
   const gerencias = executivesFrom(raw);
-  const sucursales = raw.sucursales.map((s) => sitio(s.nombre.trim(), s.direccion.trim(), s.gps));
+  const sucursales = raw.sucursales.map((s) => ({
+    ...sitio(s.nombre.trim(), s.direccion.trim(), s.gps),
+    openingHours: branchShifts(raw.openingHours, s.id),
+  }));
   const legalRepresentative = {
     fullName: completeName(raw.legalRepName),
     idNumber: raw.legalRepIdNumber.trim(),
@@ -90,6 +95,7 @@ export function medicalCenterBody(
     legalEntityType: raw.legalEntityType,
     ...(nombreComercial === '' ? {} : { tradeName: nombreComercial }),
     timeZone: TIME_ZONE,
+    openingHours: toShifts(raw.openingHours.headquarters),
     legalDocuments: {
       // Los opcionales que no se subieron no viajan: la API los omite sólo si el
       // tipo societario lo permite, y un '' no es un uuid.

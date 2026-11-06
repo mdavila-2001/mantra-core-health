@@ -1,0 +1,165 @@
+/* Layout only: colours and type come from the system tokens. */
+:host {
+  display: block;
+  /* Split by the card's own width, not the window's: the side nav eats 240 px. */
+  container-type: inline-size;
+}
+
+.unit-summary {
+  display: grid;
+  gap: var(--sp-5);
+}
+
+/* Emblem + what the centre does, side by side; the emblem stays a fixed
+   square so the services wrap next to it instead of under it. */
+.unit-summary__lead {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+.unit-summary__emblem {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  border-radius: var(--r-lg);
+  background: var(--st-primary-bg);
+  color: var(--brand-primary);
+}
+
+.unit-summary__emblem app-nav-icon {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+}
+
+.unit-summary__intro {
+  display: grid;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+/* Same scale as the section headings inside the tabs: it introduces the
+   whole card, so it may not read smaller than what sits under it. */
+.unit-summary__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 700;
+}
+
+.unit-summary__services {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.unit-summary__services li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--st-success-bg);
+  color: var(--st-success-fg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+}
+
+.unit-summary__services app-nav-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.unit-summary__code {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* Up to four tiles per row sharing the width, never under 9rem (two per row
+   on a phone). `min(100%, …)` keeps the narrowest screens from scrolling. */
+.unit-summary__stats {
+  display: grid;
+  grid-auto-rows: auto;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(9rem, (100% - 3 * var(--sp-3)) / 4)), 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+/* Each tile spans three rows of the parent grid (label, value, note) through
+   `subgrid`, so the values line up even when one label wraps. */
+.unit-summary__stat {
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
+  row-gap: var(--sp-1);
+  min-inline-size: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.unit-summary__label {
+  display: flex;
+  align-items: flex-start;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  gap: var(--sp-1);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+}
+
+.unit-summary__label app-nav-icon {
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--brand-primary);
+}
+
+.unit-summary__value {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.unit-summary__note {
+  margin: 0;
+  text-wrap: balance;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  overflow-wrap: anywhere;
+}
+
+/* Wide cards: what the centre does on the left, its figures on the right, so
+   two figures do not leave half the card empty. Only once four figures fit
+   in a row without wrapping their labels. */
+@container (min-width: 75rem) {
+  .unit-summary--split {
+    grid-template-columns: minmax(16rem, 1fr) minmax(0, 2fr);
+    align-items: start;
+  }
+}
+
+@media (max-width: 40rem) {
+  .unit-summary__emblem {
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+  }
+}

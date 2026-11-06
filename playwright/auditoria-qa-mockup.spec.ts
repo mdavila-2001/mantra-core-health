@@ -98,6 +98,7 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
     await avanzarHasta(page, PASOS_DEL_ALTA.resto);
     await page.getByTestId('registro-correo').fill(emailPrueba);
     await page.getByTestId('registro-password').fill('P@ssword1234!');
+    await page.getByTestId('registro-password-confirm').fill('P@ssword1234!');
     await page.getByTestId('registro-nit').fill('9988776655');
     await page.getByTestId('registro-razon-social').fill('Audit Corp SRL');
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso5-resto.png') });

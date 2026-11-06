@@ -112,10 +112,8 @@
   border-block-end: none;
 }
 
-.organizacion__persona-id {
+.organizacion__persona-nombre {
   color: var(--text-primary);
-  font-family: var(--font-family-mono, monospace);
-  font-size: var(--fs-caption);
   overflow-wrap: anywhere;
 }
 

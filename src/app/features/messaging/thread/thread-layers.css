@@ -119,6 +119,15 @@
   background: var(--velo);
 }
 
+/* A failed sticker has no bubble behind it: the retry line gets its own
+   error surface so it reads in both themes. */
+.hilo__burbuja.is-propio.is-sticker .hilo__reintento {
+  padding-inline-start: var(--e2);
+  border-radius: var(--r-pill);
+  background: var(--error-bg);
+  color: var(--error-tinta);
+}
+
 .hilo__menu {
   position: absolute;
   inset-block-start: 20px;

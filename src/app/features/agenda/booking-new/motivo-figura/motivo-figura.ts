@@ -4,9 +4,9 @@ import type { FormControl } from '@angular/forms';
 import { startWith, switchMap } from 'rxjs';
 
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { patientSilhouetteSex } from '../../../../core/patient-context/patient-silhouette-sex';
 import {
   BodyMap,
-  type SexoDeLaSilueta,
   type ZonaElegible,
 } from '../../../../shared/components/organisms/body-map/body-map';
 import { bodyPartsIn, withNamedParts } from '../../../symptom-check/body-parts';
@@ -48,8 +48,11 @@ export class MotivoFigura {
   /** `false` only shows (confirm step: the reason is no longer editable). */
   readonly editable = input(true);
 
+  /** Patient profile of the booking; the silhouette follows their sex. */
+  readonly pacienteId = input<string | null>(null);
+
   /** Silhouette proportions; neutral when unknown. */
-  readonly sexo = input<SexoDeLaSilueta | undefined>(undefined);
+  readonly sexo = patientSilhouetteSex(() => this.pacienteId());
 
   protected readonly texto = toSignal(
     toObservable(this.control).pipe(
@@ -75,7 +78,11 @@ export class MotivoFigura {
       if (deLaTabla !== undefined) marcadas.add(deLaTabla.madre ?? deLaTabla.id); // no invented side
     }
     // Parts named in the text are exact («rodilla derecha») and narrow the symptom's coarse zone.
-    return withNamedParts(bodyPartsIn(this.texto()), [...marcadas], (id) => BODY_ZONES.find((z) => z.id === id)?.madre);
+    return withNamedParts(
+      bodyPartsIn(this.texto()),
+      [...marcadas],
+      (id) => BODY_ZONES.find((z) => z.id === id)?.madre,
+    );
   });
 
   /* ---- picking by touch -------------------------------------------------- */

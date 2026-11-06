@@ -1,0 +1,44 @@
+.studies-panel__areas {
+  display: block;
+  margin-block-start: var(--sp-4);
+}
+
+.studies-panel__count {
+  margin-block-start: var(--sp-3);
+}
+
+.studies-panel__count:empty {
+  display: none;
+}
+
+.studies-panel__source {
+  margin-block-start: var(--sp-3);
+}
+
+.studies-panel__source > summary {
+  inline-size: fit-content;
+  color: var(--text-link);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Count and «show more» centred under the grid: the end of what is drawn. */
+.studies-panel__more {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-5);
+}
+
+.ficha-publica__vacio > p {
+  margin: 0 0 var(--sp-3);
+}
+
+/* After «show more» focus lands on the new card's list item and the global
+   focus ring is drawn on it: a rule aimed at the card itself would not reach
+   it (the card belongs to another component's encapsulation). */
+.rejilla > li {
+  border-radius: var(--r-md);
+}

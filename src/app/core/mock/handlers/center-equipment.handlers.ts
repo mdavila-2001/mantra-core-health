@@ -42,8 +42,8 @@ const TERMINO_DE_EQUIPO: Readonly<Record<string, string>> = {
 const conceptoDelGlosario = (slug: string | undefined): string | null =>
   slug === undefined ? null : uuid(`concept-glossary-${slug}`);
 
-/** Como la API: sin tipo de equipo en el catálogo para resonancia, ECG ni toma de muestras. */
-const SIN_TIPO: readonly ModalityCode[] = ['RM', 'ECG', 'LAB'];
+/** Like the API (mantra-core-health-api#1359): every modality has a device type but ECG, which the API does not know. */
+const SIN_TIPO: readonly ModalityCode[] = ['ECG'];
 
 function sembrados(u: UnidadSimulada): CenterEquipment[] {
   const propios = equipoDe(u).map((e): CenterEquipment => ({

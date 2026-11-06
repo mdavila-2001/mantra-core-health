@@ -61,6 +61,7 @@ describe('RegisterSupportStaff', () => {
       email: 'rosa@ejemplo.com',
       phone: '+591 70012345',
       password: 'secreta123',
+      confirmPassword: 'secreta123',
       ...cambios,
     });
   }

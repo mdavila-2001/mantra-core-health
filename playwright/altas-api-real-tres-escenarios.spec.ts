@@ -118,6 +118,7 @@ async function altaPaciente(page: Page, datos: DatosPaciente): Promise<Response>
   await continuarHasta(page, 'Resto de datos');
   await page.getByTestId('registro-correo').fill(datos.correo);
   await page.getByTestId('registro-password').fill(datos.password);
+  await page.getByTestId('registro-password-confirm').fill(datos.password);
   return enviar(page, '/iam/auth/register-patient');
 }
 
@@ -214,6 +215,7 @@ async function altaMedico(page: Page, datos: DatosMedico): Promise<Response> {
   await page.getByTestId('registro-pro-credencial').fill(datos.sedes);
   await continuarHasta(page, 'Su contraseña');
   await page.getByTestId('registro-pro-password').fill(datos.password);
+  await page.getByTestId('registro-pro-password-confirm').fill(datos.password);
   return enviar(page, '/iam/auth/register-practitioner');
 }
 

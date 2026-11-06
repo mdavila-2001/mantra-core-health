@@ -146,20 +146,17 @@ describe('ConversationList', () => {
       expect(buscar('conversacion')).toBeNull();
     });
 
-    it('vacío (S3) ofrece una próxima acción que lleva a buscar', () => {
+    it('vacío (S3) dice que no tiene chats disponibles, sin botones', () => {
       conEstado(empty({ label: 'Buscar medicamentos', route: '/search/medications' }));
-      expect(buscar('bandeja-vacia')?.textContent).toContain('Todavía no tiene chats');
-      const destinos = Array.from(
-        fixture.nativeElement.querySelectorAll('[data-testid="bandeja-vacia"] a'),
-      ).map((a) => (a as HTMLAnchorElement).getAttribute('href'));
-      expect(destinos).toContain('/search/medications');
+      expect(buscar('bandeja-vacia')?.textContent).toContain('No tiene chats disponibles');
+      expect(fixture.nativeElement.querySelectorAll('[data-testid="bandeja-vacia"] a, [data-testid="bandeja-vacia"] button').length).toBe(0);
     });
 
     it('sin conexión (S8) dice «Sin conexión» y ofrece reintentar', () => {
       conEstado(offline());
       const pedidos = pedidosDeReintento();
       expect(buscar('bandeja-sin-conexion')?.textContent).toContain('Sin conexión');
-      expect(texto()).not.toContain('Todavía no tiene chats');
+      expect(texto()).not.toContain('No tiene chats disponibles');
       buscar('bandeja-reintentar')?.click();
       expect(pedidos()).toBe(1);
     });
