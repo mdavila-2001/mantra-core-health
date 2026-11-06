@@ -18,6 +18,7 @@ export type LecturaDeValor =
   | 'alto'
   | 'critico-bajo'
   | 'critico-alto'
+  | 'critico'
   | 'anormal'
   | 'sin-referencia';
 
@@ -28,6 +29,7 @@ export const TEXTO_DE_LECTURA: Readonly<Record<LecturaDeValor, string>> = {
   alto: 'Alto',
   'critico-bajo': 'Crítico bajo',
   'critico-alto': 'Crítico alto',
+  critico: 'Crítico',
   anormal: 'Anormal',
   'sin-referencia': 'Sin rango de referencia',
 };
@@ -39,6 +41,7 @@ export const SIMBOLO_DE_LECTURA: Readonly<Record<LecturaDeValor, string>> = {
   alto: '↑',
   'critico-bajo': '↓↓',
   'critico-alto': '↑↑',
+  critico: '!!',
   anormal: '!',
   'sin-referencia': '',
 };
@@ -80,7 +83,7 @@ export function estaFueraDeRango(valor: ValorDeResultado): boolean {
 /** `true` si el valor es crítico (sólo por interpretación del laboratorio). */
 export function esCritico(valor: ValorDeResultado): boolean {
   const lectura = leerValor(valor);
-  return lectura === 'critico-bajo' || lectura === 'critico-alto';
+  return lectura === 'critico-bajo' || lectura === 'critico-alto' || lectura === 'critico';
 }
 
 /** El rango como se imprime: «70 – 110», «≥ 40», «≤ 200», o su texto. */

@@ -117,7 +117,7 @@ export type DetalleDeNodo =
  * Cómo leyó el laboratorio un valor. Si viene, manda sobre la comparación con
  * el rango (el laboratorio puede usar rangos por edad o sexo que acá no están).
  */
-export type InterpretacionDeValor = 'normal' | 'bajo' | 'alto' | 'critico-bajo' | 'critico-alto' | 'anormal';
+export type InterpretacionDeValor = 'normal' | 'bajo' | 'alto' | 'critico-bajo' | 'critico-alto' | 'critico' | 'anormal';
 
 export interface RangoDeReferencia {
   readonly bajo?: number;
@@ -135,10 +135,9 @@ export interface ValorDeResultado {
   readonly rango?: RangoDeReferencia;
   readonly interpretacion?: InterpretacionDeValor;
   /**
-   * La interpretación tal como la rotula el laboratorio en el informe
-   * («Alto», «Anormal»). Se muestra en texto y **no** se traduce a
-   * `interpretacion`: el código («H») no se mapea en el cliente. Si está
-   * fuera de rango lo decide el número contra el rango impreso.
+   * The lab's own label («Alto», «Anormal»), shown as text. What decides
+   * «out of range» is `interpretacion`, mapped from the HL7 v3 code
+   * (`interpretacionDelCodigo`); without a code, the number vs. the range.
    */
   readonly interpretacionDelInforme?: string;
 }
