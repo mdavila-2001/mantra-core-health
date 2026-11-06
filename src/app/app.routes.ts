@@ -158,6 +158,7 @@ export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, DestinoRedirigido>> 
   'my-support': { ruta: '/my-team', query: { tab: 'mis-accesos' } },
   'my-account/loyalty': { ruta: '/my-account', query: { pestana: 'puntos' } },
   'my-account/clinical-access': { ruta: '/my-account/privacy', query: { ver: 'historia' } },
+  'my-account/access-requests': { ruta: '/my-account/requests', query: { pestana: 'vinculos' } },
   'administration/pharmacy-profile': { ruta: '/my-account' },
   'administration/data-catalog': { ruta: '/superadmin/data-catalog' },
   'administration/web-analytics': { ruta: '/superadmin/web-analytics' },

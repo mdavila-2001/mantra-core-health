@@ -948,6 +948,8 @@ describe('ShellLayout', () => {
       // Pedido del propietario, 2026-10-01: «Administración» no se dibuja como
       // desplegable para esta cuenta; sus opciones van a nivel 0, sin `<details>`.
       expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(0);
+      // One loose block, «Administración»: the access-requests mailbox moved
+      // into «Mis solicitudes» on 04/11/2026, so «Mi cuenta» has nothing left.
       expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(1);
     });
 
