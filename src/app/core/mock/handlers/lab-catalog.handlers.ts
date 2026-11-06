@@ -97,6 +97,15 @@ export function registerLabCatalog(router: MockRouter): void {
     }));
     return {
       sections,
+      sampleTypes: [
+        { code: 'BLOOD', name: 'Análisis de sangre' },
+        { code: 'URINE', name: 'Análisis de orina' },
+        { code: 'STOOL', name: 'Análisis de heces' },
+        { code: 'FLUID', name: 'Líquidos corporales (LCR, pleural, sinovial…)' },
+        { code: 'SWAB', name: 'Hisopados, secreciones y raspados' },
+        { code: 'OTHER', name: 'Otras muestras' },
+      ],
+      catalogVersion: '2026-10-31',
       count: ITEMS.size,
       priceRule:
         'INLASA 2026 primero; FONASA 2026 convertido a Bs sólo donde INLASA no tiene el análisis; sin equivalente, sin precio.',
