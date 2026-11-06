@@ -7,12 +7,16 @@ import { servicios } from './practice.handlers';
 import { PREGUNTAS_BASE_CONSULTA, TITULO_BASE_CONSULTA } from './surveys-insights.simulator';
 
 /* Standard surveys per service (06/11/2026): `GET /surveys/standard-catalog` and
-   `GET|PUT|DELETE /surveys/service-assignments`. Registered from `index.ts`. */
+   `GET|PUT|DELETE /surveys/service-assignments`. Also makes the imported
+   templates readable like the API materializes them: they appear in
+   `GET /surveys/catalog` and open in `GET /surveys/templates/:id(/responses)`.
+   Registered from `index.ts`, after the forms and catalog handlers it wraps. */
 
 /**
- * The standard survey attached to each service: at most ONE active per
- * (practitioner, service), like the model's partial unique index. Persisted
- * under its own key so «Importar» survives a page reload.
+ * The survey attached to each service: at most ONE active per (practitioner,
+ * service), like the model's partial unique index. `catalogCode: null` is a
+ * legacy hand-made survey attached before the catalog existed: the API never
+ * issues it any more. Persisted so «Importar» survives a reload.
  */
 interface ServiceAssignmentRecord {
   /** `${practitionerProfileId}:${serviceId}`: the contract's uniqueness. */
@@ -20,16 +24,18 @@ interface ServiceAssignmentRecord {
   readonly practitionerProfileId: string;
   readonly serviceId: string;
   readonly assignmentId: string;
-  readonly catalogCode: string;
+  readonly catalogCode: string | null;
   readonly title: string;
   readonly templateId: string;
   readonly versionId: string;
   readonly assignedAt: string;
 }
 
+const templateIdOf = (practitionerId: string, code: string): string => uuid(`std-template-${practitionerId}-${code}`);
+
 const serviceAssignments = new Coleccion<ServiceAssignmentRecord>(
   [
-    // Seeded: the echo already has the imaging survey, so both cases show.
+    // The echo already has the imaging survey, so both cases show.
     {
       id: `${MEDICAL.id}:${uuid('service-ECO-DOPPLER')}`,
       practitionerProfileId: MEDICAL.id,
@@ -37,9 +43,21 @@ const serviceAssignments = new Coleccion<ServiceAssignmentRecord>(
       assignmentId: uuid('service-assignment-eco'),
       catalogCode: 'STD_IMAGING_V1',
       title: 'Estudios por imágenes',
-      templateId: uuid(`std-template-${MEDICAL.id}-STD_IMAGING_V1`),
+      templateId: templateIdOf(MEDICAL.id, 'STD_IMAGING_V1'),
       versionId: uuid(`std-template-${MEDICAL.id}-STD_IMAGING_V1-v1`),
       assignedAt: iso(-12, 10),
+    },
+    // Legacy: the hand-made teleconsultation survey, still linked from before the catalog.
+    {
+      id: `${MEDICAL.id}:${uuid('service-TELE-CARDIO')}`,
+      practitionerProfileId: MEDICAL.id,
+      serviceId: uuid('service-TELE-CARDIO'),
+      assignmentId: uuid('assignment-teleconsulta'),
+      catalogCode: null,
+      title: 'Experiencia de teleconsulta',
+      templateId: uuid('survey-teleconsulta'),
+      versionId: uuid('survey-teleconsulta-v1'),
+      assignedAt: iso(-40, 10),
     },
   ],
   'encuestas-por-servicio',
@@ -50,41 +68,70 @@ export function resetServiceSurveyAssignments(): void {
   serviceAssignments.reiniciar();
 }
 
-/** The caller's practitioner profile; without a session (tests), the demo doctor. */
+/** The caller's practitioner profile; without a session (tests), the demo doctor. Same roles as the API. */
 function callerPractitioner(user: MockRequest['user']): string | null {
   if (user === null) return MEDICAL.id;
-  // Same roles as the API controller: PRACTITIONER and CLINICIAN.
-  if (!user.roles.some((r) => r === 'PRACTITIONER' || r === 'CLINICIAN')) return null;
+  if (!user.roles.some((role) => role === 'PRACTITIONER' || role === 'CLINICIAN')) return null;
   return user.practitionerProfileId ?? MEDICAL.id;
 }
 
 /** The practitioner's services (active offers), grouped by catalog service. */
-function servicesOf(practitionerProfileId: string): readonly { serviceId: string; serviceName: string }[] {
-  const vistos = new Map<string, string>();
-  for (const oferta of offers.todos()) {
-    if (oferta.practitionerProfileId !== practitionerProfileId || !oferta.isActive) continue;
-    if (vistos.has(oferta.serviceCatalogId)) continue;
-    vistos.set(oferta.serviceCatalogId, servicios.get(oferta.serviceCatalogId)?.name ?? 'Servicio');
+function servicesOf(practitionerId: string): readonly { serviceId: string; serviceName: string }[] {
+  const seen = new Map<string, string>();
+  for (const offer of offers.todos()) {
+    if (offer.practitionerProfileId !== practitionerId || !offer.isActive || seen.has(offer.serviceCatalogId)) continue;
+    seen.set(offer.serviceCatalogId, servicios.get(offer.serviceCatalogId)?.name ?? 'Servicio');
   }
-  return [...vistos.entries()]
-    .map(([serviceId, serviceName]) => ({ serviceId, serviceName }))
-    .sort((a, b) => a.serviceName.localeCompare(b.serviceName, 'es'));
+  return [...seen.entries()].map(([serviceId, serviceName]) => ({ serviceId, serviceName })).sort((a, b) => a.serviceName.localeCompare(b.serviceName, 'es'));
 }
 
-function rowFor(practitionerProfileId: string, serviceId: string, serviceName: string) {
-  const a = serviceAssignments.get(`${practitionerProfileId}:${serviceId}`);
+function rowFor(practitionerId: string, serviceId: string, serviceName: string) {
+  const record = serviceAssignments.get(`${practitionerId}:${serviceId}`);
   return {
     serviceId,
     serviceName,
     assignment:
-      a === undefined
+      record === undefined
         ? null
-        : { assignmentId: a.assignmentId, catalogCode: a.catalogCode, title: a.title, templateId: a.templateId, versionId: a.versionId, assignedAt: a.assignedAt },
+        : { assignmentId: record.assignmentId, catalogCode: record.catalogCode, title: record.title, templateId: record.templateId, versionId: record.versionId, assignedAt: record.assignedAt },
   };
 }
 
-function templateFor(code: string): StandardTemplate | undefined {
-  return STANDARD_SURVEY_CATALOG.find((p) => p.code === code);
+const templateFor = (code: string | null): StandardTemplate | undefined => STANDARD_SURVEY_CATALOG.find((t) => t.code === code);
+
+/** The practitioner's imported (catalog) templates, each with the services that send it. */
+function importedTemplates(practitionerId: string) {
+  const byTemplate = new Map<string, { template: StandardTemplate; records: ServiceAssignmentRecord[] }>();
+  for (const record of serviceAssignments.filtrar((r) => r.practitionerProfileId === practitionerId && r.catalogCode !== null)) {
+    const template = templateFor(record.catalogCode);
+    if (template === undefined) continue;
+    const entry = byTemplate.get(record.templateId) ?? { template, records: [] };
+    entry.records.push(record);
+    byTemplate.set(record.templateId, entry);
+  }
+  return [...byTemplate.entries()].map(([id, { template, records }]) => ({ id, template, records }));
+}
+
+function templateSummary(id: string, template: StandardTemplate) {
+  return { id, title: template.title, description: template.description, status: 'ACTIVE', latestVersionNumber: 1, published: true, questionCount: template.questions.length };
+}
+
+/** A few deterministic answers per imported template, so its sheet has something to read. */
+function responsesFor(id: string, template: StandardTemplate) {
+  return Array.from({ length: 6 }, (_, n) => ({
+    id: uuid(`${id}-response-${n}`),
+    invitationId: uuid(`${id}-invitation-${n}`),
+    submittedAt: `${iso(-(n * 3 + 1), 0).slice(0, 10)}T00:00:00.000Z`,
+    answers: template.questions.map((q, i) => ({
+      questionId: uuid(`${id}-q-${i}`),
+      questionText: q.text,
+      answerType: q.answerType,
+      ...(q.answerType === 'SCALE' ? { valueNumber: (q.scaleMin ?? 1) + ((n + i) % ((q.scaleMax ?? 5) - (q.scaleMin ?? 1) + 1)) } : {}),
+      ...(q.answerType === 'BOOLEAN' ? { valueBoolean: (n + i) % 3 !== 0 } : {}),
+      ...(q.answerType === 'SINGLE_CHOICE' || q.answerType === 'MULTIPLE_CHOICE' ? { valueChoices: [q.options?.[(n + i) % (q.options?.length || 1)] ?? ''] } : {}),
+      ...(q.answerType === 'TEXT' ? { valueText: ['Todo claro y puntual.', 'Me explicaron bien el estudio.', 'Esperé un poco más de lo previsto.'][n % 3]! } : {}),
+    })),
+  }));
 }
 
 export function registerServiceSurveyAssignments(router: MockRouter): void {
@@ -94,8 +141,8 @@ export function registerServiceSurveyAssignments(router: MockRouter): void {
   });
 
   router.get('/surveys/service-assignments', ({ user }) => {
-    const profesional = callerPractitioner(user);
-    if (profesional === null) return forbidden('Solo el profesional puede ver sus encuestas por servicio.');
+    const practitionerId = callerPractitioner(user);
+    if (practitionerId === null) return forbidden('Solo el profesional puede ver sus encuestas por servicio.');
     return {
       consultation: {
         system: true,
@@ -103,7 +150,6 @@ export function registerServiceSurveyAssignments(router: MockRouter): void {
         templateTitle: TITULO_BASE_CONSULTA,
         questionCount: PREGUNTAS_BASE_CONSULTA.length,
         replaceable: false,
-        // Additive (not in the contract): the questions, for «Ver preguntas».
         questions: PREGUNTAS_BASE_CONSULTA.map((q) => ({
           text: q.questionText,
           answerType: q.answerType,
@@ -114,47 +160,79 @@ export function registerServiceSurveyAssignments(router: MockRouter): void {
           ...(q.scaleMax === undefined ? {} : { scaleMax: q.scaleMax }),
         })),
       },
-      services: servicesOf(profesional).map((s) => rowFor(profesional, s.serviceId, s.serviceName)),
+      services: servicesOf(practitionerId).map((s) => rowFor(practitionerId, s.serviceId, s.serviceName)),
     };
   });
 
   /** Import or change: deactivates the previous one and keeps ONE active (idempotent per code). */
   router.put('/surveys/service-assignments/:serviceId', (request) => {
-    const profesional = callerPractitioner(request.user);
-    if (profesional === null) return forbidden();
+    const practitionerId = callerPractitioner(request.user);
+    if (practitionerId === null) return forbidden();
     const serviceId = request.params['serviceId']!;
-    const servicio = servicesOf(profesional).find((s) => s.serviceId === serviceId);
-    if (servicio === undefined) return forbidden('Ese servicio no es suyo.');
-    const datos = cuerpo<{ catalogCode?: string }>(request);
-    const plantilla = templateFor(datos.catalogCode ?? '');
-    if (plantilla === undefined) {
+    const service = servicesOf(practitionerId).find((s) => s.serviceId === serviceId);
+    if (service === undefined) return forbidden('Ese servicio no es suyo.');
+    const template = templateFor(cuerpo<{ catalogCode?: string }>(request).catalogCode ?? null);
+    if (template === undefined) {
       return reply(404, { statusCode: 404, code: 'NOT_FOUND', reason: 'SURVEY_CATALOG_CODE_UNKNOWN', details: { reason: 'SURVEY_CATALOG_CODE_UNKNOWN' }, message: 'La encuesta del catálogo no existe.', error: 'Not Found' });
     }
-    const id = `${profesional}:${serviceId}`;
-    const previa = serviceAssignments.get(id);
-    if (previa?.catalogCode !== plantilla.code) {
+    const id = `${practitionerId}:${serviceId}`;
+    if (serviceAssignments.get(id)?.catalogCode !== template.code) {
       serviceAssignments.borrar(id);
       serviceAssignments.agregar({
         id,
-        practitionerProfileId: profesional,
+        practitionerProfileId: practitionerId,
         serviceId,
         assignmentId: nuevoId('service-assignment'),
-        catalogCode: plantilla.code,
-        title: plantilla.title,
-        templateId: uuid(`std-template-${profesional}-${plantilla.code}`),
-        versionId: uuid(`std-template-${profesional}-${plantilla.code}-v1`),
+        catalogCode: template.code,
+        title: template.title,
+        templateId: templateIdOf(practitionerId, template.code),
+        versionId: uuid(`std-template-${practitionerId}-${template.code}-v1`),
         assignedAt: ahora(),
       });
     }
-    return rowFor(profesional, serviceId, servicio.serviceName);
+    return rowFor(practitionerId, serviceId, service.serviceName);
   });
 
   router.delete('/surveys/service-assignments/:serviceId', (request) => {
-    const profesional = callerPractitioner(request.user);
-    if (profesional === null) return forbidden();
+    const practitionerId = callerPractitioner(request.user);
+    if (practitionerId === null) return forbidden();
     const serviceId = request.params['serviceId']!;
-    if (!servicesOf(profesional).some((s) => s.serviceId === serviceId)) return forbidden('Ese servicio no es suyo.');
-    serviceAssignments.borrar(`${profesional}:${serviceId}`);
+    if (!servicesOf(practitionerId).some((s) => s.serviceId === serviceId)) return forbidden('Ese servicio no es suyo.');
+    serviceAssignments.borrar(`${practitionerId}:${serviceId}`);
     return reply(204);
+  });
+
+  // The Buzón lists imported templates too (they are what the services send).
+  router.wrap('GET', '/surveys/catalog', (request, next) => {
+    const listed = next(request);
+    const practitionerId = callerPractitioner(request.user);
+    if (!Array.isArray(listed) || practitionerId === null) return listed;
+    const imported = importedTemplates(practitionerId).map(({ id, template, records }) => ({
+      ...templateSummary(id, template),
+      origin: 'PRACTITIONER',
+      assignments: records.map((r) => ({ id: r.assignmentId, targetType: 'SERVICE', targetId: r.serviceId, targetName: servicios.get(r.serviceId)?.name ?? null })),
+    }));
+    return [...listed, ...imported];
+  });
+
+  // And their sheet opens and reads like any template.
+  const imported = (request: MockRequest) => importedTemplates(callerPractitioner(request.user) ?? MEDICAL.id).find((t) => t.id === request.params['id']);
+  router.wrap('GET', '/surveys/templates/:id', (request, next) => {
+    const found = imported(request);
+    if (found === undefined) return next(request);
+    const { id, template, records } = found;
+    return {
+      ...templateSummary(id, template),
+      latestVersionId: records[0]!.versionId,
+      responseWindowDays: 7,
+      effectiveFrom: records[0]!.assignedAt.slice(0, 10),
+      effectiveTo: null,
+      questions: template.questions.map((q, i) => ({ id: uuid(`${id}-q-${i}`), position: i + 1, questionText: q.text, answerType: q.answerType, required: q.required, ...(q.options ? { options: q.options } : {}), ...(q.scaleMin === undefined ? {} : { scaleMin: q.scaleMin, scaleMax: q.scaleMax }) })),
+      assignments: records.map((r) => ({ id: r.assignmentId, targetType: 'SERVICE', targetId: r.serviceId })),
+    };
+  });
+  router.wrap('GET', '/surveys/templates/:id/responses', (request, next) => {
+    const found = imported(request);
+    return found === undefined ? next(request) : responsesFor(found.id, found.template);
   });
 }

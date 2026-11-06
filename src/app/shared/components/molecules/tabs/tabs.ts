@@ -45,13 +45,14 @@ import {
   selector: 'app-tabs',
   imports: [NavIcon],
   templateUrl: './tabs.html',
-  styleUrl: './tabs.css',
+  styleUrls: ['./tabs.css', './tabs-segmented.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: TABS_PARENT, useExisting: forwardRef(() => Tabs) }],
   host: {
     class: 'tabs',
     '[class.tabs--vertical]': 'orientation() === "vertical"',
     '[class.tabs--browser]': 'appearance() === "browser" && orientation() === "horizontal"',
+    '[class.tabs--segmented]': 'appearance() === "segmented" && orientation() === "horizontal"',
     '(window:resize)': 'medirDesborde()',
   },
 })

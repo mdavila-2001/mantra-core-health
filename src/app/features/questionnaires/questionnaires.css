@@ -1,50 +1,6 @@
-/* «Encuestas»: two sub-tabs at full content width, no own width cap. */
+/* «Encuestas»: the sub-tabs span the content width; their look is the Tabs
+   primitive's `segmented` appearance. */
 .encuestas__subpestanas {
   display: block;
   inline-size: 100%;
-}
-
-/* Second tab level, visibly subordinate to «Formularios | Encuestas»: a compact
-   segmented strip (inset track, raised selected pill, no underline), sized to its
-   labels instead of stretching across the page. Keeps the `app-tabs` semantics
-   (tablist, keyboard); only its look changes here, `tabs.css` is frozen. */
-:host ::ng-deep .encuestas__subpestanas .tabs__list {
-  display: inline-flex;
-  flex: 0 1 auto;
-  max-inline-size: 100%;
-  gap: var(--sp-1);
-  padding: var(--sp-1);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-pill);
-  background: var(--bg-inset);
-}
-
-:host ::ng-deep .encuestas__subpestanas .tabs__tab {
-  flex: 0 0 auto;
-  padding: var(--sp-1) var(--sp-4);
-  border-radius: var(--r-pill);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-}
-
-:host ::ng-deep .encuestas__subpestanas .tabs__tab::after {
-  display: none;
-}
-
-:host ::ng-deep .encuestas__subpestanas .tabs__tab.is-selected {
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-sm);
-  color: var(--text-primary);
-}
-
-/* Phones: the two options share the width so neither label is cut. */
-@media (max-width: 599px) {
-  :host ::ng-deep .encuestas__subpestanas .tabs__list {
-    display: flex;
-  }
-
-  :host ::ng-deep .encuestas__subpestanas .tabs__tab {
-    flex: 1 1 auto;
-    white-space: nowrap;
-  }
 }

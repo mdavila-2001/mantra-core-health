@@ -1,6 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { readApiError } from '../../../core/http/api-error';
+import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { unexpectedError } from '../../../core/view-state/view-state';
+import type { ViewState } from '../../../core/view-state/view-state.types';
 import type {
   ServiceSurveyAssignments,
   ServiceSurveyRow,
@@ -62,6 +65,8 @@ export function answerFormat(question: StandardSurveyQuestion): string {
     case 'BOOLEAN':
       return `Sí / No${optional}`;
     case 'SCALE': {
+      // The text already spells the scale out («(1 = Nunca, 5 = Siempre)»): do not repeat it.
+      if (/\(\s*\d+\s*=/.test(question.text)) return question.required ? '' : 'Opcional';
       const min = question.scaleMin ?? 1;
       const max = question.scaleMax ?? 5;
       const recommendation =
@@ -136,18 +141,19 @@ export function withRow(data: ServiceSurveyAssignments, next: ServiceSurveyRow):
 export type FailureFollowUp = 'reload-list' | 'reload-catalog' | null;
 
 export interface WriteFailure {
+  readonly title: string;
+  /** In the person's words; never the server's text. */
   readonly message: string;
   readonly followUp: FailureFollowUp;
 }
 
 /** Status and stable reason of an HTTP failure, if it is one. */
-function statusAndReason(error: unknown): { status: number | undefined; reason: string | undefined; message: string | undefined } {
-  if (!(error instanceof HttpErrorResponse)) return { status: undefined, reason: undefined, message: undefined };
-  const body = readApiError(error);
-  return { status: error.status, reason: body?.reason, message: body?.message || undefined };
+function statusAndReason(error: unknown): { status: number | undefined; reason: string | undefined } {
+  if (!(error instanceof HttpErrorResponse)) return { status: undefined, reason: undefined };
+  return { status: error.status, reason: readApiError(error)?.reason };
 }
 
-/** Shared by both writes: the session has no practitioner profile, offline, or a foreign service. */
+/** Shared by both writes: no practitioner profile, offline, or a foreign service. */
 function commonFailure(status: number | undefined): string | null {
   if (status === 412) return 'Su cuenta no tiene un perfil profesional asociado. Complete su perfil profesional para elegir encuestas.';
   if (status === 403) return 'Ese servicio no figura entre los suyos, así que no puede cambiar su encuesta.';
@@ -156,26 +162,64 @@ function commonFailure(status: number | undefined): string | null {
 }
 
 /**
- * Why an import (`PUT`) failed, in the person's words, and what to refresh.
+ * Why an import (`PUT`) failed, and what to refresh.
  * 404 `SURVEY_CATALOG_CODE_UNKNOWN` → the catalog changed: reload it.
  * 409 `ASSIGNMENT_ALREADY_ACTIVE` → another session changed the row: reload the list.
  */
 export function importFailure(error: unknown): WriteFailure {
-  const { status, reason, message } = statusAndReason(error);
+  const title = 'No se pudo importar la encuesta';
+  const { status, reason } = statusAndReason(error);
   if (status === 404 || reason === 'SURVEY_CATALOG_CODE_UNKNOWN') {
-    return { message: 'Esa encuesta ya no está en el catálogo. Actualizamos el catálogo: elija otra.', followUp: 'reload-catalog' };
+    return { title, message: 'Esa encuesta ya no está en el catálogo. Actualizamos el catálogo: elija otra.', followUp: 'reload-catalog' };
   }
   if (status === 409 || reason === 'ASSIGNMENT_ALREADY_ACTIVE') {
     return {
+      title,
       message: 'La encuesta de este servicio cambió al mismo tiempo en otra sesión. Actualizamos la lista: revísela y vuelva a intentar.',
       followUp: 'reload-list',
     };
   }
-  return { message: commonFailure(status) ?? message ?? 'No se pudo importar la encuesta. Vuelva a intentar en un momento.', followUp: null };
+  return { title, message: commonFailure(status) ?? 'El servidor no pudo guardar el cambio. La encuesta del servicio sigue como estaba.', followUp: null };
 }
 
-/** Why a removal (`DELETE`) failed, in the person's words. */
+/** Why a removal (`DELETE`) failed. 404/409: the row changed elsewhere, reload the list. */
 export function removeFailure(error: unknown): WriteFailure {
-  const { status, message } = statusAndReason(error);
-  return { message: commonFailure(status) ?? message ?? 'No se pudo quitar la encuesta del servicio. Vuelva a intentar en un momento.', followUp: null };
+  const title = 'No se pudo quitar la encuesta';
+  const { status } = statusAndReason(error);
+  if (status === 404 || status === 409) {
+    return { title, message: 'La encuesta de este servicio ya había cambiado. Actualizamos la lista: revísela.', followUp: 'reload-list' };
+  }
+  return { title, message: commonFailure(status) ?? 'El servidor no pudo quitar la encuesta. El servicio sigue usándola.', followUp: null };
+}
+
+/**
+ * Any failure drawn with the S9 anatomy (alert, support code, «Copiar código»,
+ * next action), with our own title and message: never the server's text. A
+ * request that never arrived keeps its S8 (offline) anatomy.
+ */
+export function failureState(error: unknown, title: string, message: string): ViewState<never> {
+  const base = errorToViewState<never>(error);
+  if (base.status === 'offline') return base;
+  const fromBase = 'requestId' in base ? base.requestId : undefined;
+  const fromBody = error instanceof HttpErrorResponse ? (readApiError(error)?.correlationId ?? error.headers.get('x-request-id')) : null;
+  return unexpectedError(fromBase ?? fromBody ?? 'sin-id', message, {
+    title,
+    hint: 'Intente de nuevo en unos segundos. Si vuelve a pasar, comparta el código de soporte con el equipo de ayuda.',
+  });
+}
+
+/** A failed READ: S9 keeps its anatomy but says it was a read (nothing the person typed). */
+export function readFailureState<T>(error: unknown, title: string, message: string): ViewState<T> {
+  const base = errorToViewState<T>(error);
+  return base.status === 'error' ? { ...base, title, message } : base;
+}
+
+/** The confirmation asked before removing a service's survey. */
+export function removeConfirmation(row: ServiceSurveyRow): { title: string; message: string; confirmLabel: string; destructive: boolean } {
+  return {
+    title: 'Quitar la encuesta del servicio',
+    message: `«${row.serviceName}» deja de usar «${row.assignment?.title ?? 'su encuesta'}». Desde ahora sus pacientes recibirán la encuesta base de servicios. Las respuestas que ya recibió no se borran.`,
+    confirmLabel: 'Quitar',
+    destructive: true,
+  };
 }

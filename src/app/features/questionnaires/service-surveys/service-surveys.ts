@@ -1,18 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import type { Subscription } from 'rxjs';
 
 import { SurveysServiceAssignmentsClient } from '../../../core/data-access/surveys/surveys-service-assignments.client';
-import type {
-  ServiceSurveyAssignments,
-  ServiceSurveyRow as Row,
-  StandardSurvey,
-} from '../../../core/data-access/surveys/surveys-service-assignments.types';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
+import type { ServiceSurveyAssignments, ServiceSurveyRow as Row, StandardSurvey } from '../../../core/data-access/surveys/surveys-service-assignments.types';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-import { MY_SERVICES_ROUTE } from '../../billing-setup/consultation-price-block/consultation-price-block';
+import { MY_SERVICES_ROUTE } from '../../my-services/my-services.routes';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
@@ -20,19 +17,20 @@ import { EmptyState } from '../../../shared/components/molecules/empty-state/emp
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ServiceSurveyRow } from './service-survey-row';
-import { appointmentQuestions, importFailure, questionCount, removeFailure, serviceKindOf, serviceQuestions, withRow, type QuestionsView } from './service-surveys.logic';
+import * as logic from './service-surveys.logic';
 import { SurveyCatalogPicker } from './survey-catalog-picker';
 import { SurveyQuestionsDialog } from './survey-questions-dialog';
 
 /**
  * «Encuestas por servicio» (06/11/2026). Fixed «Cita médica» row (system survey,
- * mandatory, view only), then one row per service of the practitioner. Import or
- * change opens the standard catalog → PUT; remove asks first → DELETE. After a
- * change the row is the one the server returned. Authorization stays in the API.
+ * view only), then one row per service. Import or change opens the standard
+ * catalog → PUT; remove asks first → DELETE. Every failure uses the S9 anatomy
+ * (support code, «Copiar código», «Reintentar») and never the server's text.
+ * Authorization stays in the API.
  */
 @Component({
   selector: 'app-service-surveys',
-  imports: [AppButton, Badge, EmptyState, NavIcon, RouterLink, ServiceSurveyRow, Skeleton, SurveyCatalogPicker, SurveyQuestionsDialog, ViewStateHost],
+  imports: [AppButton, AppButtonLink, Badge, EmptyState, NavIcon, RouterLink, ServiceSurveyRow, Skeleton, SurveyCatalogPicker, SurveyQuestionsDialog, ViewStateHost],
   templateUrl: './service-surveys.html',
   styleUrl: './service-surveys.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,53 +41,59 @@ export class ServiceSurveys {
   private readonly toast = inject(ToastService);
 
   protected readonly myServicesRoute = MY_SERVICES_ROUTE;
-  protected readonly questionCount = questionCount;
+  protected readonly questionCount = logic.questionCount;
 
   private readonly state = signal<ViewState<ServiceSurveyAssignments>>(loading());
   protected readonly view = this.state.asReadonly();
   private readonly catalogState = signal<ViewState<readonly StandardSurvey[]>>(loading());
   protected readonly catalogView = this.catalogState.asReadonly();
   protected readonly catalog = computed(() => dataOf(this.catalogView()) ?? []);
-  /** Why nothing can be imported right now, if the catalog did not load or is empty. */
-  protected readonly catalogProblem = computed(() => {
-    const status = this.catalogView().status;
-    return status === 'ready' || status === 'loading' ? null : status;
-  });
 
   protected readonly pickingFor = signal<Row | null>(null);
   protected readonly pickedKind = computed(() => {
     const row = this.pickingFor();
-    return row === null ? 'OTHER' : serviceKindOf(row.serviceName, row.serviceKind);
+    return row === null ? 'OTHER' : logic.serviceKindOf(row.serviceName, row.serviceKind);
   });
   protected readonly saving = signal(false);
-  protected readonly saveError = signal<string | null>(null);
+  /** The import failure shown inside the open picker. */
+  protected readonly saveError = signal<ViewState<never> | null>(null);
+  /** A write failure shown above the list (late import, removal), with what «Reintentar» redoes. */
+  protected readonly writeError = signal<ViewState<never> | null>(null);
+  private retryWrite: () => void = () => undefined;
   protected readonly removing = signal<string | null>(null);
-  protected readonly viewing = signal<QuestionsView | null>(null);
+  protected readonly viewing = signal<logic.QuestionsView | null>(null);
+
+  /** In-flight reads: a new load cancels the previous one (no stale overwrite). */
+  private listRead?: Subscription;
+  private catalogRead?: Subscription;
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => (this.listRead?.unsubscribe(), this.catalogRead?.unsubscribe()));
     this.load();
     this.loadCatalog();
   }
 
   protected load(): void {
+    this.listRead?.unsubscribe();
     this.state.set(loading());
-    this.surveys.list().subscribe({
+    this.listRead = this.surveys.list().subscribe({
       next: (assignments) => this.state.set(ready(assignments)),
-      error: (error: unknown) => this.state.set(errorToViewState(error)),
+      error: (error: unknown) =>
+        this.state.set(logic.readFailureState(error, 'No pudimos cargar sus servicios', 'El servidor tuvo un problema al leer la lista. No se cambió nada.')),
     });
   }
 
   /** Loaded on its own: a catalog failure does not hide the list. An empty catalog is its own S3. */
   protected loadCatalog(): void {
+    this.catalogRead?.unsubscribe();
     this.catalogState.set(loading());
-    this.surveys.listStandardCatalog().subscribe({
+    this.catalogRead = this.surveys.listStandardCatalog().subscribe({
       next: (entries) =>
+        this.catalogState.set(entries.length === 0 ? empty({ label: 'Mientras tanto, cada servicio usa la encuesta base de servicios' }) : ready(entries)),
+      error: (error: unknown) =>
         this.catalogState.set(
-          entries.length === 0
-            ? empty({ label: 'Mientras tanto, cada servicio usa la encuesta base de servicios' }, 'Todavía no hay encuestas estándar para importar.')
-            : ready(entries),
+          logic.failureState(error, 'No se pudo cargar el catálogo de encuestas', 'La lista de sus servicios se ve, pero por ahora no puede importar ni cambiar.'),
         ),
-      error: (error: unknown) => this.catalogState.set(errorToViewState(error)),
     });
   }
 
@@ -102,7 +106,7 @@ export class ServiceSurveys {
     this.pickingFor.set(row);
   }
 
-  /** Always clears the selection: a save still in flight reports through a toast. */
+  /** Always clears the selection: a save still in flight reports above the list. */
   protected closePicker(): void {
     this.pickingFor.set(null);
     this.saveError.set(null);
@@ -113,6 +117,7 @@ export class ServiceSurveys {
     if (row === null || this.saving()) return;
     this.saving.set(true);
     this.saveError.set(null);
+    this.writeError.set(null);
     this.surveys.assign(row.serviceId, catalogCode).subscribe({
       next: (updated) => {
         this.saving.set(false);
@@ -122,30 +127,22 @@ export class ServiceSurveys {
       },
       error: (error: unknown) => {
         this.saving.set(false);
-        const failure = importFailure(error);
-        const stillOpen = this.pickingFor()?.serviceId === row.serviceId;
+        const failure = logic.importFailure(error);
+        const shown = logic.failureState(error, failure.title, failure.message);
         if (failure.followUp === 'reload-catalog') this.loadCatalog();
-        if (failure.followUp === 'reload-list') {
-          // The row changed elsewhere: the open picker would show stale data.
-          this.closePicker();
-          this.load();
-        }
-        if (stillOpen && failure.followUp !== 'reload-list') this.saveError.set(failure.message);
-        else this.toast.error(failure.message);
+        if (failure.followUp === 'reload-list') this.closePicker();
+        if (this.pickingFor()?.serviceId === row.serviceId) this.saveError.set(shown);
+        else this.showWriteError(shown, () => this.openPicker(row));
+        if (failure.followUp === 'reload-list') this.load();
       },
     });
   }
 
-  protected async remove(row: Row): Promise<void> {
+  protected async remove(row: Row, confirmed = false): Promise<void> {
     if (row.assignment === null || this.removing() !== null) return;
-    const confirmed = await this.dialogs.confirm({
-      title: 'Quitar la encuesta del servicio',
-      message: `«${row.serviceName}» deja de usar «${row.assignment.title}». Desde ahora sus pacientes recibirán la encuesta base de servicios. Las respuestas que ya recibió no se borran.`,
-      confirmLabel: 'Quitar',
-      destructive: true,
-    });
-    if (!confirmed) return;
+    if (!confirmed && !(await this.dialogs.confirm(logic.removeConfirmation(row)))) return;
     this.removing.set(row.serviceId);
+    this.writeError.set(null);
     this.surveys.remove(row.serviceId).subscribe({
       next: () => {
         this.removing.set(null);
@@ -154,21 +151,33 @@ export class ServiceSurveys {
       },
       error: (error: unknown) => {
         this.removing.set(null);
-        this.toast.error(removeFailure(error).message);
+        const failure = logic.removeFailure(error);
+        this.showWriteError(logic.failureState(error, failure.title, failure.message), () => void this.remove(row, true));
+        if (failure.followUp === 'reload-list') this.load();
       },
     });
   }
 
+  protected retryLastWrite(): void {
+    this.writeError.set(null);
+    this.retryWrite();
+  }
+
   protected viewAppointment(data: ServiceSurveyAssignments): void {
-    this.viewing.set(appointmentQuestions(data));
+    this.viewing.set(logic.appointmentQuestions(data));
   }
 
   protected viewService(row: Row): void {
     const entry = this.entryFor(row.assignment?.catalogCode);
-    if (entry !== null) this.viewing.set(serviceQuestions(row, entry));
+    if (entry !== null) this.viewing.set(logic.serviceQuestions(row, entry));
+  }
+
+  private showWriteError(state: ViewState<never>, retry: () => void): void {
+    this.retryWrite = retry;
+    this.writeError.set(state);
   }
 
   private replace(next: Row): void {
-    this.state.update((current) => (current.status === 'ready' ? ready(withRow(current.data, next)) : current));
+    this.state.update((current) => (current.status === 'ready' ? ready(logic.withRow(current.data, next)) : current));
   }
 }

@@ -10,7 +10,9 @@
 
   @if (view(); as state) {
     @if (state.status === 'ready') {
-      @switch (catalogProblem()) {
+      @switch (catalogView().status) {
+        @case ('ready') {}
+        @case ('loading') {}
         @case ('empty') {
           <!-- Catalog S3: nothing to import yet; the catalog is maintained by the system. -->
           <p class="por-servicio__aviso" role="status" data-testid="service-surveys-catalog-empty">
@@ -18,14 +20,15 @@
             tanto, cada servicio usa la encuesta base de servicios.
           </p>
         }
-        @case (null) {}
         @default {
           <!-- The catalog failed on its own: the list shows, importing is disabled. -->
-          <p class="por-servicio__aviso" role="status" data-testid="service-surveys-catalog-error">
-            No se pudo cargar el catálogo de encuestas, así que por ahora no puede importar ni cambiar.
-            <button app-button type="button" variant="ghost" size="sm" (clicked)="loadCatalog()">Reintentar</button>
-          </p>
+          <app-view-state-host class="por-servicio__fallo" [state]="catalogView()" (retry)="loadCatalog()" data-testid="service-surveys-catalog-error" />
         }
+      }
+
+      @if (writeError(); as failure) {
+        <!-- A failed removal (or an import whose picker was closed): same anatomy, «Reintentar» redoes it. -->
+        <app-view-state-host class="por-servicio__fallo" [state]="failure" (retry)="retryLastWrite()" data-testid="service-surveys-write-error" />
       }
 
       <ul class="por-servicio__lista" data-testid="service-surveys-list">
@@ -78,7 +81,7 @@
           description="Cuando declare sus servicios (estudios, procedimientos, teleconsulta…), aparecerán aquí para que les asigne una encuesta estándar."
           data-testid="service-surveys-no-services"
         >
-          <a app-button empty-actions variant="secondary" [routerLink]="myServicesRoute">Ir a «Mis servicios»</a>
+          <a app-button empty-actions variant="primary" [routerLink]="myServicesRoute" data-testid="service-surveys-go-to-my-services">Ir a «Mis servicios»</a>
         </app-empty-state>
       }
     }

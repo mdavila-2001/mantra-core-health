@@ -11,12 +11,12 @@ import { SERVICE_ASSIGNMENTS, STANDARD_CATALOG } from './service-surveys.fixture
 describe('ServiceSurveys · «Encuestas por servicio»', () => {
   let fixture: ComponentFixture<ServiceSurveys>;
   let http: HttpTestingController;
-  let confirmar: boolean;
-  const confirmaciones: { title: string; message: string }[] = [];
+  let confirmAnswer: boolean;
+  const confirmations: { title: string; message: string }[] = [];
 
   beforeEach(() => {
-    confirmar = true;
-    confirmaciones.length = 0;
+    confirmAnswer = true;
+    confirmations.length = 0;
     TestBed.configureTestingModule({
       imports: [ServiceSurveys],
       providers: [
@@ -28,8 +28,8 @@ describe('ServiceSurveys · «Encuestas por servicio»', () => {
           provide: DialogService,
           useValue: {
             confirm: (config: { title: string; message: string }) => {
-              confirmaciones.push(config);
-              return Promise.resolve(confirmar);
+              confirmations.push(config);
+              return Promise.resolve(confirmAnswer);
             },
           },
         },
@@ -42,43 +42,43 @@ describe('ServiceSurveys · «Encuestas por servicio»', () => {
 
   afterEach(() => http.verify());
 
-  const raiz = (): HTMLElement => {
+  const root = (): HTMLElement => {
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
   };
-  const q = (selector: string): HTMLElement | null => raiz().querySelector(selector);
+  const q = (selector: string): HTMLElement | null => root().querySelector(selector);
   /** Modals mount in a native `<dialog>`; query the document. */
-  const enModal = (selector: string): HTMLElement | null => document.querySelector(selector);
+  const inModal = (selector: string): HTMLElement | null => document.querySelector(selector);
 
-  function responder(asignaciones: object = SERVICE_ASSIGNMENTS, catalogo: object = STANDARD_CATALOG): void {
-    http.expectOne((r) => r.method === 'GET' && r.url === '/surveys/service-assignments').flush(asignaciones);
-    http.expectOne((r) => r.method === 'GET' && r.url === '/surveys/standard-catalog').flush(catalogo);
+  function respond(assignments: object = SERVICE_ASSIGNMENTS, catalog: object = STANDARD_CATALOG): void {
+    http.expectOne((r) => r.method === 'GET' && r.url === '/surveys/service-assignments').flush(assignments);
+    http.expectOne((r) => r.method === 'GET' && r.url === '/surveys/standard-catalog').flush(catalog);
     fixture.detectChanges();
   }
 
   it('S2 mientras viaja: esqueleto, sin lista', () => {
     expect(q('[data-testid="service-surveys-loading"]')).not.toBeNull();
     expect(q('[data-testid="service-surveys-list"]')).toBeNull();
-    responder();
+    respond();
   });
 
   it('la cita médica va primero, fija: del sistema, sin «Cambiar» ni «Quitar»', () => {
-    responder();
+    respond();
 
-    const filas = [...raiz().querySelectorAll('[data-testid="service-surveys-list"] > li')];
-    expect(filas[0]?.getAttribute('data-testid')).toBe('service-surveys-appointment');
-    const cita = filas[0] as HTMLElement;
-    expect(cita.textContent).toContain('Cita médica');
-    expect(cita.textContent).toContain('12 preguntas');
-    expect(cita.textContent).toContain('obligatoria');
-    expect(cita.querySelector('[data-testid="service-surveys-appointment-view"]')).not.toBeNull();
-    expect(cita.textContent).not.toContain('Cambiar');
-    expect(cita.textContent).not.toContain('Quitar');
-    expect(cita.textContent).not.toContain('Importar');
+    const rows = [...root().querySelectorAll('[data-testid="service-surveys-list"] > li')];
+    expect(rows[0]?.getAttribute('data-testid')).toBe('service-surveys-appointment');
+    const appointment = rows[0] as HTMLElement;
+    expect(appointment.textContent).toContain('Cita médica');
+    expect(appointment.textContent).toContain('12 preguntas');
+    expect(appointment.textContent).toContain('obligatoria');
+    expect(appointment.querySelector('[data-testid="service-surveys-appointment-view"]')).not.toBeNull();
+    expect(appointment.textContent).not.toContain('Cambiar');
+    expect(appointment.textContent).not.toContain('Quitar');
+    expect(appointment.textContent).not.toContain('Importar');
   });
 
   it('un renglón por servicio: sin propia dice que usa la base; con propia, su título', () => {
-    responder();
+    respond();
 
     const eco = q('[data-testid="service-survey-svc-eco"]')!;
     expect(eco.textContent).toContain('Sin encuesta propia (se usa la base de servicios)');
@@ -91,13 +91,30 @@ describe('ServiceSurveys · «Encuestas por servicio»', () => {
     expect(ecg.querySelector('[data-testid="service-survey-remove-svc-ecg"]')).not.toBeNull();
   });
 
+  it('una asociación vieja hecha a mano (catalogCode null) no es la encuesta del servicio', () => {
+    const legacy = {
+      serviceId: 'svc-tele',
+      serviceName: 'Teleconsulta',
+      assignment: { assignmentId: 'a-0', catalogCode: null, title: 'Experiencia de teleconsulta', templateId: 't-0', versionId: 'v-0', assignedAt: '2026-09-01T10:00:00.000Z' },
+    };
+    respond({ ...SERVICE_ASSIGNMENTS, services: [...SERVICE_ASSIGNMENTS.services, legacy] });
+
+    const row = q('[data-testid="service-survey-svc-tele"]')!;
+    expect(row.textContent).toContain('Sin encuesta propia (se usa la base de servicios)');
+    expect(row.textContent).not.toContain('Experiencia de teleconsulta');
+    expect(row.textContent).not.toContain('Estándar');
+    expect(row.textContent).not.toContain('Importada el');
+    expect(row.querySelector('[data-testid="service-survey-import-svc-tele"]')).not.toBeNull();
+    expect(row.querySelector('[data-testid="service-survey-remove-svc-tele"]')).toBeNull();
+  });
+
   it('S3 sin servicios: la cita sigue y la próxima acción es «Mis servicios»', () => {
-    responder({ ...SERVICE_ASSIGNMENTS, services: [] });
+    respond({ ...SERVICE_ASSIGNMENTS, services: [] });
 
     expect(q('[data-testid="service-surveys-appointment"]')).not.toBeNull();
-    const vacio = q('[data-testid="service-surveys-no-services"]');
-    expect(vacio).not.toBeNull();
-    expect(vacio?.querySelector('a')?.getAttribute('href')).toBe('/my-services');
+    const emptyState = q('[data-testid="service-surveys-no-services"]');
+    expect(emptyState).not.toBeNull();
+    expect(emptyState?.querySelector('a')?.getAttribute('href')).toBe('/my-services');
   });
 
   it('si el catálogo falla, la lista se ve pero no se puede importar', () => {
@@ -114,34 +131,34 @@ describe('ServiceSurveys · «Encuestas por servicio»', () => {
 
   describe('Importar → PUT', () => {
     it('abre el catálogo con la recomendada para el servicio primero y su vista previa', () => {
-      responder();
+      respond();
       q('[data-testid="service-survey-import-svc-eco"]')!.click();
-      raiz();
+      root();
 
-      const opciones = [...document.querySelectorAll('[data-testid^="standard-catalog-option-"]')].map((o) =>
+      const options = [...document.querySelectorAll('[data-testid^="standard-catalog-option-"]')].map((o) =>
         o.getAttribute('data-testid'),
       );
       // «Ecocardiograma» is imaging: the imaging survey comes first even though the server sent it second.
-      expect(opciones).toEqual(['standard-catalog-option-STD_IMAGING_V1', 'standard-catalog-option-STD_PROCEDURE_V1']);
-      expect(enModal('[data-testid="standard-catalog-option-STD_IMAGING_V1"]')?.textContent).toContain('Recomendada');
-      const vista = enModal('[data-testid="standard-catalog-preview"]')!;
-      expect(vista.textContent).toContain('Estudios por imágenes');
-      expect(enModal('[data-testid="standard-catalog-source"]')?.textContent).toContain(
+      expect(options).toEqual(['standard-catalog-option-STD_IMAGING_V1', 'standard-catalog-option-STD_PROCEDURE_V1']);
+      expect(inModal('[data-testid="standard-catalog-option-STD_IMAGING_V1"]')?.textContent).toContain('Recomendada');
+      const preview = inModal('[data-testid="standard-catalog-preview"]')!;
+      expect(preview.textContent).toContain('Estudios por imágenes');
+      expect(inModal('[data-testid="standard-catalog-source"]')?.textContent).toContain(
         'Ítems adaptados de CG-CAHPS 4.0 — Dominio público (AHRQ); PSQ-18 — Uso libre (RAND)',
       );
-      expect(vista.textContent).toContain('¿Se respetó su privacidad?');
+      expect(preview.textContent).toContain('¿Se respetó su privacidad?');
     });
 
     it('elegir sólo cambia la vista previa; «Importar» manda el código elegido y la fila usa la respuesta', () => {
-      responder();
+      respond();
       q('[data-testid="service-survey-import-svc-eco"]')!.click();
-      raiz();
-      enModal('[data-testid="standard-catalog-option-STD_PROCEDURE_V1"]')!.click();
-      raiz();
+      root();
+      inModal('[data-testid="standard-catalog-option-STD_PROCEDURE_V1"]')!.click();
+      root();
       http.expectNone((r) => r.method === 'PUT');
-      expect(enModal('[data-testid="standard-catalog-preview"]')?.textContent).toContain('¿Le explicaron el procedimiento?');
+      expect(inModal('[data-testid="standard-catalog-preview"]')?.textContent).toContain('¿Le explicaron el procedimiento?');
 
-      enModal('[data-testid="standard-catalog-import"]')!.click();
+      inModal('[data-testid="standard-catalog-import"]')!.click();
       const put = http.expectOne((r) => r.method === 'PUT' && r.url === '/surveys/service-assignments/svc-eco');
       expect(put.request.body).toEqual({ catalogCode: 'STD_PROCEDURE_V1' });
       put.flush({
@@ -149,32 +166,32 @@ describe('ServiceSurveys · «Encuestas por servicio»', () => {
         serviceName: 'Ecocardiograma Doppler',
         assignment: { assignmentId: 'a-9', catalogCode: 'STD_PROCEDURE_V1', title: 'Procedimientos y estudios', templateId: 't', versionId: 'v', assignedAt: '2026-11-06T10:00:00.000Z' },
       });
-      raiz();
+      root();
 
-      expect(enModal('[data-testid="standard-catalog"]')).toBeNull();
+      expect(inModal('[data-testid="standard-catalog"]')).toBeNull();
       const eco = q('[data-testid="service-survey-svc-eco"]')!;
       expect(eco.textContent).toContain('Procedimientos y estudios');
       expect(eco.textContent).not.toContain('Sin encuesta propia');
     });
 
     it('«Cambiar» arranca en la que está en uso y no deja reimportarla', () => {
-      responder();
+      respond();
       q('[data-testid="service-survey-change-svc-ecg"]')!.click();
-      raiz();
+      root();
 
-      expect(enModal('[data-testid="standard-catalog-option-STD_PROCEDURE_V1"]')?.getAttribute('aria-checked')).toBe('true');
-      expect(enModal('[data-testid="standard-catalog-option-STD_PROCEDURE_V1"]')?.textContent).toContain('En uso');
-      const importar = enModal('[data-testid="standard-catalog-import"]')!;
-      expect(importar.getAttribute('aria-disabled')).toBe('true');
-      importar.click();
+      expect(inModal('[data-testid="standard-catalog-option-STD_PROCEDURE_V1"]')?.getAttribute('aria-checked')).toBe('true');
+      expect(inModal('[data-testid="standard-catalog-option-STD_PROCEDURE_V1"]')?.textContent).toContain('En uso');
+      const importButton = inModal('[data-testid="standard-catalog-import"]')!;
+      expect(importButton.getAttribute('aria-disabled')).toBe('true');
+      importButton.click();
       http.expectNone((r) => r.method === 'PUT');
     });
 
     it('un 404 del catálogo se explica en el modal, que queda abierto, y relee el catálogo', () => {
-      responder();
+      respond();
       q('[data-testid="service-survey-import-svc-eco"]')!.click();
-      raiz();
-      enModal('[data-testid="standard-catalog-import"]')!.click();
+      root();
+      inModal('[data-testid="standard-catalog-import"]')!.click();
       http
         .expectOne((r) => r.method === 'PUT')
         .flush(
@@ -183,31 +200,31 @@ describe('ServiceSurveys · «Encuestas por servicio»', () => {
         );
       // The catalog changed under the person: it is read again.
       http.expectOne((r) => r.method === 'GET' && r.url === '/surveys/standard-catalog').flush(STANDARD_CATALOG);
-      raiz();
+      root();
 
-      expect(enModal('[data-testid="standard-catalog-error"]')?.textContent).toContain('ya no está en el catálogo');
-      expect(enModal('[data-testid="standard-catalog"]')).not.toBeNull();
+      expect(inModal('[data-testid="standard-catalog-error"]')?.textContent).toContain('ya no está en el catálogo');
+      expect(inModal('[data-testid="standard-catalog"]')).not.toBeNull();
       expect(q('[data-testid="service-survey-svc-eco"]')?.textContent).toContain('Sin encuesta propia');
     });
   });
 
   describe('Quitar → DELETE', () => {
     it('pide confirmación y, confirmada, el servicio vuelve a la base', async () => {
-      responder();
+      respond();
       q('[data-testid="service-survey-remove-svc-ecg"]')!.click();
       await fixture.whenStable();
 
-      expect(confirmaciones[0]?.message).toContain('encuesta base de servicios');
+      expect(confirmations[0]?.message).toContain('encuesta base de servicios');
       const deletion = http.expectOne((r) => r.method === 'DELETE' && r.url === '/surveys/service-assignments/svc-ecg');
       deletion.flush(null, { status: 204, statusText: 'No Content' });
-      raiz();
+      root();
 
       expect(q('[data-testid="service-survey-svc-ecg"]')?.textContent).toContain('Sin encuesta propia');
     });
 
     it('si no se confirma, no manda nada y la fila queda como estaba', async () => {
-      confirmar = false;
-      responder();
+      confirmAnswer = false;
+      respond();
       q('[data-testid="service-survey-remove-svc-ecg"]')!.click();
       await fixture.whenStable();
 
@@ -217,11 +234,11 @@ describe('ServiceSurveys · «Encuestas por servicio»', () => {
   });
 
   it('«Ver preguntas» de la cita sin lista del servidor dice cuántas son, sin inventarlas', () => {
-    responder();
+    respond();
     q('[data-testid="service-surveys-appointment-view"]')!.click();
-    raiz();
+    root();
 
     expect(document.body.textContent).toContain('Tiene 12 preguntas');
-    expect(enModal('[data-testid="service-surveys-questions"]')).toBeNull();
+    expect(inModal('[data-testid="service-surveys-questions"]')).toBeNull();
   });
 });

@@ -22,9 +22,7 @@
           <div>
             <dt>Estado</dt>
             <dd>
-              <app-badge [variant]="encuesta.published ? 'success' : 'warning'">
-                {{ encuesta.published ? 'Publicada' : 'Borrador' }}
-              </app-badge>
+              <app-badge [variant]="sendingLabel().variant" data-testid="survey-detail-sending">{{ sendingLabel().text }}</app-badge>
             </dd>
           </div>
           <div>
@@ -57,7 +55,7 @@
       <app-alert class="encuesta__card--ancha" tone="info" title="Esta encuesta es de solo lectura" data-testid="survey-detail-read-only">
         Qué encuesta recibe cada servicio se elige del catálogo estándar en «Encuestas por servicio».
         <div alert-actions>
-          <a app-button size="sm" variant="outline" [routerLink]="rutaDeLasEncuestas" [queryParams]="porServicio" data-testid="survey-detail-go-to-services">
+          <a app-button size="sm" variant="outline" [routerLink]="rutaDeLasEncuestas" [queryParams]="serviceSurveysQuery" data-testid="survey-detail-go-to-services">
             Ir a «Encuestas por servicio»
           </a>
         </div>
@@ -102,14 +100,9 @@
           <p class="encuesta__vacio">Esta encuesta no tiene preguntas.</p>
         } @else {
           <ol class="encuesta__preguntas">
-            @for (pregunta of encuesta.questions; track pregunta.id; let i = $index) {
+            @for (pregunta of encuesta.questions; track pregunta.id) {
               <li>
-                <app-question-editor
-                  [pregunta]="pregunta"
-                  [editable]="false"
-                  [esPrimera]="i === 0"
-                  [esUltima]="i === encuesta.questions.length - 1"
-                />
+                <app-question-view [question]="pregunta" />
               </li>
             }
           </ol>

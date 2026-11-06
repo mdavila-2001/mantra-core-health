@@ -5,7 +5,7 @@ import type {
   InsightsTrendPoint,
 } from '../../../core/data-access/surveys/surveys.types';
 import type { MetricTone } from '../../../shared/components/molecules/metric-card/metric-card.types';
-import { armarBarras, type BarraDeResumen } from '../survey-detail/survey-detail';
+import { armarBarras, type BarraDeResumen } from '../survey-detail/survey-detail.logic';
 
 /* ============================================================================
     «Cómo le va» — la lógica de presentación del resumen general.

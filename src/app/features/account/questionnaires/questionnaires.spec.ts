@@ -86,7 +86,7 @@ describe('Questionnaires (Mis cuestionarios)', () => {
     cargar([enElCable('i-1', 'PENDING'), enElCable('i-2', 'EXPIRED')]);
 
     const bandeja = TestBed.inject(PatientSurveyInbox);
-    expect(bandeja.hayInvitaciones()).toBe(true);
+    expect(bandeja.invitaciones().length > 0).toBe(true);
     expect(bandeja.pendientes()).toBe(1);
     http.expectNone(LISTA);
   });
@@ -94,7 +94,7 @@ describe('Questionnaires (Mis cuestionarios)', () => {
   it('sin ninguna encuesta la bandeja de la cabecera queda vacía', () => {
     cargar([]);
 
-    expect(TestBed.inject(PatientSurveyInbox).hayInvitaciones()).toBe(false);
+    expect(TestBed.inject(PatientSurveyInbox).invitaciones().length > 0).toBe(false);
   });
 
   it('sin ninguna encuesta muestra el S3: de dónde salen y la próxima acción', () => {

@@ -1,9 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
-import { catchError, forkJoin, map, of } from 'rxjs';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, output, signal } from '@angular/core';
+import { catchError, forkJoin, map, of, type Subscription } from 'rxjs';
 
 import { SurveysCatalogClient, type SurveyCatalogEntry } from '../../../core/data-access/surveys/surveys-catalog.client';
 import { SurveysServiceAssignmentsClient } from '../../../core/data-access/surveys/surveys-service-assignments.client';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -14,12 +13,16 @@ import { ViewStateHost } from '../../../shared/components/organisms/view-state-h
 import { SurveyInsightsPanel } from '../insights/survey-insights';
 import { SurveyCard, type SurveyCardData } from '../survey-card/survey-card';
 import { encuestaRoute } from '../questionnaires.routes';
+import { readFailureState } from '../service-surveys/service-surveys.logic';
 
 /** Diacritics left loose by `normalize('NFD')`. */
 const DIACRITICS = /[̀-ͯ]/g;
 
-export const CURRENT_LABEL = 'Se envía';
-export const PAST_LABEL = 'Encuesta anterior (ya no se envía)';
+const LABELS = {
+  yes: { label: 'Se envía', tone: 'success' },
+  no: { label: 'Encuesta anterior (ya no se envía)', tone: 'secondary' },
+  unknown: { label: 'Envío sin confirmar', tone: 'secondary' },
+} as const;
 
 /** Comparable text: no case, no accents, no extra spaces («satisfaccion» finds «Satisfacción»). */
 function normalize(text: string): string {
@@ -76,20 +79,25 @@ export class SurveysInbox {
     return state.status === 'empty' ? (state.message ?? '') : '';
   });
 
+  /** The read in flight: a new load cancels it (no stale overwrite). */
+  private read?: Subscription;
+
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.read?.unsubscribe());
     this.load();
   }
 
   protected load(): void {
+    this.read?.unsubscribe();
     this.state.set(loading());
     // Which templates are sent today. If it fails, the inbox still shows (all as readable).
     const currentTemplates = this.assignments.list().pipe(
       map((data) => new Set(data.services.flatMap((row) => (row.assignment ? [row.assignment.templateId] : [])))),
       catchError(() => of(null)),
     );
-    forkJoin([this.catalog.list(), currentTemplates]).subscribe({
+    this.read = forkJoin([this.catalog.list(), currentTemplates]).subscribe({
       next: ([entries, current]) => {
-        const shown = entries.map((entry) => this.toInbox(entry, current)).filter((s) => s.current || s.status !== 'DRAFT');
+        const shown = entries.map((entry) => this.toInbox(entry, current)).filter((s) => s.sending === 'yes' || s.status !== 'DRAFT');
         this.state.set(
           shown.length === 0
             ? empty(
@@ -99,7 +107,8 @@ export class SurveysInbox {
             : ready(shown),
         );
       },
-      error: (error: unknown) => this.state.set(errorToViewState(error)),
+      error: (error: unknown) =>
+        this.state.set(readFailureState(error, 'No pudimos cargar sus encuestas', 'El servidor tuvo un problema al leer la lista. No se cambió nada.')),
     });
   }
 
@@ -107,17 +116,18 @@ export class SurveysInbox {
     this.query.set('');
   }
 
+  /**
+   * Sent today = a system base survey, or the template a service uses NOW
+   * (`GET /surveys/service-assignments`, where legacy non-catalog attachments
+   * already read as none). If that read failed, a practitioner survey is
+   * «unknown»: never claimed as sent nor as past.
+   */
   private toInbox(entry: SurveyCatalogEntry, currentTemplates: ReadonlySet<string> | null): InboxSurvey {
-    const current =
-      entry.origin === 'SYSTEM' ||
-      (currentTemplates === null
-        ? entry.assignments.some((a) => a.targetType === 'SERVICE')
-        : currentTemplates.has(entry.id));
+    const sending = entry.origin === 'SYSTEM' ? 'yes' : currentTemplates === null ? 'unknown' : currentTemplates.has(entry.id) ? 'yes' : 'no';
     return {
       ...entry,
-      current,
-      label: current ? CURRENT_LABEL : PAST_LABEL,
-      tone: current ? 'success' : 'secondary',
+      sending,
+      ...LABELS[sending],
       route: encuestaRoute(entry.id),
       searchable: normalize(`${entry.title} ${entry.description ?? ''}`),
     };

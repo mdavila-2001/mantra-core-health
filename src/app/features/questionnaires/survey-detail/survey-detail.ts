@@ -3,10 +3,9 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { SurveysClient } from '../../../core/data-access/surveys/surveys.client';
+import { SurveysServiceAssignmentsClient } from '../../../core/data-access/surveys/surveys-service-assignments.client';
 import type {
-  AnswerType,
   SurveyDetail,
-  SurveyQuestion,
   SurveyResponse,
 } from '../../../core/data-access/surveys/surveys.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -17,14 +16,16 @@ import { BackLink } from '../../../shared/components/atoms/back-link/back-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { releaseObjectUrlLater } from '../../../shared/utils/file-download/release-object-url';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { SurveyForm } from '../../../shared/components/organisms/survey-form/survey-form';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { QuestionEditor, ETIQUETA_TIPO as ETIQUETAS } from './question-editor/question-editor';
-import { ENCUESTAS_ROUTE } from '../questionnaires.routes';
+import { QuestionView } from './question-view/question-view';
+import { celdaCsv, diaDeEnvio, resumirPregunta, slugify, type ResumenDePregunta } from './survey-detail.logic';
+import { ENCUESTAS_ROUTE, SERVICE_SURVEYS_QUERY } from '../questionnaires.routes';
 
 /**
  * Piso de respuestas para mostrar un agregado o habilitar el CSV.
@@ -45,27 +46,6 @@ import { ENCUESTAS_ROUTE } from '../questionnaires.routes';
  */
 const UMBRAL_MINIMO_RESPUESTAS = 5;
 
-/** Una barra del gráfico de una pregunta: cuántos eligieron esta opción, y qué porcentaje del total es. */
-export interface BarraDeResumen {
-  readonly etiqueta: string;
-  readonly cantidad: number;
-  /** 0 a 100, sobre quienes respondieron *esta* pregunta (no sobre toda la encuesta). */
-  readonly porcentaje: number;
-}
-
-/**
- * El resumen de una pregunta: sus barras (vacío en texto libre, donde un
- * gráfico no dice nada) y, para escala, el promedio.
- */
-export interface ResumenDePregunta {
-  readonly questionId: string;
-  readonly questionText: string;
-  readonly answerType: AnswerType;
-  readonly totalRespondida: number;
-  readonly promedio: number | null;
-  readonly barras: readonly BarraDeResumen[];
-}
-
 /**
  * A survey's sheet, READ-ONLY (06/11/2026): its questionnaire, the summary and
  * the responses received. Hand-made surveys are no longer edited, published,
@@ -78,13 +58,14 @@ export interface ResumenDePregunta {
   imports: [
     Alert,
     AppButton,
+    AppButtonLink,
     BackLink,
     Badge,
     Card,
     DatePipe,
     DecimalPipe,
     PageHeader,
-    QuestionEditor,
+    QuestionView,
     RouterLink,
     Skeleton,
     SurveyForm,
@@ -96,18 +77,14 @@ export interface ResumenDePregunta {
 })
 export class SurveyDetailScreen {
   private readonly surveys = inject(SurveysClient);
+  private readonly serviceAssignments = inject(SurveysServiceAssignmentsClient);
   private readonly route = inject(ActivatedRoute);
   private readonly navigation = inject(NavigationService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   /** A dónde vuelve quien entró a una encuesta: al listado del que salió. */
   protected readonly rutaDeLasEncuestas = ENCUESTAS_ROUTE;
-  /** Query params of the «Encuestas por servicio» sub-tab. */
-  protected readonly porServicio = { encuestas: 'servicios' } as const;
-  /** Etiqueta legible de un tipo de respuesta. La usa el resumen de abajo. */
-  protected etiquetaDe(tipo: AnswerType): string {
-    return ETIQUETAS[tipo];
-  }
+  protected readonly serviceSurveysQuery = SERVICE_SURVEYS_QUERY;
 
   private readonly surveyId = this.route.snapshot.paramMap.get('surveyId') ?? '';
 
@@ -185,6 +162,21 @@ export class SurveyDetailScreen {
     () => new Map((this.encuesta()?.questions ?? []).map((p) => [p.id, p.questionText])),
   );
 
+  /**
+   * Whether a service sends this survey TODAY (its template is the one a
+   * service uses in `GET /surveys/service-assignments`). A hand-made survey
+   * never is: its sheet says «Ya no se envía», never just «Publicada».
+   */
+  protected readonly sending = signal<'yes' | 'no' | 'unknown' | null>(null);
+  protected readonly sendingLabel = computed(() => {
+    const survey = this.encuesta();
+    if (survey === null || survey === undefined) return { text: '', variant: 'secondary' as const };
+    if (!survey.published) return { text: 'Nunca se envió', variant: 'secondary' as const };
+    const sending = this.sending();
+    if (sending === 'yes') return { text: 'Se envía', variant: 'success' as const };
+    return sending === 'no' ? { text: 'Ya no se envía', variant: 'secondary' as const } : { text: 'Envío sin confirmar', variant: 'secondary' as const };
+  });
+
   /** Published: there may be responses to read. */
   protected readonly publicada = computed(() => {
     const actual = this.estado();
@@ -193,6 +185,10 @@ export class SurveyDetailScreen {
 
   constructor() {
     this.cargar();
+    this.serviceAssignments.list().subscribe({
+      next: (data) => this.sending.set(data.services.some((row) => row.assignment?.templateId === this.surveyId) ? 'yes' : 'no'),
+      error: () => this.sending.set('unknown'),
+    });
   }
 
   /** Trae la encuesta con su cuestionario. */
@@ -283,109 +279,4 @@ export class SurveyDetailScreen {
     enlace.click();
     releaseObjectUrlLater(url);
   }
-}
-
-/**
- * Una barra por etiqueta, con su porcentaje sobre `total`.
- *
- * Es la parte de `resumirPregunta` que no depende de cómo llegaron las
- * respuestas: la reutiliza el resumen general del profesional
- * (`insights/survey-insights.logic.ts`), que recibe los conteos ya agregados por
- * el servidor en vez de respuestas sueltas.
- */
-export function armarBarras(
-  total: number,
-  etiquetas: readonly string[],
-  cantidadDe: (etiqueta: string) => number,
-): readonly BarraDeResumen[] {
-  return etiquetas.map((etiqueta) => {
-    const cantidad = cantidadDe(etiqueta);
-    return { etiqueta, cantidad, porcentaje: total === 0 ? 0 : Math.round((cantidad / total) * 100) };
-  });
-}
-
-/**
- * El día de envío de una respuesta, `AAAA-MM-DD`, en UTC (el servidor lo manda
- * redondeado al día a medianoche UTC). Sin fecha, vacío. Nunca la hora.
- */
-export function diaDeEnvio(fecha: Date | null): string {
-  return fecha === null || Number.isNaN(fecha.getTime()) ? '' : fecha.toISOString().slice(0, 10);
-}
-
-/** Arma el resumen (barras + promedio) de una pregunta a partir de las respuestas recibidas. */
-export function resumirPregunta(
-  pregunta: SurveyQuestion,
-  respuestas: readonly SurveyResponse[],
-): ResumenDePregunta {
-  const respondidas = respuestas
-    .map((r) => r.answers.find((a) => a.questionId === pregunta.id))
-    .filter((a): a is SurveyResponse['answers'][number] => a !== undefined);
-  const total = respondidas.length;
-
-  const conBarras = (etiquetas: readonly string[], cantidadDe: (etiqueta: string) => number) =>
-    armarBarras(total, etiquetas, cantidadDe);
-
-  let barras: readonly BarraDeResumen[] = [];
-  let promedio: number | null = null;
-
-  switch (pregunta.answerType) {
-    case 'BOOLEAN':
-      barras = conBarras(
-        ['Sí', 'No'],
-        (etiqueta) => respondidas.filter((a) => a.valueBoolean === (etiqueta === 'Sí')).length,
-      );
-      break;
-    case 'SINGLE_CHOICE':
-    case 'MULTIPLE_CHOICE':
-      barras = conBarras(
-        pregunta.options ?? [],
-        (opcion) => respondidas.filter((a) => a.valueChoices?.includes(opcion)).length,
-      );
-      break;
-    case 'SCALE': {
-      const min = pregunta.scaleMin ?? 1;
-      const max = pregunta.scaleMax ?? 5;
-      const valores = Array.from({ length: Math.max(0, max - min + 1) }, (_, i) => min + i);
-      barras = conBarras(
-        valores.map(String),
-        (etiqueta) => respondidas.filter((a) => a.valueNumber === Number(etiqueta)).length,
-      );
-      const numeros = respondidas
-        .map((a) => a.valueNumber)
-        .filter((n): n is number => n !== undefined);
-      promedio = numeros.length === 0 ? null : numeros.reduce((a, b) => a + b, 0) / numeros.length;
-      break;
-    }
-    case 'TEXT':
-      // Texto libre no se resume en barras: cada respuesta es distinta y
-      // agruparlas no diría nada. La lista de respuestas de abajo ya las
-      // muestra completas.
-      break;
-  }
-
-  return {
-    questionId: pregunta.id,
-    questionText: pregunta.questionText,
-    answerType: pregunta.answerType,
-    totalRespondida: total,
-    promedio,
-    barras,
-  };
-}
-
-/** Encierra en comillas sólo si hace falta, duplicando las internas (RFC 4180). */
-export function celdaCsv(valor: string): string {
-  return /[",\r\n]/.test(valor) ? `"${valor.replace(/"/g, '""')}"` : valor;
-}
-
-/** Nombre de archivo seguro a partir del título de la encuesta. */
-export function slugify(texto: string): string {
-  return (
-    texto
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '') || 'encuesta'
-  );
 }

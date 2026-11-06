@@ -10,13 +10,17 @@ import type { SurveyCatalogEntry } from '../../../core/data-access/surveys/surve
 
 /** The card as the inbox needs it: the entry plus how it is painted. */
 export interface SurveyCardData extends SurveyCatalogEntry {
-  /** «Se envía» or «Encuesta anterior (ya no se envía)». */
+  /** «Se envía», «Encuesta anterior (ya no se envía)» or «Envío sin confirmar». */
   readonly label: string;
   readonly tone: BadgeVariant;
   /** The survey sheet, where its responses are read. */
   readonly route: string;
-  /** Sent today: a system base survey or a catalog survey imported for a service. */
-  readonly current: boolean;
+  /**
+   * Sent today (`yes`: a system base survey or a catalog survey imported for a
+   * service), not any more (`no`: a hand-made survey), or not known because the
+   * service list did not load (`unknown`: never claimed either way).
+   */
+  readonly sending: 'yes' | 'no' | 'unknown';
 }
 
 /** What each base survey is issued for, in words. */
@@ -44,9 +48,9 @@ export class SurveyCard {
 
   /** Names of what a current survey is sent for; never a UUID. Past surveys list none. */
   protected readonly targets = computed<readonly string[]>(() => {
-    const { scope, assignments, current } = this.survey();
+    const { scope, assignments, sending } = this.survey();
     if (scope) return [SYSTEM_SCOPE[scope]];
-    if (!current) return [];
+    if (sending !== 'yes') return [];
     return assignments
       .filter((a) => a.targetType === 'SERVICE')
       .map((a) => a.targetName ?? 'Un servicio que ya no figura');

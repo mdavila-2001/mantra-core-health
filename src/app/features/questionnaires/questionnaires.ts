@@ -8,13 +8,7 @@ import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { SurveysInbox } from './inbox/surveys-inbox';
 import { ServiceSurveys } from './service-surveys/service-surveys';
-
-/** URL query param holding the open sub-tab. */
-export const PARAM_SUBPESTANA = 'encuestas';
-
-/** Sub-tabs in order. The first is the default and is kept out of the URL. */
-export const SUBPESTANAS = ['buzon', 'servicios'] as const;
-export type Subpestana = (typeof SUBPESTANAS)[number];
+import { SURVEYS_SUBTAB_PARAM, SURVEYS_SUBTABS } from './questionnaires.routes';
 
 /**
  * The practitioner's «Encuestas» (06/11/2026): two sub-tabs, full width.
@@ -42,18 +36,18 @@ export class SurveysHome {
 
   private readonly params = toSignal(this.route.queryParamMap, { initialValue: null });
 
-  protected readonly index = computed(() => {
-    const name = this.params()?.get(PARAM_SUBPESTANA) ?? '';
-    const index = (SUBPESTANAS as readonly string[]).indexOf(name);
+  protected readonly selectedIndex = computed(() => {
+    const name = this.params()?.get(SURVEYS_SUBTAB_PARAM) ?? '';
+    const index = (SURVEYS_SUBTABS as readonly string[]).indexOf(name);
     return index < 0 ? 0 : index;
   });
 
-  protected elegir(index: number): void {
-    if (index === this.index()) return;
-    const name = SUBPESTANAS[index] ?? SUBPESTANAS[0];
+  protected select(index: number): void {
+    if (index === this.selectedIndex()) return;
+    const name = SURVEYS_SUBTABS[index] ?? SURVEYS_SUBTABS[0];
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { [PARAM_SUBPESTANA]: index === 0 ? null : name },
+      queryParams: { [SURVEYS_SUBTAB_PARAM]: index === 0 ? null : name },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });

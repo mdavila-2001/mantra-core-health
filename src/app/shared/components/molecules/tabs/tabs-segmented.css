@@ -1,0 +1,64 @@
+/* ============================================================================
+    `segmented` appearance — a second tab level inside a section that already
+    has its own tabs: a compact inset track with a raised selected pill and no
+    underline, sized to its labels. Visibly subordinate to the page's tabs.
+    Kept in its own sheet: `tabs.css` is frozen (max-lines baseline).
+    ========================================================================== */
+
+:host(.tabs--segmented) .tabs__bar {
+    display: inline-flex;
+    max-inline-size: 100%;
+}
+
+:host(.tabs--segmented) .tabs__list {
+    flex: 0 1 auto;
+    gap: var(--sp-1);
+    padding: var(--sp-1);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-pill);
+    background: var(--bg-inset);
+}
+
+:host(.tabs--segmented) .tabs__tab {
+    flex: 0 0 auto;
+    padding: var(--sp-1) var(--sp-4);
+    border-radius: var(--r-pill);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    white-space: nowrap;
+}
+
+:host(.tabs--segmented) .tabs__tab::after {
+    display: none;
+}
+
+/* Hover and focus never look like the selected pill (no surface, no shadow). */
+:host(.tabs--segmented) .tabs__tab:hover:not(:disabled):not(.is-selected) {
+    background: transparent;
+    color: var(--text-primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+:host(.tabs--segmented) .tabs__tab.is-selected {
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+}
+
+:host(.tabs--segmented) .tabs__panels {
+    padding-block-start: var(--sp-4);
+}
+
+/* Phones: the options share the track's width; labels never wrap. */
+@media (max-width: 599px) {
+    :host(.tabs--segmented) .tabs__bar,
+    :host(.tabs--segmented) .tabs__list {
+        display: flex;
+        inline-size: 100%;
+    }
+
+    :host(.tabs--segmented) .tabs__tab {
+        flex: 1 1 auto;
+    }
+}

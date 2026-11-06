@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { SurveyQuestion, SurveyResponse } from '../../../core/data-access/surveys/surveys.types';
-import { celdaCsv, resumirPregunta, slugify } from './survey-detail';
+import { celdaCsv, resumirPregunta, slugify } from './survey-detail.logic';
 
 /** Arma una respuesta mínima con una sola contestación, para no repetir el resto de campos en cada test. */
 function respuestaCon(answer: SurveyResponse['answers'][number]): SurveyResponse {

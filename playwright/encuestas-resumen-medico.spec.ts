@@ -28,7 +28,7 @@ import { entrar, esperarAplicacionLista, irA } from './support/sesion';
  * Nunca espera a que la red quede quieta: contra `ng serve` con HMR no llega. Se espera por
  * elementos y por respuestas concretas.
  *
- * Las capturas (claro y oscuro; 1440 y 390 px) se guardan en `SALIDA`.
+ * Las capturas (claro y oscuro; 1440 y 390 px; sólo la ventana) se guardan en `SALIDA`.
  */
 
 const SALIDA = join('docs', 'frontend', 'evidence', 'encuestas-resumen-medico-2026-10-28');
@@ -50,20 +50,11 @@ async function aplicarTema(page: Page, tema: Tema): Promise<void> {
   }, tema);
 }
 
+/** Viewport-only capture (a full-page one lets the side rail cover content), without the demo chip. */
 async function capturar(page: Page, nombre: string): Promise<void> {
   mkdirSync(SALIDA, { recursive: true });
-  // La cabecera es `sticky`: en una captura de página entera queda flotando a
-  // mitad de la imagen y tapa contenido. Se suelta sólo para la foto.
-  const estilo = await page.addStyleTag({
-    content: '.app-header { position: static !important; } * { scroll-behavior: auto !important; }',
-  });
-  await page.evaluate(() => {
-    window.scrollTo(0, 0);
-    for (const el of Array.from(document.querySelectorAll('*'))) {
-      if (el.scrollTop > 0) el.scrollTop = 0;
-    }
-  });
-  await page.screenshot({ path: join(SALIDA, `${nombre}.png`), fullPage: true });
+  const estilo = await page.addStyleTag({ content: 'aside.mock { display: none !important; } * { scroll-behavior: auto !important; }' });
+  await page.screenshot({ path: join(SALIDA, `${nombre}.png`) });
   await estilo.evaluate((nodo) => (nodo as Element).remove());
 }
 

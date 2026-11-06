@@ -7,8 +7,9 @@ import type {
 } from '../../../core/data-access/surveys/surveys-service-assignments.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Alert } from '../../../shared/components/molecules/alert/alert';
+import type { ViewState } from '../../../core/view-state/view-state.types';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
+import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { answerFormat, questionCount, sortForService, sourcesLine } from './service-surveys.logic';
 
 /**
@@ -18,11 +19,12 @@ import { answerFormat, questionCount, sortForService, sourcesLine } from './serv
  * first; preview of the chosen one (sources and questions) on the right.
  * Choosing only changes the preview; nothing is sent until «Importar». Only
  * opened with a non-empty catalog (the container shows the empty S3 instead).
- * Presentational: the container does the PUT and passes `saving` and `error`.
+ * Presentational: the container does the PUT and passes `saving` and `error`;
+ * «Reintentar» on the error re-sends the chosen survey.
  */
 @Component({
   selector: 'app-survey-catalog-picker',
-  imports: [Alert, AppButton, Badge, ContentDialog],
+  imports: [AppButton, Badge, ContentDialog, ViewStateHost],
   templateUrl: './survey-catalog-picker.html',
   styleUrl: './survey-catalog-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,8 +36,8 @@ export class SurveyCatalogPicker {
   readonly kind = input.required<SurveyServiceKind>();
   readonly catalog = input.required<readonly StandardSurvey[]>();
   readonly saving = input(false);
-  /** Reason of the last failed attempt, in words; `null` if none. */
-  readonly error = input<string | null>(null);
+  /** The last failed attempt, drawn with the S9 anatomy; `null` if none. */
+  readonly error = input<ViewState<never> | null>(null);
 
   readonly pick = output<string>();
   readonly closed = output<void>();
@@ -56,10 +58,8 @@ export class SurveyCatalogPicker {
 
   /** Short on purpose (it has to fit a phone); the service goes in the description. */
   protected readonly heading = computed(() => (this.service().assignment === null ? 'Importar encuesta' : 'Cambiar encuesta'));
-  protected readonly description = computed(
-    () =>
-      `Para «${this.service().serviceName}». Sus pacientes la recibirán después de cada atención de este servicio, en lugar de la encuesta base de servicios.`,
-  );
+  /** One short line, so the header stays compact on a phone; the explanation goes in the body. */
+  protected readonly description = computed(() => `Para «${this.service().serviceName}».`);
 
   /** Importing the one already in use changes nothing: the button does not offer it. */
   protected readonly canImport = computed(() => {

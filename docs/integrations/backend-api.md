@@ -1701,27 +1701,15 @@ Todas exigen `PRACTITIONER` o `CLINICIAN`. Sólo se puede invitar a colegas de l
 organización que la práctica del servicio (`eligible-members` aplica la misma regla que el
 alta), y el nombre del paciente viaja sólo al creador y a los miembros que aceptaron.
 
-### `SurveysClient` — 17 operaciones
+### `SurveysClient` — 5 operaciones
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
-| `POST` | `/surveys/assignments` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `POST` | `/surveys/invitations` | `QuestionnaireAnswer` y 3 pantallas más | No |
 | `GET` | `/surveys/me/invitations` | `QuestionnaireAnswer` y 3 pantallas más | No |
 | `GET` | `/surveys/me/invitations/:invitationId` | `QuestionnaireAnswer` y 3 pantallas más | No |
 | `POST` | `/surveys/me/invitations/:invitationId/responses` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `GET` | `/surveys/templates` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `POST` | `/surveys/templates` | `QuestionnaireAnswer` y 3 pantallas más | No |
 | `GET` | `/surveys/templates/:surveyId` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `PATCH` | `/surveys/templates/:surveyId` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `POST` | `/surveys/templates/:surveyId/deactivate` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `POST` | `/surveys/templates/:surveyId/questions` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `DELETE` | `/surveys/templates/:surveyId/questions/:questionId` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `PATCH` | `/surveys/templates/:surveyId/questions/:questionId` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `PUT` | `/surveys/templates/:surveyId/questions/order` | `QuestionnaireAnswer` y 3 pantallas más | No |
 | `GET` | `/surveys/templates/:surveyId/responses` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `POST` | `/surveys/templates/:surveyId/versions` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `POST` | `/surveys/templates/:surveyId/versions/:versionNumber/publish` | `QuestionnaireAnswer` y 3 pantallas más | No |
 
 
 ## Consumos incorporados en Hito 2

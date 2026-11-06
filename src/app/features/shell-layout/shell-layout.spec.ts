@@ -1695,7 +1695,7 @@ describe('ShellLayout', () => {
 
         abrirSesion({ sub: 'u-2', roles: ['PRACTITIONER'], tenants: ['t-1'] });
         expect(enlace()).toBeNull();
-        expect(TestBed.inject(PatientSurveyInbox).hayInvitaciones()).toBe(false);
+        expect(TestBed.inject(PatientSurveyInbox).invitaciones().length > 0).toBe(false);
       });
     });
 

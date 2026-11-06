@@ -18,7 +18,7 @@ const imported: SurveyCardData = {
   label: 'Se envía',
   tone: 'success',
   route: '/questionnaires/e1',
-  current: true,
+  sending: 'yes',
 };
 
 function render(data: SurveyCardData): HTMLElement {
@@ -50,11 +50,19 @@ describe('SurveyCard · read-only', () => {
   });
 
   it('a past survey says it is no longer sent and lists no destination, but its responses stay readable', () => {
-    const card = render({ ...imported, current: false, label: 'Encuesta anterior (ya no se envía)', tone: 'secondary' });
+    const card = render({ ...imported, sending: 'no', label: 'Encuesta anterior (ya no se envía)', tone: 'secondary' });
     expect(card.querySelector('[data-testid="survey-card-status-e1"]')?.textContent).toContain('Encuesta anterior (ya no se envía)');
     expect(card.querySelector('[data-testid="survey-card-past-note"]')).not.toBeNull();
     expect(card.querySelector('[data-testid="survey-card-targets"]')).toBeNull();
     expect(card.querySelector('[data-testid="survey-responses-e1"]')).not.toBeNull();
     expect(card.textContent).not.toContain('Activa');
+  });
+
+  it('unknown (service list failed): never claims sent nor past, still readable', () => {
+    const card = render({ ...imported, sending: 'unknown', label: 'Envío sin confirmar', tone: 'secondary' });
+    expect(card.querySelector('[data-testid="survey-card-unknown-note"]')).not.toBeNull();
+    expect(card.querySelector('[data-testid="survey-card-targets"]')).toBeNull();
+    expect(card.querySelector('[data-testid="survey-card-past-note"]')).toBeNull();
+    expect(card.querySelector('[data-testid="survey-responses-e1"]')).not.toBeNull();
   });
 });

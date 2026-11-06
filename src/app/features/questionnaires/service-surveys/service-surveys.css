@@ -97,6 +97,9 @@
   .por-servicio__acciones {
     inline-size: 100%;
     justify-content: space-between;
+    /* Aligned with the text column, not with the icon. */
+    padding-inline-start: calc(2.25rem + var(--sp-4));
+    box-sizing: border-box;
   }
 }
 
@@ -151,4 +154,9 @@
 .por-servicio__pie {
   display: flex;
   justify-content: flex-end;
+}
+
+.por-servicio__fallo {
+  display: block;
+  margin-block-end: var(--sp-4);
 }

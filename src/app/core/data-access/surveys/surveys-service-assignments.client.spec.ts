@@ -19,7 +19,7 @@ describe('SurveysServiceAssignmentsClient', () => {
   afterEach(() => http.verify());
 
   it('reads the standard catalog from /surveys/standard-catalog, never /surveys/catalog', async () => {
-    const lleno = firstValueFrom(client.listStandardCatalog());
+    const full = firstValueFrom(client.listStandardCatalog());
     http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/surveys/standard-catalog')).flush({
       items: [
         {
@@ -33,15 +33,15 @@ describe('SurveysServiceAssignmentsClient', () => {
         },
       ],
     });
-    expect((await lleno).map((e) => e.code)).toEqual(['STD_IMAGING_V1']);
+    expect((await full).map((e) => e.code)).toEqual(['STD_IMAGING_V1']);
     http.expectNone((r) => r.url.endsWith('/surveys/catalog'));
 
-    const vacio = firstValueFrom(client.listStandardCatalog());
+    const none = firstValueFrom(client.listStandardCatalog());
     http.expectOne((r) => r.url.endsWith('/surveys/standard-catalog')).flush({ items: null });
-    expect(await vacio).toEqual([]);
+    expect(await none).toEqual([]);
   });
 
-  it('normalizes the date and an absent assignment to null; catalogCode may be null', async () => {
+  it('normalizes the date; an absent assignment and a legacy one (catalogCode null) read as no survey', async () => {
     const pending = firstValueFrom(client.list());
     http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/surveys/service-assignments')).flush({
       consultation: { system: true, title: 'Cita médica', templateTitle: 'Encuesta de su consulta', questionCount: 12, replaceable: false },
@@ -50,16 +50,23 @@ describe('SurveysServiceAssignmentsClient', () => {
         { serviceId: 's-2', serviceName: 'Holter' },
         {
           serviceId: 's-3',
+          serviceName: 'Teleconsulta',
+          assignment: { assignmentId: 'a-0', catalogCode: null, title: 'Propia', templateId: 't-0', versionId: 'v-0', assignedAt: '2026-10-01T10:00:00.000Z' },
+        },
+        {
+          serviceId: 's-4',
           serviceName: 'Ecografía',
-          assignment: { assignmentId: 'a-1', catalogCode: null, title: 'Propia', templateId: 't-1', versionId: 'v-1', assignedAt: '2026-11-01T10:00:00.000Z' },
+          assignment: { assignmentId: 'a-1', catalogCode: 'STD_IMAGING_V1', title: 'Estudios por imágenes', templateId: 't-1', versionId: 'v-1', assignedAt: '2026-11-01T10:00:00.000Z' },
         },
       ],
     });
-    const cuerpo = await pending;
-    expect(cuerpo.services[0]!.assignment).toBeNull();
-    expect(cuerpo.services[1]!.assignment).toBeNull();
-    expect(cuerpo.services[2]!.assignment?.catalogCode).toBeNull();
-    expect(cuerpo.services[2]!.assignment?.assignedAt).toEqual(new Date('2026-11-01T10:00:00.000Z'));
+    const body = await pending;
+    expect(body.services[0]!.assignment).toBeNull();
+    expect(body.services[1]!.assignment).toBeNull();
+    // Legacy hand-made attachment: never sent, so it is not the service's survey.
+    expect(body.services[2]!.assignment).toBeNull();
+    expect(body.services[3]!.assignment?.catalogCode).toBe('STD_IMAGING_V1');
+    expect(body.services[3]!.assignment?.assignedAt).toEqual(new Date('2026-11-01T10:00:00.000Z'));
   });
 
   it('PUT sends only the catalog code; DELETE removes', async () => {

@@ -1,6 +1,7 @@
+<!-- The top bar's «Mis encuestas» lands on the surveys tab: the header says the same name there. -->
 <app-page-header
-  title="Mis cuestionarios"
-  subtitle="Responda los cuestionarios de las consultas que ya tuvo."
+  [title]="seccion() === 1 ? 'Mis encuestas' : 'Mis cuestionarios'"
+  [subtitle]="seccion() === 1 ? 'Responda sus encuestas sobre las atenciones que ya tuvo.' : 'Responda los cuestionarios de las consultas que ya tuvo.'"
   [breadcrumbs]="breadcrumbs()"
 />
 

@@ -56,16 +56,31 @@ describe('SurveyDetailScreen · solo lectura', () => {
   afterEach(() => http.verify());
 
   const root = (): HTMLElement => harness.routeNativeElement as HTMLElement;
+
+  /** Which services send which template today; `sentTemplate` makes s-1 the current one. */
+  function respondAssignments(sentTemplate: string | null = null): void {
+    http.expectOne((r) => r.method === 'GET' && r.url === '/surveys/service-assignments').flush({
+      consultation: {},
+      services: [
+        {
+          serviceId: 'svc',
+          serviceName: 'Ecografía',
+          assignment: sentTemplate === null ? null : { assignmentId: 'a', catalogCode: 'STD_IMAGING_V1', title: 'x', templateId: sentTemplate, versionId: 'v', assignedAt: null },
+        },
+      ],
+    });
+  }
   const find = (selector: string): Element | null => root().querySelector(selector);
 
   function expectNoManagement(): void {
-    for (const testId of ['asignacion-vigentes', 'asignacion-servicio', 'asignacion-guardar', 'encuesta-publicar', 'encuesta-agregar-pregunta', 'editor-pregunta-abrir']) {
+    for (const testId of ['asignacion-vigentes', 'asignacion-servicio', 'asignacion-guardar', 'encuesta-publicar', 'encuesta-agregar-pregunta', 'question-edit']) {
       expect(find(`[data-testid="${testId}"]`), testId).toBeNull();
     }
     expect(root().textContent).not.toMatch(/Asociar a un servicio|Desactivar encuesta|nueva versión|Publicar versión|Agregar pregunta/);
   }
 
   it('publicada: se leen las preguntas y las respuestas; no se gestiona nada', () => {
+    respondAssignments();
     http.expectOne((r) => r.method === 'GET' && r.url === '/surveys/templates/s-1').flush(sheet(true));
     http.expectOne((r) => r.method === 'GET' && r.url === '/surveys/templates/s-1/responses').flush([]);
     harness.detectChanges();
@@ -73,10 +88,21 @@ describe('SurveyDetailScreen · solo lectura', () => {
     expect(root().textContent).toContain('¿Cómo fue la atención?');
     expect(root().textContent).toContain('¿Volvería?');
     expect(find('#respuestas')).not.toBeNull();
+    // A hand-made survey is not sent any more: never «Publicada» alone.
+    expect(find('[data-testid="survey-detail-sending"]')?.textContent?.trim()).toBe('Ya no se envía');
     expectNoManagement();
   });
 
+  it('la plantilla que hoy usa un servicio dice «Se envía»', () => {
+    respondAssignments('s-1');
+    http.expectOne((r) => r.url === '/surveys/templates/s-1').flush(sheet(true));
+    http.expectOne((r) => r.url === '/surveys/templates/s-1/responses').flush([]);
+    harness.detectChanges();
+    expect(find('[data-testid="survey-detail-sending"]')?.textContent?.trim()).toBe('Se envía');
+  });
+
   it('dice que es de solo lectura y lleva a «Encuestas por servicio»', () => {
+    respondAssignments();
     http.expectOne((r) => r.url === '/surveys/templates/s-1').flush(sheet(true));
     http.expectOne((r) => r.url === '/surveys/templates/s-1/responses').flush([]);
     harness.detectChanges();
@@ -86,11 +112,13 @@ describe('SurveyDetailScreen · solo lectura', () => {
   });
 
   it('borrador viejo: tampoco se compone ni se publica, y no pide respuestas', () => {
+    respondAssignments();
     http.expectOne((r) => r.url === '/surveys/templates/s-1').flush(sheet(false));
     harness.detectChanges();
 
     expect(root().textContent).toContain('¿Cómo fue la atención?');
     expectNoManagement();
+    expect(find('[data-testid="survey-detail-sending"]')?.textContent?.trim()).toBe('Nunca se envió');
     expect(find('#respuestas')).toBeNull();
   });
 });

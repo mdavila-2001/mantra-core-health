@@ -66,8 +66,8 @@ export interface ConsultationSurveyInfo {
 /** The standard survey attached today to a service. */
 export interface ServiceSurveyAssignment {
   readonly assignmentId: string;
-  /** `null` when the attachment did not come from the catalog (legacy). */
-  readonly catalogCode: string | null;
+  /** The catalog template in use. Legacy (non-catalog) attachments never reach the screens. */
+  readonly catalogCode: string;
   readonly title: string;
   readonly templateId: string;
   readonly versionId: string;

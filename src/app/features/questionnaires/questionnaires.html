@@ -6,23 +6,23 @@
   />
 }
 
-<!-- Sub-tabs inside the hub's «Encuestas» panel, full width (composition-rules
-     §5). No card of its own: the Buzón already draws each survey as a card.
-     Each panel mounts only when open, so «Encuestas por servicio» requests
-     nothing while the Buzón is shown. -->
+<!-- Sub-tabs inside the hub's «Encuestas» panel (segmented: a second level,
+     subordinate to the hub's tabs). Each panel mounts only when open, so
+     «Encuestas por servicio» requests nothing while the Buzón is shown. -->
 <app-tabs
   class="encuestas__subpestanas"
   data-testid="surveys-subtabs"
-  [selectedIndex]="index()"
-  (selectedIndexChange)="elegir($event)"
+  [selectedIndex]="selectedIndex()"
+  appearance="segmented"
+  (selectedIndexChange)="select($event)"
 >
   <app-tab label="Buzón">
-    @if (index() === 0) {
-      <app-surveys-inbox (goToServices)="elegir(1)" />
+    @if (selectedIndex() === 0) {
+      <app-surveys-inbox (goToServices)="select(1)" />
     }
   </app-tab>
   <app-tab label="Encuestas por servicio">
-    @if (index() === 1) {
+    @if (selectedIndex() === 1) {
       <app-service-surveys />
     }
   </app-tab>

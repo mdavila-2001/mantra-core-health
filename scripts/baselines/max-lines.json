@@ -388,9 +388,6 @@
     "src/app/features/public-profile/public-profile-card/public-profile-card.css": {
       "lineas": 699
     },
-    "src/app/features/questionnaires/survey-detail/survey-detail.ts": {
-      "lineas": 697
-    },
     "src/app/core/data-access/public-directory/public-search.store.ts": {
       "lineas": 696
     },
@@ -1024,9 +1021,6 @@
     "src/app/core/mock/handlers/pharmacy-prescription-shares.handlers.ts": {
       "lineas": 440
     },
-    "src/app/core/data-access/surveys/surveys.client.ts": {
-      "lineas": 439
-    },
     "src/app/features/insurance/insurance-patients/insurance-patients.ts": {
       "lineas": 439
     },
@@ -1315,9 +1309,6 @@
     "src/app/features/access-governance/simulator/simulator.fixtures.ts": {
       "lineas": 376
     },
-    "src/app/features/questionnaires/survey-detail/question-editor/question-editor.ts": {
-      "lineas": 376
-    },
     "src/app/features/access-governance/anomalies/anomalies.ts": {
       "lineas": 375
     },
@@ -1545,9 +1536,6 @@
     },
     "src/app/core/notifications/notifications.store.ts": {
       "lineas": 344
-    },
-    "src/app/core/data-access/surveys/surveys.types.ts": {
-      "lineas": 343
     },
     "src/app/features/admin/clinical-forms/clinical-forms.ts": {
       "lineas": 343

@@ -6,11 +6,13 @@
   [dismissible]="!saving()"
   (closed)="closed.emit()"
 >
+  <p class="catalogo__intro">
+    Sus pacientes la recibirán después de cada atención de este servicio, en lugar de la encuesta base de servicios.
+  </p>
+
   <!-- The failure goes first: it must be seen without scrolling the preview. -->
-  @if (error(); as reason) {
-    <app-alert class="catalogo__error" tone="error" title="No se pudo importar la encuesta" data-testid="standard-catalog-error">
-      {{ reason }}
-    </app-alert>
+  @if (error(); as failure) {
+    <app-view-state-host class="catalogo__error" [state]="failure" (retry)="importChosen()" data-testid="standard-catalog-error" />
   }
 
   <div class="catalogo" data-testid="standard-catalog">
@@ -44,7 +46,9 @@
     </ul>
 
     @if (preview(); as entry) {
-      <section class="catalogo__vista" aria-live="polite" data-testid="standard-catalog-preview">
+      <!-- Only a short summary is announced, not the whole preview. -->
+      <p class="catalogo__anuncio" aria-live="polite">Vista previa: {{ entry.title }}, {{ questionCount(entry.questions.length) }}.</p>
+      <section class="catalogo__vista" data-testid="standard-catalog-preview">
         <h3 class="catalogo__vista-titulo">{{ entry.title }}</h3>
         <p class="catalogo__vista-descripcion">{{ entry.description }}</p>
         <p class="catalogo__fuente" data-testid="standard-catalog-source">

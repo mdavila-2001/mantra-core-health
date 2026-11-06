@@ -14,18 +14,18 @@ import { SurveyCatalogPicker } from './survey-catalog-picker';
 /* Failure paths of «Encuestas por servicio»: GET errors, PUT 409/late errors,
    DELETE errors, an empty catalog and closing the picker mid-save. */
 
+/** The server's own text must never reach the screen. */
+const RAW = 'RAW_BACKEND_TEXT';
 const apiError = (status: number, code: string, reason?: string) => ({
-  body: { statusCode: status, code, ...(reason ? { reason } : {}), message: '', timestamp: '', path: '' },
+  body: { statusCode: status, code, ...(reason ? { reason } : {}), message: RAW, timestamp: '', path: '', correlationId: 'corr-123' },
   init: { status, statusText: 'x' },
 });
 
 describe('ServiceSurveys · fallos', () => {
   let fixture: ComponentFixture<ServiceSurveys>;
   let http: HttpTestingController;
-  const errors: string[] = [];
 
   beforeEach(() => {
-    errors.length = 0;
     TestBed.configureTestingModule({
       imports: [ServiceSurveys],
       providers: [
@@ -34,7 +34,7 @@ describe('ServiceSurveys · fallos', () => {
         provideRouter([]),
         { provide: API_BASE_URL, useValue: '' },
         { provide: DialogService, useValue: { confirm: () => Promise.resolve(true) } },
-        { provide: ToastService, useValue: { success: () => undefined, error: (m: string) => errors.push(m) } },
+        { provide: ToastService, useValue: { success: () => undefined } },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -52,6 +52,17 @@ describe('ServiceSurveys · fallos', () => {
   const inModal = (selector: string): HTMLElement | null => document.querySelector(selector);
   const listRequest = () => http.expectOne((r) => r.method === 'GET' && r.url === '/surveys/service-assignments');
   const catalogRequest = () => http.expectOne((r) => r.method === 'GET' && r.url === '/surveys/standard-catalog');
+
+  /** The S9 anatomy: our title and message, support code, «Copiar código», «Reintentar»; never the server's text. */
+  function expectS9(container: Element | null, text: string): void {
+    expect(container).not.toBeNull();
+    const content = container!.textContent ?? '';
+    expect(content).toContain(text);
+    expect(content).toContain('corr-123');
+    expect(content).toContain('Copiar código');
+    expect(content).toContain('Reintentar');
+    expect(content).not.toContain(RAW);
+  }
 
   function respond(catalog: object = STANDARD_CATALOG): void {
     listRequest().flush(SERVICE_ASSIGNMENTS);
@@ -94,10 +105,10 @@ describe('ServiceSurveys · fallos', () => {
     openImportAndSend().flush(e.body, e.init);
     root();
     expect(inModal('[data-testid="standard-catalog"]')).toBeNull();
-    expect(errors[0]).toContain('otra sesión');
     listRequest().flush(SERVICE_ASSIGNMENTS);
     root();
     expect(q('[data-testid="service-surveys-list"]')).not.toBeNull();
+    expectS9(q('[data-testid="service-surveys-write-error"]'), 'otra sesión');
   });
 
   it('mientras guarda: no se cierra por fondo/Escape y «Cancelar» queda inhabilitado', () => {
@@ -126,7 +137,7 @@ describe('ServiceSurveys · fallos', () => {
     const e = apiError(500, 'INTERNAL');
     put.flush(e.body, e.init);
     root();
-    expect(errors[0]).toContain('No se pudo importar');
+    expectS9(q('[data-testid="service-surveys-write-error"]'), 'No se pudo importar');
     expect(inModal('[data-testid="standard-catalog"]')).toBeNull();
 
     // «Importar» works again: the selection was cleared.
@@ -136,15 +147,49 @@ describe('ServiceSurveys · fallos', () => {
     expect(inModal('[data-testid="standard-catalog-error"]')).toBeNull();
   });
 
-  it('DELETE que falla: la fila queda como estaba y el aviso habla de quitar', async () => {
+  it('DELETE que falla: la fila queda como estaba, S9 propio y «Reintentar» vuelve a quitar sin preguntar', async () => {
     respond();
     q('[data-testid="service-survey-remove-svc-ecg"]')!.click();
     await fixture.whenStable();
     const e = apiError(412, 'PRECONDITION_FAILED');
     http.expectOne((r) => r.method === 'DELETE' && r.url === '/surveys/service-assignments/svc-ecg').flush(e.body, e.init);
     root();
-    expect(errors[0]).toContain('perfil profesional');
+    expectS9(q('[data-testid="service-surveys-write-error"]'), 'perfil profesional');
+    expect(q('[data-testid="service-surveys-write-error"]')?.textContent).toContain('No se pudo quitar la encuesta');
     expect(q('[data-testid="service-survey-svc-ecg"]')?.textContent).toContain('Procedimientos y estudios');
-    expect(q('[data-testid="service-survey-remove-svc-ecg"]')).not.toBeNull();
+
+    [...root().querySelectorAll<HTMLButtonElement>('[data-testid="service-surveys-write-error"] button')].find((b) => b.textContent?.includes('Reintentar'))!.click();
+    await fixture.whenStable();
+    http.expectOne((r) => r.method === 'DELETE' && r.url === '/surveys/service-assignments/svc-ecg').flush(null, { status: 204, statusText: 'No Content' });
+    root();
+    expect(q('[data-testid="service-surveys-write-error"]')).toBeNull();
+    expect(q('[data-testid="service-survey-svc-ecg"]')?.textContent).toContain('Sin encuesta propia');
+  });
+
+  it('DELETE 404/409: la fila cambió en otra parte, relee la lista', async () => {
+    respond();
+    q('[data-testid="service-survey-remove-svc-ecg"]')!.click();
+    await fixture.whenStable();
+    const e = apiError(404, 'NOT_FOUND');
+    http.expectOne((r) => r.method === 'DELETE').flush(e.body, e.init);
+    root();
+    listRequest().flush(SERVICE_ASSIGNMENTS);
+    root();
+    expectS9(q('[data-testid="service-surveys-write-error"]'), 'ya había cambiado');
+  });
+
+  it('el catálogo que falla usa la misma anatomía S9, con su propio texto', () => {
+    listRequest().flush(SERVICE_ASSIGNMENTS);
+    const e = apiError(500, 'INTERNAL');
+    catalogRequest().flush(e.body, e.init);
+    root();
+    expectS9(q('[data-testid="service-surveys-catalog-error"]'), 'No se pudo cargar el catálogo de encuestas');
+  });
+
+  it('un PUT que falla con el selector abierto: S9 dentro del selector, sin el texto del servidor', () => {
+    const e = apiError(500, 'INTERNAL');
+    openImportAndSend().flush(e.body, e.init);
+    root();
+    expectS9(inModal('[data-testid="standard-catalog-error"]'), 'No se pudo importar la encuesta');
   });
 });

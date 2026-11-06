@@ -101,9 +101,16 @@ describe('fallos simulados del backend de maqueta', () => {
     expect((inesperado.body as { code: string }).code).toBe('INTERNAL');
   });
 
-  it('«vacio» no es un fallo: un 200 con lista vacía, para mirar el S3', () => {
-    const vacio = failureBody({ patron: '/surveys/me/invitations', modo: 'vacio' }, '/surveys/me/invitations');
-    expect(vacio.status).toBe(200);
-    expect(vacio.body).toEqual([]);
+  it('«empty» no es un fallo: un 200 con lista vacía, para mirar el S3', () => {
+    const emptyList = failureBody({ patron: '/surveys/me/invitations', modo: 'empty' }, '/surveys/me/invitations');
+    expect(emptyList.status).toBe(200);
+    expect(emptyList.body).toEqual([]);
+  });
+
+  it('«empty» sólo alcanza a las lecturas: una escritura pasa de largo', () => {
+    sessionStorage.setItem('mock:fallos', JSON.stringify([{ patron: '/surveys/me/invitations', modo: 'empty' }]));
+    expect(failureFor('GET', '/surveys/me/invitations')?.modo).toBe('empty');
+    expect(failureFor('POST', '/surveys/me/invitations/i-1/responses')).toBeNull();
+    sessionStorage.removeItem('mock:fallos');
   });
 });

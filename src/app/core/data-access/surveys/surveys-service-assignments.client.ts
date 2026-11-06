@@ -63,7 +63,9 @@ export class SurveysServiceAssignmentsClient {
 /** A row on the wire: the date as ISO text, `assignment` possibly absent. */
 type WireRow = Omit<ServiceSurveyRow, 'assignment'> & {
   readonly assignment?:
-    | (Omit<NonNullable<ServiceSurveyRow['assignment']>, 'assignedAt'> & {
+    | (Omit<NonNullable<ServiceSurveyRow['assignment']>, 'assignedAt' | 'catalogCode'> & {
+        /** `null` on the wire for a legacy (non-catalog) attachment. */
+        readonly catalogCode?: string | null;
         readonly assignedAt?: string | null;
       })
     | null;
@@ -74,8 +76,15 @@ interface WireAssignments {
   readonly services?: readonly WireRow[] | null;
 }
 
+/**
+ * A row as the screens use it. An attachment WITHOUT `catalogCode` is a legacy
+ * hand-made survey: the API no longer sends it (only the imported catalog
+ * survey or the service base is issued), so it is NOT the service's survey and
+ * the row reads as «uses the service base». Guarded here so every screen agrees.
+ */
 function toRow(row: WireRow): ServiceSurveyRow {
-  const assignment = row.assignment ?? null;
+  const wired = row.assignment ?? null;
+  const assignment = wired !== null && wired.catalogCode ? { ...wired, catalogCode: wired.catalogCode } : null;
   return {
     serviceId: row.serviceId,
     serviceName: row.serviceName,

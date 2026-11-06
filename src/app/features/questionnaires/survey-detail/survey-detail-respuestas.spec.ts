@@ -5,7 +5,8 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { API_BASE_URL } from '../../../core/data-access/api';
-import { diaDeEnvio, SurveyDetailScreen } from './survey-detail';
+import { SurveyDetailScreen } from './survey-detail';
+import { diaDeEnvio } from './survey-detail.logic';
 
 /* ============================================================================
     «Respuestas recibidas»: privacidad de la fecha.
@@ -75,6 +76,7 @@ describe('SurveyDetailScreen · respuestas recibidas', () => {
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
     pantalla = await harness.navigateByUrl('/questionnaires/s-1', SurveyDetailScreen);
+    http.expectOne((r) => r.url === '/surveys/service-assignments').flush({ consultation: {}, services: [] });
     http.expectOne((r) => r.url === '/surveys/templates/s-1').flush(ficha());
     http
       .expectOne((r) => r.url === '/surveys/templates/s-1/responses')

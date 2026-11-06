@@ -65,6 +65,12 @@ const CATALOG: readonly Record<string, unknown>[] = [
 const SERVICE_ASSIGNMENTS = {
   consultation: { system: true, title: 'Cita médica', templateTitle: 'x', questionCount: 1, replaceable: false },
   services: [
+    // Legacy hand-made attachment (catalogCode null): never sent, so NOT current.
+    {
+      serviceId: 'svc-tele',
+      serviceName: 'Teleconsulta',
+      assignment: { assignmentId: 'a0', catalogCode: null, title: 'Satisfacción con la consulta', templateId: 'legacy', versionId: 'v0', assignedAt: null },
+    },
     {
       serviceId: 'svc-eco',
       serviceName: 'Ecocardiograma',
@@ -129,7 +135,7 @@ describe('SurveysInbox · Buzón de solo lectura', () => {
   describe('qué se envía y qué es anterior', () => {
     beforeEach(() => respond());
 
-    it('la base del sistema y la importada para un servicio se envían; la hecha a mano es «anterior»', () => {
+    it('la base del sistema y la importada para un servicio se envían; la hecha a mano es «anterior» aunque siga ligada (catalogCode null)', () => {
       expect(statusOf('base-c')).toBe('Se envía');
       expect(statusOf('std')).toBe('Se envía');
       expect(statusOf('legacy')).toBe('Encuesta anterior (ya no se envía)');
@@ -144,10 +150,11 @@ describe('SurveysInbox · Buzón de solo lectura', () => {
     });
   });
 
-  it('si la lectura de servicios falla, el Buzón igual se ve y decide por las asociaciones a servicios', () => {
+  it('si la lectura de servicios falla, el Buzón igual se ve y no afirma si las propias se envían', () => {
     respond(CATALOG, null);
-    expect(statusOf('std')).toBe('Se envía');
-    expect(statusOf('legacy')).toBe('Encuesta anterior (ya no se envía)');
+    expect(statusOf('base-c')).toBe('Se envía');
+    expect(statusOf('std')).toBe('Envío sin confirmar');
+    expect(statusOf('legacy')).toBe('Envío sin confirmar');
   });
 
   describe('el buscador', () => {
