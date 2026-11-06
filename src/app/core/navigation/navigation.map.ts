@@ -3,6 +3,7 @@ import { SIN_CARA_DE_ASEGURADORA } from './navigation.payer';
 import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-verification';
 import { ANY_ROLE } from './navigation.types';
 import { SECCIONES_DE_LABORATORIO } from './navigation.laboratory';
+import { MEDICAL_ORGANIZATION_BRANCH_SECTIONS } from './navigation.medical-branches';
 import { INSIGHTS_SECTIONS } from './navigation.insights';
 import { ACCESS_REQUESTS_SECTIONS } from './navigation.access-requests';
 import { SECCIONES_DE_PLATAFORMA } from './navigation.platform';
@@ -1207,6 +1208,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
       'Administre sedes, áreas, quirófanos, consultorios, plantilla, legajo y sus vinculaciones.',
     module: 'M14 practice',
   },
+  ...MEDICAL_ORGANIZATION_BRANCH_SECTIONS,
   {
     // CM-11 · la organización médica (los cinco tipos del alta) abre su práctica
     // y su primera sede. Cuelga de `administration/`: una raíz propia se iría al

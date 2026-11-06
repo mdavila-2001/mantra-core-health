@@ -473,9 +473,7 @@ export class ChatStore {
   readonly hiloCargado = signal(false);
   readonly enviando = signal(false);
 
-  /** Server clock minus browser clock, measured on each send acknowledgement. */
-  readonly desfaseDelReloj = signal(0);
-
+  readonly desfaseDelReloj = signal(0); // server clock minus browser clock, per send ack
   /** Los que todavía no acusó el servidor, de todas las conversaciones. */
   readonly pendientes = signal<readonly MensajePendiente[]>([]);
 
@@ -694,8 +692,7 @@ export class ChatStore {
       .pipe(takeUntilDestroyed())
       .subscribe((mensaje) => {
         if (mensaje.conversationId === this.activaId()) {
-          // A reaction travels on the same event, with `reactions` and untouched text.
-          if (mensaje.reactions) this.aplicarReacciones(mensaje.id, mensaje.reactions);
+          if (mensaje.reactions) this.aplicarReacciones(mensaje.id, mensaje.reactions); // reaction: text untouched
           else this.aplicarTexto(mensaje.id, mensaje.bodyText, mensaje.isEdited ?? true);
         }
         this.recargarBandeja();
@@ -1929,7 +1926,8 @@ export class ChatStore {
     this.community
       .sendMessage(pendiente.conversationId, {
         senderProfileId: propio,
-        bodyText: pendiente.bodyText,
+        // Uncaptioned attachment: no `bodyText` at all, `''` is not a text.
+        ...(pendiente.bodyText.trim() ? { bodyText: pendiente.bodyText } : {}),
         ...(pendiente.replyToMessageId
           ? { replyToMessageId: pendiente.replyToMessageId }
           : {}),
@@ -2080,7 +2078,8 @@ export class ChatStore {
         },
       };
       this.archivosSinSubir.set(pendiente.claveTemporal, archivo);
-      if (esImagen && !yaLeida) {
+      // Audio too: a voice note is playable while it goes out, or if it fails.
+      if ((esImagen || archivo.type.startsWith('audio/')) && !yaLeida) {
         this.ponerVistaPrevia(pendiente.claveTemporal, archivo);
       }
       return { pendiente, archivo };

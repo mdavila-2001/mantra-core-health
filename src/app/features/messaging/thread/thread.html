@@ -331,7 +331,7 @@
                       }
                     </div>
                   } @else if (esAudio(linea.mensaje)) {
-                    <audio class="hilo__audio" controls [src]="url"></audio>
+                    <app-voice-note [src]="url" />
                   } @else {
                     <div class="hilo__documento-bloque">
                       <!-- `download` y no `target="_blank"`: es una `data:` URL, y
@@ -374,7 +374,7 @@
                 } @else if (adjuntoNoDisponible(linea.mensaje)) {
                   <p class="hilo__subiendo" role="status">Archivo no disponible</p>
                 } @else if (linea.mensaje.pendiente) {
-                  <p class="hilo__subiendo" role="status"><app-spinner size="sm" decorative /> Subiendo el archivo…</p>
+                  <p class="hilo__subiendo" role="status" data-testid="hilo-adjunto-estado">@if (linea.mensaje.estado === 'fallado') {No se pudo enviar el archivo.} @else {<app-spinner size="sm" decorative /> Subiendo el archivo…}</p>
                 } @else {
                   <!-- Ya está en el servidor y se está leyendo: esqueleto, no
                        «subiendo», que sería mentir sobre lo que pasa. -->

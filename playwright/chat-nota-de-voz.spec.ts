@@ -1,0 +1,118 @@
+import { expect, test, type Page } from '@playwright/test';
+
+import { entrar } from './support/sesion';
+
+/**
+ * Voice note in the chat: an uncaptioned audio goes out WITHOUT `bodyText`
+ * (the API rejected `bodyText: ''` with a 400) and is drawn like a messaging
+ * app — play button, the real waveform, time and speed — instead of the bare
+ * browser `<audio controls>`.
+ */
+
+/** Records what the store hands to the chat client, keeping the real call. */
+async function espiarEnvios(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    interface Cliente { sendMessage: (...a: unknown[]) => unknown }
+    interface Composer { store: { community: Cliente } }
+    const ng = (window as unknown as { ng: { getComponent(el: Element): Composer } }).ng;
+    const cliente = ng.getComponent(document.querySelector('app-composer')!).store.community;
+    const original = cliente.sendMessage.bind(cliente);
+    const registro: unknown[] = [];
+    (window as unknown as { envios: unknown[] }).envios = registro;
+    cliente.sendMessage = (id: unknown, cuerpo: unknown, ...resto: unknown[]) => {
+      registro.push(cuerpo);
+      return original(id, cuerpo, ...resto);
+    };
+  });
+}
+
+// Chromium's fake microphone: a real recording through `MediaRecorder`, the
+// same path a person takes, with a beeping tone so the waveform is not flat.
+test.use({
+  permissions: ['microphone'],
+  launchOptions: { args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] },
+});
+
+test('una nota de voz sale sin bodyText y se ve como reproductor', async ({ page }) => {
+  await entrar(page, { rol: 'paciente', identificador: 'paciente@alovida.mock', clave: 'mockup', nombre: 'Paciente' });
+  await page.goto('/messaging');
+  await page.getByTestId('conversacion').first().click();
+  await expect(page.locator('app-composer')).toBeVisible({ timeout: 30_000 });
+  await espiarEnvios(page);
+
+  await page.getByTestId('composer-audio').click();
+  // Recording time is the condition: wait until the recorder shows 2 seconds.
+  await expect(page.locator('app-composer')).toContainText('0:02', { timeout: 15_000 });
+  await page.getByTestId('composer-audio-enviar').click();
+
+  const nota = page.getByTestId('hilo-nota-voz').last();
+  await expect(nota).toBeVisible({ timeout: 30_000 });
+  await expect(nota.getByTestId('nota-voz-tiempo')).toHaveText(/^0:0[2-3]$/);
+
+  // The note shows at once from the local copy; the send follows the upload.
+  const leerEnvios = () => page.evaluate(() => (window as unknown as { envios: Record<string, unknown>[] }).envios);
+  await expect.poll(async () => (await leerEnvios()).length, { timeout: 15_000 }).toBe(1);
+  const envios = await leerEnvios();
+  // The sent message replaces the pending one and loads the audio from the server.
+  await expect(page.getByTestId('hilo-adjunto-cargando')).toHaveCount(0, { timeout: 15_000 });
+  await expect(nota).toBeVisible({ timeout: 15_000 });
+  await expect(nota.getByTestId('nota-voz-tiempo')).toHaveText(/^0:0[2-3]$/);
+  expect(envios[0]).toMatchObject({ contentType: 'MEDIA' });
+  expect(envios[0]).not.toHaveProperty('bodyText');
+
+  // The waveform comes from decoding the audio: undecoded bars are all the same
+  // height. (The fake microphone beeps, so the decoded bars have two heights.)
+  const alturas = await nota.locator('.nota-voz__barra').evaluateAll((barras) => barras.map((b) => b.getBoundingClientRect().height));
+  expect(alturas).toHaveLength(36);
+  expect(new Set(alturas.map(Math.round)).size).toBeGreaterThan(1);
+
+  await nota.getByTestId('nota-voz-velocidad').click();
+  await expect(nota.getByTestId('nota-voz-velocidad')).toHaveText('1.5×');
+  await nota.getByTestId('nota-voz-play').click();
+  await expect(nota.getByTestId('nota-voz-play')).toHaveAttribute('aria-label', 'Pausar nota de voz');
+  await expect(nota.getByTestId('nota-voz-play')).toHaveAttribute('aria-label', 'Reproducir nota de voz', { timeout: 10_000 });
+  await expect(nota.getByTestId('nota-voz-tiempo')).toHaveText(/^0:0[2-3]$/);
+
+  await nota.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: 'artifacts/playwright/chat-nota-de-voz.png' });
+  await page.getByTestId('header-theme-toggle').click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  // Theme change animates colors: the condition is that no transition is left.
+  await page.waitForFunction(() => !document.getAnimations().some((a) => a instanceof CSSTransition));
+  // The player takes the bubble's own text color in both themes.
+  const burbuja = page.locator('.hilo__burbuja', { has: nota });
+  const color = (el: Element): string => getComputedStyle(el).color;
+  expect(await nota.getByTestId('nota-voz-tiempo').evaluate(color)).toBe(await burbuja.evaluate(color));
+  await page.screenshot({ path: 'artifacts/playwright/chat-nota-de-voz-oscuro.png' });
+});
+
+test('si el envío de la nota de voz falla, la burbuja lo dice y no sigue «Subiendo…»', async ({ page }) => {
+  await entrar(page, { rol: 'paciente', identificador: 'paciente@alovida.mock', clave: 'mockup', nombre: 'Paciente' });
+  await page.goto('/messaging');
+  await page.getByTestId('conversacion').first().click();
+  await expect(page.locator('app-composer')).toBeVisible({ timeout: 30_000 });
+  // The file uploads but the message is rejected (the 400 seen in dev),
+  // through the store's real error path.
+  await page.evaluate(() => {
+    type ObservableClass = new (fn: (s: { error(e: unknown): void }) => void) => object;
+    interface Composer {
+      store: { community: { sendMessage(...a: unknown[]): object; conversationAttachmentDataUrl: unknown } };
+    }
+    const ng = (window as unknown as { ng: { getComponent(el: Element): Composer } }).ng;
+    const store = ng.getComponent(document.querySelector('app-composer')!).store;
+    // A cold HTTP observable is never subscribed: it only lends its class.
+    const Observable = Object.getPrototypeOf(store.community.sendMessage('x', {})).constructor as ObservableClass;
+    store.community.sendMessage = () => new Observable((s) => s.error(new Error('Envío rechazado')));
+    // Without a message the attachment cannot be fetched either (as in dev).
+    store.community.conversationAttachmentDataUrl = () => new Observable((s) => s.error(new Error('Sin mensaje')));
+  });
+
+  await page.getByTestId('composer-audio').click();
+  await expect(page.locator('app-composer')).toContainText('0:01', { timeout: 15_000 });
+  await page.getByTestId('composer-audio-enviar').click();
+
+  await expect(page.getByTestId('hilo-reintentar').last()).toBeVisible();
+  // The local copy keeps it playable while it can be retried.
+  await expect(page.locator('.hilo__burbuja').last().getByTestId('hilo-nota-voz')).toBeVisible();
+  await expect(page.locator('.hilo__burbuja').last()).not.toContainText('Subiendo el archivo');
+});

@@ -1,0 +1,108 @@
+/* Colors follow the bubble (currentColor): the same player reads on the own
+   bubble and on the other side's, in light and dark themes. */
+:host {
+  display: block;
+  inline-size: 16rem;
+  max-inline-size: 100%;
+  margin-block-end: 3px;
+}
+
+.nota-voz {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+}
+
+.nota-voz audio {
+  display: none;
+}
+
+.nota-voz__play {
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.nota-voz__play svg {
+  inline-size: 26px;
+  block-size: 26px;
+}
+
+.nota-voz__cuerpo {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.nota-voz__onda {
+  position: relative;
+  block-size: 28px;
+}
+
+.nota-voz__barras {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  block-size: 100%;
+}
+
+.nota-voz__barra {
+  flex: 1;
+  min-block-size: 3px;
+  border-radius: var(--r-pill);
+  background: currentColor;
+  opacity: .4;
+  transition: opacity var(--dur-fast) var(--ease-standard);
+}
+
+.nota-voz__barra.is-oida {
+  opacity: 1;
+}
+
+/* The range sits over the bars, invisible but focusable and draggable. */
+.nota-voz__posicion {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.nota-voz__play:focus-visible,
+.nota-voz__velocidad:focus-visible,
+.nota-voz__onda:has(.nota-voz__posicion:focus-visible) {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+.nota-voz__pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-overline);
+}
+
+.nota-voz__tiempo {
+  font-variant-numeric: tabular-nums;
+}
+
+.nota-voz__velocidad {
+  min-inline-size: 44px;
+  min-block-size: 32px;
+  padding: 0 var(--e2);
+  border: 1px solid currentColor;
+  border-radius: var(--r-pill);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}

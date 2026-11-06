@@ -98,6 +98,24 @@ export function productBulkRow(row: ReadyRow): BulkProductRow {
 }
 
 /**
+ * The rows that passed the local review. When the file has no availability
+ * column, updates drop `inStock` so the server keeps each product's current
+ * availability: a price-only file must not put out-of-stock products back on sale.
+ */
+export function readyRowsOf(reviewed: readonly ReviewedRow[], fileHasAvailability: boolean): ReadyRow[] {
+  return reviewed.flatMap((row): ReadyRow[] => {
+    if (!row.lista) {
+      return [];
+    }
+    if (fileHasAvailability || row.accion !== 'ACTUALIZAR') {
+      return [row];
+    }
+    const { inStock: _dropped, ...borrador } = row.borrador;
+    return [{ ...row, borrador }];
+  });
+}
+
+/**
  * Manda las filas listas de productos en lotes de 250, en serie, y emite al
  * volver cada lote los resultados acumulados, ya con la línea del archivo.
  */

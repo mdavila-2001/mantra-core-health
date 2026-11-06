@@ -51,26 +51,7 @@
             }
           </div>
 
-          <aside class="entity-import__help" aria-labelledby="entity-import-columns">
-            <h2 id="entity-import-columns" class="entity-import__subtitle">Las columnas</h2>
-            <dl class="entity-import__columns">
-              @for (column of columns(); track column.header) {
-                <div>
-                  <dt><code>{{ column.header }}</code></dt>
-                  <dd>{{ column.description }}</dd>
-                </div>
-              }
-            </dl>
-            <button
-              app-button
-              variant="outline"
-              type="button"
-              (clicked)="downloadTemplate()"
-              data-testid="entity-import-template"
-            >
-              Descargar plantilla
-            </button>
-          </aside>
+          <ng-container [ngTemplateOutlet]="formatHelp" />
         </div>
 
         @if (reading(); as current) {
@@ -159,6 +140,20 @@
     </div>
   }
 </app-view-state-host>
+
+<!-- The format does not depend on the pharmacy: with none chosen (or none at all) it still shows. -->
+@if (scope.pharmacyId() === null && scope.options().status !== 'loading') {
+  <ng-container [ngTemplateOutlet]="formatHelp" />
+}
+
+<ng-template #formatHelp>
+  <app-import-columns-help
+    headingId="entity-import-columns"
+    [columns]="columns()"
+    [templates]="templates"
+    (download)="downloadTemplate()"
+  />
+</ng-template>
 
 <ng-template #outcomeCell let-row>
   <app-badge [variant]="badgeOf(row.outcome).variant">{{ badgeOf(row.outcome).label }}</app-badge>

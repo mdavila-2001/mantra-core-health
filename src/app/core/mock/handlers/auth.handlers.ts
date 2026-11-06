@@ -5,7 +5,7 @@ import {
 import { STATUS, CORPORATE_TYPE, conceptById } from '../fixtures/concepts';
 import { patientList, type PacienteSimulado } from '../fixtures/people';
 import { crearAdmisionDeAltaDeDoctor } from './admissions.handlers';
-import { sumarSucursalesDelAlta } from './directory.handlers';
+import { addRegistrationBranches } from './directory-branches.mock';
 import { guardarImagenDeDataUrl } from './files.handlers';
 import { signatureSaveAssets } from './signature-and-seal.handlers';
 import { conflict, forbidden, notFound, preconditionFailed, reply, unauthorized, validation, type MockRequest, type MockRouter } from '../mock-router';
@@ -905,7 +905,7 @@ export function registrarAuth(router: MockRouter): void {
                 ...(b.description === undefined && lineas?.length ? { description: lineas.join(', ') } : {}),
               };
             });
-      sumarSucursalesDelAlta(
+      addRegistrationBranches(
         tenantDeDemostracion,
         declaradas.flatMap((b) => (b.name ? [{ ...b, name: b.name }] : [])),
       );

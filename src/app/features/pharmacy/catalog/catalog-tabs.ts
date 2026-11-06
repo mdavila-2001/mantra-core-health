@@ -34,7 +34,7 @@ export const CATALOG_TAB_LABELS: Readonly<Record<CatalogTab, string>> = {
 export const IMPORT_TARGET_BY_TAB: Readonly<Record<CatalogTab, ImportTarget>> = {
   products: 'products',
   categories: 'categories',
-  prices: 'prices',
+  prices: 'products',
   inventory: 'products',
   integration: 'products',
 };

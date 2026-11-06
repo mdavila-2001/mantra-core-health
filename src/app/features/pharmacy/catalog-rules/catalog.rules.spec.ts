@@ -20,6 +20,17 @@ function campos(parciales: Partial<ProductFields>): ProductFields {
 }
 
 describe('revisarProducto', () => {
+  // Prices travel in the products file: `codigo,precio` updates existing
+  // products, so a name is only required to create one.
+  it('una lista de precios (`codigo,precio`) actualiza lo que ya existe y pide nombre sólo para crear', () => {
+    const lectura = readCsv('codigo;precio\nPAR-500;20\nNUEVO-1;5\n');
+    const [existente, nuevo] = reviewLoad(lectura.filas, new Map([['PAR-500', 'p-1']]));
+
+    expect(existente).toMatchObject({ lista: true, accion: 'ACTUALIZAR', borrador: { productCode: 'PAR-500', unitPrice: 20 } });
+    expect(nuevo).toMatchObject({ lista: false, motivo: 'INVALIDA' });
+    expect(nuevo!.lista === false && nuevo!.errores[0]).toContain('Ponga la marca, el nombre genérico');
+  });
+
   it('arma el alta con sólo lo que se escribió', () => {
     const revision = reviewProduct(
       campos({ codigo: ' PAR-500 ', generico: 'Paracetamol', concentracion: '500 mg' }),
