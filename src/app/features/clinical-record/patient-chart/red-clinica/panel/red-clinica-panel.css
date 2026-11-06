@@ -135,6 +135,10 @@
   overflow-y: auto;
   padding: var(--sp-4) var(--sp-5) var(--sp-6);
   display: grid;
+  /* Una columna que no crece con su contenido: sin esto, la tabla de valores
+     (texto sin cortes) ensanchaba la columna implícita y el panel recortaba
+     la derecha de cada sección. La tabla se desplaza dentro de su caja. */
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: var(--sp-5);
   font-size: var(--fs-body);
@@ -176,6 +180,7 @@
 
 .panel__seccion {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-3);
   padding-block-start: var(--sp-4);
   border-block-start: 1px solid var(--border-subtle);
@@ -319,6 +324,19 @@ p.panel__tenue {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* El nombre del archivo puede ser largo («Informe de TSH por
+   quimioluminiscencia.pdf»): el botón parte la línea en vez de salirse. */
+.panel__archivos li {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.panel__archivos .btn {
+  max-inline-size: 100%;
+  white-space: normal;
+  text-align: start;
 }
 
 /* -- Enlaces y vínculos --------------------------------------------------- */

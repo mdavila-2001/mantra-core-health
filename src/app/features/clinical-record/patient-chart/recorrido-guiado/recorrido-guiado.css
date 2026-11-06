@@ -220,11 +220,25 @@
     gap: var(--sp-2);
   }
 
+  /* Con muchos pasos (la historia de pid-paciente tiene 34) los segmentos de
+     8 px más su hueco no entraban en 390 px y la página se desplazaba de
+     costado: en angosto se encogen sin mínimo y el hueco baja a 2 px. Saltar
+     a un paso sigue a mano con «Anterior»/«Siguiente» y las flechas. */
+  .guiado__progreso {
+    gap: 2px;
+  }
+
+  .guiado__segmento {
+    min-inline-size: 0;
+  }
+
   /* Integrada, la superficie ya pone el aire: la barra no sale de ella. */
   :host(.recorrido-guiado--integrada) .guiado__barra {
     margin: 0;
     padding-inline: 0;
     border-radius: 0;
+    /* El fondo de la franja que lo aloja (hundido), no el de una tarjeta. */
+    background: var(--bg-inset);
   }
 
   /* Los tres botones en una fila sin encogerse (encogidos, el de reproducir

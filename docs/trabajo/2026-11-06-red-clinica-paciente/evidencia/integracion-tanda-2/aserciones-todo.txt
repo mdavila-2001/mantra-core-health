@@ -1,0 +1,195 @@
+1440-claro composición: {"tarjetasDentro":0,"bordeFiltros":"0px","bordeAlertas":"0px","altoAlertas":23,"mapaDesdeTopeDeLaTarjeta":299,"plegarTexto":"Para revisar 5 alertas2 de prioridad alta","expandida":"false","profesional":false,"especialidad":false}
+ok   1440-claro: filtros y alertas sin recuadro propio, dentro de UNA tarjeta
+ok   1440-claro: alertas plegadas en un resumen (23 px)
+ok   1440-claro: sin filtros de profesional/especialidad (no hay opciones reales)
+ok   1440-claro: sin desplazamiento horizontal
+ok   1440-claro: «Para revisar 5 alertas2 de prioridad alta» se despliega
+1440-claro paso 1: {"contador":"Paso 1 de 34","narracion":"El 15 may 2025 tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por cansancio, cefalea y caída de cabello de dos meses. Se planteó hipotiroidismo como diagnóstico presuntivo. Se planteó anemia ferropénica como diagnóstico presuntivo. Se pidió hemograma completo para confirmar o descartar anemia ferropénica. Se pidió TSH por quimioluminiscencia para confirmar o descartar hipotiroidismo. Se derivó a Carla Montero Ribera para evaluación neurológica de cefalea por cefalea en estudio.","episodios":1,"nodos":7,"resaltados":6}
+ok   1440-claro: el paso 1 muestra menos episodios (1) que la red completa (7)
+1440-claro paso 2: {"contador":"Paso 2 de 34","narracion":"El 17 may 2025 se registró el informe de hemograma completo (orden del 15 may 2025, para confirmar o descartar anemia ferropénica), con resultado liberado. Se registró el informe de TSH por quimioluminiscencia (orden del 15 may 2025, para confirmar o descartar hipotiroidismo), con resultado liberado.","episodios":1,"nodos":9,"resaltados":4}
+1440-claro paso 3: {"contador":"Paso 3 de 34","narracion":"El 18 may 2025 la derivación del 15 may 2025 fue rechazada: Cefalea tensional sin signos de alarma y examen normal: corresponde manejo en atención primaria. Reenviar si aparecen signos de alarma.","episodios":1,"nodos":9,"resaltados":1}
+1440-claro paso 4: {"contador":"Paso 4 de 34","narracion":"El 29 may 2025 tenía agendada una reconsulta que vuelve a la cita del 15 may 2025. Tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por reconsulta: lectura de hemograma y TSH. Se indicó Levotiroxina 25 mcg comprimidos (25 mcg, En ayunas, 30 minutos antes del desayuno) para tratar hipotiroidismo. Ese mismo día, se descartó anemia ferropénica con base en el resultado de hemograma completo: Hemoglobina y ferritina normales: el cansancio no se explica por anemia. En su lugar se confirmó hipotiroidismo. Ese mismo día, se confirmó hipotiroidismo con base en el resultado de TSH por quimioluminiscencia: TSH 8,9 mUI/L con T4 libre baja: hipotiroidismo primario.","episodios":1,"nodos":12,"resaltados":9}
+1440-claro paso 5: {"contador":"Paso 5 de 34","narracion":"El 9 jul 2025 tenía agendada una reconsulta que vuelve a la cita del 29 may 2025, que a su vez volvía a la del 15 may 2025.","episodios":1,"nodos":13,"resaltados":1}
+ok   1440-claro: la narración no muestra uuids
+ok   1440-claro: guiado sin desplazamiento horizontal
+ok   1440-claro: salir del paso a paso devuelve los 7 episodios
+1440-claro panel TSH: {"liberado":"Liberado el 17 de mayo de 2025 · 2 valores fuera de rango","valores":["TSH8,9 mUI/L↑ Alto , fuera de rango0,4 – 4 mUI/L","T4 libre0,68 ng/dL↓ Bajo , fuera de rango0,8 – 1,8 ng/dL"],"fuera":2,"archivo":true,"recortados":0}
+ok   1440-claro: nada del panel se sale por la derecha
+ok   1440-claro: el panel lee el informe (valores, fuera de rango, fecha)
+1440-claro: descarga «Informe de TSH por quimioluminiscencia.pdf» desde blob:http://localhost:4300/0db42666-4f1e…
+ok   1440-claro: el PDF baja por la ruta del médico
+1440-claro siguiendo: {"episodio":"Siguiendo: Hipotiroidismo","contador":"Paso 1 de 9","narracion":"El 15 may 2025 tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por cansancio, cefalea y caída de cabello de dos meses. Se planteó hipotiroidismo como diagnóstico presuntivo. Se planteó anemia ferropénica como diagnóstico presuntivo. Se pidió hemograma completo para confirmar o descartar anemia ferropénica. Se pidió TSH por quimioluminiscencia para confirmar o descartar hipotiroidismo. Se derivó a Carla Montero Ribera para evaluación neurológica de cefalea por cefalea en estudio."}
+ok   1440-claro: «Siguiendo: Hipotiroidismo»
+1440-claro narración del hilo:
+  - El 15 may 2025 tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por cansancio, cefalea y caída de cabello de dos meses. Se planteó hipotiroidismo como diagnóstico presuntivo. Se planteó anemia ferropénica como diagnóstico presuntivo. Se pidió hemograma completo para confirmar o descartar anemia ferropénica. Se pidió TSH por quimioluminiscencia para confirmar o descartar hipotiroidismo. Se derivó a Carla Montero Ribera para evaluación neurológica de cefalea por cefalea en estudio.
+  - El 17 may 2025 se registró el informe de hemograma completo (orden del 15 may 2025, para confirmar o descartar anemia ferropénica), con resultado liberado. Se registró el informe de TSH por quimioluminiscencia (orden del 15 may 2025, para confirmar o descartar hipotiroidismo), con resultado liberado.
+  - El 18 may 2025 la derivación del 15 may 2025 fue rechazada: Cefalea tensional sin signos de alarma y examen normal: corresponde manejo en atención primaria. Reenviar si aparecen signos de alarma.
+  - El 29 may 2025 tenía agendada una reconsulta que vuelve a la cita del 15 may 2025. Tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por reconsulta: lectura de hemograma y TSH. Se indicó Levotiroxina 25 mcg comprimidos (25 mcg, En ayunas, 30 minutos antes del desayuno) para tratar hipotiroidismo. Ese mismo día, se descartó anemia ferropénica con base en el resultado de hemograma completo: Hemoglobina y ferritina normales: el cansancio no se explica por anemia. En su lugar se confirmó hipotiroidismo. Ese mismo día, se confirmó hipotiroidismo con base en el resultado de TSH por quimioluminiscencia: TSH 8,9 mUI/L con T4 libre baja: hipotiroidismo primario.
+  - El 9 jul 2025 tenía agendada una reconsulta que vuelve a la cita del 29 may 2025, que a su vez volvía a la del 15 may 2025.
+  - El 24 jul 2025 tenía agendada una reconsulta que vuelve a la cita del 29 may 2025, que a su vez volvía a la del 15 may 2025. Tuvo una atención (teleconsulta) con Valeria Rojas Mendoza por reconsulta: control de levotiroxina, persiste el cansancio. Se pidió TSH por quimioluminiscencia para el seguimiento de hipotiroidismo. Se indicó Levotiroxina 50 mcg comprimidos (50 mcg, En ayunas, 30 minutos antes del desayuno) para tratar hipotiroidismo. Reemplaza a la receta de Levotiroxina 25 mcg comprimidos del 29 may 2025. Se derivó a Ana Belén Terrazas Moreno para evaluación endocrinológica preconcepcional por hipotiroidismo primario (E03.9).
+  - El 26 jul 2025 se registró el informe de TSH por quimioluminiscencia (orden del 24 jul 2025, para el seguimiento de hipotiroidismo), con resultado liberado.
+  - El 2 sept 2025 llegó por la derivación del 24 jul 2025 a Ana Belén Terrazas Moreno, y se lo recibió en esta atención. Tuvo una atención (ambulatorio) por interconsulta por hipotiroidismo y deseo de embarazo. Se indicó Levotiroxina 75 mcg comprimidos (75 mcg, En ayunas, 30 minutos antes del desayuno) para tratar hipotiroidismo. Reemplaza a la receta de Levotiroxina 50 mcg comprimidos del 24 jul 2025.
+  - El 4 sept 2025 se recibió la contrarreferencia de la derivación del 24 jul 2025: Anti-TPO 412 UI/mL: tiroiditis de Hashimoto. Meta de TSH menor a 2,5 mUI/L antes de buscar embarazo: levotiroxina 75 mcg. TSH en 6 semanas y control al confirmar embarazo.
+ok   1440-claro: ninguna receta de 25 mcg dice «Levotiroxina 50 mcg»
+ok   1440-claro: consola sin errores []
+paciente-1440-claro: estudios sin vínculo a este problema en el hilo = 0
+ok   paciente-1440-claro: los estudios del hilo llegan con su diagnóstico (reasonConditionId)
+paciente-1440-claro narración:
+  - El 15 de mayo de 2025 consultó por cansancio, cefalea y caída de cabello de dos meses.
+  - Se anotó Hipotiroidismo como posible diagnóstico.
+  - Se anotó Anemia ferropénica como posible diagnóstico.
+  - Le pidieron Hemograma completo por Anemia ferropénica. El resultado ya está disponible.
+  - Le pidieron TSH por quimioluminiscencia por Hipotiroidismo. El resultado ya está disponible.
+  - El 29 de mayo de 2025 consultó por reconsulta: lectura de hemograma y TSH.
+  - El 29 de mayo de 2025 volvió a control.
+  - El 29 de mayo de 2025 se descartó Anemia ferropénica; en su lugar quedó Hipotiroidismo.
+  - El 29 de mayo de 2025 se confirmó Hipotiroidismo con su estudio de TSH por quimioluminiscencia.
+  - Le recetaron Levotiroxina 25 mcg comprimidos para Hipotiroidismo.
+  - El 24 de julio de 2025 consultó por reconsulta: control de levotiroxina, persiste el cansancio.
+  - El 24 de julio de 2025 volvió a control.
+  - Le pidieron TSH por quimioluminiscencia por Hipotiroidismo. El resultado ya está disponible.
+  - Le recetaron Levotiroxina 50 mcg comprimidos para Hipotiroidismo.
+  - El 2 de septiembre de 2025 consultó por interconsulta por hipotiroidismo y deseo de embarazo.
+  - Le recetaron Levotiroxina 75 mcg comprimidos para Hipotiroidismo.
+ok   paciente-1440-claro: «Le pidieron … TSH … por Hipotiroidismo»
+ok   paciente-1440-claro: el descartado ya no se narra como resuelto
+ok   paciente-1440-claro: la receta de 25 mcg dice «Levotiroxina 25 mcg»
+ok   paciente-1440-claro: sin desplazamiento horizontal
+ok   paciente-1440-claro: consola sin errores []
+1440-oscuro composición: {"tarjetasDentro":0,"bordeFiltros":"0px","bordeAlertas":"0px","altoAlertas":23,"mapaDesdeTopeDeLaTarjeta":299,"plegarTexto":"Para revisar 5 alertas2 de prioridad alta","expandida":"false","profesional":false,"especialidad":false}
+ok   1440-oscuro: filtros y alertas sin recuadro propio, dentro de UNA tarjeta
+ok   1440-oscuro: alertas plegadas en un resumen (23 px)
+ok   1440-oscuro: sin filtros de profesional/especialidad (no hay opciones reales)
+ok   1440-oscuro: sin desplazamiento horizontal
+ok   1440-oscuro: «Para revisar 5 alertas2 de prioridad alta» se despliega
+1440-oscuro paso 1: {"contador":"Paso 1 de 34","narracion":"El 15 may 2025 tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por cansancio, cefalea y caída de cabello de dos meses. Se planteó hipotiroidismo como diagnóstico presuntivo. Se planteó anemia ferropénica como diagnóstico presuntivo. Se pidió hemograma completo para confirmar o descartar anemia ferropénica. Se pidió TSH por quimioluminiscencia para confirmar o descartar hipotiroidismo. Se derivó a Carla Montero Ribera para evaluación neurológica de cefalea por cefalea en estudio.","episodios":1,"nodos":7,"resaltados":6}
+ok   1440-oscuro: el paso 1 muestra menos episodios (1) que la red completa (7)
+1440-oscuro paso 2: {"contador":"Paso 2 de 34","narracion":"El 17 may 2025 se registró el informe de hemograma completo (orden del 15 may 2025, para confirmar o descartar anemia ferropénica), con resultado liberado. Se registró el informe de TSH por quimioluminiscencia (orden del 15 may 2025, para confirmar o descartar hipotiroidismo), con resultado liberado.","episodios":1,"nodos":9,"resaltados":4}
+1440-oscuro paso 3: {"contador":"Paso 3 de 34","narracion":"El 18 may 2025 la derivación del 15 may 2025 fue rechazada: Cefalea tensional sin signos de alarma y examen normal: corresponde manejo en atención primaria. Reenviar si aparecen signos de alarma.","episodios":1,"nodos":9,"resaltados":1}
+ok   1440-oscuro: la narración no muestra uuids
+ok   1440-oscuro: guiado sin desplazamiento horizontal
+ok   1440-oscuro: salir del paso a paso devuelve los 7 episodios
+1440-oscuro panel TSH: {"liberado":"Liberado el 17 de mayo de 2025 · 2 valores fuera de rango","valores":["TSH8,9 mUI/L↑ Alto , fuera de rango0,4 – 4 mUI/L","T4 libre0,68 ng/dL↓ Bajo , fuera de rango0,8 – 1,8 ng/dL"],"fuera":2,"archivo":true,"recortados":0}
+ok   1440-oscuro: nada del panel se sale por la derecha
+ok   1440-oscuro: el panel lee el informe (valores, fuera de rango, fecha)
+1440-oscuro siguiendo: {"episodio":"Siguiendo: Hipotiroidismo","contador":"Paso 1 de 9","narracion":"El 15 may 2025 tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por cansancio, cefalea y caída de cabello de dos meses. Se planteó hipotiroidismo como diagnóstico presuntivo. Se planteó anemia ferropénica como diagnóstico presuntivo. Se pidió hemograma completo para confirmar o descartar anemia ferropénica. Se pidió TSH por quimioluminiscencia para confirmar o descartar hipotiroidismo. Se derivó a Carla Montero Ribera para evaluación neurológica de cefalea por cefalea en estudio."}
+ok   1440-oscuro: «Siguiendo: Hipotiroidismo»
+ok   1440-oscuro: ninguna receta de 25 mcg dice «Levotiroxina 50 mcg»
+ok   1440-oscuro: consola sin errores []
+paciente-1440-oscuro: estudios sin vínculo a este problema en el hilo = 0
+ok   paciente-1440-oscuro: los estudios del hilo llegan con su diagnóstico (reasonConditionId)
+ok   paciente-1440-oscuro: «Le pidieron … TSH … por Hipotiroidismo»
+ok   paciente-1440-oscuro: el descartado ya no se narra como resuelto
+ok   paciente-1440-oscuro: la receta de 25 mcg dice «Levotiroxina 25 mcg»
+ok   paciente-1440-oscuro: sin desplazamiento horizontal
+ok   paciente-1440-oscuro: consola sin errores []
+768-claro composición: {"tarjetasDentro":0,"bordeFiltros":"0px","bordeAlertas":"0px","altoAlertas":23,"mapaDesdeTopeDeLaTarjeta":359,"plegarTexto":"Para revisar 5 alertas2 de prioridad alta","expandida":"false","profesional":false,"especialidad":false}
+ok   768-claro: filtros y alertas sin recuadro propio, dentro de UNA tarjeta
+ok   768-claro: alertas plegadas en un resumen (23 px)
+ok   768-claro: sin filtros de profesional/especialidad (no hay opciones reales)
+ok   768-claro: sin desplazamiento horizontal
+ok   768-claro: «Para revisar 5 alertas2 de prioridad alta» se despliega
+768-claro paso 1: {"contador":"Paso 1 de 34","narracion":"El 15 may 2025 tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por cansancio, cefalea y caída de cabello de dos meses. Se planteó hipotiroidismo como diagnóstico presuntivo. Se planteó anemia ferropénica como diagnóstico presuntivo. Se pidió hemograma completo para confirmar o descartar anemia ferropénica. Se pidió TSH por quimioluminiscencia para confirmar o descartar hipotiroidismo. Se derivó a Carla Montero Ribera para evaluación neurológica de cefalea por cefalea en estudio.","episodios":1,"nodos":7,"resaltados":6}
+ok   768-claro: el paso 1 muestra menos episodios (1) que la red completa (7)
+768-claro paso 2: {"contador":"Paso 2 de 34","narracion":"El 17 may 2025 se registró el informe de hemograma completo (orden del 15 may 2025, para confirmar o descartar anemia ferropénica), con resultado liberado. Se registró el informe de TSH por quimioluminiscencia (orden del 15 may 2025, para confirmar o descartar hipotiroidismo), con resultado liberado.","episodios":1,"nodos":9,"resaltados":4}
+768-claro paso 3: {"contador":"Paso 3 de 34","narracion":"El 18 may 2025 la derivación del 15 may 2025 fue rechazada: Cefalea tensional sin signos de alarma y examen normal: corresponde manejo en atención primaria. Reenviar si aparecen signos de alarma.","episodios":1,"nodos":9,"resaltados":1}
+ok   768-claro: la narración no muestra uuids
+ok   768-claro: guiado sin desplazamiento horizontal
+ok   768-claro: salir del paso a paso devuelve los 7 episodios
+768-claro panel TSH: {"liberado":"Liberado el 17 de mayo de 2025 · 2 valores fuera de rango","valores":["TSH8,9 mUI/L↑ Alto , fuera de rango0,4 – 4 mUI/L","T4 libre0,68 ng/dL↓ Bajo , fuera de rango0,8 – 1,8 ng/dL"],"fuera":2,"archivo":true,"recortados":0}
+ok   768-claro: nada del panel se sale por la derecha
+ok   768-claro: el panel lee el informe (valores, fuera de rango, fecha)
+768-claro siguiendo: {"episodio":"Siguiendo: Hipotiroidismo","contador":"Paso 1 de 9","narracion":"El 15 may 2025 tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por cansancio, cefalea y caída de cabello de dos meses. Se planteó hipotiroidismo como diagnóstico presuntivo. Se planteó anemia ferropénica como diagnóstico presuntivo. Se pidió hemograma completo para confirmar o descartar anemia ferropénica. Se pidió TSH por quimioluminiscencia para confirmar o descartar hipotiroidismo. Se derivó a Carla Montero Ribera para evaluación neurológica de cefalea por cefalea en estudio."}
+ok   768-claro: «Siguiendo: Hipotiroidismo»
+ok   768-claro: ninguna receta de 25 mcg dice «Levotiroxina 50 mcg»
+ok   768-claro: consola sin errores []
+paciente-768-claro: estudios sin vínculo a este problema en el hilo = 0
+ok   paciente-768-claro: los estudios del hilo llegan con su diagnóstico (reasonConditionId)
+ok   paciente-768-claro: «Le pidieron … TSH … por Hipotiroidismo»
+ok   paciente-768-claro: el descartado ya no se narra como resuelto
+ok   paciente-768-claro: la receta de 25 mcg dice «Levotiroxina 25 mcg»
+ok   paciente-768-claro: sin desplazamiento horizontal
+ok   paciente-768-claro: consola sin errores []
+768-oscuro composición: {"tarjetasDentro":0,"bordeFiltros":"0px","bordeAlertas":"0px","altoAlertas":23,"mapaDesdeTopeDeLaTarjeta":359,"plegarTexto":"Para revisar 5 alertas2 de prioridad alta","expandida":"false","profesional":false,"especialidad":false}
+ok   768-oscuro: filtros y alertas sin recuadro propio, dentro de UNA tarjeta
+ok   768-oscuro: alertas plegadas en un resumen (23 px)
+ok   768-oscuro: sin filtros de profesional/especialidad (no hay opciones reales)
+ok   768-oscuro: sin desplazamiento horizontal
+ok   768-oscuro: «Para revisar 5 alertas2 de prioridad alta» se despliega
+768-oscuro paso 1: {"contador":"Paso 1 de 34","narracion":"El 15 may 2025 tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por cansancio, cefalea y caída de cabello de dos meses. Se planteó hipotiroidismo como diagnóstico presuntivo. Se planteó anemia ferropénica como diagnóstico presuntivo. Se pidió hemograma completo para confirmar o descartar anemia ferropénica. Se pidió TSH por quimioluminiscencia para confirmar o descartar hipotiroidismo. Se derivó a Carla Montero Ribera para evaluación neurológica de cefalea por cefalea en estudio.","episodios":1,"nodos":7,"resaltados":6}
+ok   768-oscuro: el paso 1 muestra menos episodios (1) que la red completa (7)
+768-oscuro paso 2: {"contador":"Paso 2 de 34","narracion":"El 17 may 2025 se registró el informe de hemograma completo (orden del 15 may 2025, para confirmar o descartar anemia ferropénica), con resultado liberado. Se registró el informe de TSH por quimioluminiscencia (orden del 15 may 2025, para confirmar o descartar hipotiroidismo), con resultado liberado.","episodios":1,"nodos":9,"resaltados":4}
+768-oscuro paso 3: {"contador":"Paso 3 de 34","narracion":"El 18 may 2025 la derivación del 15 may 2025 fue rechazada: Cefalea tensional sin signos de alarma y examen normal: corresponde manejo en atención primaria. Reenviar si aparecen signos de alarma.","episodios":1,"nodos":9,"resaltados":1}
+ok   768-oscuro: la narración no muestra uuids
+ok   768-oscuro: guiado sin desplazamiento horizontal
+ok   768-oscuro: salir del paso a paso devuelve los 7 episodios
+768-oscuro panel TSH: {"liberado":"Liberado el 17 de mayo de 2025 · 2 valores fuera de rango","valores":["TSH8,9 mUI/L↑ Alto , fuera de rango0,4 – 4 mUI/L","T4 libre0,68 ng/dL↓ Bajo , fuera de rango0,8 – 1,8 ng/dL"],"fuera":2,"archivo":true,"recortados":0}
+ok   768-oscuro: nada del panel se sale por la derecha
+ok   768-oscuro: el panel lee el informe (valores, fuera de rango, fecha)
+768-oscuro siguiendo: {"episodio":"Siguiendo: Hipotiroidismo","contador":"Paso 1 de 9","narracion":"El 15 may 2025 tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por cansancio, cefalea y caída de cabello de dos meses. Se planteó hipotiroidismo como diagnóstico presuntivo. Se planteó anemia ferropénica como diagnóstico presuntivo. Se pidió hemograma completo para confirmar o descartar anemia ferropénica. Se pidió TSH por quimioluminiscencia para confirmar o descartar hipotiroidismo. Se derivó a Carla Montero Ribera para evaluación neurológica de cefalea por cefalea en estudio."}
+ok   768-oscuro: «Siguiendo: Hipotiroidismo»
+ok   768-oscuro: ninguna receta de 25 mcg dice «Levotiroxina 50 mcg»
+ok   768-oscuro: consola sin errores []
+paciente-768-oscuro: estudios sin vínculo a este problema en el hilo = 0
+ok   paciente-768-oscuro: los estudios del hilo llegan con su diagnóstico (reasonConditionId)
+ok   paciente-768-oscuro: «Le pidieron … TSH … por Hipotiroidismo»
+ok   paciente-768-oscuro: el descartado ya no se narra como resuelto
+ok   paciente-768-oscuro: la receta de 25 mcg dice «Levotiroxina 25 mcg»
+ok   paciente-768-oscuro: sin desplazamiento horizontal
+ok   paciente-768-oscuro: consola sin errores []
+390-claro composición: {"tarjetasDentro":0,"bordeFiltros":"0px","bordeAlertas":"0px","altoAlertas":42,"mapaDesdeTopeDeLaTarjeta":378,"plegarTexto":"Para revisar 5 alertas2 de prioridad alta","expandida":"false","profesional":false,"especialidad":false}
+ok   390-claro: filtros y alertas sin recuadro propio, dentro de UNA tarjeta
+ok   390-claro: alertas plegadas en un resumen (42 px)
+ok   390-claro: sin filtros de profesional/especialidad (no hay opciones reales)
+ok   390-claro: sin desplazamiento horizontal
+ok   390-claro: «Para revisar 5 alertas2 de prioridad alta» se despliega
+390-claro paso 1: {"contador":"Paso 1 de 34","narracion":"El 15 may 2025 tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por cansancio, cefalea y caída de cabello de dos meses. Se planteó hipotiroidismo como diagnóstico presuntivo. Se planteó anemia ferropénica como diagnóstico presuntivo. Se pidió hemograma completo para confirmar o descartar anemia ferropénica. Se pidió TSH por quimioluminiscencia para confirmar o descartar hipotiroidismo. Se derivó a Carla Montero Ribera para evaluación neurológica de cefalea por cefalea en estudio.","episodios":1,"nodos":7,"resaltados":6}
+ok   390-claro: el paso 1 muestra menos episodios (1) que la red completa (7)
+390-claro paso 2: {"contador":"Paso 2 de 34","narracion":"El 17 may 2025 se registró el informe de hemograma completo (orden del 15 may 2025, para confirmar o descartar anemia ferropénica), con resultado liberado. Se registró el informe de TSH por quimioluminiscencia (orden del 15 may 2025, para confirmar o descartar hipotiroidismo), con resultado liberado.","episodios":1,"nodos":9,"resaltados":4}
+390-claro paso 3: {"contador":"Paso 3 de 34","narracion":"El 18 may 2025 la derivación del 15 may 2025 fue rechazada: Cefalea tensional sin signos de alarma y examen normal: corresponde manejo en atención primaria. Reenviar si aparecen signos de alarma.","episodios":1,"nodos":9,"resaltados":1}
+ok   390-claro: la narración no muestra uuids
+ok   390-claro: guiado sin desplazamiento horizontal
+ok   390-claro: salir del paso a paso devuelve los 7 episodios
+390-claro panel TSH: {"liberado":"Liberado el 26 de julio de 2025 · 1 valor fuera de rango","valores":["TSH5,6 mUI/L↑ Alto , fuera de rango0,4 – 4 mUI/L"],"fuera":1,"archivo":true,"recortados":0}
+ok   390-claro: nada del panel se sale por la derecha
+ok   390-claro: el panel lee el informe (valores, fuera de rango, fecha)
+390-claro siguiendo: {"episodio":"Siguiendo: Hipotiroidismo","contador":"Paso 1 de 9","narracion":"El 15 may 2025 tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por cansancio, cefalea y caída de cabello de dos meses. Se planteó hipotiroidismo como diagnóstico presuntivo. Se planteó anemia ferropénica como diagnóstico presuntivo. Se pidió hemograma completo para confirmar o descartar anemia ferropénica. Se pidió TSH por quimioluminiscencia para confirmar o descartar hipotiroidismo. Se derivó a Carla Montero Ribera para evaluación neurológica de cefalea por cefalea en estudio."}
+ok   390-claro: «Siguiendo: Hipotiroidismo»
+ok   390-claro: ninguna receta de 25 mcg dice «Levotiroxina 50 mcg»
+ok   390-claro: consola sin errores []
+paciente-390-claro: estudios sin vínculo a este problema en el hilo = 0
+ok   paciente-390-claro: los estudios del hilo llegan con su diagnóstico (reasonConditionId)
+ok   paciente-390-claro: «Le pidieron … TSH … por Hipotiroidismo»
+ok   paciente-390-claro: el descartado ya no se narra como resuelto
+ok   paciente-390-claro: la receta de 25 mcg dice «Levotiroxina 25 mcg»
+ok   paciente-390-claro: sin desplazamiento horizontal
+ok   paciente-390-claro: consola sin errores []
+390-oscuro composición: {"tarjetasDentro":0,"bordeFiltros":"0px","bordeAlertas":"0px","altoAlertas":42,"mapaDesdeTopeDeLaTarjeta":378,"plegarTexto":"Para revisar 5 alertas2 de prioridad alta","expandida":"false","profesional":false,"especialidad":false}
+ok   390-oscuro: filtros y alertas sin recuadro propio, dentro de UNA tarjeta
+ok   390-oscuro: alertas plegadas en un resumen (42 px)
+ok   390-oscuro: sin filtros de profesional/especialidad (no hay opciones reales)
+ok   390-oscuro: sin desplazamiento horizontal
+ok   390-oscuro: «Para revisar 5 alertas2 de prioridad alta» se despliega
+390-oscuro paso 1: {"contador":"Paso 1 de 34","narracion":"El 15 may 2025 tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por cansancio, cefalea y caída de cabello de dos meses. Se planteó hipotiroidismo como diagnóstico presuntivo. Se planteó anemia ferropénica como diagnóstico presuntivo. Se pidió hemograma completo para confirmar o descartar anemia ferropénica. Se pidió TSH por quimioluminiscencia para confirmar o descartar hipotiroidismo. Se derivó a Carla Montero Ribera para evaluación neurológica de cefalea por cefalea en estudio.","episodios":1,"nodos":7,"resaltados":6}
+ok   390-oscuro: el paso 1 muestra menos episodios (1) que la red completa (7)
+390-oscuro paso 2: {"contador":"Paso 2 de 34","narracion":"El 17 may 2025 se registró el informe de hemograma completo (orden del 15 may 2025, para confirmar o descartar anemia ferropénica), con resultado liberado. Se registró el informe de TSH por quimioluminiscencia (orden del 15 may 2025, para confirmar o descartar hipotiroidismo), con resultado liberado.","episodios":1,"nodos":9,"resaltados":4}
+390-oscuro paso 3: {"contador":"Paso 3 de 34","narracion":"El 18 may 2025 la derivación del 15 may 2025 fue rechazada: Cefalea tensional sin signos de alarma y examen normal: corresponde manejo en atención primaria. Reenviar si aparecen signos de alarma.","episodios":1,"nodos":9,"resaltados":1}
+ok   390-oscuro: la narración no muestra uuids
+ok   390-oscuro: guiado sin desplazamiento horizontal
+ok   390-oscuro: salir del paso a paso devuelve los 7 episodios
+390-oscuro panel TSH: {"liberado":"Liberado el 26 de julio de 2025 · 1 valor fuera de rango","valores":["TSH5,6 mUI/L↑ Alto , fuera de rango0,4 – 4 mUI/L"],"fuera":1,"archivo":true,"recortados":0}
+ok   390-oscuro: nada del panel se sale por la derecha
+ok   390-oscuro: el panel lee el informe (valores, fuera de rango, fecha)
+390-oscuro siguiendo: {"episodio":"Siguiendo: Hipotiroidismo","contador":"Paso 1 de 9","narracion":"El 15 may 2025 tuvo una atención (ambulatorio) con Valeria Rojas Mendoza por cansancio, cefalea y caída de cabello de dos meses. Se planteó hipotiroidismo como diagnóstico presuntivo. Se planteó anemia ferropénica como diagnóstico presuntivo. Se pidió hemograma completo para confirmar o descartar anemia ferropénica. Se pidió TSH por quimioluminiscencia para confirmar o descartar hipotiroidismo. Se derivó a Carla Montero Ribera para evaluación neurológica de cefalea por cefalea en estudio."}
+ok   390-oscuro: «Siguiendo: Hipotiroidismo»
+ok   390-oscuro: ninguna receta de 25 mcg dice «Levotiroxina 50 mcg»
+ok   390-oscuro: consola sin errores []
+paciente-390-oscuro: estudios sin vínculo a este problema en el hilo = 0
+ok   paciente-390-oscuro: los estudios del hilo llegan con su diagnóstico (reasonConditionId)
+ok   paciente-390-oscuro: «Le pidieron … TSH … por Hipotiroidismo»
+ok   paciente-390-oscuro: el descartado ya no se narra como resuelto
+ok   paciente-390-oscuro: la receta de 25 mcg dice «Levotiroxina 25 mcg»
+ok   paciente-390-oscuro: sin desplazamiento horizontal
+ok   paciente-390-oscuro: consola sin errores []
+
+TODO OK
