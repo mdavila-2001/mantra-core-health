@@ -1,21 +1,21 @@
 /* ============================================================================
-    Fechas y texto del recorrido guiado: el día en UTC (mismo criterio que
-    `fechaClinica` de `account/medical-record/history-view-model.ts`, que no se
-    exporta) y las barreras para que ningún identificador llegue a la narración.
+    Fechas y texto del recorrido guiado: el día clínico (`dia-clinico.ts`, el
+    mismo que usa la red) y las barreras para que ningún identificador llegue a
+    la narración.
     ========================================================================== */
+
+import { diaClinico, partesDelDia } from '../recorrido-clinico/dia-clinico';
+
+export { diaClinico };
 
 /* -- Fechas ---------------------------------------------------------------- */
 
 export const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sept', 'oct', 'nov', 'dic'];
 
-/** «3 feb 2026», leído en UTC (ver cabecera). */
+/** «3 feb 2026», on the clinical day (see `dia-clinico.ts`). */
 export function fechaCorta(cuando: Date): string {
-  return `${cuando.getUTCDate()} ${MESES[cuando.getUTCMonth()]} ${cuando.getUTCFullYear()}`;
-}
-
-/** `2026-02-03`: la clave del día UTC. */
-export function diaUtc(cuando: Date): string {
-  return cuando.toISOString().slice(0, 10);
+  const { anio, mes, dia } = partesDelDia(cuando);
+  return `${dia} ${MESES[mes - 1]} ${anio}`;
 }
 
 export function fechaValida(valor: Date | string | null | undefined): Date | null {

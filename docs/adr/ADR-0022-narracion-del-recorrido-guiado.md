@@ -36,8 +36,9 @@ puede decir y qué no.
 6. **Ningún identificador llega al texto.** Una etiqueta que devuelve un uuid o un código de catálogo se trata como
    desconocida, y una última pasada borra cualquier uuid que venga dentro de un texto libre. Tampoco se narra el número de
    caso quirúrgico.
-7. **Agrupado por día UTC**, con el mismo criterio que `fechaClinica` (`account/medical-record/history-view-model.ts`):
-   lo creado en una atención toma la fecha de la atención; lo demás, la suya. Dentro del día, la hora de la atención ordena
+7. **Agrupado por día clínico**: el día en la zona del producto (`America/La_Paz`), con el mismo helper que usa la red
+   (`recorrido-clinico/dia-clinico.ts`; antes UTC aquí y hora del navegador en la red, que discrepaban: una atención a
+   las 21:00 de La Paz ya es el día siguiente en UTC). Lo que se agrupa son instantes, no fechas sin hora. Lo creado en una atención toma la fecha de la atención; lo demás, la suya. Dentro del día, la hora de la atención ordena
    y, a igual hora, el orden de razonamiento (llega, reconsulta, se atiende, se diagnostica, resultado, decisión, se pide, se
    trata, se deriva). Lo sin fecha va al final, en un paso que lo dice.
 8. **El control no reproduce solo con `prefers-reduced-motion: reduce`**: «Reproducir» queda deshabilitado y lo explica;

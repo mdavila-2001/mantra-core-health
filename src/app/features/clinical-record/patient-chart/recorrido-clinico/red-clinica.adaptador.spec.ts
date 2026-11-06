@@ -27,7 +27,7 @@ const fila = (id: string, tipo: FilaPresentada['tipo'], extra: Partial<FilaPrese
   titulo: id,
   detalle: '',
   estado: '',
-  cuando: new Date(2026, 0, 10),
+  cuando: new Date(2026, 0, 10, 12), // noon: the same clinical day (La Paz) whatever the machine's zone
   ...extra,
 });
 const ETIQUETAS: Readonly<Record<string, { display?: string; code?: string }>> = {

@@ -20,13 +20,12 @@
     una— se narra como coincidencia («en la misma atención») y la frase queda
     marcada `inferida`. Nunca al revés.
 
-    ## Fechas en UTC
+    ## The clinical day
 
-    El mismo criterio que `fechaClinica` de
-    `account/medical-record/history-view-model.ts` (no exportada, por eso se
-    replica): el día se lee en UTC, porque una medianoche UTC leída en hora de
-    Bolivia (UTC−4) cae el día anterior. El día UTC también es la clave con la
-    que se agrupan los registros «del mismo momento».
+    Every date narrated here is an instant (an encounter's start, a creation),
+    so the day is read in the product's time zone (`dia-clinico.ts`): the same
+    key the clinical network uses for its columns and `inferido-mismo-dia`.
+    It is also the key that groups the records «of the same moment».
     ========================================================================== */
 
 import {
@@ -43,7 +42,7 @@ import {
   sucesosDeProcedimientos,
 } from './recorrido-guiado.sucesos-de-circuito';
 import { frase, Nombres, ORDEN, porId, type ClaseDeSuceso, type ContextoDelPaso, type Indices, type Suceso } from './recorrido-guiado.sucesos';
-import { diaUtc, fechaCorta, fechaValida, mayusculaInicial, minusculaInicial, sinIdentificadores } from './recorrido-guiado.texto';
+import { diaClinico, fechaCorta, fechaValida, mayusculaInicial, minusculaInicial, sinIdentificadores } from './recorrido-guiado.texto';
 import type {
   FraseDelPaso,
   LectorDelRecorrido,
@@ -57,7 +56,7 @@ export type {
   PasoDelRecorrido,
   RegistrosDelRecorrido,
 } from './recorrido-guiado.types';
-export { diaUtc, enumerar, fechaCorta, legible } from './recorrido-guiado.texto';
+export { diaClinico, enumerar, fechaCorta, legible } from './recorrido-guiado.texto';
 
 const TITULO_PRIORIDAD: readonly ClaseDeSuceso[] = [
   'atencion',
@@ -118,7 +117,7 @@ const SIN_FECHA = 'sin-fecha';
 function agrupar(sucesos: readonly Suceso[], idx: Indices): PasoDelRecorrido[] {
   const grupos = new Map<string, Suceso[]>();
   for (const s of sucesos) {
-    const clave = s.fecha === null ? SIN_FECHA : diaUtc(s.fecha);
+    const clave = s.fecha === null ? SIN_FECHA : diaClinico(s.fecha);
     const lista = grupos.get(clave) ?? [];
     lista.push(s);
     grupos.set(clave, lista);

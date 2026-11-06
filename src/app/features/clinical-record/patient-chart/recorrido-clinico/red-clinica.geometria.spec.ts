@@ -16,7 +16,8 @@ import {
   type PlanoDeLaRed,
 } from './red-clinica.geometria';
 
-const d = (anio: number, mes: number, dia = 10): Date => new Date(anio, mes - 1, dia);
+// Noon, so the clinical day (La Paz, `dia-clinico.ts`) is the same whatever the machine's zone.
+const d = (anio: number, mes: number, dia = 10): Date => new Date(anio, mes - 1, dia, 12);
 const r = (
   id: string,
   clase: RegistroDeLaRed['clase'],

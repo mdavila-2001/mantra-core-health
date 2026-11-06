@@ -29,6 +29,7 @@
 
 import type { Tone } from '../../../../shared/components/tone/tone.types';
 import type { NavIconName } from '../../../../shared/components/atoms/nav-icon/nav-icon.types';
+import { diaClinico } from './dia-clinico';
 
 /** Las clases de registro de la red, en el orden en que se apilan en una celda. */
 export const CLASES_DE_LA_RED = [
@@ -244,12 +245,8 @@ export function inferirVinculos(
   return inferidos;
 }
 
-/** La clave del día local, `aaaa-mm-dd`. */
-export function claveDelDia(fecha: Date): string {
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-  const dia = String(fecha.getDate()).padStart(2, '0');
-  return `${fecha.getFullYear()}-${mes}-${dia}`;
-}
+/** La clave del día clínico, `aaaa-mm-dd` (`dia-clinico.ts`: the same day as the guided tour). */
+export const claveDelDia = diaClinico;
 
 /* -- Episodios ------------------------------------------------------------- */
 

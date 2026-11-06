@@ -15,7 +15,7 @@ import type { Booking } from '../../../../core/data-access/scheduling/scheduling
 
 import {
   armarRecorridoGuiado,
-  diaUtc,
+  diaClinico,
   enumerar,
   fechaCorta,
   legible,
@@ -214,12 +214,18 @@ const pasoDel = (pasos: readonly PasoDelRecorrido[], clave: string): PasoDelReco
 };
 
 describe('fechas y texto', () => {
-  it('fechaCorta lee el día en UTC, no en hora local', () => {
-    expect(fechaCorta(new Date(Date.UTC(2026, 1, 3, 0, 0)))).toBe('3 feb 2026');
-    // 02:00 UTC del 3 es todavía 2 de febrero en Bolivia: el día clínico es el 3.
-    expect(fechaCorta(new Date('2026-02-03T02:00:00Z'))).toBe('3 feb 2026');
+  it('fechaCorta y diaClinico leen el día en la zona del producto (La Paz), no en UTC ni en la del navegador', () => {
+    expect(fechaCorta(new Date('2026-02-03T13:00:00Z'))).toBe('3 feb 2026');
+    // 02:00 UTC on the 3rd is 22:00 on the 2nd in La Paz: that is the clinical day.
+    expect(fechaCorta(new Date('2026-02-03T02:00:00Z'))).toBe('2 feb 2026');
+    expect(diaClinico(new Date('2026-02-03T02:00:00Z'))).toBe('2026-02-02');
     expect(fechaCorta(new Date('2026-09-30T23:59:00Z'))).toBe('30 sept 2026');
-    expect(diaUtc(new Date('2026-02-03T02:00:00Z'))).toBe('2026-02-03');
+    expect(diaClinico(new Date('2026-10-01T03:59:00Z'))).toBe('2026-09-30');
+  });
+
+  it('una atención a las 21:00 de La Paz y lo que se registró en ella son del mismo paso', () => {
+    // 21:00 La Paz = 01:00 UTC of the next day: grouped by UTC they split in two.
+    expect(diaClinico(new Date('2026-02-04T01:00:00Z'))).toBe(diaClinico(new Date('2026-02-03T14:00:00Z')));
   });
 
   it('legible descarta uuid, códigos de catálogo y vacíos', () => {

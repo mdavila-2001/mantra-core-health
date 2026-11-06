@@ -19,7 +19,7 @@ import {
   type Nombres,
   type Suceso,
 } from './recorrido-guiado.sucesos';
-import { diaUtc, fechaCorta, fechaValida, libre, minusculaInicial } from './recorrido-guiado.texto';
+import { diaClinico, fechaCorta, fechaValida, libre, minusculaInicial } from './recorrido-guiado.texto';
 import type { FraseDelPaso } from './recorrido-guiado.types';
 
 export function sucesosDeInternaciones(lista: readonly CareEpisode[], n: Nombres): Suceso[] {
@@ -94,7 +94,7 @@ export function sucesosDeDiagnosticos(lista: readonly Condition[], idx: Indices,
     // Sin instante de decisión, el veredicto del catálogo se lee como del alta.
     const mismoDia =
       veredicto !== null &&
-      (decididoEl === null || (alta.fecha !== null && diaUtc(decididoEl) === diaUtc(alta.fecha)));
+      (decididoEl === null || (alta.fecha !== null && diaClinico(decididoEl) === diaClinico(alta.fecha)));
 
     const sucesos: Suceso[] = [];
     if (!mismoDia) {
@@ -128,7 +128,7 @@ export function lugarDeDecision(
 ): { atencionId?: string; fecha: Date | null } {
   const atencionId = c.verification?.basedOn?.encounterId;
   const deLaAtencion = fechaDeAtencion(idx, atencionId);
-  if (atencionId !== undefined && fecha !== null && deLaAtencion !== null && diaUtc(deLaAtencion) === diaUtc(fecha)) {
+  if (atencionId !== undefined && fecha !== null && deLaAtencion !== null && diaClinico(deLaAtencion) === diaClinico(fecha)) {
     return { atencionId, fecha };
   }
   return { fecha };

@@ -60,7 +60,7 @@ export interface FraseDelPaso {
 }
 
 export interface PasoDelRecorrido {
-  /** Estable entre lecturas: el día UTC (`2026-02-03`) o `sin-fecha`. */
+  /** Stable across reads: the clinical day (`2026-02-03`, `dia-clinico.ts`) or `sin-fecha`. */
   readonly clave: string;
   readonly fecha: Date | null;
   /** «3 feb 2026», o «Sin fecha». */
