@@ -64,42 +64,6 @@
   gap: var(--sp-6);
 }
 
-.entity-import__help {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-3);
-  padding: var(--sp-4);
-  border-radius: var(--r-md);
-  background: var(--bg-surface-alt);
-}
-
-.entity-import__columns {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.entity-import__columns div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-2);
-}
-
-.entity-import__columns dt {
-  font-family: var(--font-mono);
-  font-size: var(--fs-caption);
-  color: var(--text-primary);
-}
-
-.entity-import__columns dd {
-  margin: 0;
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-secondary);
-}
-
 .entity-import__figures {
   display: flex;
   flex-wrap: wrap;

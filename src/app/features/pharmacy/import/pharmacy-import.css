@@ -75,46 +75,6 @@ span.import__secondary {
   margin: 0;
 }
 
-.import__help {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-3);
-  padding: var(--sp-4);
-  border-radius: var(--r-md);
-  background: var(--bg-surface-alt);
-}
-
-.import__help .import__subtitle {
-  margin: 0;
-}
-
-.import__columns {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.import__columns div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-2);
-}
-
-.import__columns dt {
-  font-family: var(--font-mono);
-  font-size: var(--fs-caption);
-  color: var(--text-primary);
-}
-
-.import__columns dd {
-  margin: 0;
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-secondary);
-}
-
 /* ─── Cifras, muestra, avance y pie ─────────────────────────────────────── */
 
 .import__figures {
