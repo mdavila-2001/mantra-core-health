@@ -89,6 +89,7 @@ export const RegisterPage = {
     RegisterPage.continuar();
 
     cy.porTestId('registro-password').clear().type(datos.password);
+    cy.porTestId('registro-password-confirm').clear().type(datos.password);
     if (opciones.conCorreo === true) {
       cy.porTestId('registro-correo').clear().type(datos.correo);
     }

@@ -118,6 +118,7 @@ describe('RegisterPharmacy', () => {
     // Una S.R.L. no puede omitir el poder (BR-09): la API responde 422.
     component.form.controls.powerOfAttorneyFileId.setValue('file-poder');
     component.form.controls.password.setValue('secreto12');
+    component.form.controls.confirmPassword.setValue('secreto12');
     // El punto de la central es obligatorio (pedido del cliente del 26/10/2026).
     component.fijarGpsCentral({ lat: -17.78, lng: -63.18 });
   }
@@ -413,10 +414,11 @@ describe('RegisterPharmacy', () => {
     expect(camposDe('representante')).toEqual([
       'legalRepName',
       'legalRepIdNumber',
-      'legalRepEmail',
       'powerOfAttorneyFileId',
     ]);
     expect(camposDe('documentos')).not.toContain('powerOfAttorneyFileId');
+    // The access email sits with the password and its confirmation.
+    expect(camposDe('acceso')).toEqual(['legalRepEmail', 'password', 'confirmPassword']);
   });
 
   it('el poder del representante viaja aparte, dentro de legalRepresentative', () => {

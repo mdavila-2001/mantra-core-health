@@ -317,7 +317,7 @@ export class RegisterMedicalCenter {
       // Una contraseña no se guarda en ningún borrador: ni en el navegador ni
       // en el servidor. `OnboardingDraftService` también la quita, pero esta
       // pantalla no depende de que otro se acuerde.
-      delete datos['password'];
+      for (const secret of ['password', 'confirmPassword']) delete datos[secret];
       this.draftService.saveProgress(
         FORM_TYPE,
         indice,

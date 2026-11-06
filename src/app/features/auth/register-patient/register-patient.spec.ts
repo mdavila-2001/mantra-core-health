@@ -376,6 +376,7 @@ describe('RegisterPatient', () => {
       lastName: 'Paz',
       motherLastName: extra.motherLastName ?? '',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
       // Los cinco que AC-03-3 volvió obligatorios se completan acá: sin ellos
       // el formulario es inválido y `submit()` no llega a salir, así que toda
       // prueba de envío los necesita. El que comprueba que cada uno frena el
@@ -543,6 +544,7 @@ describe('RegisterPatient', () => {
       expect(porClave('misc')).toEqual([
         'email',
         'password',
+        'confirmPassword',
         'privateInsurancePlanId',
         'publicInsurancePlanId',
         'billingTaxId',
@@ -916,6 +918,8 @@ describe('RegisterPatient', () => {
       'name',
       'lastName',
       'password',
+      // Typed twice so a typo cannot lock the owner out (user request, 04/11/2026).
+      'confirmPassword',
     ] as const;
 
     const OPCIONALES = [
@@ -1028,7 +1032,7 @@ describe('RegisterPatient', () => {
      * `register-patient.ts` junto a `name`/`lastName`), esta prueba falla acá,
      * antes de que vuelva a ser un finding.
      */
-    it('el excedente sobre los seis obligatorios de la fuente literal (TAREA 03 §1.2) es exactamente name/lastName/password, documentado por contrato (AC-03-4/P-03-2)', () => {
+    it('el excedente sobre los seis obligatorios de la fuente literal (TAREA 03 §1.2) es exactamente name/lastName/password más su confirmación, documentado por contrato (AC-03-4/P-03-2)', () => {
       const SEIS_DE_LA_FUENTE_LITERAL = [
         'nationalId',
         'email',
@@ -1037,7 +1041,7 @@ describe('RegisterPatient', () => {
         'birthDate',
         'residenceMunicipalityConceptId',
       ] as const;
-      const EXCEDENTE_JUSTIFICADO_POR_CONTRATO = ['name', 'lastName', 'password'] as const;
+      const EXCEDENTE_JUSTIFICADO_POR_CONTRATO = ['name', 'lastName', 'password', 'confirmPassword'] as const;
 
       expect(new Set(OBLIGATORIOS)).toEqual(
         new Set([...SEIS_DE_LA_FUENTE_LITERAL, ...EXCEDENTE_JUSTIFICADO_POR_CONTRATO]),
@@ -2838,11 +2842,13 @@ describe('RegisterPatient', () => {
     it('nunca escribe la contraseña en localStorage', () => {
       component.formPaciente.controls.name.setValue('Carlos');
       component.formPaciente.controls.password.setValue('secreto12');
+      component.formPaciente.controls.confirmPassword.setValue('secreto12');
       component.recordarPaso({ titulo: '¿Dónde vive?', clave: 'residence', campos: [] });
 
       const guardado = localStorage.getItem(component.STORAGE_KEY)!;
       expect(guardado).not.toContain('secreto12');
       expect(JSON.parse(guardado).formValores.password).toBeUndefined();
+      expect(JSON.parse(guardado).formValores.confirmPassword).toBeUndefined();
     });
 
     it('un borrador viejo con contraseña se limpia y no se reinyecta', () => {

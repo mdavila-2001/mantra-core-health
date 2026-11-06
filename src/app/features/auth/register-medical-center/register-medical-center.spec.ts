@@ -146,6 +146,7 @@ describe('RegisterMedicalCenter', () => {
       legalRepIdNumber: '4872190',
       legalRepEmail: 'marta@centro.test',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
     });
     fixture.componentInstance.fijarGpsCentral(PUNTO_CENTRAL);
     fixture.componentInstance.escribirLocalidadCentral({
@@ -393,7 +394,7 @@ describe('RegisterMedicalCenter', () => {
       ['generalManagerName', 'generalManagerPhone', 'generalManagerEmail'],
       ['salesManagerName', 'salesManagerPhone', 'salesManagerEmail'],
       ['marketingManagerName', 'marketingManagerPhone', 'marketingManagerEmail'],
-      ['legalRepEmail', 'password'],
+      ['legalRepEmail', 'password', 'confirmPassword'],
     ]);
     // Los papeles van todos en una vista (pedido del cliente del 28/10/2026); el resto, de a cuatro como tope.
     const documentos = paginas.find((p) => p.clave === 'documentos-legales')!;

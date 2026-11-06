@@ -70,6 +70,10 @@ export function mensajeDeError(
   if ('pattern' in errores) {
     return 'Revise el formato.';
   }
+  // Password confirmation: see `passwordWithConfirmation` in shared-registration.
+  if ('passwordMismatch' in errores) {
+    return 'Las contraseñas no coinciden. Escríbala igual en los dos campos.';
+  }
   // Los topes de un campo de varias respuestas: ver `validadoresDeSeleccion`.
   // «Exactamente» va primero porque es el caso en que los otros dos coinciden.
   if ('exactSelections' in errores) {

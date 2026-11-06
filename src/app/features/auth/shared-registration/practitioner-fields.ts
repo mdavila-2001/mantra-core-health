@@ -9,7 +9,7 @@ import type {
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { INVALID_IDENTITY_DOCUMENT_MESSAGE } from './national-id';
-import { MESSAGE_SHORT_PASSWORD } from './password-policy';
+import { accessPasswordFields } from './password-confirmation';
 
 /**
  * Las páginas y los campos del alta de médico, en un solo lugar.
@@ -232,20 +232,11 @@ export function practitionerFields(
           icono: 'mail',
           mensajeDeError: 'Ingrese un correo válido.',
         },
-        {
-          key: 'password',
-          label: 'Contraseña',
-          hint: 'Al menos 8 caracteres.',
+        ...accessPasswordFields('registro-pro-password', {
           description:
             'Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca se la vamos a pedir por teléfono ni por correo.',
-          control: 'password',
-          required: true,
-          autocomplete: 'new-password',
           placeholder: 'Su contraseña',
-          testId: 'registro-pro-password',
-          icono: 'lock',
-          mensajeDeError: MESSAGE_SHORT_PASSWORD,
-        },
+        }),
       ],
     },
     {

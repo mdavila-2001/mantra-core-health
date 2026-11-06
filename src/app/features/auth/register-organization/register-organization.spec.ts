@@ -220,6 +220,8 @@ describe('RegisterOrganization', () => {
         | 'incorporationCountry'
         | 'legalEntityType'
         | 'legalRepresentativePhone'
+        | 'password'
+        | 'confirmPassword'
         | keyof typeof DOCUMENTOS_DE_PRUEBA
         | keyof typeof REPRESENTANTE_DE_PRUEBA,
         string
@@ -251,7 +253,8 @@ describe('RegisterOrganization', () => {
       // el valor explícito de acá siempre gana sobre el default que dispara
       // la suscripción al cambiar de país (ver `acomodarPaisYTipoSocietario`).
       timeZone: extra.timeZone ?? 'America/La_Paz',
-      password: 'secreto12',
+      password: extra.password ?? 'secreto12',
+      confirmPassword: extra.confirmPassword ?? 'secreto12',
       constitutionFileId: extra.constitutionFileId ?? DOCUMENTOS_DE_PRUEBA.constitutionFileId,
       taxIdentifierFileId: extra.taxIdentifierFileId ?? DOCUMENTOS_DE_PRUEBA.taxIdentifierFileId,
       commerceRegistryFileId:
@@ -818,7 +821,7 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       completar({ powerOfAttorneyFileId: '' });
       fixture.detectChanges();
-      avanzarHasta('Representante legal (1 de 2)');
+      avanzarHasta('Representante legal');
       fixture.debugElement
         .query(By.css('[data-testid="paginated-form-continuar"]'))
         .nativeElement.click();
@@ -827,7 +830,7 @@ describe('RegisterOrganization', () => {
       expect(
         (fixture.nativeElement as HTMLElement).querySelector('.paginated-form__titulo')
           ?.textContent,
-      ).toContain('Representante legal (2 de 2)');
+      ).toContain('Representante legal');
       expect(dropzonePoder()).toBeDefined();
       expect(dropzonePoder()?.required()).toBe(true);
       expect(component.form.controls.powerOfAttorneyFileId.invalid).toBe(true);
@@ -908,11 +911,11 @@ describe('RegisterOrganization', () => {
       ).toBe(GERENCIAS_DE_PRUEBA.generalManager.nombre.name);
     });
 
-    it('en «Representante legal (1 de 2)» con los nombres vacíos, «Continuar» no avanza y los cinco campos quedan marcados', () => {
+    it('en «Representante legal» con los nombres vacíos, «Continuar» no avanza y los cinco campos quedan marcados', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Representante legal (1 de 2)');
+      avanzarHasta('Representante legal');
 
       const grupo = component.form.controls.legalRepresentative;
       grupo.controls.name.setValue('');
@@ -927,7 +930,7 @@ describe('RegisterOrganization', () => {
       expect(
         (fixture.nativeElement as HTMLElement).querySelector('.paginated-form__titulo')
           ?.textContent,
-      ).toContain('Representante legal (1 de 2)');
+      ).toContain('Representante legal');
       for (const testId of [
         'registro-organizacion-representante-nombre',
         'registro-organizacion-representante-segundo-nombre',
@@ -1014,7 +1017,7 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Representante legal (1 de 2)');
+      avanzarHasta('Representante legal');
 
       const agregar = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
         '[data-testid="registro-organizacion-representante-agregar-nombre"]',
@@ -1158,11 +1161,11 @@ describe('RegisterOrganization', () => {
       expect('email' in component.form.controls).toBe(false);
     });
 
-    it('«Representante legal (1 de 2)» trae juntos el nombre, el correo y la contraseña', () => {
+    it('«Representante legal» trae el nombre y la cédula; «Su acceso», el correo, la contraseña y su confirmación', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Representante legal (1 de 2)');
+      avanzarHasta('Representante legal');
 
       for (const testId of [
         'registro-organizacion-representante-nombre',
@@ -1171,8 +1174,15 @@ describe('RegisterOrganization', () => {
         'registro-organizacion-representante-apellido-paterno',
         'registro-organizacion-representante-apellido-materno',
         'registro-organizacion-representante-ci',
+      ]) {
+        expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`)).not.toBeNull();
+      }
+
+      avanzarHasta('Su acceso');
+      for (const testId of [
         'registro-organizacion-representante-correo',
         'registro-organizacion-representante-password',
+        'registro-organizacion-representante-password-confirm',
       ]) {
         expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`)).not.toBeNull();
       }
@@ -1182,7 +1192,7 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Representante legal (1 de 2)');
+      avanzarHasta('Representante legal');
 
       const grilla: HTMLElement = fixture.nativeElement.querySelector(
         'app-inline-name-fields .nombres',
@@ -1191,19 +1201,23 @@ describe('RegisterOrganization', () => {
       expect(grilla.querySelectorAll('.nombres__campo--mitad').length).toBe(5);
     });
 
-    it('sin contraseña, «Continuar» no avanza de la página del representante', () => {
+    it.each([
+      ['sin contraseña', { password: '', confirmPassword: '' }],
+      ['sin repetir la contraseña', { confirmPassword: '' }],
+      ['con la confirmación distinta', { confirmPassword: 'secreto13' }],
+    ])('%s, «Su acceso» no envía el alta', (_caso, cambios) => {
       fixture.detectChanges();
-      completar();
-      component.form.controls.password.setValue('');
+      completar(cambios);
       fixture.detectChanges();
-      avanzarHasta('Representante legal (1 de 2)');
+      avanzarHasta('Su acceso');
 
       fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
       fixture.detectChanges();
 
       expect(
         fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent,
-      ).toContain('Representante legal (1 de 2)');
+      ).toContain('Su acceso');
+      http.expectNone('/iam/auth/register-organization');
     });
 
     it('el owner copia el nombre y el correo del representante, y trae la contraseña', () => {

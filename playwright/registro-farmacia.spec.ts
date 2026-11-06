@@ -90,15 +90,11 @@ async function escribirNombre(page: Page, prefijo: string, nombre: string, apell
   await page.getByTestId(`${prefijo}-apellido-paterno`).fill(apellido);
 }
 
-/** Página «Representante legal»: nombre, cédula, correo y poder, todos obligatorios. */
-async function completarRepresentante(
-  page: Page,
-  correo = 'legal@farmacia-sanmartin.test',
-): Promise<void> {
+/** Página «Representante legal»: nombre, cédula y poder; el correo va en «Su acceso». */
+async function completarRepresentante(page: Page): Promise<void> {
   await expect(page.locator('.paginated-form__titulo')).toContainText('Representante legal');
   await escribirNombre(page, 'registro-farmacia-representante', 'Mariana', 'Siles');
   await page.getByTestId('registro-farmacia-representante-documento').fill('4567890');
-  await page.getByTestId('registro-farmacia-representante-correo').fill(correo);
   await adjuntarPoder(page);
   await page.getByTestId('paginated-form-continuar').click();
 }
@@ -121,10 +117,15 @@ async function saltarGerencias(page: Page): Promise<void> {
   }
 }
 
-/** Página «Tu acceso»: la contraseña y el envío. */
-async function completarAccesoYEnviar(page: Page): Promise<void> {
+/** Página «Su acceso»: el correo de acceso, la contraseña, su confirmación y el envío. */
+async function completarAccesoYEnviar(
+  page: Page,
+  correo = 'legal@farmacia-sanmartin.test',
+): Promise<void> {
   await expect(page.locator('.paginated-form__titulo')).toContainText('Su acceso');
+  await page.getByTestId('registro-farmacia-representante-correo').fill(correo);
   await page.getByTestId('registro-farmacia-password').fill('secreto12');
+  await page.getByTestId('registro-farmacia-password-confirm').fill('secreto12');
   await page.getByTestId('paginated-form-continuar').click();
 }
 
@@ -178,9 +179,9 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await saltarLosPapeles(page);
     await completarCentral(page);
     await saltarSucursales(page);
-    await completarRepresentante(page, 'legal@farmacia-minima.test');
+    await completarRepresentante(page);
     await saltarGerencias(page);
-    await completarAccesoYEnviar(page);
+    await completarAccesoYEnviar(page, 'legal@farmacia-minima.test');
 
     await expect(page.getByTestId('registro-farmacia-exito')).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText('Ya puede ingresar con su cuenta')).toBeVisible();
@@ -197,9 +198,9 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await completarCentral(page);
     await saltarSucursales(page);
     // La cuenta de demostración del paciente ya existe en el simulador.
-    await completarRepresentante(page, 'paciente@alovida.mock');
+    await completarRepresentante(page);
     await saltarGerencias(page);
-    await completarAccesoYEnviar(page);
+    await completarAccesoYEnviar(page, 'paciente@alovida.mock');
 
     await expect(page.getByTestId('registro-farmacia-error')).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId('registro-farmacia-error')).toContainText('correo');
@@ -263,7 +264,6 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await expect(page.locator('.paginated-form__titulo')).toContainText('Representante legal');
     await escribirNombre(page, 'registro-farmacia-representante', 'Mariana', 'Siles');
     await page.getByTestId('registro-farmacia-representante-documento').fill('4567890');
-    await page.getByTestId('registro-farmacia-representante-correo').fill('legal@farmacia-completa.test');
     await adjuntarPoder(page);
     await page.getByTestId('paginated-form-continuar').click();
 
@@ -280,7 +280,7 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
       await page.getByTestId('paginated-form-continuar').click();
     }
 
-    await completarAccesoYEnviar(page);
+    await completarAccesoYEnviar(page, 'legal@farmacia-completa.test');
 
     await expect(page.getByTestId('registro-farmacia-exito')).toBeVisible({ timeout: 20_000 });
     await capturar(page, 'exito-completo');
@@ -325,9 +325,9 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await saltarLosPapeles(page);
     await completarCentral(page);
     await saltarSucursales(page);
-    await completarRepresentante(page, 'legal@farmacia-oscura.test');
+    await completarRepresentante(page);
     await saltarGerencias(page);
-    await completarAccesoYEnviar(page);
+    await completarAccesoYEnviar(page, 'legal@farmacia-oscura.test');
 
     await expect(page.getByTestId('registro-farmacia-exito')).toBeVisible({ timeout: 20_000 });
     await capturar(page, 'exito-oscuro-1440');

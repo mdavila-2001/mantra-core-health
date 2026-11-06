@@ -85,6 +85,7 @@ test.describe('carril 03 — alta de paciente', () => {
 
     await page.getByTestId('registro-correo').fill('ana@gmail');
     await page.getByTestId('registro-password').fill('Secreto123!');
+    await page.getByTestId('registro-password-confirm').fill('Secreto123!');
     await page.getByTestId('paginated-form-continuar').click();
 
     await expect(page.getByText('Ingrese un correo válido.')).toBeVisible();
@@ -115,6 +116,7 @@ test.describe('carril 03 — alta de paciente', () => {
 
     await page.getByTestId('registro-correo').fill('ana.paz@correo.umsa.bo');
     await page.getByTestId('registro-password').fill('Secreto123!');
+    await page.getByTestId('registro-password-confirm').fill('Secreto123!');
     await page.getByTestId('registro-nit').fill('1234567019');
     await page.getByTestId('registro-razon-social').fill('Ana Paz');
 
@@ -172,6 +174,7 @@ test.describe('carril 03 — alta de paciente', () => {
 
     await page.getByTestId('registro-correo').fill('luis.paz@correo.umsa.bo');
     await page.getByTestId('registro-password').fill('Secreto123!');
+    await page.getByTestId('registro-password-confirm').fill('Secreto123!');
     await page.getByTestId('paginated-form-continuar').click();
 
     // El validador de contrato del mock rechazaría una clave que la API no conoce.
