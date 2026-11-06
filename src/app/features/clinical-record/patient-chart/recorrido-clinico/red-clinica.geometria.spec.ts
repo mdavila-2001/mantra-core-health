@@ -8,6 +8,7 @@ import {
   claveDeGrupo,
   DISTANCIA_DEL_TRONCO,
   MEDIDAS_DE_LA_RED,
+  PASO_DE_CARRIL,
   type AristaDeLaRed,
   type EstadoDeLaRed,
   type PlanoDeLaRed,
@@ -36,7 +37,7 @@ function plano(
   });
 }
 
-/* -- Una historia con todas las clases de línea -------------------------- */
+/* -- A history with every kind of line ------------------------------------ */
 
 const REGISTROS: readonly RegistroDeLaRed[] = [
   r('e1', 'atencion', d(2025, 5)),
@@ -263,10 +264,10 @@ describe('ubicarRed · muchas líneas', () => {
   it('el pasillo se ensancha cuando bajan más líneas de las que entran', () => {
     const regs: RegistroDeLaRed[] = [];
     const vins: VinculoDeLaRed[] = [];
-    // Ocho registros del mismo problema en un mismo momento, cada uno con su
-    // receta en un momento distinto: las ocho bajadas comparten pasillo y
-    // altura, y no entran en el ancho de siempre. (En hilos distintos se
-    // apilarían en alturas que no se solapan y compartirían carril.)
+    // Eight records of the same problem at the same moment, each with its
+    // prescription at a different moment: the eight descents share aisle and
+    // height, and do not fit in the usual width. (In different threads they
+    // would stack at heights that do not overlap and would share a lane.)
     for (let i = 0; i < 8; i++) {
       regs.push(r(`d${i}`, 'diagnostico', d(2025, 1), { certeza: 'confirmado', concepto: 'k' }));
       regs.push(r(`r${i}`, 'medicacion', d(2025, 2 + i)));
@@ -277,20 +278,63 @@ describe('ubicarRed · muchas líneas', () => {
     verificarTrazado(p);
   });
 
+  it('un haz de ocho bajadas paralelas deja al menos un paso de carril entre líneas y no pisa tarjetas', () => {
+    const regs: RegistroDeLaRed[] = [];
+    const vins: VinculoDeLaRed[] = [];
+    for (let i = 0; i < 8; i++) {
+      regs.push(r(`d${i}`, 'diagnostico', d(2025, 1), { certeza: 'confirmado', concepto: 'k' }));
+      regs.push(r(`r${i}`, 'medicacion', d(2025, 3 + i)));
+      vins.push({ desde: `d${i}`, hasta: `r${i}`, motivo: 'indicado-para' });
+    }
+    const p = plano(regs, vins, { todo: true });
+    const xs = [...new Set(verticalesDelPasillo(p, 0).map((v) => v.x))].sort((a, b) => a - b);
+    expect(xs.length).toBe(8);
+    for (let i = 1; i < xs.length; i++) expect(xs[i] - xs[i - 1]).toBeGreaterThanOrEqual(PASO_DE_CARRIL);
+    expect(PASO_DE_CARRIL).toBeGreaterThanOrEqual(10);
+    verificarTrazado(p);
+  });
+
+  it('las salidas de un mismo origen comparten un solo carril: un tronco que se abre, no un haz', () => {
+    const regs: RegistroDeLaRed[] = [r('dx', 'diagnostico', d(2025, 1), { certeza: 'confirmado', concepto: 'k' })];
+    const vins: VinculoDeLaRed[] = [];
+    for (let i = 0; i < 8; i++) {
+      regs.push(r(`r${i}`, 'medicacion', d(2025, 3 + i)));
+      vins.push({ desde: 'dx', hasta: `r${i}`, motivo: 'indicado-para' });
+    }
+    const p = plano(regs, vins, { todo: true });
+    const salidas = verticalesDelPasillo(p, 0);
+    expect(salidas.length).toBeGreaterThanOrEqual(8);
+    expect(new Set(salidas.map((v) => v.x)).size).toBe(1);
+    verificarTrazado(p);
+  });
+
   it.each(Array.from({ length: 16 }, (_, i) => i + 1))('una historia generada (semilla %i) cumple las reglas del trazado', (semilla) => {
     const { registros, vinculos } = historiaGenerada(semilla);
     verificarTrazado(plano(registros, vinculos, { todo: true }));
-    // Y con todo abierto: descartados y grupos.
+    // And with everything open: ruled-out diagnoses and groups.
     const abiertos = new Set(registros.map((x) => x.id));
     const red = agruparEnEpisodios(registros, vinculos);
     for (const e of red.episodios) for (const x of registros) abiertos.add(claveDeGrupo(e.id, `enc:${x.id}`));
     verificarTrazado(plano(registros, vinculos, { todo: true, abiertos }));
-    // La verificación compara cada tramo con todos los demás: con la máquina
-    // cargada pasaba los 5 s por omisión sin que nada estuviera mal.
+    // The check compares every stretch with all the others: on a loaded
+    // machine it went past the default 5 s with nothing wrong.
   }, 30_000);
 });
 
-/* -- Una historia pseudoaleatoria y reproducible --------------------------- */
+/** The vertical link stretches running in the aisle right of column `columna`. */
+function verticalesDelPasillo(p: PlanoDeLaRed, columna: number): { x: number; clave: string }[] {
+  const c = p.columnas[columna];
+  const siguiente = p.columnas[columna + 1]?.x ?? p.ancho;
+  return p.aristas
+    .filter((a) => a.familia === 'enlace')
+    .flatMap((a) =>
+      segmentos(a)
+        .filter((sg) => sg.ax === sg.bx && sg.ax > c.x + c.ancho && sg.ax < siguiente)
+        .map((sg) => ({ x: sg.ax, clave: a.clave })),
+    );
+}
+
+/* -- A pseudo-random, reproducible history --------------------------------- */
 
 function historiaGenerada(semilla: number): { registros: RegistroDeLaRed[]; vinculos: VinculoDeLaRed[] } {
   let s = semilla * 7919;
@@ -348,7 +392,7 @@ function historiaGenerada(semilla: number): { registros: RegistroDeLaRed[]; vinc
   return { registros, vinculos: [...vinculos, ...inferirVinculos(registros, vinculos)] };
 }
 
-/* -- Las reglas del trazado ------------------------------------------------ */
+/* -- The routing rules ----------------------------------------------------- */
 
 interface Segmento {
   readonly ax: number;
@@ -363,22 +407,23 @@ function segmentos(arista: AristaDeLaRed): Segmento[] {
 }
 
 /**
- * Lo que tiene que cumplir cualquier plano (las mismas reglas que se le
- * exigían al recorrido por carriles, más las de los hilos):
+ * What any plane must satisfy (the same rules the lane-based tour had to
+ * meet, plus the threads' ones):
  *
- * 1. dos nodos no se superponen;
- * 2. cada enlace arranca y termina en el borde de sus nodos;
- * 3. dos enlaces de **distinto** origen no comparten un tramo paralelo a menos
- *    de 6 px (los de un mismo origen sí pueden abrirse desde la misma salida;
- *    y los que llegan a un mismo «+N» pueden converger);
- * 4. ningún tramo de enlace pasa a menos de 4 px de una tarjeta que no sea
- *    uno de sus extremos, y ningún tronco atraviesa una tarjeta;
- * 5. la punta de flecha (los ~16 px finales) no la pisa otro enlace;
- * 6. los tramos verticales de los enlaces corren a 8 px o más de los troncos;
- * 7. todo nodo queda dentro de su hilo y del plano.
+ * 1. two nodes never overlap;
+ * 2. every link starts and ends on the edge of its nodes;
+ * 3. two links of **different** origin never share a parallel stretch closer
+ *    than 6 px, and two vertical ones never closer than `PASO_DE_CARRIL`, so a
+ *    bundle reads as separate lines (those of one origin may open from the
+ *    same exit; and those reaching the same «+N» may converge);
+ * 4. no link stretch passes within 4 px of a card that is not one of its
+ *    ends, and no trunk crosses a card;
+ * 5. no other link steps on the arrowhead (the last ~16 px);
+ * 6. the links' vertical stretches run 8 px or more from the trunks;
+ * 7. every node stays inside its thread and the plane.
  */
 function verificarTrazado(p: PlanoDeLaRed): void {
-  // 1 y 7
+  // 1 and 7
   for (const a of p.nodos) {
     const hilo = p.hilos.find((h) => h.episodio.id === a.episodio)!;
     expect(a.y, `${a.id} dentro de su hilo`).toBeGreaterThanOrEqual(hilo.y);
@@ -440,7 +485,7 @@ function verificarTrazado(p: PlanoDeLaRed): void {
           if (sa.ax === sa.bx && sb.ax === sb.bx) {
             const solapan =
               Math.min(Math.max(sa.ay, sa.by), Math.max(sb.ay, sb.by)) - Math.max(Math.min(sa.ay, sa.by), Math.min(sb.ay, sb.by)) > 0.5;
-            if (solapan) expect(Math.abs(sa.ax - sb.ax), `${a.clave} y ${b.clave} comparten un vertical`).toBeGreaterThanOrEqual(6);
+            if (solapan) expect(Math.abs(sa.ax - sb.ax), `${a.clave} y ${b.clave} comparten un vertical`).toBeGreaterThanOrEqual(PASO_DE_CARRIL);
           }
         }
       }

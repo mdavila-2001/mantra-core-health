@@ -12,15 +12,15 @@
     <span class="red__muestra-hito red__hito--momento" aria-hidden="true"></span> Atención o cita
   </li>
 }
-@for (item of items(); track item.clave) {
-  <li class="red__leyenda-item" [attr.data-motivo]="item.motivo">
+@for (item of items(); track item.familia) {
+  <li class="red__leyenda-item" [attr.data-familia]="item.familia" [attr.title]="item.motivos">
     <svg class="red__muestra" viewBox="0 0 28 8" aria-hidden="true" focusable="false">
       <path
         class="red__arista"
         [class.red__arista--tronco]="item.familia === 'tronco'"
         [class.red__arista--enlace]="item.familia === 'enlace'"
         [class.red__arista--inferido]="item.familia === 'inferido'"
-        d="M 1 4 H 22"
+        [attr.d]="item.familia === 'tronco' ? 'M 1 4 H 27' : 'M 1 4 H 22'"
       />
       @if (item.familia !== 'tronco') {
         <path
@@ -29,6 +29,6 @@
         />
       }
     </svg>
-    {{ item.nombre }}
+    {{ item.nombre }}<span class="sr-only">: {{ item.motivos }}</span>
   </li>
 }

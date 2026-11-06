@@ -5,26 +5,23 @@ import type { AristaDeLaRed } from '../red-clinica.geometria.types';
 
 type Familia = 'tronco' | 'enlace' | 'inferido';
 
-/** The links the legend explains, in the order it explains them. */
-const ORDEN_DE_LA_LEYENDA: readonly MotivoDelVinculo[] = [
-  'registrado-en',
-  'derivado-desde',
-  'indicado-para',
-  'pedido-para',
-  'resultado-de',
-  'plan-para',
-  'evidencia',
-  'reemplazado-por',
-  'receta-reemplazada',
-  'reconsulta-de',
-  'recibido-en',
-  'durante-internacion',
-  'inferido-misma-atencion',
-  'inferido-mismo-dia',
+/**
+ * The families the canvas really tells apart, each with its own stroke: the
+ * trunk (thin, no arrowhead), the recorded link (solid, arrowhead) and the
+ * inferred one (dotted, arrowhead). Listing every reason under the same green
+ * line distinguished nothing; the reason of each line is in the panel.
+ */
+const FAMILIAS: readonly { readonly familia: Familia; readonly nombre: string }[] = [
+  { familia: 'tronco', nombre: 'Registrado en la atención' },
+  { familia: 'enlace', nombre: 'Relación registrada' },
+  { familia: 'inferido', nombre: 'Inferido (no registrado)' },
 ];
 
+/** The order the reasons are named in, inside each family. */
+const ORDEN_DE_LOS_MOTIVOS = Object.keys(NOMBRE_DEL_MOTIVO) as readonly MotivoDelVinculo[];
+
 /**
- * The legend's items: each kind of line on screen and, with something
+ * The legend's items: each family of line on screen and, with something
  * collapsed, the strip's milestones. Without it, the lines are a code. It sits
  * on the network's `<ul>` (same element, no wrapper).
  */
@@ -40,27 +37,22 @@ export class RedLeyenda {
   readonly conHitos = input(true);
 
   /**
-   * The lines on screen, by reason AND by how they are drawn: the family comes
-   * from the geometry (same column: trunk; otherwise: link), so a reason drawn
-   * both ways gets two samples, the trunk one saying «en la misma atención».
+   * The families on screen, from how each line was drawn (the geometry's
+   * family, or inferred), each naming the reasons it carries for hover and
+   * for assistive technology.
    */
   protected readonly items = computed(() => {
-    const presentes = new Map<MotivoDelVinculo, Set<Familia>>();
+    const presentes = new Map<Familia, Set<MotivoDelVinculo>>();
     for (const a of this.aristas()) {
       const familia: Familia = a.inferido ? 'inferido' : a.familia;
-      presentes.set(a.motivo, (presentes.get(a.motivo) ?? new Set<Familia>()).add(familia));
+      presentes.set(familia, (presentes.get(familia) ?? new Set<MotivoDelVinculo>()).add(a.motivo));
     }
-    return ORDEN_DE_LA_LEYENDA.flatMap((motivo) => {
-      const familias = [...(presentes.get(motivo) ?? [])].sort();
-      return familias.map((familia) => ({
-        clave: `${motivo}:${familia}`,
-        motivo,
-        familia,
-        nombre:
-          familia === 'tronco' && familias.length > 1
-            ? `${NOMBRE_DEL_MOTIVO[motivo]} (en la misma atención)`
-            : NOMBRE_DEL_MOTIVO[motivo],
-      }));
-    });
+    return FAMILIAS.filter(({ familia }) => presentes.has(familia)).map(({ familia, nombre }) => ({
+      familia,
+      nombre,
+      motivos: ORDEN_DE_LOS_MOTIVOS.filter((m) => presentes.get(familia)!.has(m))
+        .map((m) => NOMBRE_DEL_MOTIVO[m])
+        .join(' · '),
+    }));
   });
 }

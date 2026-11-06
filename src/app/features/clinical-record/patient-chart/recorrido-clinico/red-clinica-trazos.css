@@ -114,13 +114,17 @@
     stroke-width var(--dur-fast) ease;
 }
 
+/* Three families, told apart without color: the trunk is thin and has no
+   arrowhead, a recorded link is solid with one, an inferred one is dotted.
+   The trunk's opacity keeps it ≥ 3:1 on the canvas in light and dark (at
+   0.55 it fell to 2.7:1 in light). */
 .red__arista--tronco {
   stroke: var(--brand-primary);
   stroke-width: 1.5;
-  opacity: 0.55;
+  opacity: 0.75;
 }
 
-/* Real links: solid. */
+/* Recorded links: solid. */
 .red__arista--enlace {
   stroke: var(--st-success-fg);
   stroke-width: 2;

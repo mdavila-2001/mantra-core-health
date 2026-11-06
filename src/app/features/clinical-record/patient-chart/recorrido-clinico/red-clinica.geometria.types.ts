@@ -26,8 +26,12 @@ export const MEDIDAS_DE_LA_RED = {
 /** Where the lane closest to a card starts in its aisle: more than an arrowhead. */
 export const INICIO_DEL_PASILLO = 18;
 
-/** The distance between two parallel lanes. */
-export const PASO_DE_CARRIL = 7;
+/**
+ * The distance between two parallel lanes: with the 6 px halo of each line,
+ * 10 px leave 4 px of background between two neighbours, so a bundle reads
+ * as separate lines (at 7 px the halos touched).
+ */
+export const PASO_DE_CARRIL = 10;
 
 /** Room between the outermost lane and the next column's trunk. */
 export const AIRE_CON_EL_TRONCO = 12;
