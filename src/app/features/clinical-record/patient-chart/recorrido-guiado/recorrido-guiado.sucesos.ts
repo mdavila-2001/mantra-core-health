@@ -49,9 +49,14 @@ export interface Suceso {
   /**
    * Several events of the same step with the same `clave` are told in one
    * plural sentence (three equal appointments on the same day are not three
-   * sentences).
+   * sentences). `nombre` is what each one adds to the plural sentence (two
+   * presumptive diagnoses are named together).
    */
-  readonly plural?: { readonly clave: string; readonly texto: (cuantos: number) => string };
+  readonly plural?: {
+    readonly clave: string;
+    readonly nombre?: string;
+    readonly texto: (cuantos: number, nombres: readonly string[]) => string;
+  };
 }
 
 export interface ContextoDelPaso {

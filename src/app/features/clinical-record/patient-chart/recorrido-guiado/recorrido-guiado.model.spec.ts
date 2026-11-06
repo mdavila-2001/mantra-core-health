@@ -293,6 +293,20 @@ describe('armarRecorridoGuiado — plantillas', () => {
     expect(frases.map((f) => f.fuentes[0])).toEqual([ID.e1, ID.migrana, ID.tac, ID.paracetamol]);
   });
 
+  it('dos presuntivos de la misma atención se dicen en una sola frase', () => {
+    const e = u(230);
+    const pasos = armar({
+      atenciones: [atencion(e, dia(7, 4), 'Cansancio')],
+      diagnosticos: [
+        { id: u(231), codeConceptId: 'cx-migrana', encounterId: e, createdAt: dia(7, 4) },
+        { id: u(232), codeConceptId: 'cx-sinusitis', encounterId: e, createdAt: dia(7, 4) },
+      ],
+    });
+    expect(pasos[0].narracion).toContain('Se plantearon migraña y sinusitis aguda como diagnósticos presuntivos.');
+    expect(pasos[0].narracion).not.toContain('Se planteó');
+    expect(pasos[0].frases.find((f) => f.texto.startsWith('Se plantearon'))?.fuentes).toEqual([u(231), u(232)]);
+  });
+
   it('el vínculo inferido se dice «en la misma atención», nunca como causa', () => {
     const { frases } = pasoDel(armar(), '2026-02-03');
     const paracetamol = frases.find((f) => f.fuentes.includes(ID.paracetamol));
