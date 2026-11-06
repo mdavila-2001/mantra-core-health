@@ -16,7 +16,8 @@
   gap: var(--sp-4);
 }
 
-.recorrido__cabecera {
+.recorrido__cabecera,
+.recorrido__falta {
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);

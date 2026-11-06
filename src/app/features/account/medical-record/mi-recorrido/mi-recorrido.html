@@ -22,20 +22,20 @@
     </p>
   }
 
-  @if (fallo()) {
-    <app-alert tone="warning" title="Falta parte del recorrido" data-testid="recorrido-fallo">
-      No pudimos traer sus estudios ni sus controles. Los diagnósticos, las consultas y las recetas
-      se muestran igual.
-      <div alert-actions>
-        <button app-button variant="secondary" size="sm" type="button" (clicked)="reintentar.emit()">
-          Volver a cargar
-        </button>
-      </div>
-    </app-alert>
-  } @else if (citasSinCargar(); as motivo) {
-    <app-alert tone="warning" title="Faltan los controles" data-testid="recorrido-citas-sin-cargar">
-      {{ motivo }} El recorrido se muestra igual, pero sin los controles agendados.
-    </app-alert>
+  <!-- Partial failure: what arrived is still drawn, and the M34 host says why the rest did not
+       (S5 without a retry, S9 with its request id). -->
+  @if (faltaDelDetalle(); as falta) {
+    <div class="recorrido__falta" data-testid="recorrido-fallo">
+      <p class="recorrido__aviso">
+        Falta parte del recorrido: los diagnósticos, las consultas y las recetas se muestran igual.
+      </p>
+      <app-view-state-host [state]="falta" (retry)="reintentar.emit()" />
+    </div>
+  } @else if (faltaDeLasCitas(); as falta) {
+    <div class="recorrido__falta" data-testid="recorrido-citas-sin-cargar">
+      <p class="recorrido__aviso">Faltan los controles: el recorrido se muestra igual, sin los agendados.</p>
+      <app-view-state-host [state]="falta" (retry)="reintentar.emit()" />
+    </div>
   }
 
   @if (vacio()) {

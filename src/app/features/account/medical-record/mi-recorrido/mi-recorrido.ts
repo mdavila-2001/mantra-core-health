@@ -1,10 +1,12 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 
+import { hasData, isLoading } from '../../../../core/view-state/view-state';
+import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AccordionPanel } from '../../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
-import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DrawerPanel } from '../../../../shared/components/organisms/drawer-panel/drawer-panel';
+import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import type { Episodio, Recorrido } from './episodios';
 import type { PasoNarrado } from './narracion';
 import { fechaCorta } from './redaccion';
@@ -47,11 +49,11 @@ const TIPO_EN_PALABRAS: Readonly<Record<RegistroConVinculos['tipo'], string>> = 
   selector: 'app-mi-recorrido',
   imports: [
     AccordionPanel,
-    Alert,
     AppButton,
     DrawerPanel,
     NgTemplateOutlet,
     MiRecorridoDetalle,
+    ViewStateHost,
   ],
   templateUrl: './mi-recorrido.html',
   styleUrl: './mi-recorrido.css',
@@ -59,12 +61,10 @@ const TIPO_EN_PALABRAS: Readonly<Record<RegistroConVinculos['tipo'], string>> = 
 })
 export class MiRecorrido {
   readonly recorrido = input.required<Recorrido>();
-  /** The orders and appointments are still arriving. */
-  readonly cargando = input(false);
-  /** The orders and appointments could not be read. */
-  readonly fallo = input(false);
-  /** Why the appointments (and with them the follow-ups) did not arrive, or `null`. */
-  readonly citasSinCargar = input<string | null>(null);
+  /** The lazy read of orders and appointments (M34), or `null` while nobody asked for it. */
+  readonly detalle = input<ViewState<unknown> | null>(null);
+  /** The failed read of the appointments (and with them the follow-ups), as M34 says it, or `null`. */
+  readonly citasSinCargar = input<ViewState<unknown> | null>(null);
   /** The prescription being downloaded now, if any. */
   readonly descargandoReceta = input<string | null>(null);
 
@@ -85,6 +85,15 @@ export class MiRecorrido {
   /** The record the detail sheet shows. */
   protected readonly enDetalle = signal<RegistroConVinculos | null>(null);
   protected readonly detalleAbierto = signal(false);
+
+  protected readonly cargando = computed(() => {
+    const estado = this.detalle();
+    return estado !== null && isLoading(estado);
+  });
+
+  /** The read failed: the host tells S5 from S9 (no retry on a wall, request id on a fault). */
+  protected readonly faltaDelDetalle = computed(() => fallido(this.detalle()));
+  protected readonly faltaDeLasCitas = computed(() => fallido(this.citasSinCargar()));
 
   protected readonly vacio = computed(() => {
     const r = this.recorrido();
@@ -247,4 +256,9 @@ function registrosDe(episodio: Episodio): readonly RegistroConVinculos[] {
     ...episodio.descartados,
     ...episodio.sueltos.map((h) => h.registro),
   ];
+}
+
+/** The state when it is a failure (neither in flight nor with data), `null` otherwise. */
+export function fallido<T>(estado: ViewState<T> | null): ViewState<T> | null {
+  return estado === null || isLoading(estado) || hasData(estado) ? null : estado;
 }

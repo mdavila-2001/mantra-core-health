@@ -1,0 +1,9 @@
+ok   S2: «Mi recorrido» declares the read in flight (still visible after the shot)
+ok   S5: the host says «No tiene acceso»
+ok   S5: no retry is offered
+ok   S5: no «Volver a cargar» either
+ok   S5: what arrived is still drawn
+ok   S9: the request id is shown (mock-fallo)
+ok   S9: retry is offered
+ok   S9: «Reintentar» asks again and the notice goes away once the read succeeds
+TODO OK
