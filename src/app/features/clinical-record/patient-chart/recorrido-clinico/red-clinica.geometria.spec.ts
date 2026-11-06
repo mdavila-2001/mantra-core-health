@@ -287,7 +287,9 @@ describe('ubicarRed · muchas líneas', () => {
     const red = agruparEnEpisodios(registros, vinculos);
     for (const e of red.episodios) for (const x of registros) abiertos.add(claveDeGrupo(e.id, `enc:${x.id}`));
     verificarTrazado(plano(registros, vinculos, { todo: true, abiertos }));
-  });
+    // La verificación compara cada tramo con todos los demás: con la máquina
+    // cargada pasaba los 5 s por omisión sin que nada estuviera mal.
+  }, 30_000);
 });
 
 /* -- Una historia pseudoaleatoria y reproducible --------------------------- */
