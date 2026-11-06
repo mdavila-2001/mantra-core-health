@@ -3,7 +3,8 @@
  *
  * The journey, `UI → request → response → persistence → reload → UI`:
  *
- * 1. «Agregar del catálogo» leads to the catalog; the Hemograma is added with its
+ * 1. «Agregar del catálogo» leads to the catalog, grouped by sample type (blood,
+ *    urine…) and filtered to urine; the Hemograma is added with its
  *    components and, after reloading, says it is already in the price list;
  * 2. «Precios» shows the panel with its components under it, and the component
  *    that came without a suggested price waits as «Falta el precio»;
@@ -25,6 +26,16 @@ test('el laboratorio agrega el Hemograma del catálogo y le pone precio a un com
   await expect(page.getByTestId('lab-prices-table')).toBeVisible();
   await page.getByTestId('lab-prices-catalog').click();
   await expect(page).toHaveURL(/laboratory-prices\/catalog/);
+
+  // Browsed by sample type: blood first, urine apart, each card with its section.
+  const sangre = page.getByRole('heading', { name: /^Análisis de sangre/ });
+  await expect(sangre).toBeVisible();
+  await page.goto(`${PRICES}/catalog?sample=URINE`, { waitUntil: 'domcontentloaded' });
+  const ego = page.locator('[data-testid="lab-catalog-item"][data-code="EGO"]');
+  await expect(ego).toContainText('Uroanálisis y orina');
+  await expect(page.getByTestId('lab-catalog-item')).toHaveCount(1);
+  await expect(page.getByRole('heading', { name: /^Análisis de orina/ })).toBeVisible();
+  await expect(sangre).toHaveCount(0);
 
   await page.goto(`${PRICES}/catalog?q=hemograma`, { waitUntil: 'domcontentloaded' });
   const hemograma = page.locator('[data-testid="lab-catalog-item"][data-code="HEMOGRAMA"]');

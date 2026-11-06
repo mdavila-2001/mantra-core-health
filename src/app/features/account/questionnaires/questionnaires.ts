@@ -21,6 +21,8 @@ import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
+import { NO_SURVEYS } from './questionnaires.copy';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
@@ -46,12 +48,7 @@ const PARAM_DE_SECCION = 'seccion';
  */
 const SECCIONES = ['aspectos', 'encuestas'] as const;
 
-/**
- * Cuántas encuestas respondidas se consultan, como mucho, para ofrecer
- * «Dejar reseña pública». La pregunta es una por reserva (no hay lectura en
- * lote), así que se acota a las más recientes: quien tiene muchas respondidas
- * no dispara una ráfaga de peticiones al abrir la pantalla.
- */
+/** Max answered surveys checked for «Dejar reseña pública» (one request per booking, no batch read). */
 const MAX_CONSULTAS_DE_RESENA = 5;
 
 /** Cuánto se espera la respuesta de cada una; es un extra de la lista. */
@@ -143,6 +140,7 @@ interface CuestionarioVisible {
     Badge,
     Card,
     DatePipe,
+    EmptyState,
     MedicalAspects,
     PageHeader,
     RateEncounterDialog,
@@ -194,6 +192,7 @@ export class Questionnaires {
 
   /** A dónde manda el estado vacío: a los turnos, que es de donde salen. */
   protected readonly rutaDeTurnos = MIS_TURNOS_ROUTE;
+  protected readonly noSurveys = NO_SURVEYS;
 
   private readonly estado = signal<ViewState<readonly CuestionarioVisible[]>>(loading());
 
@@ -255,10 +254,7 @@ export class Questionnaires {
         this.consultarResenas(invitaciones);
         if (invitaciones.length === 0) {
           this.estado.set(
-            empty(
-              { label: 'Ver mis citas', route: this.rutaDeTurnos },
-              'Todavía no tiene cuestionarios. Aparecen acá cuando el profesional cierra una consulta que tiene encuesta asociada.',
-            ),
+            empty({ label: NO_SURVEYS.action, route: this.rutaDeTurnos }, NO_SURVEYS.description, NO_SURVEYS.title),
           );
           return;
         }
