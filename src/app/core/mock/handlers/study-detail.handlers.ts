@@ -1,7 +1,30 @@
-import { STUDY_DETAIL_TARGETS, type StudyDetailFields } from '../../data-access/diagnostics/study-detail.types';
-import { IMAGING_BODY_STRUCTURE, IMAGING_BONE_TYPE, IMAGING_MODALITY, UNPAIRED_BODY_SITES } from '../fixtures/study-detail-concepts';
-import { CODE_SYSTEM_VERSION_ID, LATERALITY, membersOf, record, SPECIMEN_TYPE, setByCode } from '../fixtures/concepts';
-import { isMockReply, precondition, type MockHandler, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
+import {
+  STUDY_DETAIL_TARGETS,
+  type StudyDetailFields,
+} from '../../data-access/diagnostics/study-detail.types';
+import {
+  IMAGING_BODY_STRUCTURE,
+  IMAGING_BONE_TYPE,
+  IMAGING_CONTRAST,
+  IMAGING_MODALITY,
+  UNPAIRED_BODY_SITES,
+} from '../fixtures/study-detail-concepts';
+import {
+  CODE_SYSTEM_VERSION_ID,
+  LATERALITY,
+  membersOf,
+  record,
+  SPECIMEN_TYPE,
+  setByCode,
+} from '../fixtures/concepts';
+import {
+  isMockReply,
+  precondition,
+  type MockHandler,
+  type MockReply,
+  type MockRequest,
+  type MockRouter,
+} from '../mock-router';
 import { Coleccion, cuerpo, uuid } from '../mock-store';
 import { categoriaDeLaOrden, esRechazo, resolverCategoria } from './service-request-category.mock';
 
@@ -29,6 +52,7 @@ const DETAIL_KEYS = [
   'bodyStructureUberon',
   'bodyMeshId',
   'boneTypeConceptId',
+  'contrastConceptId',
 ] as const;
 
 type Row = { readonly id: string } & StudyDetailFields;
@@ -47,17 +71,22 @@ const SETS: Readonly<Record<string, readonly string[]>> = {
   bodySite: Object.values(IMAGING_BODY_STRUCTURE),
   laterality: Object.values(LATERALITY),
   boneType: Object.values(IMAGING_BONE_TYPE),
+  contrast: Object.values(IMAGING_CONTRAST),
 };
 
 function fail(reason: string, field: string, message: string): MockReply {
   return precondition(message, reason, { reason, field });
 }
 
-const text = (value: unknown): string | undefined => (typeof value === 'string' && value !== '' ? value : undefined);
+const text = (value: unknown): string | undefined =>
+  typeof value === 'string' && value !== '' ? value : undefined;
 
 /** Las siete claves del detalle de un cuerpo, planas o dentro de `imaging` (lo plano manda, como en la API). */
 function detailOf(body: Record<string, unknown>): StudyDetailFields {
-  const nested = typeof body['imaging'] === 'object' && body['imaging'] !== null ? (body['imaging'] as Record<string, unknown>) : {};
+  const nested =
+    typeof body['imaging'] === 'object' && body['imaging'] !== null
+      ? (body['imaging'] as Record<string, unknown>)
+      : {};
   const out: Record<string, string> = {};
   for (const key of ['specimenTypeConceptId', ...DETAIL_KEYS]) {
     const value = text(body[key]) ?? text(nested[key]);
@@ -67,53 +96,137 @@ function detailOf(body: Record<string, unknown>): StudyDetailFields {
 }
 
 /** El rechazo que daría la API, o `null` si el detalle es válido. Las reglas siguen el orden V3–V9 de la API. */
-export function rejectStudyDetail(detail: StudyDetailFields, category: 'LAB' | 'IMAGING' | 'OTHER' | undefined): MockReply | null {
+export function rejectStudyDetail(
+  detail: StudyDetailFields,
+  category: 'LAB' | 'IMAGING' | 'OTHER' | undefined,
+): MockReply | null {
   const hasImaging = DETAIL_KEYS.some((key) => detail[key] !== undefined);
   const specimen = detail.specimenTypeConceptId;
   if (specimen !== undefined && hasImaging) {
-    return fail('SPECIMEN_AND_IMAGING_FIELDS_EXCLUSIVE', 'specimenTypeConceptId', 'Una orden lleva muestra (laboratorio) o datos de imagen, no las dos cosas');
+    return fail(
+      'SPECIMEN_AND_IMAGING_FIELDS_EXCLUSIVE',
+      'specimenTypeConceptId',
+      'Una orden lleva muestra (laboratorio) o datos de imagen, no las dos cosas',
+    );
   }
   if (specimen !== undefined) {
     if (category !== undefined && category !== 'LAB') {
-      return fail('SPECIMEN_NOT_ALLOWED_FOR_CATEGORY', 'specimenTypeConceptId', 'La muestra sólo se pide en laboratorio');
+      return fail(
+        'SPECIMEN_NOT_ALLOWED_FOR_CATEGORY',
+        'specimenTypeConceptId',
+        'La muestra sólo se pide en laboratorio',
+      );
     }
     if (!SETS['specimen']!.includes(specimen)) {
-      return fail('SPECIMEN_TYPE_NOT_IN_CATALOG', 'specimenTypeConceptId', 'La muestra no es de `specimen-type`');
+      return fail(
+        'SPECIMEN_TYPE_NOT_IN_CATALOG',
+        'specimenTypeConceptId',
+        'La muestra no es de `specimen-type`',
+      );
     }
   }
   if (category === 'IMAGING' && detail.bodySiteConceptId === undefined) {
-    return fail('BODY_SITE_REQUIRED', 'imaging.bodySiteConceptId', 'Un estudio de imagen exige región corporal');
+    return fail(
+      'BODY_SITE_REQUIRED',
+      'imaging.bodySiteConceptId',
+      'Un estudio de imagen exige región corporal',
+    );
   }
   if (!hasImaging) return null;
   if (category !== undefined && category !== 'IMAGING') {
-    return fail('IMAGING_FIELDS_NOT_ALLOWED', 'imaging', 'Los datos de imagen sólo van en estudios de imagen');
+    return fail(
+      'IMAGING_FIELDS_NOT_ALLOWED',
+      'imaging',
+      'Los datos de imagen sólo van en estudios de imagen',
+    );
   }
-  const { modalityConceptId: modality, bodySiteConceptId: site, lateralityConceptId: side, bodyStructureUberon: uberon, bodyMeshId: mesh, boneTypeConceptId: bone } = detail;
+  const {
+    modalityConceptId: modality,
+    bodySiteConceptId: site,
+    lateralityConceptId: side,
+    bodyStructureUberon: uberon,
+    bodyMeshId: mesh,
+    boneTypeConceptId: bone,
+    contrastConceptId: contrast,
+  } = detail;
   if (modality !== undefined && !SETS['modality']!.includes(modality)) {
-    return fail('MODALITY_NOT_IN_CATALOG', 'imaging.modalityConceptId', 'La modalidad no es de `service-request-imaging-modality`');
+    return fail(
+      'MODALITY_NOT_IN_CATALOG',
+      'imaging.modalityConceptId',
+      'La modalidad no es de `service-request-imaging-modality`',
+    );
   }
   if (site !== undefined && !SETS['bodySite']!.includes(site)) {
-    return fail('BODY_SITE_NOT_IN_CATALOG', 'imaging.bodySiteConceptId', 'La región no es de `imaging-body-structure`');
+    return fail(
+      'BODY_SITE_NOT_IN_CATALOG',
+      'imaging.bodySiteConceptId',
+      'La región no es de `imaging-body-structure`',
+    );
   }
   if (side !== undefined) {
-    if (!SETS['laterality']!.includes(side)) return fail('LATERALITY_NOT_IN_CATALOG', 'imaging.lateralityConceptId', 'El lado no es de `condition-laterality`');
+    if (!SETS['laterality']!.includes(side))
+      return fail(
+        'LATERALITY_NOT_IN_CATALOG',
+        'imaging.lateralityConceptId',
+        'El lado no es de `condition-laterality`',
+      );
     // La API pide la región para el lado (no basta la estructura del 3D).
-    if (site === undefined) return fail('BODY_SITE_REQUIRED', 'imaging.lateralityConceptId', 'El lado exige indicar la región');
+    if (site === undefined)
+      return fail(
+        'BODY_SITE_REQUIRED',
+        'imaging.lateralityConceptId',
+        'El lado exige indicar la región',
+      );
     if (UNPAIRED_BODY_SITES.some((code) => record.get(code)?.id === site)) {
-      return fail('LATERALITY_NOT_APPLICABLE', 'imaging.lateralityConceptId', 'La región no admite lateralidad');
+      return fail(
+        'LATERALITY_NOT_APPLICABLE',
+        'imaging.lateralityConceptId',
+        'La región no admite lateralidad',
+      );
     }
   }
   if (uberon !== undefined && !STRUCTURE_PATTERN.test(uberon)) {
-    return fail('BODY_STRUCTURE_FORMAT_INVALID', 'imaging.bodyStructureUberon', 'La estructura debe tener la forma UBERON:<n> o FMA:<n>');
+    return fail(
+      'BODY_STRUCTURE_FORMAT_INVALID',
+      'imaging.bodyStructureUberon',
+      'La estructura debe tener la forma UBERON:<n> o FMA:<n>',
+    );
   }
   if (mesh !== undefined && !MESH_PATTERN.test(mesh)) {
-    return fail('BODY_MESH_ID_FORMAT_INVALID', 'imaging.bodyMeshId', 'La malla debe ser alfanumérica (hasta 64 caracteres)');
+    return fail(
+      'BODY_MESH_ID_FORMAT_INVALID',
+      'imaging.bodyMeshId',
+      'La malla debe ser alfanumérica (hasta 64 caracteres)',
+    );
   }
   if (bone !== undefined) {
     if (site === undefined && uberon === undefined) {
-      return fail('BONE_TYPE_REQUIRES_BODY_STRUCTURE', 'imaging.boneTypeConceptId', 'El tipo de hueso exige la región o la estructura (UBERON)');
+      return fail(
+        'BONE_TYPE_REQUIRES_BODY_STRUCTURE',
+        'imaging.boneTypeConceptId',
+        'El tipo de hueso exige la región o la estructura (UBERON)',
+      );
     }
-    if (!SETS['boneType']!.includes(bone)) return fail('BONE_TYPE_NOT_IN_CATALOG', 'imaging.boneTypeConceptId', 'El tipo de hueso no es de `imaging-bone-type`');
+    if (!SETS['boneType']!.includes(bone))
+      return fail(
+        'BONE_TYPE_NOT_IN_CATALOG',
+        'imaging.boneTypeConceptId',
+        'El tipo de hueso no es de `imaging-bone-type`',
+      );
+  }
+  if (contrast !== undefined) {
+    if (!SETS['contrast']!.includes(contrast))
+      return fail(
+        'CONTRAST_NOT_IN_CATALOG',
+        'imaging.contrastConceptId',
+        'El contraste no es de `imaging-contrast`',
+      );
+    if (modality === undefined)
+      return fail(
+        'CONTRAST_REQUIRES_MODALITY',
+        'imaging.contrastConceptId',
+        'El contraste exige indicar la modalidad',
+      );
   }
   return null;
 }
@@ -132,11 +245,24 @@ export function studyDetailOfOrder(orderId: string): Record<string, string> {
   const { id: _id, ...detail } = row;
   return {
     ...detail,
-    ...(detail.specimenTypeConceptId === undefined ? {} : { specimenTypeDisplay: displayOf(detail.specimenTypeConceptId) ?? '' }),
-    ...(detail.bodySiteConceptId === undefined ? {} : { bodySiteDisplay: displayOf(detail.bodySiteConceptId) ?? '' }),
-    ...(detail.lateralityConceptId === undefined ? {} : { lateralityDisplay: displayOf(detail.lateralityConceptId) ?? '' }),
-    ...(detail.modalityConceptId === undefined ? {} : { modalityDisplay: displayOf(detail.modalityConceptId) ?? '' }),
-    ...(detail.boneTypeConceptId === undefined ? {} : { boneTypeDisplay: displayOf(detail.boneTypeConceptId) ?? '' }),
+    ...(detail.specimenTypeConceptId === undefined
+      ? {}
+      : { specimenTypeDisplay: displayOf(detail.specimenTypeConceptId) ?? '' }),
+    ...(detail.bodySiteConceptId === undefined
+      ? {}
+      : { bodySiteDisplay: displayOf(detail.bodySiteConceptId) ?? '' }),
+    ...(detail.lateralityConceptId === undefined
+      ? {}
+      : { lateralityDisplay: displayOf(detail.lateralityConceptId) ?? '' }),
+    ...(detail.modalityConceptId === undefined
+      ? {}
+      : { modalityDisplay: displayOf(detail.modalityConceptId) ?? '' }),
+    ...(detail.boneTypeConceptId === undefined
+      ? {}
+      : { boneTypeDisplay: displayOf(detail.boneTypeConceptId) ?? '' }),
+    ...(detail.contrastConceptId === undefined
+      ? {}
+      : { contrastDisplay: displayOf(detail.contrastConceptId) ?? '' }),
   };
 }
 
@@ -152,11 +278,28 @@ function enumOf(target: string, valueSet: string, name: string) {
     versionId: set?.defaultVersionId ?? CODE_SYSTEM_VERSION_ID,
     cacheToken: `v1-${valueSet}`,
     allowCustomValue: false,
-    options: membersOf(valueSet).map((c, i) => ({ conceptId: c.id, code: c.code, display: c.display, ordinal: c.ordinal, isDefault: i === 0 })),
+    options: membersOf(valueSet).map((c, i) => ({
+      conceptId: c.id,
+      code: c.code,
+      display: c.display,
+      ordinal: c.ordinal,
+      isDefault: i === 0,
+    })),
   };
 }
 
-const IMAGING_STUDIES = ['RX-TORAX', 'ECO-ABD', 'RMN-RODILLA', 'TAC-CRANEO', 'MAMOGRAFIA', 'ECO-OBSTETRICA', 'RX-COLUMNA', 'TAC-ABDOMEN', 'RMN-CEREBRO', 'DENSITOMETRIA'];
+const IMAGING_STUDIES = [
+  'RX-TORAX',
+  'ECO-ABD',
+  'RMN-RODILLA',
+  'TAC-CRANEO',
+  'MAMOGRAFIA',
+  'ECO-OBSTETRICA',
+  'RX-COLUMNA',
+  'TAC-ABDOMEN',
+  'RMN-CEREBRO',
+  'DENSITOMETRIA',
+];
 
 /** `STUDY-HEMOGRAMA` → `LAB_HEMOGRAMA`, `STUDY-RX-TORAX` → `IMG_RX_TORAX`, `STUDY-ECG` → `CAR_ECG`. */
 export function realCodeOfStudy(code: string): string {
@@ -175,14 +318,20 @@ function withBody(result: unknown, body: unknown): unknown {
 }
 
 /** Suma el detalle a cada fila de `list(body)`, que identifica con `idOf`. */
-function enrich(list: (body: Record<string, unknown>) => unknown, idOf: (row: Record<string, unknown>) => string) {
+function enrich(
+  list: (body: Record<string, unknown>) => unknown,
+  idOf: (row: Record<string, unknown>) => string,
+) {
   return (request: MockRequest, next: MockHandler): unknown => {
     const result = next(request);
     const body = bodyOf(result);
     if (typeof body !== 'object' || body === null) return result;
     const rows = list(body as Record<string, unknown>);
     if (!Array.isArray(rows)) return result;
-    const extended = rows.map((row: Record<string, unknown>) => ({ ...row, ...studyDetailOfOrder(idOf(row)) }));
+    const extended = rows.map((row: Record<string, unknown>) => ({
+      ...row,
+      ...studyDetailOfOrder(idOf(row)),
+    }));
     return withBody(result, { ...body, [rowsKeyOf(body as Record<string, unknown>)]: extended });
   };
 }
@@ -204,26 +353,62 @@ export function registrarDetalleDeEstudio(router: MockRouter): void {
     }
     const result = next(request);
     const created = bodyOf(result);
-    const id = typeof created === 'object' && created !== null ? text((created as Record<string, unknown>)['id']) : undefined;
-    if (isMockReply(result) && result.status === 201 && id !== undefined && Object.keys(detail).length > 0) {
+    const id =
+      typeof created === 'object' && created !== null
+        ? text((created as Record<string, unknown>)['id'])
+        : undefined;
+    if (
+      isMockReply(result) &&
+      result.status === 201 &&
+      id !== undefined &&
+      Object.keys(detail).length > 0
+    ) {
       details.agregar({ id, ...detail });
     }
     return result;
   });
 
-  router.wrap('GET', '/diagnostics/patients/:id/orders', enrich((b) => b['orders'], (row) => String(row['id'])));
-  router.wrap('GET', '/diagnostic-results/me/orders', enrich((b) => b['items'], (row) => String(row['id'])));
-  router.wrap('POST', '/diagnostics/service-requests/inbox', enrich((b) => b['items'], (row) => String(row['serviceRequestId'])));
+  router.wrap(
+    'GET',
+    '/diagnostics/patients/:id/orders',
+    enrich(
+      (b) => b['orders'],
+      (row) => String(row['id']),
+    ),
+  );
+  router.wrap(
+    'GET',
+    '/diagnostic-results/me/orders',
+    enrich(
+      (b) => b['items'],
+      (row) => String(row['id']),
+    ),
+  );
+  router.wrap(
+    'POST',
+    '/diagnostics/service-requests/inbox',
+    enrich(
+      (b) => b['items'],
+      (row) => String(row['serviceRequestId']),
+    ),
+  );
 
   /** Los catálogos del detalle: los de la maqueta que ya existían y los sintéticos de arriba. */
   router.wrap('GET', '/system-context/dynamic-enums', (request, next) => {
     const target = request.query.get('target') ?? '';
     const code = {
       [STUDY_DETAIL_TARGETS.specimen]: ['VS_SPECIMEN_TYPE', 'Tipo de espécimen'],
-      [STUDY_DETAIL_TARGETS.modality]: ['VS_SERVICE_REQUEST_IMAGING_MODALITY', 'Modalidad del estudio de imagen'],
-      [STUDY_DETAIL_TARGETS.bodySite]: ['VS_IMAGING_BODY_STRUCTURE', 'Región del cuerpo del estudio de imagen'],
+      [STUDY_DETAIL_TARGETS.modality]: [
+        'VS_SERVICE_REQUEST_IMAGING_MODALITY',
+        'Modalidad del estudio de imagen',
+      ],
+      [STUDY_DETAIL_TARGETS.bodySite]: [
+        'VS_IMAGING_BODY_STRUCTURE',
+        'Región del cuerpo del estudio de imagen',
+      ],
       [STUDY_DETAIL_TARGETS.laterality]: ['VS_CONDITION_LATERALITY', 'Lateralidad'],
       [STUDY_DETAIL_TARGETS.boneType]: ['VS_IMAGING_BONE_TYPE', 'Tipo de hueso'],
+      [STUDY_DETAIL_TARGETS.contrast]: ['VS_IMAGING_CONTRAST', 'Contraste'],
     }[target];
     if (code !== undefined) return enumOf(target, code[0]!, code[1]!);
     if (target !== 'clinical.service_requests.code_concept_id') return next(request);
@@ -232,6 +417,9 @@ export function registrarDetalleDeEstudio(router: MockRouter): void {
     const result = next(request);
     const catalogo = bodyOf(result) as { options?: { code: string }[] };
     if (catalogo.options === undefined) return result;
-    return withBody(result, { ...catalogo, options: catalogo.options.map((o) => ({ ...o, code: realCodeOfStudy(o.code) })) });
+    return withBody(result, {
+      ...catalogo,
+      options: catalogo.options.map((o) => ({ ...o, code: realCodeOfStudy(o.code) })),
+    });
   });
 }

@@ -147,6 +147,15 @@ describe('AnalysisOrderBlock', () => {
   });
 
   /**
+   * Elige el estudio como lo hace la pantalla: antes se elige el tipo de orden. Se usa «otro estudio» porque
+   * no limita el catálogo; los recorridos de laboratorio e imagen están en `analysis-order-block.tipo.spec.ts`.
+   */
+  function elegirEstudio(conceptId: string): void {
+    componente['orden'].kind.set('OTHER');
+    componente['estudio'].set(conceptId);
+  }
+
+  /**
    * Responde **todos** los catálogos pendientes, no sólo el del estudio.
    *
    * Son tres targets distintos y se piden a la vez: el bloque pregunta por el
@@ -331,8 +340,11 @@ describe('AnalysisOrderBlock', () => {
     expect(fixture.nativeElement.querySelector('form')).toBeNull();
   });
 
-  /** El tipo no se elige: sale del estudio, y sin estudio no hay pedido. */
-  it('no ofrece un selector de tipo: lo deduce del estudio', () => {
+  /**
+   * El tipo de orden se elige primero y sin él no se ofrece ningún estudio; el tipo de la categoría, en cambio,
+   * sigue saliendo del estudio (un segundo selector dejaba pedir un hemograma como imagen).
+   */
+  it('el tipo de orden se elige primero y sin él no se ofrece ningún estudio; la categoría sale del estudio', () => {
     fixture.detectChanges();
     responderCatalogos();
     responderCircuito();
@@ -341,16 +353,17 @@ describe('AnalysisOrderBlock', () => {
     const etiquetas = [...fixture.nativeElement.querySelectorAll('label')].map((l: Element) =>
       l.textContent?.trim(),
     );
-    expect(etiquetas.some((t: string | undefined) => t?.startsWith('Tipo'))).toBe(false);
+    expect(etiquetas.some((t: string | undefined) => t?.startsWith('Tipo de orden'))).toBe(true);
+    expect(etiquetas.some((t: string | undefined) => t?.startsWith('Estudio'))).toBe(false);
     expect(componente['puedePedir']()).toBe(false);
 
-    componente['estudio'].set('code-hemograma');
+    elegirEstudio('code-hemograma');
     expect(componente['tipo'].label()).toBe('Laboratorio');
     expect(componente['puedePedir']()).toBe(true);
 
-    componente['estudio'].set('code-rx');
+    elegirEstudio('code-rx');
     expect(componente['tipo'].label()).toBe('Imagenología');
-    componente['estudio'].set('code-raro');
+    elegirEstudio('code-raro');
     expect(componente['tipo'].label()).toBe('Otro estudio');
   });
 
@@ -367,7 +380,7 @@ describe('AnalysisOrderBlock', () => {
     responderCatalogos();
     responderCircuito();
 
-    componente['estudio'].set(estudio);
+    elegirEstudio(estudio);
     componente['pedir']();
     responderChequeo(false);
 
@@ -387,7 +400,7 @@ describe('AnalysisOrderBlock', () => {
     }
     responderCircuito();
 
-    componente['estudio'].set('code-ecg');
+    elegirEstudio('code-ecg');
     expect(componente['tipo'].label()).toBe('Estudio cardiológico');
     componente['pedir']();
     responderChequeo(false);
@@ -404,7 +417,7 @@ describe('AnalysisOrderBlock', () => {
     responderCatalogos();
     responderCircuito();
 
-    componente['estudio'].set('code-hemograma');
+    elegirEstudio('code-hemograma');
     componente['pedir']();
 
     // Primero pregunta si es un duplicado; sin uno, el alta sigue directo.
@@ -440,7 +453,7 @@ describe('AnalysisOrderBlock', () => {
     responderCatalogos();
     responderCircuito();
 
-    componente['estudio'].set('code-hemograma');
+    elegirEstudio('code-hemograma');
     componente['notaDelFormularioLibre'].set('nota-libre-1');
     componente['pedir']();
     responderChequeo(false);
@@ -523,7 +536,7 @@ describe('AnalysisOrderBlock', () => {
       fixture.detectChanges();
       responderCatalogos();
       responderCircuito();
-      componente['estudio'].set('code-hemograma');
+      elegirEstudio('code-hemograma');
     });
 
     it('con duplicado abre el diálogo y no manda el alta', () => {
@@ -702,7 +715,7 @@ describe('AnalysisOrderBlock', () => {
 
     expect(componente['errorDelHistorico']()).not.toBeNull();
 
-    componente['estudio'].set('code-hemograma');
+    elegirEstudio('code-hemograma');
     expect(componente['puedePedir']()).toBe(true);
   });
   /**
@@ -773,7 +786,7 @@ describe('AnalysisOrderBlock', () => {
       responderCategorias(codigoProcedimiento);
       responderCircuito();
       fixture.detectChanges();
-      componente['estudio'].set(categoria === 'cat-proc' ? PROCEDIMIENTO : 'code-hemograma');
+      elegirEstudio(categoria === 'cat-proc' ? PROCEDIMIENTO : 'code-hemograma');
       fixture.detectChanges();
     }
 
@@ -869,7 +882,7 @@ describe('AnalysisOrderBlock', () => {
       responderCategorias('SR_PROCEDURE');
       responderCircuito();
       fixture.detectChanges();
-      componente['estudio'].set('code-rx');
+      elegirEstudio('code-rx');
       fixture.detectChanges();
       for (const atlas of http.match((r) => r.url.startsWith('/anatomy-atlas-3d'))) {
         atlas.flush(atlas.request.url.endsWith('index.json') ? { shards: 1, entries: [] } : []);
@@ -992,7 +1005,7 @@ describe('AnalysisOrderBlock', () => {
       it('laboratorio e imagen son excluyentes: cambiar de estudio no arrastra lo del otro', () => {
         abrir('cat-lab');
         elegirMuestra('sp-orina');
-        componente['estudio'].set('code-rx');
+        elegirEstudio('code-rx');
         fixture.detectChanges();
         for (const atlas of http.match((r) => r.url.startsWith('/anatomy-atlas-3d'))) atlas.flush([]);
 
@@ -1124,7 +1137,7 @@ describe('AnalysisOrderBlock', () => {
       componente['performer'].choice.set({ mode: 'ORGANIZATION', siteId: 's-2' });
       fixture.detectChanges();
 
-      componente['estudio'].set('proc-endoscopia');
+      elegirEstudio('proc-endoscopia');
       fixture.detectChanges();
 
       expect(componente['performer'].choice()).toEqual({ mode: 'PATIENT_CHOICE', siteId: null });

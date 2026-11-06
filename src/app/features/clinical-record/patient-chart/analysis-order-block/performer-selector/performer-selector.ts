@@ -11,7 +11,8 @@ import {
 } from './performer-selector.rules';
 
 /** El texto que acompaña a cualquier opción: avisa que no se obliga a nadie. */
-export const PERFORMER_RECOMMENDATION_TEXT = 'Es una recomendación. Su paciente puede elegir otro lugar.';
+export const PERFORMER_RECOMMENDATION_TEXT =
+  'Es una recomendación. Su paciente puede elegir otro lugar.';
 
 /** Por qué «Lo hago yo» está deshabilitada cuando no hay ninguna sede propia. */
 export const NO_OWN_SITE_REASON =
@@ -53,6 +54,10 @@ export const NO_CENTER_SITE_REASON = 'Ningún centro publica este procedimiento 
 export class PerformerSelector {
   /** El procedimiento pedido, o `null` si todavía no se eligió. */
   readonly procedureConceptId = input<string | null>(null);
+  /** La pregunta del selector: «procedimiento» por omisión; laboratorio e imagen la cambian. */
+  readonly titulo = input('Quién realiza el procedimiento');
+  /** Cómo se llama lo que se pide en los motivos: «procedimiento» por omisión, «estudio» en laboratorio e imagen. */
+  readonly termino = input('procedimiento');
 
   /** «Lo hago yo»: sedes activas del médico que publican el procedimiento. */
   readonly ownSites = input<readonly PerformerSite[]>([]);
@@ -98,18 +103,23 @@ export class PerformerSelector {
 
   /** El motivo visible de «Lo hago yo» deshabilitada, o `null` si está disponible. */
   protected readonly selfReason = computed(() =>
-    this.selfEnabled() ? null : (this.unavailableReason() ?? NO_OWN_SITE_REASON),
+    this.selfEnabled()
+      ? null
+      : (this.unavailableReason() ?? NO_OWN_SITE_REASON.replace('procedimiento', this.termino())),
   );
 
   /** El motivo visible de «En este centro» deshabilitada, o `null`. */
   protected readonly organizationReason = computed(() =>
-    this.organizationEnabled() ? null : (this.unavailableReason() ?? NO_CENTER_SITE_REASON),
+    this.organizationEnabled()
+      ? null
+      : (this.unavailableReason() ??
+        NO_CENTER_SITE_REASON.replace('procedimiento', this.termino())),
   );
 
   /** Lo que impide mirar las sedes, antes de saber si hay o no. */
   private readonly unavailableReason = computed<string | null>(() => {
     if (this.procedureConceptId() === null) {
-      return 'Elija primero el procedimiento';
+      return `Elija primero el ${this.termino()}`;
     }
     if (this.sitesError() !== null) {
       return this.sitesError();
@@ -124,8 +134,11 @@ export class PerformerSelector {
     effect(() => {
       const { mode, siteId } = this.choice();
       const sites = this.sitesOfMode();
-      const modeGone = (mode === 'SELF' && !this.selfEnabled()) || (mode === 'ORGANIZATION' && !this.organizationEnabled());
-      const siteGone = siteId !== null && sites !== null && !sites.some((s) => s.practiceSiteId === siteId);
+      const modeGone =
+        (mode === 'SELF' && !this.selfEnabled()) ||
+        (mode === 'ORGANIZATION' && !this.organizationEnabled());
+      const siteGone =
+        siteId !== null && sites !== null && !sites.some((s) => s.practiceSiteId === siteId);
       if (modeGone || siteGone) {
         this.choice.set(DEFAULT_PERFORMER_CHOICE);
       }

@@ -8,6 +8,7 @@ import {
   abrirConsultaDelPaciente,
   abrirOrdenDeEstudios,
   cerrarCasilla,
+  elegirTipoDeOrden,
   MEDICA_MOCK,
   responderFormularioMedico,
 } from './support/consulta-estudios';
@@ -34,7 +35,9 @@ import { entrar } from './support/sesion';
  * debe ensuciar el árbol); la evidencia del trabajo se genera con
  * `E2E_CAPTURAS_DIR=docs/trabajo/2026-10-31-estudios-muestra-y-region-corporal/evidencia/capturas`.
  */
-const CAPTURAS = process.env['E2E_CAPTURAS_DIR'] ?? join(process.cwd(), 'artifacts', 'playwright', 'capturas-estudios');
+const CAPTURAS =
+  process.env['E2E_CAPTURAS_DIR'] ??
+  join(process.cwd(), 'artifacts', 'playwright', 'capturas-estudios');
 
 test.use({
   launchOptions: {
@@ -51,16 +54,28 @@ const VISTAS = [
 ] as const;
 
 async function fijarTema(page: Page, tema: 'claro' | 'oscuro'): Promise<void> {
-  await page.emulateMedia({ colorScheme: tema === 'oscuro' ? 'dark' : 'light', reducedMotion: 'reduce' });
-  await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t === 'oscuro' ? 'dark' : 'light'), tema);
+  await page.emulateMedia({
+    colorScheme: tema === 'oscuro' ? 'dark' : 'light',
+    reducedMotion: 'reduce',
+  });
+  await page.evaluate(
+    (t) => document.documentElement.setAttribute('data-theme', t === 'oscuro' ? 'dark' : 'light'),
+    tema,
+  );
 }
 
 /** Una captura de la ventana o, con `zona`, sólo de ese elemento entero (la sección de imagen es más alta que la ventana). */
 async function foto(page: Page, nombre: string, zona?: Locator): Promise<void> {
   mkdirSync(CAPTURAS, { recursive: true });
-  await page.evaluate(() => new Promise<void>((listo) => requestAnimationFrame(() => requestAnimationFrame(() => listo()))));
+  await page.evaluate(
+    () =>
+      new Promise<void>((listo) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => listo())),
+      ),
+  );
   const ruta = join(CAPTURAS, `${nombre}.png`);
-  if (zona === undefined) await page.screenshot({ path: ruta, animations: 'disabled', caret: 'hide' });
+  if (zona === undefined)
+    await page.screenshot({ path: ruta, animations: 'disabled', caret: 'hide' });
   else await zona.screenshot({ path: ruta, animations: 'disabled', caret: 'hide' });
 }
 
@@ -68,21 +83,42 @@ async function foto(page: Page, nombre: string, zona?: Locator): Promise<void> {
 async function detalleGuardado(page: Page): Promise<Record<string, unknown>[]> {
   return page.evaluate(() => {
     const crudo = sessionStorage.getItem('mock.studyDetail');
-    return crudo === null ? [] : ((JSON.parse(crudo) as { filas: Record<string, unknown>[] }).filas);
+    return crudo === null ? [] : (JSON.parse(crudo) as { filas: Record<string, unknown>[] }).filas;
   });
 }
 
-/** Elige un estudio de la lista cuyo nombre case, sin importar cuál traiga la maqueta. */
-async function elegirEstudioQueCase(modal: Locator, patron: RegExp): Promise<string> {
+/** Laboratorio: el tipo de análisis arma el árbol; elige el primer estudio del árbol que case con el patrón. */
+async function elegirEstudioDeLaboratorio(
+  modal: Locator,
+  tipo: string,
+  patron: RegExp,
+): Promise<string> {
+  await elegirTipoDeOrden(modal, 'Laboratorio');
+  await elegirOpcion(modal.getByRole('combobox', { name: /^Tipo de análisis\b/ }), tipo);
+  await modal.locator('app-tree-select button').first().click();
+  const dialogo = modal.page().locator('dialog[open]').last();
+  await dialogo
+    .getByRole('treeitem')
+    .first()
+    .click()
+    .catch(() => undefined);
+  const fila = dialogo.getByRole('treeitem').filter({ hasText: patron }).first();
+  await expect(fila).toBeVisible({ timeout: 15_000 });
+  const nombre = ((await fila.innerText()) ?? '').trim();
+  await fila.click();
+  return nombre;
+}
+
+/** Imagenología: el tipo de imagen filtra los estudios; elige el primero de la lista. */
+async function elegirEstudioDeImagen(modal: Locator, tipoDeImagen: string): Promise<void> {
+  await elegirTipoDeOrden(modal, 'Imagenología');
+  await elegirOpcion(modal.getByRole('combobox', { name: /^Tipo de imagen\b/ }), tipoDeImagen);
   const combo = modal.getByRole('combobox', { name: /^Estudio\b/ });
   await combo.click();
   const lista = modal.page().locator('dialog.select-dialog[open]');
   await expect(lista).toBeVisible();
-  const opcion = lista.getByRole('option', { name: patron }).first();
-  const nombre = ((await opcion.innerText()) ?? '').trim();
-  await opcion.click();
+  await lista.getByRole('option').first().click();
   await expect(lista).toHaveCount(0);
-  return nombre;
 }
 
 async function abrirOrdenes(page: Page): Promise<Locator> {
@@ -93,15 +129,57 @@ async function abrirOrdenes(page: Page): Promise<Locator> {
 }
 
 test.describe('la orden de estudios lleva muestra o parte del cuerpo (maqueta)', () => {
-  test('laboratorio: exige la muestra, la manda y la conserva tras recargar', async ({ browser }) => {
+  test('el tipo de orden se elige primero: sin él no hay estudio, y cambiar de tipo no arrastra lo anterior', async ({
+    browser,
+  }) => {
     test.setTimeout(300_000);
-    const contexto = await browser.newContext({ viewport: { width: 1440, height: 1300 }, reducedMotion: 'reduce' });
+    const contexto = await browser.newContext({
+      viewport: { width: 1440, height: 1300 },
+      reducedMotion: 'reduce',
+    });
+    const page = await contexto.newPage();
+    const modal = await abrirOrdenes(page);
+
+    await expect(modal.getByRole('combobox', { name: /^Tipo de orden\b/ })).toBeVisible();
+    await expect(modal.getByRole('combobox', { name: /^Estudio\b/ })).toHaveCount(0);
+    await expect(modal.getByTestId('lab-type')).toHaveCount(0);
+    await expect(modal.getByTestId('imaging-modality')).toHaveCount(0);
+
+    await elegirEstudioDeImagen(modal, 'Radiografía simple');
+    await expect(modal.getByTestId('imaging-guidance')).toContainText(
+      'pendiente de revisión clínica',
+    );
+
+    // Pasar a laboratorio no deja el estudio de imagen, su ficha ni la parte del cuerpo.
+    await elegirTipoDeOrden(modal, 'Laboratorio');
+    await expect(modal.getByTestId('imaging-guidance')).toHaveCount(0);
+    await expect(modal.getByTestId('order-imaging-detail')).toHaveCount(0);
+    await expect(modal.getByTestId('lab-type')).toBeVisible();
+
+    // «Otro estudio» conserva el selector de siempre, con todo el catálogo.
+    await elegirTipoDeOrden(modal, 'Otro estudio');
+    await expect(modal.getByRole('combobox', { name: /^Estudio\b/ })).toBeVisible();
+    await contexto.close();
+  });
+
+  test('laboratorio: exige la muestra, la manda y la conserva tras recargar', async ({
+    browser,
+  }) => {
+    test.setTimeout(300_000);
+    const contexto = await browser.newContext({
+      viewport: { width: 1440, height: 1300 },
+      reducedMotion: 'reduce',
+    });
     const page = await contexto.newPage();
     const errores: string[] = [];
     page.on('pageerror', (e) => errores.push(e.message));
 
     let modal = await abrirOrdenes(page);
-    const estudio = await elegirEstudioQueCase(modal, /Glucosa|Creatinina|TSH|Perfil lip/i);
+    const estudio = await elegirEstudioDeLaboratorio(
+      modal,
+      'Sangre',
+      /Glucosa|Creatinina|TSH|Perfil lip|Hemograma/i,
+    );
     const pedir = modal.getByRole('button', { name: 'Pedir estudio' });
 
     // Sin muestra no se puede pedir, y el campo lo dice.
@@ -111,7 +189,13 @@ test.describe('la orden de estudios lleva muestra o parte del cuerpo (maqueta)',
     await expect(modal.getByTestId('order-detail-missing')).toContainText('Elija la muestra');
     await foto(page, 'lab-1440-claro-vacio');
 
-    await elegirOpcion(muestra, 'Orina');
+    // El tipo de análisis limita la muestra: en «Sangre» no se ofrece orina.
+    await muestra.click();
+    const muestras = page.locator('dialog.select-dialog[open]');
+    await expect(muestras.getByRole('option').first()).toBeVisible();
+    expect(await muestras.getByRole('option', { name: /^Orina/ }).count()).toBe(0);
+    await page.keyboard.press('Escape');
+    await elegirOpcion(muestra, /Sangre/);
     await expect(pedir).toBeEnabled();
     await foto(page, 'lab-1440-claro-con-muestra');
     await pedir.click();
@@ -121,7 +205,9 @@ test.describe('la orden de estudios lleva muestra o parte del cuerpo (maqueta)',
     const guardadas = await detalleGuardado(page);
     expect(guardadas).toHaveLength(1);
     expect(guardadas[0]!['specimenTypeConceptId']).toBeTruthy();
-    expect(Object.keys(guardadas[0]!).filter((k) => k !== 'id' && k !== 'specimenTypeConceptId')).toEqual([]);
+    expect(
+      Object.keys(guardadas[0]!).filter((k) => k !== 'id' && k !== 'specimenTypeConceptId'),
+    ).toEqual([]);
 
     // Recargar la página y releer: la orden conserva la muestra.
     await page.reload({ waitUntil: 'domcontentloaded' });
@@ -129,7 +215,12 @@ test.describe('la orden de estudios lleva muestra o parte del cuerpo (maqueta)',
       await abrirConsultaDelPaciente(page);
       return abrirOrdenDeEstudios(page);
     })();
-    await expect(modal.getByTestId('study-detail').filter({ hasText: 'Muestra: Orina' }).first()).toBeVisible({ timeout: 30_000 });
+    await expect(
+      modal
+        .getByTestId('study-detail')
+        .filter({ hasText: /Muestra: .*Sangre/i })
+        .first(),
+    ).toBeVisible({ timeout: 30_000 });
     await modal.getByTestId('study-detail').first().scrollIntoViewIfNeeded();
     await foto(page, 'lab-1440-claro-historico');
     await cerrarCasilla(page, modal);
@@ -137,17 +228,24 @@ test.describe('la orden de estudios lleva muestra o parte del cuerpo (maqueta)',
     await contexto.close();
   });
 
-  test('imagen: parte del cuerpo por lista y por 3D, lado, modalidad y tipo de hueso; todo vuelve tras recargar', async ({ browser }) => {
+  test('imagen: parte del cuerpo por lista y por 3D, lado, modalidad y tipo de hueso; todo vuelve tras recargar', async ({
+    browser,
+  }) => {
     test.setTimeout(420_000);
-    const contexto = await browser.newContext({ viewport: { width: 1440, height: 1300 }, reducedMotion: 'reduce' });
+    const contexto = await browser.newContext({
+      viewport: { width: 1440, height: 1300 },
+      reducedMotion: 'reduce',
+    });
     const page = await contexto.newPage();
     const errores: string[] = [];
     page.on('pageerror', (e) => errores.push(e.message));
 
     let modal = await abrirOrdenes(page);
-    await elegirEstudioQueCase(modal, /Radiograf|Rx|Ecograf|Tomograf|Resonancia/i);
+    await elegirEstudioDeImagen(modal, 'Radiografía simple');
     const pedir = modal.getByRole('button', { name: 'Pedir estudio' });
     const detalle = modal.getByTestId('order-imaging-detail');
+    // El tipo de imagen ya se eligió arriba: la sección no lo vuelve a preguntar.
+    await expect(modal.getByRole('combobox', { name: /^Modalidad\b/ })).toHaveCount(0);
     await expect(detalle).toBeVisible();
     await expect(modal.getByRole('combobox', { name: /^Muestra\b/ })).toHaveCount(0);
     await expect(pedir).toBeDisabled();
@@ -155,7 +253,9 @@ test.describe('la orden de estudios lleva muestra o parte del cuerpo (maqueta)',
 
     // El visor 3D dibuja (o avisa que no puede); la lista accesible sirve en los dos casos.
     const visor = detalle.locator('app-anatomy-viewer .anatomy-viewer');
-    await expect(visor).toHaveAttribute('data-status', /ready|unsupported|error/, { timeout: 120_000 });
+    await expect(visor).toHaveAttribute('data-status', /ready|unsupported|error/, {
+      timeout: 120_000,
+    });
     const estadoDelVisor = await visor.getAttribute('data-status');
     test.info().annotations.push({ type: 'visor-3d', description: String(estadoDelVisor) });
 
@@ -175,9 +275,11 @@ test.describe('la orden de estudios lleva muestra o parte del cuerpo (maqueta)',
     await elegirOpcion(hueso, 'Hueso largo');
 
     // La región del catálogo la propone la parte marcada (cruce de la API: fémur → «Fémur»).
-    await expect(modal.getByRole('combobox', { name: /^Región del estudio\b/ })).toContainText('Fémur');
+    await expect(modal.getByRole('combobox', { name: /^Región del estudio\b/ })).toContainText(
+      'Fémur',
+    );
     await elegirOpcion(modal.getByRole('combobox', { name: /^Lado\b/ }), 'Izquierda');
-    await elegirOpcion(modal.getByRole('combobox', { name: /^Modalidad\b/ }), 'Radiografía');
+    await elegirOpcion(modal.getByRole('combobox', { name: /^Contraste\b/ }), 'Sin contraste');
     await expect(pedir).toBeEnabled();
     await foto(page, 'img-1440-claro-completo');
 
@@ -186,8 +288,20 @@ test.describe('la orden de estudios lleva muestra o parte del cuerpo (maqueta)',
     const guardadas = await detalleGuardado(page);
     expect(guardadas).toHaveLength(1);
     const imaging = guardadas[0]!;
-    expect(Object.keys(imaging).filter((k) => k !== 'id').sort()).toEqual(
-      ['bodyMeshId', 'bodySiteConceptId', 'bodyStructureUberon', 'boneTypeConceptId', 'lateralityConceptId', 'modalityConceptId'].sort(),
+    expect(
+      Object.keys(imaging)
+        .filter((k) => k !== 'id')
+        .sort(),
+    ).toEqual(
+      [
+        'bodyMeshId',
+        'bodySiteConceptId',
+        'bodyStructureUberon',
+        'boneTypeConceptId',
+        'contrastConceptId',
+        'lateralityConceptId',
+        'modalityConceptId',
+      ].sort(),
     );
     expect(imaging['bodyStructureUberon']).toMatch(/^(UBERON|FMA):\d+$/);
     expect(imaging).not.toHaveProperty('specimenTypeConceptId');
@@ -195,7 +309,12 @@ test.describe('la orden de estudios lleva muestra o parte del cuerpo (maqueta)',
     await page.reload({ waitUntil: 'domcontentloaded' });
     await abrirConsultaDelPaciente(page);
     modal = await abrirOrdenDeEstudios(page);
-    const linea = modal.getByTestId('study-detail').filter({ hasText: 'Región: Fémur · Izquierda · Radiografía simple · Hueso largo · marcada en el cuerpo 3D' });
+    const linea = modal
+      .getByTestId('study-detail')
+      .filter({
+        hasText:
+          'Región: Fémur · Izquierda · Radiografía simple · Hueso largo · Sin contraste · marcada en el cuerpo 3D',
+      });
     await expect(linea.first()).toBeVisible({ timeout: 30_000 });
     expect(errores).toEqual([]);
     await contexto.close();
@@ -205,14 +324,22 @@ test.describe('la orden de estudios lleva muestra o parte del cuerpo (maqueta)',
     for (const tema of ['claro', 'oscuro'] as const) {
       test(`capturas de la sección de imagen en ${vista.nombre} ${tema}`, async ({ browser }) => {
         test.setTimeout(300_000);
-        const contexto = await browser.newContext({ viewport: { width: vista.ancho, height: vista.alto }, reducedMotion: 'reduce', colorScheme: tema === 'oscuro' ? 'dark' : 'light' });
+        const contexto = await browser.newContext({
+          viewport: { width: vista.ancho, height: vista.alto },
+          reducedMotion: 'reduce',
+          colorScheme: tema === 'oscuro' ? 'dark' : 'light',
+        });
         const page = await contexto.newPage();
         const modal = await abrirOrdenes(page);
         await fijarTema(page, tema);
-        await elegirEstudioQueCase(modal, /Radiograf|Rx|Ecograf|Tomograf|Resonancia/i);
+        await elegirEstudioDeImagen(modal, 'Radiografía simple');
         const detalle = modal.getByTestId('order-imaging-detail');
         await expect(detalle).toBeVisible();
-        await expect(detalle.locator('app-anatomy-viewer .anatomy-viewer')).toHaveAttribute('data-status', /ready|unsupported|error/, { timeout: 120_000 });
+        await expect(detalle.locator('app-anatomy-viewer .anatomy-viewer')).toHaveAttribute(
+          'data-status',
+          /ready|unsupported|error/,
+          { timeout: 120_000 },
+        );
         await foto(page, `img-${vista.nombre}-${tema}-vacio`);
         await detalle.getByRole('textbox', { name: /Buscar la parte del cuerpo/ }).fill('femur');
         await detalle.getByTestId('bsp-results').getByRole('button').first().click();

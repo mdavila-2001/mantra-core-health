@@ -15,7 +15,11 @@ const sede = (id: string, name: string, addressText: string | null = null): Perf
 });
 
 const PROPIAS = [sede('s-1', 'Centro Norte', 'Av. 1')];
-const CENTER_SITES = [sede('s-3', 'Centro Sur'), sede('s-1', 'Centro Norte', 'Av. 1'), sede('s-2', 'Centro Este')];
+const CENTER_SITES = [
+  sede('s-3', 'Centro Sur'),
+  sede('s-1', 'Centro Norte', 'Av. 1'),
+  sede('s-2', 'Centro Este'),
+];
 
 describe('PerformerSelector', () => {
   let fixture: ComponentFixture<PerformerSelector>;
@@ -33,7 +37,8 @@ describe('PerformerSelector', () => {
     await fixture.whenStable();
   }
 
-  const byTestId = (testid: string): HTMLElement | null => host.querySelector(`[data-testid="${testid}"]`);
+  const byTestId = (testid: string): HTMLElement | null =>
+    host.querySelector(`[data-testid="${testid}"]`);
   const radio = (testid: string): HTMLInputElement =>
     byTestId(testid)!.querySelector('input[type="radio"]') as HTMLInputElement;
   const elegir = async (testid: string): Promise<void> => {
@@ -54,12 +59,31 @@ describe('PerformerSelector', () => {
     expect(byTestId('performer-sites')).toBeNull();
   });
 
+  it('en laboratorio e imagen los motivos hablan de «estudio», no de «procedimiento»', async () => {
+    await montar({
+      ownSites: [],
+      centerSites: [],
+      termino: 'estudio',
+      titulo: 'Qué laboratorio lo realiza',
+    });
+
+    expect(byTestId('performer-self-reason')!.textContent).toContain(
+      'publique este estudio con precio',
+    );
+    expect(byTestId('performer-organization-reason')!.textContent).toContain(
+      'Ningún centro publica este estudio con precio',
+    );
+    expect(host.textContent).not.toContain('procedimiento');
+  });
+
   it('«Lo hago yo» deshabilitada con el motivo visible si no hay sedes propias', async () => {
     await montar({ ownSites: [] });
 
     expect(radio('performer-option-self').disabled).toBe(true);
     expect(byTestId('performer-self-reason')!.textContent).toContain(NO_OWN_SITE_REASON);
-    expect(NO_OWN_SITE_REASON).toBe('No tiene una sede activa que publique este procedimiento con precio');
+    expect(NO_OWN_SITE_REASON).toBe(
+      'No tiene una sede activa que publique este procedimiento con precio',
+    );
     expect(radio('performer-option-organization').disabled).toBe(false);
   });
 
@@ -128,7 +152,9 @@ describe('PerformerSelector', () => {
 
     expect(radio('performer-option-self').disabled).toBe(true);
     expect(radio('performer-option-organization').disabled).toBe(true);
-    expect(byTestId('performer-self-reason')!.textContent).toContain('Elija primero el procedimiento');
+    expect(byTestId('performer-self-reason')!.textContent).toContain(
+      'Elija primero el procedimiento',
+    );
   });
 
   it('con error de lectura no inventa sedes: deshabilita y muestra el motivo', async () => {
@@ -136,7 +162,9 @@ describe('PerformerSelector', () => {
 
     expect(radio('performer-option-self').disabled).toBe(true);
     expect(radio('performer-option-organization').disabled).toBe(true);
-    expect(byTestId('performer-organization-reason')!.textContent).toContain('No pudimos leer las sedes.');
+    expect(byTestId('performer-organization-reason')!.textContent).toContain(
+      'No pudimos leer las sedes.',
+    );
   });
 
   it('mientras lee las sedes las deshabilita con «Buscando sedes…»', async () => {

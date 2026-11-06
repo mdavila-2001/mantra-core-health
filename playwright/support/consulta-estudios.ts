@@ -34,7 +34,9 @@ export async function abrirConsultaDelPaciente(page: Page): Promise<void> {
   await irA(page, `${new URL(page.url()).pathname}/consultation`);
   await expect(page.getByTestId('consulta-rejilla')).toBeVisible({ timeout: 30_000 });
   const abrir = page.getByTestId('consulta-abrir-encuentro');
-  await expect(abrir.or(page.getByTestId('encuentros-en-curso')).first()).toBeVisible({ timeout: 30_000 });
+  await expect(abrir.or(page.getByTestId('encuentros-en-curso')).first()).toBeVisible({
+    timeout: 30_000,
+  });
   if (await abrir.isVisible()) await abrir.click();
   await expect(page.getByTestId('encuentros-en-curso')).toBeVisible({ timeout: 30_000 });
 }
@@ -83,7 +85,9 @@ async function contestarCampo(campo: Locator): Promise<boolean> {
 export async function responderFormularioMedico(page: Page): Promise<void> {
   const modal = await abrirCasilla(page, 'formulario');
   const respondido = modal.getByTestId('formulario-respondido');
-  await expect(respondido.or(modal.getByTestId('campo-especialidad')).first()).toBeVisible({ timeout: 30_000 });
+  await expect(respondido.or(modal.getByTestId('campo-especialidad')).first()).toBeVisible({
+    timeout: 30_000,
+  });
   if (!(await respondido.isVisible())) {
     const campos = modal.getByTestId('campo-especialidad');
     for (let i = 0; i < (await campos.count()); i += 1) await contestarCampo(campos.nth(i));
@@ -103,8 +107,17 @@ export async function abrirOrdenDeEstudios(page: Page): Promise<Locator> {
   return modal;
 }
 
-/** Elige el estudio por su nombre en el selector «Estudio». */
+/** Elige el tipo de orden («Laboratorio», «Imagenología» u «Otro estudio»): lo primero que pregunta el formulario. */
+export async function elegirTipoDeOrden(
+  modal: Locator,
+  tipo: 'Laboratorio' | 'Imagenología' | 'Otro estudio',
+): Promise<void> {
+  await elegirOpcion(modal.getByRole('combobox', { name: /^Tipo de orden\b/ }), tipo);
+}
+
+/** Elige el estudio por su nombre en el selector «Estudio» (el de «Otro estudio», que ofrece todo el catálogo). */
 export async function elegirEstudio(modal: Locator, estudio: string): Promise<void> {
+  await elegirTipoDeOrden(modal, 'Otro estudio');
   await elegirOpcion(modal.getByRole('combobox', { name: /^Estudio\b/ }), estudio);
   await expect(modal.getByText(/^\s*Tipo: /)).toBeVisible();
 }
