@@ -7,7 +7,16 @@
   </div>
 
   @if (actionError(); as message) {
-    <app-alert tone="error" data-testid="referral-action-error">{{ message }}</app-alert>
+    <app-alert tone="error" data-testid="referral-action-error">
+      {{ message }}
+      @if (arrivalRefused() && canRespond()) {
+        <div alert-actions>
+          <button app-button variant="outline" size="sm" type="button" data-testid="referral-accept-without-arrival" [disabled]="working()" (clicked)="accept(true)">
+            Aceptar sin vincular la atención
+          </button>
+        </div>
+      }
+    </app-alert>
   }
 
   <dl class="detail__data">
