@@ -116,18 +116,31 @@ describe('SurveyDetailScreen · pestañas', () => {
     it('403: S5, nunca «nadie respondió»', async () => {
       await open('/questionnaires/s-1#resumen', true, apiError(403, 'FORBIDDEN'));
       const summary = find('[data-testid="survey-detail-summary"]');
-      expect(summary?.textContent).toContain('No tiene acceso');
+      expect(summary?.textContent).toContain('No tiene acceso a las respuestas');
+      expect(summary?.textContent).not.toContain('No tiene acceso a esta sección');
       expect(summary?.textContent).not.toContain('nadie respondió');
     });
 
     it('500: S9 con código y «Reintentar», que vuelve a pedir las respuestas', async () => {
       await open('/questionnaires/s-1#resumen', true, apiError(500, 'INTERNAL'));
       const summary = find('[data-testid="survey-detail-summary"]')!;
-      expect(summary.textContent).toContain('No pudimos cargar las respuestas');
+      expect(summary.textContent).toContain('No pudimos cargar el resumen');
       expect(summary.textContent).toContain('corr-9');
       expect(summary.textContent).not.toContain('RAW');
       [...summary.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent?.includes('Reintentar'))!.click();
       http.expectOne((r) => r.url === '/surveys/templates/s-1/responses').flush([1, 2, 3, 4, 5].map(answer));
+      harness.detectChanges();
+      expect(find('[data-testid="survey-detail-summary-bars"]')).not.toBeNull();
+    });
+
+    it('un segundo pedido de respuestas cancela el que sigue en vuelo', async () => {
+      await open('/questionnaires/s-1#resumen', true, apiError(500, 'INTERNAL'));
+      const screen = harness.routeDebugElement!.componentInstance as { cargarRespuestas(): void };
+      screen.cargarRespuestas();
+      screen.cargarRespuestas();
+      const reads = http.match((r) => r.url === '/surveys/templates/s-1/responses');
+      expect(reads.map((read) => read.cancelled)).toEqual([true, false]);
+      reads[1]!.flush([1, 2, 3, 4, 5].map(answer));
       harness.detectChanges();
       expect(find('[data-testid="survey-detail-summary-bars"]')).not.toBeNull();
     });
@@ -144,6 +157,11 @@ describe('SurveyDetailScreen · pestañas', () => {
       expect(summary.textContent).toContain('Reintentar');
       expect(summary.textContent).not.toContain('nadie respondió');
     });
+  });
+
+  it('«Respuestas» con 500: S9 dice que no se pudieron cargar las respuestas', async () => {
+    await open('/questionnaires/s-1#respuestas', true, apiError(500, 'INTERNAL'));
+    expect(find('[data-testid="survey-detail-answers"]')?.textContent).toContain('No pudimos cargar las respuestas');
   });
 
   it('una encuesta sin publicar: un solo panel sin tira de pestañas; #respuestas no deja un panel vacío y la URL lo dice', async () => {

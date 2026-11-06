@@ -12,7 +12,7 @@
 
   @if (error(); as failure) {
     <!-- The page's own error anatomy; «Importar» below is the retry, so the banner offers none. -->
-    <app-view-state-host class="catalogo__error" [state]="failure.state" [retryable]="false" data-testid="standard-catalog-error" />
+    <app-view-state-host class="catalogo__error" [state]="failure" [retryable]="false" data-testid="standard-catalog-error" />
   }
 
   <div class="catalogo" data-testid="standard-catalog">

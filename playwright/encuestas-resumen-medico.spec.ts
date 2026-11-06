@@ -7,28 +7,28 @@ import type { Actor } from './support/actores';
 import { entrar, esperarAplicacionLista, irA } from './support/sesion';
 
 /**
- * «Cómo le va» (el resumen general del médico) en el «Buzón» de solo lectura y
- * la lectura de las respuestas de una encuesta.
+ * «Cómo le va» (the practitioner's overall summary) in the read-only «Buzón»,
+ * and reading the answers of one survey.
  *
- * Corre contra el **backend simulado** (`ng serve --configuration
- * development,demo`), con la cuenta de la médica. Recorre:
+ * Runs against the **mock backend** (`ng serve --configuration
+ * development,demo`), with the doctor's account. It walks through:
  *
- *   1. Pestaña «Encuestas» de Formularios: el bloque «Cómo le va» sobre la lista.
- *   2. Cambiar de período (Este mes → 12 meses; el de abertura es «3 meses»): sólo
- *      presets de meses calendario, nunca rangos libres; cambia la petición y las cifras.
- *   3. Cambiar de servicio: la petición lleva `serviceId`; un servicio con pocas
- *      respuestas se marca «pocas respuestas» sin esconderse; uno sin envíos
- *      muestra el vacío con su próxima acción.
- *   4. Buzón de solo lectura (06/11/2026): una encuesta hecha a mano es
- *      «anterior», sin «Abrir»; «Ver respuestas» lleva a su ficha, que se lee
- *      (cuestionario y respuestas, `GET …/responses` → 200) sin gestionar nada
- *      —la asociación libre ya no existe: la API la rechaza—, sobrevive a la
- *      recarga y apunta a «Encuestas por servicio».
+ *   1. The «Encuestas» tab of Formularios: the «Cómo le va» block above the list.
+ *   2. Changing the period (Este mes → 12 meses; it opens on «3 meses»): only
+ *      calendar-month presets, never free ranges; the request and the figures change.
+ *   3. Changing the service: the request carries `serviceId`; a service with few
+ *      answers is marked «pocas respuestas» without hiding; one with no sends
+ *      shows the empty state with its next action.
+ *   4. Read-only Buzón (06/11/2026): a hand-made survey is «anterior», without
+ *      «Abrir»; «Ver respuestas» leads to its sheet, which reads (questionnaire
+ *      and answers, `GET …/responses` → 200) without managing anything — free
+ *      association no longer exists: the API rejects it —, survives a reload
+ *      and points to «Encuestas por servicio».
  *
- * Nunca espera a que la red quede quieta: contra `ng serve` con HMR no llega. Se espera por
- * elementos y por respuestas concretas.
+ * Never waits for the network to go quiet: against `ng serve` with HMR it never
+ * does. It waits on elements and on concrete responses.
  *
- * Las capturas (claro y oscuro; 1440 y 390 px; sólo la ventana) se guardan en `SALIDA`.
+ * The captures (light and dark; 1440 and 390 px; viewport only) go to `SALIDA`.
  */
 
 const SALIDA = join('docs', 'frontend', 'evidence', 'encuestas-resumen-medico-2026-10-28');
@@ -226,6 +226,11 @@ test.describe('Encuestas · «Cómo le va» y el Buzón de solo lectura', () => 
     for (const seccion of ['resumen-nps', 'resumen-preguntas', 'resumen-tendencia', 'resumen-comentarios']) {
       await expect(page.getByTestId(seccion)).toHaveCount(0);
     }
+    // The whole notice in frame: its bottom edge above the viewport's.
+    await page.getByTestId('resumen-suprimido').evaluate((node) => {
+      const box = node.getBoundingClientRect();
+      if (box.bottom > window.innerHeight - 16) window.scrollBy(0, box.bottom - window.innerHeight + 24);
+    });
     await capturar(page, '04-suprimido-privacidad-claro-1440');
 
     // Su acción amplía el alcance: con todas las consultas el resumen sale completo.
@@ -269,21 +274,21 @@ test.describe('Encuestas · «Cómo le va» y el Buzón de solo lectura', () => 
     await capturar(page, '07-resumen-oscuro-1440');
     await aplicarTema(page, 'claro');
 
-    // ── 4. Buzón de solo lectura → las respuestas de una encuesta ───────────────
+    // ── 4. Read-only Buzón → one survey's answers ──────────────────────────────
     const tarjeta = page.getByTestId('surveys-inbox-list').locator('li', { hasText: 'Experiencia de teleconsulta' });
     await expect(tarjeta).toContainText('Encuesta anterior (ya no se envía)');
     await expect(tarjeta.getByRole('link', { name: /^Abrir/ })).toHaveCount(0);
     await tarjeta.getByRole('link', { name: 'Ver las respuestas de Experiencia de teleconsulta' }).click();
     await expect(page).toHaveURL(/\/questionnaires\/[0-9a-f-]{36}#respuestas$/);
 
-    // La ficha se lee. ONE card with tabs; `#respuestas` opens the answers tab, with the answers.
+    // The sheet reads. ONE card with tabs; `#respuestas` opens the answers tab, with the answers.
     await expect(page.getByRole('tab', { name: 'Respuestas', exact: true })).toHaveAttribute('aria-selected', 'true', { timeout: 30_000 });
     await expect(page.getByTestId('survey-detail-answer-list')).toBeVisible({ timeout: 30_000 });
     const lecturas = async (): Promise<readonly number[]> =>
       (await atendidas(page)).filter((r) => r.method === 'GET' && /^\/surveys\/templates\/[^/?]+\/responses/.test(r.url)).map((r) => r.status);
     await expect.poll(lecturas, { timeout: 15_000 }).toEqual([200]);
 
-    // Nada que gestione la encuesta: ni asociar, ni publicar, ni corregir, ni desactivar.
+    // Nothing that manages the survey: no attach, publish, edit or deactivate.
     for (const testId of ['asignacion-vigentes', 'asignacion-servicio', 'asignacion-guardar', 'encuesta-publicar', 'encuesta-agregar-pregunta']) {
       await expect(page.getByTestId(testId)).toHaveCount(0);
     }
@@ -291,7 +296,7 @@ test.describe('Encuestas · «Cómo le va» y el Buzón de solo lectura', () => 
     expect((await atendidas(page)).filter((r) => r.method !== 'GET' && r.url.startsWith('/surveys/'))).toEqual([]);
     await capturar(page, '08-ficha-solo-lectura-claro-1440');
 
-    // Recarga completa → sigue legible, en la misma pestaña.
+    // Full reload → still readable, on the same tab.
     await page.reload();
     await esperarAplicacionLista(page);
     await expect(page.getByTestId('survey-detail-answer-list')).toBeVisible({ timeout: 30_000 });
@@ -301,7 +306,7 @@ test.describe('Encuestas · «Cómo le va» y el Buzón de solo lectura', () => 
     await expect(page).toHaveURL(/#resumen$/);
     await expect(page.getByTestId('survey-detail-summary-bars').or(page.getByTestId('survey-detail-summary-below-minimum'))).toBeVisible();
 
-    // ── 5. La ficha lleva a donde hoy se elige la encuesta de cada servicio ─────
+    // ── 5. The sheet leads to where each service's survey is chosen today ──────
     await page.getByRole('tab', { name: 'Preguntas', exact: true }).click();
     await expect(page.getByTestId('survey-detail-read-only')).toContainText('Solo lectura');
     await page.getByTestId('survey-detail-go-to-services').click();
@@ -322,7 +327,7 @@ test.describe('Encuestas · «Cómo le va» y el Buzón de solo lectura', () => 
     await resumenAsentado(page);
     await capturar(page, '13-resumen-claro-390');
 
-    // A 390 px el Buzón sólo tiene el buscador (sin filtro por estado) y no se corta.
+    // At 390 px the Buzón only has the search box (no status filter) and is not cut.
     const barra = page.getByTestId('surveys-inbox-toolbar');
     await barra.scrollIntoViewIfNeeded();
     await expect(barra.locator('app-segmented-control')).toHaveCount(0);

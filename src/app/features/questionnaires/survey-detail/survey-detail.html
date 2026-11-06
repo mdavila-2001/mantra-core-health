@@ -14,8 +14,8 @@
       @if (encuesta.description) {
         <p class="encuesta__consigna">{{ encuesta.description }}</p>
       }
-      <dl class="encuesta__datos">
-        <div>
+      <dl class="encuesta__datos" data-testid="survey-detail-facts">
+        <div class="encuesta__datos-estado">
           <dt>Estado</dt>
           <dd>
             <app-badge [variant]="sendingLabel().variant" data-testid="survey-detail-sending">{{ sendingLabel().text }}</app-badge>
@@ -49,10 +49,10 @@
       <!-- The questions panel, shared by the tabbed and the single-panel layouts. -->
       <ng-template #questionsPanel>
         <!-- Read-only since 06/11/2026 (the API rejects editing hand-made surveys): one compact line. -->
-        <p class="encuesta__solo-lectura" data-testid="survey-detail-read-only">
-          Solo lectura: qué encuesta recibe cada servicio se elige en&nbsp;<a app-link [routerLink]="rutaDeLasEncuestas" [queryParams]="serviceSurveysQuery" data-testid="survey-detail-go-to-services">«Encuestas por servicio»</a>.
-        </p>
         <div class="encuesta__panel-cabecera">
+          <p class="encuesta__solo-lectura" data-testid="survey-detail-read-only">
+            Solo lectura: qué encuesta recibe cada servicio se elige en&nbsp;<a app-link [routerLink]="rutaDeLasEncuestas" [queryParams]="serviceSurveysQuery" data-testid="survey-detail-go-to-services">«Encuestas por servicio»</a>.
+          </p>
           @if (encuesta.questions.length > 0) {
             <button app-button type="button" variant="outline" size="sm" (click)="alternarPrevia()" data-testid="encuesta-previa">
               {{ enPrevia() ? 'Ver la lista de preguntas' : 'Ver como el paciente' }}
@@ -83,7 +83,7 @@
           </app-tab>
           <app-tab label="Resumen">
             @if (activeTab() === 1) {
-              <app-view-state-host class="encuesta__panel" [state]="answersView()" (retry)="cargarRespuestas()" data-testid="survey-detail-summary">
+              <app-view-state-host class="encuesta__panel" [state]="summaryView()" (retry)="cargarRespuestas()" data-testid="survey-detail-summary">
                 @if (!suficientesRespuestas()) {
                   <!-- Below the minimum a chart would point at a single person (D-13): same
                        anatomy and words as the «Cómo le va» summary. -->
@@ -138,11 +138,14 @@
             @if (activeTab() === 2) {
               <app-view-state-host class="encuesta__panel" [state]="answersView()" (retry)="cargarRespuestas()" data-testid="survey-detail-answers">
                 <div class="encuesta__respuestas-cabecera">
+                  <span class="encuesta__respuestas-total" data-testid="survey-detail-answer-count">
+                    {{ respuestas().length }} {{ respuestas().length === 1 ? 'respuesta' : 'respuestas' }}
+                  </span>
                   @if (suficientesRespuestas()) {
                     <button app-button type="button" variant="outline" size="sm" (click)="descargarCsv()">Descargar CSV</button>
                   } @else {
                     <p class="encuesta__nota-csv">
-                      El CSV se habilita con un mínimo de 5 respuestas, para no exponer una respuesta puntual como si fuera
+                      El CSV se habilita con un mínimo de {{ minCohort }} respuestas, para no exponer una respuesta puntual como si fuera
                       identificable.
                     </p>
                   }

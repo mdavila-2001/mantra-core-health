@@ -15,7 +15,7 @@ class OptionsHost {
   readonly retryable = signal(true);
 }
 
-/* The two options of the host: an S5 with its own title, and S8/S9 without «Reintentar». */
+/* The options of the host: an S5 or S8 with its own title, and S8/S9 without «Reintentar». */
 describe('ViewStateHost · título de S5 y reintento opcional', () => {
   async function render(state: ViewState<never>, retryable = true): Promise<string> {
     await TestBed.configureTestingModule({ imports: [OptionsHost], providers: [provideRouter([])] }).compileComponents();
@@ -30,6 +30,12 @@ describe('ViewStateHost · título de S5 y reintento opcional', () => {
     expect(await render(forbidden({ title: 'No se pudo quitar la encuesta', message: 'M' }))).toContain('No se pudo quitar la encuesta');
     TestBed.resetTestingModule();
     expect(await render(forbidden({ message: 'M' }))).toContain('No tiene acceso a esta sección');
+  });
+
+  it('S8 usa el título que trae el estado y conserva la causa fija', async () => {
+    const text = await render({ ...offline(), title: 'No se pudo importar la encuesta' });
+    expect(text).toContain('No se pudo importar la encuesta');
+    expect(text).toContain('La solicitud no llegó al servidor');
   });
 
   it('con retryable=false, S9 y S8 no ofrecen «Reintentar» (S9 conserva «Copiar código»)', async () => {

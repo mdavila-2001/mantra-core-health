@@ -196,11 +196,8 @@ function isRefusal(error: unknown): boolean {
   return error instanceof HttpErrorResponse && (error.status === 403 || error.status === 412);
 }
 
-/** A failure as the screen keeps it: our title, and the state the host draws. */
-export interface ShownFailure {
-  readonly title: string;
-  readonly state: ViewState<never>;
-}
+/** A failure as the screen keeps it: the state the host draws, carrying our title (one source). */
+export type ShownFailure = ViewState<never>;
 
 /** Where a 412 (no practitioner profile) sends the person: their profile. */
 export const PROFILE_ROUTE = '/my-account';
@@ -212,29 +209,23 @@ export const PROFILE_ROUTE = '/my-account';
  */
 export function failureState(error: unknown, title: string, message: string): ShownFailure {
   const base = errorToViewState<never>(error);
-  if (base.status === 'offline') return { title, state: base };
+  if (base.status === 'offline') return { ...base, title };
   const fromBase = 'requestId' in base ? base.requestId : undefined;
   const fromBody = error instanceof HttpErrorResponse ? (readApiError(error)?.correlationId ?? error.headers.get('x-request-id')) : null;
   const requestId = fromBase ?? fromBody ?? undefined;
   if (isRefusal(error)) {
     const toProfile = error instanceof HttpErrorResponse && error.status === 412;
-    return {
+    return forbidden({
       title,
-      state: forbidden({
-        title,
-        message,
-        ...(toProfile ? { nextAction: { label: 'Completar mi perfil profesional', route: PROFILE_ROUTE } } : {}),
-        ...(requestId ? { requestId } : {}),
-      }),
-    };
+      message,
+      ...(toProfile ? { nextAction: { label: 'Completar mi perfil profesional', route: PROFILE_ROUTE } } : {}),
+      ...(requestId ? { requestId } : {}),
+    });
   }
-  return {
+  return unexpectedError(requestId ?? 'sin-id', message, {
     title,
-    state: unexpectedError(requestId ?? 'sin-id', message, {
-      title,
-      hint: 'Intente de nuevo en unos segundos. Si vuelve a pasar, comparta el código de soporte con el equipo de ayuda.',
-    }),
-  };
+    hint: 'Intente de nuevo en unos segundos. Si vuelve a pasar, comparta el código de soporte con el equipo de ayuda.',
+  });
 }
 
 /** A failed READ: S9 keeps its anatomy but says it was a read (nothing the person typed). */

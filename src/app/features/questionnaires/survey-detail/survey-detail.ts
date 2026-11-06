@@ -113,6 +113,12 @@ export class SurveyDetailScreen {
     );
   });
 
+  /** The same state in «Resumen»: a failed read says the SUMMARY could not be loaded. */
+  protected readonly summaryView = computed<ViewState<readonly SurveyResponse[]>>(() => {
+    const state = this.answersView();
+    return state.status === 'error' ? { ...state, title: 'No pudimos cargar el resumen' } : state;
+  });
+
   protected readonly minCohort = MIN_COHORT;
   protected readonly belowMinimumMessage = computed(
     () =>

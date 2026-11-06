@@ -1475,10 +1475,10 @@ describe('ShellLayout', () => {
     });
 
     /**
-     * 28/10/2026 · La bandeja de encuestas del paciente, arriba. Sólo la ve el
-     * paciente y, desde el 06/11/2026, SIEMPRE: tenga o no invitaciones (la
-     * pantalla explica con un estado vacío cuándo llegan). El número son las
-     * pendientes dentro del plazo y sólo aparece si hay alguna.
+     * 28/10/2026 · The patient's survey inbox, in the top bar. Only the patient
+     * sees it and, since 06/11/2026, ALWAYS: with or without invitations (the
+     * screen explains with an empty state when they arrive). The number is the
+     * pending ones still in time, and it only shows when there is one.
      */
     describe('Mis encuestas en la cabecera', () => {
       const EN_UN_DIA = new Date(Date.now() + 24 * 60 * 60 * 1000);

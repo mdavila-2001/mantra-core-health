@@ -156,6 +156,29 @@ test.describe('Encuestas por servicio · backend simulado', () => {
     await expect(list).not.toContainText('Encuesta post-cirugía'); // unsent draft: no answers to read
   });
 
+  test('ficha de una encuesta anterior en 390 px: el estado no pisa el dato de al lado ni el de abajo', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await entrar(page, MOCK_DOCTOR);
+    await irA(page, '/form-builder');
+    await page.getByRole('tab', { name: 'Encuestas', exact: true }).click();
+    const legacy = page.getByTestId('surveys-inbox-list').locator('li', { hasText: 'Experiencia de teleconsulta' });
+    await legacy.getByRole('link', { name: /Ver las respuestas/ }).click();
+    const badge = page.getByTestId('survey-detail-sending');
+    await expect(badge).toHaveText('Encuesta anterior (ya no se envía)', { timeout: 30_000 });
+
+    // Every other metadata value: the badge's box must not intersect any of them.
+    const facts = page.getByTestId('survey-detail-facts');
+    const own = (await badge.boundingBox())!;
+    for (const value of await facts.locator('dd').all()) {
+      if ((await value.getByTestId('survey-detail-sending').count()) > 0) continue;
+      const other = (await value.boundingBox())!;
+      const intersects = own.x < other.x + other.width && other.x < own.x + own.width && own.y < other.y + other.height && other.y < own.y + own.height;
+      expect(intersects, `the badge overlaps «${(await value.textContent())?.trim()}»`).toBe(false);
+    }
+    const card = (await facts.boundingBox())!;
+    expect(own.x + own.width, 'the badge stays inside the card').toBeLessThanOrEqual(card.x + card.width + 0.5);
+  });
+
   test.describe('AC-27-21 · sin scroll horizontal en los tres anchos obligatorios', () => {
     for (const viewport of VIEWPORTS) {
       test(`Buzón, Encuestas por servicio y el catálogo en ${viewport.width}px`, async ({ page }) => {

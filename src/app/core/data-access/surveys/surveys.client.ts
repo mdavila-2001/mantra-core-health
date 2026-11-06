@@ -19,13 +19,13 @@ import type {
 /**
  * Cliente de `surveys`: cuestionarios y encuestas de satisfacción.
  *
- * ## Dos caras, dos superficies
+ * ## Two faces, two surfaces
  *
- * El profesional **lee** sus encuestas y respuestas (`/surveys/templates`,
- * de solo lectura desde el 06/11/2026: la encuesta de cada servicio se importa
- * del catálogo estándar) y el paciente **responde** (`/surveys/me/invitations`). No son dos vistas del mismo recurso: son dos
- * conjuntos de rutas con autorizaciones distintas, y por eso los métodos de acá
- * están agrupados igual que en el backend.
+ * The practitioner **reads** their surveys and answers (`/surveys/templates`,
+ * read-only since 06/11/2026: each service's survey is imported from the
+ * standard catalog) and the patient **answers** (`/surveys/me/invitations`).
+ * They are not two views of one resource: they are two route sets with
+ * different authorization, so the methods here are grouped as in the backend.
  *
  * ## El identificador del paciente no viaja nunca
  *
@@ -49,7 +49,7 @@ export class SurveysClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
-  /* --- Lectura del profesional (read-only since 06/11/2026) ------------------ */
+  /* --- Practitioner reads (read-only since 06/11/2026) ----------------------- */
 
   /**
    * `GET /surveys/templates/:id` — la encuesta con su cuestionario.

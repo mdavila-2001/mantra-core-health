@@ -162,7 +162,9 @@ export class ViewStateHost<T> {
   /** S8: sin red o tiempo agotado, cada uno con su explicación fija. */
   protected readonly offlineText = computed(() => {
     const state = this.state();
-    return explanationOf(state.status === 'offline' && state.timedOut === true ? 'timeout' : 'offline');
+    const text = explanationOf(state.status === 'offline' && state.timedOut === true ? 'timeout' : 'offline');
+    // A screen may say what could not be done; the cause and the action remain the fixed explanation.
+    return state.status === 'offline' && state.title !== undefined ? { ...text, title: state.title } : text;
   });
 
   protected readonly errorRequestId = computed(() => this.errorState()?.requestId ?? '');

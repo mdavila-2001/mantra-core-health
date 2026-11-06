@@ -29,7 +29,7 @@
       @if (writeError(); as failure) {
         <!-- A failed removal (or an import whose picker was closed): S9 with «Reintentar»; a refusal
              is S5 with our own title and, for a 412, the way to the professional profile. -->
-        <app-view-state-host class="por-servicio__fallo" [state]="failure.state" (retry)="retryLastWrite()" data-testid="service-surveys-write-error" />
+        <app-view-state-host class="por-servicio__fallo" [state]="failure" (retry)="retryLastWrite()" data-testid="service-surveys-write-error" />
       }
 
       <ul class="por-servicio__lista" data-testid="service-surveys-list">

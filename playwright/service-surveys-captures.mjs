@@ -1,6 +1,6 @@
 /**
  * Evidence for «Encuestas por servicio», the read-only «Buzón», the read-only
- * survey sheet and the patient's «Mis encuestas» (06/11/2026, sixth round).
+ * survey sheet and the patient's «Mis encuestas» (06/11/2026, seventh round).
  *
  * Against the demo build (`yarn start:demo`, mock backend). One browser, serial
  * captures, VIEWPORT-only screenshots (never full page: the side rail would cover
@@ -13,7 +13,7 @@
  */
 import { expect } from '@playwright/test';
 
-import { browser, DOCTOR, fresh, go, list, requests, reveal, servicesUrl, shot, signIn, writeLog } from './support/capture-kit.mjs';
+import { browser, digest, DOCTOR, fresh, go, list, requests, reveal, servicesUrl, shot, signIn, writeLog } from './support/capture-kit.mjs';
 
 const log = [];
 
@@ -45,16 +45,22 @@ const log = [];
   const card = page.getByTestId('surveys-inbox-list').locator('li', { hasText: title });
   await expect(card).toContainText('Se envía', { timeout: 30_000 });
   await reveal(page, card);
-  await shot(page, '04-inbox-after-import-sent-1440');
+  await shot(page, '04-inbox-after-import-sent-1440', { belowHeader: true });
   await card.getByRole('link', { name: `Ver las respuestas de ${title}` }).click();
   await expect(page.getByTestId('survey-detail-sending')).toHaveText('Se envía', { timeout: 30_000 });
   // Settled: just imported, no answers yet, so the answers tab is an S3 with its next action.
   await expect(page.getByTestId('survey-detail-answers')).toContainText('Todavía no respondió nadie', { timeout: 30_000 });
+  // 05: the sheet's top on «Preguntas» (status «Se envía», the questionnaire).
+  await page.getByRole('tab', { name: 'Preguntas', exact: true }).click();
+  await expect(page.getByTestId('survey-detail-questions')).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, '05-imported-survey-sheet-1440');
-  // 05b: the S3 answers state itself, framed from the tab strip down.
+  // 05b: «Respuestas», the S3 state itself (no answers yet, with its next action), framed from the tab strip down.
+  await page.getByRole('tab', { name: 'Respuestas', exact: true }).click();
+  await expect(page.getByTestId('survey-detail-answers')).toContainText('Todavía no respondió nadie');
   await reveal(page, page.getByTestId('survey-detail-tabs'));
-  await shot(page, '05b-imported-survey-no-answers-yet-1440');
+  await shot(page, '05b-imported-survey-no-answers-yet-1440', { belowHeader: true });
+  if (digest('05-imported-survey-sheet-1440') === digest('05b-imported-survey-no-answers-yet-1440')) throw new Error('05 and 05b are the same capture');
   await go(page, servicesUrl);
   await expect(list(page)).toBeVisible({ timeout: 30_000 });
 
@@ -163,10 +169,12 @@ for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) 
   await expect(page.getByTestId('surveys-inbox-list')).toBeVisible({ timeout: 30_000 });
   const legacy = page.getByTestId('surveys-inbox-list').locator('li', { hasText: 'Experiencia de teleconsulta' });
   if (width === 1440) {
-    await reveal(page, page.getByTestId('surveys-inbox-toolbar'));
-    await shot(page, '19-inbox-read-only-1440');
+    // 19: the list down to a «ya no se envía» card (the last group), at the frame's bottom.
+    await expect(legacy).toContainText('Encuesta anterior (ya no se envía)');
+    await legacy.evaluate((card) => window.scrollBy(0, card.getBoundingClientRect().bottom - window.innerHeight + 24));
+    await shot(page, '19-inbox-read-only-1440', { belowHeader: true });
     await reveal(page, legacy);
-    await shot(page, '20-inbox-past-survey-1440');
+    await shot(page, '20-inbox-past-survey-1440', { belowHeader: true });
   }
   await legacy.getByRole('link', { name: /Ver las respuestas/ }).click();
   await expect(page.getByTestId('survey-detail-sending')).toHaveText('Encuesta anterior (ya no se envía)', { timeout: 30_000 });
@@ -176,11 +184,10 @@ for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) 
   // The questionnaire tab, scrolled so several questions show.
   await page.getByRole('tab', { name: 'Preguntas', exact: true }).click();
   await reveal(page, page.getByTestId('survey-detail-questions'));
-  await shot(page, `22-legacy-sheet-questions-${suffix}`);
+  await shot(page, `22-legacy-sheet-questions-${suffix}`, { belowHeader: true });
   await context.close();
 }
 
-/** Opens a survey's sheet from the Buzón by its title and waits until the answers settled. */
 // 23–24 · Patient «Mis encuestas» at 390, no surveys yet.
 {
   const { context, page } = await fresh(390, 844, [{ patron: '/surveys/me/invitations', modo: 'empty' }]);
@@ -211,6 +218,7 @@ for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) 
   await shot(page, `27-dark-inbox-${suffix}`);
   await page.getByTestId('surveys-inbox-list').locator('li', { hasText: 'Experiencia de teleconsulta' }).getByRole('link', { name: /Ver las respuestas/ }).click();
   await expect(page.getByTestId('survey-detail-sending')).toHaveText('Encuesta anterior (ya no se envía)', { timeout: 30_000 });
+  await expect(page.locator('.encuesta__respuesta').first()).toBeVisible({ timeout: 30_000 });
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, `28-dark-sheet-${suffix}`);
   await context.close();

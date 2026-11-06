@@ -1,5 +1,5 @@
 /**
- * Evidence for the read-only survey sheet's tabs (06/11/2026, sixth round):
+ * Evidence for the read-only survey sheet's tabs (06/11/2026, seventh round):
  * Resumen with data and below the minimum, Respuestas with data, «Ver como el
  * paciente», the #resumen entry, an unpublished survey, the answers' S5/S9 and
  * dark mode. Run after `service-surveys-captures.mjs` (one browser at a time).
@@ -30,17 +30,22 @@ for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) 
     if (strip === null || strip.y + strip.height > height) throw new Error('390: the tab strip is below the fold after landing');
     await shot(page, '30a-landing-from-see-answers-390');
     await reveal(page, page.getByTestId('survey-detail-tabs'));
-    await shot(page, '30-answers-with-data-390');
+    await shot(page, '30-answers-with-data-390', { belowHeader: true });
   }
   await page.getByRole('tab', { name: 'Resumen', exact: true }).click();
   await expect(page.getByTestId('survey-detail-summary-bars')).toBeVisible();
   await reveal(page, page.getByTestId('survey-detail-tabs'));
-  await shot(page, `31-summary-with-data-${suffix}`);
+  await shot(page, `31-summary-with-data-${suffix}`, { belowHeader: true });
+  // 31b: one optional question with 1–4 answers inside an otherwise shown summary: «Sin datos suficientes».
+  const suppressed = page.getByTestId('survey-detail-question-suppressed');
+  await expect(suppressed).toHaveText(/Sin datos suficientes: menos de 5 respuestas a esta pregunta/);
+  await reveal(page, page.locator('.encuesta__resumen-pregunta', { has: suppressed }));
+  await shot(page, `31b-summary-question-suppressed-${suffix}`, { belowHeader: true });
   await openSheet(page, 'Satisfacción general con el servicio');
   await page.getByRole('tab', { name: 'Resumen', exact: true }).click();
   await expect(page.getByTestId('survey-detail-summary-below-minimum')).toBeVisible();
   await reveal(page, page.getByTestId('survey-detail-tabs'));
-  await shot(page, `32-summary-below-minimum-${suffix}`);
+  await shot(page, `32-summary-below-minimum-${suffix}`, { belowHeader: true });
   await context.close();
 }
 {
@@ -51,7 +56,7 @@ for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) 
   await page.getByTestId('encuesta-previa').click();
   await expect(page.locator('app-survey-form')).toBeVisible();
   await reveal(page, page.getByTestId('survey-detail-tabs'));
-  await shot(page, '33-as-the-patient-sees-it-1440');
+  await shot(page, '33-as-the-patient-sees-it-1440', { belowHeader: true });
   // The #resumen entry: a full load straight into the summary tab.
   const sheetUrl = new URL(page.url());
   await page.goto('about:blank');
@@ -68,6 +73,10 @@ for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) 
   });
   await page.goto(`${BASE}/questionnaires/${draftId}#respuestas`);
   await expect(page.getByTestId('survey-detail-sending')).toHaveText('Nunca se envió', { timeout: 30_000 });
+  // One panel, no tab strip, and the URL no longer asks for a tab the survey does not have.
+  await expect(page.getByTestId('survey-detail-single')).toBeVisible();
+  await expect(page.getByTestId('survey-detail-tabs')).toHaveCount(0);
+  await expect.poll(() => new URL(page.url()).hash).toBe('');
   await shot(page, '35-unpublished-single-tab-1440');
   await context.close();
 }
@@ -78,11 +87,11 @@ for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) 
   await openSheet(page, 'Estudios por imágenes');
   await page.getByRole('tab', { name: 'Preguntas', exact: true }).click();
   await reveal(page, page.getByTestId('survey-detail-tabs'));
-  await shot(page, `36-dark-questions-${suffix}`);
+  await shot(page, `36-dark-questions-${suffix}`, { belowHeader: true });
   await page.getByRole('tab', { name: 'Resumen', exact: true }).click();
   await expect(page.getByTestId('survey-detail-summary-bars')).toBeVisible();
   await reveal(page, page.getByTestId('survey-detail-tabs'));
-  await shot(page, `36b-dark-summary-${suffix}`);
+  await shot(page, `36b-dark-summary-${suffix}`, { belowHeader: true });
   await context.close();
 }
 
@@ -96,7 +105,7 @@ for (const [name, mode, tab] of [['37-answers-refused-s5-1440', 'forbidden', 'Re
   const panel = page.getByTestId(tab === 'Resumen' ? 'survey-detail-summary' : 'survey-detail-answers');
   await expect(panel.locator('app-alert')).toBeVisible({ timeout: 30_000 });
   await reveal(page, page.getByTestId('survey-detail-tabs'));
-  await shot(page, name);
+  await shot(page, name, { belowHeader: true });
   await context.close();
 }
 

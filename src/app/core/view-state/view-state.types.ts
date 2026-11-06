@@ -189,6 +189,8 @@ export interface StaleViewState<T> {
  */
 export interface OfflineViewState {
   readonly status: 'offline';
+  /** What could not be done (the screen's own context line); the cause and the action stay the fixed ones. */
+  readonly title?: string;
   /** Último intento, para poder decir «reintentado hace un momento». */
   readonly lastAttemptAt?: Date;
   /**

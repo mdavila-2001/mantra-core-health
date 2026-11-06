@@ -108,7 +108,7 @@ describe('Questionnaires (Mis cuestionarios)', () => {
     const accion = raiz().querySelector<HTMLAnchorElement>('[data-testid="questionnaires-see-appointments"]');
     expect(accion?.textContent?.trim()).toBe('Ver mis citas');
     expect(accion?.getAttribute('href')).toBeTruthy();
-    // No es la lista vacía ni el vacío genérico del anfitrión.
+    // Neither the empty list nor the host's generic empty state.
     expect(raiz().querySelector('[data-testid="cuestionarios-lista"]')).toBeNull();
     expect(raiz().textContent).not.toContain('Todavía no hay nada acá');
   });

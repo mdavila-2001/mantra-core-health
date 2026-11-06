@@ -93,7 +93,7 @@ export class ServiceSurveys {
         this.catalogState.set(entries.length === 0 ? empty({ label: 'Mientras tanto, cada servicio usa la encuesta base de servicios' }) : ready(entries)),
       error: (error: unknown) =>
         this.catalogState.set(
-          logic.failureState(error, 'No se pudo cargar el catálogo de encuestas', 'La lista de sus servicios se ve, pero por ahora no puede importar ni cambiar.').state,
+          logic.failureState(error, 'No se pudo cargar el catálogo de encuestas', 'La lista de sus servicios se ve, pero por ahora no puede importar ni cambiar.'),
         ),
     });
   }

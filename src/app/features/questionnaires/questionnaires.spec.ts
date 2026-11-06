@@ -9,7 +9,7 @@ import { SurveysInbox } from './inbox/surveys-inbox';
 import { SurveysHome } from './questionnaires';
 import { ServiceSurveys } from './service-surveys/service-surveys';
 
-/** Los dos paneles tienen su propio spec; acá se miden sólo las sub-pestañas. */
+/** Each panel has its own spec; this one only measures the sub-tabs. */
 @Component({ selector: 'app-surveys-inbox', template: '<p data-testid="stub-inbox">B</p>' })
 class InboxStub {
   readonly goToServices = output<void>();

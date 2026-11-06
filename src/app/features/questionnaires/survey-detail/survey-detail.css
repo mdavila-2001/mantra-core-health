@@ -14,11 +14,14 @@
   margin-block-start: var(--sp-5);
 }
 
-/* The questionnaire tab's own action, aligned to the end above the list. */
+/* The questionnaire tab's head: the read-only line and «Ver como el paciente» in ONE row (wraps on phones). */
 .encuesta__panel-cabecera {
   display: flex;
-  justify-content: flex-end;
-  margin-block: 0 var(--sp-3);
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-4);
+  margin-block: var(--sp-4) var(--sp-3);
 }
 
 .encuesta__consigna {
@@ -53,8 +56,14 @@
   color: var(--text-secondary);
 }
 
+.encuesta__respuestas-total {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
 .encuesta__nota-csv {
-  margin: var(--sp-2) 0 0;
+  flex: 1 1 20rem;
+  margin: 0;
   color: var(--text-secondary);
   font-size: var(--fs-caption);
 }
@@ -68,9 +77,8 @@
   list-style: none;
 }
 
-/* La nota de la previa: dice que lo que se toca no se guarda. Va arriba del
-   cuestionario porque es la advertencia que evita que alguien crea que está
-   respondiendo. */
+/* The preview note: nothing touched there is saved. It sits above the
+   questionnaire so nobody believes they are answering. */
 .encuesta__previa-nota {
   margin: 0 0 var(--sp-4);
   padding: var(--sp-2) var(--sp-3);
@@ -91,7 +99,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: var(--sp-2);
   inline-size: 100%;
   margin-block: 0 var(--sp-3);
@@ -224,16 +232,22 @@
   margin: 0;
 }
 
-/* Phones: the metadata in two columns, not one long column. */
+/* Phones: the metadata in two columns, not one long column. «Estado» takes the
+   whole row: its badge («Encuesta anterior (ya no se envía)») is wider than a cell. */
 @media (max-width: 48rem) {
   .encuesta__datos {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .encuesta__datos-estado {
+    grid-column: 1 / -1;
   }
 }
 
 /* The read-only notice: one compact line with its link, inside «Preguntas». */
 .encuesta__solo-lectura {
-  margin: var(--sp-4) 0 0;
+  flex: 1 1 20rem;
+  margin: 0;
   color: var(--text-secondary);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);

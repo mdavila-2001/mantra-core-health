@@ -55,11 +55,12 @@ describe('service-surveys.logic', () => {
   it('un rechazo (403/412) es S5, sin «Reintentar»; un fallo del servidor es S9 con código', () => {
     const refused = failureState(new HttpErrorResponse({ status: 412, error: { code: 'PRECONDITION_FAILED', message: 'RAW', correlationId: 'c-1' } }), 'T', 'M');
     expect(refused).toMatchObject({
-      title: 'T',
-      state: { status: 'forbidden', message: 'M', requestId: 'c-1', nextAction: { label: 'Completar mi perfil profesional', route: '/my-account' } },
+      status: 'forbidden', title: 'T', message: 'M', requestId: 'c-1', nextAction: { label: 'Completar mi perfil profesional', route: '/my-account' },
     });
     const failed = failureState(new HttpErrorResponse({ status: 500, error: { code: 'INTERNAL', message: 'RAW', correlationId: 'c-2' } }), 'T', 'M');
-    expect(failed).toMatchObject({ title: 'T', state: { status: 'error', title: 'T', message: 'M', requestId: 'c-2' } });
+    expect(failed).toMatchObject({ status: 'error', title: 'T', message: 'M', requestId: 'c-2' });
+    // A request that never arrived keeps S8, with the screen's title (the picker keeps its context).
+    expect(failureState(new HttpErrorResponse({ status: 0 }), 'T', 'M')).toMatchObject({ status: 'offline', title: 'T' });
   });
 
   it('cita las fuentes como ítems adaptados', () => {

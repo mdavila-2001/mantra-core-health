@@ -11,9 +11,9 @@ import type { PatientInvitation } from '../data-access/surveys/surveys.types';
  *
  * ## Qué cuenta y por qué
  *
- * - **La bandeja** es lo que devolvió el servidor: pendientes, respondidas o
- *   vencidas. (06/11/2026: the patient's icon is offered even with none — the
- *   screen explains with an empty state when they arrive.)
+ * - **The inbox** is what the server returned: pending, answered or expired.
+ *   (06/11/2026: the patient's icon is offered even with none — the screen
+ *   explains with an empty state when they arrive.)
  * - **El contador** son las pendientes **no vencidas**: una pendiente cuyo plazo
  *   pasó ya no se puede responder, y contarla prometería una acción imposible.
  *

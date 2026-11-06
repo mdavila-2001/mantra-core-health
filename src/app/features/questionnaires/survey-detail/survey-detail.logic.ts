@@ -8,7 +8,9 @@ import type { AnswerType, SurveyQuestion, SurveyResponse } from '../../../core/d
 /**
  * The privacy minimum (D-13): below this many answers no aggregate is shown —
  * not for the survey, not for a single question — and no CSV is offered. Same
- * rule as the server applies to the «Cómo le va» summary.
+ * rule as the server applies to the «Cómo le va» summary. Scope: aggregates and
+ * the CSV only. The «Respuestas» tab still lists each answer as received (day
+ * only, no patient identity), including those of a question suppressed here.
  */
 export const MIN_COHORT = 5;
 

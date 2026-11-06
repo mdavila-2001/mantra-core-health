@@ -148,7 +148,9 @@ function templateSummary(id: string, template: StandardTemplate) {
 
 /**
  * Deterministic answers for an imported template, only AFTER it was imported:
- * one every two days since then, up to six. A fresh import has none.
+ * one every two days since then, up to six. A fresh import has none. The optional
+ * «report delivery» question is skipped after the third answer, so the sheet's
+ * Resumen shows a question below its own minimum (per-question privacy rule).
  */
 function responsesFor(id: string, template: StandardTemplate, importedAt: string) {
   const days = Math.floor((Date.now() - new Date(importedAt).getTime()) / 86_400_000);
@@ -157,7 +159,7 @@ function responsesFor(id: string, template: StandardTemplate, importedAt: string
     id: uuid(`${id}-response-${n}`),
     invitationId: uuid(`${id}-invitation-${n}`),
     submittedAt: `${iso(-(n * 2 + 1), 0).slice(0, 10)}T00:00:00.000Z`,
-    answers: template.questions.map((q, i) => ({
+    answers: template.questions.flatMap((q, i) => (q.dimension === 'entrega_resultados' && n >= 3 ? [] : [{
       questionId: uuid(`${id}-q-${i}`),
       questionText: q.text,
       answerType: q.answerType,
@@ -165,7 +167,7 @@ function responsesFor(id: string, template: StandardTemplate, importedAt: string
       ...(q.answerType === 'BOOLEAN' ? { valueBoolean: (n + i) % 3 !== 0 } : {}),
       ...(q.answerType === 'SINGLE_CHOICE' || q.answerType === 'MULTIPLE_CHOICE' ? { valueChoices: [q.options?.[(n + i) % (q.options?.length || 1)] ?? ''] } : {}),
       ...(q.answerType === 'TEXT' ? { valueText: ['Todo claro y puntual.', 'Me explicaron bien el estudio.', 'Esperé un poco más de lo previsto.'][n % 3]! } : {}),
-    })),
+    }])),
   }));
 }
 
