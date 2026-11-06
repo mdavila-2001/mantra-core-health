@@ -78,6 +78,7 @@ const ALERTA: AlertaDeApoyo = {
       [guia]="guia"
       [(filtro)]="filtro"
       (nodoElegido)="desdeAlertas.push($event)"
+      (limpiar)="limpiezas = limpiezas + 1; filtro.set(filtroVacio); visibles.set([])"
     />
   `,
 })
@@ -90,6 +91,8 @@ class Anfitrion {
   readonly seleccionado = signal<string | null>(null);
   readonly filtro = signal<FiltroDeRed>(FILTRO_VACIO);
   readonly desdeAlertas: string[] = [];
+  readonly filtroVacio = FILTRO_VACIO;
+  limpiezas = 0;
 }
 
 describe('RedClinicaSuperficie', () => {
@@ -172,6 +175,23 @@ describe('RedClinicaSuperficie', () => {
     (por('guiado-siguiente') as HTMLButtonElement).click();
     await pintar();
     expect(red().visibles()).toEqual(['dx2']);
+  });
+
+  it('el aviso de paso ofrece «Quitar filtros»: limpia los del padre y al salir no vuelven', async () => {
+    host.filtro.set({ ...FILTRO_VACIO, texto: 'pielo' });
+    host.visibles.set(['dx2']);
+    await pintar();
+    await abrirGuiado();
+    expect(por('red-guiado-sin-nodos')!.textContent).toContain('no queda a la vista con los filtros puestos');
+    (por('red-guiado-quitar-filtros') as HTMLButtonElement).click();
+    await pintar();
+    expect(host.limpiezas).toBe(1);
+    expect(por('red-guiado-sin-nodos')).toBeNull();
+    expect([...red().visibles()].sort()).toEqual(['dx1', 'e1', 'rx1']);
+    (por('red-guiado-alternar') as HTMLButtonElement).click();
+    await pintar();
+    expect(host.filtro()).toEqual(FILTRO_VACIO);
+    expect(red().visibles()).toEqual([]);
   });
 
   it('el paso despliega y trae a la vista lo que enfoca (irANodo)', async () => {

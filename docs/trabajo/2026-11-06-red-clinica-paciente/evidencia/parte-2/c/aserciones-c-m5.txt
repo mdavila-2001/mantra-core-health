@@ -1,0 +1,15 @@
+ok   1440-claro: el aviso de paso ofrece «Quitar filtros» (filtro: Toda la historia Solo el hilo de este diagnósticoToda la historiaTrastorno de ansiedad generalizadaEn estudioInfección urinariaDiagnóstico históricoInfección respiratoria agudaEn estudioDislipidemiaEn estudioHipertensión arterial esencialEnfermedad activaAnemia ferropénicaRechazadoHipotiroidismoEnfermedad activaCancelar)
+ok   1440-claro: «Quitar filtros» limpia el filtro (Toda la historia Solo el hilo de este diagnósticoToda la historiaTrastorno de ansiedad generalizadaEn estudioInfección urinariaDiagnóstico históricoInfección respiratoria agudaEn estudioDislipidemiaEn estudioHipertensión arterial esencialEnfermedad activaAnemia ferropénicaRechazadoHipotiroidismoEnfermedad activaCancelar → Toda la historia)
+ok   1440-claro: el recorrido sigue en el mismo paso (Paso 1 de 34)
+ok   1440-claro: el foco no se pierde al desaparecer el botón (recorrido-nodo)
+ok   1440-claro: lo que cuenta el paso queda a la vista (6 nodos)
+ok   1440-claro: al salir del paso a paso el filtro sigue quitado (Toda la historia)
+FALLA 1440 dark: page.waitForURL: Navigation failed because page crashed! | =========================== logs =========================== | waiting for navigation until "load" | ============================================================
+ok   390-claro: el aviso de paso ofrece «Quitar filtros» (filtro: Trastorno de ansiedad generalizada)
+ok   390-claro: «Quitar filtros» limpia el filtro (Trastorno de ansiedad generalizada → Toda la historia)
+ok   390-claro: el recorrido sigue en el mismo paso (Paso 1 de 34)
+ok   390-claro: el foco no se pierde al desaparecer el botón (recorrido-nodo)
+ok   390-claro: lo que cuenta el paso queda a la vista (6 nodos)
+ok   390-claro: al salir del paso a paso el filtro sigue quitado (Toda la historia)
+
+1 FALLA(S)

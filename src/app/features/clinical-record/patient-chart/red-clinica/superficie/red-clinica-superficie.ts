@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DOCUMENT,
   effect,
   inject,
   Injector,
@@ -89,6 +90,7 @@ const TODA = '';
 })
 export class RedClinicaSuperficie {
   private readonly injector = inject(Injector);
+  private readonly document = inject(DOCUMENT);
 
   readonly registros = input.required<readonly RegistroDeLaRed[]>();
   readonly vinculos = input.required<readonly VinculoDeLaRed[]>();
@@ -222,6 +224,24 @@ export class RedClinicaSuperficie {
         const red = this.red();
         if (red === undefined || !this.guiado()) return;
         [...paso.enfocar].reverse().forEach((id) => red.irANodo(id));
+      },
+      { injector: this.injector },
+    );
+  }
+
+  /**
+   * «Quitar filtros» from the step notice. The parent clears its filters,
+   * which are the only copy: leaving the guided mode restores the fold, not
+   * the filters the person removed on purpose. The button disappears with the
+   * notice, so the focus goes to what the step tells, now in view.
+   */
+  protected quitarFiltros(): void {
+    this.limpiar.emit();
+    afterNextRender(
+      () => {
+        const id = this.paso()?.enfocar[0];
+        const activo = this.document.activeElement;
+        if (id !== undefined && (activo === null || activo === this.document.body)) this.red()?.irANodo(id, { foco: true });
       },
       { injector: this.injector },
     );

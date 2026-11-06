@@ -92,3 +92,11 @@
     padding-inline: 0;
   }
 }
+
+/* The step notice and its way out, on one line when they fit. */
+.superficie__sin-nodos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
