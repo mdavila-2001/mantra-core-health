@@ -62,6 +62,7 @@ describe('Settings', () => {
       return Promise.resolve();
     },
     refrescar: () => Promise.resolve(),
+    avisoDePush: signal(''),
   };
 
   const text = (): string => fixture.nativeElement.textContent as string;
@@ -103,6 +104,7 @@ describe('Settings', () => {
   beforeEach(() => {
     requested.length = 0;
     inFlight.set([]);
+    fakePermissions.avisoDePush.set('');
     states.set({ avisos: 'sin-decidir', ubicacion: 'concedido', camara: 'denegado' });
     TestBed.configureTestingModule({
       providers: [
@@ -305,6 +307,17 @@ describe('Settings', () => {
     fixture.detectChanges();
 
     expect(toggle('avisos').checked).toBe(false);
+  });
+
+  it('si encender los avisos no deja el push andando, lo dice debajo de los permisos', () => {
+    mount();
+    goTo('Permisos');
+    expect(query('permission-avisos-notice')).toBeNull();
+
+    fakePermissions.avisoDePush.set('Los avisos del navegador todavía no están disponibles en este entorno.');
+    fixture.detectChanges();
+
+    expect(query('permission-avisos-notice')?.textContent).toContain('todavía no están disponibles');
   });
 
   it('el interruptor nombra su permiso: sin rótulo visible propio, queda mudo', () => {

@@ -190,6 +190,8 @@ export const appConfig: ApplicationConfig = {
     // Los avisos push de la cuenta que se va no deben seguir llegando a este
     // navegador (dispositivo compartido). Import dinámico por el presupuesto del
     // paquete inicial, igual que el limpiador de arriba.
+    // Every logout (manual, idle, other tab, everywhere) forgets the browser on purpose:
+    // the per-user opt-in stays, so WebPushService.resync restores it on that person's next login.
     {
       provide: SESSION_CLEANERS,
       multi: true,

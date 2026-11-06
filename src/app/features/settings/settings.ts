@@ -13,6 +13,7 @@ import {
 import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-toggle.directive';
 import { ThemeService } from '../../core/tokens/theme.service';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
+import { Alert } from '../../shared/components/molecules/alert/alert';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
 import { Switch } from '../../shared/components/atoms/switch/switch';
@@ -88,7 +89,7 @@ const BROWSER_PERMISSIONS: readonly {
  */
 @Component({
   selector: 'app-settings',
-  imports: [AgendaPreferences, AlovidaThemeToggleDirective, AppButtonLink, ChatPreferences, MyDevices, NavIcon, NotificationPreferences, PageHeader, RouterLink, Switch, Tab, Tabs],
+  imports: [AgendaPreferences, Alert, AlovidaThemeToggleDirective, AppButtonLink, ChatPreferences, MyDevices, NavIcon, NotificationPreferences, PageHeader, RouterLink, Switch, Tab, Tabs],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
