@@ -1,0 +1,56 @@
+/* El host ocupa la fila entera de la rejilla del formulario (`.app-form-grid > :not(app-form-field)`);
+   con `display: contents` sus hijos caían cada uno en una columna de la rejilla y la sección quedaba angosta. */
+:host {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.detalle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  min-inline-size: 0;
+  margin: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.detalle__titulo {
+  padding-inline: var(--sp-2);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.detalle__campos {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.detalle__error {
+  margin: 0;
+  color: var(--text-danger);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+@media (min-width: 48rem) {
+  .detalle__campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Por qué «Pedir estudio» está gris: dicho junto al campo que falta, no sólo con un asterisco. */
+.detalle__falta {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

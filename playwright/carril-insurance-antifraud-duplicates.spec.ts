@@ -228,6 +228,11 @@ async function elegir(zona: Locator, campo: RegExp, opcion: string): Promise<voi
 async function pedirEstudio(modal: Locator, estudio: string, tipo: string): Promise<void> {
   await elegir(modal, /^Estudio\b/, estudio);
   await elegir(modal, /^Tipo\b/, tipo);
+  // Un estudio de laboratorio pide la muestra (obligatoria desde 2026-11-06).
+  const muestra = modal.getByRole('combobox', { name: /^Muestra\b/ });
+  if ((await muestra.count()) > 0) {
+    await pickFromDropdown(modal, muestra, (lista) => lista.getByRole('option').first());
+  }
   await modal.getByRole('button', { name: 'Pedir estudio' }).click();
 }
 

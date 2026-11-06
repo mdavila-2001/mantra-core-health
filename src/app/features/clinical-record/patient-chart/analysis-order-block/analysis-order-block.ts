@@ -21,7 +21,6 @@ import {
   previousStudyFromErrorDetails,
 } from '../../../../core/data-access/diagnostics/diagnostics.client';
 import type {
-  DiagnosticOrder,
   DiagnosticReport,
   DuplicateStudyCheckResult,
   NewDiagnosticOrder,
@@ -51,12 +50,13 @@ import {
   DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS,
   PRIORITY_LABELS,
   conceptosDe,
-  duplicadoDe,
+  filaDeOrden,
   mensajeDeAlta,
 } from './analysis-order-block.helpers';
 import { createPerformerOrderState } from './performer-selector/performer-order-state';
 import { PerformerSelector } from './performer-selector/performer-selector';
 import { CollectionPointSelect } from './collection-point-select/collection-point-select';
+import { StudyDetailSection } from './study-detail-section/study-detail-section';
 import { createStudyCategoryState } from './study-category';
 import type { EstudioEnFicha } from './analysis-order-block.helpers';
 
@@ -149,6 +149,7 @@ const TOPE = 25;
     InformedConsentBadge,
     InformedConsentDialog,
     CollectionPointSelect,
+    StudyDetailSection,
   ],
   templateUrl: './analysis-order-block.html',
   styleUrl: './analysis-order-block.css',
@@ -250,6 +251,8 @@ export class AnalysisOrderBlock {
   /** Quién realiza el procedimiento: sólo en órdenes de procedimiento. */
   /** F5b: el punto de toma sugerido (sólo en sedes que tienen puntos). */
   private readonly collectionPoint = viewChild(CollectionPointSelect);
+  /** La muestra (laboratorio) o la parte del cuerpo (imagen) del estudio. */
+  private readonly detail = viewChild(StudyDetailSection);
 
   protected readonly performer = createPerformerOrderState({
     category: this.tipo.conceptId,
@@ -313,7 +316,7 @@ export class AnalysisOrderBlock {
     // el informe previo del paciente casi siempre está en esta misma lectura.
     const informesPorId = new Map(state.data.reports.map((informe) => [informe.id, informe]));
 
-    return state.data.orders.map((orden) => this.aFila(orden, conResultado, informesPorId));
+    return state.data.orders.map((orden) => filaDeOrden(orden, conResultado, informesPorId, (id) => this.etiquetas().get(id)?.display));
   });
 
   /**
@@ -366,7 +369,8 @@ export class AnalysisOrderBlock {
       this.tipo.fields() !== null &&
       !this.pidiendo() &&
       !this.checkingDuplicate() &&
-      this.performer.canSubmit(),
+      this.performer.canSubmit() &&
+      (this.detail()?.canSubmit() ?? true),
   );
 
   /** El fallo de la escritura, en palabras. */
@@ -527,6 +531,7 @@ export class AnalysisOrderBlock {
       ...(prioridad === null ? {} : { priorityConceptId: prioridad }),
       ...performerFields,
       ...(this.collectionPoint()?.fields() ?? {}),
+      ...(this.detail()?.fields() ?? {}),
       ...decision,
     };
 
@@ -581,7 +586,8 @@ export class AnalysisOrderBlock {
         }
       }
     }
-    this.registro.set(errorToViewState<null>(error));
+    // Un 422 de la muestra o de la parte del cuerpo se muestra en su campo, no como error general.
+    this.registro.set(this.detail()?.absorbError(error) === true ? ready(null) : errorToViewState<null>(error));
   }
 
   /** El diálogo de antiduplicación pidió reutilizar el informe previo. */
@@ -618,6 +624,7 @@ export class AnalysisOrderBlock {
     this.prioridad.set(null);
     this.performer.reset();
     this.collectionPoint()?.reset();
+    this.detail()?.reset();
   }
 
   /**
@@ -629,32 +636,6 @@ export class AnalysisOrderBlock {
    */
   private estaLiberado(informe: DiagnosticReport): boolean {
     return informe.currentReleasedVersionId !== undefined;
-  }
-
-  /** Una orden traducida a la fila que la ficha muestra. */
-  private aFila(
-    orden: DiagnosticOrder,
-    conResultado: ReadonlySet<string>,
-    informesPorId: ReadonlyMap<string, DiagnosticReport>,
-  ): EstudioEnFicha {
-    const duplicado = duplicadoDe(orden);
-
-    return {
-      id: orden.id,
-      estudio: this.etiquetaDe(orden.codeConceptId),
-      categoria: this.etiquetaDe(orden.categoryConceptId),
-      estado: this.etiquetaDe(orden.statusConceptId),
-      pedidoEl: orden.createdAt,
-      conResultado: conResultado.has(orden.id),
-      duplicado,
-      informePrevioDel:
-        duplicado === 'reused' && orden.previousDiagnosticReportId !== undefined
-          ? (informesPorId.get(orden.previousDiagnosticReportId)?.createdAt ?? null)
-          : null,
-      justificacion: orden.duplicateOverrideReason ?? null,
-      collectionPoint: orden.suggestedCareSpace ? `${orden.suggestedCareSpace.code} · ${orden.suggestedCareSpace.name}` : null,
-      ...(orden.encounterId === undefined ? {} : { encounterId: orden.encounterId }),
-    };
   }
 
   private cargar(patientProfileId: string): void {
