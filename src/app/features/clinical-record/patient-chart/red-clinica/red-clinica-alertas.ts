@@ -11,10 +11,9 @@
 
     Funciones puras sobre los tipos de `core/data-access` tal como llegan del
     API. Lo que el API no dice en claro (los códigos de catálogo) se resuelve
-    con `codigoDe`, igual que en `diagnosis-block`. Los campos nuevos de la
-    franja 1 (`targetEncounterId`, `reasonConditionId`,
-    `replacedByConditionId`) se leen con acceso opcional tolerante: si la API
-    todavía no los manda, las alertas siguen funcionando con lo que hay.
+    con `codigoDe`, igual que en `diagnosis-block`. Los vínculos de la franja 1
+    (`reasonConditionId`, `targetEncounterId`, `replacedByConditionId`) son
+    opcionales en el contrato: ausentes, las alertas trabajan con lo que hay.
     ========================================================================== */
 
 import type { Condition, Encounter } from '../../../../core/data-access/clinical/clinical.types';
@@ -156,12 +155,6 @@ function fecha(d: Date): string {
   return d.toLocaleDateString('es-BO', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-/** Lee un campo que la franja 1 agrega al tipo, sin exigir que ya exista. */
-function campoOpcional(registro: object, campo: string): string | undefined {
-  const valor = (registro as Record<string, unknown>)[campo];
-  return typeof valor === 'string' && valor !== '' ? valor : undefined;
-}
-
 const sinCodigo: ResolverCodigo = () => undefined;
 
 /* -- Las reglas ------------------------------------------------------------ */
@@ -178,7 +171,7 @@ export function presuntivosSinResolver(entrada: EntradaDeAlertas): readonly Aler
     .filter((c) => {
       if (c.verification?.outcome !== undefined) return false;
       if (c.resolvedAt !== undefined) return false;
-      if (campoOpcional(c, 'replacedByConditionId') !== undefined) return false;
+      if (c.replacedByConditionId !== undefined) return false;
       const estado = diagnosisStateOf(
         {
           ...c,
@@ -195,7 +188,7 @@ export function presuntivosSinResolver(entrada: EntradaDeAlertas): readonly Aler
       const nombre = entrada.etiquetaDe?.(c.codeConceptId) ?? 'Diagnóstico presuntivo';
       const nodo = idDeNodo('diagnostico', c.id);
       const estudios = (entrada.ordenes ?? []).filter(
-        (o) => campoOpcional(o, 'reasonConditionId') === c.id,
+        (o) => o.reasonConditionId === c.id,
       );
       const conEstudios =
         estudios.length === 0
@@ -237,7 +230,7 @@ export function estudiosSinResultado(entrada: EntradaDeAlertas): readonly Alerta
       const dias = diasEntre(o.createdAt, entrada.ahora);
       const nombre = entrada.etiquetaDe?.(o.codeConceptId) ?? 'Estudio';
       const nodo = idDeNodo('estudio', o.id);
-      const motivo = campoOpcional(o, 'reasonConditionId');
+      const motivo = o.reasonConditionId;
       const borrador = (entrada.informes ?? []).some(
         (i) => i.serviceRequestId === o.id && i.currentVersionId !== undefined,
       );
@@ -286,7 +279,8 @@ export function derivacionesAbiertas(entrada: EntradaDeAlertas): readonly Alerta
 
     if (r.counterReferralText !== undefined && r.counterReferralText.trim() !== '') continue;
     const llegada = r.transfer?.arrivedAt;
-    const atencionDestino = campoOpcional(r, 'targetEncounterId');
+    // Sólo existe tras ACCEPT: lo escribe el destino al aceptar o al registrar la llegada.
+    const atencionDestino = r.targetEncounterId;
     const desde = llegada ?? r.respondedAt;
     // Sin llegada ni respuesta fechada no hay desde cuándo contar: no se avisa.
     if (desde === undefined) continue;

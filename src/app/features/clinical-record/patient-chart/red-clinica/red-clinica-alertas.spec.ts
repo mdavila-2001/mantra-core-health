@@ -101,18 +101,18 @@ describe('presuntivosSinResolver', () => {
           verification: { outcome: 'CONFIRMED', decidedAt: '', decidedByProfileId: 'x', reasonText: null, basedOn: null },
         }),
         condicion({ id: 'res', resolvedAt: haceDias(1) }),
-        { ...condicion({ id: 'rep' }), ...{ replacedByConditionId: 'conf' } },
+        { ...condicion({ id: 'rep' }), replacedByConditionId: 'conf' },
       ],
     });
     expect(alertas).toEqual([]);
   });
 
-  it('cuenta y resalta los estudios pedidos para resolverlo (reasonConditionId, tolerante)', () => {
+  it('cuenta y resalta los estudios pedidos para resolverlo (reasonConditionId)', () => {
     const alertas = presuntivosSinResolver({
       ...base,
       diagnosticos: [condicion({ id: 'dx' })],
       ordenes: [
-        { ...orden({ id: 'o1' }), ...{ reasonConditionId: 'dx' } },
+        { ...orden({ id: 'o1' }), reasonConditionId: 'dx' },
         orden({ id: 'o2' }),
       ],
     });
@@ -187,7 +187,7 @@ describe('estudiosSinResultado', () => {
   it('resalta también el diagnóstico para el que se pidió', () => {
     const [alerta] = estudiosSinResultado({
       ...base,
-      ordenes: [{ ...orden({ id: 'o1' }), ...{ reasonConditionId: 'dx' } }],
+      ordenes: [{ ...orden({ id: 'o1' }), reasonConditionId: 'dx' }],
     });
     expect(alerta.nodoIds).toEqual(['o1', 'dx']);
   });
@@ -216,7 +216,7 @@ describe('derivacionesAbiertas', () => {
       derivaciones: [
         {
           ...derivacion({ id: 'r', status: 'ACCEPTED', respondedAt: haceDias(40), transfer: { arrivedAt: haceDias(30) } }),
-          ...{ targetEncounterId: 'enc-destino' },
+          targetEncounterId: 'enc-destino',
         },
       ],
     });

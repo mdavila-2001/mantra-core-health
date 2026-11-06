@@ -320,7 +320,7 @@ export const DIAGNOSTICOS_DEMO: readonly Condition[] = [
       reasonText: 'Hipertensión sostenida en MAPA.',
       basedOn: { kind: 'ANALYSIS', serviceRequestId: 'e1' },
     },
-    ...{ replacedByConditionId: 'dx2' },
+    replacedByConditionId: 'dx2',
   },
   {
     id: 'dx2',
@@ -341,9 +341,9 @@ export const DIAGNOSTICOS_DEMO: readonly Condition[] = [
 ];
 
 export const ORDENES_DEMO: readonly DiagnosticOrder[] = [
-  { id: 'e1', patientProfileId: paciente, codeConceptId: 'cpt-mapa', statusConceptId: 'sr-activa', encounterId: 'a1', createdAt: d(8, 4), ...{ reasonConditionId: 'dx2' } },
-  { id: 'e2', patientProfileId: paciente, codeConceptId: 'cpt-lipidos', statusConceptId: 'sr-activa', encounterId: 'a1', createdAt: d(8, 4), ...{ reasonConditionId: 'dx2' } },
-  { id: 'e3', patientProfileId: paciente, codeConceptId: 'cpt-eco', statusConceptId: 'sr-activa', encounterId: 'a3', createdAt: d(9, 2, 11), ...{ reasonConditionId: 'dx2' } },
+  { id: 'e1', patientProfileId: paciente, codeConceptId: 'cpt-mapa', statusConceptId: 'sr-activa', encounterId: 'a1', createdAt: d(8, 4), reasonConditionId: 'dx2' },
+  { id: 'e2', patientProfileId: paciente, codeConceptId: 'cpt-lipidos', statusConceptId: 'sr-activa', encounterId: 'a1', createdAt: d(8, 4), reasonConditionId: 'dx2' },
+  { id: 'e3', patientProfileId: paciente, codeConceptId: 'cpt-eco', statusConceptId: 'sr-activa', encounterId: 'a3', createdAt: d(9, 2, 11), reasonConditionId: 'dx2' },
 ];
 
 export const INFORMES_DEMO: readonly DiagnosticReport[] = [
@@ -362,7 +362,7 @@ export const DERIVACIONES_DEMO: readonly Referral[] = [
     targetDisplayName: 'Cardiología · Clínica Norte',
     respondedAt: d(8, 27),
     transfer: { arrivedAt: d(9, 2, 10) },
-    ...{ targetEncounterId: 'a3' },
+    targetEncounterId: 'a3',
   },
   {
     id: 'd2',
