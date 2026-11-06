@@ -27,6 +27,25 @@
   gap: var(--sp-2);
 }
 
+/* Full-width map above the table: both show the same wave (the filter
+   applies to both). */
+.branches__map {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.branches__map-title {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.branches__map p {
+  margin: 0;
+  font-size: var(--fs-caption);
+}
+
 .branches__list {
   margin: 0;
   padding-left: var(--sp-5);
