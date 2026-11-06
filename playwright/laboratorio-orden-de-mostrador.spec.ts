@@ -78,12 +78,12 @@ test('el laboratorio carga, corrige y anula la orden que trae el paciente', asyn
   await page.getByRole('menuitem', { name: 'Corregir' }).click();
   const fix = page.getByRole('dialog', { name: 'Corregir la orden' });
   await expect(fix).toBeVisible();
-  await pick(page, 'Radiografía de tórax');
+  await pick(page, 'Radiografía de tórax frontal y lateral');
   await page.getByTestId('lab-order-intake-save').click();
   await expect(fix).toBeHidden();
   await page.reload();
   await esperarAplicacionLista(page);
-  await expect(page.locator('tr', { hasText: REQUESTER }).first()).toContainText('Radiografía de tórax');
+  await expect(page.locator('tr', { hasText: REQUESTER }).first()).toContainText('Radiografía de tórax frontal y lateral');
 
   // Annul it, with a reason.
   await page.locator('tr', { hasText: REQUESTER }).first().getByRole('button', { name: /acciones/i }).click();
