@@ -265,8 +265,12 @@ describe('ubicarRed · muchas líneas', () => {
   it('el pasillo se ensancha cuando bajan más líneas de las que entran', () => {
     const regs: RegistroDeLaRed[] = [];
     const vins: VinculoDeLaRed[] = [];
+    // Ocho registros del mismo problema en un mismo momento, cada uno con su
+    // receta en un momento distinto: las ocho bajadas comparten pasillo y
+    // altura, y no entran en el ancho de siempre. (En hilos distintos se
+    // apilarían en alturas que no se solapan y compartirían carril.)
     for (let i = 0; i < 8; i++) {
-      regs.push(r(`d${i}`, 'diagnostico', d(2025, 1), { certeza: 'confirmado', concepto: `k${i}` }));
+      regs.push(r(`d${i}`, 'diagnostico', d(2025, 1), { certeza: 'confirmado', concepto: 'k' }));
       regs.push(r(`r${i}`, 'medicacion', d(2025, 2 + i)));
       vins.push({ desde: `d${i}`, hasta: `r${i}`, motivo: 'indicado-para' });
     }
@@ -275,7 +279,7 @@ describe('ubicarRed · muchas líneas', () => {
     verificarTrazado(p);
   });
 
-  it.each([1, 2, 3, 4, 5, 6, 7, 8])('una historia generada (semilla %i) cumple las reglas del trazado', (semilla) => {
+  it.each(Array.from({ length: 16 }, (_, i) => i + 1))('una historia generada (semilla %i) cumple las reglas del trazado', (semilla) => {
     const { registros, vinculos } = historiaGenerada(semilla);
     verificarTrazado(plano(registros, vinculos, { todo: true }));
     // Y con todo abierto: descartados y grupos.
