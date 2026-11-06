@@ -1,0 +1,44 @@
+axe médica 1440 light red plegada ([data-testid="red-superficie"]): 0 reglas con violaciones
+ok   axe médica 1440 light red plegada: sin violaciones WCAG 2.2 AA
+axe médica 1440 light hipotiroidismo desplegado + alertas ([data-testid="red-superficie"]): 0 reglas con violaciones
+ok   axe médica 1440 light hipotiroidismo desplegado + alertas: sin violaciones WCAG 2.2 AA
+axe médica 1440 light panel del estudio TSH ([data-testid="red-panel"]): 0 reglas con violaciones
+ok   axe médica 1440 light panel del estudio TSH: sin violaciones WCAG 2.2 AA
+axe médica 1440 dark red plegada ([data-testid="red-superficie"]): 0 reglas con violaciones
+ok   axe médica 1440 dark red plegada: sin violaciones WCAG 2.2 AA
+axe médica 1440 dark hipotiroidismo desplegado + alertas ([data-testid="red-superficie"]): 0 reglas con violaciones
+ok   axe médica 1440 dark hipotiroidismo desplegado + alertas: sin violaciones WCAG 2.2 AA
+axe médica 1440 dark panel del estudio TSH ([data-testid="red-panel"]): 0 reglas con violaciones
+ok   axe médica 1440 dark panel del estudio TSH: sin violaciones WCAG 2.2 AA
+axe médica 390 dark red plegada ([data-testid="red-superficie"]): 0 reglas con violaciones
+ok   axe médica 390 dark red plegada: sin violaciones WCAG 2.2 AA
+axe médica 390 dark hipotiroidismo desplegado + alertas ([data-testid="red-superficie"]): 0 reglas con violaciones
+ok   axe médica 390 dark hipotiroidismo desplegado + alertas: sin violaciones WCAG 2.2 AA
+axe médica 390 dark panel del estudio TSH ([data-testid="red-panel"]): 0 reglas con violaciones
+ok   axe médica 390 dark panel del estudio TSH: sin violaciones WCAG 2.2 AA
+axe paciente 1440 light ([data-testid="mi-recorrido"]): 0 reglas con violaciones
+ok   axe paciente 1440 light: sin violaciones WCAG 2.2 AA
+axe paciente 1440 dark ([data-testid="mi-recorrido"]): 0 reglas con violaciones
+ok   axe paciente 1440 dark: sin violaciones WCAG 2.2 AA
+Tab desde «Expandir todo»:
+  button[red-plegar-todo] «Contraer todo»
+  button «Lo más antiguo»
+  button «Lo más reciente»
+  div «Recorrido clínico por episodios, de lo más antiguo a lo más reciente»
+  button[red-episodio] «Episodio: Hipotiroidismo. Enfermedad activa. del 16 de marzo de 2025 a»
+  button[red-fuera] «Ver 5 marcas de Hipotiroidismo anteriores a lo visible»
+  button[red-episodio] «Episodio: Hipertensión arterial esencial. Enfermedad activa. del 2 de »
+  button[red-episodio] «Episodio: Dislipidemia. En estudio. del 31 de diciembre de 2025 al 4 d»
+  button[red-episodio] «Episodio: Infección respiratoria aguda. En estudio. del 31 de marzo de»
+  button[red-episodio] «Episodio: Infección urinaria. Diagnóstico histórico. del 8 de abril de»
+  button[red-fuera] «Ver 3 marcas de Infección urinaria anteriores a lo visible»
+  button[red-episodio] «Episodio: Trastorno de ansiedad generalizada. En estudio. del 21 de se»
+  button[red-fuera] «Ver 1 marca de Trastorno de ansiedad generalizada anterior a lo visibl»
+  button[red-episodio] «Episodio: Atenciones sin diagnóstico asociado. del 10 de enero de 2026»
+ok   Enter despliega el episodio (aria-expanded=true)
+ok   el nodo con foco queda entero en la pantalla
+Enter sobre el nodo → foco en h2 «TSH por quimioluminiscencia»
+Escape → foco en button[recorrido-nodo] «Estudio pedido: TSH por quimioluminiscencia. Orden de estudio. Complet»
+ok   Escape cierra el panel y el foco vuelve al nodo
+
+TODO OK
