@@ -52,8 +52,10 @@
     transition: transform var(--dur-fast) var(--ease-standard);
 }
 
-/* La flecha gira; el estado real lo dice `aria-expanded`, no el dibujo. */
-:host(.is-expanded) .accordion-panel__chevron {
+/* The chevron turns with its own trigger's `aria-expanded`: a host-level
+   selector would also reach the chevrons of nested (projected) panels, which
+   share this component's emulated-encapsulation attribute. */
+.accordion-panel__trigger[aria-expanded='true'] > .accordion-panel__chevron {
     transform: rotate(180deg);
 }
 
