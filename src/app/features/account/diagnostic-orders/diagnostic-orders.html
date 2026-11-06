@@ -99,6 +99,9 @@
 
 <ng-template #celdaEstudio let-fila>
   <span class="ordenes__estudio">{{ fila.studyLabel }}</span>
+  @if (fila.studyDetail) {
+    <span class="ordenes__detalle" data-testid="mis-ordenes-detalle">{{ fila.studyDetail }}</span>
+  }
   <app-order-performer-summary [mode]="fila.performerMode" [siteName]="fila.suggestedSiteName" />
 </ng-template>
 

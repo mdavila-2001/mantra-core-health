@@ -32,6 +32,14 @@
   gap: var(--sp-4);
 }
 
+/* En un móvil, el hijo más ancho (el selector de la respuesta del formulario médico, la barra de acción) estiraba la
+   columna de la rejilla por encima de la tarjeta y todo el formulario —también la muestra y la parte del cuerpo—
+   se cortaba por la derecha. Con `min-inline-size: 0` la columna se ajusta a la tarjeta. La cadena de
+   `.app-form-grid` repetida le gana en especificidad a la regla global de la rejilla (`alovida.css`). */
+.estudios__formulario.app-form-grid.app-form-grid.app-form-grid > * {
+  min-inline-size: 0;
+}
+
 .estudios__historico {
   display: grid;
   gap: var(--sp-3);
