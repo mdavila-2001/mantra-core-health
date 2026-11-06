@@ -1,6 +1,7 @@
 import { CONTENT_DIALOG_SCENARIOS } from './content-dialog.scenarios';
 import { DATA_TABLE_SCENARIOS } from './data-table.scenarios';
 import { RED_CLINICA_SCENARIOS } from './red-clinica.scenarios';
+import { RECORRIDO_GUIADO_SCENARIOS } from './recorrido-guiado.scenarios';
 import type { ComponentScenario } from './scenario.types';
 import { VIEW_STATE_HOST_SCENARIOS } from './view-state-host.scenarios';
 
@@ -22,6 +23,7 @@ export const SCENARIOS: readonly ComponentScenario[] = [
   ...CONTENT_DIALOG_SCENARIOS,
   ...VIEW_STATE_HOST_SCENARIOS,
   ...RED_CLINICA_SCENARIOS,
+  ...RECORRIDO_GUIADO_SCENARIOS,
 ];
 
 const BY_KEY = new Map<string, ComponentScenario[]>();

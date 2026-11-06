@@ -1,0 +1,252 @@
+/* ============================================================================
+    Recorrido guiado: la tarjeta de narración arriba y la barra de control abajo.
+
+    Por debajo de 650 px de ancho del propio componente (--bp-sm; una consulta
+    de contenedor no puede leer la custom property) la barra se compacta: los
+    botones quedan sólo con ícono —el nombre sigue para el lector de pantalla—
+    y se pega abajo, a mano del pulgar, mientras la narración queda encima.
+    ========================================================================== */
+
+:host {
+  display: block;
+  container-type: inline-size;
+  container-name: guiado;
+}
+
+.guiado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.guiado:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* -- Relato --------------------------------------------------------------- */
+
+.guiado__relato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-block-size: 7.5rem;
+}
+
+.guiado__contador {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.guiado__fecha {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.guiado__episodio {
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-pill);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+}
+
+.guiado__tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.guiado__tarjeta--entra {
+  animation: guiado-entra var(--dur-base) var(--ease-out);
+}
+
+@keyframes guiado-entra {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.guiado__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+}
+
+.guiado__narracion {
+  margin: 0;
+  max-inline-size: 72ch;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-primary);
+}
+
+/* -- Barra ---------------------------------------------------------------- */
+
+.guiado__barra {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.guiado__progreso {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+/* El blanco táctil es la celda entera (24 px de alto); la línea visible es fina. */
+.guiado__segmento {
+  flex: 1 1 0;
+  min-inline-size: var(--sp-2);
+  block-size: var(--sp-6);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.guiado__marca {
+  display: block;
+  inline-size: 100%;
+  block-size: 4px;
+  border-radius: var(--r-pill);
+  background: var(--border-default);
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
+}
+
+.guiado__segmento:hover .guiado__marca {
+  background: var(--border-strong);
+}
+
+.guiado__segmento.is-revelado .guiado__marca {
+  background: var(--brand-secondary);
+}
+
+.guiado__segmento.is-actual .guiado__marca {
+  background: var(--brand-primary);
+  transform: scaleY(2);
+}
+
+.guiado__segmento:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.guiado__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.guiado__boton--reproducir {
+  min-inline-size: 8.5rem;
+}
+
+.guiado__icono {
+  inline-size: 1rem;
+  block-size: 1rem;
+  fill: currentColor;
+}
+
+.guiado__velocidad {
+  margin-inline-start: auto;
+}
+
+.guiado__aviso {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.guiado__vacio {
+  margin: 0;
+  padding: var(--sp-4);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-lg);
+  color: var(--text-secondary);
+}
+
+/* -- Compacto ------------------------------------------------------------- */
+
+@container guiado (max-width: 649px) {
+  .guiado {
+    padding: var(--sp-3);
+    gap: var(--sp-3);
+  }
+
+  .guiado__titulo {
+    font-size: var(--fs-body-lg);
+    line-height: var(--lh-body-lg);
+  }
+
+  .guiado__barra {
+    position: sticky;
+    inset-block-end: 0;
+    z-index: 1;
+    margin: 0 calc(var(--sp-3) * -1) calc(var(--sp-3) * -1);
+    padding: var(--sp-2) var(--sp-3) var(--sp-3);
+    border-block-start: 1px solid var(--border-subtle);
+    border-radius: 0 0 var(--r-lg) var(--r-lg);
+    background: var(--bg-surface);
+    gap: var(--sp-2);
+  }
+
+  /* Los tres botones en una fila sin encogerse (encogidos, el de reproducir
+     se quedaba sin ícono) y la velocidad en la fila de abajo, a lo ancho. */
+  .guiado__controles {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .guiado__velocidad {
+    grid-column: 1 / -1;
+    margin-inline-start: 0;
+  }
+
+  .guiado__rotulo {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .guiado__boton,
+  .guiado__boton--reproducir {
+    min-inline-size: 0;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guiado__tarjeta--entra {
+    animation: none;
+  }
+
+  .guiado__marca {
+    transition: none;
+  }
+}
