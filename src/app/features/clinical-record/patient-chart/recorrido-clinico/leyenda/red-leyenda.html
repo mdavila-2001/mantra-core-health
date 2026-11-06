@@ -1,0 +1,34 @@
+@if (conHitos()) {
+  <li class="red__leyenda-item">
+    <span class="red__muestra-hito red__hito--confirmado" aria-hidden="true"></span> Confirmado
+  </li>
+  <li class="red__leyenda-item">
+    <span class="red__muestra-hito red__hito--presuntivo" aria-hidden="true"></span> Presuntivo
+  </li>
+  <li class="red__leyenda-item">
+    <span class="red__muestra-hito red__hito--descartado" aria-hidden="true"></span> Descartado
+  </li>
+  <li class="red__leyenda-item">
+    <span class="red__muestra-hito red__hito--momento" aria-hidden="true"></span> Atención o cita
+  </li>
+}
+@for (item of items(); track item.clave) {
+  <li class="red__leyenda-item" [attr.data-motivo]="item.motivo">
+    <svg class="red__muestra" viewBox="0 0 28 8" aria-hidden="true" focusable="false">
+      <path
+        class="red__arista"
+        [class.red__arista--tronco]="item.familia === 'tronco'"
+        [class.red__arista--enlace]="item.familia === 'enlace'"
+        [class.red__arista--inferido]="item.familia === 'inferido'"
+        d="M 1 4 H 22"
+      />
+      @if (item.familia !== 'tronco') {
+        <path
+          [class]="item.familia === 'inferido' ? 'red__punta red__punta--inferido' : 'red__punta'"
+          d="M 21 1 L 27 4 L 21 7 Z"
+        />
+      }
+    </svg>
+    {{ item.nombre }}
+  </li>
+}

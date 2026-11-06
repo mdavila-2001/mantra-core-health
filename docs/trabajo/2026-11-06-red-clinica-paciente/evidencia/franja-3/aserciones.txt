@@ -1,0 +1,74 @@
+PASS marco a 1440 px de ancho útil (mide 1440)
+PASS light: el marco está en tema light
+PASS light 1440: panel lateral es <aside>
+PASS light 1440: tres valores en la tabla
+PASS light 1440: fuera de rango dicho con texto («Alto»)
+PASS light 1440: el mapa queda a la izquierda del panel, sin taparse
+PASS light 1440 estudio: sin scroll horizontal (1440 <= 1440)
+PASS light 1440: un vínculo navega y el foco va al título nuevo
+PASS light 1440: diagnóstico descartado muestra «se descartó en favor de»
+PASS light 1440: derivación sin contrarreferencia lo dice
+PASS light 1440: reconsulta muestra su origen
+PASS light 1440: Escape cierra el panel
+PASS light 1440: el foco vuelve al nodo que lo abrió
+PASS marco a 1440 px de ancho útil (mide 1440)
+PASS light 1440: chip de tipo filtra (3 de 14)
+PASS light 1440: la lista muestra 3 nodos
+PASS light 1440: «Limpiar filtros» vuelve a 14
+PASS marco a 1440 px de ancho útil (mide 1440)
+PASS light 1440: cinco alertas a la vista de siete
+PASS light 1440: el puntero sobre una alerta resalta sus nodos
+PASS light 1440: «Ver las 7 alertas» las muestra todas
+PASS light 1440: clic en una alerta abre su nodo
+PASS light 1440: sin errores de consola
+PASS marco a 390 px de ancho útil (mide 390)
+PASS light 390 filtros: sin scroll horizontal (390 <= 390)
+PASS light 390 filtros desplegados: sin scroll horizontal (390 <= 390)
+PASS marco a 390 px de ancho útil (mide 390)
+PASS light 390 alertas: sin scroll horizontal (390 <= 390)
+PASS light 390: en el teléfono es una hoja <dialog>
+PASS light 390: la hoja es modal (foco atrapado por el navegador)
+PASS light 390: la hoja entra en el ancho (0+390)
+PASS light 390: al abrir, el foco está en la hoja
+PASS light 390: cuatro Tab siguen dentro de la hoja
+PASS light 390: con la hoja abierta, un nodo del mapa no puede recibir foco (inerte)
+PASS light 390: Escape cierra la hoja
+PASS light 390: el foco vuelve al nodo
+PASS light 390: sin errores de consola
+PASS marco a 1440 px de ancho útil (mide 1440)
+PASS dark: el marco está en tema dark
+PASS dark 1440: panel lateral es <aside>
+PASS dark 1440: tres valores en la tabla
+PASS dark 1440: fuera de rango dicho con texto («Alto»)
+PASS dark 1440: el mapa queda a la izquierda del panel, sin taparse
+PASS dark 1440 estudio: sin scroll horizontal (1440 <= 1440)
+PASS dark 1440: un vínculo navega y el foco va al título nuevo
+PASS dark 1440: diagnóstico descartado muestra «se descartó en favor de»
+PASS dark 1440: derivación sin contrarreferencia lo dice
+PASS dark 1440: reconsulta muestra su origen
+PASS dark 1440: Escape cierra el panel
+PASS dark 1440: el foco vuelve al nodo que lo abrió
+PASS marco a 1440 px de ancho útil (mide 1440)
+PASS dark 1440: chip de tipo filtra (3 de 14)
+PASS dark 1440: la lista muestra 3 nodos
+PASS dark 1440: «Limpiar filtros» vuelve a 14
+PASS marco a 1440 px de ancho útil (mide 1440)
+PASS dark 1440: cinco alertas a la vista de siete
+PASS dark 1440: el puntero sobre una alerta resalta sus nodos
+PASS dark 1440: «Ver las 7 alertas» las muestra todas
+PASS dark 1440: clic en una alerta abre su nodo
+PASS dark 1440: sin errores de consola
+PASS marco a 390 px de ancho útil (mide 390)
+PASS dark 390 filtros: sin scroll horizontal (390 <= 390)
+PASS dark 390 filtros desplegados: sin scroll horizontal (390 <= 390)
+PASS marco a 390 px de ancho útil (mide 390)
+PASS dark 390 alertas: sin scroll horizontal (390 <= 390)
+PASS dark 390: en el teléfono es una hoja <dialog>
+PASS dark 390: la hoja es modal (foco atrapado por el navegador)
+PASS dark 390: la hoja entra en el ancho (0+390)
+PASS dark 390: al abrir, el foco está en la hoja
+PASS dark 390: cuatro Tab siguen dentro de la hoja
+PASS dark 390: con la hoja abierta, un nodo del mapa no puede recibir foco (inerte)
+PASS dark 390: Escape cierra la hoja
+PASS dark 390: el foco vuelve al nodo
+PASS dark 390: sin errores de consola

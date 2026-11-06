@@ -126,15 +126,70 @@ describe('ReferralDetail', () => {
     expect(byTestId('referral-cancel')).not.toBeNull();
   });
 
-  it('aceptar manda ACCEPT y avisa con la derivación del servidor', async () => {
+  it('la atención abierta del expediente (de cualquier organización) no se manda como la de llegada', async () => {
     create(INCOMING);
-    let changed: Referral | null = null;
-    fixture.componentInstance.changed.subscribe((r) => (changed = r));
     await member<() => Promise<void>>('accept')();
     const req = http.expectOne((r) => r.url === '/referrals/r-1/respond');
     expect(req.request.body).toEqual({ decision: 'ACCEPT' });
     req.flush({ ok: true, ...DTO, status: 'ACCEPTED' });
+  });
+
+  it('la atención de origen de la derivación nunca es la de llegada', async () => {
+    create({ ...INCOMING, sourceEncounterId: 'enc-abierto' });
+    fixture.componentRef.setInput('arrivalEncounterId', 'enc-abierto');
+    await member<() => Promise<void>>('accept')();
+    const req = http.expectOne((r) => r.url === '/referrals/r-1/respond');
+    expect(req.request.body).toEqual({ decision: 'ACCEPT' });
+    req.flush({ ok: true, ...DTO, status: 'ACCEPTED' });
+  });
+
+  it('un 422 del vínculo no bloquea: lo dice y ofrece aceptar sin vincular, sólo si la persona lo elige', async () => {
+    create(INCOMING);
+    fixture.componentRef.setInput('arrivalEncounterId', 'enc-abierto');
+    await member<() => Promise<void>>('accept')();
+    http.expectOne((r) => r.url === '/referrals/r-1/respond').flush(
+      { statusCode: 422, code: 'PRECONDITION_FAILED', message: 'x', details: { field: 'targetEncounterId', reason: 'REFERRAL_TARGET_ENCOUNTER_INVALID' } },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+    fixture.detectChanges();
+    expect(byTestId('referral-action-error')?.textContent).toContain('no puede quedar como la de llegada');
+    // Nothing is retried on its own.
+    http.expectNone((r) => r.url === '/referrals/r-1/respond');
+    byTestId('referral-accept-without-arrival')!.click();
+    await fixture.whenStable();
+    const req = http.expectOne((r) => r.url === '/referrals/r-1/respond');
+    expect(req.request.body).toEqual({ decision: 'ACCEPT' });
+    req.flush({ ok: true, ...DTO, status: 'ACCEPTED' });
+  });
+
+  it('aceptar manda ACCEPT con la atención de la consulta como la de llegada (v4292) y avisa con la derivación del servidor', async () => {
+    create(INCOMING);
+    fixture.componentRef.setInput('arrivalEncounterId', 'enc-abierto');
+    let changed: Referral | null = null;
+    fixture.componentInstance.changed.subscribe((r) => (changed = r));
+    await member<() => Promise<void>>('accept')();
+    const req = http.expectOne((r) => r.url === '/referrals/r-1/respond');
+    expect(req.request.body).toEqual({ decision: 'ACCEPT', targetEncounterId: 'enc-abierto' });
+    req.flush({ ok: true, ...DTO, status: 'ACCEPTED', targetEncounterId: 'enc-abierto' });
     expect(changed!.status).toBe('ACCEPTED');
+    expect(changed!.targetEncounterId).toBe('enc-abierto');
+  });
+
+  it('sin atención a mano acepta sin vínculo: no se inventa una', async () => {
+    create(INCOMING);
+    fixture.componentRef.setInput('arrivalEncounterId', null);
+    fixture.detectChanges();
+    await member<() => Promise<void>>('accept')();
+    const req = http.expectOne((r) => r.url === '/referrals/r-1/respond');
+    expect(req.request.body).toEqual({ decision: 'ACCEPT' });
+    req.flush({ ok: true, ...DTO, status: 'ACCEPTED' });
+  });
+
+  it('la atención de llegada se nombra con la cita de la lista', () => {
+    create({ ...INCOMING, status: 'ACCEPTED', targetEncounterId: 'enc-abierto' });
+    fixture.componentRef.setInput('appointments', [{ id: 'enc-abierto', etiqueta: '6 nov 2026 · Interconsulta', enCurso: true }]);
+    fixture.detectChanges();
+    expect(byTestId('referral-detail-arrival-encounter')?.textContent?.trim()).toBe('6 nov 2026 · Interconsulta');
   });
 
   it('rechazar manda el motivo; sin motivo (cancelado) no manda nada', async () => {

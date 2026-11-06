@@ -1,0 +1,155 @@
+<section class="panel__seccion" aria-labelledby="red-panel-estudio">
+  <h3 class="panel__seccion-titulo" id="red-panel-estudio">Pedido</h3>
+  <dl class="panel__pares">
+    @if (d().categoria) {
+      <div><dt>Categoría</dt><dd>{{ d().categoria }}</dd></div>
+    }
+    @if (d().prioridad) {
+      <div><dt>Prioridad</dt><dd>{{ d().prioridad }}</dd></div>
+    }
+    @if (d().motivo) {
+      <div><dt>Motivo</dt><dd>{{ d().motivo }}</dd></div>
+    }
+  </dl>
+</section>
+
+<section class="panel__seccion" aria-labelledby="red-panel-resultado" data-testid="red-panel-resultado">
+  <h3 class="panel__seccion-titulo" id="red-panel-resultado">Resultado</h3>
+  @if (resultado(); as r) {
+    <!-- The full report read (values, conclusion, files), with its states:
+         while it arrives or if it fails, what is already known (that it is
+         released) stays in view. -->
+    @if (lectura(); as lectura) {
+      <app-red-clinica-informe-estado [estado]="lectura.estado" (reintentar)="releer.emit()" />
+    }
+    <p class="panel__linea" data-testid="red-panel-liberado">
+      @if (r.liberadoEn) {
+        Liberado el
+        <time [attr.datetime]="r.liberadoEn.toISOString()">{{ r.liberadoEn | date: "d 'de' MMMM 'de' y" }}</time>
+      } @else {
+        Resultado liberado
+      }
+      @if (fueraDeRango() > 0) {
+        ·
+        <strong class="panel__fuera-resumen">
+          {{ fueraDeRango() }} {{ fueraDeRango() === 1 ? 'valor fuera' : 'valores fuera' }} de rango
+        </strong>
+      }
+    </p>
+    @if (r.publicadoAlPaciente === false) {
+      <p class="panel__linea panel__tenue" data-testid="red-panel-sin-publicar">Liberado sin publicar al paciente.</p>
+    }
+    @if (filas().length > 0) {
+      <div class="panel__tabla-caja">
+        <table class="panel__tabla">
+          <caption class="panel__oculto">Valores del resultado con su rango de referencia</caption>
+          <thead>
+            <tr>
+              <th scope="col">Análisis</th>
+              <th scope="col">Valor</th>
+              <th scope="col">Referencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (f of filas(); track $index) {
+              <tr [class.panel__fila--fuera]="f.fuera" data-testid="red-panel-valor">
+                <th scope="row">{{ f.valor.nombre }}</th>
+                <td>
+                  <span class="panel__valor">{{ f.texto }}</span>
+                  @if (f.valor.interpretacionDelInforme; as rotulo) {
+                    <!-- The lab's label, as is; the symbol and the tone come
+                         from the number against the range. -->
+                    <span class="panel__lectura panel__lectura--{{ tonoDeLectura(f.lectura) ?? 'informe' }}" data-testid="red-panel-interpretacion">
+                      @if (f.simbolo) {
+                        <span aria-hidden="true">{{ f.simbolo }}</span>
+                      }
+                      {{ rotulo }}
+                      @if (f.fuera) {
+                        <span class="panel__oculto">, fuera de rango</span>
+                      }
+                    </span>
+                  } @else if (tonoDeLectura(f.lectura); as tono) {
+                    <span class="panel__lectura panel__lectura--{{ tono }}">
+                      <span aria-hidden="true">{{ f.simbolo }}</span>
+                      {{ textoDeLectura[f.lectura] }}
+                    </span>
+                  }
+                </td>
+                <td class="panel__tenue">{{ f.rango }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    @if (r.conclusion) {
+      <div class="panel__texto">
+        <p class="panel__rotulo">Conclusión del informe</p>
+        <p>{{ r.conclusion }}</p>
+      </div>
+    }
+    @if (r.archivos.length > 0 && descargable()) {
+      <ul class="panel__archivos">
+        @for (archivo of r.archivos; track archivo.fileId) {
+          <li>
+            <button
+              app-button
+              variant="secondary"
+              size="sm"
+              data-testid="red-panel-archivo"
+              [attr.aria-label]="'Descargar ' + archivo.nombre"
+              [attr.title]="archivo.nombre"
+              [isLoading]="descargando(archivo.fileId)"
+              (clicked)="abrirArchivo.emit(archivo)"
+            >
+              <app-nav-icon name="download" />
+              <span class="panel__archivo-nombre">Descargar {{ archivo.nombre }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+      @if (descarga(); as dl) {
+        @switch (dl.estado.status) {
+          @case ('forbidden') {
+            <app-alert tone="warning" title="No puede abrir este archivo">
+              El servidor no le da acceso al archivo del informe. Los valores de arriba siguen siendo los liberados.
+            </app-alert>
+          }
+          @case ('not-found') {
+            <app-alert tone="warning" title="El archivo no está disponible">
+              No se encontró el archivo del informe.
+            </app-alert>
+          }
+          @case ('offline') {
+            <app-alert tone="warning" title="Sin conexión">
+              No se pudo descargar el archivo. Revise la conexión y vuelva a intentarlo.
+            </app-alert>
+          }
+          @case ('validation') {
+            <app-alert tone="info" title="El archivo todavía no se puede abrir">
+              Puede estar en revisión de seguridad. Intente de nuevo en unos minutos.
+            </app-alert>
+          }
+          @case ('error') {
+            <app-alert tone="error" title="No se pudo descargar el archivo">
+              Intente de nuevo.
+              @if (dl.estado.status === 'error') {
+                Código de soporte: <code>{{ dl.estado.requestId }}</code>
+              }
+            </app-alert>
+          }
+          @case ('ready') {
+            <p class="panel__tenue" role="status">Descarga iniciada.</p>
+          }
+        }
+      }
+    }
+  } @else {
+    <p class="panel__pendiente" data-testid="red-panel-sin-resultado">
+      Sin resultado liberado todavía
+      @if (pedidoHace() !== null) {
+        · pedido {{ pedidoHace() }}
+      }
+    </p>
+  }
+</section>

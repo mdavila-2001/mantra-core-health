@@ -43,6 +43,17 @@ describe('vademécum de la receta: la LINAME 2022-2024', () => {
     expect(conceptByCode('J01CA04')).toBeUndefined();
   });
 
+  it('las concentraciones de levotiroxina de la demostración tienen la ficha de su ATC, con su propia concentración', () => {
+    const base = conceptByCode('MED-LEVOTIROXINA');
+    for (const [code, dosis] of [['MED-LEVOTIROXINA-25', '25 mcg'], ['MED-LEVOTIROXINA-75', '75 mcg']] as const) {
+      const concepto = conceptByCode(code);
+      expect(concepto?.properties?.['dose_forms']).toEqual(base?.properties?.['dose_forms']);
+      expect(concepto?.properties?.['dose_forms']).toEqual(expect.arrayContaining(['Comprimido']));
+      expect(concepto?.properties?.['liname_presentations']).toEqual(base?.properties?.['liname_presentations']);
+      expect(concepto?.properties?.['strengths']).toEqual([dosis]);
+    }
+  });
+
   it('no quedan acentos graves de la fuente («sòdica»)', () => {
     expect(MEDICAMENTOS_LINAME.filter((m) => /[àèìòù]/i.test(m.name))).toEqual([]);
   });

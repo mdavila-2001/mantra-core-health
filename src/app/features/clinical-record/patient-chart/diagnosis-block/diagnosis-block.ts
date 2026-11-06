@@ -22,17 +22,8 @@ import type {
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { empty, loading, ready } from '../../../../core/view-state/view-state';
+import { dataOf, empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
-import {
-  CODIGO_ACTIVA,
-  CODIGO_CONFIRMADO,
-  CODIGO_DESCARTADO,
-  DIAGNOSIS_STATE_LABELS,
-  diagnosisStateOf,
-  type DiagnosisState,
-} from '../../../../shared/clinical/diagnosis-state';
-import type { Tone } from '../../../../shared/components/tone/tone.types';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import { DiagnosisVerifyDialog } from '../diagnosis-verify-dialog/diagnosis-verify-dialog';
@@ -41,6 +32,7 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
+import { conceptosDe, filasDe, type FilaDeDiagnostico } from './diagnosis-rows';
 import { PresuntivoForm } from './presuntivo-form/presuntivo-form';
 
 export {
@@ -65,96 +57,7 @@ export interface CitaDelPaciente {
   readonly enCurso: boolean;
 }
 
-/* ---- la tabla de presuntivos (C3) ----------------------------------------- */
-
-/**
- * Una fila de la tabla: la condición y lo que la pantalla ya resolvió de ella.
- *
- * El estado sale de `diagnosisStateOf` sobre **códigos** de catálogo, nunca de
- * etiquetas: la etiqueta es presentación y puede cambiar sin aviso.
- */
-export interface FilaDeDiagnostico {
-  readonly condition: Condition;
-  readonly nombre: string;
-  readonly estado: DiagnosisState;
-  readonly etiquetaDeEstado: string;
-  readonly tono: Tone;
-  /** «Informe · Cuadro compatible», o «—» mientras no se decidió. */
-  readonly evidencia: string;
-  /** Sólo un presuntivo se confirma o se rechaza. */
-  readonly enEstudio: boolean;
-}
-
-/** Mismo reparto de color que la línea de tiempo de la consulta. */
-const TONO_DEL_ESTADO: Readonly<Record<DiagnosisState, Tone>> = Object.freeze({
-  IN_STUDY: 'warning',
-  ACTIVE: 'success',
-  HISTORIC: 'info',
-  REFUTED: 'info',
-});
-
-const SIN_ETIQUETA = 'Diagnóstico sin etiqueta en el catálogo';
-
-const LARGO_DEL_MOTIVO = 60;
-
-/** Qué respaldó la decisión, en dos palabras, y el motivo recortado. */
-function evidenciaDe(condicion: Condition): string {
-  const decision = condicion.verification;
-  if (decision === undefined || decision === null) return '—';
-  const tipo =
-    decision.basedOn === null
-      ? null
-      : decision.basedOn.kind === 'NOTE'
-        ? 'Nota'
-        : decision.basedOn.diagnosticReportId === undefined
-          ? 'Orden'
-          : 'Informe';
-  const motivo =
-    decision.reasonText === null
-      ? null
-      : decision.reasonText.length > LARGO_DEL_MOTIVO
-        ? `${decision.reasonText.slice(0, LARGO_DEL_MOTIVO - 1)}…`
-        : decision.reasonText;
-  return [tipo, motivo].filter((parte): parte is string => parte !== null).join(' · ') || '—';
-}
-
-/** Las condiciones como filas, de la más nueva a la más vieja. */
-function filasDe(conditions: readonly Condition[], etiquetas: ConceptLabels): FilaDeDiagnostico[] {
-  const codigo = (conceptId: string | undefined) =>
-    conceptId === undefined ? undefined : etiquetas.get(conceptId)?.code;
-  return [...conditions]
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .map((condition) => {
-      const estado = diagnosisStateOf(
-        {
-          ...condition,
-          verificationStatusConceptId: codigo(condition.verificationStatusConceptId),
-          clinicalStatusConceptId: codigo(condition.clinicalStatusConceptId),
-        },
-        { confirmed: CODIGO_CONFIRMADO, refuted: CODIGO_DESCARTADO, active: CODIGO_ACTIVA },
-      );
-      return {
-        condition,
-        nombre: etiquetas.get(condition.codeConceptId)?.display ?? SIN_ETIQUETA,
-        estado,
-        etiquetaDeEstado: DIAGNOSIS_STATE_LABELS[estado],
-        tono: TONO_DEL_ESTADO[estado],
-        evidencia: evidenciaDe(condition),
-        enEstudio: estado === 'IN_STUDY',
-      };
-    });
-}
-
-/** Los conceptos que la tabla traduce: el diagnóstico y sus dos estados. */
-function conceptosDe(conditions: readonly Condition[]): string[] {
-  return conditions.flatMap((condition) =>
-    [
-      condition.codeConceptId,
-      condition.verificationStatusConceptId,
-      condition.clinicalStatusConceptId,
-    ].filter((id): id is string => id !== undefined),
-  );
-}
+export type { FilaDeDiagnostico } from './diagnosis-rows';
 
 /**
  * **Diagnóstico** del expediente: la tabla de presuntivos — C3.
@@ -244,6 +147,8 @@ export class DiagnosisBlock implements DraftBlock {
 
   /** Las condiciones de la persona, ya resueltas a filas. */
   protected readonly filas = signal<ViewState<readonly FilaDeDiagnostico[]>>(loading());
+  /** The same rows as link options, for «Se confirmó en su lugar» of the verify dialog. */
+  protected readonly diagnosticos = computed(() => (dataOf(this.filas()) ?? []).map((f) => f.opcion));
 
   /** La decisión en curso: qué presuntivo y en qué sentido. `null` sin diálogo. */
   protected readonly verificando = signal<{

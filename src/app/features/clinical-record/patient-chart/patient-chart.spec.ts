@@ -26,6 +26,11 @@ import {
   REQUEST_ACCESS_LABEL,
 } from '../consultation/consultation-forbidden';
 import { PatientChart } from './patient-chart';
+import { RecorridoClinico } from './recorrido-clinico/recorrido-clinico';
+import { RedClinicaDelExpediente } from './red-clinica/expediente/red-clinica-del-expediente';
+import { RedDelExpediente } from './red-clinica/expediente/red-del-expediente';
+import { SeleccionDeLaRed } from './red-clinica/expediente/seleccion-de-la-red';
+import { By } from '@angular/platform-browser';
 
 /**
  * El expediente de una persona. Lo que estas pruebas fijan:
@@ -259,6 +264,10 @@ describe('PatientChart', () => {
     for (const referrals of http.match((r) => r.url === '/referrals')) {
       if (!referrals.cancelled) referrals.flush([]);
     }
+    // «Recorrido» also reads the person's appointments (the network by episodes).
+    for (const citas of http.match((r) => r.url === '/scheduling/bookings')) {
+      if (!citas.cancelled) citas.flush({ items: [] });
+    }
     // The access-scope notice reads the practitioner's inbox once the chart is ready.
     for (const inbox of http.match((r) => r.url === '/authz/practitioners/me/access-requests')) {
       if (!inbox.cancelled) inbox.flush([]);
@@ -266,10 +275,18 @@ describe('PatientChart', () => {
     http.verify();
   });
 
-  function interno<T>(nombre: string): T {
-    const valor = (componente as unknown as Record<string, unknown>)[nombre];
-    return (typeof valor === 'function' ? valor.bind(componente) : valor) as T;
+  function interno<T>(nombre: string, de: object = componente): T {
+    const valor = (de as Record<string, unknown>)[nombre];
+    return (typeof valor === 'function' ? valor.bind(de) : valor) as T;
   }
+
+  /** The network's state, provided by the chart screen (`red-clinica/expediente/`). */
+  const red = (): RedDelExpediente => harness.fixture.debugElement.query(By.directive(PatientChart)).injector.get(RedDelExpediente);
+  const seleccion = (): SeleccionDeLaRed =>
+    harness.fixture.debugElement.query(By.directive(PatientChart)).injector.get(SeleccionDeLaRed);
+  /** A member of the network's container, the one wiring the surface and the panel. */
+  const enLaRed = <T>(nombre: string): T =>
+    interno<T>(nombre, harness.fixture.debugElement.query(By.directive(RedClinicaDelExpediente)).componentInstance as object);
 
   /** Abre sesión con organización activa: sin ella no hay encuentro que registrar. */
   function abrirSesion(claims: Record<string, unknown> = {}): void {
@@ -2274,10 +2291,48 @@ describe('PatientChart', () => {
     it('«Recorrido» conecta el diagnóstico con la atención que lo declara, y nada más', () => {
       const raiz = pintar(CON_ATENCION);
       elegir('recorrido');
-      expect(interno<() => readonly object[]>('aristasDelRecorrido')()).toEqual([
-        { desde: 'e-1', hasta: 'c-1', motivo: 'atencion' },
+      expect(red().vinculos()).toEqual([
+        { desde: 'e-1', hasta: 'c-1', motivo: 'registrado-en' },
       ]);
+      // The network opens collapsed (level 1): the records appear on expanding.
+      expect(raiz.querySelectorAll('[data-testid="recorrido-nodo"]').length).toBe(0);
+      (raiz.querySelector('[data-testid="red-desplegar-todo"]') as HTMLButtonElement).click();
+      harness.fixture.detectChanges();
       expect(raiz.querySelectorAll('[data-testid="recorrido-nodo"]').length).toBe(3);
+    });
+
+    it('«Recorrido» pide citas, derivaciones, estudios y procedimientos con los servicios de siempre, y dice cuál falta', () => {
+      const raiz = pintar(CON_ATENCION);
+      elegir('recorrido');
+      expect(raiz.querySelector('[data-testid="red-cargando"]')).not.toBeNull();
+      const citas = http.expectOne((r) => r.url === '/scheduling/bookings');
+      expect(citas.request.params.get('patientProfileId')).toBe('p-1');
+      expect(citas.request.params.get('includeCancelled')).toBe('true');
+      citas.flush({ code: 'BOOM' }, { status: 500, statusText: 'Error', headers: { 'x-request-id': 'req-77' } });
+      for (const req of http.match((r) => r.url === '/referrals')) req.flush([]);
+      responderCircuitoDiagnostico();
+      responderHistoricoDeProcedimientos();
+      harness.fixture.detectChanges();
+      const aviso = raiz.querySelector('[data-testid="red-faltan"]');
+      expect(aviso?.textContent).toContain('las citas');
+      expect(aviso?.textContent).not.toContain('derivaciones');
+      // The network is drawn anyway with what there is.
+      expect(raiz.querySelector('[data-testid="expediente-recorrido"]')).not.toBeNull();
+    });
+
+    it('«Recorrido»: un 403 en una lectura es el alcance del acceso, no «recorrido incompleto»', () => {
+      const raiz = pintar(CON_ATENCION);
+      elegir('recorrido');
+      http.expectOne((r) => r.url === '/scheduling/bookings').flush({ items: [] });
+      for (const req of http.match((r) => r.url === '/referrals')) {
+        req.flush({ code: 'FORBIDDEN' }, { status: 403, statusText: 'Forbidden' });
+      }
+      responderCircuitoDiagnostico();
+      responderHistoricoDeProcedimientos();
+      harness.fixture.detectChanges();
+      expect(raiz.querySelector('[data-testid="red-faltan"]')).toBeNull();
+      expect(raiz.querySelector('[data-testid="red-sin-acceso"]')?.textContent).toContain('las derivaciones');
+      expect(raiz.querySelector('[data-testid="expediente-recorrido"]')).not.toBeNull();
     });
 
     it('el filtro oculta un tipo en las dos vistas y lo dice en texto', () => {
@@ -2286,7 +2341,7 @@ describe('PatientChart', () => {
       interno<(t: string, v: boolean) => void>('alternarTipo')('observaciones', false);
       harness.fixture.detectChanges();
       expect(interno<() => readonly { id: string }[]>('filasDelHistorial')().map((f) => f.id)).toEqual(['c-1']);
-      expect(interno<() => readonly { id: string }[]>('nodosDelRecorrido')().map((n) => n.id)).toEqual(['c-1']);
+      expect(seleccion().visibles()).toEqual(['c-1']);
       expect(raiz.querySelector('[data-testid="expediente-aviso-filtro"]')?.textContent).toContain('observaciones');
     });
 
@@ -2307,13 +2362,135 @@ describe('PatientChart', () => {
       expect(raiz.querySelector('[data-testid="expediente-recorrido"]')?.hasAttribute('data-pdf-ignore')).toBe(true);
     });
 
-    it('elegir un nodo abre el mismo detalle que la tabla', () => {
-      pintar(CON_ATENCION);
+    /** The network's own four reads, with a study ordered for the diagnosis. */
+    function responderLecturasDeLaRed(): void {
+      for (const req of http.match((r) => r.url === '/scheduling/bookings')) req.flush({ items: [] });
+      for (const req of http.match((r) => r.url === '/referrals')) req.flush([]);
+      for (const req of http.match((r) => r.url.startsWith('/diagnostics/patients/'))) {
+        req.flush({
+          patientProfileId: 'p-1',
+          orders: [
+            { id: 'ord-1', patientProfileId: 'p-1', encounterId: 'e-1', codeConceptId: 'obs-peso', statusConceptId: 'st-final', createdAt: '2026-05-20T10:30:00.000Z', reasonConditionId: 'c-1', category: 'LAB' },
+          ],
+          reports: [],
+          limit: 50,
+          truncated: [],
+        });
+      }
+      responderHistoricoDeProcedimientos();
+      for (const req of http.match((r) => r.url === '/terminology/concepts')) req.flush(CONCEPTOS);
+      harness.fixture.detectChanges();
+    }
+
+    it('«Recorrido»: lo recortado por el tope se dice, y sin todos los informes no afirma «estudio sin resultado»', () => {
+      const raiz = pintar(CON_ATENCION);
       elegir('recorrido');
-      interno<(id: string) => void>('abrirDesdeElRecorrido')('c-1');
-      const abierta = interno<() => { fila: { id: string }; bloque: string } | null>('filaEnDetalle')();
-      expect(abierta?.fila.id).toBe('c-1');
-      expect(abierta?.bloque).toBe('diagnosticos');
+      for (const req of http.match((r) => r.url === '/scheduling/bookings')) req.flush({ items: [], count: 51, limit: 50, truncated: true });
+      for (const req of http.match((r) => r.url === '/referrals')) req.flush([]);
+      for (const req of http.match((r) => r.url.startsWith('/diagnostics/patients/'))) {
+        req.flush({
+          patientProfileId: 'p-1',
+          orders: [{ id: 'ord-1', patientProfileId: 'p-1', encounterId: 'e-1', codeConceptId: 'obs-peso', statusConceptId: 'st-final', createdAt: '2026-05-20T10:30:00.000Z', reasonConditionId: 'c-1', category: 'LAB' }],
+          reports: [],
+          limit: 50,
+          truncated: ['reports'],
+        });
+      }
+      responderHistoricoDeProcedimientos();
+      for (const req of http.match((r) => r.url === '/terminology/concepts')) req.flush(CONCEPTOS);
+      harness.fixture.detectChanges();
+      expect(raiz.querySelector('[data-testid="red-recortadas"]')?.textContent).toContain('las citas, los estudios');
+      const tipos = seleccion().alertas().map((a) => a.tipo);
+      expect(tipos).not.toContain('estudio-sin-resultado');
+    });
+
+    function abrirRecorrido(): HTMLElement {
+      const raiz = pintar(CON_ATENCION);
+      elegir('recorrido');
+      responderLecturasDeLaRed();
+      return raiz;
+    }
+
+    it('la red y el panel comparten nodos con los ids reales, y el estudio llega con su vínculo al diagnóstico', () => {
+      abrirRecorrido();
+      const nodos = red().nodos();
+      expect(nodos.map((n) => n.id).sort()).toEqual(['c-1', 'e-1', 'o-1', 'ord-1']);
+      expect(red().aristas()).toContainEqual({ desde: 'ord-1', hasta: 'c-1', tipo: 'pedido-para' });
+    });
+
+    it('elegir un nodo en la red abre el panel con ese nodo, y «Ver el registro completo» abre el detalle de siempre', () => {
+      const raiz = abrirRecorrido();
+      expect(raiz.querySelector('[data-testid="red-panel"]')).toBeNull();
+      enLaRed<(e: object) => void>('elegir')({ id: 'c-1', clase: 'diagnostico', episodio: 'episodio:c-1' });
+      harness.fixture.detectChanges();
+      const panel = raiz.querySelector('[data-testid="red-panel"]');
+      expect(panel?.textContent).toContain('Diabetes tipo 2');
+      // It no longer opens the modal: the detail goes to the panel.
+      expect(interno<() => unknown>('filaEnDetalle')()).toBeNull();
+      expect(raiz.querySelector('[data-testid="red-panel-registro-completo"]')).not.toBeNull();
+      enLaRed<() => void>('verRegistroCompleto')();
+      expect(interno<() => { fila: { id: string } } | null>('filaEnDetalle')()?.fila.id).toBe('c-1');
+    });
+
+    it('un vínculo del panel abre el otro nodo; cerrar lo vacía', () => {
+      abrirRecorrido();
+      enLaRed<(id: string) => void>('abrirNodo')('c-1');
+      enLaRed<(id: string) => void>('abrirNodo')('ord-1');
+      expect(seleccion().nodoAbierto()?.id).toBe('ord-1');
+      // An id that is not the network's opens nothing.
+      enLaRed<(id: string) => void>('abrirNodo')('fantasma');
+      expect(seleccion().nodoAbierto()?.id).toBe('ord-1');
+      enLaRed<() => void>('cerrarPanel')();
+      expect(seleccion().nodoAbierto()).toBeNull();
+    });
+
+    it('la barra de la red se cruza con el filtro por tipo del expediente', () => {
+      abrirRecorrido();
+      const filtro = seleccion().filtro;
+      expect(seleccion().visibles()).toEqual([]);
+      filtro.set({ ...filtro(), hiloDeDiagnosticoId: 'c-1' });
+      expect([...seleccion().visibles()].sort()).toEqual(['c-1', 'e-1', 'ord-1']);
+      interno<(t: string, v: boolean) => void>('alternarTipo')('diagnosticos', false);
+      expect([...seleccion().visibles()].sort()).toEqual(['e-1', 'ord-1']);
+    });
+
+    it('si los dos filtros juntos no dejan nada, lo dice y ofrece limpiar, en vez de dibujar todo', () => {
+      const raiz = abrirRecorrido();
+      const filtro = seleccion().filtro;
+      filtro.set({ ...filtro(), texto: 'nada que coincida' });
+      harness.fixture.detectChanges();
+      expect(raiz.querySelector('[data-testid="red-sin-resultado"]')).not.toBeNull();
+      expect(raiz.querySelector('app-recorrido-clinico')).toBeNull();
+      seleccion().limpiarFiltros();
+      harness.fixture.detectChanges();
+      expect(raiz.querySelector('[data-testid="red-sin-resultado"]')).toBeNull();
+      expect(raiz.querySelector('app-recorrido-clinico')).not.toBeNull();
+    });
+
+    it('las alertas salen de lo leído: el estudio sin resultado resalta su nodo y su diagnóstico', () => {
+      const raiz = abrirRecorrido();
+      const alertas = seleccion().alertas();
+      const estudio = alertas.find((a) => a.tipo === 'estudio-sin-resultado');
+      expect(estudio?.nodoIds).toEqual(['ord-1', 'c-1']);
+      expect(raiz.querySelector('[data-testid="red-alertas"]')).not.toBeNull();
+      // Compact: they start folded into their summary and unfold with their button.
+      expect(raiz.querySelector('[data-testid="red-alerta"]')).toBeNull();
+      raiz.querySelector<HTMLButtonElement>('[data-testid="red-alertas-plegar"]')!.click();
+      harness.fixture.detectChanges();
+      const boton = raiz.querySelector<HTMLButtonElement>('[data-testid="red-alerta"][data-tipo="estudio-sin-resultado"]')!;
+      boton.dispatchEvent(new Event('mouseenter'));
+      harness.fixture.detectChanges();
+      const red = harness.fixture.debugElement.query(By.directive(RecorridoClinico)).componentInstance as RecorridoClinico;
+      expect(red.resaltados()).toEqual(['ord-1', 'c-1']);
+      boton.click();
+      harness.fixture.detectChanges();
+      expect(seleccion().nodoAbierto()?.id).toBe('ord-1');
+    });
+
+    it('mientras se leen los estudios no muestra «nada abierto»', () => {
+      const raiz = pintar(CON_ATENCION);
+      elegir('recorrido');
+      expect(raiz.querySelector('[data-testid="red-alertas"]')).toBeNull();
     });
 
     it('el filtro no pasa de una persona a otra', async () => {

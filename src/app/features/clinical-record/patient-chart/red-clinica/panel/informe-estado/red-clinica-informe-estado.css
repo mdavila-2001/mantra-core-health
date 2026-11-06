@@ -1,0 +1,5 @@
+.estado__tenue {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

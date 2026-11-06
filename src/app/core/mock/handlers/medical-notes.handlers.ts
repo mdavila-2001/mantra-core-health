@@ -1,9 +1,5 @@
-import {
-  noteList,
-  PROGRESS_NOTE_TYPE,
-  type SimulatedNoteRow,
-  type SimulatedNote,
-} from '../fixtures/clinic';
+import { noteList, PROGRESS_NOTE_TYPE, type SimulatedNote } from '../fixtures/clinic';
+import { type SimulatedNoteRow } from '../fixtures/clinic-notes.data';
 import { STATUS } from '../fixtures/concepts';
 import { MEDICAL } from '../fixtures/people';
 import {

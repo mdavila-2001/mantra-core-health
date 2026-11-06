@@ -1,0 +1,34 @@
+1440-claro: URL /my-account/medical-record?vista=recorrido
+1440-claro: hilos=4 → ["Hipertensión arterial esencial · Confirmado · desde 2 oct 2025","Dislipidemia · En estudio · desde 31 dic 2025","Infección respiratoria aguda · En estudio · desde 31 mar 2026","Otras consultas · Sin diagnóstico asociado · desde 9 jul 2026"]
+1440-claro plegado: overflow=false (scroll 1440 / client 1440), holgura izq 40 der 40, ancho 93%
+1440-claro: aria-expanded antes=false
+1440-claro: aria-expanded después (Enter)=true
+1440-claro desplegado: overflow=false (scroll 1440 / client 1440), holgura izq 40 der 40, ancho 93%
+1440-claro: narración="El 4 de noviembre de 2026 consultó por control de rutina." | región viva="Paso 3 de 4: El 4 de noviembre de 2026 consultó por control de rutina." aria-live=polite
+1440-claro: errores=[]
+1440-oscuro: URL /my-account/medical-record?vista=recorrido
+1440-oscuro: hilos=4 → ["Hipertensión arterial esencial · Confirmado · desde 2 oct 2025","Dislipidemia · En estudio · desde 31 dic 2025","Infección respiratoria aguda · En estudio · desde 31 mar 2026","Otras consultas · Sin diagnóstico asociado · desde 9 jul 2026"]
+1440-oscuro plegado: overflow=false (scroll 1440 / client 1440), holgura izq 40 der 40, ancho 93%
+1440-oscuro: aria-expanded antes=false
+1440-oscuro: aria-expanded después (Enter)=true
+1440-oscuro desplegado: overflow=false (scroll 1440 / client 1440), holgura izq 40 der 40, ancho 93%
+1440-oscuro: narración="El 4 de noviembre de 2026 consultó por control de rutina." | región viva="Paso 3 de 4: El 4 de noviembre de 2026 consultó por control de rutina." aria-live=polite
+1440-oscuro: errores=[]
+390-claro: URL /my-account/medical-record?vista=recorrido
+390-claro: hilos=4 → ["Hipertensión arterial esencial · Confirmado · desde 2 oct 2025","Dislipidemia · En estudio · desde 31 dic 2025","Infección respiratoria aguda · En estudio · desde 31 mar 2026","Otras consultas · Sin diagnóstico asociado · desde 9 jul 2026"]
+390-claro plegado: overflow=false (scroll 390 / client 390), holgura izq 12 der 12, ancho 94%
+390-claro: aria-expanded antes=false
+390-claro: aria-expanded después (Enter)=true
+390-claro desplegado: overflow=false (scroll 390 / client 390), holgura izq 12 der 12, ancho 94%
+390-claro: narración="El 4 de noviembre de 2026 consultó por control de rutina." | región viva="Paso 3 de 4: El 4 de noviembre de 2026 consultó por control de rutina." aria-live=polite
+390-claro: errores=[]
+390-oscuro: URL /my-account/medical-record?vista=recorrido
+390-oscuro: hilos=4 → ["Hipertensión arterial esencial · Confirmado · desde 2 oct 2025","Dislipidemia · En estudio · desde 31 dic 2025","Infección respiratoria aguda · En estudio · desde 31 mar 2026","Otras consultas · Sin diagnóstico asociado · desde 9 jul 2026"]
+390-oscuro plegado: overflow=false (scroll 390 / client 390), holgura izq 12 der 12, ancho 94%
+390-oscuro: aria-expanded antes=false
+390-oscuro: aria-expanded después (Enter)=true
+390-oscuro desplegado: overflow=false (scroll 390 / client 390), holgura izq 12 der 12, ancho 94%
+390-oscuro: narración="El 4 de noviembre de 2026 consultó por control de rutina." | región viva="Paso 3 de 4: El 4 de noviembre de 2026 consultó por control de rutina." aria-live=polite
+390-oscuro: errores=[]
+reduce-motion: transition-duration hecho=null · animation-duration región=0s
+entrada directa ?vista=recorrido: hilos=4

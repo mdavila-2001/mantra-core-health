@@ -1,0 +1,166 @@
+/* ============================================================================
+    Clinical network detail panel.
+
+    Side: a column the parent places next to the map. It sticks to the top on
+    scroll (`sticky`) and has its own scroll, so the map does not move.
+    Sheet: a modal `<dialog>` anchored at the bottom, almost full screen.
+    The sections' shared styles live in `red-clinica-panel.secciones.css`, the
+    links in `red-clinica-panel.vinculos.css`.
+    ========================================================================== */
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+.panel--lateral {
+  position: sticky;
+  /* Below the shell's fixed header (`app-header`, 56–64 px): without that
+     margin, the title and «Cerrar» were covered on scroll. The variable lives
+     in the header; the fallback here is the larger of the two. */
+  inset-block-start: calc(var(--header-height, 4rem) + var(--sp-4));
+  max-block-size: calc(100dvh - var(--header-height, 4rem) - var(--sp-8));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.panel--hoja {
+  margin: 0;
+  margin-block-start: auto;
+  padding: 0;
+  border: none;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  block-size: 92dvh;
+  max-block-size: 92dvh;
+  border-start-start-radius: var(--r-xl);
+  border-start-end-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.panel--hoja[open] {
+  display: flex;
+  animation: panel-hoja-entrada var(--dur-base) var(--ease-out);
+}
+
+.panel--hoja::backdrop {
+  background: var(--velo);
+}
+
+@keyframes panel-hoja-entrada {
+  from {
+    transform: translateY(2rem);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel--hoja[open] {
+    animation: none;
+  }
+}
+
+/* -- Header ----------------------------------------------------------------- */
+
+.panel__cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.panel__encabezado {
+  min-inline-size: 0;
+}
+
+.panel__tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.panel__tipo app-nav-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.panel__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.panel__titulo:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--r-xs);
+}
+
+.panel__subtitulo {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* -- Body ------------------------------------------------------------------- */
+
+.panel__cuerpo {
+  flex: 1;
+  min-block-size: 0;
+  overflow-y: auto;
+  padding: var(--sp-4) var(--sp-5) var(--sp-6);
+  display: grid;
+  /* A column that does not grow with its content: without it, the values
+     table (unbreakable text) widened the implicit column and the panel cut
+     off the right of every section. The table scrolls inside its box. */
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--sp-5);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.panel__hechos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--sp-3) var(--sp-4);
+  margin: 0;
+}
+
+.panel__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.panel__acciones:empty {
+  display: none;
+}
+

@@ -1,0 +1,137 @@
+@if (actual(); as paso) {
+  <!-- Focusable so arrows and space work without first reaching a button. -->
+  <section
+    class="guiado"
+    tabindex="0"
+    aria-label="Recorrido guiado de la historia"
+    aria-keyshortcuts="ArrowLeft ArrowRight Space Home End"
+    data-testid="recorrido-guiado"
+  >
+    <!-- The narration announces itself on changing step; the counter goes
+         inside so «Paso 3 de 9» is heard before the text. -->
+    <div class="guiado__relato" aria-live="polite" aria-atomic="true" data-testid="guiado-relato">
+      <p class="guiado__contador">
+        <span data-testid="guiado-contador">Paso {{ indice() + 1 }} de {{ total() }}</span>
+        <span class="guiado__punto" aria-hidden="true">·</span>
+        @if (paso.fecha) {
+          <time class="guiado__fecha" [attr.datetime]="paso.clave">{{ paso.fechaTexto }}</time>
+        } @else {
+          <span class="guiado__fecha">{{ paso.fechaTexto }}</span>
+        }
+        @if (nombreDelEpisodio(); as episodio) {
+          <span class="guiado__episodio" data-testid="guiado-episodio">Siguiendo: {{ episodio }}</span>
+        }
+      </p>
+      @for (p of [paso]; track p.clave) {
+        <div class="guiado__tarjeta" animate.enter="guiado__tarjeta--entra">
+          <h3 class="guiado__titulo" data-testid="guiado-titulo">{{ p.titulo }}</h3>
+          <!-- Each sentence on its own: an inferred one says so in words (ADR-0022), not only by style. -->
+          <p class="guiado__narracion" data-testid="guiado-narracion">
+            @for (f of p.frases; track $index) {
+              <span class="guiado__frase" [class.guiado__frase--inferida]="f.inferida">{{ f.texto }}@if (f.inferida) {<span class="guiado__inferido" data-testid="guiado-inferido"> (inferido)</span>}</span>{{ ' ' }}
+            }
+          </p>
+        </div>
+      }
+    </div>
+
+    <div class="guiado__barra">
+      <div class="guiado__progreso" role="group" aria-label="Saltar a un paso" data-testid="guiado-progreso">
+        @for (p of lista(); track p.clave; let i = $index) {
+          <button
+            #segmento
+            type="button"
+            class="guiado__segmento"
+            [class.is-revelado]="i < indice()"
+            [class.is-actual]="i === indice()"
+            [attr.aria-current]="i === indice() ? 'step' : null"
+            [attr.aria-label]="etiquetaDeSegmento(p, i)"
+            [attr.title]="p.fechaTexto + ' · ' + p.titulo"
+            [attr.data-testid]="'guiado-segmento-' + i"
+            (click)="saltarA(i)"
+          >
+            <span class="guiado__marca" aria-hidden="true"></span>
+          </button>
+        }
+      </div>
+
+      <div class="guiado__avance" role="progressbar" aria-label="Avance del recorrido" aria-valuemin="1" [attr.aria-valuemax]="total()" [attr.aria-valuenow]="indice() + 1" [attr.aria-valuetext]="'Paso ' + (indice() + 1) + ' de ' + total()" data-testid="guiado-avance">
+        <span [style.inline-size.%]="((indice() + 1) / total()) * 100"></span>
+      </div>
+
+      <div class="guiado__controles">
+        <button
+          app-button
+          type="button"
+          variant="secondary"
+          size="sm"
+          class="guiado__boton"
+          [disabled]="esPrimero()"
+          data-testid="guiado-anterior"
+          (clicked)="anterior()"
+        >
+          <app-nav-icon name="arrow-left" aria-hidden="true" />
+          <span class="guiado__rotulo">Anterior</span>
+        </button>
+
+        <button
+          app-button
+          type="button"
+          variant="primary"
+          size="sm"
+          class="guiado__boton guiado__boton--reproducir"
+          [disabled]="movimientoReducido()"
+          data-testid="guiado-reproducir"
+          (clicked)="alternar()"
+        >
+          @if (reproduciendo()) {
+            <svg class="guiado__icono" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="6" y="5" width="4" height="14" rx="1" />
+              <rect x="14" y="5" width="4" height="14" rx="1" />
+            </svg>
+            <span class="guiado__rotulo">Pausar</span>
+          } @else {
+            <svg class="guiado__icono" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" />
+            </svg>
+            <span class="guiado__rotulo">Reproducir</span>
+          }
+        </button>
+
+        <button
+          app-button
+          type="button"
+          variant="secondary"
+          size="sm"
+          class="guiado__boton"
+          [disabled]="esUltimo()"
+          data-testid="guiado-siguiente"
+          (clicked)="siguiente()"
+        >
+          <span class="guiado__rotulo">Siguiente</span>
+          <app-nav-icon name="arrow-right" aria-hidden="true" />
+        </button>
+
+        <app-segmented-control
+          class="guiado__velocidad"
+          ariaLabel="Velocidad de reproducción"
+          [options]="velocidades"
+          [value]="velocidad()"
+          (valueChange)="elegirVelocidad($event)"
+        />
+      </div>
+
+      @if (movimientoReducido()) {
+        <p class="guiado__aviso" data-testid="guiado-aviso-movimiento">
+          La reproducción automática está desactivada porque el sistema pide reducir el movimiento. Avance con
+          «Siguiente» o con las flechas del teclado.
+        </p>
+      }
+    </div>
+  </section>
+} @else {
+  <p class="guiado__vacio" data-testid="guiado-vacio">
+    Todavía no hay registros para recorrer. Cuando se registre la primera atención, el recorrido la va a contar paso a
+    paso.
+  </p>
+}

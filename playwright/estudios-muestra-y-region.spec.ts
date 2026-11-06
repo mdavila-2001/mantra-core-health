@@ -178,7 +178,7 @@ test.describe('la orden de estudios lleva muestra o parte del cuerpo (maqueta)',
     const estudio = await elegirEstudioDeLaboratorio(
       modal,
       'Sangre',
-      /Glucosa|Creatinina|TSH|Perfil lip|Hemograma/i,
+      /Glucosa|Creatinina|TSH|Perfil lip/i,
     );
     const pedir = modal.getByRole('button', { name: 'Pedir estudio' });
 
@@ -309,12 +309,10 @@ test.describe('la orden de estudios lleva muestra o parte del cuerpo (maqueta)',
     await page.reload({ waitUntil: 'domcontentloaded' });
     await abrirConsultaDelPaciente(page);
     modal = await abrirOrdenDeEstudios(page);
-    const linea = modal
-      .getByTestId('study-detail')
-      .filter({
-        hasText:
-          'Región: Fémur · Izquierda · Radiografía simple · Hueso largo · Sin contraste · marcada en el cuerpo 3D',
-      });
+    const linea = modal.getByTestId('study-detail').filter({
+      hasText:
+        'Región: Fémur · Izquierda · Radiografía simple · Hueso largo · Sin contraste · marcada en el cuerpo 3D',
+    });
     await expect(linea.first()).toBeVisible({ timeout: 30_000 });
     expect(errores).toEqual([]);
     await contexto.close();

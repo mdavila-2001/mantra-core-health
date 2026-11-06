@@ -42,6 +42,9 @@ export const REFERRAL_ERROR_REASONS = [
   'TRANSFER_DETAIL_REQUIRED',
   'TRANSFER_ARRIVAL_BEFORE_DEPARTURE',
   'REFERRAL_ARRIVAL_ALREADY_RECORDED',
+  // v4292: the arrival encounter of an acceptance.
+  'REFERRAL_TARGET_ENCOUNTER_INVALID',
+  'REFERRAL_TARGET_ENCOUNTER_NOT_ALLOWED',
 ] as const;
 
 export type ReferralErrorReason = (typeof REFERRAL_ERROR_REASONS)[number];
@@ -90,6 +93,10 @@ export const REFERRAL_REASON_MESSAGE: Readonly<Record<ReferralErrorReason, strin
   TRANSFER_ARRIVAL_BEFORE_DEPARTURE: 'La llegada no puede ser anterior a la salida registrada.',
   REFERRAL_ARRIVAL_ALREADY_RECORDED:
     'La llegada ya está registrada: el traslado no admite más cambios. Recargue para ver los datos actuales.',
+  REFERRAL_TARGET_ENCOUNTER_INVALID:
+    'La atención en curso no es de esta persona en su organización: no puede quedar como la de llegada. Puede aceptar la derivación sin vincular la atención.',
+  REFERRAL_TARGET_ENCOUNTER_NOT_ALLOWED:
+    'La atención de llegada sólo se registra al aceptar. Puede aceptar la derivación sin vincular la atención.',
 };
 
 /** Lo que el error de una derivación trae además del `code`. */

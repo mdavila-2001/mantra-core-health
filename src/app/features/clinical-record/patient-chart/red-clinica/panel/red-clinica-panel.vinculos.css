@@ -1,0 +1,90 @@
+/* ============================================================================
+    The detail panel's links to other records.
+    ========================================================================== */
+
+.panel__vinculos {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel__vinculo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+
+button.panel__vinculo:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-default);
+}
+
+button.panel__vinculo:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.panel__vinculo--fuera {
+  cursor: default;
+  border-style: dashed;
+  background: var(--bg-surface-alt);
+}
+
+.panel__vinculo-icono {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+}
+
+.panel__vinculo-icono app-nav-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.panel__vinculo-texto {
+  display: grid;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.panel__vinculo-relacion {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.panel__vinculo-titulo {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.panel__inferido {
+  display: inline-block;
+  margin-inline-start: var(--sp-1);
+  padding: 0 var(--sp-2);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-caption);
+  font-style: italic;
+  color: var(--text-secondary);
+}
+

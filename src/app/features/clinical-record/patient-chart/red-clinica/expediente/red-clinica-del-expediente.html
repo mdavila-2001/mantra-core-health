@@ -1,0 +1,46 @@
+<!-- Filters, alerts, step-by-step tour and network: one surface (rule 6), in
+     `red-clinica/superficie/`. -->
+<app-red-clinica-superficie
+  class="expediente__red-mapa"
+  [registros]="red.registros()"
+  [vinculos]="red.vinculos()"
+  [nodos]="red.nodos()"
+  [visibles]="seleccion.visibles()"
+  [cuantosVisibles]="seleccion.cuantosVisibles()"
+  [sinResultado]="seleccion.sinResultado()"
+  [alertas]="seleccion.alertas()"
+  [alertasListas]="red.faltas().listas"
+  [alertasComprobadas]="red.faltas().comprobadas"
+  [seleccionado]="seleccion.nodoAbiertoId()"
+  [guia]="seleccion.guia()"
+  [(filtro)]="seleccion.filtro"
+  (elegido)="elegir($event)"
+  (nodoElegido)="abrirNodo($event)"
+  (limpiar)="seleccion.limpiarFiltros()"
+/>
+<app-red-clinica-panel
+  class="expediente__red-panel"
+  [nodo]="seleccion.nodoAbierto()"
+  [nodos]="red.nodos()"
+  [aristas]="red.aristas()"
+  [ahora]="red.ahora()"
+  [devolverFoco]="false"
+  [pacienteId]="red.fuente.profileId()"
+  (informeLeido)="seleccion.alLeerInforme($event)"
+  (nodoElegido)="abrirNodo($event)"
+  (cerrado)="cerrarPanel()"
+>
+  @if (seleccion.filaDelNodoAbierto()) {
+    <button
+      app-button
+      panel-acciones
+      variant="outline"
+      size="sm"
+      type="button"
+      data-testid="red-panel-registro-completo"
+      (clicked)="verRegistroCompleto()"
+    >
+      Ver el registro completo
+    </button>
+  }
+</app-red-clinica-panel>

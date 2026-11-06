@@ -1,0 +1,11 @@
+/* On the phone the selector takes the width so both labels are not cut. */
+:host {
+  display: flex;
+  margin-block-end: var(--sp-4);
+}
+
+@media (max-width: 47.99rem) {
+  app-segmented-control {
+    flex: 1 1 auto;
+  }
+}

@@ -65,6 +65,12 @@ export class ReferralDetail {
   readonly referral = input.required<Referral>();
   readonly patientProfileId = input.required<string>();
   readonly encounterId = input<string | null>(null);
+  /**
+   * Arrival encounter (`targetEncounterId`, v4292): the API takes only one of this patient in the accepting
+   * organization, so the host passes it only when it knows that (the consultation's own encounter), never the
+   * chart's «first open encounter», which may be another organization's.
+   */
+  readonly arrivalEncounterId = input<string | null>(null);
   /** Las citas de la persona: el consentimiento se ata a una atención. */
   readonly appointments = input<readonly CitaDelPaciente[]>([]);
   readonly canWrite = input(true);
@@ -83,6 +89,16 @@ export class ReferralDetail {
   protected readonly consentEncounterId = computed(() =>
     consentEncounter(this.referral().sourceEncounterId, this.encounterId(), this.appointments()),
   );
+
+  /**
+   * The arrival encounter (`targetEncounterId`, patch v4291) in words: the
+   * list's appointment if it is there, otherwise that it exists unnamed.
+   */
+  protected readonly arrivalEncounterLabel = computed<string | null>(() => {
+    const id = this.referral().targetEncounterId;
+    if (id === undefined) return null;
+    return this.appointments().find((cita) => cita.id === id)?.etiqueta ?? 'Atención registrada en la historia';
+  });
 
   protected readonly type = computed(() => referralTypeLabel(this.referral().referralType));
   protected readonly destination = computed(() => destinationOf(this.referral()));
@@ -163,16 +179,32 @@ export class ReferralDetail {
       }),
   );
 
-  protected async accept(): Promise<void> {
+  /** The arrival link to send: never the referral's own source encounter. */
+  private readonly arrival = computed(() => {
+    const id = this.arrivalEncounterId();
+    return id !== null && id !== this.referral().sourceEncounterId ? id : null;
+  });
+
+  /** The API refused the arrival link: accepting without it stays possible. */
+  protected readonly arrivalRefused = computed(() => this.reason()?.reason.startsWith('REFERRAL_TARGET_ENCOUNTER_') === true);
+
+  /** No known arrival encounter: accepted without the link. `withoutArrival`: the person's explicit retry after a 422. */
+  protected async accept(withoutArrival = false): Promise<void> {
+    const targetEncounterId = withoutArrival ? null : this.arrival();
     const confirmed = await this.dialogs.confirm({
       title: 'Aceptar derivación',
-      message: `Quedará registrado que ${this.destination()} recibe a la persona para: ${this.referral().requestedServiceText ?? this.referral().targetServiceName ?? 'el servicio pedido'}.`,
+      message:
+        `Quedará registrado que ${this.destination()} recibe a la persona para: ${this.referral().requestedServiceText ?? this.referral().targetServiceName ?? 'el servicio pedido'}.` +
+        (targetEncounterId === null ? '' : ' La atención en curso queda como la de llegada.'),
       confirmLabel: 'Aceptar derivación',
       cancelLabel: 'Volver',
     });
     if (confirmed) {
       this.run(
-        this.referrals.respond(this.referral().id, { decision: 'ACCEPT' }),
+        this.referrals.respond(this.referral().id, {
+          decision: 'ACCEPT',
+          ...(targetEncounterId === null ? {} : { targetEncounterId }),
+        }),
         'Derivación aceptada',
         'Cuando termine la atención, registre la contrarreferencia.',
       );

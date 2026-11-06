@@ -1,0 +1,120 @@
+<section class="filtros" [class.filtros--integrada]="integrada()" aria-label="Filtros de la red clínica" data-testid="red-filtros">
+  <div class="filtros__fila">
+    <app-search-field
+      class="filtros__buscar"
+      label="Buscar en la historia"
+      placeholder="Buscar diagnóstico, estudio, profesional…"
+      [value]="filtro().texto"
+      (searched)="buscar($event)"
+    />
+
+    <app-form-field class="filtros__hilo" label="Solo el hilo de este diagnóstico">
+      <app-select
+        data-testid="red-filtro-hilo"
+        [options]="opcionesDeHilo()"
+        [value]="hilo()"
+        placeholder="Toda la historia"
+        (valueChange)="elegirHilo($event)"
+      />
+    </app-form-field>
+
+    <button
+      app-button
+      class="filtros__mas"
+      variant="secondary"
+      size="sm"
+      [attr.aria-expanded]="desplegado()"
+      aria-controls="red-filtros-avanzados"
+      (clicked)="desplegado.set(!desplegado())"
+    >
+      <app-nav-icon name="sliders" />
+      {{ desplegado() ? 'Menos filtros' : 'Más filtros' }}
+    </button>
+  </div>
+
+  <div id="red-filtros-avanzados" class="filtros__avanzados" [class.filtros__avanzados--abierto]="desplegado()">
+    @if (conEspecialidades()) {
+      <app-form-field label="Especialidad">
+        <app-select
+          data-testid="red-filtro-especialidad"
+          [options]="opcionesDeEspecialidad()"
+          [value]="especialidad()"
+          placeholder="Todas las especialidades"
+          (valueChange)="elegirEspecialidad($event)"
+        />
+      </app-form-field>
+    }
+
+    @if (conProfesionales()) {
+      <app-form-field label="Profesional">
+        <app-select
+          data-testid="red-filtro-profesional"
+          [options]="opcionesDeProfesional()"
+          [value]="profesional()"
+          placeholder="Todos los profesionales"
+          (valueChange)="elegirProfesional($event)"
+        />
+      </app-form-field>
+    }
+
+    <app-form-field label="Desde">
+      <app-date-picker
+        data-testid="red-filtro-desde"
+        [value]="filtro().desde"
+        [hasError]="rangoInvertido()"
+        (valueChange)="elegirDesde($event)"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Hasta"
+      [errorMessage]="rangoInvertido() ? 'La fecha «hasta» es anterior a «desde»: no queda ningún registro en ese rango.' : ''"
+    >
+      <app-date-picker
+        data-testid="red-filtro-hasta"
+        [value]="filtro().hasta"
+        [hasError]="rangoInvertido()"
+        (valueChange)="elegirHasta($event)"
+      />
+    </app-form-field>
+  </div>
+
+  @if (mostrarTipos() && tipos().length > 0) {
+    <div class="filtros__tipos" role="group" aria-label="Tipos de registro">
+      <span class="filtros__rotulo">Tipos</span>
+      @for (tipo of tipos(); track tipo) {
+        <app-chip
+          size="md"
+          variant="info"
+          data-testid="red-filtro-tipo"
+          [selectable]="true"
+          [label]="aspecto[tipo].plural"
+          [selected]="tipoElegido(tipo)"
+          (selectedChange)="alternarTipo(tipo)"
+        >
+          {{ aspecto[tipo].plural }}
+        </app-chip>
+      }
+    </div>
+  }
+
+  <div class="filtros__resumen">
+    <p class="filtros__cuenta" role="status" data-testid="red-filtros-cuenta">
+      @if (visibles() !== null) {
+        @if (activos() === 0) {
+          {{ total() }} registros en la historia
+        } @else {
+          {{ visibles() }} de {{ total() }} registros · {{ activos() }}
+          {{ activos() === 1 ? 'filtro aplicado' : 'filtros aplicados' }}
+        }
+      } @else if (activos() > 0) {
+        {{ activos() }} {{ activos() === 1 ? 'filtro aplicado' : 'filtros aplicados' }}
+      }
+    </p>
+    @if (activos() > 0) {
+      <button app-button variant="ghost" size="sm" data-testid="red-filtros-limpiar" (clicked)="limpiar()">
+        Limpiar filtros
+      </button>
+    }
+  </div>
+</section>
