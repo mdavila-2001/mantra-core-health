@@ -4,11 +4,8 @@ import { AppButton } from '../../../../../shared/components/atoms/button/button'
 import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../../../../shared/components/atoms/nav-icon/nav-icon.types';
 import type { LecturasComprobadas } from '../lecturas/red-clinica-lecturas';
-import type {
-  AlertaDeApoyo,
-  PrioridadDeAlerta,
-  TipoDeAlerta,
-} from '../red-clinica-alertas';
+import type { PrioridadDeAlerta } from '../red-clinica-alertas';
+import type { AlertaDeApoyo, TipoDeAlerta } from '../red-clinica-alertas.types';
 
 /** Cuántas se ven antes de «Ver todas». */
 export const ALERTAS_A_LA_VISTA = 5;

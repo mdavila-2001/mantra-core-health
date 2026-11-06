@@ -53,7 +53,8 @@ export interface EstadoDeLaRed {
 
 export type FormaDelNodo = 'tarjeta' | 'descartado' | 'plegar' | 'grupo';
 
-export interface NodoDeLaRed {  /** The real record's id; for the controls, `grupo:…` or `plegar:…`. */
+export interface NodoDeLaRed {
+  /** The real record's id; for the controls, `grupo:…` or `plegar:…`. */
   readonly id: string;
   readonly forma: FormaDelNodo;
   /** The record it stands for; absent in a group. */
@@ -63,7 +64,8 @@ export interface NodoDeLaRed {  /** The real record's id; for the controls, `gru
   readonly x: number;
   readonly y: number;
   readonly ancho: number;
-  readonly alto: number;  /** Groups only: what it opens or closes. */
+  readonly alto: number;
+  /** Groups only: what it opens or closes. */
   readonly grupo?: {
     readonly accion: 'expandir' | 'contraer';
     readonly clave: string;
@@ -77,7 +79,8 @@ export interface ColumnaDeLaRed {
   readonly ancho: number;
   readonly ancha: boolean;
   readonly fecha: Date | null;
-  readonly encuentroId: string | null;  /** As in the previous tour: encounter in view, day with a hidden encounter, or no encounter. */
+  readonly encuentroId: string | null;
+  /** As in the previous tour: encounter in view, day with a hidden encounter, or no encounter. */
   readonly contexto: 'atencion' | 'dia' | 'sin-atencion';
   readonly intervalo: string;
   readonly hueco: number;
@@ -95,7 +98,8 @@ export interface HiloDeLaRed {
   readonly episodio: EpisodioClinico;
   readonly y: number;
   readonly alto: number;
-  readonly desplegado: boolean;  /** Collapsed: the summary strip. */
+  readonly desplegado: boolean;
+  /** Collapsed: the summary strip. */
   readonly hitos: readonly HitoUbicado[];
   readonly yPista: number;
   /** Expanded: where the channel runs. */
@@ -110,7 +114,8 @@ export interface AristaDeLaRed {
   readonly desde: string;
   readonly hasta: string;
   readonly motivo: MotivoDelVinculo;
-  readonly inferido: boolean;  /** `tronco`: from an encounter to what was entered in its column. `enlace`: with an arrow. */
+  readonly inferido: boolean;
+  /** `tronco`: from an encounter to what was entered in its column. `enlace`: with an arrow. */
   readonly familia: 'tronco' | 'enlace';
   readonly trazo: string;
   readonly puntos: readonly Punto[];

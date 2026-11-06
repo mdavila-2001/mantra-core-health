@@ -55,7 +55,8 @@ export function trazarAristas(
       etiqueta = { x: (lx + lt) / 2, y: yc, vertical: false };
     }
     aristas.push({ ...p, inferido, trazo: poligonal(puntos), puntos, ...(inferido ? { etiqueta } : {}) });
-  }  return aristas;
+  }
+  return aristas;
 }
 
 /** The trunk's vertices: from the encounter down the left aisle to the record. */

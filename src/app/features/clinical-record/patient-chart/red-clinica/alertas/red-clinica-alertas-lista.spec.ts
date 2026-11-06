@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { ENTRADA_DE_ALERTAS_DEMO } from '../red-clinica.demo';
-import { alertasDeApoyo, type AlertaDeApoyo } from '../red-clinica-alertas';
+import { ENTRADA_DE_ALERTAS_DEMO } from '../red-clinica.demo-alertas';
+import { alertasDeApoyo } from '../red-clinica-alertas';
+import { type AlertaDeApoyo } from '../red-clinica-alertas.types';
 import { ALERTAS_A_LA_VISTA, RedClinicaAlertasLista } from './red-clinica-alertas-lista';
 
 @Component({

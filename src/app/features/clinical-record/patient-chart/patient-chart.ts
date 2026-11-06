@@ -138,11 +138,8 @@ import { guiaDelExpediente } from './red-clinica/superficie/guia-de-la-red';
 import { alertasDeApoyo } from './red-clinica/red-clinica-alertas';
 import type { ValorDeResultado } from './red-clinica/red-clinica.types';
 import { aplicarFiltro, criteriosActivos, FILTRO_VACIO, type FiltroDeRed } from './red-clinica/red-clinica-filtro';
-import {
-  nodosDeLaRed,
-  visiblesCombinados,
-  type DetalleDeBloque,
-} from './red-clinica/red-clinica-del-expediente';
+import { nodosDeLaRed, visiblesCombinados } from './red-clinica/red-clinica-del-expediente';
+import { type DetalleDeBloque } from './red-clinica/red-clinica-del-expediente.fuente';
 import {
   atencionDeCadaRegistro,
   compararFilas,

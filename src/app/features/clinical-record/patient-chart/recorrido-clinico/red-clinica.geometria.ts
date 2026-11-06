@@ -108,7 +108,8 @@ export function ubicarRed(
   const yCentro = (id: string): number => yDeNodo.get(id)! + ubicable.get(id)!.alto / 2;
   const entradasIzq = new Map<string, number>();
   const entradasDer = new Map<string, number>();
-  const yEntrada = new Map<string, number>();  // Heights already taken by a horizontal stretch in each aisle: a source's
+  const yEntrada = new Map<string, number>();
+  // Heights already taken by a horizontal stretch in each aisle: a source's
   // exit and the entry into a target of the neighbouring column could land at
   // the same height and read as a single line.
   const ocupadas = new Map<number, number[]>();

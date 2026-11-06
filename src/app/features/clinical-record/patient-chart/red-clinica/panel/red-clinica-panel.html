@@ -1,7 +1,7 @@
 @if (nodo(); as n) {
   @if (esHoja()) {
-    <!-- Teléfono: hoja inferior modal. El navegador atrapa el foco y entrega
-         `Escape` como `cancel`. -->
+    <!-- Phone: modal bottom sheet. The browser traps the focus and delivers
+         `Escape` as `cancel`. -->
     <dialog
       #hoja
       class="panel panel--hoja"
@@ -12,9 +12,10 @@
       <ng-container *ngTemplateOutlet="contenido; context: { $implicit: n }" />
     </dialog>
   } @else {
-    <!-- Escritorio: columna al lado del mapa, sin velo y sin atrapar el foco.
-         El `keydown` no hace interactivo al `<aside>`: escucha el `Escape` que
-         burbujea desde sus controles (y desde el título, que recibe el foco). -->
+    <!-- Desktop: a column next to the map, with no veil and no focus trap.
+         The `keydown` does not make the `<aside>` interactive: it listens to
+         the `Escape` bubbling from its controls (and from the title, which
+         gets the focus). -->
     <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
     <aside
       class="panel panel--lateral"
@@ -53,7 +54,7 @@
   </header>
 
   <div class="panel__cuerpo">
-    <!-- Qué, cuándo, quién, estado. -->
+    <!-- What, when, who, status. -->
     <dl class="panel__hechos">
       @if (n.estado) {
         <div class="panel__hecho">
@@ -74,8 +75,9 @@
           }
         </dd>
       </div>
-      <!-- `undefined`: quien armó el nodo no tiene el nombre (la lectura no
-           lo trae) y no se afirma nada; `null`: no hay profesional registrado. -->
+      <!-- `undefined`: whoever built the node does not have the name (the read
+           does not bring it) and nothing is asserted; `null`: no practitioner
+           recorded. -->
       @if (n.profesional !== undefined) {
         <div class="panel__hecho">
           <dt>Profesional</dt>
@@ -92,290 +94,45 @@
 
     @if (n.detalle; as d) {
       @switch (d.tipo) {
-        <!-- ===== Estudio ===================================================== -->
+        <!-- ===== Study ======================================================= -->
         @case ('estudio') {
-          <section class="panel__seccion" aria-labelledby="red-panel-estudio">
-            <h3 class="panel__seccion-titulo" id="red-panel-estudio">Pedido</h3>
-            <dl class="panel__pares">
-              @if (d.categoria) {
-                <div><dt>Categoría</dt><dd>{{ d.categoria }}</dd></div>
-              }
-              @if (d.prioridad) {
-                <div><dt>Prioridad</dt><dd>{{ d.prioridad }}</dd></div>
-              }
-              @if (d.motivo) {
-                <div><dt>Motivo</dt><dd>{{ d.motivo }}</dd></div>
-              }
-            </dl>
-          </section>
-
-          <section class="panel__seccion" aria-labelledby="red-panel-resultado" data-testid="red-panel-resultado">
-            <h3 class="panel__seccion-titulo" id="red-panel-resultado">Resultado</h3>
-            @if (resultado(); as r) {
-              <!-- La lectura del informe completo (valores, conclusión,
-                   archivos), con sus estados: mientras llega o si falla, lo
-                   que ya se sabe (que está liberado) sigue a la vista. -->
-              @if (lecturaDelInforme(); as lectura) {
-                <app-red-clinica-informe-estado [estado]="lectura.estado" (reintentar)="releerInforme()" />
-              }
-              <p class="panel__linea" data-testid="red-panel-liberado">
-                @if (r.liberadoEn) {
-                  Liberado el
-                  <time [attr.datetime]="r.liberadoEn.toISOString()">{{ r.liberadoEn | date: "d 'de' MMMM 'de' y" }}</time>
-                } @else {
-                  Resultado liberado
-                }
-                @if (fueraDeRango() > 0) {
-                  ·
-                  <strong class="panel__fuera-resumen">
-                    {{ fueraDeRango() }} {{ fueraDeRango() === 1 ? 'valor fuera' : 'valores fuera' }} de rango
-                  </strong>
-                }
-              </p>
-              @if (r.publicadoAlPaciente === false) {
-                <p class="panel__linea panel__tenue" data-testid="red-panel-sin-publicar">Liberado sin publicar al paciente.</p>
-              }
-              @if (filas().length > 0) {
-                <div class="panel__tabla-caja">
-                  <table class="panel__tabla">
-                    <caption class="panel__oculto">Valores del resultado con su rango de referencia</caption>
-                    <thead>
-                      <tr>
-                        <th scope="col">Análisis</th>
-                        <th scope="col">Valor</th>
-                        <th scope="col">Referencia</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (f of filas(); track $index) {
-                        <tr [class.panel__fila--fuera]="f.fuera" data-testid="red-panel-valor">
-                          <th scope="row">{{ f.valor.nombre }}</th>
-                          <td>
-                            <span class="panel__valor">{{ f.texto }}</span>
-                            @if (f.valor.interpretacionDelInforme; as rotulo) {
-                              <!-- El rótulo del laboratorio, tal cual; el símbolo y el
-                                   tono salen del número contra el rango. -->
-                              <span class="panel__lectura panel__lectura--{{ tonoDeLectura(f.lectura) ?? 'informe' }}" data-testid="red-panel-interpretacion">
-                                @if (f.simbolo) {
-                                  <span aria-hidden="true">{{ f.simbolo }}</span>
-                                }
-                                {{ rotulo }}
-                                @if (f.fuera) {
-                                  <span class="panel__oculto">, fuera de rango</span>
-                                }
-                              </span>
-                            } @else if (tonoDeLectura(f.lectura); as tono) {
-                              <span class="panel__lectura panel__lectura--{{ tono }}">
-                                <span aria-hidden="true">{{ f.simbolo }}</span>
-                                {{ textoDeLectura[f.lectura] }}
-                              </span>
-                            }
-                          </td>
-                          <td class="panel__tenue">{{ f.rango }}</td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              }
-              @if (r.conclusion) {
-                <div class="panel__texto">
-                  <p class="panel__rotulo">Conclusión del informe</p>
-                  <p>{{ r.conclusion }}</p>
-                </div>
-              }
-              @if (r.archivos.length > 0 && descargable()) {
-                <ul class="panel__archivos">
-                  @for (archivo of r.archivos; track archivo.fileId) {
-                    <li>
-                      <button
-                        app-button
-                        variant="secondary"
-                        size="sm"
-                        data-testid="red-panel-archivo"
-                        [isLoading]="descargando(archivo.fileId)"
-                        (clicked)="abrirArchivo(archivo)"
-                      >
-                        <app-nav-icon name="download" />
-                        Descargar {{ archivo.nombre }}
-                      </button>
-                    </li>
-                  }
-                </ul>
-                @if (descarga(); as dl) {
-                  @switch (dl.estado.status) {
-                    @case ('forbidden') {
-                      <app-alert tone="warning" title="No puede abrir este archivo">
-                        El servidor no le da acceso al archivo del informe. Los valores de arriba siguen siendo los liberados.
-                      </app-alert>
-                    }
-                    @case ('not-found') {
-                      <app-alert tone="warning" title="El archivo no está disponible">
-                        No se encontró el archivo del informe.
-                      </app-alert>
-                    }
-                    @case ('offline') {
-                      <app-alert tone="warning" title="Sin conexión">
-                        No se pudo descargar el archivo. Revise la conexión y vuelva a intentarlo.
-                      </app-alert>
-                    }
-                    @case ('validation') {
-                      <app-alert tone="info" title="El archivo todavía no se puede abrir">
-                        Puede estar en revisión de seguridad. Intente de nuevo en unos minutos.
-                      </app-alert>
-                    }
-                    @case ('error') {
-                      <app-alert tone="error" title="No se pudo descargar el archivo">
-                        Intente de nuevo.
-                        @if (dl.estado.status === 'error') {
-                          Código de soporte: <code>{{ dl.estado.requestId }}</code>
-                        }
-                      </app-alert>
-                    }
-                    @case ('ready') {
-                      <p class="panel__tenue" role="status">Descarga iniciada.</p>
-                    }
-                  }
-                }
-              }
-            } @else {
-              <p class="panel__pendiente" data-testid="red-panel-sin-resultado">
-                Sin resultado liberado todavía
-                @if (n.cuando) {
-                  · pedido {{ hace() }}
-                }
-              </p>
-            }
-          </section>
+          <app-red-panel-estudio
+            [d]="d"
+            [resultado]="resultado()"
+            [lectura]="lecturaDelInforme()"
+            [descargable]="descargable()"
+            [descarga]="descarga.estado()"
+            [pedidoHace]="n.cuando ? hace() : null"
+            (releer)="releerInforme()"
+            (abrirArchivo)="abrirArchivo($event)"
+          />
         }
 
-        <!-- ===== Diagnóstico ================================================= -->
+        <!-- ===== Diagnosis =================================================== -->
         @case ('diagnostico') {
-          <section class="panel__seccion" aria-labelledby="red-panel-razonamiento" data-testid="red-panel-razonamiento">
-            <h3 class="panel__seccion-titulo" id="red-panel-razonamiento">Razonamiento</h3>
-            <p class="panel__linea">
-              Certeza:
-              <strong>
-                @switch (d.certeza) {
-                  @case ('presuntivo') { Presuntivo, en estudio }
-                  @case ('confirmado') { Confirmado }
-                  @case ('descartado') { Descartado }
-                }
-              </strong>
-              @if (d.inicio) {
-                · inicio {{ d.inicio | date: "d MMM y" }}
-              }
-            </p>
-            @if (d.nota) {
-              <div class="panel__texto">
-                <p class="panel__rotulo">Hallazgos y justificación</p>
-                <p>{{ d.nota }}</p>
-              </div>
-            }
-            @if (d.decision; as dec) {
-              <div class="panel__texto">
-                <p class="panel__rotulo">
-                  {{ dec.resultado === 'confirmado' ? 'Confirmado' : 'Descartado' }}
-                  el {{ dec.decididoEn | date: "d 'de' MMMM 'de' y" }}
-                  @if (dec.decididoPor) {
-                    por {{ dec.decididoPor }}
-                  }
-                </p>
-                @if (dec.motivo) {
-                  <p>{{ dec.motivo }}</p>
-                }
-                @if (dec.evidencia; as ev) {
-                  <p class="panel__linea">
-                    Basado en {{ ev.tipo === 'nota' ? 'la nota' : 'el análisis' }}:
-                    @if (ev.nodoId) {
-                      <button type="button" class="panel__enlace" (click)="elegir(ev.nodoId)">{{ ev.etiqueta }}</button>
-                    } @else {
-                      {{ ev.etiqueta }}
-                    }
-                  </p>
-                }
-              </div>
-            } @else if (d.certeza === 'presuntivo') {
-              <p class="panel__pendiente">Todavía no se confirmó ni se descartó · registrado {{ hace() }}</p>
-            }
-            @if (d.reemplazadoPor; as rp) {
-              <p class="panel__linea" data-testid="red-panel-reemplazo">
-                Se descartó en favor de
-                <button type="button" class="panel__enlace" (click)="elegir(rp.nodoId)">{{ rp.etiqueta }}</button>
-              </p>
-            }
-          </section>
+          <section
+            app-red-panel-razonamiento
+            class="panel__seccion"
+            aria-labelledby="red-panel-razonamiento"
+            data-testid="red-panel-razonamiento"
+            [d]="d"
+            [hace]="hace()"
+            (elegir)="elegir($event)"
+          ></section>
         }
 
-        <!-- ===== Derivación ================================================== -->
+        <!-- ===== Referral ==================================================== -->
         @case ('derivacion') {
-          <section class="panel__seccion" aria-labelledby="red-panel-derivacion" data-testid="red-panel-derivacion">
-            <h3 class="panel__seccion-titulo" id="red-panel-derivacion">Derivación</h3>
-            <dl class="panel__pares">
-              @if (d.tipoDeDerivacion) {
-                <div><dt>Tipo</dt><dd>{{ d.tipoDeDerivacion }}</dd></div>
-              }
-              @if (d.destino) {
-                <div><dt>Destino</dt><dd>{{ d.destino }}</dd></div>
-              }
-              @if (d.motivo) {
-                <div><dt>Motivo</dt><dd>{{ d.motivo }}</dd></div>
-              }
-            </dl>
-            @if (d.resumenClinico) {
-              <div class="panel__texto">
-                <p class="panel__rotulo">Resumen clínico</p>
-                <p>{{ d.resumenClinico }}</p>
-              </div>
-            }
-            <div class="panel__texto">
-              <p class="panel__rotulo">Respuesta del destino</p>
-              @if (d.respuesta; as resp) {
-                <p>
-                  {{ resp.decision === 'aceptada' ? 'Aceptada' : 'Rechazada' }}
-                  @if (resp.en) {
-                    el {{ resp.en | date: "d 'de' MMMM 'de' y" }}
-                  }
-                  @if (resp.motivoDeRechazo) {
-                    · {{ resp.motivoDeRechazo }}
-                  }
-                </p>
-              } @else {
-                <p class="panel__pendiente">Sin respuesta todavía</p>
-              }
-            </div>
-            <div class="panel__texto">
-              <p class="panel__rotulo">Llegada</p>
-              @if (d.llegada; as ll) {
-                <p>
-                  Llegó el {{ ll.en | date: "d 'de' MMMM 'de' y, HH:mm" }}
-                  @if (ll.atencionNodoId) {
-                    ·
-                    <button type="button" class="panel__enlace" (click)="elegir(ll.atencionNodoId)">Ver la atención de llegada</button>
-                  }
-                </p>
-                @if (ll.notas) {
-                  <p>{{ ll.notas }}</p>
-                }
-              } @else {
-                <p class="panel__pendiente">Sin llegada registrada</p>
-              }
-            </div>
-            <div class="panel__texto">
-              <p class="panel__rotulo">Contrarreferencia</p>
-              @if (d.contrarreferencia; as cr) {
-                @if (cr.en) {
-                  <p class="panel__tenue">{{ cr.en | date: "d 'de' MMMM 'de' y" }}</p>
-                }
-                <p>{{ cr.texto }}</p>
-              } @else {
-                <p class="panel__pendiente">El destino todavía no devolvió su informe</p>
-              }
-            </div>
-          </section>
+          <section
+            app-red-panel-derivacion
+            class="panel__seccion"
+            aria-labelledby="red-panel-derivacion"
+            data-testid="red-panel-derivacion"
+            [d]="d"
+            (elegir)="elegir($event)"
+          ></section>
         }
-
-        <!-- ===== Cita / reconsulta =========================================== -->
+        <!-- ===== Appointment / follow-up ===================================== -->
         @case ('cita') {
           <ng-container *ngTemplateOutlet="cita; context: { $implicit: d }" />
         }
@@ -383,7 +140,7 @@
           <ng-container *ngTemplateOutlet="cita; context: { $implicit: d }" />
         }
 
-        <!-- ===== El resto ==================================================== -->
+        <!-- ===== The rest =================================================== -->
         @case ('general') {
           @if (d.resumen || (d.datos && d.datos.length > 0)) {
             <section class="panel__seccion" aria-labelledby="red-panel-general">
@@ -430,8 +187,8 @@
       </section>
     }
 
-    <!-- Lo que el padre agrega al pie del detalle (p. ej. «Ver el registro
-         completo»): el panel no sabe de bloques ni de modales. -->
+    <!-- What the parent adds at the foot of the detail (e.g. «Ver el registro
+         completo»): the panel knows nothing of blocks or modals. -->
     <div class="panel__acciones">
       <ng-content select="[panel-acciones]" />
     </div>

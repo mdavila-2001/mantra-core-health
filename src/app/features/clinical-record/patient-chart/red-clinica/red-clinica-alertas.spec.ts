@@ -3,20 +3,18 @@ import { describe, expect, it } from 'vitest';
 import type { Condition } from '../../../../core/data-access/clinical/clinical.types';
 import type { DiagnosticOrder } from '../../../../core/data-access/diagnostics/diagnostics.types';
 import type { Referral } from '../../../../core/data-access/referrals/referrals.types';
-import { ENTRADA_DE_ALERTAS_DEMO } from './red-clinica.demo';
+import { ENTRADA_DE_ALERTAS_DEMO } from './red-clinica.demo-alertas';
 import {
   alertasDeApoyo,
   antiguedad,
-  derivacionesAbiertas,
   diagnosticosRepetidos,
   diasEntre,
-  estudiosSinResultado,
   motivosRepetidos,
   nodosAlertados,
-  presuntivosSinResolver,
   resultadosFueraDeRango,
-  type EntradaDeAlertas,
 } from './red-clinica-alertas';
+import { derivacionesAbiertas, estudiosSinResultado, presuntivosSinResolver } from './red-clinica-alertas.pendientes';
+import { type EntradaDeAlertas } from './red-clinica-alertas.types';
 
 const ahora = new Date(2026, 10, 6, 10);
 const haceDias = (n: number) => new Date(ahora.getTime() - n * 24 * 60 * 60 * 1000);

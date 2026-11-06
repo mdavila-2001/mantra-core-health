@@ -1,289 +1,34 @@
 /* ============================================================================
-    Alertas de apoyo: lo que quedó abierto en la historia del paciente.
+    Support alerts: what was left open in the patient's history.
 
-    Decisión del usuario (06/11/2026): **alertas sí, sugerencias de diagnóstico
-    no**. Cada alerta señala un hecho verificable en los registros —un
-    presuntivo que nadie resolvió, un estudio sin resultado, una derivación sin
-    respuesta, algo que se repite, un valor fuera de rango— y nunca concluye qué
-    tiene el paciente. La redacción se cuida en ese sentido: «sin resolver», «se
-    repite», «fuera del rango informado»; nunca «posible», «compatible con» ni
-    «descartar».
+    User's decision (06/11/2026): **alerts yes, diagnosis suggestions no**.
+    Each alert points at a verifiable fact in the records —a presumptive nobody
+    resolved, a study without a result, an unanswered referral, something that
+    repeats, an out-of-range value— and never concludes what the patient has.
+    The wording is careful about that: «sin resolver», «se repite», «fuera del
+    rango informado»; never «posible», «compatible con» nor «descartar».
 
-    Funciones puras sobre los tipos de `core/data-access` tal como llegan del
-    API. Lo que el API no dice en claro (los códigos de catálogo) se resuelve
-    con `codigoDe`, igual que en `diagnosis-block`. Los vínculos de la franja 1
-    (`reasonConditionId`, `targetEncounterId`, `replacedByConditionId`) son
-    opcionales en el contrato: ausentes, las alertas trabajan con lo que hay.
+    Pure functions over the `core/data-access` types as they arrive from the
+    API. What the API does not say plainly (the catalogue codes) is resolved
+    with `codigoDe`, as in `diagnosis-block`. The strip 1 links
+    (`reasonConditionId`, `targetEncounterId`, `replacedByConditionId`) are
+    optional in the contract: when absent, the alerts work with what there is.
+    The contract lives in `red-clinica-alertas.types.ts`; the pending-work
+    rules, in `red-clinica-alertas.pendientes.ts`.
     ========================================================================== */
 
 import type { Condition, Encounter } from '../../../../core/data-access/clinical/clinical.types';
-import type {
-  DiagnosticOrder,
-  DiagnosticReport,
-} from '../../../../core/data-access/diagnostics/diagnostics.types';
-import type { Referral } from '../../../../core/data-access/referrals/referrals.types';
-import {
-  CODIGO_ACTIVA,
-  CODIGO_CONFIRMADO,
-  CODIGO_DESCARTADO,
-  diagnosisStateOf,
-  type ResolverCodigo,
-} from '../../../../shared/clinical/diagnosis-state';
-import { antiguedad, diasEntre, fecha, prioridadPorPlazo, type PrioridadDeAlerta } from './red-clinica-alertas.plazos';
+import { fecha, type PrioridadDeAlerta } from './red-clinica-alertas.plazos';
 import { normalizarTexto } from './red-clinica-filtro';
 import { esCritico, estaFueraDeRango, textoDelRango, textoDelValor } from './red-clinica-valores';
-import type { LecturasComprobadas } from './lecturas/red-clinica-lecturas';
-import type { TipoDeNodo, ValorDeResultado } from './red-clinica.types';
-
-/* -- El contrato de salida ------------------------------------------------- */
-
-export const TIPOS_DE_ALERTA = [
-  'resultado-critico',
-  'resultado-fuera-de-rango',
-  'presuntivo-sin-resolver',
-  'estudio-sin-resultado',
-  'derivacion-sin-respuesta',
-  'derivacion-sin-contrarreferencia',
-  'diagnostico-repetido',
-  'motivo-repetido',
-] as const;
-
-export type TipoDeAlerta = (typeof TIPOS_DE_ALERTA)[number];
+import type { ValorDeResultado } from './red-clinica.types';
+import { TIPOS_DE_ALERTA, UMBRALES_POR_OMISION, type AlertaDeApoyo, type EntradaDeAlertas } from './red-clinica-alertas.types';
+import { derivacionesAbiertas, estudiosSinResultado, presuntivosSinResolver } from './red-clinica-alertas.pendientes';
 
 export type { PrioridadDeAlerta } from './red-clinica-alertas.plazos';
-
-export interface AlertaDeApoyo {
-  /** Estable entre recálculos: `tipo:idDelRegistro`. */
-  readonly id: string;
-  readonly tipo: TipoDeAlerta;
-  readonly prioridad: PrioridadDeAlerta;
-  /** Una línea: qué quedó abierto. */
-  readonly titulo: string;
-  /** El dato que la sostiene: antigüedad, cuántas veces, qué valor. */
-  readonly detalle: string;
-  /** El nodo al que lleva el clic. */
-  readonly nodoId: string;
-  /** Todos los nodos que la red debe resaltar (incluye `nodoId`). */
-  readonly nodoIds: readonly string[];
-  /** Días desde el hecho que la origina, si aplica. */
-  readonly dias?: number;
-}
-
-/* -- El contrato de entrada ------------------------------------------------ */
-
-/** Un resultado liberado con sus valores, ya traducidos (ver `ValorDeResultado`). */
-export interface ResultadoParaAlertas {
-  /** El nodo del estudio (o del informe) en la red. */
-  readonly nodoId: string;
-  readonly estudio: string;
-  readonly valores: readonly ValorDeResultado[];
-}
-
-export interface Umbrales {
-  /** Días tras los que un presuntivo sin resolver sube a prioridad media. */
-  readonly presuntivoDias: number;
-  /** Días tras los que un estudio sin resultado sube a prioridad media. */
-  readonly estudioDias: number;
-  /** Días tras los que una derivación sin respuesta sube a prioridad media. */
-  readonly derivacionDias: number;
-  /** Días desde la llegada tras los que falta la contrarreferencia. */
-  readonly contrarreferenciaDias: number;
-  /** Cuántas veces tiene que aparecer un motivo para avisar. */
-  readonly repeticiones: number;
-}
-
-/**
- * Los plazos por omisión. Son de **referencia**, no normas clínicas: cada
- * servicio puede pasar los suyos. El triple del plazo sube a prioridad alta.
- */
-export const UMBRALES_POR_OMISION: Umbrales = Object.freeze({
-  presuntivoDias: 14,
-  estudioDias: 7,
-  derivacionDias: 7,
-  contrarreferenciaDias: 14,
-  repeticiones: 2,
-});
-
-export interface EntradaDeAlertas {
-  readonly ahora: Date;
-  readonly diagnosticos?: readonly Condition[];
-  readonly ordenes?: readonly DiagnosticOrder[];
-  readonly informes?: readonly DiagnosticReport[];
-  readonly derivaciones?: readonly Referral[];
-  readonly atenciones?: readonly Encounter[];
-  readonly resultados?: readonly ResultadoParaAlertas[];
-  /** concepto → código de catálogo (`TerminologyClient.readConceptLabels`). */
-  readonly codigoDe?: ResolverCodigo;
-  /** concepto → nombre legible; sin él se dice «Diagnóstico», «Estudio». */
-  readonly etiquetaDe?: (conceptId: string | undefined) => string | undefined;
-  /** El id de nodo de un registro. Por omisión, el id del registro. */
-  readonly idDeNodo?: (tipo: TipoDeNodo, idDelRegistro: string) => string;
-  readonly umbrales?: Partial<Umbrales>;
-  /**
-   * Which side readings arrived whole (`lecturasComprobadas`). Absent: all of
-   * them. An alert never asserts an absence over what was not read: no «sin
-   * estudios pedidos» without the orders, no «sin resultado» without every report.
-   */
-  readonly leidas?: LecturasComprobadas;
-}
-
-/* -- Utilidades ------------------------------------------------------------ */
-
 export { antiguedad, diasEntre } from './red-clinica-alertas.plazos';
 
-const sinCodigo: ResolverCodigo = () => undefined;
-
-/* -- Las reglas ------------------------------------------------------------ */
-
-/**
- * Presuntivos sin resolver: la condición no está confirmada ni descartada
- * (por catálogo **o** por la decisión de C3) y no se resolvió.
- */
-export function presuntivosSinResolver(entrada: EntradaDeAlertas): readonly AlertaDeApoyo[] {
-  const codigo = entrada.codigoDe ?? sinCodigo;
-  const umbral = { ...UMBRALES_POR_OMISION, ...entrada.umbrales }.presuntivoDias;
-  const idDeNodo = entrada.idDeNodo ?? ((_t, id) => id);
-  return (entrada.diagnosticos ?? [])
-    .filter((c) => {
-      if (c.verification?.outcome !== undefined) return false;
-      if (c.resolvedAt !== undefined) return false;
-      if (c.replacedByConditionId !== undefined) return false;
-      const estado = diagnosisStateOf(
-        {
-          ...c,
-          verificationStatusConceptId: codigo(c.verificationStatusConceptId),
-          clinicalStatusConceptId: codigo(c.clinicalStatusConceptId),
-        },
-        { confirmed: CODIGO_CONFIRMADO, refuted: CODIGO_DESCARTADO, active: CODIGO_ACTIVA },
-        entrada.ahora,
-      );
-      return estado === 'IN_STUDY';
-    })
-    .map((c) => {
-      const dias = diasEntre(c.createdAt, entrada.ahora);
-      const nombre = entrada.etiquetaDe?.(c.codeConceptId) ?? 'Diagnóstico presuntivo';
-      const nodo = idDeNodo('diagnostico', c.id);
-      const estudios = (entrada.ordenes ?? []).filter(
-        (o) => o.reasonConditionId === c.id,
-      );
-      const conEstudios =
-        estudios.length > 0
-          ? ` ${estudios.length} ${estudios.length === 1 ? 'estudio pedido' : 'estudios pedidos'} para resolverlo.`
-          : entrada.leidas?.ordenes === false ? '' : ' Sin estudios pedidos para confirmarlo o descartarlo.';
-      return {
-        id: `presuntivo-sin-resolver:${c.id}`,
-        tipo: 'presuntivo-sin-resolver' as const,
-        prioridad: prioridadPorPlazo(dias, umbral),
-        titulo: `Presuntivo sin resolver: ${nombre}`,
-        detalle: `Registrado ${antiguedad(dias)} (${fecha(c.createdAt)}), sigue sin confirmarse ni descartarse.${conEstudios}`,
-        nodoId: nodo,
-        nodoIds: [nodo, ...estudios.map((o) => idDeNodo('estudio', o.id))],
-        dias,
-      };
-    });
-}
-
-const ESTADO_DE_ORDEN_CERRADA = /CANCEL|REVOK|ENTERED_IN_ERROR|ERROR|ANULAD/;
-
-/**
- * Estudios pedidos sin resultado **liberado**. No cuenta la orden satisfecha
- * por un informe previo (antiduplicación) ni la cancelada o anulada.
- */
-export function estudiosSinResultado(entrada: EntradaDeAlertas): readonly AlertaDeApoyo[] {
-  if (entrada.leidas?.informes === false) return []; // Reports cut or unread: the result may exist.
-  const codigo = entrada.codigoDe ?? sinCodigo;
-  const umbral = { ...UMBRALES_POR_OMISION, ...entrada.umbrales }.estudioDias;
-  const idDeNodo = entrada.idDeNodo ?? ((_t, id) => id);
-  const liberadas = new Set(
-    (entrada.informes ?? [])
-      .filter((i) => i.currentReleasedVersionId !== undefined && i.serviceRequestId !== undefined)
-      .map((i) => i.serviceRequestId as string),
-  );
-  return (entrada.ordenes ?? [])
-    .filter((o) => !liberadas.has(o.id))
-    .filter((o) => o.previousDiagnosticReportId === undefined)
-    .filter((o) => !ESTADO_DE_ORDEN_CERRADA.test(codigo(o.statusConceptId) ?? ''))
-    .map((o) => {
-      const dias = diasEntre(o.createdAt, entrada.ahora);
-      const nombre = entrada.etiquetaDe?.(o.codeConceptId) ?? 'Estudio';
-      const nodo = idDeNodo('estudio', o.id);
-      const motivo = o.reasonConditionId;
-      const borrador = (entrada.informes ?? []).some(
-        (i) => i.serviceRequestId === o.id && i.currentVersionId !== undefined,
-      );
-      return {
-        id: `estudio-sin-resultado:${o.id}`,
-        tipo: 'estudio-sin-resultado' as const,
-        prioridad: prioridadPorPlazo(dias, umbral),
-        titulo: `Estudio sin resultado liberado: ${nombre}`,
-        detalle:
-          `Pedido ${antiguedad(dias)} (${fecha(o.createdAt)}).` +
-          (borrador ? ' Hay un informe en redacción, todavía no validado.' : ' Aún no hay informe.'),
-        nodoId: nodo,
-        nodoIds: motivo === undefined ? [nodo] : [nodo, idDeNodo('diagnostico', motivo)],
-        dias,
-      };
-    });
-}
-
-/** Derivaciones sin respuesta del destino, y aceptadas sin contrarreferencia. */
-export function derivacionesAbiertas(entrada: EntradaDeAlertas): readonly AlertaDeApoyo[] {
-  const umbrales = { ...UMBRALES_POR_OMISION, ...entrada.umbrales };
-  const idDeNodo = entrada.idDeNodo ?? ((_t, id) => id);
-  const alertas: AlertaDeApoyo[] = [];
-  for (const r of entrada.derivaciones ?? []) {
-    const destino = r.targetDisplayName ?? r.targetTenantName ?? r.targetExternalName ?? 'el destino';
-    const nodo = idDeNodo('derivacion', r.id);
-    const estado = r.status;
-    if (estado === 'CANCELLED' || estado === 'REJECTED') continue;
-
-    const sinRespuesta =
-      estado === 'PENDING' || (estado === undefined && r.respondedAt === undefined);
-    if (sinRespuesta) {
-      const dias = diasEntre(r.createdAt, entrada.ahora);
-      alertas.push({
-        id: `derivacion-sin-respuesta:${r.id}`,
-        tipo: 'derivacion-sin-respuesta',
-        prioridad: prioridadPorPlazo(dias, umbrales.derivacionDias),
-        titulo: `Derivación sin respuesta de ${destino}`,
-        detalle: `Enviada ${antiguedad(dias)} (${fecha(r.createdAt)}); el destino no la aceptó ni la rechazó.`,
-        nodoId: nodo,
-        nodoIds: [nodo],
-        dias,
-      });
-      continue;
-    }
-
-    if (r.counterReferralText !== undefined && r.counterReferralText.trim() !== '') continue;
-    const llegada = r.transfer?.arrivedAt;
-    // Sólo existe tras ACCEPT: lo escribe el destino al aceptar o al registrar la llegada.
-    const atencionDestino = r.targetEncounterId;
-    const desde = llegada ?? r.respondedAt;
-    // Sin llegada ni respuesta fechada no hay desde cuándo contar: no se avisa.
-    if (desde === undefined) continue;
-    const dias = diasEntre(desde, entrada.ahora);
-    if (dias < umbrales.contrarreferenciaDias) continue;
-    const ids = [nodo];
-    if (atencionDestino !== undefined) ids.push(idDeNodo('atencion', atencionDestino));
-    alertas.push({
-      id: `derivacion-sin-contrarreferencia:${r.id}`,
-      tipo: 'derivacion-sin-contrarreferencia',
-      prioridad: prioridadPorPlazo(dias, umbrales.contrarreferenciaDias * 2),
-      titulo: `Derivación sin contrarreferencia de ${destino}`,
-      detalle:
-        (llegada !== undefined
-          ? `El paciente llegó ${antiguedad(dias)} (${fecha(llegada)})`
-          : `Aceptada ${antiguedad(dias)} (${fecha(desde)})`) +
-        '; el destino todavía no devolvió su informe.',
-      nodoId: nodo,
-      nodoIds: ids,
-      dias,
-    });
-  }
-  return alertas;
-}
-
-/** El mismo diagnóstico (mismo concepto) registrado más de una vez. */
+/** The same diagnosis (same concept) recorded more than once. */
 export function diagnosticosRepetidos(entrada: EntradaDeAlertas): readonly AlertaDeApoyo[] {
   const minimo = { ...UMBRALES_POR_OMISION, ...entrada.umbrales }.repeticiones;
   const idDeNodo = entrada.idDeNodo ?? ((_t, id) => id);
@@ -313,7 +58,7 @@ export function diagnosticosRepetidos(entrada: EntradaDeAlertas): readonly Alert
     });
 }
 
-/** El mismo motivo de consulta (texto normalizado) en varias atenciones. */
+/** The same reason for consultation (normalised text) in several encounters. */
 export function motivosRepetidos(entrada: EntradaDeAlertas): readonly AlertaDeApoyo[] {
   const minimo = { ...UMBRALES_POR_OMISION, ...entrada.umbrales }.repeticiones;
   const idDeNodo = entrada.idDeNodo ?? ((_t, id) => id);
@@ -353,7 +98,7 @@ export function motivosRepetidos(entrada: EntradaDeAlertas): readonly AlertaDeAp
     });
 }
 
-/** Valores de resultados liberados fuera del rango informado (o críticos). */
+/** Released result values outside the reported range (or critical). */
 export function resultadosFueraDeRango(entrada: EntradaDeAlertas): readonly AlertaDeApoyo[] {
   const alertas: AlertaDeApoyo[] = [];
   for (const r of entrada.resultados ?? []) {
@@ -383,8 +128,8 @@ export function resultadosFueraDeRango(entrada: EntradaDeAlertas): readonly Aler
 const PESO_DE_PRIORIDAD: Readonly<Record<PrioridadDeAlerta, number>> = { alta: 0, media: 1, baja: 2 };
 
 /**
- * Todas las alertas, de la más urgente a la menos: por prioridad, luego por
- * el orden de `TIPOS_DE_ALERTA`, luego por antigüedad (la más vieja primero).
+ * Every alert, from most to least urgent: by priority, then by the order of
+ * `TIPOS_DE_ALERTA`, then by age (the oldest first).
  */
 export function alertasDeApoyo(entrada: EntradaDeAlertas): readonly AlertaDeApoyo[] {
   const todas = [
@@ -403,7 +148,7 @@ export function alertasDeApoyo(entrada: EntradaDeAlertas): readonly AlertaDeApoy
   );
 }
 
-/** Los ids de nodo a resaltar por un conjunto de alertas. */
+/** The node ids a set of alerts highlights. */
 export function nodosAlertados(alertas: readonly AlertaDeApoyo[]): ReadonlySet<string> {
   return new Set(alertas.flatMap((a) => a.nodoIds));
 }

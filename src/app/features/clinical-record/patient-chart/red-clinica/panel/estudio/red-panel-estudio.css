@@ -1,0 +1,108 @@
+/* ============================================================================
+    A study's sections in the detail panel: the values table, the readings and
+    the report files. The host does not box anything: its sections are items
+    of the panel body's grid.
+    ========================================================================== */
+
+:host {
+  display: contents;
+}
+
+.panel__tabla-caja {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+
+.panel__tabla {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.panel__tabla th,
+.panel__tabla td {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: start;
+  vertical-align: top;
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.panel__tabla tbody tr:last-child th,
+.panel__tabla tbody tr:last-child td {
+  border-block-end: none;
+}
+
+.panel__tabla thead th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-surface-alt);
+}
+
+.panel__tabla tbody th {
+  font-weight: 500;
+}
+
+.panel__fila--fuera {
+  background: var(--st-warning-bg);
+}
+
+.panel__valor {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.panel__lectura {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-inline-start: var(--sp-2);
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-pill);
+  border: 1px solid;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.panel__lectura--warning {
+  color: var(--st-warning-fg);
+  background: var(--st-warning-bg);
+  border-color: var(--st-warning-bd);
+}
+
+.panel__lectura--error {
+  color: var(--st-error-fg);
+  background: var(--st-error-bg);
+  border-color: var(--st-error-bd);
+}
+
+.panel__lectura--informe {
+  color: var(--text-secondary);
+  background: var(--bg-inset);
+  border-color: var(--border-default);
+}
+
+.panel__archivos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The file name can be long («Informe de TSH por
+   quimioluminiscencia.pdf»): the button wraps instead of overflowing. */
+.panel__archivos li {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.panel__archivos .btn {
+  max-inline-size: 100%;
+  white-space: normal;
+  text-align: start;
+}

@@ -32,7 +32,7 @@ import { RecorridoGuiado, type PasoActualDelRecorrido } from '../../recorrido-gu
 import { armarRecorridoGuiado, type PasoDelRecorrido } from '../../recorrido-guiado/recorrido-guiado.model';
 import { RedClinicaAlertasLista } from '../alertas/red-clinica-alertas-lista';
 import { RedClinicaFiltros } from '../filtros/red-clinica-filtros';
-import type { AlertaDeApoyo } from '../red-clinica-alertas';
+import type { AlertaDeApoyo } from '../red-clinica-alertas.types';
 import type { LecturasComprobadas } from '../lecturas/red-clinica-lecturas';
 import { FILTRO_VACIO, type FiltroDeRed } from '../red-clinica-filtro';
 import type { NodoDeRed } from '../red-clinica.types';

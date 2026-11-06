@@ -39,11 +39,13 @@ export function aristasPendientes(
     if (vistas.has(clave)) continue;
     vistas.add(clave);
     const atencionA = a.registro?.clase === 'atencion';
-    const atencionB = b.registro?.clase === 'atencion';    // An inferred link never runs along the trunk: there it would be hidden by
+    const atencionB = b.registro?.clase === 'atencion';
+    // An inferred link never runs along the trunk: there it would be hidden by
     // the real ones of the same encounter and its dotted stroke would not show.
     const tronco =
       a.columna === b.columna && (atencionA || atencionB) && !(atencionA && atencionB) && !esInferido(v.motivo);
-    if (tronco) {      // The trunk always starts at the encounter.
+    if (tronco) {
+      // The trunk always starts at the encounter.
       pendientes.push(atencionA ? { clave, desde, hasta, motivo: v.motivo, familia: 'tronco' } : { clave, desde: hasta, hasta: desde, motivo: v.motivo, familia: 'tronco' });
     } else {
       pendientes.push({ clave, desde, hasta, motivo: v.motivo, familia: 'enlace' });
@@ -79,5 +81,6 @@ export function aristasPendientes(
       carrilDeCanal.set(tramo.p.clave, carril);
     }
     carrilesDeCanal.set(e.id, ocupados.length);
-  }  return { pendientes, enlaces, carrilDeCanal, carrilesDeCanal };
+  }
+  return { pendientes, enlaces, carrilDeCanal, carrilesDeCanal };
 }

@@ -96,7 +96,8 @@ export interface RegistroDeLaRed {
   readonly detalle: string;
   readonly estado: string;
   readonly tonoDelEstado?: Tone;
-  readonly cuando: Date | null;  /**
+  readonly cuando: Date | null;
+  /**
    * The encounter whose column it goes in. It is the contract's (`encounterId`,
    * `sourceEncounterId`) and, for an appointment, the same-day encounter
    * inferred for it: placing is not asserting —the line joining them is marked

@@ -1,30 +1,27 @@
 /* ============================================================================
-    Una historia de demostración para la red clínica.
+    A demonstration story for the clinical network.
 
-    La usan las pruebas de esta carpeta y el escenario del stock de componentes
-    (`/design-system/stock`, sólo con backend simulado). No la importa ninguna
-    pantalla del producto: cuando la franja 2 enchufe la red al expediente, los
-    nodos saldrán del expediente real y esto queda sólo para pruebas.
+    Used by this folder's tests and by the component stock scenario
+    (`/design-system/stock`, mocked backend only). No product screen imports
+    it: the nodes come from the real chart, and this stays for tests only. The
+    same facts as the API sends them, for the alerts, live in
+    `red-clinica.demo-alertas.ts`.
 
-    La historia: una persona consulta por cefalea; se piensa en una cefalea
-    tensional y en hipertensión; un monitoreo de presión confirma la segunda y
-    descarta la primera; se indica enalapril, se deriva a cardiología (que la
-    recibe pero no devuelve contrarreferencia y pide un ecocardiograma que
-    sigue sin resultado) y a nutrición (que no respondió).
+    The story: a person consults for headache; tension headache and
+    hypertension are considered; a blood pressure monitoring confirms the
+    second and rules out the first; enalapril is prescribed, and the person is
+    referred to cardiology (which receives them but returns no
+    counter-referral and orders an echocardiogram still without a result) and
+    to nutrition (which did not answer).
     ========================================================================== */
 
-import type { Condition, Encounter } from '../../../../core/data-access/clinical/clinical.types';
-import type {
-  DiagnosticOrder,
-  DiagnosticReport,
-} from '../../../../core/data-access/diagnostics/diagnostics.types';
-import type { Referral } from '../../../../core/data-access/referrals/referrals.types';
-import type { EntradaDeAlertas, ResultadoParaAlertas } from './red-clinica-alertas';
-import type { AristaDeRed, NodoDeRed } from './red-clinica.types';
+import type { NodoDeRed } from './red-clinica.types';
+import type { AristaDeRed } from './red-clinica-vinculos.types';
 
 export const AHORA_DEMO = new Date(2026, 10, 6, 12, 0);
 
-const d = (mes: number, dia: number, hora = 9) => new Date(2026, mes - 1, dia, hora, 0);
+/** A 2026 date: month (1-12), day and hour. */
+export const d = (mes: number, dia: number, hora = 9) => new Date(2026, mes - 1, dia, hora, 0);
 
 const rojas = { id: 'pro-rojas', nombre: 'Dra. Ana Rojas' };
 const mendez = { id: 'pro-mendez', nombre: 'Dr. Luis Méndez' };
@@ -285,120 +282,3 @@ export const ARISTAS_DEMO: readonly AristaDeRed[] = [
   { desde: 'e3', hasta: 'dx2', tipo: 'pedido-para' },
   { desde: 'dx3', hasta: 'a3', tipo: 'registrado-en' },
 ];
-
-/* -- Los mismos hechos, como llegan del API, para las alertas ------------- */
-
-const paciente = 'pid-paciente';
-
-const CODIGOS: Readonly<Record<string, string>> = {
-  'v-prov': 'COND_PROVISIONAL',
-  'v-conf': 'COND_CONFIRMED',
-  'v-ref': 'COND_REFUTED',
-  'cs-act': 'COND_ACTIVE',
-  'sr-activa': 'SR_ACTIVE',
-};
-
-const ETIQUETAS: Readonly<Record<string, string>> = {
-  'cpt-cefalea': 'Cefalea tensional',
-  'cpt-hta': 'Hipertensión arterial esencial',
-  'cpt-hvi': 'Hipertrofia ventricular izquierda',
-  'cpt-mapa': 'Monitoreo ambulatorio de presión (MAPA)',
-  'cpt-lipidos': 'Perfil lipídico',
-  'cpt-eco': 'Ecocardiograma transtorácico',
-};
-
-export const DIAGNOSTICOS_DEMO: readonly Condition[] = [
-  {
-    id: 'dx1',
-    codeConceptId: 'cpt-cefalea',
-    verificationStatusConceptId: 'v-ref',
-    encounterId: 'a1',
-    createdAt: d(8, 4),
-    verification: {
-      outcome: 'REFUTED',
-      decidedAt: d(8, 25).toISOString(),
-      decidedByProfileId: 'pro-rojas',
-      reasonText: 'Hipertensión sostenida en MAPA.',
-      basedOn: { kind: 'ANALYSIS', serviceRequestId: 'e1' },
-    },
-    replacedByConditionId: 'dx2',
-  },
-  {
-    id: 'dx2',
-    codeConceptId: 'cpt-hta',
-    verificationStatusConceptId: 'v-conf',
-    clinicalStatusConceptId: 'cs-act',
-    encounterId: 'a1',
-    createdAt: d(8, 4),
-  },
-  {
-    id: 'dx3',
-    codeConceptId: 'cpt-hvi',
-    verificationStatusConceptId: 'v-prov',
-    encounterId: 'a3',
-    createdAt: d(9, 2, 11),
-    verification: null,
-  },
-];
-
-export const ORDENES_DEMO: readonly DiagnosticOrder[] = [
-  { id: 'e1', patientProfileId: paciente, codeConceptId: 'cpt-mapa', statusConceptId: 'sr-activa', encounterId: 'a1', createdAt: d(8, 4), reasonConditionId: 'dx2' },
-  { id: 'e2', patientProfileId: paciente, codeConceptId: 'cpt-lipidos', statusConceptId: 'sr-activa', encounterId: 'a1', createdAt: d(8, 4), reasonConditionId: 'dx2' },
-  { id: 'e3', patientProfileId: paciente, codeConceptId: 'cpt-eco', statusConceptId: 'sr-activa', encounterId: 'a3', createdAt: d(9, 2, 11), reasonConditionId: 'dx2' },
-];
-
-export const INFORMES_DEMO: readonly DiagnosticReport[] = [
-  { id: 'inf-1', patientProfileId: paciente, serviceRequestId: 'e1', codeConceptId: 'cpt-mapa', lifecycleStatusConceptId: 'x', currentVersionId: 'v1', currentReleasedVersionId: 'v1', createdAt: d(8, 20) },
-  { id: 'inf-2', patientProfileId: paciente, serviceRequestId: 'e2', codeConceptId: 'cpt-lipidos', lifecycleStatusConceptId: 'x', currentVersionId: 'v1', currentReleasedVersionId: 'v1', createdAt: d(8, 8) },
-];
-
-export const DERIVACIONES_DEMO: readonly Referral[] = [
-  {
-    id: 'd1',
-    patientProfileId: paciente,
-    statusConceptId: 'x',
-    status: 'ACCEPTED',
-    createdAt: d(8, 25),
-    sourceEncounterId: 'a2',
-    targetDisplayName: 'Cardiología · Clínica Norte',
-    respondedAt: d(8, 27),
-    transfer: { arrivedAt: d(9, 2, 10) },
-    targetEncounterId: 'a3',
-  },
-  {
-    id: 'd2',
-    patientProfileId: paciente,
-    statusConceptId: 'x',
-    status: 'PENDING',
-    createdAt: d(10, 10),
-    sourceEncounterId: 'a2',
-    targetDisplayName: 'Centro de Nutrición Vida',
-  },
-];
-
-export const ATENCIONES_DEMO: readonly Encounter[] = [
-  { id: 'a1', statusConceptId: 'x', reasonText: 'Cefalea persistente', startAt: d(8, 4) },
-  { id: 'a2', statusConceptId: 'x', reasonText: 'cefalea persistente.', startAt: d(8, 25) },
-  { id: 'a3', statusConceptId: 'x', reasonText: 'Interconsulta por HTA', startAt: d(9, 2, 10) },
-];
-
-/** Los resultados liberados de la red, ya en el formato de las alertas. */
-export function resultadosDe(nodos: readonly NodoDeRed[]): readonly ResultadoParaAlertas[] {
-  return nodos.flatMap((n) =>
-    n.detalle?.tipo === 'estudio' && n.detalle.resultado !== null
-      ? [{ nodoId: n.id, estudio: n.titulo, valores: n.detalle.resultado.valores }]
-      : [],
-  );
-}
-
-export const ENTRADA_DE_ALERTAS_DEMO: EntradaDeAlertas = {
-  ahora: AHORA_DEMO,
-  diagnosticos: DIAGNOSTICOS_DEMO,
-  ordenes: ORDENES_DEMO,
-  informes: INFORMES_DEMO,
-  derivaciones: DERIVACIONES_DEMO,
-  atenciones: ATENCIONES_DEMO,
-  resultados: resultadosDe(NODOS_DEMO),
-  codigoDe: (id) => (id === undefined ? undefined : CODIGOS[id]),
-  etiquetaDe: (id) => (id === undefined ? undefined : ETIQUETAS[id]),
-};

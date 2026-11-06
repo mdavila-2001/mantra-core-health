@@ -1,9 +1,5 @@
-import {
-  LECTURA_DE_VINCULO,
-  type AristaDeRed,
-  type NodoDeRed,
-  type TipoDeVinculo,
-} from '../red-clinica.types';
+import { type NodoDeRed } from '../red-clinica.types';
+import { LECTURA_DE_VINCULO, type AristaDeRed, type TipoDeVinculo } from '../red-clinica-vinculos.types';
 
 /** Un vínculo del nodo abierto, ya leído desde su punta. */
 export interface VinculoDelPanel {

@@ -182,7 +182,8 @@ export function construirRed(
     if (dx.replacedByConditionId) unir(dx.id, dx.replacedByConditionId, 'reemplazado-por');
     const base = dx.verification?.basedOn;
     if (base !== undefined && base !== null) {
-      const evidencia = base.diagnosticReportId ?? base.serviceRequestId ?? base.noteId ?? base.encounterId;      // The encounter where it was entered is already joined by `registrado-en`.
+      const evidencia = base.diagnosticReportId ?? base.serviceRequestId ?? base.noteId ?? base.encounterId;
+      // The encounter where it was entered is already joined by `registrado-en`.
       if (evidencia !== dx.encounterId) unir(evidencia, dx.id, 'evidencia');
     }
   }
@@ -200,7 +201,8 @@ export function construirRed(
   }
   for (const c of fuente.citas ?? []) {
     const origen = c.followUpOf;
-    if (origen === undefined || origen === null) continue;    // The source appointment if it arrived; otherwise its encounter. A single
+    if (origen === undefined || origen === null) continue;
+    // The source appointment if it arrived; otherwise its encounter. A single
     // line: both say the same.
     if (presentes.has(origen.bookingId)) unir(origen.bookingId, c.id, 'reconsulta-de');
     else unir(origen.encounterId, c.id, 'reconsulta-de');
@@ -212,7 +214,8 @@ export function construirRed(
   const atendible = new Map(
     (fuente.citas ?? []).map((c) => [c.id, CITA[rotular(c.statusConceptId).code ?? '']?.atendible ?? true]),
   );
-  const inferidos = inferirVinculos(registros, vinculos, (id) => atendible.get(id) ?? true);  // The appointment inferred to an encounter goes in that encounter's column:
+  const inferidos = inferirVinculos(registros, vinculos, (id) => atendible.get(id) ?? true);
+  // The appointment inferred to an encounter goes in that encounter's column:
   // it is the same visit. The line joining them says «inferido».
   const columnaInferida = new Map(
     inferidos.filter((v) => v.motivo === 'inferido-mismo-dia').map((v) => [v.desde, v.hasta]),

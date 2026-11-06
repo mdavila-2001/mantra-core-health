@@ -110,7 +110,8 @@ export function armarCeldas(
         if (estado.abiertos.has(clave)) {
           for (const r of detalle) {
             nodos.push({ id: r.id, forma: 'tarjeta', registro: r, episodio: e.id, columna, alto: m.altoNodo });
-          }          // Same id as the «+N»: Angular keeps the button and the focus.
+          }
+          // Same id as the «+N»: Angular keeps the button and the focus.
           nodos.push({ id: `grupo:${clave}`, forma: 'grupo', episodio: e.id, columna, alto: m.altoGrupo, grupo: { accion: 'contraer', clave, ocultos: [] } });
         } else {
           detalle.forEach((r) => representante.set(r.id, `grupo:${clave}`));
@@ -121,5 +122,6 @@ export function armarCeldas(
     }
   }
   const ubicable = new Map<string, NodoSinUbicar>();
-  for (const nodos of celdas.values()) for (const n of nodos) ubicable.set(n.id, n);  return { porId, ordenadas, indiceDeColumna, claveDeColumna, hilosVisibles, celdas, representante, ubicable };
+  for (const nodos of celdas.values()) for (const n of nodos) ubicable.set(n.id, n);
+  return { porId, ordenadas, indiceDeColumna, claveDeColumna, hilosVisibles, celdas, representante, ubicable };
 }

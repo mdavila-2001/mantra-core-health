@@ -1,9 +1,11 @@
 /* ============================================================================
-    Panel de detalle de la red clínica.
+    Clinical network detail panel.
 
-    Lateral: una columna que el padre pone al lado del mapa. Se pega arriba al
-    hacer scroll (`sticky`) y tiene su propio scroll, así el mapa no se mueve.
-    Hoja: `<dialog>` modal anclado abajo, casi a pantalla completa.
+    Side: a column the parent places next to the map. It sticks to the top on
+    scroll (`sticky`) and has its own scroll, so the map does not move.
+    Sheet: a modal `<dialog>` anchored at the bottom, almost full screen.
+    The sections' shared styles live in `red-clinica-panel.secciones.css`, the
+    links in `red-clinica-panel.vinculos.css`.
     ========================================================================== */
 
 :host {
@@ -21,9 +23,9 @@
 
 .panel--lateral {
   position: sticky;
-  /* Debajo de la cabecera fija del shell (`app-header`, 56–64 px): sin ese
-     margen, el título y «Cerrar» quedaban tapados al desplazar. La variable
-     vive en la cabecera; acá llega el valor de respaldo, el mayor de los dos. */
+  /* Below the shell's fixed header (`app-header`, 56–64 px): without that
+     margin, the title and «Cerrar» were covered on scroll. The variable lives
+     in the header; the fallback here is the larger of the two. */
   inset-block-start: calc(var(--header-height, 4rem) + var(--sp-4));
   max-block-size: calc(100dvh - var(--header-height, 4rem) - var(--sp-8));
   border: 1px solid var(--border-subtle);
@@ -73,7 +75,7 @@
   }
 }
 
-/* -- Cabecera ------------------------------------------------------------- */
+/* -- Header ----------------------------------------------------------------- */
 
 .panel__cabecera {
   display: flex;
@@ -127,7 +129,7 @@
   color: var(--text-secondary);
 }
 
-/* -- Cuerpo --------------------------------------------------------------- */
+/* -- Body ------------------------------------------------------------------- */
 
 .panel__cuerpo {
   flex: 1;
@@ -135,9 +137,9 @@
   overflow-y: auto;
   padding: var(--sp-4) var(--sp-5) var(--sp-6);
   display: grid;
-  /* Una columna que no crece con su contenido: sin esto, la tabla de valores
-     (texto sin cortes) ensanchaba la columna implícita y el panel recortaba
-     la derecha de cada sección. La tabla se desplaza dentro de su caja. */
+  /* A column that does not grow with its content: without it, the values
+     table (unbreakable text) widened the implicit column and the panel cut
+     off the right of every section. The table scrolls inside its box. */
   grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: var(--sp-5);
@@ -152,22 +154,6 @@
   margin: 0;
 }
 
-.panel__hecho dt,
-.panel__pares dt,
-.panel__rotulo {
-  margin: 0;
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.panel__hecho dd,
-.panel__pares dd {
-  margin: var(--sp-1) 0 0;
-  overflow-wrap: anywhere;
-}
-
 .panel__acciones {
   display: flex;
   flex-wrap: wrap;
@@ -178,278 +164,3 @@
   display: none;
 }
 
-.panel__seccion {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-3);
-  padding-block-start: var(--sp-4);
-  border-block-start: 1px solid var(--border-subtle);
-}
-
-.panel__seccion-titulo {
-  margin: 0;
-  font-size: var(--fs-body-lg);
-  line-height: var(--lh-body-lg);
-  font-weight: 600;
-}
-
-.panel__pares {
-  display: grid;
-  gap: var(--sp-3);
-  margin: 0;
-}
-
-.panel__pares:empty {
-  display: none;
-}
-
-.panel__texto {
-  display: grid;
-  gap: var(--sp-1);
-}
-
-.panel__texto p,
-.panel__linea {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.panel__tenue {
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-}
-
-p.panel__tenue {
-  margin: 0;
-}
-
-.panel__pendiente {
-  margin: 0;
-  padding: var(--sp-2) var(--sp-3);
-  border-inline-start: 3px solid var(--st-warning-bd);
-  background: var(--st-warning-bg);
-  color: var(--st-warning-fg);
-  border-radius: var(--r-sm);
-  font-weight: 600;
-  font-size: var(--fs-caption);
-}
-
-.panel__fuera-resumen {
-  color: var(--st-warning-fg);
-}
-
-/* -- Tabla de valores ----------------------------------------------------- */
-
-.panel__tabla-caja {
-  overflow-x: auto;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-}
-
-.panel__tabla {
-  inline-size: 100%;
-  border-collapse: collapse;
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-}
-
-.panel__tabla th,
-.panel__tabla td {
-  padding: var(--sp-2) var(--sp-3);
-  text-align: start;
-  vertical-align: top;
-  border-block-end: 1px solid var(--border-subtle);
-}
-
-.panel__tabla tbody tr:last-child th,
-.panel__tabla tbody tr:last-child td {
-  border-block-end: none;
-}
-
-.panel__tabla thead th {
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: var(--bg-surface-alt);
-}
-
-.panel__tabla tbody th {
-  font-weight: 500;
-}
-
-.panel__fila--fuera {
-  background: var(--st-warning-bg);
-}
-
-.panel__valor {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.panel__lectura {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-1);
-  margin-inline-start: var(--sp-2);
-  padding: 0 var(--sp-2);
-  border-radius: var(--r-pill);
-  border: 1px solid;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.panel__lectura--warning {
-  color: var(--st-warning-fg);
-  background: var(--st-warning-bg);
-  border-color: var(--st-warning-bd);
-}
-
-.panel__lectura--error {
-  color: var(--st-error-fg);
-  background: var(--st-error-bg);
-  border-color: var(--st-error-bd);
-}
-
-.panel__lectura--informe {
-  color: var(--text-secondary);
-  background: var(--bg-inset);
-  border-color: var(--border-default);
-}
-
-.panel__archivos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* El nombre del archivo puede ser largo («Informe de TSH por
-   quimioluminiscencia.pdf»): el botón parte la línea en vez de salirse. */
-.panel__archivos li {
-  min-inline-size: 0;
-  max-inline-size: 100%;
-}
-
-.panel__archivos .btn {
-  max-inline-size: 100%;
-  white-space: normal;
-  text-align: start;
-}
-
-/* -- Enlaces y vínculos --------------------------------------------------- */
-
-.panel__enlace {
-  padding: 0;
-  border: none;
-  background: none;
-  font: inherit;
-  color: var(--text-link);
-  text-decoration: underline;
-  text-underline-offset: 0.15em;
-  cursor: pointer;
-  text-align: start;
-}
-
-.panel__enlace:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-  border-radius: var(--r-xs);
-}
-
-.panel__vinculos {
-  display: grid;
-  gap: var(--sp-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.panel__vinculo {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-3);
-  inline-size: 100%;
-  min-block-size: 2.75rem;
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
-  color: inherit;
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-  transition: background-color var(--dur-fast) var(--ease-standard),
-    border-color var(--dur-fast) var(--ease-standard);
-}
-
-button.panel__vinculo:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-default);
-}
-
-button.panel__vinculo:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-.panel__vinculo--fuera {
-  cursor: default;
-  border-style: dashed;
-  background: var(--bg-surface-alt);
-}
-
-.panel__vinculo-icono {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  inline-size: 1.75rem;
-  block-size: 1.75rem;
-  border-radius: var(--r-full);
-  background: var(--bg-inset);
-  color: var(--text-secondary);
-}
-
-.panel__vinculo-icono app-nav-icon {
-  inline-size: 1rem;
-  block-size: 1rem;
-}
-
-.panel__vinculo-texto {
-  display: grid;
-  gap: var(--sp-1);
-  min-inline-size: 0;
-}
-
-.panel__vinculo-relacion {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-secondary);
-}
-
-.panel__vinculo-titulo {
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.panel__inferido {
-  display: inline-block;
-  margin-inline-start: var(--sp-1);
-  padding: 0 var(--sp-2);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--r-pill);
-  font-size: var(--fs-caption);
-  font-style: italic;
-  color: var(--text-secondary);
-}
-
-.panel__oculto {
-  position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}

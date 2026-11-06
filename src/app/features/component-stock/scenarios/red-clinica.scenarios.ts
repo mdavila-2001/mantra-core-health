@@ -15,12 +15,8 @@ import {
   type PresentacionDelPanel,
 } from '../../clinical-record/patient-chart/red-clinica/panel/red-clinica-panel';
 import { alertasDeApoyo } from '../../clinical-record/patient-chart/red-clinica/red-clinica-alertas';
-import {
-  AHORA_DEMO,
-  ARISTAS_DEMO,
-  ENTRADA_DE_ALERTAS_DEMO,
-  NODOS_DEMO,
-} from '../../clinical-record/patient-chart/red-clinica/red-clinica.demo';
+import { AHORA_DEMO, ARISTAS_DEMO, NODOS_DEMO } from '../../clinical-record/patient-chart/red-clinica/red-clinica.demo';
+import { ENTRADA_DE_ALERTAS_DEMO } from '../../clinical-record/patient-chart/red-clinica/red-clinica.demo-alertas';
 import { aplicarFiltro, FILTRO_VACIO, type FiltroDeRed } from '../../clinical-record/patient-chart/red-clinica/red-clinica-filtro';
 import { ASPECTO_DE_TIPO, type NodoDeRed } from '../../clinical-record/patient-chart/red-clinica/red-clinica.types';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';

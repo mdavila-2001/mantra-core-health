@@ -7,7 +7,8 @@
     sobre qué significa «del 1 al 15 de octubre».
     ========================================================================== */
 
-import type { AristaDeRed, NodoDeRed, Referencia, TipoDeNodo } from './red-clinica.types';
+import type { NodoDeRed, Referencia, TipoDeNodo } from './red-clinica.types';
+import type { AristaDeRed } from './red-clinica-vinculos.types';
 
 export interface FiltroDeRed {
   /** Id de especialidad; `null` = todas. */

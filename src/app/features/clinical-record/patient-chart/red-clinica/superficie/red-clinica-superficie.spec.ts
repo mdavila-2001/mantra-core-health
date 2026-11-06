@@ -7,7 +7,7 @@ import type { Condition, Encounter, MedicationRequest } from '../../../../../cor
 import { RecorridoClinico } from '../../recorrido-clinico/recorrido-clinico';
 import type { RegistroDeLaRed, VinculoDeLaRed } from '../../recorrido-clinico/red-clinica.model';
 import { RecorridoGuiado } from '../../recorrido-guiado/recorrido-guiado';
-import type { AlertaDeApoyo } from '../red-clinica-alertas';
+import type { AlertaDeApoyo } from '../red-clinica-alertas.types';
 import { FILTRO_VACIO, type FiltroDeRed } from '../red-clinica-filtro';
 import { guiaDelExpediente, NINGUNO_VISIBLE, type GuiaDeLaRed } from './guia-de-la-red';
 import { RedClinicaSuperficie } from './red-clinica-superficie';

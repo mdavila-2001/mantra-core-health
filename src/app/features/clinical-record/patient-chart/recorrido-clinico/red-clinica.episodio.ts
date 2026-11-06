@@ -12,7 +12,8 @@ export interface HitoDelEpisodio {
   readonly id: string;
   readonly clase: ClaseDeLaRed;
   readonly cuando: Date | null;
-  readonly titulo: string;  /** Which kind of milestone: decides the marker's shape. */
+  readonly titulo: string;
+  /** Which kind of milestone: decides the marker's shape. */
   readonly tipo: 'presuntivo' | 'confirmado' | 'descartado' | 'historico' | 'derivacion' | 'internacion' | 'procedimiento' | 'momento';
 }
 
@@ -21,7 +22,8 @@ export interface EpisodioClinico {
   readonly clase: 'problema' | 'sin-diagnostico';
   readonly nombre: string;
   readonly estado: string;
-  readonly tonoDelEstado?: Tone;  /** The chain's diagnoses, in chronological order. */
+  readonly tonoDelEstado?: Tone;
+  /** The chain's diagnoses, in chronological order. */
   readonly diagnosticos: readonly string[];
   /** The records drawn in this episode. */
   readonly miembros: readonly string[];
@@ -38,7 +40,8 @@ export interface EpisodioClinico {
 }
 
 export interface RedPorEpisodios {
-  readonly episodios: readonly EpisodioClinico[];  /** The episode where each record is drawn. */
+  readonly episodios: readonly EpisodioClinico[];
+  /** The episode where each record is drawn. */
   readonly episodioDe: ReadonlyMap<string, string>;
   /** Every episode each record belongs to (its own first). */
   readonly pertenencias: ReadonlyMap<string, readonly string[]>;

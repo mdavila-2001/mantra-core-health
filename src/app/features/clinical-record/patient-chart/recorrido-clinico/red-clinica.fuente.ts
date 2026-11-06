@@ -52,7 +52,8 @@ export interface FuenteDeLaRed {
   >[];
   readonly observations: readonly Pick<Observation, 'id' | 'encounterId'>[];
   readonly notes: readonly Pick<ChartNote, 'noteId' | 'encounterId'>[];
-  readonly carePlans: readonly Pick<CarePlan, 'id' | 'conditionId'>[];  /** The reads the network requests separately. `null`: could not be read or has not arrived yet. */
+  readonly carePlans: readonly Pick<CarePlan, 'id' | 'conditionId'>[];
+  /** The reads the network requests separately. `null`: could not be read or has not arrived yet. */
   readonly citas?: readonly CitaDeLaFuente[] | null;
   readonly derivaciones?: readonly DerivacionDeLaFuente[] | null;
   readonly estudios?: {

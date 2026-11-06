@@ -1,111 +1,38 @@
 /* ============================================================================
-    De la red por episodios (Franja 2) al contrato del panel, los filtros y las
-    alertas (Franja 3).
+    From the network by episodes (Strip 2) to the contract of the panel, the
+    filters and the alerts (Strip 3).
 
-    La red ya leyó el expediente y armó sus registros y vínculos
-    (`recorrido-clinico/red-clinica.adaptador.ts → construirRed`). Esto no
-    vuelve a leer nada ni decide episodios: traduce cada `RegistroDeLaRed` a un
-    `NodoDeRed` —con el análisis de su tipo sacado de la lectura que lo trajo—
-    y cada `VinculoDeLaRed` a una `AristaDeRed`, con el sentido que pide la
-    tabla de `red-clinica.types.ts`.
+    The network already read the chart and built its records and links
+    (`recorrido-clinico/red-clinica.adaptador.ts → construirRed`). This reads
+    nothing again nor decides episodes: it translates each `RegistroDeLaRed`
+    to a `NodoDeRed` —with its type's analysis taken from the read that brought
+    it (`red-clinica-del-expediente.fuente.ts`)— and each `VinculoDeLaRed` to an
+    `AristaDeRed`, in the direction `red-clinica-vinculos.types.ts` asks for
+    (`red-clinica-del-expediente.aristas.ts`).
 
-    Reglas:
+    Rules:
 
-    - **Ids reales.** El id del nodo es el del registro; las aristas, también.
-    - **Nada inventado.** Lo que la lectura no trae queda ausente: sin nombre
-      del profesional (ningún contrato del expediente lo publica), sin fecha de
-      liberación ni valores de un informe en la lista de órdenes (sólo dice
-      que hay versión liberada): el panel los lee al abrir el estudio, con el
-      id del informe. El panel dice lo que hay y nada más.
-    - **Los inferidos siguen siendo inferidos**: `inferido: true` en la arista.
+    - **Real ids.** The node's id is the record's; the edges', too.
+    - **Nothing made up.** What the read does not bring stays absent: no
+      practitioner name (no chart contract publishes it), no release date nor
+      values of a report in the orders list (it only says there is a released
+      version): the panel reads them on opening the study, with the report id.
+      The panel says what there is and nothing more.
+    - **Inferred links stay inferred**: `inferido: true` on the edge.
     ========================================================================== */
 
-import type { Condition } from '../../../../core/data-access/clinical/clinical.types';
-import type {
-  AnalysisCategory,
-  DiagnosticOrder,
-  DiagnosticReport,
-} from '../../../../core/data-access/diagnostics/diagnostics.types';
-import type { Referral } from '../../../../core/data-access/referrals/referrals.types';
-import type { Booking } from '../../../../core/data-access/scheduling/scheduling.types';
+import type { AnalysisCategory } from '../../../../core/data-access/diagnostics/diagnostics.types';
 import { referralTypeLabel } from '../referral-block/referral-block.model';
 import type { Rotulador } from '../recorrido-clinico/red-clinica.fuente';
-import type {
-  ClaseDeLaRed,
-  MotivoDelVinculo,
-  RegistroDeLaRed,
-  VinculoDeLaRed,
-} from '../recorrido-clinico/red-clinica.model';
-import type {
-  AristaDeRed,
-  CertezaDiagnostica,
-  DetalleDeNodo,
-  DetalleGeneral,
-  NodoDeRed,
-  TipoDeNodo,
-  TipoDeVinculo,
-} from './red-clinica.types';
-
-/* -- Lo que se lee de cada lectura --------------------------------------- */
-
-export type DiagnosticoDelDetalle = Pick<
-  Condition,
-  'id' | 'noteText' | 'onsetAt' | 'replacedByConditionId' | 'verification'
->;
-
-export type CitaDelDetalle = Pick<Booking, 'id' | 'reasonText' | 'followUpOf'>;
-
-export type DerivacionDelDetalle = Pick<
-  Referral,
-  | 'id'
-  | 'status'
-  | 'referralType'
-  | 'reasonText'
-  | 'diagnosisText'
-  | 'clinicalSummary'
-  | 'respondedAt'
-  | 'rejectReason'
-  | 'targetEncounterId'
-  | 'counterReferralText'
-  | 'counterReferralAt'
-  | 'targetDisplayName'
-  | 'targetTenantName'
-  | 'targetExternalName'
-  | 'targetServiceName'
-  | 'requestedServiceText'
-> & { readonly transfer?: { readonly arrivedAt?: Date; readonly arrivalNotes?: string } };
-
-export type OrdenDelDetalle = Pick<DiagnosticOrder, 'id' | 'category' | 'priorityConceptId'>;
-
-export type InformeDelDetalle = Pick<DiagnosticReport, 'id' | 'serviceRequestId' | 'currentReleasedVersionId'>;
-
-/** Lo que el expediente ya muestra de un registro de sus bloques: el resumen y pares rótulo/valor. */
-export interface DetalleDeBloque {
-  readonly resumen?: string;
-  readonly datos?: readonly { readonly rotulo: string; readonly valor: string }[];
-}
+import type { ClaseDeLaRed, RegistroDeLaRed, VinculoDeLaRed } from '../recorrido-clinico/red-clinica.model';
+import type { CertezaDiagnostica, DetalleDeNodo, DetalleGeneral, NodoDeRed, TipoDeNodo } from './red-clinica.types';
+import type { AristaDeRed } from './red-clinica-vinculos.types';
+import type { FuenteDelDetalle, InformeDelDetalle } from './red-clinica-del-expediente.fuente';
+import { aristasDeLaRed } from './red-clinica-del-expediente.aristas';
 
 /**
- * Las lecturas de donde sale el análisis de cada nodo. Todas opcionales: una
- * que falló (`null`) deja a sus nodos con la cabecera y los vínculos.
- */
-export interface FuenteDelDetalle {
-  readonly diagnosticos?: readonly DiagnosticoDelDetalle[] | null;
-  readonly citas?: readonly CitaDelDetalle[] | null;
-  readonly derivaciones?: readonly DerivacionDelDetalle[] | null;
-  readonly estudios?: {
-    readonly orders: readonly OrdenDelDetalle[];
-    readonly reports: readonly InformeDelDetalle[];
-  } | null;
-  /** Atención, medicación, observación, nota, plan, documento, internación. */
-  readonly bloques?: ReadonlyMap<string, DetalleDeBloque>;
-}
-
-/* -- Tipos y vínculos ------------------------------------------------------ */
-
-/**
- * El tipo de nodo de cada clase de la red. El informe (`resultado`) es un
- * estudio para el panel: su análisis es el del pedido más su resultado.
+ * The node type of each network class. The report (`resultado`) is a study
+ * for the panel: its analysis is the order's plus its result.
  */
 const TIPO_DE_LA_CLASE: Readonly<Record<ClaseDeLaRed, TipoDeNodo>> = {
   atencion: 'atencion',
@@ -123,52 +50,7 @@ const TIPO_DE_LA_CLASE: Readonly<Record<ClaseDeLaRed, TipoDeNodo>> = {
   documento: 'documento',
 };
 
-interface Traduccion {
-  readonly tipo: TipoDeVinculo;
-  /** La red guarda el vínculo en el otro sentido que la tabla de la Franja 3. */
-  readonly invertir: boolean;
-  readonly inferido?: true;
-}
-
-/**
- * Cada motivo de la red, como vínculo del panel. La red dibuja
- * «atención → registro» y «diagnóstico → receta»; el panel lee «el registro
- * se registró en la atención» y «la receta está indicada para el
- * diagnóstico»: mismo vínculo, la flecha al revés.
- */
-export const VINCULO_DEL_MOTIVO: Readonly<Record<MotivoDelVinculo, Traduccion>> = {
-  'registrado-en': { tipo: 'registrado-en', invertir: true },
-  'indicado-para': { tipo: 'indicado-para', invertir: true },
-  'pedido-para': { tipo: 'pedido-para', invertir: true },
-  'resultado-de': { tipo: 'resultado-de', invertir: true },
-  'reemplazado-por': { tipo: 'reemplazado-por', invertir: false },
-  'receta-reemplazada': { tipo: 'reemplaza-receta', invertir: false },
-  evidencia: { tipo: 'evidencia-de', invertir: false },
-  'plan-para': { tipo: 'plan-para', invertir: true },
-  'derivado-desde': { tipo: 'derivada-desde', invertir: true },
-  'recibido-en': { tipo: 'recibida-en', invertir: false },
-  'reconsulta-de': { tipo: 'reconsulta-de', invertir: true },
-  'durante-internacion': { tipo: 'durante-internacion', invertir: true },
-  'inferido-misma-atencion': { tipo: 'pedido-para', invertir: true, inferido: true },
-  'inferido-mismo-dia': { tipo: 'atendida-en', invertir: false, inferido: true },
-};
-
-/** Las aristas del panel, desde los vínculos de la red. Un vínculo repetido sale una vez. */
-export function aristasDeLaRed(vinculos: readonly VinculoDeLaRed[]): readonly AristaDeRed[] {
-  const vistas = new Set<string>();
-  const aristas: AristaDeRed[] = [];
-  for (const v of vinculos) {
-    const t = VINCULO_DEL_MOTIVO[v.motivo];
-    const [desde, hasta] = t.invertir ? [v.hasta, v.desde] : [v.desde, v.hasta];
-    const clave = `${t.tipo}:${desde}>${hasta}`;
-    if (vistas.has(clave)) continue;
-    vistas.add(clave);
-    aristas.push(t.inferido ? { desde, hasta, tipo: t.tipo, inferido: true } : { desde, hasta, tipo: t.tipo });
-  }
-  return aristas;
-}
-
-/* -- El análisis de cada tipo ---------------------------------------------- */
+/* -- Each type's analysis --------------------------------------------------- */
 
 const CATEGORIA: Readonly<Record<AnalysisCategory, string>> = {
   LAB: 'Laboratorio',
@@ -176,7 +58,7 @@ const CATEGORIA: Readonly<Record<AnalysisCategory, string>> = {
   OTHER: 'Otro estudio',
 };
 
-/** «Histórico» es un diagnóstico que se confirmó y se resolvió: el estado lo dice aparte. */
+/** «Histórico» is a diagnosis that was confirmed and resolved: the status says so apart. */
 function certezaDelPanel(r: RegistroDeLaRed): CertezaDiagnostica {
   return r.certeza === 'presuntivo' || r.certeza === 'descartado' ? r.certeza : 'confirmado';
 }
@@ -186,7 +68,7 @@ function texto(valor: string | undefined | null): string | undefined {
   return limpio === undefined || limpio === '' ? undefined : limpio;
 }
 
-/** Los nodos de la red con su análisis, y sus aristas. */
+/** The network's nodes with their analysis, and their edges. */
 export function nodosDeLaRed(
   registros: readonly RegistroDeLaRed[],
   vinculos: readonly VinculoDeLaRed[],
@@ -217,9 +99,9 @@ export function nodosDeLaRed(
       tipo: 'estudio',
       ...(orden?.category === undefined ? {} : { categoria: CATEGORIA[orden.category] }),
       ...(prioridad === undefined ? {} : { prioridad }),
-      // La lista de órdenes no trae ni la fecha de liberación ni los valores:
-      // se dice que hay resultado liberado, sin inventar lo demás. Con el id
-      // del informe, el panel los lee al abrirlo (`getPractitionerResult`).
+      // The orders list brings neither the release date nor the values: it
+      // says there is a released result, without making up the rest. With the
+      // report id, the panel reads them on opening it (`getPractitionerResult`).
       resultado: liberado === undefined ? null : { liberadoEn: null, valores: [], archivos: [], informeId: liberado.id },
     };
   };
@@ -258,8 +140,8 @@ export function nodosDeLaRed(
                             ...(evidenciaId !== undefined && porId.has(evidenciaId) ? { nodoId: evidenciaId } : {}),
                           },
                   },
-            // Sólo si el reemplazo llegó en esta lectura: un enlace a un nodo
-            // que no está no lleva a ningún lado.
+            // Only if the replacement arrived in this read: a link to a node
+            // that is not there leads nowhere.
             reemplazadoPor:
               reemplazo !== undefined && porId.has(reemplazo)
                 ? { nodoId: reemplazo, etiqueta: titulo(reemplazo)! }
@@ -299,8 +181,8 @@ export function nodosDeLaRed(
             ...(destino === undefined ? {} : { destino }),
             ...(motivo === undefined ? {} : { motivo }),
             ...(resumen === undefined ? {} : { resumenClinico: resumen }),
-            // Una derivación que llegó o tiene contrarreferencia fue aceptada
-            // aunque el estado ya diga «completada».
+            // A referral that arrived or has a counter-referral was accepted
+            // even if the status already says «completada».
             respuesta: respondida
               ? {
                   decision: d.status === 'REJECTED' ? 'rechazada' : 'aceptada',
@@ -353,12 +235,12 @@ export function nodosDeLaRed(
 }
 
 /**
- * Lo que el filtro deja ver, cruzado con el filtro por tipo del expediente.
+ * What the filter lets through, crossed with the chart's filter by type.
  *
- * Los dos son ids; vacío en uno quiere decir «todo» en ese criterio. Devuelve
- * `null` cuando ninguno filtra (la red dibuja todo) y un arreglo —quizá
- * vacío— cuando alguno lo hace: vacío es «nada pasa», que la red no puede
- * recibir como `visibles` (para ella vacío es «todo»).
+ * Both are ids; empty in one means «everything» for that criterion. Returns
+ * `null` when neither filters (the network draws everything) and an array
+ * —maybe empty— when one does: empty is «nothing passes», which the network
+ * cannot receive as `visibles` (for it empty is «everything»).
  */
 export function visiblesCombinados(
   porTipo: readonly string[],
