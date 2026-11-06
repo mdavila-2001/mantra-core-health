@@ -263,6 +263,7 @@ test('alta: el distrito del consultorio viaja aparte de la calle y la sede lo mu
   await page.getByTestId('registro-pro-celular-personal').fill('70012345');
   await page.getByTestId('registro-pro-correo-personal').fill(CORREO);
   await page.getByTestId('registro-pro-password').fill(CLAVE);
+  await page.getByTestId('registro-pro-password-confirm').fill(CLAVE);
   await continuar(page);
 
   await enLaPagina(page, '¿Dónde vive?');

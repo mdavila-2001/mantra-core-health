@@ -1267,6 +1267,7 @@ export interface Dependent {
    */
   readonly ageYears?: number;
   readonly nationalId?: string;
+  readonly sexAtBirth?: BirthSexCode;
   readonly relationshipCode: DependentRelationshipCode;
   /** Cómo se dice ese parentesco en pantalla («Hijo/a»). */
   readonly relationshipDisplay: string;

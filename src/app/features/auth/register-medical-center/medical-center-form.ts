@@ -1,5 +1,7 @@
 import { FormControl, FormGroup, Validators, type ValidatorFn } from '@angular/forms';
 
+import { openingHoursControl } from '../shared-registration/opening-hours';
+
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import {
   MAX_MEDICAL_FACILITY_BRANCHES,
@@ -9,7 +11,7 @@ import {
 import { executivesControls } from '../shared-registration/executives';
 import type { Coordinates } from '../shared-registration/map-location-picker/map-location-picker';
 import { nameGroup } from '../shared-registration/name-fields/person-name';
-import { passwordValidators } from '../shared-registration/password-policy';
+import { passwordWithConfirmation } from '../shared-registration/password-confirmation';
 import {
   sucursalesCompletas,
   type SucursalDeclarada,
@@ -121,8 +123,9 @@ export function createMedicalCenterForm(tipoOfrecido: ValidatorFn) {
     legalRepPhone: new FormControl('', { nonNullable: true, validators: [telefonoCompleto] }),
     // --- las tres gerencias, todas opcionales ---------------------------------
     ...executivesControls(),
+    openingHours: openingHoursControl(),
     // --- la cuenta -----------------------------------------------------------
-    password: new FormControl('', { nonNullable: true, validators: [...passwordValidators] }),
+    ...passwordWithConfirmation(),
   });
 }
 

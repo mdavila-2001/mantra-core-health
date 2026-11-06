@@ -5,37 +5,33 @@
     { label: 'Directorio de laboratorios', routerLink: '/laboratory-directory' },
     { label: title() },
   ]"
-/>
+>
+  <!-- One root node per @if: a block with several roots is not projected. -->
+  @if (accredited()) {
+    <p page-meta class="ficha-lab__trust" data-testid="unit-trust">
+      <app-badge variant="success" value="Centro acreditado" />
+    </p>
+  }
 
-<!-- La ficha es UNA `app-card` con pestañas, centrada y a lo ancho: la regla de
-     la casa (`docs/components/composition-rules.md` §5, 09/09/2026). El resumen
-     del centro —código, categoría, modalidades— queda arriba y siempre a la
-     vista, porque es lo que reconoce al centro; debajo, lo que ofrece y de qué
-     está hecho, una colección por pestaña.
+  <!-- Booking starts from the order a doctor issued, so this leads to the
+       patient's orders; it does not promise a slot at this centre. -->
+  @if (detail() && canBook()) {
+    <a app-button page-actions class="ficha-lab__book" variant="primary" [routerLink]="ordersRoute" data-testid="unit-book">
+      <app-nav-icon name="calendar" />
+      Reservar desde mis órdenes
+    </a>
+  }
+</app-page-header>
 
-     La anatomía interior es la de la ficha de una clínica y la de una farmacia
-     (`clinic-detail`, `pharmacy-detail`): la rejilla de tarjetas del sistema.
-     Lo que cambia es dónde vive cada colección, no lo que se dice: todos los
-     datos de antes siguen acá.
-
-     La pestaña abierta vive en `?tab=` (`estudios`, `equipos`, `sedes`,
-     `acreditaciones`). Sin valor, o con uno que esta ficha no tiene, abre
-     Estudios: es la pregunta que trae a alguien acá y donde cae el ancla
-     `#estudios` de «Ver estudios y precios». -->
+<!-- ONE `app-card` with tabs, centred and full width (`composition-rules.md` §5).
+     The summary stays on top in every tab; the open tab lives in `?tab=` and
+     defaults to Studies, where the `#estudios` anchor lands. -->
 <div class="ficha-publica">
   <app-view-state-host [state]="state()" (retry)="retry()">
+    <app-lab-sheet-skeleton vsh-skeleton />
     @if (detail(); as unit) {
       <app-card variant="outlined" padding="lg" class="ficha-lab__card" data-testid="unit-card">
-        <app-section-heading card-header [icono]="iconoDelCentro()" titulo="El centro" />
-        <app-fact-list disposicion="columnas" [hechos]="identificacion(unit)" />
-
-        @if (modalidades(unit).length > 0) {
-          <ul class="ficha-publica__modalidades" aria-label="Modalidades de atención">
-            @for (modalidad of modalidades(unit); track modalidad) {
-              <li>{{ modalidad }}</li>
-            }
-          </ul>
-        }
+        <app-lab-unit-summary [unit]="unit" [icon]="iconoDelCentro()" />
 
         <app-tabs
           class="ficha-lab__tabs"
@@ -44,236 +40,24 @@
           (selectedIndexChange)="seleccionar($event)"
           data-testid="unit-tabs"
         >
-          <app-tab [label]="rotulos().estudios">
-            <!-- Primero lo que el centro ofrece, como en las otras dos fichas: es la
-                 pregunta que trae a alguien acá. Las sedes, los equipos y las
-                 acreditaciones explican ese catálogo, así que van detrás.
-
-                 `aria-label` y no `aria-labelledby`: `app-section-heading` dibuja el
-                 `<h2>` adentro y no expone su id, así que no hay a quién apuntar. -->
-            <section id="estudios" aria-label="Estudios y servicios">
-              <!-- El buscador va en el encabezado de la sección y no encima de la
-                   rejilla: ahí se leería como un filtro de la ficha entera.
-
-                   Aparece desde siete estudios, el mismo umbral que traía
-                   `app-fact-section`. Con menos se ven todos de una vez y un buscador
-                   sobre lo que ya está entero en pantalla no ahorra nada — peor,
-                   sugiere que hay algo escondido. Con los 106 de un laboratorio del
-                   corpus es lo único que hace encontrable uno. -->
-              <div class="ficha-publica__encabezado">
-                <app-section-heading
-                  class="ficha-publica__titulo"
-                  icono="results"
-                  titulo="Estudios y servicios"
-                  [cuantos]="unit.studies.length"
-                />
-
-                @if (unit.studies.length >= MINIMO_PARA_BUSCAR) {
-                  <app-search-field
-                    class="ficha-publica__buscador"
-                    [(value)]="terminoDeEstudio"
-                    label="Buscar en estudios y servicios"
-                    placeholder="Buscar por nombre o código"
-                  />
-                }
-              </div>
-
-              <p class="ficha-publica__nota">
-                Cada precio dice de dónde sale: el que publica el centro, el de referencia del INLASA o, donde
-                Bolivia no tiene arancel, el de FONASA (Chile) convertido a bolivianos al tipo de cambio oficial
-                del 01/10/2026. El importe final lo fija el centro y puede cambiar según lo que incluya cada estudio.
-              </p>
-
-              @if (unit.studies.length === 0) {
-                <p class="ficha-publica__vacio" role="status">
-                  Este centro todavía no publicó su lista de estudios. Vuelva al directorio para ver
-                  otros centros.
-                </p>
-              } @else if (estudiosVisibles().length === 0) {
-                <p class="ficha-publica__vacio" role="status">
-                  Ningún estudio coincide con «{{ terminoDeEstudio() }}». Pruebe con otro nombre o código,
-                  o borre la búsqueda para ver los {{ unit.studies.length }}.
-                </p>
-              } @else {
-                <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia
-                     cuántos estudios hay antes de leer el primero. -->
-                <ul class="rejilla ficha-publica__rejilla" data-testid="unit-studies">
-                  @for (estudio of estudiosVisibles(); track estudio.id) {
-                    <li>
-                      <article class="rejilla__tarjeta" data-testid="unit-study">
-                        <app-service-icon class="rejilla__icono" [servicio]="estudio.name" />
-
-                        <div class="ficha-publica__titular">
-                          <h3 class="rejilla__nombre">{{ estudio.name }}</h3>
-                        </div>
-
-                        <p class="rejilla__dato">{{ referenciaDeEstudio(estudio) }}</p>
-
-                        @if (estudio.description) {
-                          <p class="rejilla__resumen">{{ estudio.description }}</p>
-                        }
-
-                        @if (estudio.preparationInstructions; as preparacion) {
-                          <p class="rejilla__resumen">Preparación: {{ preparacion }}</p>
-                        }
-
-                        <!-- La entrega es un dato y no un sello: casi todos los
-                             estudios de un centro tardan lo mismo, así que como
-                             distintivo se repetía once veces y le robaba la atención
-                             al único que sí señala algo. -->
-                        @if (entregaDe(estudio); as plazo) {
-                          <p class="rejilla__resumen">Entrega estimada: {{ plazo }}</p>
-                        }
-
-                        <dl class="ficha-publica__precio">
-                          <!-- El rótulo lo decide la tarifa y no está fijo: «precio
-                               público» significa que el centro lo publicó, y de los
-                               centros del corpus no sabemos ninguno. Llamar pública a
-                               una cifra de demostración la haría pasar por dato
-                               verificado, que es justo lo que este directorio no
-                               puede permitirse — los centros que lista existen. -->
-                          <dt class="ficha-publica__rotulo">{{ rotuloDelPrecio(estudio) }}</dt>
-                          <dd class="ficha-publica__monto tabular-nums" data-testid="unit-study-price">
-                            @if (precioDe(estudio); as monto) {
-                              {{ monto }}
-                            } @else {
-                              <!-- Un «0,00» se lee como que el estudio no se cobra.
-                                   Lo que pasa de verdad es que no hay tarifa. -->
-                              <span class="ficha-publica__sin-precio">Sin precio publicado</span>
-                            }
-                          </dd>
-                        </dl>
-
-                        <!-- Sólo lo excepcional lleva distintivo: rotular también el
-                             estudio que no pide orden deja la rejilla sin nada que
-                             mirar. Es la misma regla que los sellos de la farmacia. -->
-                        @if (estudio.requiresMedicalOrder === true) {
-                          <p class="ficha-publica__sellos">
-                            <app-badge variant="secondary" value="Requiere orden médica" />
-                          </p>
-                        }
-                      </article>
-                    </li>
-                  }
-                </ul>
-              }
-            </section>
+          <app-tab [label]="'Estudios (' + unit.studies.length + ')'">
+            <app-lab-studies-panel [studies]="unit.studies" [(term)]="terminoDeEstudio" [(area)]="selectedArea" />
           </app-tab>
-
-        @if (unit.equipment.length > 0) {
-          <app-tab [label]="rotulos().equipos">
-            <section aria-label="Equipos">
-              <app-section-heading icono="scan" titulo="Equipos" [cuantos]="unit.equipment.length" />
-
-              <ul class="rejilla ficha-publica__rejilla" data-testid="unit-equipment">
-                @for (equipo of unit.equipment; track equipo.id) {
-                  <li>
-                    <article class="rejilla__tarjeta" data-testid="unit-equipment-item">
-                      <app-nav-icon class="rejilla__icono" name="scan" />
-
-                      <div class="ficha-publica__titular">
-                        <h3 class="rejilla__nombre">{{ equipo.type.display }}</h3>
-                        <!-- El estado sí va en todas: acá lo excepcional no se
-                             distingue de un vistazo, y «operativo» es lo que
-                             alguien viene a comprobar antes de mandar un estudio. -->
-                        <app-badge
-                          [variant]="varianteDeEstado(equipo.operationalStatus.code)"
-                          [value]="equipo.operationalStatus.display"
-                        />
-                      </div>
-
-                      @if (modeloDe(equipo); as modelo) {
-                        <p class="rejilla__dato">{{ modelo }}</p>
-                      }
-
-                      @if (fecha(equipo.nextCalibrationDueAt); as calibracion) {
-                        <p class="rejilla__resumen">Próxima calibración: {{ calibracion }}</p>
-                      }
-
-                      @if (sedeSiHayVarias(equipo.siteId); as sede) {
-                        <p class="rejilla__resumen">{{ sede }}</p>
-                      }
-                    </article>
-                  </li>
-                }
-              </ul>
-            </section>
-          </app-tab>
-        }
-
-        @if (unit.sites.length > 0) {
-          <app-tab [label]="rotulos().sedes">
-            <section aria-label="Sedes">
-              <app-section-heading icono="building" titulo="Sedes" [cuantos]="unit.sites.length" />
-
-              <ul class="rejilla ficha-publica__rejilla" data-testid="unit-sites">
-                @for (sede of unit.sites; track sede.id) {
-                  <li>
-                    <article class="rejilla__tarjeta" data-testid="unit-site">
-                      <app-nav-icon class="rejilla__icono" name="building" />
-
-                      <div class="ficha-publica__titular">
-                        <h3 class="rejilla__nombre">{{ sede.name }}</h3>
-                      </div>
-
-                      <p class="rejilla__dato">{{ sede.code }}</p>
-
-                      <p class="ficha-publica__sellos ficha-publica__sellos--pie">
-                        @if (sede.role.display) {
-                          <app-badge variant="secondary" [value]="sede.role.display" />
-                        }
-                        @if (sede.sampleCollectionAvailable === true) {
-                          <app-badge variant="info" value="Toma de muestras" />
-                        }
-                        @if (sede.imagingAvailable === true) {
-                          <app-badge variant="info" value="Servicios de imagen" />
-                        }
-                      </p>
-                    </article>
-                  </li>
-                }
-              </ul>
-            </section>
-          </app-tab>
-        }
-
-        @if (unit.accreditations.length > 0) {
-          <app-tab [label]="rotulos().acreditaciones">
-            <section aria-label="Acreditaciones vigentes">
-              <app-section-heading
-                icono="shield"
-                titulo="Acreditaciones vigentes"
-                [cuantos]="unit.accreditations.length"
-              />
-
-              <ul class="rejilla ficha-publica__rejilla" data-testid="unit-accreditations">
-                @for (acreditacion of unit.accreditations; track acreditacion.id) {
-                  <li>
-                    <article class="rejilla__tarjeta" data-testid="unit-accreditation">
-                      <app-nav-icon class="rejilla__icono" name="shield" />
-
-                      <div class="ficha-publica__titular">
-                        <h3 class="rejilla__nombre">{{ acreditacion.type.display }}</h3>
-                      </div>
-
-                      @if (acreditacion.number; as numero) {
-                        <p class="rejilla__dato">{{ numero }}</p>
-                      }
-
-                      @if (vigenciaDe(acreditacion); as vigencia) {
-                        <p class="rejilla__resumen">{{ vigencia }}</p>
-                      }
-
-                      @if (sedeSiHayVarias(acreditacion.siteId); as sede) {
-                        <p class="rejilla__resumen">{{ sede }}</p>
-                      }
-                    </article>
-                  </li>
-                }
-              </ul>
-            </section>
-          </app-tab>
-        }
+          @if (unit.equipment.length > 0) {
+            <app-tab [label]="'Equipos (' + unit.equipment.length + ')'">
+              <app-lab-facility-grid kind="equipment" [unit]="unit" />
+            </app-tab>
+          }
+          @if (unit.sites.length > 0) {
+            <app-tab [label]="'Sedes (' + unit.sites.length + ')'">
+              <app-lab-facility-grid kind="sites" [unit]="unit" />
+            </app-tab>
+          }
+          @if (unit.accreditations.length > 0) {
+            <app-tab [label]="'Acreditaciones (' + unit.accreditations.length + ')'">
+              <app-lab-facility-grid kind="accreditations" [unit]="unit" />
+            </app-tab>
+          }
         </app-tabs>
       </app-card>
     }

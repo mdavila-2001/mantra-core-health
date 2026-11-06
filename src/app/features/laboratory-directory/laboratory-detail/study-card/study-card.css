@@ -1,0 +1,110 @@
+/* Layout only: colours and type come from the system tokens. */
+:host {
+  display: block;
+  block-size: 100%;
+}
+
+.study-card {
+  gap: var(--sp-2);
+}
+
+/* Icon on the left, the "needs an order" badge on the right of the same row,
+   so the title below always starts at the same height across a row. */
+.study-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+/* The preparation is the one thing that, if missed, means coming back: it
+   gets its own tinted strip instead of being one more grey line. */
+.study-card__prep {
+  display: flex;
+  gap: var(--sp-2);
+  margin: var(--sp-1) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  text-wrap: pretty;
+}
+
+.study-card__prep-icon {
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  margin-block-start: 0.1rem;
+}
+
+/* Price and turnaround share the footer; `margin-block-start: auto` pins it to
+   the bottom so amounts line up across a row whatever the title length. */
+.study-card__foot {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+  margin-block-start: auto;
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+/* The price takes the room and wraps inside; the turnaround stays at the
+   right edge on every card, priced or not. */
+.study-card__price {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 0;
+  margin: 0;
+  min-inline-size: 0;
+}
+
+.study-card__price-label {
+  margin: 0;
+  text-wrap: balance;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.study-card__amount {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 700;
+}
+
+/* A missing tariff weighs like missing data, not like a figure. */
+.study-card__no-price {
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 500;
+}
+
+.study-card__eta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  white-space: nowrap;
+  flex: none;
+}
+
+.study-card__eta app-nav-icon {
+  inline-size: 0.95rem;
+  block-size: 0.95rem;
+}

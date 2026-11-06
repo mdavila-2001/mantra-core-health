@@ -1,0 +1,87 @@
+@switch (kind()) {
+  @case ('equipment') {
+    <section aria-label="Equipos">
+      <app-section-heading icono="scan" titulo="Equipos" [cuantos]="unit().equipment.length" />
+      <ul class="rejilla ficha-publica__rejilla" data-testid="unit-equipment">
+        @for (item of unit().equipment; track item.id) {
+          <li>
+            <article class="rejilla__tarjeta" data-testid="unit-equipment-item">
+              <app-nav-icon class="rejilla__icono" name="scan" />
+              <div class="ficha-publica__titular">
+                <h3 class="rejilla__nombre">{{ item.type.display }}</h3>
+                <!-- Status on every card: «operativo» is what people come to check. -->
+                <app-badge [variant]="statusTone(item.operationalStatus.code)" [value]="item.operationalStatus.display" />
+              </div>
+              @if (model(item); as text) {
+                <p class="rejilla__dato">{{ text }}</p>
+              }
+              @if (date(item.nextCalibrationDueAt); as due) {
+                <p class="rejilla__resumen">Próxima calibración: {{ due }}</p>
+              }
+              @if (siteIfSeveral(item.siteId); as site) {
+                <p class="rejilla__resumen">{{ site }}</p>
+              }
+            </article>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @case ('sites') {
+    <section aria-label="Sedes">
+      <app-section-heading icono="building" titulo="Sedes" [cuantos]="unit().sites.length" />
+      <ul class="rejilla ficha-publica__rejilla" data-testid="unit-sites">
+        @for (site of unit().sites; track site.id) {
+          <li>
+            <article class="rejilla__tarjeta" data-testid="unit-site">
+              <app-nav-icon class="rejilla__icono" name="building" />
+              <div class="ficha-publica__titular">
+                <h3 class="rejilla__nombre">{{ site.name }}</h3>
+              </div>
+              <p class="rejilla__dato">{{ site.code }}</p>
+              <p class="ficha-publica__sellos ficha-publica__sellos--pie">
+                @if (site.role.display) {
+                  <app-badge variant="secondary" [value]="site.role.display" />
+                }
+                @if (site.sampleCollectionAvailable === true) {
+                  <app-badge variant="info" value="Toma de muestras" />
+                }
+                @if (site.imagingAvailable === true) {
+                  <app-badge variant="info" value="Servicios de imagen" />
+                }
+              </p>
+            </article>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @case ('accreditations') {
+    <section aria-label="Acreditaciones vigentes">
+      <app-section-heading icono="shield" titulo="Acreditaciones vigentes" [cuantos]="unit().accreditations.length" />
+      <ul class="rejilla ficha-publica__rejilla" data-testid="unit-accreditations">
+        @for (item of unit().accreditations; track item.id) {
+          <li>
+            <article class="rejilla__tarjeta" data-testid="unit-accreditation">
+              <app-nav-icon class="rejilla__icono" name="shield" />
+              <div class="ficha-publica__titular">
+                <h3 class="rejilla__nombre">{{ item.type.display }}</h3>
+              </div>
+              @if (item.number; as number) {
+                <p class="rejilla__dato">{{ number }}</p>
+              }
+              @if (validity(item); as text) {
+                <p class="rejilla__resumen">{{ text }}</p>
+              }
+              @if (siteIfSeveral(item.siteId); as site) {
+                <p class="rejilla__resumen">{{ site }}</p>
+              }
+            </article>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+}

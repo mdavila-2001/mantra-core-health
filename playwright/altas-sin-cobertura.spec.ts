@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { chooseOption } from './helpers/combobox';
 import { pdfDePrueba } from './helpers/documentos-legales';
+import { centroDelPin } from './helpers/mapa';
 import {
   PASOS_DEL_ALTA,
   completarContacto,
@@ -68,6 +70,17 @@ async function subir(page: Page, testId: string, nombre: string): Promise<void> 
   await destino.first().setInputFiles(pdfDePrueba(nombre));
 }
 
+/**
+ * Places and confirms the HQ pin from the context's geolocation: the pin is
+ * required and the street is derived from it (no address field since 26/10/2026).
+ */
+async function confirmarCentral(page: Page, prefijo: string): Promise<void> {
+  await page.getByTestId(`${prefijo}-central-location-use`).click();
+  await centroDelPin(page.getByTestId(`${prefijo}-central-map`));
+  await page.getByTestId(`${prefijo}-central-location-confirm`).click();
+  await expect(page.getByTestId(`${prefijo}-central-location-confirmed`)).toBeAttached();
+}
+
 test.describe('dónde se elige el tipo de alta', () => {
   test('«Crear cuenta» ofrece sólo paciente y médico', async ({ page }) => {
     await page.goto('/auth/register', { waitUntil: 'domcontentloaded' });
@@ -95,6 +108,7 @@ test.describe('dónde se elige el tipo de alta', () => {
 });
 
 test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imagenología', () => {
+  test.use({ geolocation: { latitude: -17.7833, longitude: -63.1821 }, permissions: ['geolocation'] });
   /**
    * Regresión del 03/10/2026: con el campo vacío, la plantilla `DD/MM/AAAA`
    * ocupa sólo la izquierda del input y un clic en cualquier otro punto dejaba
@@ -124,6 +138,7 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
 
     await page.getByTestId('registro-correo').fill(`paciente-${Date.now()}@alovida.test`);
     await page.getByTestId('registro-password').fill('Alta-Paciente1!');
+    await page.getByTestId('registro-password-confirm').fill('Alta-Paciente1!');
 
     const enviar = page.getByTestId('paginated-form-continuar');
     await expect(enviar).toHaveText(/Crear cuenta/);
@@ -138,19 +153,27 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
     await enLaPagina(page, 'La empresa');
 
     await page.getByTestId('registro-lab-razon-social').fill('Laboratorio Andino S.R.L.');
-    await page.getByLabel('Tipo de sociedad').selectOption({ label: 'S.R.L.' });
+    await chooseOption(page.getByLabel('Tipo de sociedad'), 'S.R.L.');
     await page.getByTestId('registro-lab-nit').fill('1023456789');
     await continuar(page);
 
     await continuarHasta(page, 'Dónde está la central');
-    await page.getByTestId('registro-lab-direccion').fill('Av. Cañoto esq. Ballivián 234');
+    await confirmarCentral(page, 'registro-lab');
     await continuarHasta(page, 'Representante legal');
 
     await escribirNombre(page, 'registro-lab-representante', 'Mariana', 'Siles');
-    await page.getByTestId('registro-lab-representante-correo').fill(`legal-${Date.now()}@lab-andino.test`);
+    await page.getByTestId('registro-lab-representante-documento').fill('4567890');
+    // The notarised power is required for every organisation (owner, 05/11/2026).
+    await subir(page, 'registro-lab-doc-powerOfAttorneyFileId', 'powerOfAttorneyFileId');
+    await expect(page.getByTestId('registro-lab-doc-powerOfAttorneyFileId-quitar')).toBeVisible({
+      timeout: 15_000,
+    });
     await continuarHasta(page, 'Su acceso');
 
+    await page.getByTestId('registro-lab-representante-correo').fill(`legal-${Date.now()}@lab-andino.test`);
+
     await page.getByTestId('registro-lab-password').fill('secreto12');
+    await page.getByTestId('registro-lab-password-confirm').fill('secreto12');
     await continuar(page);
 
     await expect(page.getByTestId('registro-lab-exito')).toBeVisible({ timeout: 20_000 });
@@ -159,14 +182,14 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
     await expect(page).toHaveURL(/\/auth$/);
   });
 
-  test('imagenología: modalidades y los tres papeles obligatorios alcanzan para terminar el alta', async ({
+  test('imagenología: modalidades y los papeles obligatorios alcanzan para terminar el alta', async ({
     page,
   }) => {
     await page.goto('/auth/register/imaging-center', { waitUntil: 'domcontentloaded' });
     await enLaPagina(page, 'La empresa');
 
     await page.getByTestId('registro-imagen-razon-social').fill('Imagen Oriente S.R.L.');
-    await page.getByLabel('Tipo de sociedad').selectOption({ label: 'S.R.L.' });
+    await chooseOption(page.getByLabel('Tipo de sociedad'), 'S.R.L.');
     await page.getByTestId('registro-imagen-nit').fill('1023456789');
     await continuar(page);
 
@@ -178,22 +201,33 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
     await continuar(page);
 
     await enLaPagina(page, 'Los papeles de la empresa');
-    for (const clave of ['seprecFile', 'licenciaFile', 'sedesFile']) {
+    for (const clave of ['seprecFile', 'licenciaFile', 'sedesFile', 'nitFile']) {
       await subir(page, `registro-imagen-adjunto-${clave}`, clave);
       await expect(page.getByTestId(`registro-imagen-quitar-${clave}`)).toBeVisible({ timeout: 15_000 });
     }
+    await continuar(page);
+
+    // An S.R.L. must attach its constitution (only a sole proprietorship has none).
+    await enLaPagina(page, 'Constitución de la empresa');
+    await subir(page, 'registro-imagen-adjunto-constitucionFile', 'constitucionFile');
+    await expect(page.getByTestId('registro-imagen-quitar-constitucionFile')).toBeVisible({ timeout: 15_000 });
     await continuarHasta(page, 'Dónde está la central');
 
-    await page.getByTestId('registro-imagen-direccion').fill('Calle Sucre 120');
+    await confirmarCentral(page, 'registro-imagen');
     await continuarHasta(page, 'Representante legal');
 
     await escribirNombre(page, 'registro-imagen-representante', 'Rodrigo', 'Vaca');
+    await page.getByTestId('registro-imagen-representante-documento').fill('4567890');
+    await subir(page, 'registro-imagen-adjunto-poderFile', 'poderFile');
+    await expect(page.getByTestId('registro-imagen-quitar-poderFile')).toBeVisible({ timeout: 15_000 });
+    await continuarHasta(page, 'Su acceso');
+
     await page
       .getByTestId('registro-imagen-representante-correo')
       .fill(`legal-${Date.now()}@imagen-oriente.test`);
-    await continuarHasta(page, 'Su acceso');
 
     await page.getByTestId('registro-imagen-password').fill('secreto12');
+    await page.getByTestId('registro-imagen-password-confirm').fill('secreto12');
     await continuar(page);
 
     await expect(page.getByTestId('registro-imagen-exito')).toBeVisible({ timeout: 20_000 });

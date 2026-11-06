@@ -1,0 +1,23 @@
+/* The form opens inside the representative's sheet: two columns from tablet width. */
+.editor {
+  display: grid;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-3);
+}
+
+.editor__error {
+  margin: 0;
+  color: var(--text-danger);
+  font-size: var(--fs-caption);
+}
+
+@media (min-width: 650px) {
+  .editor {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .editor__error,
+  .editor__acciones {
+    grid-column: 1 / -1;
+  }
+}

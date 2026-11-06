@@ -8,7 +8,6 @@ import { Router, RouterLink } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
-  PharmacyBranchRegistration,
   PharmacyOrganizationRegistration,
 } from '../../../core/data-access/iam/iam.types';
 import { registrationErrorToViewState } from '../shared-registration/registration-errors';
@@ -66,10 +65,7 @@ import {
   nameGroup,
   completeName,
 } from '../shared-registration/name-fields/person-name';
-import {
-  MESSAGE_SHORT_PASSWORD,
-  passwordValidators,
-} from '../shared-registration/password-policy';
+import { accessPasswordFields, passwordWithConfirmation } from '../shared-registration/password-confirmation';
 import {
   MapLocationPicker,
   type Coordinates,
@@ -80,6 +76,7 @@ import { RegistrationBadge } from '../shared-registration/registration-badge';
 import { tradeNameControl, tradeNameField, tradeNameOf } from '../shared-registration/trade-name';
 import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
 import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
+import { RegistrationOpeningHours, openingHoursControl, openingHoursSection, pharmacyBranches, toShifts } from '../shared-registration/opening-hours';
 import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
 
 /* ============================================================================
@@ -178,8 +175,8 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
  * representante legal (no hay un punto «correo de acceso» separado en la
  * fuente): el correo del representante (1.8.2) es el mismo con el que se
  * inicia sesión, igual que decide el molde de laboratorio en su página
- * «Representante legal» («Con este correo se entra»). Por eso «Tu acceso»
- * sólo pide la contraseña.
+ * «Representante legal» («Con este correo se entra»). Por eso «Su acceso»
+ * pide ese correo junto con la contraseña y su confirmación.
  */
 @Component({
   selector: 'app-register-pharmacy',
@@ -203,6 +200,7 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
     DropzonePdf,
     InlineNameFields,
     OnboardingDraftBanner,
+    RegistrationOpeningHours,
   ],
   templateUrl: './register-pharmacy.html',
   styleUrls: ['../shared-registration/registration.css', './register-pharmacy.css'],
@@ -298,7 +296,8 @@ export class RegisterPharmacy {
       validators: [Validators.email, Validators.maxLength(MAX_CORREO)],
     }),
     // --- la cuenta -------------------------------------------------------------
-    password: new FormControl('', { nonNullable: true, validators: [...passwordValidators] }),
+    openingHours: openingHoursControl(),
+    ...passwordWithConfirmation(),
   });
 
   readonly state = signal<ViewState<null>>(ready(null));
@@ -403,6 +402,7 @@ export class RegisterPharmacy {
         hint: 'Si sólo atiende en la central, siga de largo.',
         campos: [{ key: 'sucursales', label: 'Sucursales (opcional)', control: 'custom' as const }],
       },
+      openingHoursSection(true),
       {
         titulo: 'Representante legal',
         clave: 'representante',
@@ -426,17 +426,6 @@ export class RegisterPharmacy {
             testId: 'registro-farmacia-representante-documento',
             mensajeDeError: 'Escriba el documento del representante (al menos cuatro caracteres).',
           },
-          {
-            key: 'legalRepEmail',
-            label: 'Correo del representante legal',
-            hint: 'Con este correo va a entrar a la plataforma.',
-            control: 'email' as const,
-            required: true,
-            icono: 'mail' as const,
-            autocomplete: 'username',
-            testId: 'registro-farmacia-representante-correo',
-            mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
-          },
           this.campoDelPoder,
         ],
       },
@@ -446,18 +435,21 @@ export class RegisterPharmacy {
         clave: 'acceso',
         icon: 'lock' as const,
         hint: 'Entra con el correo del representante legal y esta contraseña.',
+        disposicion: 'dos-columnas' as const,
         campos: [
           {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            control: 'password' as const,
+            key: 'legalRepEmail',
+            ancho: 'completo' as const,
+            label: 'Correo de acceso',
+            hint: 'El del representante legal: con este correo va a entrar a la plataforma.',
+            control: 'email' as const,
             required: true,
-            icono: 'lock' as const,
-            autocomplete: 'new-password',
-            testId: 'registro-farmacia-password',
-            mensajeDeError: MESSAGE_SHORT_PASSWORD,
+            icono: 'mail' as const,
+            autocomplete: 'username',
+            testId: 'registro-farmacia-representante-correo',
+            mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
           },
+          ...accessPasswordFields('registro-farmacia-password'),
         ],
       },
     ]),
@@ -968,15 +960,7 @@ export class RegisterPharmacy {
     const central = this.gpsCentral();
     const nombreDelRepresentante = completeName(raw.legalRepName);
 
-    const sucursales: readonly PharmacyBranchRegistration[] = this.sucursales()
-      .filter((s) => s.nombre.trim() !== '' && s.gps !== null)
-      .map((s) => ({
-        name: s.nombre.trim(),
-        latitude: s.gps!.lat,
-        longitude: s.gps!.lng,
-        ...(s.descripcion.trim() === '' ? {} : { description: s.descripcion.trim() }),
-        ...(s.urlUbicacion === '' ? {} : { locationUrl: s.urlUbicacion }),
-      }));
+    const sucursales = pharmacyBranches(this.sucursales(), raw.openingHours);
 
     const gerencias = {
       generalManager: {
@@ -1018,6 +1002,7 @@ export class RegisterPharmacy {
       ),
       taxIdentifier: raw.taxId.trim(),
       legalAddress: raw.addressLines.trim(),
+      openingHours: toShifts(raw.openingHours.headquarters),
       ...(central === null
         ? {}
         : { headquarters: { latitude: central.lat, longitude: central.lng } }),

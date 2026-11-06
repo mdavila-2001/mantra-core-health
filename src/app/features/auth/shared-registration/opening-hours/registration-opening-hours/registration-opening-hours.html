@@ -1,0 +1,36 @@
+<div class="opening-hours">
+  <section class="opening-hours__site" [attr.data-testid]="testId() + '-headquarters'">
+    <h3 class="opening-hours__title">Casa central</h3>
+    <p class="opening-hours__hint">
+      Lo dejamos cargado con el horario más común. Cambie sólo lo que no coincida: es lo que verán los
+      pacientes antes de ir.
+    </p>
+    <app-week-hours-editor
+      siteLabel="la casa central"
+      [testId]="testId() + '-hq'"
+      [value]="value().headquarters"
+      (valueChange)="setHeadquarters($event)"
+    />
+  </section>
+
+  @for (branch of named(); track branch.id) {
+    <section class="opening-hours__site" [attr.data-testid]="testId() + '-branch-' + branch.id">
+      <h3 class="opening-hours__title">{{ branch.nombre }}</h3>
+      <app-switch
+        label="Mismo horario que la casa central"
+        [checked]="own(branch.id) === null"
+        [ariaLabel]="'Mismo horario que la casa central, ' + branch.nombre"
+        [attr.data-testid]="testId() + '-same-' + branch.id"
+        (checkedChange)="setSameAsHeadquarters(branch.id, $event)"
+      />
+      @if (own(branch.id); as week) {
+        <app-week-hours-editor
+          [siteLabel]="branch.nombre"
+          [testId]="testId() + '-' + branch.id"
+          [value]="week"
+          (valueChange)="setBranch(branch.id, $event)"
+        />
+      }
+    </section>
+  }
+</div>

@@ -155,6 +155,13 @@ export interface ContactoDeLaEmpresa {
   readonly correo: string | null;
   /** Documento de identidad, si se declaró (sólo el representante legal). */
   readonly documento?: string | null;
+  /** Las partes del nombre, si el alta las declaró: es lo que se edita. */
+  readonly partes?: {
+    readonly name?: string;
+    readonly middleName?: string;
+    readonly lastName?: string;
+    readonly motherLastName?: string;
+  };
 }
 
 /** La gente de la ficha: quien firma por la empresa y quienes la gestionan. */

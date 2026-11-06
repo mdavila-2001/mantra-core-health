@@ -331,11 +331,11 @@
 
 <!-- Celdas con presentación propia: la tabla las instancia por fila. -->
 <ng-template #celdaPersona let-persona>
-  <span class="organizacion__persona-id">{{ persona.userId }}</span>
+  <span class="organizacion__persona-nombre">{{ persona.userName ?? 'Nombre no disponible' }}</span>
 </ng-template>
 
 <ng-template #celdaRolPersona let-persona>
-  <app-badge variant="secondary">{{ persona.tenantRoleConceptId }}</app-badge>
+  <app-badge variant="secondary">{{ etiquetaDeRol(persona.tenantRoleCode) }}</app-badge>
 </ng-template>
 
 <ng-template #celdaHora let-cita>

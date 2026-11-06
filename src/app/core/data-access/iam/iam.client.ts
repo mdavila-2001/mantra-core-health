@@ -35,6 +35,7 @@ import type {
   VerifiedEmail,
 } from './iam.types';
 import { cuerpoDeCentroDiagnostico } from './diagnostic-center.body';
+import { laboratoryBody } from './laboratory.body';
 
 /** Respuestas de la API tal como viajan: las fechas son texto. */
 interface TokenResponseBody {
@@ -432,6 +433,9 @@ export class IamClient {
           ? {}
           : { legalRepresentative: registration.legalRepresentative }),
         ...(registration.executives === undefined ? {} : { executives: registration.executives }),
+        ...(registration.openingHours === undefined
+          ? {}
+          : { openingHours: registration.openingHours }),
       },
       owner: {
         email: registration.owner.email,
@@ -489,6 +493,9 @@ export class IamClient {
           ? {}
           : { legalDocuments: registration.legalDocuments }),
         ...(registration.executives === undefined ? {} : { executives: registration.executives }),
+        ...(registration.openingHours === undefined
+          ? {}
+          : { openingHours: registration.openingHours }),
         // `pharmacy`: el bloque `RegisterPharmacyBlockDto` del DTO real (P50).
         // Viaja siempre: la dirección legal es la de la casa central, que la
         // API crea en toda alta de farmacia; el punto y las sucursales, si los
@@ -531,70 +538,10 @@ export class IamClient {
   registerLaboratoryOrganization(
     registration: LaboratoryOrganizationRegistration,
   ): Observable<RegisteredOrganization> {
-    const { diagnosticUnit } = registration;
-    const { address } = diagnosticUnit.primarySite;
-    return this.http.post<RegisteredOrganization>(this.url('/iam/auth/register-organization'), {
-      organization: {
-        code: registration.code,
-        legalName: registration.legalName,
-        ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
-        legalEntityType: registration.legalEntityType,
-        tenantType: 'DIAGNOSTIC_CENTER',
-        taxIdentifier: registration.taxIdentifier,
-        countryConceptId: registration.countryConceptId,
-        jurisdictionConceptId: registration.jurisdictionConceptId,
-        diagnosticUnit: {
-          name: diagnosticUnit.name,
-          diagnosticUnitTypeConceptId: diagnosticUnit.diagnosticUnitTypeConceptId,
-          modalityConceptIds: [...diagnosticUnit.modalityConceptIds],
-          primarySite: {
-            name: diagnosticUnit.primarySite.name,
-            address: {
-              lines: [...address.lines],
-              ...(address.latitude === undefined || address.longitude === undefined
-                ? {}
-                : { latitude: address.latitude, longitude: address.longitude }),
-            },
-          },
-          ...(diagnosticUnit.branches === undefined || diagnosticUnit.branches.length === 0
-            ? {}
-            : {
-                branches: diagnosticUnit.branches.map((branch) => ({
-                  name: branch.name,
-                  address: {
-                    lines: [...branch.addressLines],
-                    ...(branch.location === undefined
-                      ? {}
-                      : { latitude: branch.location.latitude, longitude: branch.location.longitude }),
-                  },
-                  ...(branch.description === undefined
-                    ? {}
-                    : { description: branch.description }),
-                  ...(branch.locationUrl === undefined
-                    ? {}
-                    : { locationUrl: branch.locationUrl }),
-                })),
-              }),
-        },
-        legalRepresentative: {
-          fullName: registration.legalRepresentative.fullName,
-          idNumber: registration.legalRepresentative.idNumber,
-          email: registration.legalRepresentative.email,
-          ...(registration.legalRepresentative.powerOfAttorneyFileId === undefined
-            ? {}
-            : { powerOfAttorneyFileId: registration.legalRepresentative.powerOfAttorneyFileId }),
-        },
-        ...(registration.legalDocuments === undefined
-          ? {}
-          : { legalDocuments: registration.legalDocuments }),
-        ...(registration.executives === undefined ? {} : { executives: registration.executives }),
-      },
-      owner: {
-        email: registration.owner.email,
-        password: registration.owner.password,
-        displayName: registration.owner.displayName,
-      },
-    });
+    return this.http.post<RegisteredOrganization>(
+      this.url('/iam/auth/register-organization'),
+      laboratoryBody(registration),
+    );
   }
 
   /**
@@ -840,7 +787,9 @@ function toSession(body: TokenResponseBody): Session {
     expiresAt: new Date(body.expiresAt),
     ...newDeviceOf(body.newDevice),
     ...(body.mfaEnrollmentRequired === true ? { mfaEnrollmentRequired: true } : {}),
-    ...(deniedTenantsOfBody(body.deniedTenants).length === 0 ? {} : { deniedTenants: deniedTenantsOfBody(body.deniedTenants) }),
+    ...(deniedTenantsOfBody(body.deniedTenants).length === 0
+      ? {}
+      : { deniedTenants: deniedTenantsOfBody(body.deniedTenants) }),
   };
 }
 

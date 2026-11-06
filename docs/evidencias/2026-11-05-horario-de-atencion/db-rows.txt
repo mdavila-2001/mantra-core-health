@@ -1,0 +1,21 @@
+      sede      | dia | turno | abre  |  cierra  
+----------------+-----+-------+-------+----------
+ (casa central) |   1 |     1 | 08:00 | 12:00:00
+ (casa central) |   1 |     2 | 14:30 | 19:00:00
+ (casa central) |   2 |     1 | 08:00 | 12:00:00
+ (casa central) |   2 |     2 | 14:30 | 19:00:00
+ (casa central) |   3 |     1 | 08:00 | 12:00:00
+ (casa central) |   3 |     2 | 14:30 | 19:00:00
+ (casa central) |   4 |     1 | 08:00 | 12:00:00
+ (casa central) |   4 |     2 | 14:30 | 19:00:00
+ (casa central) |   5 |     1 | 08:00 | 12:00:00
+ (casa central) |   5 |     2 | 14:30 | 19:00:00
+ Sucursal Norte |   1 |     1 | 00:00 | 24:00:00
+ Sucursal Norte |   2 |     1 | 00:00 | 24:00:00
+ Sucursal Norte |   3 |     1 | 00:00 | 24:00:00
+ Sucursal Norte |   4 |     1 | 00:00 | 24:00:00
+ Sucursal Norte |   5 |     1 | 00:00 | 24:00:00
+ Sucursal Norte |   6 |     1 | 00:00 | 24:00:00
+ Sucursal Norte |   7 |     1 | 00:00 | 24:00:00
+(17 rows)
+

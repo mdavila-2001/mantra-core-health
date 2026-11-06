@@ -13,6 +13,11 @@ import { mensajeDeError } from '../../../shared/forms/paginated/error-message';
 import { AYUDA_ALTA_MEDICA } from './medical-center.help';
 import { signupErrorMessage, RegisterMedicalCenter } from './register-medical-center';
 
+import { defaultWeekHours, toShifts } from '../shared-registration/opening-hours/opening-hours';
+
+/** The pre-filled week every sign-up starts with, as it travels to the API. */
+const HORARIO_PLANTILLA = toShifts(defaultWeekHours());
+
 const RUTA_ALTA = '/iam/auth/register-organization';
 
 /** Los `fileId` que devolvería la pre-carga de cada documento. */
@@ -146,6 +151,7 @@ describe('RegisterMedicalCenter', () => {
       legalRepIdNumber: '4872190',
       legalRepEmail: 'marta@centro.test',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
     });
     fixture.componentInstance.fijarGpsCentral(PUNTO_CENTRAL);
     fixture.componentInstance.escribirLocalidadCentral({
@@ -197,6 +203,7 @@ describe('RegisterMedicalCenter', () => {
         countryConceptId: 'c-bo',
         jurisdictionConceptId: 'j-nac',
         timeZone: 'America/La_Paz',
+        openingHours: HORARIO_PLANTILLA,
         legalRepresentative: {
           fullName: 'Marta Rojas',
           idNumber: '4872190',
@@ -368,6 +375,7 @@ describe('RegisterMedicalCenter', () => {
       'Documentación legal (PDF)',
       'Dónde está la casa central',
       'Sus sucursales',
+      'Horario de atención',
       'Representante legal',
       'Poder del representante legal',
       'Gerencia general',
@@ -388,12 +396,13 @@ describe('RegisterMedicalCenter', () => {
       ],
       ['gpsCentral'],
       ['sucursales'],
+      ['openingHours'],
       ['legalRepName', 'legalRepIdNumber', 'legalRepPhone'],
       ['powerOfAttorneyFileId'],
       ['generalManagerName', 'generalManagerPhone', 'generalManagerEmail'],
       ['salesManagerName', 'salesManagerPhone', 'salesManagerEmail'],
       ['marketingManagerName', 'marketingManagerPhone', 'marketingManagerEmail'],
-      ['legalRepEmail', 'password'],
+      ['legalRepEmail', 'password', 'confirmPassword'],
     ]);
     // Los papeles van todos en una vista (pedido del cliente del 28/10/2026); el resto, de a cuatro como tope.
     const documentos = paginas.find((p) => p.clave === 'documentos-legales')!;
@@ -422,6 +431,7 @@ describe('RegisterMedicalCenter', () => {
       'documentos-legales': undefined,
       ubicacion: undefined,
       sucursales: undefined,
+      horario: undefined,
       representante: 'dos-columnas',
       poder: undefined,
       'gerencia-general': 'dos-columnas',
@@ -869,8 +879,8 @@ describe('RegisterMedicalCenter', () => {
 
       const req = http.expectOne(RUTA_ALTA);
       expect(req.request.body.organization.medicalFacility.branches).toEqual([
-        { name: 'Sucursal Equipetrol', addressLines: ['Av. Equipetrol 1'], latitude: -17.76, longitude: -63.2 },
-        { name: 'Sucursal Norte', addressLines: ['Av. Banzer 2'], latitude: -17.7, longitude: -63.17 },
+        { name: 'Sucursal Equipetrol', addressLines: ['Av. Equipetrol 1'], latitude: -17.76, longitude: -63.2, openingHours: HORARIO_PLANTILLA },
+        { name: 'Sucursal Norte', addressLines: ['Av. Banzer 2'], latitude: -17.7, longitude: -63.17, openingHours: HORARIO_PLANTILLA },
       ]);
       req.flush(RESPUESTA_ALTA);
     });

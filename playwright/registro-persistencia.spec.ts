@@ -75,6 +75,7 @@ test('el alta persiste contra la API: un login nuevo devuelve la misma localidad
 
   await page.getByTestId('registro-correo').fill(email);
   await page.getByTestId('registro-password').fill(password);
+  await page.getByTestId('registro-password-confirm').fill(password);
 
   // Última página: el mismo botón, con el texto de envío.
   const enviar = page.getByTestId('paginated-form-continuar');
@@ -154,6 +155,7 @@ test('el GPS del domicilio, confirmado sobre el mapa, persiste contra la API', a
 
   await page.getByTestId('registro-correo').fill(email);
   await page.getByTestId('registro-password').fill(password);
+  await page.getByTestId('registro-password-confirm').fill(password);
 
   const enviar = page.getByTestId('paginated-form-continuar');
   await expect(enviar).toHaveText(/Crear cuenta/);

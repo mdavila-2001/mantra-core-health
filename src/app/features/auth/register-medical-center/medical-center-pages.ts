@@ -5,7 +5,9 @@ import type {
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { executivesPages } from '../shared-registration/executives';
-import { MESSAGE_SHORT_PASSWORD, MIN_CHARACTERS_PASSWORD } from '../shared-registration/password-policy';
+import { openingHoursSection } from '../shared-registration/opening-hours';
+import { accessPasswordFields } from '../shared-registration/password-confirmation';
+import { MIN_CHARACTERS_PASSWORD } from '../shared-registration/password-policy';
 import { MAX_LEGAL_NAME } from './medical-center-form';
 
 /** Prefijo de los `data-testid` de toda la pantalla (los de antes de la ampliación lo conservan). */
@@ -213,6 +215,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
         },
       ],
     },
+    openingHoursSection(true),
     {
       titulo: 'Representante legal',
       clave: 'representante',
@@ -264,14 +267,15 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       clave: 'acceso',
       icon: 'lock' as const,
       hint: 'Entra con el correo del representante legal y esta contraseña.',
-      // Usuario y contraseña, uno al lado del otro: una página de un solo campo dejaba la
-      // casilla de 1.600 px de ancho a 1920.
+      // Email across the row, then password and its confirmation side by side: a
+      // single-field page left a 1,600 px wide box at 1920.
       disposicion: 'dos-columnas' as const,
       campos: [
         {
           key: 'legalRepEmail',
-          label: 'Correo del representante legal',
-          hint: 'Con este correo va a entrar a la plataforma.',
+          ancho: 'completo' as const,
+          label: 'Correo de acceso',
+          hint: 'El del representante legal: con este correo va a entrar a la plataforma.',
           control: 'email' as const,
           required: true,
           icono: 'mail' as const,
@@ -279,17 +283,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           testId: `${TEST_ID}-legal-rep-email`,
           mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
         },
-        {
-          key: 'password',
-          label: 'Contraseña',
-          control: 'password' as const,
-          required: true,
-          icono: 'lock' as const,
-          autocomplete: 'new-password',
-          hint: `Mínimo ${MIN_CHARACTERS_PASSWORD} caracteres.`,
-          testId: `${TEST_ID}-password`,
-          mensajeDeError: MESSAGE_SHORT_PASSWORD,
-        },
+        ...accessPasswordFields(`${TEST_ID}-password`, { hint: `Mínimo ${MIN_CHARACTERS_PASSWORD} caracteres.` }),
       ],
     },
   ]);

@@ -1,0 +1,14 @@
+<ul class="lista" role="list" data-testid="inicio-estado-lista">
+  @for (item of items(); track item.key) {
+    <li class="lista__fila" [class]="'lista__fila--' + item.state" [attr.data-testid]="'inicio-estado-' + item.key">
+      <app-nav-icon class="lista__icono" [name]="item.state === 'ok' ? 'check-circle' : 'clock'" />
+      <div class="lista__texto">
+        <p class="lista__titulo">
+          {{ item.label }}
+          <span class="lista__estado">{{ stateText(item.state) }}</span>
+        </p>
+        <p class="lista__detalle">{{ item.detail }}</p>
+      </div>
+    </li>
+  }
+</ul>

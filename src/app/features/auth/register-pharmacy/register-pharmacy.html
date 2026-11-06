@@ -250,6 +250,15 @@
                 }
               </div>
             </ng-template>
+
+            <ng-template appCampoPersonalizado="openingHours">
+              <app-registration-opening-hours
+                testId="registration-pharmacy-hours"
+                [value]="form.controls.openingHours.value"
+                [branches]="sucursales()"
+                (valueChange)="form.controls.openingHours.setValue($event); guardarBorrador()"
+              />
+            </ng-template>
           </app-paginated-form>
         </div>
 

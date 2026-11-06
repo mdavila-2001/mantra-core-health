@@ -9,6 +9,7 @@ import { VOICE_RECOGNIZER } from './dictation';
 import type { VoiceErrorEvent, VoiceResultEvent, VoiceRecognizer } from './dictation.types';
 import { SymptomCheck } from './symptom-check';
 import { ESPERAR_IMAGEN_DE_VISTA } from '../../shared/components/organisms/body-map/body-map';
+import { SessionStore } from '../../core/auth/session.store';
 import { SpecialtyImages } from '../../core/data-access/terminology/specialty-images.service';
 import { defaultSpecialtyImage } from '../../shared/specialties/specialty-images';
 
@@ -30,7 +31,27 @@ function responderSexoPropio(
   http: HttpTestingController,
   sexAtBirth?: 'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN',
 ): void {
+  abrirSesionDePaciente();
   http.expectOne('/profiles/patients/me').flush(sexAtBirth === undefined ? {} : { sexAtBirth });
+}
+
+/**
+ * The silhouette follows the active patient: `/me` is only read once a
+ * session with a patient profile exists (bug 2026-11-05).
+ */
+function abrirSesionDePaciente(): void {
+  TestBed.inject(SessionStore).start({
+    accessToken: jwt({ sub: 'user-1', roles: ['USER', 'PATIENT'], pid: 'pp-own' }),
+    refreshToken: 'r-1',
+  });
+  TestBed.tick();
+}
+
+/** base64url JWT, enough for `SessionStore` to read its claims. */
+function jwt(payload: Record<string, unknown>): string {
+  const b64 = (o: unknown) =>
+    btoa(JSON.stringify(o)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64(payload)}.x`;
 }
 
 /**
@@ -317,7 +338,7 @@ describe('SymptomCheck · la silueta', () => {
     fixture.detectChanges();
     expect(html.querySelectorAll('[data-testid="sintoma-reconocido"]').length).toBeGreaterThan(0);
 
-    tocar('body-map-pecho');
+    tocar('body-map-esternon');
 
     expect((fixture.componentInstance as unknown as { texto(): string }).texto()).toBe('');
     expect(control.value).toBe('');
@@ -327,7 +348,7 @@ describe('SymptomCheck · la silueta', () => {
   });
 
   it('lo elegido a mano en una zona no se borra al tocar otra', () => {
-    tocar('body-map-rodillas');
+    tocar('body-map-rodilla-der');
     const opcion = Array.from(
       html.querySelectorAll<HTMLButtonElement>('[data-testid="zona-abierta"] button'),
     ).find((boton) => boton.textContent?.trim() === 'dolor de rodilla');
@@ -335,7 +356,7 @@ describe('SymptomCheck · la silueta', () => {
     opcion.click();
     fixture.detectChanges();
 
-    tocar('body-map-pecho');
+    tocar('body-map-esternon');
 
     const chips = Array.from(html.querySelectorAll('[data-testid="sintoma-reconocido"]'));
     expect(chips.some((chip) => chip.textContent?.includes('rodilla'))).toBe(true);
@@ -688,10 +709,15 @@ describe('SymptomCheck · lo que reconoce el motor local', () => {
     fixture.detectChanges();
 
     const marcada = (id: string) =>
-      html.querySelector(`[data-testid="body-map-${id}"]`)?.closest('g')?.classList.contains('body-map__zona--marcada');
+      html
+        .querySelector(`[data-testid="body-map-${id}"]`)
+        ?.closest('g')
+        ?.classList.contains('body-map__zona--marcada');
     expect(marcada('rodilla-der')).toBe(true);
     expect(marcada('rodilla-izq')).toBe(false);
-    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain('Rodilla derecha');
+    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain(
+      'Rodilla derecha',
+    );
   });
 
   it('«me duelen los ojos» gira la figura a la cara y enciende los dos ojos', () => {
@@ -718,7 +744,9 @@ describe('SymptomCheck · lo que reconoce el motor local', () => {
         id,
       ).toContain('body-map__zona--marcada');
     }
-    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain('Pies y tobillos');
+    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain(
+      'Pies y tobillos',
+    );
   });
 
   it('lo que se cuenta ilumina la silueta y las pastillas, sin abrir ninguna zona', () => {
@@ -734,7 +762,6 @@ describe('SymptomCheck · lo que reconoce el motor local', () => {
     ).toContain('body-map__zona--marcada');
     expect(html.querySelector('[data-testid="zona-animo"]')?.classList).toContain('is-marcada');
     expect(html.querySelector('[data-testid="zona-abierta"]')).toBeNull();
-
   });
 
   it('sin certeza manda a Medicina general cuando no se reconoce nada', () => {
@@ -858,6 +885,7 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
   it('sin sexo resuelto todavía (la lectura no respondió), no filtra: se ve todo', () => {
     // A propósito no se responde `http.expectOne(...)`: mientras está en
     // vuelo, `sexoAlNacer` sigue en su valor inicial (`undefined`).
+    abrirSesionDePaciente();
     abrirZonaIntima();
 
     const pastillas = pastillasDeLaZona();
@@ -869,6 +897,7 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
   });
 
   it('si la lectura del propio perfil falla, no filtra: se ve todo', () => {
+    abrirSesionDePaciente();
     http
       .expectOne('/profiles/patients/me')
       .flush('error', { status: 500, statusText: 'Internal Server Error' });
@@ -1339,4 +1368,3 @@ describe('SymptomCheck · dictar', () => {
     expect(boton().textContent).toContain('Dictar');
   });
 });
-

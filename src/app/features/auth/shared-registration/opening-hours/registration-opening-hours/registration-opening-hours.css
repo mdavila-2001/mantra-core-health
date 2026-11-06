@@ -1,0 +1,31 @@
+:host {
+  display: block;
+}
+
+.opening-hours {
+  display: grid;
+  gap: var(--sp-6);
+}
+
+.opening-hours__site {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* Branches read as their own block under the headquarters. */
+.opening-hours__site + .opening-hours__site {
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.opening-hours__title {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.opening-hours__hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

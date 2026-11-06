@@ -83,7 +83,7 @@ export async function esperarSubidaLista(
 /**
  * Sube los 5 documentos legales y avanza el asistente, asumiendo que la
  * página vigente es «Documentación legal obligatoria (PDF)» —los cinco en una
- * sola vista—. Deja el asistente en «Representante legal (1 de 2)».
+ * sola vista—. Deja el asistente en «Representante legal».
  */
 export async function subirLosCincoDocumentos(page: Page): Promise<void> {
   for (const clave of CLAVES_DE_DOCUMENTOS_LEGALES) {

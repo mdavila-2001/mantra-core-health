@@ -103,7 +103,7 @@ import {
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import { MAX_ATTACHMENT_BYTES } from '../shared-registration/doctor-credentials';
 import { licenceRowControl } from '../shared-registration/licence-row';
-import { passwordValidators } from '../shared-registration/password-policy';
+import { passwordWithConfirmation } from '../shared-registration/password-confirmation';
 import { identityDocumentValidators } from '../shared-registration/national-id';
 import {
   EMPTY_STUDY,
@@ -1157,10 +1157,7 @@ export class RegisterPractitioner {
     thirdName: new FormControl('', { nonNullable: true }),
     lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     motherLastName: new FormControl('', { nonNullable: true }),
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [...passwordValidators],
-    }),
+    ...passwordWithConfirmation(),
     // Documento de identidad boliviano. Obligatorio en el alta de profesional:
     // la matrícula habilita a ejercer, pero es la cédula la que ata esa matrícula
     // a una persona verificable. Además del formato válido, ahora tiene que estar.

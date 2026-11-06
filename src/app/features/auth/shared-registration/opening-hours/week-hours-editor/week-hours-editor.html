@@ -1,0 +1,100 @@
+<div class="week-hours">
+  <app-switch
+    label="Abierto las 24 horas, todos los días"
+    [checked]="value().allDay"
+    [ariaLabel]="'Abierto las 24 horas, ' + siteLabel()"
+    [attr.data-testid]="testId() + '-24h'"
+    (checkedChange)="setAllDay($event)"
+  />
+
+  @if (value().allDay) {
+    <p class="week-hours__all-day" [attr.data-testid]="testId() + '-24h-summary'">
+      Atiende de lunes a domingo, de 00:00 a 24:00.
+    </p>
+  } @else {
+    <ul class="week-hours__days" role="list">
+      @for (day of value().days; track $index; let i = $index) {
+        <li class="week-hours__day" [class.week-hours__day--open]="day.open" [attr.data-testid]="testId() + '-day-' + i">
+          <span class="week-hours__name">{{ weekdays[i] }}</span>
+          <app-segmented-control
+            [options]="openClosed"
+            [value]="day.open ? 'open' : 'closed'"
+            [ariaLabel]="weekdays[i] + ', ' + siteLabel()"
+            [attr.data-testid]="testId() + '-open-' + i"
+            (valueChange)="setOpen(i, $event)"
+          />
+
+          @if (day.open) {
+            <div class="week-hours__shifts">
+              @for (shift of day.shifts; track $index; let s = $index) {
+                <div class="week-hours__shift">
+                  <app-input
+                    type="time"
+                    [step]="timeStep"
+                    [value]="shift.opensAt"
+                    [hasError]="problem(day) !== null"
+                    [ariaLabel]="'Abre el ' + weekdays[i].toLowerCase() + (s ? ', segundo turno' : '')"
+                    [testId]="testId() + '-opens-' + i + '-' + s"
+                    (valueChange)="setTime(i, s, 'opensAt', $event)"
+                  />
+                  <span aria-hidden="true">a</span>
+                  <app-input
+                    type="time"
+                    [step]="timeStep"
+                    [value]="shift.closesAt"
+                    [hasError]="problem(day) !== null"
+                    [ariaLabel]="'Cierra el ' + weekdays[i].toLowerCase() + (s ? ', segundo turno' : '')"
+                    [testId]="testId() + '-closes-' + i + '-' + s"
+                    (valueChange)="setTime(i, s, 'closesAt', $event)"
+                  />
+                  @if (s > 0) {
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      [attr.data-testid]="testId() + '-remove-shift-' + i"
+                      (clicked)="removeShift(i, s)"
+                    >
+                      Quitar turno
+                    </button>
+                  }
+                </div>
+              }
+              <div class="week-hours__actions">
+                @if (day.shifts.length < maxShifts) {
+                  <button
+                    app-button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    [attr.data-testid]="testId() + '-add-shift-' + i"
+                    (clicked)="addShift(i)"
+                  >
+                    + Turno de tarde
+                  </button>
+                }
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  [attr.data-testid]="testId() + '-copy-' + i"
+                  (clicked)="copyToOpenDays(i)"
+                >
+                  Usar en todos los días abiertos
+                </button>
+              </div>
+            </div>
+          } @else {
+            <span class="week-hours__closed">No atiende</span>
+          }
+
+          @if (problem(day); as message) {
+            <p class="week-hours__error" role="alert" [attr.data-testid]="testId() + '-error-' + i">{{ message }}</p>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

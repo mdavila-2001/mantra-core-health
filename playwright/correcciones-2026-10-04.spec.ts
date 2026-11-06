@@ -158,6 +158,7 @@ test('alta del médico: profesión COB-2023, ciudad derivada, filtro de salud, f
   await fotoDe(fila, '02-otra-profesion-cob-2023');
   await continuarHasta(page, 'Su contraseña');
   await page.getByTestId('registro-pro-password').fill(CLAVE);
+  await page.getByTestId('registro-pro-password-confirm').fill(CLAVE);
   await page.waitForTimeout(7_000); // límite de altas por IP: se respeta
   const respuesta = page.waitForResponse(
     (r) => r.url().includes('/iam/auth/register-practitioner') && r.request().method() === 'POST',

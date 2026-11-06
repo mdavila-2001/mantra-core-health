@@ -196,6 +196,7 @@ describe('RegisterPractitioner', () => {
       motherLastName: extra.motherLastName ?? '',
       nationalId: extra.nationalId ?? '1234567',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
       // Obligatorio para un título con colegio conocido, como el de por defecto.
@@ -361,6 +362,7 @@ describe('RegisterPractitioner', () => {
         'mobilePhone',
         'personalEmail',
         'password',
+        'confirmPassword',
       ]);
       // Pedido del cliente del 26/10/2026: en cada ubicación lo único que se
       // marca es el punto. La calle, la zona y el municipio salen de él: siguen
