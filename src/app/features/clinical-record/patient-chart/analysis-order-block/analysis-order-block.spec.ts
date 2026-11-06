@@ -904,4 +904,91 @@ describe('AnalysisOrderBlock', () => {
       expect(componente['performer'].choice()).toEqual({ mode: 'PATIENT_CHOICE', siteId: null });
     });
   });
+
+  /* -- Red clínica (patch v4291): «Para qué diagnóstico» ----------------- */
+  describe('vínculo con el diagnóstico (reasonConditionId)', () => {
+    const DIAGNOSTICOS = [
+      { id: 'c-hipo', etiqueta: 'Hipotiroidismo', confirmado: true, confirmadoEl: null },
+      { id: 'c-ans', etiqueta: 'Ansiedad', confirmado: false, confirmadoEl: null },
+      { id: 'c-anemia', etiqueta: 'Anemia', confirmado: false, confirmadoEl: null, descartado: true },
+    ];
+
+    function preparar(): void {
+      fixture.componentRef.setInput('diagnosticos', DIAGNOSTICOS);
+      fixture.detectChanges();
+      responderCatalogos();
+      responderCircuito();
+      fixture.detectChanges();
+    }
+
+    it('ofrece los diagnósticos no descartados, con su certeza', () => {
+      preparar();
+      expect(componente['opcionesDeDiagnostico']()).toEqual([
+        { value: 'c-hipo', label: 'Hipotiroidismo · Confirmado' },
+        { value: 'c-ans', label: 'Ansiedad · En estudio' },
+      ]);
+      expect(fixture.nativeElement.querySelector('[data-testid="estudios-para-diagnostico"]')).not.toBeNull();
+    });
+
+    it('sin diagnósticos no dibuja el selector', () => {
+      fixture.detectChanges();
+      responderCatalogos();
+      responderCircuito();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[data-testid="estudios-para-diagnostico"]')).toBeNull();
+    });
+
+    it('el elegido viaja como reasonConditionId; sin elegir, la clave no viaja', () => {
+      preparar();
+      componente['estudio'].set('code-hemograma');
+      componente['paraDiagnostico'].set('c-ans');
+      componente['pedir']();
+      responderChequeo(false);
+      const alta = http.expectOne((r) => r.url === '/clinical/service-requests');
+      expect(alta.request.body.reasonConditionId).toBe('c-ans');
+      alta.flush({ id: 'sr-9', patientProfileId: 'p-1', status: 's', intent: 'i', reasonConditionId: 'c-ans', createdAt: '2026-08-14T10:00:00.000Z' });
+      responderCircuito();
+      // Tras pedir, el siguiente arranca sin vínculo.
+      expect(componente['paraDiagnostico']()).toBeNull();
+
+      componente['estudio'].set('code-hemograma');
+      componente['pedir']();
+      responderChequeo(false);
+      const otra = http.expectOne((r) => r.url === '/clinical/service-requests');
+      expect('reasonConditionId' in otra.request.body).toBe(false);
+      otra.flush({ id: 'sr-10', patientProfileId: 'p-1', status: 's', intent: 'i', createdAt: '2026-08-14T10:00:00.000Z' });
+      responderCircuito();
+    });
+
+    it('el histórico dice para qué diagnóstico se pidió', () => {
+      fixture.componentRef.setInput('diagnosticos', DIAGNOSTICOS);
+      fixture.detectChanges();
+      responderCatalogos();
+      responderCircuito({ ...CIRCUITO_VACIO, orders: [{ ...ORDEN, reasonConditionId: 'c-hipo' }, { ...ORDEN, id: 'sr-2', reasonConditionId: 'c-fuera' }] });
+      fixture.detectChanges();
+      expect(componente['estudios']().map((e) => e.paraDiagnostico)).toEqual(['Hipotiroidismo', 'Diagnóstico de la historia']);
+      expect(fixture.nativeElement.querySelector('[data-testid="estudios-fila-diagnostico"]')?.textContent).toContain('Para: Hipotiroidismo');
+    });
+
+    it('el 422 SERVICE_REQUEST_REASON_CONDITION_INVALID va al selector, no arriba', () => {
+      preparar();
+      componente['estudio'].set('code-hemograma');
+      componente['paraDiagnostico'].set('c-ans');
+      componente['pedir']();
+      responderChequeo(false);
+      http.expectOne((r) => r.url === '/clinical/service-requests').flush(
+        {
+          statusCode: 422,
+          code: 'PRECONDITION_FAILED',
+          message: 'El diagnóstico indicado no existe o no es de esta persona',
+          reason: 'SERVICE_REQUEST_REASON_CONDITION_INVALID',
+          details: { field: 'reasonConditionId', reason: 'SERVICE_REQUEST_REASON_CONDITION_INVALID' },
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+      fixture.detectChanges();
+      expect(componente['errorDelDiagnostico']()).toBe('El diagnóstico indicado no existe o no es de esta persona');
+      expect(componente['errorDelPedido']()).toBeNull();
+    });
+  });
 });

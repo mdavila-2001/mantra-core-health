@@ -52,7 +52,19 @@ export interface NewDiagnosisVerification {
   readonly expectedResolutionAt?: string;
   /** Un curso crónico se confirma sin fin esperado. */
   readonly clinicalCourseConceptId?: string;
+  /**
+   * Sólo con `outcome: 'REFUTED'`: el diagnóstico que se confirmó en su lugar
+   * (patch v4291, diferencial resuelto). Del mismo paciente y distinto del que
+   * se rechaza; si no, 422.
+   */
+  readonly replacedByConditionId?: string;
 }
+
+/**
+ * Lo mismo para `POST /clinical/conditions/:id/verification`: el patch v4291
+ * suma `replacedByConditionId` y el contrato generado todavía no lo trae.
+ */
+export const DIAGNOSIS_VERIFICATION_CONTRACT_PENDING_KEYS: readonly string[] = ['replacedByConditionId'];
 
 /** Un diagnóstico o problema del paciente. */
 export interface Condition {
@@ -73,6 +85,11 @@ export interface Condition {
   readonly resolvedAt?: Date;
   /** Hallazgos y justificación clínica (Patch v4.1.3). */
   readonly noteText?: string;
+  /**
+   * Sólo en un descartado (REFUTED): el diagnóstico que lo reemplazó (patch
+   * v4291). Ausente si el rechazo no resolvió un diferencial.
+   */
+  readonly replacedByConditionId?: string;
   readonly createdAt: Date;
 }
 

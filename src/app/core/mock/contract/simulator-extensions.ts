@@ -7,6 +7,8 @@ import {
   PATIENT_SEARCH_SIMULATOR_EXTENSIONS,
   PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS,
 } from '../../data-access/profiles/profiles.types';
+import { DIAGNOSIS_VERIFICATION_CONTRACT_PENDING_KEYS } from '../../data-access/clinical/clinical.types';
+import { DIAGNOSTIC_ORDER_CONTRACT_PENDING_KEYS } from '../../data-access/diagnostics/diagnostics.types';
 import { INFORMED_CONSENT_CONTRACT_PENDING_KEYS } from '../../data-access/informed-consents/informed-consents.types';
 import {
   REFERRAL_CONTRACT_PENDING_KEYS,
@@ -48,6 +50,10 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // `REFERRAL_CONTRACT_PENDING_KEYS` —; se borra al regenerar el contrato.
   'POST /referrals': REFERRAL_CONTRACT_PENDING_KEYS,
   'PATCH /referrals/:id/respond': REFERRAL_RESPOND_CONTRACT_PENDING_KEYS,
+  // Red clínica (patch v4291): los vínculos nuevos de la orden y del rechazo.
+  // Mismo caso: el cliente los manda a la API real; se borra al regenerar.
+  'POST /clinical/service-requests': DIAGNOSTIC_ORDER_CONTRACT_PENDING_KEYS,
+  'POST /clinical/conditions/:id/verification': DIAGNOSIS_VERIFICATION_CONTRACT_PENDING_KEYS,
   // Consentimiento informado DIRIGIDO (v4266): mismo caso que el de arriba.
   'POST /consent/treatment-informed-consents': INFORMED_CONSENT_CONTRACT_PENDING_KEYS,
   // Respuesta automática redactada por la IA: falta la columna del modo en el modelo.

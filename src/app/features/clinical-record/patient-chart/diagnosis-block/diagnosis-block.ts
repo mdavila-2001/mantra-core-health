@@ -97,8 +97,12 @@ const SIN_ETIQUETA = 'Diagnóstico sin etiqueta en el catálogo';
 
 const LARGO_DEL_MOTIVO = 60;
 
-/** Qué respaldó la decisión, en dos palabras, y el motivo recortado. */
-function evidenciaDe(condicion: Condition): string {
+/**
+ * Qué respaldó la decisión, en dos palabras, y el motivo recortado. Un
+ * descartado que resolvió un diferencial dice además por cuál se reemplazó
+ * (`replacedByConditionId`, patch v4291).
+ */
+function evidenciaDe(condicion: Condition, nombreDe: (conditionId: string) => string | undefined): string {
   const decision = condicion.verification;
   if (decision === undefined || decision === null) return '—';
   const tipo =
@@ -115,13 +119,21 @@ function evidenciaDe(condicion: Condition): string {
       : decision.reasonText.length > LARGO_DEL_MOTIVO
         ? `${decision.reasonText.slice(0, LARGO_DEL_MOTIVO - 1)}…`
         : decision.reasonText;
-  return [tipo, motivo].filter((parte): parte is string => parte !== null).join(' · ') || '—';
+  const reemplazo =
+    condicion.replacedByConditionId === undefined
+      ? null
+      : `Reemplazado por ${nombreDe(condicion.replacedByConditionId) ?? 'otro diagnóstico de la historia'}`;
+  return [tipo, motivo, reemplazo].filter((parte): parte is string => parte !== null).join(' · ') || '—';
 }
 
 /** Las condiciones como filas, de la más nueva a la más vieja. */
 function filasDe(conditions: readonly Condition[], etiquetas: ConceptLabels): FilaDeDiagnostico[] {
   const codigo = (conceptId: string | undefined) =>
     conceptId === undefined ? undefined : etiquetas.get(conceptId)?.code;
+  const nombreDe = (conditionId: string) => {
+    const otra = conditions.find((c) => c.id === conditionId);
+    return otra === undefined ? undefined : (etiquetas.get(otra.codeConceptId)?.display ?? SIN_ETIQUETA);
+  };
   return [...conditions]
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .map((condition) => {
@@ -139,7 +151,7 @@ function filasDe(conditions: readonly Condition[], etiquetas: ConceptLabels): Fi
         estado,
         etiquetaDeEstado: DIAGNOSIS_STATE_LABELS[estado],
         tono: TONO_DEL_ESTADO[estado],
-        evidencia: evidenciaDe(condition),
+        evidencia: evidenciaDe(condition, nombreDe),
         enEstudio: estado === 'IN_STUDY',
       };
     });

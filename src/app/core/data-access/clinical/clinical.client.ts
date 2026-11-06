@@ -706,9 +706,11 @@ type Fechas<T, K extends keyof T> = Omit<T, K> & Partial<Readonly<Record<K, stri
 
 type WireCondition = Omit<
   Fechas<Condition, 'onsetAt' | 'expectedResolutionAt' | 'resolvedAt'>,
-  'createdAt'
+  'createdAt' | 'replacedByConditionId'
 > & {
   readonly createdAt: string;
+  /** Patch v4291: el contrato la omite si es nula; se tolera `null` igual. */
+  readonly replacedByConditionId?: string | null;
 };
 
 type WireAllergy = Omit<Allergy, 'createdAt'> & { readonly createdAt: string };
@@ -861,6 +863,7 @@ function toCondition({
   expectedResolutionAt,
   resolvedAt,
   createdAt,
+  replacedByConditionId,
   ...resto
 }: WireCondition): Condition {
   return {
@@ -868,6 +871,7 @@ function toCondition({
     ...fecha('onsetAt', onsetAt),
     ...fecha('expectedResolutionAt', expectedResolutionAt),
     ...fecha('resolvedAt', resolvedAt),
+    ...(replacedByConditionId == null ? {} : { replacedByConditionId }),
     createdAt: new Date(createdAt),
   };
 }

@@ -252,6 +252,10 @@ describe('DiagnosisBlock', () => {
     for (const lectura of http.match((r) => r.url === '/charts/notes')) {
       lectura.flush({ items: [], count: 0, limit: 50, nextCursor: null });
     }
+    // Y el resumen, para «Se confirmó en su lugar» (v4291).
+    for (const lectura of http.match((r) => r.url === '/clinical/patients/p-1/summary')) {
+      lectura.flush(RESUMEN);
+    }
     fixture.detectChanges();
 
     const decidida = {
@@ -337,5 +341,31 @@ describe('DiagnosisBlock', () => {
 
       expect(avisos).toBe(1);
     });
+  });
+
+  it('un descartado que resolvió un diferencial dice por cuál se reemplazó (v4291)', () => {
+    cargar({
+      ...RESUMEN,
+      conditions: [
+        ...RESUMEN.conditions,
+        {
+          id: 'c-3',
+          codeConceptId: 'dx-hta',
+          clinicalStatusConceptId: 'st-activa',
+          verificationStatusConceptId: 'st-provisional',
+          replacedByConditionId: 'c-2',
+          createdAt: '2026-09-25T10:00:00.000Z',
+          verification: {
+            outcome: 'REFUTED',
+            decidedAt: '2026-09-26T10:00:00.000Z',
+            decidedByProfileId: 'pr-1',
+            reasonText: 'TSH suprimida',
+            basedOn: null,
+          },
+        },
+      ],
+    });
+    const fila = porTestId('diagnostico-fila-c-3')?.closest('tr');
+    expect(fila?.textContent).toContain('TSH suprimida · Reemplazado por Hipertensión esencial');
   });
 });
