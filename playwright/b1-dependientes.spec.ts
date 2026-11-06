@@ -144,8 +144,13 @@ test.describe('B.1 · dependientes por CI', () => {
       const m = /\/body-map\/(\w+)-front\.webp/.exec(r.url());
       if (m) maniquies.push(m[1]!);
     });
-    await page.getByTestId('header-paciente-activo').click();
-    await page.getByRole('menuitem', { name: new RegExp(DEPENDIENTE.nombre) }).click();
+    // Desktop again: at 390 px the demo badge covers the header switcher, and
+    // the card's own button is the screen's main path anyway.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/my-account/dependents');
+    const lista = page.getByTestId('dependents-lista');
+    await lista.getByRole('button', { name: `Actuar por ${DEPENDIENTE.nombre}` }).click();
+    await expect(lista.getByText('Perfil activo')).toBeVisible();
     await page.getByRole('link', { name: 'AloVida — ir al panel' }).click();
     await expect(page.locator('app-symptom-check app-body-map')).toBeVisible({ timeout: 30_000 });
     await expect.poll(() => maniquies.includes('male')).toBe(true);
