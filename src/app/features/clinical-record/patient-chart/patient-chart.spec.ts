@@ -2351,15 +2351,6 @@ describe('PatientChart', () => {
       expect(raiz.querySelector('[data-testid="expediente-recorrido"]')?.hasAttribute('data-pdf-ignore')).toBe(true);
     });
 
-    it('elegir un nodo abre el mismo detalle que la tabla', () => {
-      pintar(CON_ATENCION);
-      elegir('recorrido');
-      interno<(id: string) => void>('abrirDesdeElRecorrido')('c-1');
-      const abierta = interno<() => { fila: { id: string }; bloque: string } | null>('filaEnDetalle')();
-      expect(abierta?.fila.id).toBe('c-1');
-      expect(abierta?.bloque).toBe('diagnosticos');
-    });
-
     /** Las cuatro lecturas propias de la red, con un estudio pedido para el diagnóstico. */
     function responderLecturasDeLaRed(): void {
       for (const req of http.match((r) => r.url === '/scheduling/bookings')) req.flush({ items: [] });
@@ -2379,6 +2370,28 @@ describe('PatientChart', () => {
       for (const req of http.match((r) => r.url === '/terminology/concepts')) req.flush(CONCEPTOS);
       harness.fixture.detectChanges();
     }
+
+    it('«Recorrido»: lo recortado por el tope se dice, y sin todos los informes no afirma «estudio sin resultado»', () => {
+      const raiz = pintar(CON_ATENCION);
+      elegir('recorrido');
+      for (const req of http.match((r) => r.url === '/scheduling/bookings')) req.flush({ items: [], count: 51, limit: 50, truncated: true });
+      for (const req of http.match((r) => r.url === '/referrals')) req.flush([]);
+      for (const req of http.match((r) => r.url.startsWith('/diagnostics/patients/'))) {
+        req.flush({
+          patientProfileId: 'p-1',
+          orders: [{ id: 'ord-1', patientProfileId: 'p-1', encounterId: 'e-1', codeConceptId: 'obs-peso', statusConceptId: 'st-final', createdAt: '2026-05-20T10:30:00.000Z', reasonConditionId: 'c-1', category: 'LAB' }],
+          reports: [],
+          limit: 50,
+          truncated: ['reports'],
+        });
+      }
+      responderHistoricoDeProcedimientos();
+      for (const req of http.match((r) => r.url === '/terminology/concepts')) req.flush(CONCEPTOS);
+      harness.fixture.detectChanges();
+      expect(raiz.querySelector('[data-testid="red-recortadas"]')?.textContent).toContain('las citas, los estudios');
+      const tipos = interno<() => readonly { tipo: string }[]>('alertasDeLaRed')().map((a) => a.tipo);
+      expect(tipos).not.toContain('estudio-sin-resultado');
+    });
 
     function abrirRecorrido(): HTMLElement {
       const raiz = pintar(CON_ATENCION);

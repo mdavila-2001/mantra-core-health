@@ -3,6 +3,7 @@ import { booleanAttribute, ChangeDetectionStrategy, Component, computed, input, 
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../../../../shared/components/atoms/nav-icon/nav-icon.types';
+import type { LecturasComprobadas } from '../lecturas/red-clinica-lecturas';
 import type {
   AlertaDeApoyo,
   PrioridadDeAlerta,
@@ -62,6 +63,8 @@ export class RedClinicaAlertasLista {
    * otra superficie sin empujar lo que viene debajo (el mapa del Recorrido).
    */
   readonly compacta = input(false, { transform: booleanAttribute });
+  /** Which readings arrived whole: the empty text only asserts absences over those. */
+  readonly comprobadas = input<LecturasComprobadas>({ ordenes: true, informes: true, derivaciones: true });
 
   readonly nodoElegido = output<string>();
   /** Los nodos a resaltar en la red mientras la alerta tiene puntero o foco. */
@@ -80,6 +83,21 @@ export class RedClinicaAlertasLista {
   );
   protected readonly ocultas = computed(() => Math.max(0, this.alertas().length - ALERTAS_A_LA_VISTA));
   protected readonly altas = computed(() => this.alertas().filter((a) => a.prioridad === 'alta').length);
+
+  /** «Nothing open» says only what was checked; what could not be read is named. */
+  protected readonly textoVacio = computed(() => {
+    const { informes, derivaciones } = this.comprobadas();
+    const revisado = [
+      'sin presuntivos por resolver',
+      ...(informes ? ['estudios sin resultado'] : []),
+      ...(derivaciones ? ['derivaciones pendientes'] : []),
+    ].join(', ');
+    const sinLeer = [...(informes ? [] : ['los estudios']), ...(derivaciones ? [] : ['las derivaciones'])];
+    return (
+      `Nada abierto en los registros a la vista: ${revisado} ni valores fuera de rango en los informes abiertos.` +
+      (sinLeer.length === 0 ? '' : ` Sin revisar ${sinLeer.join(' ni ')}: no se pudieron leer completos.`)
+    );
+  });
 
   protected elegir(alerta: AlertaDeApoyo): void {
     this.nodoElegido.emit(alerta.nodoId);

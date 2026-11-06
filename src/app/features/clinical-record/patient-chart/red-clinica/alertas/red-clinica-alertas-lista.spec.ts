@@ -12,6 +12,7 @@ import { ALERTAS_A_LA_VISTA, RedClinicaAlertasLista } from './red-clinica-alerta
   template: `
     <app-red-clinica-alertas-lista
       [alertas]="alertas()"
+      [comprobadas]="comprobadas()"
       (nodoElegido)="elegidos.push($event)"
       (resaltar)="resaltados.push($event)"
     />
@@ -19,6 +20,7 @@ import { ALERTAS_A_LA_VISTA, RedClinicaAlertasLista } from './red-clinica-alerta
 })
 class Anfitrion {
   readonly alertas = signal<readonly AlertaDeApoyo[]>(alertasDeApoyo(ENTRADA_DE_ALERTAS_DEMO));
+  readonly comprobadas = signal({ ordenes: true, informes: true, derivaciones: true });
   readonly elegidos: string[] = [];
   readonly resaltados: (readonly string[])[] = [];
 }
@@ -83,5 +85,19 @@ describe('RedClinicaAlertasLista', () => {
     expect(items()).toHaveLength(0);
     expect(el().querySelector('[data-testid="red-alertas-vacio"]')?.textContent).toContain('Nada abierto');
     expect(el().querySelector('[data-testid="red-alertas-todas"]')).toBeNull();
+  });
+
+  it('vacía, sólo afirma ausencias sobre lo que se leyó completo, y nombra lo que no', async () => {
+    host.alertas.set([]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const vacio = () => el().querySelector('[data-testid="red-alertas-vacio"]')?.textContent ?? '';
+    expect(vacio()).toContain('estudios sin resultado, derivaciones pendientes ni valores fuera de rango en los informes abiertos');
+    host.comprobadas.set({ ordenes: true, informes: false, derivaciones: false });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(vacio()).not.toContain('estudios sin resultado');
+    expect(vacio()).not.toContain('derivaciones pendientes');
+    expect(vacio()).toContain('Sin revisar los estudios ni las derivaciones');
   });
 });

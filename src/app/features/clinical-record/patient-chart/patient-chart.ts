@@ -16,7 +16,7 @@ import {
 import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, forkJoin, map, of, switchMap, type Observable, type Subscription } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap, type Subscription } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { ChartTemplatesClient } from '../../../core/data-access/chart-templates/chart-templates.client';
@@ -162,11 +162,11 @@ import {
 } from './recorrido-clinico/red-clinica.adaptador';
 import type { CertezaDiagnostica } from './recorrido-clinico/red-clinica.model';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
-import type { Booking } from '../../../core/data-access/scheduling/scheduling.types';
 import { ReferralsClient } from '../../../core/data-access/referrals/referrals.client';
-import type { Referral } from '../../../core/data-access/referrals/referrals.types';
-import type { PatientDiagnostics } from '../../../core/data-access/diagnostics/diagnostics.types';
-import type { DentalProcedure } from '../../../core/data-access/procedures/procedures.types';
+import {
+  faltasDeLasLecturas, lecturasCargando, lecturasComprobadas, leerLasLecturas, type LecturasDeLaRed,
+} from './red-clinica/lecturas/red-clinica-lecturas';
+import { RedClinicaLecturasAviso } from './red-clinica/lecturas/red-clinica-lecturas-aviso';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -407,14 +407,6 @@ export interface VinculoClinico {
   readonly valor: string;
 }
 
-/** Las lecturas que la red pide aparte del expediente, cada una con su estado. */
-interface LecturasDeLaRed {
-  readonly citas: ViewState<readonly Booking[]>;
-  readonly derivaciones: ViewState<readonly Referral[]>;
-  readonly estudios: ViewState<PatientDiagnostics>;
-  readonly procedimientos: ViewState<readonly DentalProcedure[]>;
-}
-
 /** La certeza que lee la red, desde el estado C3 del diagnóstico. */
 const CERTEZA_DEL_ESTADO: Readonly<Record<DiagnosisState, CertezaDiagnostica>> = {
   IN_STUDY: 'presuntivo',
@@ -513,6 +505,7 @@ interface Expediente {
     Progress,
     RedClinicaPanel,
     RedClinicaSuperficie,
+    RedClinicaLecturasAviso,
     SegmentedControl,
     Tab,
     Tabs,
@@ -1261,42 +1254,27 @@ export class PatientChart {
   private cargarLecturasDeLaRed(): void {
     const profileId = this.profileId();
     this.cargaDeLaRed?.unsubscribe();
-    this.lecturasDeLaRed.set({
-      citas: loading(),
-      derivaciones: loading(),
-      estudios: loading(),
-      procedimientos: loading(),
-    });
-    const leer = <T>(fuente: Observable<T>): Observable<ViewState<T>> =>
-      fuente.pipe(
-        map((dato) => ready(dato) as ViewState<T>),
-        catchError((error: unknown) => of(errorToViewState<T>(error))),
-      );
+    this.lecturasDeLaRed.set(lecturasCargando());
     this.cargaDeLaRed = forkJoin({
-      citas: leer(
-        this.scheduling
-          .searchBookings({ patientProfileId: profileId, includeCancelled: true, limit: TOPE })
-          .pipe(map((pagina) => pagina.items)),
-      ),
-      derivaciones: leer(this.referrals.listByPatient(profileId)),
-      estudios: leer(this.diagnostics.getPatientDiagnostics(profileId, TOPE)),
-      procedimientos: leer(
-        this.procedures
-          .listDentalProcedures({ patientProfileId: profileId, limit: TOPE })
-          .pipe(map((pagina) => pagina.items)),
-      ),
+      // `truncated`/`total` are kept: a cut reading is said, and absences are not asserted over it.
+      lecturas: leerLasLecturas({
+        citas: this.scheduling.searchBookings({ patientProfileId: profileId, includeCancelled: true, limit: TOPE }),
+        derivaciones: this.referrals.listByPatient(profileId),
+        estudios: this.diagnostics.getPatientDiagnostics(profileId, TOPE),
+        procedimientos: this.procedures.listDentalProcedures({ patientProfileId: profileId, limit: TOPE }),
+      }),
       catalogoDental: this.procedures
         .readDentalCatalog()
         .pipe(catchError(() => of<DentalCatalog | null>(null))),
     })
       .pipe(
         switchMap((leido) => {
-          const estudios = dataOf(leido.estudios);
+          const estudios = dataOf(leido.lecturas.estudios);
           const conceptos = [
-            ...(dataOf(leido.citas) ?? []).flatMap((c) => [c.statusConceptId, c.typeConceptId]),
+            ...(dataOf(leido.lecturas.citas) ?? []).flatMap((c) => [c.statusConceptId, c.typeConceptId]),
             ...(estudios?.orders ?? []).flatMap((o) => [o.codeConceptId, o.statusConceptId, o.priorityConceptId]),
             ...(estudios?.reports ?? []).flatMap((r) => [r.codeConceptId, r.lifecycleStatusConceptId]),
-            ...(dataOf(leido.procedimientos) ?? []).map((p) => p.statusConceptId),
+            ...(dataOf(leido.lecturas.procedimientos) ?? []).map((p) => p.statusConceptId),
           ].filter((id): id is string => id !== undefined && id !== '');
           return this.terminology.readConceptLabels(conceptos).pipe(
             catchError(() => of<ConceptLabels>(new Map())),
@@ -1313,52 +1291,12 @@ export class PatientChart {
           mapa.set(codigo.conceptId, { display: codigo.display });
         }
         this.etiquetasDeLaRed.set(mapa);
-        this.lecturasDeLaRed.set({
-          citas: leido.citas,
-          derivaciones: leido.derivaciones,
-          estudios: leido.estudios,
-          procedimientos: leido.procedimientos,
-        });
+        this.lecturasDeLaRed.set(leido.lecturas);
       });
   }
 
-  /**
-   * Qué lecturas de la red faltan, en palabras, con el id de petición (S9)
-   * si alguna falló por un error inesperado.
-   *
-   * A 403 goes apart (`sinAcceso`): it is the access scope (e.g. by specialty,
-   * see `ChartAccessScope`), not a failure a retry can fix.
-   */
-  protected readonly faltasDeLaRed = computed(() => {
-    const lecturas = this.lecturasDeLaRed();
-    if (lecturas === null) {
-      return { cargando: false, faltan: '', sinAcceso: '', peticion: '' };
-    }
-    const nombres: Readonly<Record<keyof LecturasDeLaRed, string>> = {
-      citas: 'las citas',
-      derivaciones: 'las derivaciones',
-      estudios: 'los estudios',
-      procedimientos: 'los procedimientos',
-    };
-    const claves = Object.keys(nombres) as (keyof LecturasDeLaRed)[];
-    const fallidas = claves.filter(
-      (k) =>
-        lecturas[k].status !== 'ready' &&
-        lecturas[k].status !== 'loading' &&
-        lecturas[k].status !== 'forbidden',
-    );
-    const prohibidas = claves.filter((k) => lecturas[k].status === 'forbidden');
-    const peticion = fallidas
-      .map((k) => lecturas[k])
-      .map((estado) => (estado.status === 'error' ? estado.requestId : ''))
-      .find((id) => id !== '' && id !== 'sin-id');
-    return {
-      cargando: claves.some((k) => lecturas[k].status === 'loading'),
-      faltan: fallidas.map((k) => nombres[k]).join(', '),
-      sinAcceso: prohibidas.map((k) => nombres[k]).join(', '),
-      peticion: peticion ?? '',
-    };
-  });
+  /** What the network could not read, apart by kind (S5 ≠ S6 ≠ S9), and what came cut (`red-clinica-lecturas.ts`). */
+  protected readonly faltasDeLaRed = computed(() => faltasDeLasLecturas(this.lecturasDeLaRed(), TOPE));
 
   /** Los registros y vínculos de la red: los bloques (todos: el filtro va aparte) y lo que la red lee. */
   private readonly red = computed(() => {
@@ -1533,6 +1471,7 @@ export class PatientChart {
     const presentes = new Set(this.registrosDeLaRed().map((r) => r.id));
     return alertasDeApoyo({
       ahora: this.ahoraDeLaRed(),
+      leidas: lecturasComprobadas(lecturas),
       diagnosticos: datos.resumen.conditions,
       ordenes: estudios?.orders ?? [],
       informes: estudios?.reports ?? [],
@@ -1664,16 +1603,6 @@ export class PatientChart {
       .map(({ aspecto }) => aspecto.plural.toLowerCase())
       .join(', '),
   );
-
-  /** Abre el detalle de un registro elegido en el recorrido. */
-  protected abrirDesdeElRecorrido(id: string): void {
-    const fila = this.bloques()
-      .flatMap((bloque) => bloque.filas)
-      .find((candidata) => candidata.id === id);
-    if (fila !== undefined) {
-      this.verDetalle(fila);
-    }
-  }
 
   /** Cómo está ordenada la tabla unificada. De lo más reciente a lo más viejo. */
   protected readonly ordenDelHistorial = signal<SortState>({ key: 'cuando', direction: 'desc' });

@@ -35,10 +35,7 @@
   </header>
 
   @if (alertas().length === 0) {
-    <p class="alertas__vacio" data-testid="red-alertas-vacio">
-      Nada abierto en los registros a la vista: sin presuntivos por resolver, estudios sin resultado,
-      derivaciones pendientes ni valores fuera de rango.
-    </p>
+    <p class="alertas__vacio" data-testid="red-alertas-vacio">{{ textoVacio() }}</p>
   } @else if (lista()) {
     <div id="red-alertas-cuerpo" class="alertas__cuerpo">
       <ul class="alertas__lista">

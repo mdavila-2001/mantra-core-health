@@ -120,6 +120,15 @@ describe('presuntivosSinResolver', () => {
     expect(alertas[0].detalle).toContain('1 estudio pedido para resolverlo');
   });
 
+  it('no afirma «sin estudios pedidos» si las órdenes no se leyeron completas', () => {
+    const entrada = { ...base, diagnosticos: [condicion({ id: 'dx' })] };
+    expect(presuntivosSinResolver(entrada)[0].detalle).toContain('Sin estudios pedidos');
+    const sinOrdenes = presuntivosSinResolver({ ...entrada, leidas: { ordenes: false, informes: true, derivaciones: true } });
+    expect(sinOrdenes).toHaveLength(1);
+    expect(sinOrdenes[0].detalle).not.toContain('Sin estudios pedidos');
+    expect(sinOrdenes[0].detalle).toMatch(/descartarse\.$/);
+  });
+
   it('respeta los umbrales y el mapeo de ids de nodo', () => {
     const [alerta] = presuntivosSinResolver({
       ...base,
@@ -147,6 +156,12 @@ describe('estudiosSinResultado', () => {
     expect(alertas[0].prioridad).toBe('media');
     expect(alertas[0].detalle).toContain('hace 9 días');
     expect(alertas[0].detalle).toContain('Aún no hay informe');
+  });
+
+  it('con los informes recortados por el tope o sin leer no afirma «sin resultado»: el informe puede existir', () => {
+    const entrada = { ...base, ordenes: [orden({ id: 'o1', createdAt: haceDias(9) })] };
+    expect(estudiosSinResultado({ ...entrada, leidas: { ordenes: true, informes: false, derivaciones: true } })).toEqual([]);
+    expect(estudiosSinResultado({ ...entrada, leidas: { ordenes: false, informes: true, derivaciones: true } })).toHaveLength(1);
   });
 
   it('distingue el informe en redacción del liberado', () => {

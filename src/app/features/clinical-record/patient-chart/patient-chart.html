@@ -132,33 +132,8 @@
             Filtrado: no se muestran {{ tiposOcultosEnPalabras() }}.
           </p>
         }
-        <!-- Las lecturas propias de la red (citas, derivaciones, estudios,
-             procedimientos) fallan por su cuenta: la red se dibuja con lo que
-             hay y dice qué falta, con reintento y el id de petición. -->
-        @if (faltasDeLaRed().cargando) {
-          <p class="expediente__aviso-filtro" role="status" data-testid="red-cargando">
-            Leyendo citas, derivaciones, estudios y procedimientos…
-          </p>
-        } @else if (faltasDeLaRed().faltan !== '') {
-          <app-alert tone="warning" title="El recorrido está incompleto" data-testid="red-faltan">
-            No se pudieron leer {{ faltasDeLaRed().faltan }}: el recorrido muestra el resto.
-            @if (faltasDeLaRed().peticion !== '') {
-              Id. de petición: {{ faltasDeLaRed().peticion }}.
-            }
-            <div alert-actions>
-              <button app-button variant="outline" size="sm" type="button" (clicked)="releerLaRed()">
-                Reintentar
-              </button>
-            </div>
-          </app-alert>
-        }
-        <!-- A 403 here is the access scope, not a failure: no retry offered. -->
-        @if (!faltasDeLaRed().cargando && faltasDeLaRed().sinAcceso !== '') {
-          <app-alert tone="info" title="Fuera de su acceso" data-testid="red-sin-acceso">
-            Su acceso a esta historia no incluye {{ faltasDeLaRed().sinAcceso }}: el recorrido
-            muestra lo que sí puede ver.
-          </app-alert>
-        }
+        <!-- The network's own readings fail on their own: it is drawn with what arrived and says what is missing. -->
+        <app-red-clinica-lecturas-aviso [faltas]="faltasDeLaRed()" (reintentar)="releerLaRed()" />
         <app-view-state-host [state]="estadoDelRecorrido()" (retry)="recargar()">
           <!-- Una sola superficie a lo ancho: la barra de filtros, las alertas y
                la red; con un nodo abierto (≥ 780 px), el panel a su lado en la
@@ -180,7 +155,8 @@
               [cuantosVisibles]="cuantosVisiblesEnLaRed()"
               [sinResultado]="filtrosDeLaRedSinResultado()"
               [alertas]="alertasDeLaRed()"
-              [alertasListas]="!faltasDeLaRed().cargando"
+              [alertasListas]="faltasDeLaRed().listas"
+              [alertasComprobadas]="faltasDeLaRed().comprobadas"
               [seleccionado]="nodoAbiertoId()"
               [guia]="guiaDeLaRed()"
               [(filtro)]="filtroDeLaRed"

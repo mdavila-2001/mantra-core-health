@@ -29,8 +29,10 @@ import {
   diagnosisStateOf,
   type ResolverCodigo,
 } from '../../../../shared/clinical/diagnosis-state';
+import { antiguedad, diasEntre, fecha, prioridadPorPlazo, type PrioridadDeAlerta } from './red-clinica-alertas.plazos';
 import { normalizarTexto } from './red-clinica-filtro';
 import { esCritico, estaFueraDeRango, textoDelRango, textoDelValor } from './red-clinica-valores';
+import type { LecturasComprobadas } from './lecturas/red-clinica-lecturas';
 import type { TipoDeNodo, ValorDeResultado } from './red-clinica.types';
 
 /* -- El contrato de salida ------------------------------------------------- */
@@ -48,12 +50,7 @@ export const TIPOS_DE_ALERTA = [
 
 export type TipoDeAlerta = (typeof TIPOS_DE_ALERTA)[number];
 
-/**
- * - `alta`: conviene mirarlo hoy (valor crítico, plazo muy vencido);
- * - `media`: pasó el plazo de referencia;
- * - `baja`: abierto, pero dentro de lo esperable, o un patrón para tener presente.
- */
-export type PrioridadDeAlerta = 'alta' | 'media' | 'baja';
+export type { PrioridadDeAlerta } from './red-clinica-alertas.plazos';
 
 export interface AlertaDeApoyo {
   /** Estable entre recálculos: `tipo:idDelRegistro`. */
@@ -122,38 +119,17 @@ export interface EntradaDeAlertas {
   /** El id de nodo de un registro. Por omisión, el id del registro. */
   readonly idDeNodo?: (tipo: TipoDeNodo, idDelRegistro: string) => string;
   readonly umbrales?: Partial<Umbrales>;
+  /**
+   * Which side readings arrived whole (`lecturasComprobadas`). Absent: all of
+   * them. An alert never asserts an absence over what was not read: no «sin
+   * estudios pedidos» without the orders, no «sin resultado» without every report.
+   */
+  readonly leidas?: LecturasComprobadas;
 }
 
 /* -- Utilidades ------------------------------------------------------------ */
 
-const DIA_MS = 24 * 60 * 60 * 1000;
-
-/** Días completos entre dos instantes (nunca negativo). */
-export function diasEntre(desde: Date, hasta: Date): number {
-  return Math.max(0, Math.floor((hasta.getTime() - desde.getTime()) / DIA_MS));
-}
-
-/**
- * «hoy», «hace 1 día», «hace 12 días»; desde 60 días, «hace 3 meses (94 días)»:
- * los meses se leen rápido y los días son el dato que se compara con un plazo.
- */
-export function antiguedad(dias: number): string {
-  if (dias === 0) return 'hoy';
-  if (dias === 1) return 'hace 1 día';
-  if (dias < 60) return `hace ${dias} días`;
-  const meses = Math.floor(dias / 30);
-  return `hace ${meses} meses (${dias} días)`;
-}
-
-function prioridadPorPlazo(dias: number, plazo: number): PrioridadDeAlerta {
-  if (dias >= plazo * 3) return 'alta';
-  if (dias >= plazo) return 'media';
-  return 'baja';
-}
-
-function fecha(d: Date): string {
-  return d.toLocaleDateString('es-BO', { day: 'numeric', month: 'short', year: 'numeric' });
-}
+export { antiguedad, diasEntre } from './red-clinica-alertas.plazos';
 
 const sinCodigo: ResolverCodigo = () => undefined;
 
@@ -191,15 +167,15 @@ export function presuntivosSinResolver(entrada: EntradaDeAlertas): readonly Aler
         (o) => o.reasonConditionId === c.id,
       );
       const conEstudios =
-        estudios.length === 0
-          ? 'Sin estudios pedidos para confirmarlo o descartarlo.'
-          : `${estudios.length} ${estudios.length === 1 ? 'estudio pedido' : 'estudios pedidos'} para resolverlo.`;
+        estudios.length > 0
+          ? ` ${estudios.length} ${estudios.length === 1 ? 'estudio pedido' : 'estudios pedidos'} para resolverlo.`
+          : entrada.leidas?.ordenes === false ? '' : ' Sin estudios pedidos para confirmarlo o descartarlo.';
       return {
         id: `presuntivo-sin-resolver:${c.id}`,
         tipo: 'presuntivo-sin-resolver' as const,
         prioridad: prioridadPorPlazo(dias, umbral),
         titulo: `Presuntivo sin resolver: ${nombre}`,
-        detalle: `Registrado ${antiguedad(dias)} (${fecha(c.createdAt)}), sigue sin confirmarse ni descartarse. ${conEstudios}`,
+        detalle: `Registrado ${antiguedad(dias)} (${fecha(c.createdAt)}), sigue sin confirmarse ni descartarse.${conEstudios}`,
         nodoId: nodo,
         nodoIds: [nodo, ...estudios.map((o) => idDeNodo('estudio', o.id))],
         dias,
@@ -214,6 +190,7 @@ const ESTADO_DE_ORDEN_CERRADA = /CANCEL|REVOK|ENTERED_IN_ERROR|ERROR|ANULAD/;
  * por un informe previo (antiduplicación) ni la cancelada o anulada.
  */
 export function estudiosSinResultado(entrada: EntradaDeAlertas): readonly AlertaDeApoyo[] {
+  if (entrada.leidas?.informes === false) return []; // Reports cut or unread: the result may exist.
   const codigo = entrada.codigoDe ?? sinCodigo;
   const umbral = { ...UMBRALES_POR_OMISION, ...entrada.umbrales }.estudioDias;
   const idDeNodo = entrada.idDeNodo ?? ((_t, id) => id);

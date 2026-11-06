@@ -15,13 +15,14 @@
   </div>
 
   <div class="superficie__franja superficie__apoyo">
-    <!-- Las alertas, sólo con las lecturas resueltas: mientras se leen los
-         estudios, «nada abierto» sería falso (S1, no S2). -->
+    <!-- Alerts only once the readings resolved: while studies load, «nothing
+         open» would be false (that is S2, loading, not an S3 empty). -->
     @if (alertasListas()) {
       <app-red-clinica-alertas-lista
         class="superficie__alertas"
         compacta
         [alertas]="alertas()"
+        [comprobadas]="alertasComprobadas()"
         (resaltar)="resaltadosPorAlerta.set($event)"
         (nodoElegido)="tocarLaRed(); nodoElegido.emit($event)"
       />

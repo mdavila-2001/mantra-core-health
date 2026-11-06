@@ -32,6 +32,7 @@ import { armarRecorridoGuiado, type PasoDelRecorrido } from '../../recorrido-gui
 import { RedClinicaAlertasLista } from '../alertas/red-clinica-alertas-lista';
 import { RedClinicaFiltros } from '../filtros/red-clinica-filtros';
 import type { AlertaDeApoyo } from '../red-clinica-alertas';
+import type { LecturasComprobadas } from '../lecturas/red-clinica-lecturas';
 import { FILTRO_VACIO, type FiltroDeRed } from '../red-clinica-filtro';
 import type { NodoDeRed } from '../red-clinica.types';
 import {
@@ -97,8 +98,10 @@ export class RedClinicaSuperficie {
   /** Los filtros juntos no dejan nada: se avisa en lugar de dibujar la red. */
   readonly sinResultado = input(false);
   readonly alertas = input<readonly AlertaDeApoyo[]>([]);
-  /** `false` mientras se leen las lecturas de las que salen (S1, no «nada abierto»). */
+  /** `false` while the readings they come from load: S2 (loading), not an S3 «nothing open». */
   readonly alertasListas = input(true);
+  /** Which readings arrived whole: the alerts' «nothing open» only covers those. */
+  readonly alertasComprobadas = input<LecturasComprobadas>({ ordenes: true, informes: true, derivaciones: true });
   readonly seleccionado = input<string | null>(null);
   readonly filtro = model<FiltroDeRed>(FILTRO_VACIO);
   /** Lo que narra el recorrido guiado. `null`: todavía no hay expediente. */
