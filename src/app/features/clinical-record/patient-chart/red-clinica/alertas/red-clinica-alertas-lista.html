@@ -23,6 +23,11 @@
           @if (altas() > 0) {
             <span class="alertas__resumen">{{ altas() }} de prioridad alta</span>
           }
+          @if (deInformes() > 0) {
+            <span class="alertas__origen" data-testid="red-alertas-de-informes">
+              {{ deInformes() }} de {{ deInformes() === 1 ? 'un informe abierto' : 'informes abiertos' }}
+            </span>
+          }
         </button>
       } @else {
         {{ titulo() }}

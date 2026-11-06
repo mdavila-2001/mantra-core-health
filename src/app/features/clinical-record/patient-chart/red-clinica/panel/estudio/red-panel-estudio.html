@@ -97,11 +97,13 @@
               variant="secondary"
               size="sm"
               data-testid="red-panel-archivo"
+              [attr.aria-label]="'Descargar ' + archivo.nombre"
+              [attr.title]="archivo.nombre"
               [isLoading]="descargando(archivo.fileId)"
               (clicked)="abrirArchivo.emit(archivo)"
             >
               <app-nav-icon name="download" />
-              Descargar {{ archivo.nombre }}
+              <span class="panel__archivo-nombre">Descargar {{ archivo.nombre }}</span>
             </button>
           </li>
         }

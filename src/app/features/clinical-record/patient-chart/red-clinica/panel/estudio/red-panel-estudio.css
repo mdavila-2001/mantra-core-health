@@ -44,12 +44,13 @@
   font-weight: 500;
 }
 
-.panel__fila--fuera {
-  background: var(--st-warning-bg);
+/* Out of range: a warning rule on the row's edge, not a filled row. Filled,
+   the dark theme's brown left the secondary text under AA. */
+.panel__fila--fuera th {
+  box-shadow: inset 3px 0 0 var(--st-warning-fg);
 }
 
 .panel__valor {
-  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   white-space: nowrap;
@@ -95,7 +96,8 @@
 }
 
 /* The file name can be long («Informe de TSH por
-   quimioluminiscencia.pdf»): the button wraps instead of overflowing. */
+   quimioluminiscencia.pdf»): one line, cut with an ellipsis; the full name
+   is in the accessible name and the tooltip. */
 .panel__archivos li {
   min-inline-size: 0;
   max-inline-size: 100%;
@@ -103,6 +105,11 @@
 
 .panel__archivos .btn {
   max-inline-size: 100%;
-  white-space: normal;
-  text-align: start;
+}
+
+.panel__archivo-nombre {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

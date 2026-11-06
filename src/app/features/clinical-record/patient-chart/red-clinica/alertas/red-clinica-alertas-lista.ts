@@ -80,6 +80,11 @@ export class RedClinicaAlertasLista {
   );
   protected readonly ocultas = computed(() => Math.max(0, this.alertas().length - ALERTAS_A_LA_VISTA));
   protected readonly altas = computed(() => this.alertas().filter((a) => a.prioridad === 'alta').length);
+  /**
+   * Out-of-range alerts only exist once a report is opened (its values are
+   * read on opening): the summary names them, or the count grows unexplained.
+   */
+  protected readonly deInformes = computed(() => this.alertas().filter((a) => a.tipo.startsWith('resultado-')).length);
 
   /** «Nothing open» says only what was checked; what could not be read is named. */
   protected readonly textoVacio = computed(() => {

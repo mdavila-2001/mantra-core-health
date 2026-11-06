@@ -119,6 +119,12 @@
   color: var(--st-error-fg);
 }
 
+.alertas__origen {
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
 .alertas__vacio,
 .alertas__pie {
   margin: 0;
