@@ -152,6 +152,13 @@
             </div>
           </app-alert>
         }
+        <!-- A 403 here is the access scope, not a failure: no retry offered. -->
+        @if (!faltasDeLaRed().cargando && faltasDeLaRed().sinAcceso !== '') {
+          <app-alert tone="info" title="Fuera de su acceso" data-testid="red-sin-acceso">
+            Su acceso a esta historia no incluye {{ faltasDeLaRed().sinAcceso }}: el recorrido
+            muestra lo que sí puede ver.
+          </app-alert>
+        }
         <app-view-state-host [state]="estadoDelRecorrido()" (retry)="recargar()">
           <!-- Una sola superficie a lo ancho: la barra de filtros, las alertas y
                la red; con un nodo abierto (≥ 780 px), el panel a su lado en la

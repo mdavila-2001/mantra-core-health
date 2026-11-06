@@ -2309,6 +2309,21 @@ describe('PatientChart', () => {
       expect(raiz.querySelector('[data-testid="expediente-recorrido"]')).not.toBeNull();
     });
 
+    it('«Recorrido»: un 403 en una lectura es el alcance del acceso, no «recorrido incompleto»', () => {
+      const raiz = pintar(CON_ATENCION);
+      elegir('recorrido');
+      http.expectOne((r) => r.url === '/scheduling/bookings').flush({ items: [] });
+      for (const req of http.match((r) => r.url === '/referrals')) {
+        req.flush({ code: 'FORBIDDEN' }, { status: 403, statusText: 'Forbidden' });
+      }
+      responderCircuitoDiagnostico();
+      responderHistoricoDeProcedimientos();
+      harness.fixture.detectChanges();
+      expect(raiz.querySelector('[data-testid="red-faltan"]')).toBeNull();
+      expect(raiz.querySelector('[data-testid="red-sin-acceso"]')?.textContent).toContain('las derivaciones');
+      expect(raiz.querySelector('[data-testid="expediente-recorrido"]')).not.toBeNull();
+    });
+
     it('el filtro oculta un tipo en las dos vistas y lo dice en texto', () => {
       const raiz = pintar();
       elegir('tabla');

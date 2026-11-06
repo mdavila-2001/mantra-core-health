@@ -1325,11 +1325,14 @@ export class PatientChart {
   /**
    * Qué lecturas de la red faltan, en palabras, con el id de petición (S9)
    * si alguna falló por un error inesperado.
+   *
+   * A 403 goes apart (`sinAcceso`): it is the access scope (e.g. by specialty,
+   * see `ChartAccessScope`), not a failure a retry can fix.
    */
   protected readonly faltasDeLaRed = computed(() => {
     const lecturas = this.lecturasDeLaRed();
     if (lecturas === null) {
-      return { cargando: false, faltan: '', peticion: '' };
+      return { cargando: false, faltan: '', sinAcceso: '', peticion: '' };
     }
     const nombres: Readonly<Record<keyof LecturasDeLaRed, string>> = {
       citas: 'las citas',
@@ -1339,8 +1342,12 @@ export class PatientChart {
     };
     const claves = Object.keys(nombres) as (keyof LecturasDeLaRed)[];
     const fallidas = claves.filter(
-      (k) => lecturas[k].status !== 'ready' && lecturas[k].status !== 'loading',
+      (k) =>
+        lecturas[k].status !== 'ready' &&
+        lecturas[k].status !== 'loading' &&
+        lecturas[k].status !== 'forbidden',
     );
+    const prohibidas = claves.filter((k) => lecturas[k].status === 'forbidden');
     const peticion = fallidas
       .map((k) => lecturas[k])
       .map((estado) => (estado.status === 'error' ? estado.requestId : ''))
@@ -1348,6 +1355,7 @@ export class PatientChart {
     return {
       cargando: claves.some((k) => lecturas[k].status === 'loading'),
       faltan: fallidas.map((k) => nombres[k]).join(', '),
+      sinAcceso: prohibidas.map((k) => nombres[k]).join(', '),
       peticion: peticion ?? '',
     };
   });
