@@ -1,7 +1,7 @@
 # Plan — Muestra de laboratorio y región corporal en la orden de estudios
 
 - Fecha: 2026-10-31 · Repos afectados: `mantra-core-health` (front), `mantra-core-health-api`, `mantra-core-health-model` · Predecesor: ninguno
-- Estado de la entrega: **traspaso**. Solo hay descubrimiento y plan; no hay código de producto escrito.
+- Estado de la entrega: **H2 (front) en ejecución** (2026-11-06). H1 (modelo y API) lo hace otro agente en paralelo; este repo construye contra el contrato común y contra el doble del mock, declarado.
 - Resultado observable: al pedir un estudio, el profesional indica **qué muestra** se analiza (sangre, orina…) si es de laboratorio, o **qué parte del cuerpo** se estudia si es de imagen, marcándola en el modelo 3D del cuerpo que ya existe.
 - Kill-test: pedir una radiografía de una mano desde la ficha del paciente; recargar; si la orden no vuelve con la región, lateralidad y tipo de hueso, no está hecho.
 
@@ -26,6 +26,15 @@ Falta granularidad en el detalle de cada análisis clínico. Laboratorio: qué d
 | F8 | Ya existe el visor 3D `app-anatomy-viewer` (three.js, capas esqueleto/músculos/vasos/nervios/órganos, emite `picked` con el id de malla) y el catálogo UBERON/FMA en `public/anatomy-atlas-3d/catalog/`. Hoy solo lo usa el glosario. | `src/app/shared/components/organisms/anatomy-viewer/`, `src/app/core/data-access/anatomy-atlas/anatomy-atlas.types.ts` |
 | F9 | `AnatomyPart` trae `layer`, `side`, `structureId` (UBERON) y `meshId` (FMA); **no** trae tipo de hueso. | `anatomy-atlas.types.ts:20-31` |
 | F10 | Existe `studyCategory` en la orden (`study-category.ts`) para distinguir laboratorio de imagen. Verificar si alcanza como discriminador. | `analysis-order-block/study-category.ts` |
+
+## Decisiones del front (2026-11-06, descubrimiento nuevo — corrige F1/F3 del plan)
+Los hechos F1–F3 estaban desactualizados: **el modelo y la API ya traían el detalle de la orden desde v4.2.82** (`SQL/patches/2026-11-01_v4282_service_request_detalle.sql`, `service-request-detail.dto.ts`): `specimen_type_concept_id`, `modality_concept_id`, `body_site_concept_id`, `laterality_concept_id`, `contrast_concept_id` ya existen y la API ya valida `details.reason` (`SPECIMEN_TYPE_NOT_IN_CATALOG`, `BODY_SITE_REQUIRED`, …). Lo que el trabajo paralelo de API/modelo suma es `bodyStructureUberon`, `bodyMeshId` y `boneTypeConceptId` (value set `imaging-bone-type`).
+- **D-1 (forma en el cable; confirmada por la API final).** Se manda `specimenTypeConceptId` plano e `imaging: { modalityConceptId, bodySiteConceptId, lateralityConceptId, bodyStructureUberon, bodyMeshId, boneTypeConceptId }` anidado: es lo que acepta la API de `dev` hoy para las cuatro primeras claves y lo que el trabajo en curso de la API acepta además plano. El tipo de la vista (`NewDiagnosticOrder`) lleva los siete campos planos, como pide el contrato común; el aplanado/anidado vive en UN lugar (`study-detail.types.ts`).
+- **D-2 (región) — corregida el 2026-11-06 con el contrato final de la API (PR api #1374).** La API exige `bodySiteConceptId` (región de `imaging-body-structure`) para estudios de imagen y para el lado; la estructura UBERON sola no basta. Ya hay fuente del cruce pieza 3D → región: `regiones-cuerpo-3d.json` de la API (156 regiones, 570 mallas, sha256 en su `SHA256SUMS`). `scripts/gen-body-regions.mjs` copia a `body-regions.data.ts` lo mínimo (región → nombre y lado, malla → región, estructura → región sólo si es de una única región de malla propia) con su procedencia. El 3D **propone** la región (y el lado, si la región tiene lado); el médico la ve en su select y la puede cambiar; una pieza sin cruce lo dice y no inventa nada (regla 97.5.2 respetada: el cruce viene de la API, no se escribe a mano).
+- **D-3 (tipo de hueso).** Lo elige el médico de un select cuando la capa tocada es `skeleton`; no se deriva. Target `clinical.service_requests.bone_type_concept_id` (value set `bone-type` según el agente del modelo, PR #133 de `mantra-core-health-model`; ahí aún no está en `dev`). Confirmado por el coordinador el 2026-11-06; las columnas nuevas del modelo son `body_structure_uberon`, `body_mesh_id` y `bone_type_concept_id`.
+- **D-4 (lab-reception).** `src/app/features/lab-reception/` ya no existe en `dev` (la absorbió «Órdenes» del laboratorio, plan 2026-10-31-ordenes-compactas). Queda extendido `LabInboxItem` (lectura de la bandeja) y un helper de precarga del espécimen; sin pantalla de recepción no hay dónde mostrarlo (se declara).
+- **D-5 (topes de líneas).** Los archivos tocados están congelados en `scripts/baselines/max-lines.json` (cero holgura): todo cambio es neto cero o va a archivos nuevos (≤300 líneas).
+- **D-6 (mock).** El doble es `wrap` de las rutas existentes en un archivo nuevo (`study-detail.handlers.ts`); se ejercita correcto / límite / inválido (regla 65). El contrato generado (`api-contract.generated.ts`) está viejo respecto de `dev` de la API (182 operaciones): no se regenera aquí (fuera de alcance, churn ajeno); las claves nuevas entran como `PENDING_KEYS` del simulador, patrón de `REFERRAL_CONTRACT_PENDING_KEYS`.
 
 ## Desconocidos / ambigüedades (resolver antes de escribir esquema)
 1. **¿La muestra va por estudio o por orden?** Una orden puede traer varios estudios. Supuesto: un registro por estudio pedido. Confirmar con producto/clínica.
@@ -58,17 +67,17 @@ Falta granularidad en el detalle de cada análisis clínico. Laboratorio: qué d
 ## H2 — Frontend: pedir el estudio con muestra y cuerpo 3D
 **CA:** Dado un profesional en la ficha de un paciente, cuando elige un análisis de laboratorio, entonces debe indicar la muestra (sangre, orina…); cuando elige un estudio de imagen, entonces ve el cuerpo 3D, toca la parte (o la elige en la lista accesible), indica lateralidad y, si es un hueso, se muestra su tipo; al guardar y recargar, la orden conserva todo.
 **DoD:** `yarn lint` · `yarn typecheck` · `yarn build` · `yarn test` focalizado · Playwright contra backend real · capturas en 3 viewports y ambos temas, con **doble revisión** (`evidencia/doble-revision.md`) · consola y red sin errores nuevos.
-**Estado:** TODO
+**Estado:** A MEDIAS (3 de 7 microtareas HECHO; contra el doble, no contra la API real)
 
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
-| H2.S1.M1 | Tipos y cliente: ampliar `NewDiagnosticOrder`/`DiagnosticOrder` | Compila y el cliente envía/lee los campos | `yarn typecheck` + spec del cliente | TODO |
-| H2.S1.M2 | Selector de muestra (reusar `SPECIMEN_TYPE_TARGET` y el `select` existente) | Estudio de laboratorio exige muestra | spec del componente | TODO |
-| H2.S2.M1 | Molécula `body-site-picker` que envuelve `app-anatomy-viewer` + lista accesible; emite estructura, lateralidad y tipo de hueso | Teclado y puntero eligen lo mismo; con SSR no rompe | spec + prueba de teclado | TODO |
-| H2.S2.M2 | Integrar en `analysis-order-block` según `studyCategory` | Imagen muestra el selector corporal; laboratorio, el de muestra | spec + Playwright | TODO |
-| H2.S2.M3 | Mostrar muestra/región en la orden del paciente (`account/diagnostic-orders`) y en `lab-reception` (precargar el tipo de espécimen) | Los datos viajan hasta recepción | Playwright | TODO |
-| H2.S3.M1 | Estados M34, errores del servidor mapeados al campo, doble envío bloqueado | Cada error aparece en su campo | spec + capturas | TODO |
-| H2.S3.M2 | Prueba visual y doble revisión | Ninguna pantalla `RECHAZADA` | `evidencia/doble-revision.md` | TODO |
+| H2.S1.M1 | Tipos y cliente: ampliar `NewDiagnosticOrder`/`DiagnosticOrder` | Compila y el cliente envía/lee los campos | `yarn typecheck` + spec del cliente | HECHO (typecheck exit 0; `study-detail.types.spec.ts`, `diagnostics-lab.types.spec.ts`: 17 archivos / 220 pruebas en verde) |
+| H2.S1.M2 | Selector de muestra (reusar `SPECIMEN_TYPE_TARGET` y el `select` existente) | Estudio de laboratorio exige muestra | spec del componente | HECHO (usa el destino `clinical.service_requests.specimen_type_concept_id` de la API, no `SPECIMEN_TYPE_TARGET`: ver D-1; spec + Playwright en la maqueta) |
+| H2.S2.M1 | Molécula `body-site-picker` que envuelve `app-anatomy-viewer` + lista accesible; emite estructura, lateralidad y tipo de hueso | Teclado y puntero eligen lo mismo; con SSR no rompe | spec + prueba de teclado | A MEDIAS: **organismo** y no molécula (lint: una molécula no importa organismos). Teclado/lista probados en navegador; el toque del lienzo sólo en la lógica pura; **SSR no ejercitado** (el estado del atlas no pide nada fuera del navegador, pero no se renderizó en servidor) |
+| H2.S2.M2 | Integrar en `analysis-order-block` según `studyCategory` | Imagen muestra el selector corporal; laboratorio, el de muestra | spec + Playwright | HECHO contra la maqueta (Playwright 8/8); la pierna contra la API real queda BLOCKED hasta que lleguen sus PRs |
+| H2.S2.M3 | Mostrar muestra/región en la orden del paciente (`account/diagnostic-orders`) y en `lab-reception` (precargar el tipo de espécimen) | Los datos viajan hasta recepción | Playwright | A MEDIAS: orden del paciente (`mis-ordenes-detalle`) y `LabInboxItem` + `specimenDraftFromInboxItem` con unitarios; **`lab-reception` ya no existe** en `dev` (D-4) y no hay Playwright de la orden del paciente |
+| H2.S3.M1 | Estados M34, errores del servidor mapeados al campo, doble envío bloqueado | Cada error aparece en su campo | spec + capturas | A MEDIAS: 422 por campo, datos conservados y botón bloqueado en unitarios; **sin captura** del error ni del catálogo del cuerpo en fallo |
+| H2.S3.M2 | Prueba visual y doble revisión | Ninguna pantalla `RECHAZADA` | `evidencia/doble-revision.md` | A MEDIAS: ninguna rechazada, ninguna aprobada; la segunda pasada la escribió quien implementó (sin independencia) |
 
 ## H3 — Entrega
 Dos PRs por cambio terminado: uno a `dev` y otro a `test` (rama propia desde `test`, cherry-pick). Mergeable demostrado con `gh pr view` / `gh pr checks` (regla 35). Un PR por repo afectado; orden de despliegue: modelo → API → front.
