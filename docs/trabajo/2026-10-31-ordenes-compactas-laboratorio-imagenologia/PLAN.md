@@ -50,12 +50,12 @@
 
 ## H2 — Marketplace de servicios con el estándar de composición
 Confirmado 31/10: máximo alcance — `/my-services`, directorio de laboratorios (`/laboratory-directory` y su ficha) y catálogo de farmacia, con el estándar de composición-rules §5 (UNA tarjeta con pestañas, centrada, a lo ancho).
-**Estado:** A MEDIAS — código escrito por agentes en paralelo (archivos disjuntos); falta ejecutar specs, capturas en 390/768/1440 y doble revisión.
+**Estado:** HECHO (con reservas): verificado en navegador 390/768/1440 en claro y oscuro; medición §5; 2 revisiones independientes (la última: entregable con reservas).
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Estado |
 |---|---|---|---|---|
-| H2.S1.M1 | `/my-services`: una tarjeta con pestañas Todos/Activos/Inactivos (`?estado=`), misma lógica y `data-testid` | una `app-card` + `app-tabs`; el filtro de estado vive en las pestañas | `ng test my-services` + Playwright `carril-22-mis-servicios` + capturas | A MEDIAS |
-| H2.S1.M2 | Ficha del laboratorio: una tarjeta con pestañas Estudios/Equipos/Sedes/Acreditaciones (`?tab=`); el listado no se tocó (lo dibuja `DirectoryPage`, compartido) | una `app-card` + `app-tabs`; ancla `#estudios` intacta | `ng test laboratory-directory` + capturas | A MEDIAS |
-| H2.S1.M3 | Ficha pública de farmacia: una tarjeta con pestañas Medicamentos/Sucursales y receta (`?tab=`); vacíos orientadores | una `app-card` + `app-tabs`; `consultar-producto-por-chat` sigue en la pestaña por defecto | `ng test public-directories` + Playwright `chat-marketplace` + capturas | A MEDIAS |
+| H2.S1.M1 | `/my-services`: una tarjeta con pestañas Todos/Activos/Inactivos (`?estado=`), misma lógica y `data-testid` | una `app-card` + `app-tabs`; el filtro de estado vive en las pestañas | `ng test my-services` + Playwright `carril-22-mis-servicios` + capturas | HECHO |
+| H2.S1.M2 | Ficha del laboratorio: una tarjeta con pestañas Estudios/Equipos/Sedes/Acreditaciones (`?tab=`); el listado no se tocó (lo dibuja `DirectoryPage`, compartido) | una `app-card` + `app-tabs`; ancla `#estudios` intacta | `ng test laboratory-directory` + capturas | HECHO |
+| H2.S1.M3 | Ficha pública de farmacia: una tarjeta con pestañas Medicamentos/Sucursales (`?tab=`; la búsqueda de receta vive dentro de Sucursales); vacíos orientadores | una `app-card` + `app-tabs`; `consultar-producto-por-chat` sigue en la pestaña por defecto | `ng test public-directories` + Playwright `chat-marketplace` + capturas | HECHO |
 
 ## H3 — Paridad en la app móvil Flutter
 Repo `mantra_core_health_mobile`, misma rama. Hecha la pantalla «Órdenes» contra un doble en memoria (regla 65); faltan signup/login y los flujos de farmacia, y el repositorio HTTP.
