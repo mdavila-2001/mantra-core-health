@@ -97,8 +97,10 @@ describe('validador de contrato de la maqueta', () => {
   });
 
   it('una ruta que la API no publica no se valida: no hay contrato', () => {
+    // Una ruta inventada: las que la API publica hoy cambian con cada
+    // regeneración del contrato (`/diagnostics/lab/services` ya es una).
     expect(
-      contractViolations('POST', '/diagnostics/lab/services', { cualquier: 'cosa' }),
+      contractViolations('POST', '/ruta-no-publicada-por-la-api', { cualquier: 'cosa' }),
     ).toBeNull();
   });
 

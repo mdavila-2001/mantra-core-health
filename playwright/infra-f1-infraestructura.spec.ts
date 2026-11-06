@@ -58,9 +58,15 @@ async function entrar(page: Page): Promise<void> {
   await page.getByTestId('login-identifier').fill('superadmin@alovida.mock');
   await page.getByTestId('login-password').fill('mockup');
   await page.getByTestId('login-submit').click();
-  await page.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+  await page.waitForURL(/\/(dashboard|portal-selector|auth\/organization)/, { timeout: 60_000 });
   if (page.url().includes('/auth/organization')) {
     await page.getByTestId('tenant-opcion').filter({ hasText: SAN_LUCAS }).first().click();
+    await page.waitForURL(/\/(dashboard|portal-selector)/, { timeout: 60_000 });
+  }
+  // Una cuenta que administra y tiene reportería aterriza en la elección de
+  // portal: estas pruebas recorren la administración.
+  if (page.url().includes('/portal-selector')) {
+    await page.getByRole('link', { name: /Portal de administración/ }).click();
     await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
   }
   // La maqueta responde dentro de Angular: Playwright no ve red. Con esto la
