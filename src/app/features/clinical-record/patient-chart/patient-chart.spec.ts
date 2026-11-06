@@ -253,6 +253,10 @@ describe('PatientChart', () => {
     for (const referrals of http.match((r) => r.url === '/referrals')) {
       if (!referrals.cancelled) referrals.flush([]);
     }
+    // El «Recorrido» lee además las citas de la persona (la red por episodios).
+    for (const citas of http.match((r) => r.url === '/scheduling/bookings')) {
+      if (!citas.cancelled) citas.flush({ items: [] });
+    }
     http.verify();
   });
 
@@ -2225,10 +2229,33 @@ describe('PatientChart', () => {
     it('«Recorrido» conecta el diagnóstico con la atención que lo declara, y nada más', () => {
       const raiz = pintar(CON_ATENCION);
       elegir('recorrido');
-      expect(interno<() => readonly object[]>('aristasDelRecorrido')()).toEqual([
-        { desde: 'e-1', hasta: 'c-1', motivo: 'atencion' },
+      expect(interno<() => readonly object[]>('vinculosDeLaRed')()).toEqual([
+        { desde: 'e-1', hasta: 'c-1', motivo: 'registrado-en' },
       ]);
+      // La red abre plegada (nivel 1): los registros aparecen al desplegar.
+      expect(raiz.querySelectorAll('[data-testid="recorrido-nodo"]').length).toBe(0);
+      (raiz.querySelector('[data-testid="red-desplegar-todo"]') as HTMLButtonElement).click();
+      harness.fixture.detectChanges();
       expect(raiz.querySelectorAll('[data-testid="recorrido-nodo"]').length).toBe(3);
+    });
+
+    it('«Recorrido» pide citas, derivaciones, estudios y procedimientos con los servicios de siempre, y dice cuál falta', () => {
+      const raiz = pintar(CON_ATENCION);
+      elegir('recorrido');
+      expect(raiz.querySelector('[data-testid="red-cargando"]')).not.toBeNull();
+      const citas = http.expectOne((r) => r.url === '/scheduling/bookings');
+      expect(citas.request.params.get('patientProfileId')).toBe('p-1');
+      expect(citas.request.params.get('includeCancelled')).toBe('true');
+      citas.flush({ code: 'BOOM' }, { status: 500, statusText: 'Error', headers: { 'x-request-id': 'req-77' } });
+      for (const req of http.match((r) => r.url === '/referrals')) req.flush([]);
+      responderCircuitoDiagnostico();
+      responderHistoricoDeProcedimientos();
+      harness.fixture.detectChanges();
+      const aviso = raiz.querySelector('[data-testid="red-faltan"]');
+      expect(aviso?.textContent).toContain('las citas');
+      expect(aviso?.textContent).not.toContain('derivaciones');
+      // La red se dibuja igual con lo que hay.
+      expect(raiz.querySelector('[data-testid="expediente-recorrido"]')).not.toBeNull();
     });
 
     it('el filtro oculta un tipo en las dos vistas y lo dice en texto', () => {
@@ -2237,7 +2264,7 @@ describe('PatientChart', () => {
       interno<(t: string, v: boolean) => void>('alternarTipo')('observaciones', false);
       harness.fixture.detectChanges();
       expect(interno<() => readonly { id: string }[]>('filasDelHistorial')().map((f) => f.id)).toEqual(['c-1']);
-      expect(interno<() => readonly { id: string }[]>('nodosDelRecorrido')().map((n) => n.id)).toEqual(['c-1']);
+      expect(interno<() => readonly string[]>('visiblesDeLaRed')()).toEqual(['c-1']);
       expect(raiz.querySelector('[data-testid="expediente-aviso-filtro"]')?.textContent).toContain('observaciones');
     });
 

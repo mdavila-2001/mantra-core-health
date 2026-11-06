@@ -1,10 +1,10 @@
 /* ============================================================================
-    Recorrido clínico. Ni un color propio: cada tipo toma un trío `--st-*` del
-    sistema (o la superficie hundida, si no tiene significado clínico), así que
-    el tema oscuro lo resuelve el tema y no esta hoja.
+    Red clínica por episodios. Ni un color propio: cada clase toma un trío
+    `--st-*` del sistema (o la superficie hundida, si no tiene significado
+    clínico), así que el tema oscuro lo resuelve el tema y no esta hoja.
 
-    Las medidas en píxeles de nodos, columnas y carriles NO son decoración: el
-    trazado de las conexiones se calcula con ellas en `recorrido-clinico.model.ts`
+    Las medidas en píxeles de nodos, columnas, hilos y carriles NO son
+    decoración: el trazado se calcula con ellas en `red-clinica.geometria.ts`
     y se aplican desde la plantilla. Acá sólo vive lo que no mueve una línea.
     ========================================================================== */
 
@@ -24,14 +24,14 @@
 .tono--info      { --t-bg: var(--st-info-bg);      --t-fg: var(--st-info-fg);      --t-bd: var(--st-info-bd); }
 .tono--neutral   { --t-bg: var(--bg-inset);        --t-fg: var(--text-secondary);  --t-bd: var(--border-default); }
 
-.recorrido {
+.red {
   display: grid;
   gap: var(--sp-3);
 }
 
-/* -- Barra: leyenda y saltos ---------------------------------------------- */
+/* -- Barra, leyenda ---------------------------------------------------------- */
 
-.recorrido__barra {
+.red__barra {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -39,7 +39,19 @@
   gap: var(--sp-3) var(--sp-6);
 }
 
-.recorrido__leyenda {
+.red__acciones,
+.red__saltos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.red__saltos app-nav-icon {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+.red__leyenda {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2) var(--sp-4);
@@ -51,32 +63,28 @@
   color: var(--text-secondary);
 }
 
-.recorrido__leyenda-item {
+.red__leyenda-item {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
 }
 
-.recorrido__muestra {
+.red__muestra {
   inline-size: 28px;
   block-size: 8px;
   overflow: visible;
 }
 
-.recorrido__saltos {
-  display: flex;
-  gap: var(--sp-1);
+.red__muestra-hito {
+  position: relative;
+  display: inline-block;
+  inline-size: 12px;
+  block-size: 12px;
 }
 
-.recorrido__saltos app-nav-icon {
-  inline-size: 16px;
-  block-size: 16px;
-}
+/* -- El lienzo ---------------------------------------------------------------- */
 
-/* -- El lienzo ---------------------------------------------------------------
-   Contiene el desplazamiento: la página nunca se ensancha por el recorrido. */
-
-.recorrido__lienzo {
+.red__lienzo {
   position: relative;
   overflow-x: auto;
   overflow-y: hidden;
@@ -86,137 +94,29 @@
   overscroll-behavior-x: contain;
 }
 
-.recorrido__lienzo:focus-visible {
+.red__lienzo:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
-.recorrido__plano {
+.red__plano {
   position: relative;
   min-inline-size: 100%;
 }
 
-/* -- Carriles --------------------------------------------------------------- */
+/* -- El eje ------------------------------------------------------------------- */
 
-.recorrido__carril {
-  position: absolute;
-  inset-inline: 0;
-  border-block-start: 1px solid var(--border-default);
-}
-
-/* Sin bandas tintadas: el halo de las indicaciones es del color del lienzo,
-   y sobre una banda tintada se veía como una franja de otro color alrededor
-   de cada línea. Los carriles ya se separan por su filete y su rótulo. */
-
-/* Pegado al borde izquierdo visible: al desplazarse, el carril no pierde nombre.
-   Con fondo propio y por encima de la capa de líneas: sin eso, el tronco de una
-   atención le pasaba por encima al texto («OBSERVACIONES» tachado). */
-.recorrido__carril-rotulo {
-  position: sticky;
-  z-index: 1;
-  inset-inline-start: 0;
-  margin: var(--sp-1) var(--sp-2);
-  background: var(--bg-surface);
-  border-radius: var(--r-full);
-  box-shadow: var(--shadow-sm);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 2px var(--sp-3);
-  font-size: var(--fs-overline);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--t-fg);
-}
-
-.recorrido__carril-rotulo app-nav-icon {
-  inline-size: 14px;
-  block-size: 14px;
-}
-
-.recorrido__carril-cuenta {
-  padding: 0 var(--sp-2);
-  border-radius: var(--r-full);
-  background: var(--t-bg);
-  border: 1px solid var(--t-bd);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
-}
-
-/* -- Eje y conexiones ------------------------------------------------------- */
-
-.recorrido__trazos {
-  position: absolute;
-  inset: 0;
-  overflow: visible;
-  pointer-events: none;
-}
-
-.recorrido__eje {
-  stroke: var(--border-strong);
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-
-.recorrido__arista {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  transition:
-    opacity var(--dur-base) ease,
-    stroke-width var(--dur-fast) ease;
-}
-
-.recorrido__arista--atencion {
-  stroke: var(--brand-primary);
-  stroke-width: 1.5;
-  opacity: 0.55;
-}
-
-.recorrido__arista--indicacion {
-  stroke: var(--st-success-fg);
-  stroke-width: 2;
-  stroke-dasharray: 6 4;
-}
-
-/* Del color del lienzo: corta la línea que pasa por debajo en cada cruce. */
-.recorrido__halo {
-  fill: none;
-  stroke: var(--bg-inset);
-  stroke-width: 6;
-  stroke-linecap: butt;
-  stroke-linejoin: round;
-}
-
-.recorrido__punta {
-  fill: var(--st-success-fg);
-}
-
-.recorrido__arista--iluminada {
-  opacity: 1;
-  stroke-width: 3;
-}
-
-.recorrido__arista--atenuada {
-  opacity: 0.12;
-}
-
-/* -- Columnas --------------------------------------------------------------- */
-
-.recorrido__columnas {
+.red__eje,
+.red__hilos,
+.red__nodos {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.recorrido__columna {
+.red__columna {
   position: absolute;
-  inset-block: 0;
-}
-
-.recorrido__cabecera {
-  position: relative;
+  inset-block-start: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -224,7 +124,7 @@
   text-align: center;
 }
 
-.recorrido__fecha {
+.red__fecha {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-body);
@@ -233,17 +133,28 @@
   font-variant-numeric: tabular-nums;
   text-transform: capitalize;
   color: var(--text-primary);
+  white-space: nowrap;
 }
 
-.recorrido__contexto {
+.red__fecha--corta {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.red__contexto {
   margin: 0;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
-/* El hito sobre el eje: lleno si es una atención, hueco si es un día suelto. */
-.recorrido__hito {
+.red__columna--angosta .red__contexto {
+  font-size: var(--fs-overline);
+}
+
+/* La marca sobre el eje: llena si es una atención, hueca si es un día suelto. */
+.red__marca-eje {
   position: absolute;
   inset-block-end: 8px;
   inset-inline-start: 50%;
@@ -255,18 +166,15 @@
   border: 2px solid var(--border-strong);
 }
 
-.recorrido__hito--atencion {
+.red__marca-eje--atencion {
   background: var(--brand-primary);
   border-color: var(--brand-primary);
   box-shadow: 0 0 0 4px var(--st-primary-bg);
 }
 
-/* El tiempo entre dos columnas, en el pasillo y sobre el eje. */
-.recorrido__intervalo {
+.red__intervalo {
   position: absolute;
   inset-block-end: 2px;
-  /* El centro del pasillo lo fija la plantilla: el pasillo se ensancha
-     cuando bajan muchas indicaciones. */
   translate: -50% 0;
   padding: 0 var(--sp-2);
   border-radius: var(--r-full);
@@ -279,18 +187,321 @@
   font-variant-numeric: tabular-nums;
 }
 
-.recorrido__nodos {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+/* -- Los hilos ---------------------------------------------------------------- */
+
+.red__hilo {
+  position: absolute;
+  inset-inline: 0;
+  border-block-start: 1px solid var(--border-default);
 }
 
-/* -- Nodos ------------------------------------------------------------------ */
+/* Desplegado, el hilo se marca con un filete de marca a la izquierda: es lo
+   que se está leyendo. Sin fondo propio: el halo de las líneas es del color
+   del lienzo, y sobre otra superficie se vería como una franja. */
+.red__hilo--desplegado {
+  border-block-end: 1px solid var(--border-default);
+  box-shadow: inset 3px 0 0 var(--brand-primary);
+}
 
-.recorrido__nodo {
-  position: absolute;
+.red__hilo--resaltado {
+  box-shadow: inset 4px 0 0 var(--st-warning-fg);
+}
+
+/* La cabecera queda pegada al borde visible: al desplazarse, el episodio no
+   pierde nombre. Por encima de las líneas (z-index), con fondo propio. */
+.red__cabecera-hilo {
+  position: sticky;
+  z-index: 3;
+  inset-inline-start: 0;
+  display: inline-flex;
+  align-items: center;
+  max-inline-size: min(100%, calc(100vw - 2 * var(--sp-6)));
+  padding-inline: var(--sp-2);
+}
+
+.red__alternar {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  min-block-size: 40px;
+  padding: var(--sp-1) var(--sp-3);
+  font: inherit;
+  text-align: start;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.red__alternar:hover {
+  border-color: var(--border-strong);
+}
+
+.red__alternar:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--focus-ring),
+    var(--shadow-sm);
+}
+
+/* La flecha del plegado, sin ícono nuevo: un borde girado. */
+.red__chevron {
+  flex: none;
+  inline-size: 8px;
+  block-size: 8px;
+  margin-inline: 2px 4px;
+  border-inline-end: 2px solid currentColor;
+  border-block-end: 2px solid currentColor;
+  rotate: -45deg;
+  transition: rotate var(--dur-fast) ease;
+}
+
+.red__alternar[aria-expanded='true'] .red__chevron,
+.red__chevron--abierto {
+  rotate: 45deg;
+}
+
+.red__episodio-nombre {
   overflow: hidden;
-  inset-inline: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.red__hilo--sin-diagnostico .red__episodio-nombre {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.red__estado,
+.red__nodo-estado {
+  flex: none;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--t-bg);
+  color: var(--t-fg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+}
+
+.red__episodio-datos {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.red__episodio-rango {
+  font-variant-numeric: tabular-nums;
+  text-transform: capitalize;
+}
+
+.red__episodio-conteo::before,
+.red__episodio-descartados::before {
+  content: '·';
+  margin-inline-end: var(--sp-2);
+}
+
+.red__episodio-descartados {
+  color: var(--st-error-fg);
+}
+
+/* -- La franja plegada: pista e hitos ----------------------------------------- */
+
+.red__pista {
+  position: absolute;
+  block-size: 0;
+  border-block-start: 2px solid var(--border-strong);
+}
+
+.red__hito {
+  position: absolute;
+  inline-size: 12px;
+  block-size: 12px;
+  margin: -5px 0 0 -6px;
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  border: 2px solid var(--border-strong);
+}
+
+.red__muestra-hito.red__hito--momento,
+.red__hito--momento {
+  background: var(--brand-primary);
+  border-color: var(--bg-surface);
+  inline-size: 10px;
+  block-size: 10px;
+  margin: -4px 0 0 -5px;
+}
+
+.red__muestra-hito.red__hito--momento {
+  margin: 0;
+}
+
+/* Los diagnósticos: rombo, y su relleno dice la certeza. Nunca sólo el color:
+   presuntivo es hueco, confirmado lleno, descartado tachado. */
+.red__hito--confirmado,
+.red__hito--presuntivo,
+.red__hito--descartado,
+.red__hito--historico {
+  inline-size: 14px;
+  block-size: 14px;
+  margin: -6px 0 0 -7px;
+  border-radius: 2px;
+  rotate: 45deg;
+}
+
+.red__muestra-hito.red__hito--confirmado,
+.red__muestra-hito.red__hito--presuntivo,
+.red__muestra-hito.red__hito--descartado {
+  inline-size: 11px;
+  block-size: 11px;
+  margin: 0;
+}
+
+.red__hito--confirmado {
+  background: var(--st-success-fg);
+  border-color: var(--st-success-fg);
+}
+
+.red__hito--presuntivo {
+  background: var(--st-warning-bg);
+  border-color: var(--st-warning-fg);
+}
+
+.red__hito--descartado {
+  background: var(--bg-surface);
+  border: 2px dashed var(--st-error-fg);
+}
+
+.red__hito--historico {
+  background: var(--st-secondary-bg);
+  border-color: var(--st-secondary-fg);
+}
+
+.red__hito--derivacion,
+.red__hito--internacion,
+.red__hito--procedimiento {
+  border-radius: 2px;
+  background: var(--st-secondary-bg);
+  border-color: var(--st-secondary-fg);
+}
+
+.red__hito--internacion {
+  background: var(--st-warning-bg);
+  border-color: var(--st-warning-fg);
+}
+
+/* -- Las líneas --------------------------------------------------------------- */
+
+.red__trazos {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.red__linea-eje {
+  stroke: var(--border-strong);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.red__arista {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition:
+    opacity var(--dur-base) ease,
+    stroke-width var(--dur-fast) ease;
+}
+
+.red__arista--tronco {
+  stroke: var(--brand-primary);
+  stroke-width: 1.5;
+  opacity: 0.55;
+}
+
+/* Los vínculos reales: sólidos. */
+.red__arista--enlace {
+  stroke: var(--st-success-fg);
+  stroke-width: 2;
+}
+
+/* Los inferidos: punteados finos y en otro tono, con la palabra al lado. */
+.red__arista--inferido {
+  stroke: var(--st-warning-fg);
+  stroke-width: 2;
+  stroke-dasharray: 2 5;
+}
+
+.red__halo {
+  fill: none;
+  stroke: var(--bg-inset);
+  stroke-width: 6;
+  stroke-linecap: butt;
+  stroke-linejoin: round;
+}
+
+.red__punta {
+  fill: var(--st-success-fg);
+}
+
+.red__punta--inferido {
+  fill: var(--st-warning-fg);
+}
+
+.red__arista--iluminada {
+  opacity: 1;
+  stroke-width: 3;
+}
+
+.red__arista--atenuada {
+  opacity: 0.12;
+}
+
+.red__etiqueta-inferido {
+  position: absolute;
+  z-index: 2;
+  translate: -50% -50%;
+  padding: 0 var(--sp-1);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  border: 1px dashed var(--st-warning-fg);
+  font-size: var(--fs-overline);
+  line-height: 16px;
+  font-weight: 600;
+  color: var(--st-warning-fg);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.red__etiqueta-inferido--vertical {
+  writing-mode: vertical-rl;
+  rotate: 180deg;
+  translate: 50% 50%;
+  padding: var(--sp-1) 0;
+}
+
+/* -- Los nodos ------------------------------------------------------------------ */
+
+.red__nodo {
+  position: absolute;
+  z-index: 2;
+  overflow: hidden;
   display: grid;
   align-content: center;
   gap: var(--sp-1);
@@ -310,33 +521,38 @@
     translate var(--dur-fast) ease;
 }
 
-.recorrido__nodo:hover,
-.recorrido__nodo--enfocado {
+.red__nodo:hover,
+.red__nodo--enfocado {
   box-shadow: var(--shadow-md);
   translate: 0 -1px;
   border-color: var(--t-bd);
   border-inline-start-color: var(--t-fg);
 }
 
-.recorrido__nodo:focus-visible {
+.red__nodo:focus-visible {
   outline: none;
   box-shadow:
     0 0 0 3px var(--focus-ring),
     var(--shadow-md);
 }
 
-.recorrido__nodo--atenuado {
+.red__nodo--atenuado {
   opacity: 0.35;
 }
 
-.recorrido__nodo-cabeza {
+.red__nodo--resaltado {
+  outline: 2px solid var(--st-warning-fg);
+  outline-offset: 2px;
+}
+
+.red__nodo-cabeza {
   display: flex;
   align-items: flex-start;
   gap: var(--sp-2);
   min-inline-size: 0;
 }
 
-.recorrido__marca {
+.red__marca {
   display: inline-grid;
   place-items: center;
   flex: none;
@@ -348,14 +564,12 @@
   border: 1px solid var(--t-bd);
 }
 
-.recorrido__marca app-nav-icon {
+.red__marca app-nav-icon {
   inline-size: 14px;
   block-size: 14px;
 }
 
-/* Dos renglones: un nombre clínico cortado al primero obliga a abrir el
-   detalle para saber qué medicamento es. */
-.recorrido__nodo-principal {
+.red__nodo-principal {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
@@ -366,7 +580,15 @@
   line-height: var(--lh-body);
 }
 
-.recorrido__nodo-pie {
+.red__nodo-una-linea {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-caption);
+  line-height: 22px;
+}
+
+.red__nodo-pie {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
@@ -375,55 +597,18 @@
   line-height: var(--lh-caption);
 }
 
-.recorrido__nodo-estado {
-  flex: none;
-  padding: 0 var(--sp-2);
-  border-radius: var(--r-full);
-  background: var(--t-bg);
-  color: var(--t-fg);
-  font-weight: 600;
-}
-
-/* Cede espacio antes que la fecha: «Desde 8 oct 2026» dice más que la
-   posología, que el detalle trae completa. */
-.recorrido__nodo-secundario {
+.red__nodo-secundario {
   flex: 0 1000 auto;
   min-inline-size: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
   color: var(--text-secondary);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .recorrido__arista,
-  .recorrido__nodo {
-    transition: none;
-  }
-
-  .recorrido__nodo:hover,
-  .recorrido__nodo--enfocado {
-    translate: none;
-  }
-}
-
-/* El nodo de grupo no es un registro: borde discontinuo y sin sombra, para
-   que se lea como «hay más acá» y no como un registro más. */
-.recorrido__nodo--grupo {
-  background: transparent;
-  border-style: dashed;
-  border-inline-start-style: solid;
-  box-shadow: none;
-}
-
-.recorrido__nodo--grupo .recorrido__nodo-principal {
-  color: var(--t-fg);
-}
-
-/* La fecha propia del registro, cuando no es la de su columna. */
-/* No se encoge: el formato ya es corto (ver `fechaPropia`) y es la posología
-   la que cede. Mayúscula inicial en el mes, igual que las cabeceras. */
-.recorrido__nodo-fecha {
+.red__nodo-fecha {
   flex: none;
   white-space: nowrap;
   color: var(--text-secondary);
@@ -431,57 +616,162 @@
   text-transform: capitalize;
 }
 
-/* La indicación en texto, sólo en la disposición vertical. */
-.recorrido__nodo-para {
+/* El nodo de grupo no es un registro: borde discontinuo y sin sombra. */
+.red__nodo--grupo {
+  background: transparent;
+  border-style: dashed;
+  border-inline-start-style: dashed;
+  border-inline-start-width: 1px;
+  box-shadow: none;
+}
+
+.red__nodo--grupo .red__nodo-principal {
+  color: var(--text-secondary);
+}
+
+/* El descartado plegado: un marcador discreto que se abre. */
+.red__nodo--compacto {
+  padding-block: var(--sp-1);
+  background: var(--bg-inset);
+  border-style: dashed;
+  border-inline-start-style: solid;
+  box-shadow: none;
+  color: var(--text-secondary);
+}
+
+.red__nodo--compacto .red__marca {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.red__descartado-rotulo {
+  margin-inline-end: var(--sp-1);
+  font-weight: 700;
+  color: var(--st-error-fg);
+}
+
+/* El descartado abierto se lee tachado en su nombre: no es un problema vigente. */
+.red__nodo--descartado:not(.red__nodo--compacto) .red__nodo-principal {
+  text-decoration: line-through;
+  text-decoration-color: var(--st-error-fg);
+}
+
+.red__nodo-compartido-marca {
+  position: absolute;
+  inset-block-start: var(--sp-1);
+  inset-inline-end: var(--sp-1);
+  display: inline-grid;
+  place-items: center;
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: var(--r-full);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+}
+
+.red__nodo-compartido-marca app-nav-icon {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+.red__nodo-relacion,
+.red__nodo-compartido {
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--st-success-fg);
   font-weight: 600;
 }
 
-/* -- Disposición vertical (teléfono) ----------------------------------------
-   Un momento por bloque, lo más reciente arriba. El tronco de la izquierda es
-   el eje del tiempo; los nodos se apilan en el flujo normal. */
+.red__nodo-relacion--inferido {
+  color: var(--st-warning-fg);
+  font-style: italic;
+}
 
-.recorrido-v {
-  position: relative;
+.red__nodo-compartido {
+  color: var(--st-primary-fg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .red__arista,
+  .red__nodo,
+  .red__chevron {
+    transition: none;
+  }
+
+  .red__nodo:hover,
+  .red__nodo--enfocado {
+    translate: none;
+  }
+}
+
+/* -- Disposición vertical (teléfono) ------------------------------------------- */
+
+.red-v {
   display: grid;
-  gap: var(--sp-5);
+  gap: var(--sp-3);
   margin: 0;
-  padding: 0 0 0 var(--sp-6);
+  padding: 0;
   list-style: none;
 }
 
-.recorrido-v::before {
+.red-v__episodio {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.red-v .red__cabecera-hilo {
+  position: static;
+  display: flex;
+  max-inline-size: none;
+  padding: 0;
+}
+
+.red-v .red__alternar {
+  flex-wrap: wrap;
+  inline-size: 100%;
+  border-radius: var(--r-md);
+}
+
+.red-v .red__episodio-nombre {
+  white-space: normal;
+}
+
+.red-v .red__episodio-datos {
+  flex-wrap: wrap;
+  white-space: normal;
+  inline-size: 100%;
+}
+
+.red-v__momentos {
+  position: relative;
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0 0 0 var(--sp-5);
+  list-style: none;
+}
+
+.red-v__momentos::before {
   content: '';
   position: absolute;
   inset-block: var(--sp-2) 0;
-  inset-inline-start: calc(var(--sp-2) + 1px);
+  inset-inline-start: var(--sp-2);
   border-inline-start: 2px solid var(--border-strong);
 }
 
-.recorrido-v__cabecera {
-  position: relative;
+.red-v__fecha {
   margin-block-end: var(--sp-2);
 }
 
-.recorrido-v__cabecera .recorrido__fecha,
-.recorrido-v__cabecera .recorrido__contexto {
-  text-align: start;
-}
-
-.recorrido-v__hito {
-  inset-block-start: var(--sp-1);
-  inset-block-end: auto;
-  inset-inline-start: calc(var(--sp-6) * -1 + var(--sp-2) + 2px);
-}
-
-.recorrido-v__nodos {
+.red-v__nodos {
   display: grid;
   gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.recorrido-v .recorrido__nodo {
-  position: static;
+.red-v .red__nodo {
+  position: relative;
   inline-size: 100%;
 }

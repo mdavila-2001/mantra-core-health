@@ -14,7 +14,7 @@ import {
 import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { forkJoin, map, of, type Subscription } from 'rxjs';
+import { forkJoin, map, of, type Observable, type Subscription } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -130,7 +130,6 @@ import type { SegmentedOption } from '../../../shared/components/molecules/segme
 import type { SortState } from '../../../shared/components/organisms/data-table/data-table.types';
 import { RecorridoClinico } from './recorrido-clinico/recorrido-clinico';
 import {
-  aristasDelHistorial,
   atencionDeCadaRegistro,
   compararFilas,
   type FuenteDelHistorial,
@@ -138,11 +137,22 @@ import {
 import {
   ASPECTO_DEL_TIPO,
   TIPOS_DEL_RECORRIDO,
-  type AristaDelRecorrido,
   type AspectoDelTipo,
-  type NodoDelRecorrido,
   type TipoDelRecorrido,
 } from './recorrido-clinico/recorrido-clinico.model';
+import {
+  CLASE_DEL_TIPO,
+  construirRed,
+  type FilaPresentada,
+  type Rotulador,
+} from './recorrido-clinico/red-clinica.adaptador';
+import type { CertezaDiagnostica } from './recorrido-clinico/red-clinica.model';
+import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
+import type { Booking } from '../../../core/data-access/scheduling/scheduling.types';
+import { ReferralsClient } from '../../../core/data-access/referrals/referrals.client';
+import type { Referral } from '../../../core/data-access/referrals/referrals.types';
+import type { PatientDiagnostics } from '../../../core/data-access/diagnostics/diagnostics.types';
+import type { DentalProcedure } from '../../../core/data-access/procedures/procedures.types';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -273,6 +283,9 @@ export interface FilaClinica {
   /** La condición cruda (C3), para pasársela a `app-diagnosis-verify-dialog`. */
   readonly condicionOriginal?: Condition;
 
+  /** El estado C3 del diagnóstico: la certeza que lee el recorrido. */
+  readonly estadoDx?: DiagnosisState;
+
   /**
    * Los vínculos clínicos del registro, en pares rótulo/valor y ya en palabras.
    *
@@ -379,6 +392,22 @@ export interface VinculoClinico {
   readonly rotulo: string;
   readonly valor: string;
 }
+
+/** Las lecturas que la red pide aparte del expediente, cada una con su estado. */
+interface LecturasDeLaRed {
+  readonly citas: ViewState<readonly Booking[]>;
+  readonly derivaciones: ViewState<readonly Referral[]>;
+  readonly estudios: ViewState<PatientDiagnostics>;
+  readonly procedimientos: ViewState<readonly DentalProcedure[]>;
+}
+
+/** La certeza que lee la red, desde el estado C3 del diagnóstico. */
+const CERTEZA_DEL_ESTADO: Readonly<Record<DiagnosisState, CertezaDiagnostica>> = {
+  IN_STUDY: 'presuntivo',
+  ACTIVE: 'confirmado',
+  REFUTED: 'descartado',
+  HISTORIC: 'historico',
+};
 
 /** Lo que la pantalla necesita de las dos lecturas, ya unido. */
 interface Expediente {
@@ -498,6 +527,8 @@ export class PatientChart {
   private readonly forms = inject(FormsClient);
   private readonly procedures = inject(ProceduresClient);
   private readonly diagnostics = inject(DiagnosticsClient);
+  private readonly scheduling = inject(SchedulingClient);
+  private readonly referrals = inject(ReferralsClient);
   private readonly chartTemplates = inject(ChartTemplatesClient);
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
@@ -736,6 +767,7 @@ export class PatientChart {
         decision: fila.verification?.reasonText ?? '',
         presuntivo: estadoDx === 'IN_STUDY',
         condicionOriginal: fila,
+        estadoDx,
       }));
   });
 
@@ -1191,46 +1223,195 @@ export class PatientChart {
     return this.bloques().filter((bloque) => !ocultos.has(bloque.clave as TipoDelRecorrido));
   });
 
-  /** Los registros de los tipos visibles, como nodos del recorrido. */
-  protected readonly nodosDelRecorrido = computed<readonly NodoDelRecorrido[]>(() => {
-    const atencionDe = this.atencionDeCadaRegistro();
-    return this.bloquesVisibles().flatMap((bloque) => {
-      const tipo = bloque.clave as TipoDelRecorrido;
-      return bloque.filas.map((fila) => ({
-        id: fila.id,
-        tipo,
-        // Un nodo sin título es una caja muda: si el registro no trae nombre,
-        // al menos dice qué es.
-        principal:
-          fila.principal.trim() === '' || fila.principal === SIN_DATO
-            ? ASPECTO_DEL_TIPO[tipo].singular
-            : fila.principal,
-        // Lo que se decidió sobre un diagnóstico (por qué se confirmó o se
-        // descartó) es justo lo que el recorrido viene a contar.
-        // «Sin registrar» como dato secundario es ruido en una tarjeta chica: la
-        // tabla de cada bloque tampoco lo muestra.
-        secundario: fila.decision
-          ? `Decisión: ${fila.decision}`
-          : fila.secundario === SIN_DATO
-            ? ''
-            : fila.secundario,
-        estado: fila.estado === SIN_DATO ? '' : fila.estado,
-        tonoDelEstado: fila.estadoTono ?? 'info',
-        cuando: fila.cuando,
-        encuentroId: atencionDe.get(fila.id),
-      }));
+  /* -- La red por episodios (Recorrido) ----------------------------------
+     Además de los bloques, la red lee citas, derivaciones, estudios y
+     procedimientos, con los servicios de siempre. Se piden al entrar a la
+     vista —las otras dos no los usan— y cada lectura falla por su cuenta:
+     sin derivaciones, la red se dibuja igual y lo dice arriba. */
+
+  /** Las cuatro lecturas de la red. `null`: todavía no se pidieron. */
+  protected readonly lecturasDeLaRed = signal<LecturasDeLaRed | null>(null);
+  /** Las etiquetas de los conceptos de esas lecturas (y los códigos dentales). */
+  private readonly etiquetasDeLaRed = signal<ReadonlyMap<string, { display?: string; code?: string }>>(new Map());
+  private cargaDeLaRed: Subscription | null = null;
+
+  /** Vuelve a pedir las lecturas de la red (el «Reintentar» de su aviso). */
+  protected releerLaRed(): void {
+    this.cargarLecturasDeLaRed();
+  }
+
+  private cargarLecturasDeLaRed(): void {
+    const profileId = this.profileId();
+    this.cargaDeLaRed?.unsubscribe();
+    this.lecturasDeLaRed.set({
+      citas: loading(),
+      derivaciones: loading(),
+      estudios: loading(),
+      procedimientos: loading(),
     });
+    const leer = <T>(fuente: Observable<T>): Observable<ViewState<T>> =>
+      fuente.pipe(
+        map((dato) => ready(dato) as ViewState<T>),
+        catchError((error: unknown) => of(errorToViewState<T>(error))),
+      );
+    this.cargaDeLaRed = forkJoin({
+      citas: leer(
+        this.scheduling
+          .searchBookings({ patientProfileId: profileId, includeCancelled: true, limit: TOPE })
+          .pipe(map((pagina) => pagina.items)),
+      ),
+      derivaciones: leer(this.referrals.listByPatient(profileId)),
+      estudios: leer(this.diagnostics.getPatientDiagnostics(profileId, TOPE)),
+      procedimientos: leer(
+        this.procedures
+          .listDentalProcedures({ patientProfileId: profileId, limit: TOPE })
+          .pipe(map((pagina) => pagina.items)),
+      ),
+      catalogoDental: this.procedures
+        .readDentalCatalog()
+        .pipe(catchError(() => of<DentalCatalog | null>(null))),
+    })
+      .pipe(
+        switchMap((leido) => {
+          const estudios = dataOf(leido.estudios);
+          const conceptos = [
+            ...(dataOf(leido.citas) ?? []).flatMap((c) => [c.statusConceptId, c.typeConceptId]),
+            ...(estudios?.orders ?? []).flatMap((o) => [o.codeConceptId, o.statusConceptId]),
+            ...(estudios?.reports ?? []).flatMap((r) => [r.codeConceptId, r.lifecycleStatusConceptId]),
+            ...(dataOf(leido.procedimientos) ?? []).map((p) => p.statusConceptId),
+          ].filter((id): id is string => id !== undefined && id !== '');
+          return this.terminology.readConceptLabels(conceptos).pipe(
+            catchError(() => of<ConceptLabels>(new Map())),
+            map((etiquetas) => ({ leido, etiquetas })),
+          );
+        }),
+      )
+      .subscribe(({ leido, etiquetas }) => {
+        const mapa = new Map<string, { display?: string; code?: string }>();
+        for (const [id, etiqueta] of etiquetas) {
+          mapa.set(id, { display: etiqueta.display, code: etiqueta.code });
+        }
+        for (const codigo of leido.catalogoDental?.procedureCodes ?? []) {
+          mapa.set(codigo.conceptId, { display: codigo.display });
+        }
+        this.etiquetasDeLaRed.set(mapa);
+        this.lecturasDeLaRed.set({
+          citas: leido.citas,
+          derivaciones: leido.derivaciones,
+          estudios: leido.estudios,
+          procedimientos: leido.procedimientos,
+        });
+      });
+  }
+
+  /**
+   * Qué lecturas de la red faltan, en palabras, con el id de petición (S9)
+   * si alguna falló por un error inesperado.
+   */
+  protected readonly faltasDeLaRed = computed(() => {
+    const lecturas = this.lecturasDeLaRed();
+    if (lecturas === null) {
+      return { cargando: false, faltan: '', peticion: '' };
+    }
+    const nombres: Readonly<Record<keyof LecturasDeLaRed, string>> = {
+      citas: 'las citas',
+      derivaciones: 'las derivaciones',
+      estudios: 'los estudios',
+      procedimientos: 'los procedimientos',
+    };
+    const claves = Object.keys(nombres) as (keyof LecturasDeLaRed)[];
+    const fallidas = claves.filter(
+      (k) => lecturas[k].status !== 'ready' && lecturas[k].status !== 'loading',
+    );
+    const peticion = fallidas
+      .map((k) => lecturas[k])
+      .map((estado) => (estado.status === 'error' ? estado.requestId : ''))
+      .find((id) => id !== '' && id !== 'sin-id');
+    return {
+      cargando: claves.some((k) => lecturas[k].status === 'loading'),
+      faltan: fallidas.map((k) => nombres[k]).join(', '),
+      peticion: peticion ?? '',
+    };
   });
 
-  /** Las conexiones del recorrido: ver {@link aristasDelHistorial}. */
-  protected readonly aristasDelRecorrido = computed<readonly AristaDelRecorrido[]>(() => {
-    const fuente = this.fuenteDelHistorial();
-    return fuente === null ? [] : aristasDelHistorial(fuente);
+  /** Los registros y vínculos de la red: los bloques (todos: el filtro va aparte) y lo que la red lee. */
+  private readonly red = computed(() => {
+    const datos = this.datos();
+    if (datos === null) {
+      return { registros: [], vinculos: [] };
+    }
+    const filas: FilaPresentada[] = this.bloques()
+      .filter((bloque) => (TIPOS_DEL_RECORRIDO as readonly string[]).includes(bloque.clave))
+      .flatMap((bloque) => {
+        const tipo = bloque.clave as TipoDelRecorrido;
+        return bloque.filas.map((fila) => ({
+          id: fila.id,
+          tipo,
+          // Un nodo sin título es una caja muda: si el registro no trae
+          // nombre, al menos dice qué es.
+          titulo:
+            fila.principal.trim() === '' || fila.principal === SIN_DATO
+              ? ASPECTO_DEL_TIPO[tipo].singular
+              : fila.principal,
+          // Lo que se decidió sobre un diagnóstico es justo lo que el
+          // recorrido viene a contar. «Sin registrar» es ruido en una tarjeta.
+          detalle: fila.decision
+            ? `Decisión: ${fila.decision}`
+            : fila.secundario === SIN_DATO
+              ? ''
+              : fila.secundario,
+          estado: fila.estado === SIN_DATO ? '' : fila.estado,
+          tonoDelEstado: fila.estadoTono ?? 'info',
+          cuando: fila.cuando,
+          ...(fila.estadoDx === undefined ? {} : { certeza: CERTEZA_DEL_ESTADO[fila.estadoDx] }),
+          ...(fila.condicionOriginal === undefined
+            ? {}
+            : { concepto: fila.condicionOriginal.codeConceptId }),
+        }));
+      });
+    const lecturas = this.lecturasDeLaRed();
+    const etiquetas = this.etiquetasDeLaRed();
+    const rotular: Rotulador = (id) => (id === undefined ? {} : (etiquetas.get(id) ?? {}));
+    return construirRed(
+      filas,
+      {
+        encounters: datos.resumen.encounters,
+        conditions: datos.resumen.conditions,
+        medicationRequests: datos.resumen.medicationRequests,
+        observations: datos.resumen.observations,
+        notes: datos.chart.notes,
+        carePlans: datos.chart.carePlans,
+        citas: lecturas === null ? null : dataOf(lecturas.citas),
+        derivaciones: lecturas === null ? null : dataOf(lecturas.derivaciones),
+        estudios: lecturas === null ? null : dataOf(lecturas.estudios),
+        procedimientos: lecturas === null ? null : dataOf(lecturas.procedimientos),
+      },
+      rotular,
+    );
   });
 
-  /** El estado del recorrido: el vacío con su salida, o los nodos. */
+  protected readonly registrosDeLaRed = computed(() => this.red().registros);
+  protected readonly vinculosDeLaRed = computed(() => this.red().vinculos);
+
+  /**
+   * El filtro por tipo, sobre la red: los ids que se dibujan. Vacío —nada
+   * oculto— es «todos». Los episodios se arman con todo igual: ocultar los
+   * diagnósticos deja de dibujarlos, no deshace los problemas.
+   */
+  protected readonly visiblesDeLaRed = computed<readonly string[]>(() => {
+    const ocultos = this.tiposOcultos();
+    if (ocultos.size === 0) {
+      return [];
+    }
+    const clasesOcultas = new Set([...ocultos].map((tipo) => CLASE_DEL_TIPO[tipo]));
+    return this.registrosDeLaRed()
+      .filter((r) => !clasesOcultas.has(r.clase))
+      .map((r) => r.id);
+  });
+
+  /** El estado del recorrido: el vacío con su salida, o la red. */
   protected readonly estadoDelRecorrido = computed(() =>
-    this.estadoDelLibro(this.nodosDelRecorrido()),
+    this.estadoDelLibro(this.registrosDeLaRed()),
   );
 
   /**
@@ -2300,6 +2481,14 @@ export class PatientChart {
   constructor() {
     // Salir con el detalle abierto no deja la carga escribiendo en la nada.
     inject(DestroyRef).onDestroy(() => this.cargaDeFormularios?.unsubscribe());
+    inject(DestroyRef).onDestroy(() => this.cargaDeLaRed?.unsubscribe());
+    // La red pide lo suyo al entrar a «Recorrido», una vez por lectura del
+    // expediente: `cargar()` la vuelve a `null` y la próxima entrada relee.
+    effect(() => {
+      if (this.vista() === 'recorrido' && this.datos() !== null && this.lecturasDeLaRed() === null) {
+        untracked(() => this.cargarLecturasDeLaRed());
+      }
+    });
     // Ir de un expediente a otro reutiliza el componente: sin escuchar el
     // parámetro, el segundo seguiría mostrando los datos del primero.
     effect(() => {
@@ -2515,6 +2704,9 @@ export class PatientChart {
     this.expediente.set(loading());
     this.etiquetas.set(new Map());
     this.nombre.set('');
+    this.cargaDeLaRed?.unsubscribe();
+    this.lecturasDeLaRed.set(null);
+    this.etiquetasDeLaRed.set(new Map());
 
     if (profileId === '') {
       // S6 y no un error: sin identificador no hay recurso que buscar, y decir
