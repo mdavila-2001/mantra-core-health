@@ -1,0 +1,135 @@
+[
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505"
+  },
+  {
+    "kind": "console",
+    "type": "log",
+    "text": "NG0751: Angular has detected that this application contains `@defer` blocks and the hot module replacement (HMR) mode is enabled. All `@defer` block dependencies will be loaded eagerly. Find more at https://v21.angular.dev/errors/NG0751"
+  },
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505"
+  },
+  {
+    "kind": "console",
+    "type": "log",
+    "text": "NG0751: Angular has detected that this application contains `@defer` blocks and the hot module replacement (HMR) mode is enabled. All `@defer` block dependencies will be loaded eagerly. Find more at https://v21.angular.dev/errors/NG0751"
+  },
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all the items in the collection. Duplicated keys were: \nkey \"Consulta\" at index \"0\" and \"1\". Find more at https://v21.angular.dev/errors/NG0955"
+  },
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all the items in the collection. Duplicated keys were: \nkey \"Consulta\" at index \"0\" and \"1\". Find more at https://v21.angular.dev/errors/NG0955"
+  },
+  {
+    "kind": "mock",
+    "label": "rechazo",
+    "row": {
+      "method": "POST",
+      "url": "/clinical/conditions/2498fb78-8aa4-4466-a92a-d7ee5983a63e/verification",
+      "status": 200,
+      "body": {
+        "outcome": "REFUTED",
+        "reasonText": "TSH 0,09 mUI/L con T4 libre alta: las palpitaciones son por exceso de levotiroxina, no por ansiedad.",
+        "replacedByConditionId": "9e0e63a2-7299-4774-a657-a8123a417256"
+      },
+      "respuesta": {
+        "categoryConceptId": "f1b38727-8b5f-4811-a01c-75ca33042048",
+        "severityConceptId": "3090c0b9-8a05-4a37-ab8c-d09e5aedde60",
+        "id": "2498fb78-8aa4-4466-a92a-d7ee5983a63e",
+        "codeConceptId": "f77783d2-46a4-481e-ae1d-4e8ca8615dd0",
+        "clinicalStatusConceptId": "b1e1cd45-07dc-435b-a234-7eb63788a650",
+        "verificationStatusConceptId": "88f017ec-b2ec-401e-a7ff-15b26a9f49ea",
+        "encounterId": "4c78b2d4-1cd9-4522-af77-7cce36efda16",
+        "onsetAt": "2026-09-21T09:00:00.000Z",
+        "expectedResolutionAt": "2027-01-15T09:00:00.000Z",
+        "noteText": "Palpitaciones, insomnio e irritabilidad. Descartar sobredosificación de levotiroxina.",
+        "createdAt": "2026-10-12T09:30:00.000Z",
+        "resolvedAt": "2026-11-06T04:35:59.474Z",
+        "verification": {
+          "outcome": "REFUTED",
+          "decidedAt": "2026-11-06T04:35:59.474Z",
+          "decidedByProfileId": "be0f3a66-c03e-4eac-a416-c1068238d3d2",
+          "reasonText": "TSH 0,09 mUI/L con T4 libre alta: las palpitaciones son por exceso de levotiroxina, no por ansiedad.",
+          "basedOn": null
+        },
+        "replacedByConditionId": "9e0e63a2-7299-4774-a657-a8123a417256"
+      }
+    }
+  },
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505"
+  },
+  {
+    "kind": "console",
+    "type": "log",
+    "text": "NG0751: Angular has detected that this application contains `@defer` blocks and the hot module replacement (HMR) mode is enabled. All `@defer` block dependencies will be loaded eagerly. Find more at https://v21.angular.dev/errors/NG0751"
+  },
+  {
+    "kind": "relectura-derivacion",
+    "gets": []
+  },
+  {
+    "kind": "sessionStorage",
+    "sizes": [
+      [
+        "mock.comunidad.vitrinas",
+        3933332
+      ],
+      [
+        "mock.agenda.reservas",
+        303224
+      ],
+      [
+        "mock.clinica.encuentros",
+        253006
+      ],
+      [
+        "mock.clinica.condiciones",
+        242789
+      ],
+      [
+        "mock.agenda.plantillas",
+        43212
+      ],
+      [
+        "mock.agenda.recursos",
+        36205
+      ],
+      [
+        "mock.comunidad.mensajes",
+        17528
+      ],
+      [
+        "mock.apoyo.permisos",
+        11252
+      ],
+      [
+        "mock.apoyo.vinculos",
+        6436
+      ],
+      [
+        "mock.comunidad.conversaciones",
+        6298
+      ],
+      [
+        "mock.practice.servicios",
+        4078
+      ],
+      [
+        "mock.apoyo.asignaciones",
+        2325
+      ]
+    ]
+  }
+]

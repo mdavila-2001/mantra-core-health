@@ -126,15 +126,33 @@ describe('ReferralDetail', () => {
     expect(byTestId('referral-cancel')).not.toBeNull();
   });
 
-  it('aceptar manda ACCEPT y avisa con la derivación del servidor', async () => {
+  it('aceptar manda ACCEPT con la atención abierta como la de llegada (v4291) y avisa con la derivación del servidor', async () => {
     create(INCOMING);
     let changed: Referral | null = null;
     fixture.componentInstance.changed.subscribe((r) => (changed = r));
     await member<() => Promise<void>>('accept')();
     const req = http.expectOne((r) => r.url === '/referrals/r-1/respond');
+    expect(req.request.body).toEqual({ decision: 'ACCEPT', targetEncounterId: 'enc-abierto' });
+    req.flush({ ok: true, ...DTO, status: 'ACCEPTED', targetEncounterId: 'enc-abierto' });
+    expect(changed!.status).toBe('ACCEPTED');
+    expect(changed!.targetEncounterId).toBe('enc-abierto');
+  });
+
+  it('sin atención a mano acepta sin vínculo: no se inventa una', async () => {
+    create(INCOMING);
+    fixture.componentRef.setInput('encounterId', null);
+    fixture.detectChanges();
+    await member<() => Promise<void>>('accept')();
+    const req = http.expectOne((r) => r.url === '/referrals/r-1/respond');
     expect(req.request.body).toEqual({ decision: 'ACCEPT' });
     req.flush({ ok: true, ...DTO, status: 'ACCEPTED' });
-    expect(changed!.status).toBe('ACCEPTED');
+  });
+
+  it('la atención de llegada se nombra con la cita de la lista', () => {
+    create({ ...INCOMING, status: 'ACCEPTED', targetEncounterId: 'enc-abierto' });
+    fixture.componentRef.setInput('appointments', [{ id: 'enc-abierto', etiqueta: '6 nov 2026 · Interconsulta', enCurso: true }]);
+    fixture.detectChanges();
+    expect(byTestId('referral-detail-arrival-encounter')?.textContent?.trim()).toBe('6 nov 2026 · Interconsulta');
   });
 
   it('rechazar manda el motivo; sin motivo (cancelado) no manda nada', async () => {

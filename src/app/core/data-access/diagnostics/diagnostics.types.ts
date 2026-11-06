@@ -72,6 +72,12 @@ export interface DiagnosticOrder {
    * (v4.2.47). Ausente en cualquier otro caso.
    */
   readonly previousServiceRequestId?: string;
+  /**
+   * El diagnóstico que la orden quiere confirmar, descartar o seguir (patch
+   * v4291, `service_requests.reason_condition_id`). Ausente si se pidió sin
+   * diagnóstico detrás.
+   */
+  readonly reasonConditionId?: string;
 }
 
 /**
@@ -154,6 +160,11 @@ export interface NewDiagnosticOrder extends ServiceRequestPerformerInput {
   readonly previousDiagnosticReportId?: string;
   readonly reusePreviousReport?: boolean;
   readonly duplicateOverrideReason?: string;
+  /**
+   * Para qué diagnóstico se pide (patch v4291): una condición del mismo
+   * paciente; si no, 422. Opcional: un estudio de control no cuelga de ninguno.
+   */
+  readonly reasonConditionId?: string;
 }
 
 /**
@@ -169,6 +180,8 @@ export interface DiagnosticOrderCreated {
   readonly category?: AnalysisCategory;
   /** Notas vinculadas a la orden (P40). */
   readonly basedOnNoteIds?: readonly string[];
+  /** El diagnóstico vinculado (patch v4291); ausente si se pidió sin él. */
+  readonly reasonConditionId?: string;
   readonly status: string;
   readonly intent: string;
   readonly createdAt: Date;
@@ -391,3 +404,11 @@ export interface NewDiagnosticResultShare {
   /** Obligatorio: no existe compartir sin plazo. */
   readonly validUntil: Date;
 }
+
+/**
+ * Claves del alta de orden (`POST /clinical/service-requests`) que la API suma
+ * con el patch v4291 y el `openapi.json` del contrato de la maqueta todavía no
+ * declara. El cliente SÍ las manda a la API real; la entrada en
+ * `core/mock/contract/simulator-extensions.ts` se borra al regenerar el contrato.
+ */
+export const DIAGNOSTIC_ORDER_CONTRACT_PENDING_KEYS: readonly string[] = ['reasonConditionId'];

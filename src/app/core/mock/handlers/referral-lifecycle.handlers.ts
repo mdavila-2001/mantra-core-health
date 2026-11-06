@@ -20,6 +20,7 @@ import {
   transferProblem,
   type SimulatedTransfer,
 } from './referral-transfer.rules';
+import { checkTargetEncounter, isRejection } from './clinical-links.mock';
 
 /* ============================================================================
     Lo que pasa con una derivación después de emitida (API v4266): leerla,
@@ -50,7 +51,7 @@ export function registerReferralLifecycle(router: MockRouter): void {
   router.patch('/referrals/:id/respond', (request) => {
     if (!isClinician(request)) return forbidden();
     const id = request.params['id'] ?? '';
-    const body = cuerpo<{ decision: string; rejectReason: string }>(request);
+    const body = cuerpo<{ decision: string; rejectReason: string; targetEncounterId?: unknown }>(request);
     if (body.decision !== 'ACCEPT' && body.decision !== 'REJECT') {
       return validation('decision debe ser ACCEPT o REJECT', [{ message: 'decision debe ser ACCEPT o REJECT' }]);
     }
@@ -72,10 +73,17 @@ export function registerReferralLifecycle(router: MockRouter): void {
     if (found.statusConceptId !== REFERRAL_STATUS['REF_REQUESTED']) {
       return precondition('REFERRAL_NOT_PENDING', 'La referencia no está en estado solicitado', found.id);
     }
+    // Patch v4291: la atención de llegada sólo al aceptar, y de la misma persona.
+    if (body.decision === 'REJECT' && body.targetEncounterId != null) {
+      return precondition('REFERRAL_TARGET_ENCOUNTER_NOT_ALLOWED', 'Sólo al aceptar se indica la atención de llegada', found.id);
+    }
+    const arrival = checkTargetEncounter(body.targetEncounterId, found.patientProfileId);
+    if (isRejection(arrival)) return arrival.rejection;
     const answered = referralList.actualizar(found.id, {
       statusConceptId: REFERRAL_STATUS[body.decision === 'ACCEPT' ? 'REF_ACCEPTED' : 'REF_REJECTED']!,
       respondedAt: ahora(),
       rejectReason: body.decision === 'REJECT' ? body.rejectReason!.trim() : null,
+      ...(arrival.value === undefined ? {} : { targetEncounterId: arrival.value }),
     })!;
     return { ok: true, ...view(answered) };
   });

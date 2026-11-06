@@ -398,12 +398,18 @@ type Fechas<T, K extends keyof T> = Omit<T, K> & Partial<Readonly<Record<K, stri
 // este archivo usa `Fechas<T, K>` en vez de confiar en el tipo de la vista.
 type WireOrder = Omit<
   DiagnosticOrder,
-  'createdAt' | 'previousDiagnosticReportId' | 'duplicateOverrideReason' | 'previousServiceRequestId'
+  | 'createdAt'
+  | 'previousDiagnosticReportId'
+  | 'duplicateOverrideReason'
+  | 'previousServiceRequestId'
+  | 'reasonConditionId'
 > & {
   readonly createdAt: string;
   readonly previousDiagnosticReportId?: string | null;
   readonly duplicateOverrideReason?: string | null;
   readonly previousServiceRequestId?: string | null;
+  /** Patch v4291: el contrato la omite si es nula, pero una fila MikroORM puede traer `null`. */
+  readonly reasonConditionId?: string | null;
 };
 
 type WireReport = Omit<DiagnosticReport, 'createdAt'> & { readonly createdAt: string };
@@ -424,6 +430,7 @@ function toOrder({
   previousDiagnosticReportId,
   duplicateOverrideReason,
   previousServiceRequestId,
+  reasonConditionId,
   ...resto
 }: WireOrder): DiagnosticOrder {
   return {
@@ -432,6 +439,7 @@ function toOrder({
     ...(previousDiagnosticReportId == null ? {} : { previousDiagnosticReportId }),
     ...(duplicateOverrideReason == null ? {} : { duplicateOverrideReason }),
     ...(previousServiceRequestId == null ? {} : { previousServiceRequestId }),
+    ...(reasonConditionId == null ? {} : { reasonConditionId }),
   };
 }
 

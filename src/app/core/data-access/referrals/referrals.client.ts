@@ -141,6 +141,9 @@ export class ReferralsClient {
       .patch<WireReferral>(this.url(`/referrals/${encodeURIComponent(id)}/respond`), {
         decision: body.decision,
         ...(rejectReason === undefined || rejectReason === '' ? {} : { rejectReason }),
+        ...(body.decision === 'ACCEPT' && body.targetEncounterId !== undefined
+          ? { targetEncounterId: body.targetEncounterId }
+          : {}),
       })
       .pipe(map(toReferral));
   }

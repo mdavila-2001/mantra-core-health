@@ -64,6 +64,11 @@ export interface RespondReferralInput {
   readonly decision: ReferralDecision;
   /** Obligatorio si `decision` es `REJECT`. */
   readonly rejectReason?: string;
+  /**
+   * Sólo al aceptar (patch v4291): la atención del destino en la que recibe a
+   * la persona. Del mismo paciente; la escribe únicamente el destino.
+   */
+  readonly targetEncounterId?: string;
 }
 
 /** Topes del DTO. Se repiten acá para cortar antes de mandar. */
@@ -238,6 +243,11 @@ export interface Referral {
   readonly priorityConceptId?: string;
   /** El traslado y la llegada (v4274); ausente si nunca se registró. */
   readonly transfer?: ReferralTransfer;
+  /**
+   * La atención en la que el destino recibió a la persona (patch v4291,
+   * `referrals.target_encounter_id`). Ausente hasta que el destino la anote.
+   */
+  readonly targetEncounterId?: string;
 }
 
 /** Un problema de validación, atado al campo que lo corrige. */
@@ -347,4 +357,8 @@ export function referralIssues(input: Partial<NewReferral>, today: Date = new Da
  * Lo mismo para `PATCH /referrals/:id/respond`: el contrato generado sólo
  * declara `decision`, y la API v4266 suma `rejectReason`.
  */
-export const REFERRAL_RESPOND_CONTRACT_PENDING_KEYS: readonly string[] = ['rejectReason'];
+export const REFERRAL_RESPOND_CONTRACT_PENDING_KEYS: readonly string[] = [
+  'rejectReason',
+  // Patch v4291: la atención de llegada al aceptar.
+  'targetEncounterId',
+];

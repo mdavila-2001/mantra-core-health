@@ -51,6 +51,12 @@
         </dd>
       </div>
     }
+    @if (arrivalEncounterLabel(); as atencion) {
+      <div class="detail__row">
+        <dt>Atención de llegada</dt>
+        <dd data-testid="referral-detail-arrival-encounter">{{ atencion }}</dd>
+      </div>
+    }
     @if (referral().rejectReason) {
       <div class="detail__row"><dt>Motivo del rechazo</dt><dd>{{ referral().rejectReason }}</dd></div>
     }

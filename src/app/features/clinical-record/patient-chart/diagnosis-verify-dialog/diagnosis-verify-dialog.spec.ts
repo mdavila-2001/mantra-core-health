@@ -69,9 +69,35 @@ const NOTAS = {
   nextCursor: null,
 };
 
+/**
+ * El resumen de la persona: el propio presuntivo, un confirmado, otro en
+ * estudio y un descartado. Sólo los dos del medio son candidatos a reemplazo.
+ */
+const RESUMEN = {
+  patientProfileId: 'p-1',
+  conditions: [
+    { id: 'c-1', codeConceptId: 'dx-hta', verificationStatusConceptId: 'st-provisional', createdAt: '2026-09-20T10:00:00.000Z' },
+    { id: 'c-hipo', codeConceptId: 'dx-hipo', verificationStatusConceptId: 'st-confirmada', createdAt: '2026-09-01T10:00:00.000Z' },
+    { id: 'c-ans', codeConceptId: 'dx-ans', verificationStatusConceptId: 'st-provisional', createdAt: '2026-09-02T10:00:00.000Z' },
+    { id: 'c-anemia', codeConceptId: 'dx-anemia', verificationStatusConceptId: 'st-descartada', createdAt: '2026-09-03T10:00:00.000Z' },
+  ],
+  allergies: [],
+  medicationRequests: [],
+  observations: [],
+  encounters: [],
+  limit: 50,
+  truncated: [],
+};
+
 const ETIQUETAS = {
   items: [
     { conceptId: 'st-hemo', code: 'HEMO', display: 'Hemograma completo', codeSystemVersionId: 'v' },
+    { conceptId: 'dx-hipo', code: 'E03.9', display: 'Hipotiroidismo', codeSystemVersionId: 'v' },
+    { conceptId: 'dx-ans', code: 'F41.1', display: 'Ansiedad', codeSystemVersionId: 'v' },
+    { conceptId: 'dx-anemia', code: 'D50', display: 'Anemia', codeSystemVersionId: 'v' },
+    { conceptId: 'st-confirmada', code: 'COND_CONFIRMED', display: 'Confirmado', codeSystemVersionId: 'v' },
+    { conceptId: 'st-provisional', code: 'COND_PROVISIONAL', display: 'Provisional', codeSystemVersionId: 'v' },
+    { conceptId: 'st-descartada', code: 'COND_REFUTED', display: 'Descartado', codeSystemVersionId: 'v' },
   ],
   count: 1,
   limit: 200,
@@ -152,12 +178,16 @@ describe('DiagnosisVerifyDialog', () => {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
   }
 
-  /** Pinta el diálogo y responde las cuatro lecturas con las que se arma. */
-  function abrir(outcome: DiagnosisOutcome = 'CONFIRMED'): void {
+  /**
+   * Pinta el diálogo y responde las cinco lecturas con las que se arma: el
+   * resumen (patch v4291) trae los candidatos a «Se confirmó en su lugar».
+   */
+  function abrir(outcome: DiagnosisOutcome = 'CONFIRMED', resumen: object = RESUMEN): void {
     fixture.componentRef.setInput('outcome', outcome);
     fixture.detectChanges();
     http.expectOne((r) => r.url === '/diagnostics/patients/p-1/orders').flush(CIRCUITO);
     http.expectOne((r) => r.url === '/charts/notes').flush(NOTAS);
+    http.expectOne((r) => r.url === '/clinical/patients/p-1/summary').flush(resumen);
     http.expectOne((r) => r.url === '/terminology/concepts').flush(ETIQUETAS);
     http.expectOne((r) => r.url === '/system-context/dynamic-enums').flush(CATALOGO_DE_CURSO);
     fixture.detectChanges();
@@ -290,5 +320,73 @@ describe('DiagnosisVerifyDialog', () => {
     expect(señal<string>('motivo')()).toBe('Cuadro compatible');
     expect(interno<() => boolean>('enviando')()).toBe(false);
     expect(cierres).toBe(0);
+  });
+
+  /* -- Red clínica (patch v4291): «Se confirmó en su lugar» -------------- */
+
+  it('al rechazar ofrece los otros diagnósticos no descartados, y nunca a sí mismo', () => {
+    abrir('REFUTED');
+    expect(interno<() => readonly { label: string; value: string | null }[]>('opcionesDeReemplazo')()).toEqual([
+      { value: 'c-hipo', label: 'Hipotiroidismo · Confirmado' },
+      { value: 'c-ans', label: 'Ansiedad · En estudio' },
+    ]);
+    expect(fixture.nativeElement.querySelector('[data-testid="verificar-reemplazo"]')).not.toBeNull();
+  });
+
+  it('al confirmar no muestra el selector de reemplazo', () => {
+    abrir('CONFIRMED');
+    expect(fixture.nativeElement.querySelector('[data-testid="verificar-reemplazo"]')).toBeNull();
+  });
+
+  it('el reemplazo elegido viaja como replacedByConditionId con REFUTED', () => {
+    abrir('REFUTED');
+    señal<string>('motivo').set('TSH suprimida');
+    señal<string | null>('reemplazo').set('c-hipo');
+    enviar();
+    const req = http.expectOne('/clinical/conditions/c-1/verification');
+    expect(req.request.body).toEqual({ outcome: 'REFUTED', reasonText: 'TSH suprimida', replacedByConditionId: 'c-hipo' });
+    req.flush({ ...DECIDIDA, replacedByConditionId: 'c-hipo' });
+  });
+
+  it('sin elegir reemplazo, la clave no viaja', () => {
+    abrir('REFUTED');
+    señal<string>('motivo').set('Descartado por clínica');
+    enviar();
+    const req = http.expectOne('/clinical/conditions/c-1/verification');
+    expect('replacedByConditionId' in req.request.body).toBe(false);
+    req.flush(DECIDIDA);
+  });
+
+  it('un 422 CONDITION_REPLACEMENT_INVALID se muestra en el selector y no arriba', () => {
+    abrir('REFUTED');
+    señal<string>('motivo').set('TSH suprimida');
+    señal<string | null>('reemplazo').set('c-hipo');
+    enviar();
+    http.expectOne('/clinical/conditions/c-1/verification').flush(
+      {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message: 'El diagnóstico de reemplazo no existe o no es de esta persona',
+        reason: 'CONDITION_REPLACEMENT_INVALID',
+        details: { field: 'replacedByConditionId' },
+      },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+    fixture.detectChanges();
+    expect(señal<string>('errorDeReemplazo')()).toBe('El diagnóstico de reemplazo no existe o no es de esta persona');
+    expect(interno<() => string | null>('errorDelServidor')()).toBeNull();
+    expect(texto()).toContain('El diagnóstico de reemplazo no existe');
+  });
+
+  it('si el resumen no se puede leer, el rechazo sigue disponible sin reemplazo', () => {
+    fixture.componentRef.setInput('outcome', 'REFUTED');
+    fixture.detectChanges();
+    http.expectOne((r) => r.url === '/diagnostics/patients/p-1/orders').flush(CIRCUITO);
+    http.expectOne((r) => r.url === '/charts/notes').flush(NOTAS);
+    http.expectOne((r) => r.url === '/clinical/patients/p-1/summary').flush({}, { status: 500, statusText: 'Error' });
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(ETIQUETAS);
+    http.expectOne((r) => r.url === '/system-context/dynamic-enums').flush(CATALOGO_DE_CURSO);
+    fixture.detectChanges();
+    expect(interno<() => readonly unknown[]>('opcionesDeReemplazo')()).toEqual([]);
   });
 });
