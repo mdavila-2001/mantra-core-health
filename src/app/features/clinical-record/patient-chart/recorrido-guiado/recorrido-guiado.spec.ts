@@ -109,6 +109,30 @@ describe('RecorridoGuiado', () => {
     expect(raiz().querySelector('time')?.getAttribute('datetime')).toBe('2026-02-01');
   });
 
+  it('una frase inferida lo dice en palabras, no sólo con el estilo', () => {
+    simularMovimiento(false);
+    fixture = TestBed.createComponent(Anfitrion);
+    host = fixture.componentInstance;
+    const [primero, ...resto] = PASOS;
+    host.pasos.set([
+      {
+        ...primero!,
+        frases: [
+          { texto: 'Se atendió.', fuentes: ['a'], inferida: false },
+          { texto: 'Se pidió un hemograma en la misma atención.', fuentes: ['a'], inferida: true },
+        ],
+      },
+      ...resto,
+    ]);
+    fixture.detectChanges();
+    fixture.detectChanges();
+    const marcas = raiz().querySelectorAll('[data-testid="guiado-inferido"]');
+    expect(marcas).toHaveLength(1);
+    expect(marcas[0]!.textContent).toContain('inferido');
+    expect(marcas[0]!.closest('.guiado__frase')?.textContent).toContain('en la misma atención');
+    expect(por('guiado-narracion').textContent?.replace(/\s+/g, ' ')).toContain('Se atendió. Se pidió un hemograma en la misma atención. (inferido)');
+  });
+
   it('emite el paso inicial con lo que hay que enfocar y lo revelado', () => {
     montar();
     expect(host.emitidos.at(-1)).toMatchObject({ indice: 0, total: 3, enfocar: ['a'], revelados: ['a'] });

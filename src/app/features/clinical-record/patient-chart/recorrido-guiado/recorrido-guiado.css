@@ -103,6 +103,15 @@
   color: var(--text-primary);
 }
 
+.guiado__frase--inferida {
+  color: var(--text-secondary);
+}
+
+.guiado__inferido {
+  font-size: var(--fs-caption);
+  font-style: italic;
+}
+
 /* -- Barra ---------------------------------------------------------------- */
 
 .guiado__barra {

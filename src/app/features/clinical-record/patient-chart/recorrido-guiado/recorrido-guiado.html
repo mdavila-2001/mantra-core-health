@@ -26,7 +26,12 @@
       @for (p of [paso]; track p.clave) {
         <div class="guiado__tarjeta" animate.enter="guiado__tarjeta--entra">
           <h3 class="guiado__titulo" data-testid="guiado-titulo">{{ p.titulo }}</h3>
-          <p class="guiado__narracion" data-testid="guiado-narracion">{{ p.narracion }}</p>
+          <!-- Each sentence on its own: an inferred one says so in words (ADR-0022), not only by style. -->
+          <p class="guiado__narracion" data-testid="guiado-narracion">
+            @for (f of p.frases; track $index) {
+              <span class="guiado__frase" [class.guiado__frase--inferida]="f.inferida">{{ f.texto }}@if (f.inferida) {<span class="guiado__inferido" data-testid="guiado-inferido"> (inferido)</span>}</span>{{ ' ' }}
+            }
+          </p>
         </div>
       }
     </div>
