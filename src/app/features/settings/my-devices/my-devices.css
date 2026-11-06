@@ -60,17 +60,16 @@
   margin-inline-start: calc(1.25rem + var(--e3));
 }
 
-/* On a phone the button drops under the text instead of squeezing it. */
+/* On a phone the button takes a second line under the text, aligned with it. */
 @media (width < 36rem) {
   .dispositivos__renglon {
-    flex-wrap: wrap;
-  }
-
-  .dispositivos__cuerpo {
-    flex-basis: 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .dispositivos__accion {
+    grid-column: 2;
+    justify-self: start;
     max-inline-size: 100%;
     white-space: normal;
   }
