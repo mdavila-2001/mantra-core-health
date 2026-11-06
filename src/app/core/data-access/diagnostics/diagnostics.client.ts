@@ -398,8 +398,21 @@ type Fechas<T, K extends keyof T> = Omit<T, K> & Partial<Readonly<Record<K, stri
 // este archivo usa `Fechas<T, K>` en vez de confiar en el tipo de la vista.
 type WireOrder = Omit<
   DiagnosticOrder,
-  'createdAt' | 'previousDiagnosticReportId' | 'duplicateOverrideReason' | 'previousServiceRequestId'
+  | 'createdAt'
+  | 'previousDiagnosticReportId'
+  | 'duplicateOverrideReason'
+  | 'previousServiceRequestId'
+  | 'specimenTypeConceptId'
+  | 'modalityConceptId'
+  | 'bodySiteConceptId'
+  | 'lateralityConceptId'
+  | 'contrastConceptId'
 > & {
+  readonly specimenTypeConceptId?: string | null;
+  readonly modalityConceptId?: string | null;
+  readonly bodySiteConceptId?: string | null;
+  readonly lateralityConceptId?: string | null;
+  readonly contrastConceptId?: string | null;
   readonly createdAt: string;
   readonly previousDiagnosticReportId?: string | null;
   readonly duplicateOverrideReason?: string | null;
@@ -424,11 +437,21 @@ function toOrder({
   previousDiagnosticReportId,
   duplicateOverrideReason,
   previousServiceRequestId,
+  specimenTypeConceptId,
+  modalityConceptId,
+  bodySiteConceptId,
+  lateralityConceptId,
+  contrastConceptId,
   ...resto
 }: WireOrder): DiagnosticOrder {
   return {
     ...resto,
     createdAt: new Date(createdAt),
+    ...(specimenTypeConceptId == null ? {} : { specimenTypeConceptId }),
+    ...(modalityConceptId == null ? {} : { modalityConceptId }),
+    ...(bodySiteConceptId == null ? {} : { bodySiteConceptId }),
+    ...(lateralityConceptId == null ? {} : { lateralityConceptId }),
+    ...(contrastConceptId == null ? {} : { contrastConceptId }),
     ...(previousDiagnosticReportId == null ? {} : { previousDiagnosticReportId }),
     ...(duplicateOverrideReason == null ? {} : { duplicateOverrideReason }),
     ...(previousServiceRequestId == null ? {} : { previousServiceRequestId }),

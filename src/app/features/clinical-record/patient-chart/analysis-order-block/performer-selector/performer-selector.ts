@@ -53,6 +53,10 @@ export const NO_CENTER_SITE_REASON = 'Ningún centro publica este procedimiento 
 export class PerformerSelector {
   /** El procedimiento pedido, o `null` si todavía no se eligió. */
   readonly procedureConceptId = input<string | null>(null);
+  /** La pregunta del selector: «procedimiento» por omisión; laboratorio e imagen la cambian. */
+  readonly titulo = input('Quién realiza el procedimiento');
+  /** Cómo se llama lo que se pide en los motivos: «procedimiento» por omisión, «estudio» en laboratorio e imagen. */
+  readonly termino = input('procedimiento');
 
   /** «Lo hago yo»: sedes activas del médico que publican el procedimiento. */
   readonly ownSites = input<readonly PerformerSite[]>([]);
@@ -98,18 +102,18 @@ export class PerformerSelector {
 
   /** El motivo visible de «Lo hago yo» deshabilitada, o `null` si está disponible. */
   protected readonly selfReason = computed(() =>
-    this.selfEnabled() ? null : (this.unavailableReason() ?? NO_OWN_SITE_REASON),
+    this.selfEnabled() ? null : (this.unavailableReason() ?? NO_OWN_SITE_REASON.replace('procedimiento', this.termino())),
   );
 
   /** El motivo visible de «En este centro» deshabilitada, o `null`. */
   protected readonly organizationReason = computed(() =>
-    this.organizationEnabled() ? null : (this.unavailableReason() ?? NO_CENTER_SITE_REASON),
+    this.organizationEnabled() ? null : (this.unavailableReason() ?? NO_CENTER_SITE_REASON.replace('procedimiento', this.termino())),
   );
 
   /** Lo que impide mirar las sedes, antes de saber si hay o no. */
   private readonly unavailableReason = computed<string | null>(() => {
     if (this.procedureConceptId() === null) {
-      return 'Elija primero el procedimiento';
+      return `Elija primero el ${this.termino()}`;
     }
     if (this.sitesError() !== null) {
       return this.sitesError();

@@ -122,3 +122,52 @@
   color: var(--st-success-fg);
   font-weight: 600;
 }
+
+/* La ficha de «qué hace» el tipo de imagen y qué revisar antes de pedirlo. */
+.estudios__ficha {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.estudios__ficha-titulo,
+.estudios__ficha-subtitulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+.estudios__ficha-texto,
+.estudios__ficha-aviso {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.estudios__ficha-lista {
+  margin: 0;
+  list-style: disc;
+  padding-inline-start: var(--sp-5);
+  display: grid;
+  gap: var(--sp-1);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+/* El origen del texto se dice, y no con sólo color: va en cursiva y apagado. */
+.estudios__ficha-aviso {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-style: italic;
+}
+
+.estudios__detalle {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

@@ -54,6 +54,14 @@ describe('PerformerSelector', () => {
     expect(byTestId('performer-sites')).toBeNull();
   });
 
+  it('en laboratorio e imagen los motivos hablan de «estudio», no de «procedimiento»', async () => {
+    await montar({ ownSites: [], centerSites: [], termino: 'estudio', titulo: 'Qué laboratorio lo realiza' });
+
+    expect(byTestId('performer-self-reason')!.textContent).toContain('publique este estudio con precio');
+    expect(byTestId('performer-organization-reason')!.textContent).toContain('Ningún centro publica este estudio con precio');
+    expect(host.textContent).not.toContain('procedimiento');
+  });
+
   it('«Lo hago yo» deshabilitada con el motivo visible si no hay sedes propias', async () => {
     await montar({ ownSites: [] });
 

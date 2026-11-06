@@ -309,8 +309,11 @@ describe('AnalysisOrderBlock', () => {
     expect(fixture.nativeElement.querySelector('form')).toBeNull();
   });
 
-  /** El tipo no se elige: sale del estudio, y sin estudio no hay pedido. */
-  it('no ofrece un selector de tipo: lo deduce del estudio', () => {
+  /**
+   * El tipo de la orden sale del estudio, y el selector de «Tipo de orden» sólo
+   * ofrece estudios de su familia: no hay forma de pedir un hemograma como imagen.
+   */
+  it('el tipo de orden se elige primero y sin él no se ofrece ningún estudio; el tipo de la categoría sale del estudio', () => {
     fixture.detectChanges();
     responderCatalogos();
     responderCircuito();
@@ -319,7 +322,8 @@ describe('AnalysisOrderBlock', () => {
     const etiquetas = [...fixture.nativeElement.querySelectorAll('label')].map((l: Element) =>
       l.textContent?.trim(),
     );
-    expect(etiquetas.some((t: string | undefined) => t?.startsWith('Tipo'))).toBe(false);
+    expect(etiquetas.some((t: string | undefined) => t?.startsWith('Tipo de orden'))).toBe(true);
+    expect(etiquetas.some((t: string | undefined) => t?.startsWith('Estudio'))).toBe(false);
     expect(componente['puedePedir']()).toBe(false);
 
     componente['estudio'].set('code-hemograma');

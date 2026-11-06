@@ -33,12 +33,15 @@ import { readApiError } from '../../../../core/http/api-error';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { Select } from '../../../../shared/components/atoms/select/select';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { BodyRegionPicker } from '../../../../shared/components/organisms/body-region-picker/body-region-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
+import { TreeSelect } from '../../../../shared/components/organisms/tree-select/tree-select';
 import { writeFailureMessage } from '../../write-message';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { consentTargetState } from '../informed-consent/consent-target';
@@ -56,6 +59,8 @@ import {
 import { createPerformerOrderState } from './performer-selector/performer-order-state';
 import { PerformerSelector } from './performer-selector/performer-selector';
 import { createStudyCategoryState } from './study-category';
+import { createOrderDetailState } from './order-detail-state';
+import type { OrderKind } from './study-order-kind';
 import type { EstudioEnFicha } from './analysis-order-block.helpers';
 
 export type { EstudioEnFicha } from './analysis-order-block.helpers';
@@ -79,6 +84,14 @@ export const TARGET_CATEGORIA = 'clinical.service_requests.category_concept_id';
 
 /** La prioridad. Opcional en el DTO: sin binding, se omite y ya. */
 export const TARGET_PRIORIDAD = 'clinical.service_requests.priority_concept_id';
+
+export {
+  TARGET_CONTRASTE,
+  TARGET_LATERALIDAD,
+  TARGET_MODALIDAD,
+  TARGET_MUESTRA,
+  TARGET_REGION,
+} from './order-detail-state';
 
 /** Lo que se muestra cuando un concepto no tiene etiqueta en el catálogo. */
 const SIN_DATO = '—';
@@ -143,7 +156,10 @@ const TOPE = 25;
     DuplicateStudyWarningDialog,
     FormActions,
     FormField,
+    BodyRegionPicker,
     PerformerSelector,
+    Select,
+    TreeSelect,
     InformedConsentBadge,
     InformedConsentDialog,
   ],
@@ -244,12 +260,24 @@ export class AnalysisOrderBlock {
 
   protected readonly pidiendo = signal(false);
 
-  /** Quién realiza el procedimiento: sólo en órdenes de procedimiento. */
+  /* -- Tipo de orden y detalle (06/11/2026) ---------------------------------
+     Lo primero que se elige es a quién va el pedido: laboratorio o imagen (y,
+     para no perder lo que ya se podía pedir, «otro estudio»). Cambia qué se
+     pregunta después y qué detalle viaja (`order-detail-state.ts`). */
+  protected readonly orden = createOrderDetailState({
+    study: this.estudio,
+    studyTarget: TARGET_ESTUDIO,
+    labelOf: (id) => this.etiquetaDe(id),
+  });
+
+  /** Quién realiza el estudio: procedimientos, y la recomendación para laboratorio e imagen. */
   protected readonly performer = createPerformerOrderState({
     category: this.tipo.conceptId,
     study: this.estudio,
     categoryTarget: TARGET_CATEGORIA,
+    alsoFor: this.orden.performerApplies,
   });
+
 
   /** El resultado de la última escritura. */
   protected readonly registro = signal<ViewState<null>>(ready(null));
@@ -409,6 +437,13 @@ export class AnalysisOrderBlock {
     });
   }
 
+  /** Cambia el tipo de orden; el ejecutor recomendado para el anterior tampoco se arrastra. */
+  protected elegirTipoDeOrden(tipo: OrderKind | null): void {
+    if (this.orden.chooseKind(tipo)) {
+      this.performer.reset();
+    }
+  }
+
   /** La etiqueta de un concepto, o el guion si el catálogo no la tiene. */
   protected etiquetaDe(conceptId: string | undefined): string {
     if (conceptId === undefined) {
@@ -519,6 +554,7 @@ export class AnalysisOrderBlock {
       // Los opcionales sin elegir se **omiten**: el backend valida con
       // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
       ...(prioridad === null ? {} : { priorityConceptId: prioridad }),
+      ...this.orden.fields(),
       ...performerFields,
       ...decision,
     };
@@ -609,6 +645,7 @@ export class AnalysisOrderBlock {
   private limpiar(): void {
     this.estudio.set(null);
     this.prioridad.set(null);
+    this.orden.reset();
     this.performer.reset();
   }
 
@@ -644,6 +681,7 @@ export class AnalysisOrderBlock {
           ? (informesPorId.get(orden.previousDiagnosticReportId)?.createdAt ?? null)
           : null,
       justificacion: orden.duplicateOverrideReason ?? null,
+      detalle: this.orden.describe(orden),
       ...(orden.encounterId === undefined ? {} : { encounterId: orden.encounterId }),
     };
   }

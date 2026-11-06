@@ -1,0 +1,75 @@
+/* El visor 3D y, al lado, la lista de las mismas regiones. En pantalla angosta
+   se apilan: primero el modelo, después la lista. */
+
+:host {
+  display: block;
+}
+
+.region {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--sp-4);
+  align-items: stretch;
+}
+
+.region__visor {
+  min-inline-size: 0;
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+/* Altura DEFINIDA, como en el glosario: con la del lienzo (`block-size: 100%` de
+   un contenedor sin altura) el tamaño del dibujo empuja al contenedor, y el
+   `ResizeObserver` del visor entra en bucle («loop completed with undelivered
+   notifications»). */
+.region__visor app-anatomy-viewer {
+  block-size: 24rem;
+}
+
+.region__aviso {
+  margin: 0;
+  padding: var(--sp-4);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.region__lista {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.region__titulo {
+  padding: 0;
+  margin-block-end: var(--sp-1);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+.region__nota {
+  margin: var(--sp-1) 0 0;
+  min-block-size: var(--lh-caption);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+@media (max-width: 40rem) {
+  .region {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.region__leyenda {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

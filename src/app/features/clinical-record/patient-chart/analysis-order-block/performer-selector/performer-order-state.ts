@@ -24,6 +24,13 @@ export interface PerformerOrderStateInputs {
   readonly study: Signal<string | null>;
   /** El binding que puebla las categorías (`esquema.tabla.columna`). */
   readonly categoryTarget: string;
+  /**
+   * Ofrece también el selector de ejecutor en órdenes que no son de
+   * procedimiento (laboratorio e imagen). Es la recomendación de dónde hacerse
+   * el estudio: no asigna nada, y sin elegir sigue siendo «que elija el
+   * paciente».
+   */
+  readonly alsoFor?: Signal<boolean>;
 }
 
 /** Lo que el selector muestra de las sedes: nunca inventa, dice por qué faltan. */
@@ -95,6 +102,9 @@ export function createPerformerOrderState(inputs: PerformerOrderStateInputs): Pe
   });
 
   const isProcedure = computed(() => {
+    if (inputs.alsoFor?.() === true && inputs.study() !== null) {
+      return true;
+    }
     const chosen = inputs.category();
     return chosen !== null && isProcedureCategoryCode(categories().find((c) => c.conceptId === chosen)?.code);
   });

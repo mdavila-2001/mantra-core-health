@@ -715,6 +715,12 @@ export interface SimulatedOrder {
   readonly duplicateOverrideReason?: string;
   /** P40 (C2): las notas médicas que motivan la orden, en el orden citado. */
   readonly basedOnNoteIds?: readonly string[];
+  /** Detalle de la orden (v4.2.82): muestra (laboratorio) y tipo de imagen, región, lado y contraste (imagen). */
+  readonly specimenTypeConceptId?: string;
+  readonly modalityConceptId?: string;
+  readonly bodySiteConceptId?: string;
+  readonly lateralityConceptId?: string;
+  readonly contrastConceptId?: string;
 }
 
 export const orderList = new Coleccion<SimulatedOrder>(

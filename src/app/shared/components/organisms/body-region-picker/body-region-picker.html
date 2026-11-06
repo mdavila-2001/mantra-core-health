@@ -1,0 +1,31 @@
+<div class="region">
+  <section class="region__visor" aria-label="Modelo 3D del cuerpo">
+    @if (parts().length > 0) {
+      <app-anatomy-viewer
+        [parts]="parts()"
+        [modelUrls]="modelUrls"
+        [layers]="layers"
+        [selected]="selectedMeshes()"
+        label="Cuerpo humano en 3D. Toque una pieza para proponer su región"
+        (picked)="onPicked($event)"
+      />
+    } @else if (partsFailed()) {
+      <p class="region__aviso" role="status">
+        No pudimos cargar el modelo 3D. Elija la región en la lista.
+      </p>
+    } @else {
+      <p class="region__aviso" role="status">Cargando el modelo…</p>
+    }
+    <p class="region__leyenda">Toque una pieza del modelo para proponer su región, o elíjala en la lista.</p>
+  </section>
+
+  <fieldset class="region__lista">
+    <legend class="region__titulo">Región del cuerpo</legend>
+    <app-radio-group [name]="groupName" [value]="value()" (valueChange)="pickFromList($event)">
+      @for (region of regions(); track region.atlas) {
+        <app-radio [value]="region.atlas" [label]="region.label" data-testid="body-region-option" />
+      }
+    </app-radio-group>
+    <p class="region__nota" role="status" data-testid="body-region-note">{{ pickedNote() }}</p>
+  </fieldset>
+</div>

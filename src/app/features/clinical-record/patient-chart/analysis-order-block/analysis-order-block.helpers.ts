@@ -45,6 +45,12 @@ export interface EstudioEnFicha {
   readonly informePrevioDel: Date | null;
   /** La justificación clínica guardada al repetir el estudio (v4.2.47); `null` si no hubo. */
   readonly justificacion: string | null;
+  /**
+   * El detalle que se pidió, en palabras: la muestra de un laboratorio, o el
+   * tipo de imagen, la región, el lado y el contraste. `null` en una orden
+   * anterior o de «estudio completo».
+   */
+  readonly detalle: string | null;
   /** La consulta en la que se pidió, si la orden la trae. Ata su consentimiento informado. */
   readonly encounterId?: string;
 }

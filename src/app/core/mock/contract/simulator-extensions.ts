@@ -7,6 +7,7 @@ import {
   PATIENT_SEARCH_SIMULATOR_EXTENSIONS,
   PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS,
 } from '../../data-access/profiles/profiles.types';
+import { SERVICE_REQUEST_DETAIL_CONTRACT_PENDING_KEYS } from '../../data-access/diagnostics/diagnostics.types';
 import { INFORMED_CONSENT_CONTRACT_PENDING_KEYS } from '../../data-access/informed-consents/informed-consents.types';
 import {
   REFERRAL_CONTRACT_PENDING_KEYS,
@@ -50,6 +51,10 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   'PATCH /referrals/:id/respond': REFERRAL_RESPOND_CONTRACT_PENDING_KEYS,
   // Consentimiento informado DIRIGIDO (v4266): mismo caso que el de arriba.
   'POST /consent/treatment-informed-consents': INFORMED_CONSENT_CONTRACT_PENDING_KEYS,
+  // Detalle de la orden de estudio (06/11/2026): muestra, tipo de imagen, región, lado y
+  // contraste. La API los acepta desde esta entrega; el cliente SÍ los manda a la API real.
+  // Se borra al regenerar el contrato.
+  'POST /clinical/service-requests': SERVICE_REQUEST_DETAIL_CONTRACT_PENDING_KEYS,
   // Respuesta automática redactada por la IA: falta la columna del modo en el modelo.
   'PUT /community/profiles/:profileId/auto-reply': CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS,
   // Personal de apoyo que responde en nombre del doctor (ronda «personal de

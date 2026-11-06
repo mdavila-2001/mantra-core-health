@@ -124,7 +124,13 @@ const ENUMS: readonly (readonly [patron: RegExp, valueSet: string, name: string]
    * diagnóstico. Van antes de `/category/` a secas, que casaría con
    * `service_requests.category_concept_id` pero con el conjunto equivocado.
    */
-  [/service_requests\.code_concept_id/, 'VS_DIAGNOSTIC_STUDY', 'Estudio'],
+  [/service_requests\.code_concept_id/, 'VS_ORDERABLE_STUDY', 'Estudio'],
+  // El detalle de la orden (v4.2.82). Con la tabla en el patrón, por lo mismo que arriba.
+  [/service_requests\.specimen_type_concept_id/, 'VS_SPECIMEN_TYPE', 'Muestra'],
+  [/service_requests\.modality_concept_id/, 'VS_DIAGNOSTIC_MODALITY', 'Tipo de imagen'],
+  [/service_requests\.body_site_concept_id/, 'VS_SERVICE_REQUEST_BODY_REGION', 'Región del cuerpo'],
+  [/service_requests\.laterality_concept_id/, 'VS_CONDITION_LATERALITY', 'Lado'],
+  [/service_requests\.contrast_concept_id/, 'VS_SERVICE_REQUEST_CONTRAST', 'Contraste'],
   /* El buscador de la receta (`medication-block`) pide este catálogo y no estaba
      mapeado: caía al `VS_RECORD_STATUS` de respaldo y ofrecía «Activo»,
      «Inactivo»… como medicamentos, así que ninguna búsqueda encontraba nada. */

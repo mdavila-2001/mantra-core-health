@@ -1,6 +1,14 @@
 import type { AnalysisCategory } from '../../data-access/diagnostics/diagnostics.types';
 import { noteList } from '../fixtures/clinic';
-import { ORDER_CATEGORY, STATUS } from '../fixtures/concepts';
+import {
+  DIAGNOSTIC_MODALITY,
+  LATERALITY,
+  ORDER_BODY_REGION,
+  ORDER_CATEGORY,
+  ORDER_CONTRAST,
+  SPECIMEN_TYPE,
+  STATUS,
+} from '../fixtures/concepts';
 
 /* ============================================================================
     P40 (carril C2) en el doble: la categoría textual de la orden de análisis y
@@ -131,4 +139,87 @@ export function validarNotas(
 /** ¿Es un rechazo? */
 export function esRechazo(valor: object): valor is RechazoDeOrden {
   return 'status' in valor;
+}
+
+/* ============================================================================
+    El detalle de la orden (v4.2.82) en el doble: muestra en laboratorio; tipo
+    de imagen, región, lado y contraste en imagenología. Las mismas reglas que
+    la API (`service-request-detail.ts`): el cruce con la categoría, la
+    pertenencia a su catálogo y las dos dependencias (lado ⇒ región, contraste
+    ⇒ tipo de imagen). Cada una responde 422 con su `reason`.
+    ========================================================================== */
+
+export interface DetalleDeOrden {
+  readonly specimenTypeConceptId?: string;
+  readonly modalityConceptId?: string;
+  readonly bodySiteConceptId?: string;
+  readonly lateralityConceptId?: string;
+  readonly contrastConceptId?: string;
+}
+
+const CAMPOS_DE_IMAGEN = ['modalityConceptId', 'bodySiteConceptId', 'lateralityConceptId', 'contrastConceptId'] as const;
+
+const CATALOGOS_DEL_DETALLE: Readonly<Record<keyof DetalleDeOrden, ReadonlySet<string>>> = {
+  specimenTypeConceptId: new Set(Object.values(SPECIMEN_TYPE)),
+  // La modalidad de laboratorio no es un tipo de imagen.
+  modalityConceptId: new Set(
+    Object.entries(DIAGNOSTIC_MODALITY)
+      .filter(([codigo]) => codigo !== 'DU_MODALITY_LAB')
+      .map(([, id]) => id),
+  ),
+  bodySiteConceptId: new Set(Object.values(ORDER_BODY_REGION)),
+  lateralityConceptId: new Set(Object.values(LATERALITY)),
+  contrastConceptId: new Set(Object.values(ORDER_CONTRAST)),
+};
+
+/**
+ * El detalle a guardar, o el rechazo.
+ *
+ * @param categoria - La categoría de la orden, o `undefined` si no la declara.
+ * @param cuerpo - El cuerpo del alta.
+ */
+export function validarDetalle(
+  categoria: AnalysisCategory | undefined,
+  cuerpo: Readonly<Record<string, unknown>>,
+): { readonly detalle: DetalleDeOrden } | RechazoDeOrden {
+  const detalle: { -readonly [K in keyof DetalleDeOrden]: string } = {};
+  for (const campo of Object.keys(CATALOGOS_DEL_DETALLE) as (keyof DetalleDeOrden)[]) {
+    const valor = cuerpo[campo];
+    if (valor === undefined) continue;
+    if (typeof valor !== 'string') {
+      return { status: 400, reason: 'VALIDATION_FAILED', message: `${campo} debe ser un uuid` };
+    }
+    detalle[campo] = valor;
+  }
+  const hayMuestra = detalle.specimenTypeConceptId !== undefined;
+  const deImagen = CAMPOS_DE_IMAGEN.filter((c) => detalle[c] !== undefined);
+  if (!hayMuestra && deImagen.length === 0) return { detalle };
+
+  if ((hayMuestra && categoria !== 'LAB') || (deImagen.length > 0 && categoria !== 'IMAGING')) {
+    return {
+      status: 422,
+      reason: 'SERVICE_REQUEST_DETAIL_NOT_FOR_CATEGORY',
+      message: 'Esos datos no corresponden a la categoría de la orden',
+    };
+  }
+  for (const [campo, valor] of Object.entries(detalle)) {
+    if (!CATALOGOS_DEL_DETALLE[campo as keyof DetalleDeOrden].has(valor)) {
+      return {
+        status: 422,
+        reason: 'SERVICE_REQUEST_DETAIL_NOT_IN_CATALOG',
+        message: 'El valor no pertenece al catálogo de ese campo',
+      };
+    }
+  }
+  if (
+    (detalle.lateralityConceptId !== undefined && detalle.bodySiteConceptId === undefined) ||
+    (detalle.contrastConceptId !== undefined && detalle.modalityConceptId === undefined)
+  ) {
+    return {
+      status: 422,
+      reason: 'SERVICE_REQUEST_DETAIL_DEPENDENCY',
+      message: 'La lateralidad necesita la región y el contraste necesita el tipo de imagen',
+    };
+  }
+  return { detalle };
 }

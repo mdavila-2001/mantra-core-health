@@ -1,13 +1,21 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { noteList } from '../fixtures/clinic';
-import { ORDER_CATEGORY, STATUS } from '../fixtures/concepts';
+import {
+  DIAGNOSTIC_MODALITY,
+  LATERALITY,
+  ORDER_BODY_REGION,
+  ORDER_CATEGORY,
+  ORDER_CONTRAST,
+  SPECIMEN_TYPE,
+  STATUS,
+} from '../fixtures/concepts';
 import { PATIENTS } from '../fixtures/people';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { uuid } from '../mock-store';
 import { registrarDiagnostico } from './diagnostics.handlers';
-import { categoriaDeLaOrden } from './service-request-category.mock';
+import { categoriaDeLaOrden, esRechazo, validarDetalle } from './service-request-category.mock';
 
 /**
  * P40 (carril C2) en el doble: `POST /clinical/service-requests` con
@@ -164,5 +172,58 @@ describe('P40 · orden de análisis basada en notas (simulador)', () => {
     expect(categoriaDeLaOrden(ORDER_CATEGORY['SRQ-IMAGING'])).toBe('IMAGING');
     expect(categoriaDeLaOrden(ORDER_CATEGORY['SRQ-PROCEDURE'])).toBe('OTHER');
     expect(categoriaDeLaOrden('')).toBeUndefined();
+  });
+});
+
+describe('validarDetalle (detalle de la orden, v4.2.82)', () => {
+  const MUESTRA = SPECIMEN_TYPE['BLDV']!;
+  const RX = DIAGNOSTIC_MODALITY['DU_MODALITY_XRAY']!;
+  const REGION = ORDER_BODY_REGION['SR_REGION_UPPER_LIMB']!;
+  const LADO = LATERALITY['COND_LAT_LEFT']!;
+  const CONTRASTE = ORDER_CONTRAST['SR_CONTRAST_NONE']!;
+  const razon = (r: unknown) => (esRechazo(r as object) ? (r as { reason: string }).reason : null);
+
+  describe('correcto', () => {
+    it('una orden de laboratorio guarda su muestra', () => {
+      expect(validarDetalle('LAB', { specimenTypeConceptId: MUESTRA })).toEqual({
+        detalle: { specimenTypeConceptId: MUESTRA },
+      });
+    });
+    it('una orden de imagen guarda tipo, región, lado y contraste', () => {
+      const cuerpo = { modalityConceptId: RX, bodySiteConceptId: REGION, lateralityConceptId: LADO, contrastConceptId: CONTRASTE };
+      expect(validarDetalle('IMAGING', cuerpo)).toEqual({ detalle: cuerpo });
+    });
+  });
+
+  describe('límite', () => {
+    it('sin detalle no hay nada que validar, con cualquier categoría o sin ella', () => {
+      for (const categoria of ['LAB', 'IMAGING', 'OTHER', undefined] as const) {
+        expect(validarDetalle(categoria, {})).toEqual({ detalle: {} });
+      }
+    });
+    it('la región sola, sin lado, es válida', () => {
+      expect(razon(validarDetalle('IMAGING', { bodySiteConceptId: REGION }))).toBeNull();
+    });
+  });
+
+  describe('inválido', () => {
+    it('rechaza el cruce con la categoría en los dos sentidos y sin categoría', () => {
+      expect(razon(validarDetalle('IMAGING', { specimenTypeConceptId: MUESTRA }))).toBe('SERVICE_REQUEST_DETAIL_NOT_FOR_CATEGORY');
+      expect(razon(validarDetalle('LAB', { modalityConceptId: RX }))).toBe('SERVICE_REQUEST_DETAIL_NOT_FOR_CATEGORY');
+      expect(razon(validarDetalle(undefined, { specimenTypeConceptId: MUESTRA }))).toBe('SERVICE_REQUEST_DETAIL_NOT_FOR_CATEGORY');
+    });
+    it('rechaza un valor de otro catálogo, y la modalidad de laboratorio como tipo de imagen', () => {
+      expect(razon(validarDetalle('IMAGING', { bodySiteConceptId: LADO }))).toBe('SERVICE_REQUEST_DETAIL_NOT_IN_CATALOG');
+      expect(razon(validarDetalle('IMAGING', { modalityConceptId: DIAGNOSTIC_MODALITY['DU_MODALITY_LAB']! }))).toBe(
+        'SERVICE_REQUEST_DETAIL_NOT_IN_CATALOG',
+      );
+    });
+    it('rechaza lado sin región y contraste sin tipo de imagen', () => {
+      expect(razon(validarDetalle('IMAGING', { lateralityConceptId: LADO }))).toBe('SERVICE_REQUEST_DETAIL_DEPENDENCY');
+      expect(razon(validarDetalle('IMAGING', { contrastConceptId: CONTRASTE }))).toBe('SERVICE_REQUEST_DETAIL_DEPENDENCY');
+    });
+    it('un valor que no es texto es un 400', () => {
+      expect(validarDetalle('LAB', { specimenTypeConceptId: 5 })).toMatchObject({ status: 400 });
+    });
   });
 });

@@ -1125,6 +1125,55 @@ export const ORDER_CATEGORY = define('VS_SERVICE_REQUEST_CATEGORY', [
   ['SRQ-OTHER', 'Otro', 'Orden de análisis que no pertenece a laboratorio ni imagenología.'],
 ]);
 
+/* El detalle de la orden de imagen, con los códigos del backend (`CLIN.SERVICE_REQUEST_*`
+   de `clinical.concepts.ts`): las siete regiones del atlas 3D y los tres contrastes. */
+conjunto('VS_SERVICE_REQUEST_CONTRAST', 'Contraste', 'Si el estudio de imagen se pide con o sin contraste.');
+export const ORDER_CONTRAST = define('VS_SERVICE_REQUEST_CONTRAST', [
+  ['SR_CONTRAST_NONE', 'Sin contraste'],
+  ['SR_CONTRAST_WITH', 'Con contraste'],
+  ['SR_CONTRAST_BOTH', 'Sin y con contraste'],
+]);
+
+conjunto('VS_SERVICE_REQUEST_BODY_REGION', 'Región del cuerpo', 'Las siete regiones del atlas anatómico 3D.');
+export const ORDER_BODY_REGION = define('VS_SERVICE_REQUEST_BODY_REGION', [
+  ['SR_REGION_HEAD_NECK', 'Cabeza y cuello'],
+  ['SR_REGION_BACK_SPINE', 'Dorso y médula espinal'],
+  ['SR_REGION_THORAX', 'Tórax'],
+  ['SR_REGION_ABDOMEN', 'Abdomen'],
+  ['SR_REGION_PELVIS', 'Pelvis y periné'],
+  ['SR_REGION_UPPER_LIMB', 'Miembro superior'],
+  ['SR_REGION_LOWER_LIMB', 'Miembro inferior'],
+]);
+
+/* El catálogo de estudios que se ofrece al **pedir** (`service_requests.code_concept_id`),
+   con los códigos del backend (`LAB_*`, `IMG_*`, `CAR_*`, `PRO_*`): la pantalla de la orden
+   deduce la familia, el tipo de análisis y el tipo de imagen del prefijo, y los códigos
+   `STUDY-*` del resto de la maqueta no lo tienen. Un subconjunto del catálogo real. */
+conjunto('VS_ORDERABLE_STUDY', 'Estudios que se pueden pedir', 'Laboratorio, imagen y otros estudios, con los códigos del catálogo.');
+export const ORDERABLE_STUDY = define('VS_ORDERABLE_STUDY', [
+  ['LAB_HEMOGRAMA', 'Hemograma completo'],
+  ['LAB_VSG', 'Velocidad de sedimentación globular'],
+  ['LAB_GLICEMIA', 'Glicemia en ayunas'],
+  ['LAB_PERFIL_LIPIDICO', 'Perfil lipídico'],
+  ['LAB_CREATININA', 'Creatinina'],
+  ['LAB_TSH', 'TSH'],
+  ['LAB_VIH', 'VIH (tamizaje)'],
+  ['LAB_ORINA', 'Examen general de orina'],
+  ['LAB_UROCULTIVO', 'Urocultivo'],
+  ['LAB_COPROPARASITOLOGICO', 'Coproparasitológico'],
+  ['LAB_BACILOSCOPIA', 'Baciloscopia de esputo'],
+  ['IMG_RX_TORAX', 'Radiografía de tórax'],
+  ['IMG_RX_MIEMBRO_SUP', 'Radiografía de miembro superior'],
+  ['IMG_RX_MIEMBRO_INF', 'Radiografía de miembro inferior'],
+  ['IMG_ECO_ABDOMINAL', 'Ecografía abdominal'],
+  ['IMG_TC_CRANEO', 'Tomografía de cráneo'],
+  ['IMG_RM_CEREBRAL', 'Resonancia cerebral'],
+  ['IMG_MAMOGRAFIA', 'Mamografía'],
+  ['IMG_DENSITOMETRIA', 'Densitometría ósea'],
+  ['CAR_ECG', 'Electrocardiograma'],
+  ['PRO_ENDOSCOPIA_ALTA', 'Endoscopía digestiva alta'],
+]);
+
 conjunto('VS_PRIORITY', 'Prioridad', 'Prioridad de una orden.');
 export const PRIORITY = define('VS_PRIORITY', [
   ['PRI-ROUTINE', 'Rutina'],

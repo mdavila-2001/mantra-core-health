@@ -1,0 +1,40 @@
+PASS · 0 el formulario ofrece «Tipo de orden»
+PASS · 0 sin tipo elegido no hay «Tipo de análisis» ni «Tipo de imagen»
+PASS · 1 Laboratorio muestra «Tipo de análisis»
+PASS · 1 los tipos de análisis son Sangre, Orina, Heces, Fluidos y secreciones, Genético — Sangre | Orina | Heces | Fluidos y secreciones | Genético
+PASS · 1 «Genético» dice que no hay estudios y no inventa ninguno
+PASS · 1 el árbol de Orina se abre con sus estudios — Estudio de laboratorio Orina 2 Examen general de orina Urocultivo Cancelar
+PASS · 1 el árbol de Heces se abre con sus estudios — Estudio de laboratorio Heces 1 Coproparasitológico Cancelar
+PASS · 1 el árbol de Fluidos y secreciones se abre con sus estudios — Estudio de laboratorio Esputo y secreciones 1 Baciloscopia de esputo Cancelar
+PASS · 1 el árbol de Sangre trae sus ramas (Hematología, Química sanguínea…) — Estudio de laboratorio Hematología 2 Química sanguínea 3 Hormonas y marcadores 1 Serología e infecciosas 1 Cancelar
+PASS · 1 el árbol de Sangre NO trae estudios de orina
+PASS · 1 se pudo elegir un estudio de laboratorio en el árbol — Perfil lipídico
+PASS · 1 la muestra de Sangre se limita a muestras de sangre (no orina ni heces) — Sangre venosa | Suero | Plasma | Sangre arterial | Sangre capilar
+PASS · 1 aparece «Qué laboratorio lo realiza» (recomendación)
+PASS · 1 «Pedir estudio» queda habilitado
+PASS · 1 salió UN POST /clinical/service-requests — {"custodianTenantId":"7008ddb3-957c-4095-a68f-a9425d52b798","patientProfileId":"c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0","codeConceptId":"2054886c-f21b-4414-ac58-2928342a6dc0","category":"LAB","encounterId":"055b7df8-541b-4504-aa2f-d60c9b30633c","specimenTypeConceptId":"9ba2600a-c627-4ab6-aed1-6becc446d620","performerSelectionConceptId":"f65da5a1-7ec8-47d5-a41f-d65461b2eac6"}
+PASS · 1 el cuerpo lleva category LAB y specimenTypeConceptId, y ningún dato de imagen
+PASS · 1 el servidor (simulador) aceptó con 2xx — 201
+PASS · 1 tras recargar, el histórico muestra «Sangre venosa» en la orden — Sangre venosa
+PASS · 2 Imagenología muestra «Tipo de imagen» y no el tipo de análisis
+PASS · 2 los tipos de imagen incluyen Rayos X y Ecografía, sin «Laboratorio» — Rayos X | Ecografía | Tomografía computarizada | Resonancia magnética | Mamografía | Densitometría ósea
+PASS · 2 aparece la ficha «Rayos X: qué hace» con «Para revisar antes de pedirlo»
+PASS · 2 la ficha dice que es un texto interno pendiente de revisión clínica
+PASS · 2 el cuerpo 3D (visor del atlas, reusado) está en el formulario
+PASS · 2 la lista elige la región «Miembro superior»
+PASS · 2 con región aparece «Lado»
+PASS · 2 aparece «Qué centro de imagen lo realiza»
+PASS · 2 «Pedir estudio» queda habilitado
+PASS · 2 salió UN POST /clinical/service-requests — {"custodianTenantId":"7008ddb3-957c-4095-a68f-a9425d52b798","patientProfileId":"c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0","codeConceptId":"ffb5e06d-7ccc-4531-a3d2-d264494cd8ae","category":"IMAGING","encounterId":"055b7df8-541b-4504-aa2f-d60c9b30633c","modalityConceptId":"38c4bdc2-3f1d-4ae6-aef0-156469b38708","bodySiteConceptId":"5b2a56c4-2304-423c-ad25-43f8ae7b3cc0","lateralityConceptId":"46a15840-8900-445a-a68a-a41a5fb1923a","contrastConceptId":"1f288fd5-1132-448f-a71b-cf5a43813d54","performerSelectionConceptId":"f65da5a1-7ec8-47d5-a41f-d65461b2eac6"}
+PASS · 2 el cuerpo lleva category IMAGING, tipo de imagen, región, lado y contraste, y ninguna muestra
+PASS · 2 el simulador aceptó con 2xx — 201
+PASS · 2 tras recargar, el histórico dice «Rayos X · Miembro superior · Izquierdo · Sin contraste» — Sangre venosa | Rayos X · Miembro superior · Izquierdo · Sin contraste
+PASS · 3 al pasar a Laboratorio no queda el estudio de imagen ni la ficha
+PASS · 3 «Otro estudio» conserva el selector de estudios de siempre
+
+NOTA · La agenda de hoy no tiene citas atendibles (0): se entra por el archivo clínico.
+NOTA · Consulta: http://127.0.0.1:4333/medical-records/c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0/consultation
+NOTA · Estado del visor 3D en este navegador: ready
+NOTA · Tras tocar el modelo, la nota dice: ««yeyuno» no tiene región asignada en el atlas: elíjala en la lista.»
+
+Errores de consola/página (0):

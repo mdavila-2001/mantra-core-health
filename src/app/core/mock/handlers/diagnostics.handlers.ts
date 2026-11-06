@@ -34,7 +34,7 @@ import { TENANT_CLINICA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENA
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 import { decodeInboxCursor, encodeInboxCursor } from './diagnostics-inbox-cursor';
 import { performerFieldsOfOrder, pickPerformerFields, seededProcedureOrdersOf } from './service-request-performer.mock';
-import { categoriaDeLaOrden, esRechazo, resolverCategoria, validarNotas, type RechazoDeOrden } from './service-request-category.mock';
+import { categoriaDeLaOrden, esRechazo, resolverCategoria, validarDetalle, validarNotas, type RechazoDeOrden } from './service-request-category.mock';
 
 /* ============================================================================
     Diagnóstico: órdenes e informes del circuito clínico, la cola de trabajo
@@ -998,6 +998,12 @@ export function registrarDiagnostico(router: MockRouter): void {
       category?: unknown;
       basedOnNoteIds?: unknown;
       priorityConceptId?: string;
+      // Detalle de la orden (v4.2.82).
+      specimenTypeConceptId?: string;
+      modalityConceptId?: string;
+      bodySiteConceptId?: string;
+      lateralityConceptId?: string;
+      contrastConceptId?: string;
       reasonText?: string;
       encounterId?: string;
       formInstanceId?: string;
@@ -1017,6 +1023,8 @@ export function registrarDiagnostico(router: MockRouter): void {
     if (esRechazo(categoria)) return rechazoDeOrden(categoria);
     const notas = validarNotas(datos.basedOnNoteIds, patientProfileId, datos.encounterId);
     if (esRechazo(notas)) return rechazoDeOrden(notas);
+    const detalle = validarDetalle(categoriaDeLaOrden(categoria.conceptId), datos);
+    if (esRechazo(detalle)) return rechazoDeOrden(detalle);
 
     // Sin decisión, el alta vuelve a correr el mismo detector que el
     // chequeo: la UI no es la barrera. Con decisión, se confía en lo que el
@@ -1041,6 +1049,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       categoryConceptId: categoria.conceptId ?? '',
       ...(notas.noteIds.length === 0 ? {} : { basedOnNoteIds: notas.noteIds }),
       priorityConceptId: datos.priorityConceptId ?? '',
+      ...detalle.detalle,
       statusConceptId: reutilizada ? STATUS['ST-SATISFIED-BY-PRIOR']! : STATUS['ST-PENDING']!,
       requesterProfileId: request.user?.practitionerProfileId ?? MEDICAL.id,
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
@@ -1061,6 +1070,11 @@ export function registrarDiagnostico(router: MockRouter): void {
         id: nueva.id,
         patientProfileId: nueva.patientProfileId,
         ...ordenDeAnalisis(nueva),
+        specimenTypeConceptId: nueva.specimenTypeConceptId ?? null,
+        modalityConceptId: nueva.modalityConceptId ?? null,
+        bodySiteConceptId: nueva.bodySiteConceptId ?? null,
+        lateralityConceptId: nueva.lateralityConceptId ?? null,
+        contrastConceptId: nueva.contrastConceptId ?? null,
         status: reutilizada ? 'SATISFIED_BY_PRIOR' : 'ACTIVE',
         createdAt: nueva.createdAt,
       },

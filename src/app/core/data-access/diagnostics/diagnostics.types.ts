@@ -56,6 +56,16 @@ export interface DiagnosticOrder {
    */
   readonly basedOnNoteIds?: readonly string[];
   readonly statusConceptId: string;
+  /** Detalle de la orden (v4.2.82). Muestra (laboratorio): concepto de `specimen-type`. Ausente en una orden anterior o «estudio completo». */
+  readonly specimenTypeConceptId?: string;
+  /** Detalle de la orden (v4.2.82). Tipo de imagen (imagenología): concepto de `diagnostic-modality`. Ausente en una orden anterior o «estudio completo». */
+  readonly modalityConceptId?: string;
+  /** Detalle de la orden (v4.2.82). Región del cuerpo (imagenología): concepto de `service-request-body-region`. Ausente en una orden anterior o «estudio completo». */
+  readonly bodySiteConceptId?: string;
+  /** Detalle de la orden (v4.2.82). Lateralidad (imagenología): exige la región. Ausente en una orden anterior o «estudio completo». */
+  readonly lateralityConceptId?: string;
+  /** Detalle de la orden (v4.2.82). Contraste (imagenología): exige el tipo de imagen. Ausente en una orden anterior o «estudio completo». */
+  readonly contrastConceptId?: string;
   readonly priorityConceptId?: string;
   readonly requesterProfileId?: string;
   readonly createdAt: Date;
@@ -142,6 +152,16 @@ export interface NewDiagnosticOrder extends ServiceRequestPerformerInput {
    * En la cita es obligatoria (P43).
    */
   readonly formInstanceId?: string;
+  /** Detalle de la orden (v4.2.82). Muestra (laboratorio): concepto de `specimen-type`. Sólo con la categoría que corresponde: si no, 422. */
+  readonly specimenTypeConceptId?: string;
+  /** Detalle de la orden (v4.2.82). Tipo de imagen (imagenología): concepto de `diagnostic-modality`. Sólo con la categoría que corresponde: si no, 422. */
+  readonly modalityConceptId?: string;
+  /** Detalle de la orden (v4.2.82). Región del cuerpo (imagenología): concepto de `service-request-body-region`. Sólo con la categoría que corresponde: si no, 422. */
+  readonly bodySiteConceptId?: string;
+  /** Detalle de la orden (v4.2.82). Lateralidad (imagenología): exige la región. Sólo con la categoría que corresponde: si no, 422. */
+  readonly lateralityConceptId?: string;
+  /** Detalle de la orden (v4.2.82). Contraste (imagenología): exige el tipo de imagen. Sólo con la categoría que corresponde: si no, 422. */
+  readonly contrastConceptId?: string;
   readonly priorityConceptId?: string;
   readonly requesterProfileId?: string;
   readonly performerTenantId?: string;
@@ -155,6 +175,23 @@ export interface NewDiagnosticOrder extends ServiceRequestPerformerInput {
   readonly reusePreviousReport?: boolean;
   readonly duplicateOverrideReason?: string;
 }
+
+/**
+ * Las claves del detalle de la orden (v4.2.82) que la API acepta desde esta
+ * entrega y el `openapi.json` con el que se generó la maqueta todavía no trae.
+ *
+ * **No** son «sólo simulador»: van también a la API real, que es la que las
+ * publica. Se registran en `core/mock/contract/simulator-extensions.ts` para que
+ * la maqueta no las rechace con un 400 mientras tanto, y esa entrada se borra en
+ * cuanto `scripts/gen-mock-contract.mjs` regenere el contrato con ellas.
+ */
+export const SERVICE_REQUEST_DETAIL_CONTRACT_PENDING_KEYS: readonly string[] = [
+  'specimenTypeConceptId',
+  'modalityConceptId',
+  'bodySiteConceptId',
+  'lateralityConceptId',
+  'contrastConceptId',
+];
 
 /**
  * La orden recién creada, tal como vuelve del alta.
