@@ -131,6 +131,13 @@ export function cadenaDeReconsultas(cita: Booking, idx: Indices): { fechas: (Dat
   return { fechas, ids };
 }
 
+const CANTIDADES = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'];
+
+/** «tres», o el número si pasa de diez. */
+function cantidad(n: number): string {
+  return CANTIDADES[n] ?? String(n);
+}
+
 export function sucesosDeCitas(lista: readonly Booking[], idx: Indices, n: Nombres, ahora: Date): Suceso[] {
   return lista.map((c) => {
     const fecha = fechaValida(c.startAt);
@@ -143,6 +150,13 @@ export function sucesosDeCitas(lista: readonly Booking[], idx: Indices, n: Nombr
         fecha,
         titulo: futura ? 'Próxima cita' : 'Cita',
         enfocar: [c.id],
+        plural: {
+          clave: `cita|${futura}|${servicio ?? ''}|${futura ? '' : (estado ?? '')}`,
+          texto: (cuantos) =>
+            `${futura ? 'Tiene' : 'Tenía'} ${cantidad(cuantos)} citas${servicio === undefined ? '' : ` de ${servicio}`}${
+              estado === undefined || futura ? '' : ` (estado: ${minusculaInicial(estado)})`
+            }.`,
+        },
         // Una cita común que coincide con una atención es la misma visita: no se repite.
         frase: (ctx) =>
           ctx.hayAtencion && !futura

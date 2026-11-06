@@ -46,6 +46,11 @@ export interface Suceso {
   readonly enfocar: readonly string[];
   /** Arma la frase cuando ya se sabe con quién comparte el paso. */
   readonly frase: (contexto: ContextoDelPaso) => FraseDelPaso | null;
+  /**
+   * Varios sucesos del mismo paso con la misma `clave` se cuentan en una sola
+   * frase en plural (tres citas iguales el mismo día no son tres frases).
+   */
+  readonly plural?: { readonly clave: string; readonly texto: (cuantos: number) => string };
 }
 
 export interface ContextoDelPaso {

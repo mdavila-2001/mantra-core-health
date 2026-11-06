@@ -212,8 +212,16 @@
     gap: var(--sp-2);
   }
 
+  /* Los tres botones en una fila sin encogerse (encogidos, el de reproducir
+     se quedaba sin ícono) y la velocidad en la fila de abajo, a lo ancho. */
   .guiado__controles {
-    flex-wrap: nowrap;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .guiado__velocidad {
+    grid-column: 1 / -1;
+    margin-inline-start: 0;
   }
 
   .guiado__rotulo {
@@ -226,8 +234,10 @@
     white-space: nowrap;
   }
 
+  .guiado__boton,
   .guiado__boton--reproducir {
     min-inline-size: 0;
+    justify-content: center;
   }
 }
 

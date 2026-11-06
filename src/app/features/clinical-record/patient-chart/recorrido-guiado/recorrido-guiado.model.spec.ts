@@ -301,7 +301,7 @@ describe('armarRecorridoGuiado — plantillas', () => {
   it('el resultado dice qué estudio, cuándo se pidió y para qué', () => {
     const { narracion, titulo, enfocar } = pasoDel(armar(), '2026-02-10');
     expect(narracion).toBe(
-      'El 10 feb 2026 se registró el informe de tomografía de cráneo, pedida el 3 feb 2026 para confirmar o descartar migraña, con resultado liberado.',
+      'El 10 feb 2026 se registró el informe de tomografía de cráneo (orden del 3 feb 2026, para confirmar o descartar migraña), con resultado liberado.',
     );
     expect(titulo).toBe('Resultado de tomografía de cráneo');
     expect(enfocar).toEqual([ID.informeTac, ID.tac]);
@@ -325,7 +325,7 @@ describe('armarRecorridoGuiado — plantillas', () => {
 
   it('un diagnóstico confirmado el mismo día se narra en una sola frase', () => {
     const { narracion } = pasoDel(armar(), '2026-02-17');
-    expect(narracion).toContain('Se diagnosticó sinusitis aguda y quedó confirmado.');
+    expect(narracion).toContain('Se registró sinusitis aguda como diagnóstico confirmado.');
     expect(narracion).not.toContain('Se planteó sinusitis aguda');
   });
 
@@ -361,7 +361,7 @@ describe('armarRecorridoGuiado — plantillas', () => {
   it('el reemplazo de una receta se narra en la receta nueva', () => {
     const { narracion, enfocar } = pasoDel(armar(), '2026-03-02');
     expect(narracion).toContain(
-      'Se indicó Claritromicina 500 mg para tratar sinusitis aguda. Reemplaza a Amoxicilina 500 mg, indicado el 17 feb 2026.',
+      'Se indicó Claritromicina 500 mg para tratar sinusitis aguda. Reemplaza a la receta de Amoxicilina 500 mg del 17 feb 2026.',
     );
     expect(enfocar).toContain(ID.amoxicilina);
   });
@@ -370,7 +370,7 @@ describe('armarRecorridoGuiado — plantillas', () => {
     const vieja = receta(u(70), 'cx-amoxicilina', ID.e1, dia(2, 3));
     const nueva = receta(u(71), 'cx-claritromicina', ID.e1, dia(2, 9), { replacesRequestId: u(70) });
     const pasos = armar({ recetas: [vieja, nueva] });
-    expect(pasoDel(pasos, '2026-02-09').narracion).toContain('Reemplaza a Amoxicilina 500 mg, indicado el 3 feb 2026.');
+    expect(pasoDel(pasos, '2026-02-09').narracion).toContain('Reemplaza a la receta de Amoxicilina 500 mg del 3 feb 2026.');
   });
 
   it('la derivación dice a dónde y por qué; la llegada se narra en la atención de destino', () => {
@@ -431,6 +431,14 @@ describe('armarRecorridoGuiado — plantillas', () => {
     expect(pasos[0].narracion).not.toContain('QX-0001');
   });
 
+  it('las citas comunes iguales del mismo día se cuentan en una sola frase', () => {
+    const iguales = [u(92), u(93), u(94)].map((id) => cita(id, dia(1, 20), { statusConceptId: 'cx-cancelada' }));
+    const pasos = armar({ citas: [...iguales, cita(u(95), dia(1, 20))] });
+    expect(pasos[0].narracion).toBe('El 20 ene 2026 tenía tres citas (estado: cancelada). Tenía una cita.');
+    expect(pasos[0].frases[0].fuentes).toEqual([u(92), u(93), u(94)]);
+    expect(pasos[0].enfocar).toEqual([u(92), u(93), u(94), u(95)]);
+  });
+
   it('una cita común sin atención ese día se narra con su estado', () => {
     const pasos = armar({ citas: [cita(u(91), dia(1, 15), { statusConceptId: 'cx-cancelada', service: { offeringId: 'x', name: 'Cardiología', price: '0', minDurationMinutes: 20, maxDurationMinutes: 30, requiresApproval: false } })] });
     expect(pasos[0].narracion).toBe('El 15 ene 2026 tenía una cita de Cardiología (estado: cancelada).');
@@ -488,7 +496,7 @@ describe('armarRecorridoGuiado — cadenas de reemplazo de diagnósticos', () =>
     const x = dx(u(140), 'cx-migrana', { verificationStatusConceptId: 'cx-v-confirmado' });
     const y = dx(u(141), 'cx-sinusitis', { verificationStatusConceptId: 'cx-v-descartado' });
     const texto = armar({ diagnosticos: [x, y] })[0].narracion;
-    expect(texto).toContain('El 1 jun 2026 se diagnosticó migraña y quedó confirmado.');
+    expect(texto).toContain('El 1 jun 2026 se registró migraña como diagnóstico confirmado.');
     expect(texto).toContain('Se consideró sinusitis aguda y se descartó.');
   });
 

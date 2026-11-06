@@ -158,7 +158,7 @@ export function fraseDeDecision(
 
   if (veredicto === 'CONFIRMED') {
     partes.push(
-      `${mismoDia ? `Se diagnosticó ${nombre} y quedó confirmado` : `Se confirmó ${nombre}`}${base}${
+      `${mismoDia ? `Se registró ${nombre} como diagnóstico confirmado` : `Se confirmó ${nombre}`}${base}${
         motivo === undefined ? '' : `: ${motivo}`
       }.`,
     );
@@ -234,7 +234,7 @@ export function propositoDeOrden(o: DiagnosticOrder, idx: Indices, n: Nombres): 
   if (!yaDecidido) return { texto: `para confirmar o descartar ${nombre}`, dx: dx.id };
   return veredicto === 'CONFIRMED'
     ? { texto: `para el seguimiento de ${nombre}`, dx: dx.id }
-    : { texto: `en relación con ${nombre}, ya descartado`, dx: dx.id };
+    : { texto: `en relación con ${nombre} (diagnóstico ya descartado)`, dx: dx.id };
 }
 
 export function sucesosDeOrdenes(lista: readonly DiagnosticOrder[], idx: Indices, n: Nombres): Suceso[] {
@@ -285,9 +285,9 @@ export function sucesosDeInformes(lista: readonly DiagnosticReport[], idx: Indic
         const origen =
           orden === undefined
             ? ''
-            : `, pedida${pedida === null ? '' : ` el ${fechaCorta(pedida)}`}${
-                proposito === null ? '' : ` ${proposito.texto}`
-              }`;
+            : ` (orden${pedida === null ? '' : ` del ${fechaCorta(pedida)}`}${
+                proposito === null ? '' : `, ${proposito.texto}`
+              })`;
         return frase(
           liberado
             ? `Se registró el informe de ${estudio}${origen}, con resultado liberado.`
@@ -347,8 +347,8 @@ export function sucesosDeRecetas(lista: readonly MedicationRequest[], idx: Indic
         if (anterior !== undefined) {
           fuentes.push(anterior.id);
           const desde = fechaValida(anterior.issuedAt ?? anterior.signedAt ?? anterior.createdAt);
-          texto += ` Reemplaza a ${n.medicamento(anterior.medicationConceptId)}${
-            desde === null ? '' : `, indicado el ${fechaCorta(desde)}`
+          texto += ` Reemplaza a la receta de ${n.medicamento(anterior.medicationConceptId)}${
+            desde === null ? '' : ` del ${fechaCorta(desde)}`
           }.`;
         }
         return frase(texto, fuentes, inferida);

@@ -180,9 +180,25 @@ function armarPaso(
   const frases: FraseDelPaso[] = [];
   const enfocar: string[] = [];
   const usados: Suceso[] = [];
+  // Cuántos sucesos con frase comparten cada clave de plural.
+  const iguales = new Map<string, Suceso[]>();
   for (const s of ordenados) {
-    const f = s.frase(contexto);
+    if (s.plural === undefined || s.frase(contexto) === null) continue;
+    iguales.set(s.plural.clave, [...(iguales.get(s.plural.clave) ?? []), s]);
+  }
+  for (const s of ordenados) {
+    let f = s.frase(contexto);
     if (f === null) continue;
+    const grupo = s.plural === undefined ? undefined : iguales.get(s.plural.clave);
+    if (s.plural !== undefined && grupo !== undefined && grupo.length > 1) {
+      // El primero del grupo dice el total; los demás ya están contados.
+      if (grupo[0] !== s) {
+        usados.push(s);
+        for (const id of s.enfocar) if (!enfocar.includes(id)) enfocar.push(id);
+        continue;
+      }
+      f = frase(s.plural.texto(grupo.length), grupo.flatMap((g) => g.enfocar));
+    }
     // Lo suelto en un día con atención se dice como coincidencia de fecha, no de atención.
     const suelto = contexto.hayAtencion && s.atencionId === undefined && frases.length > 0;
     frases.push(suelto ? { ...f, texto: `Ese mismo día, ${minusculaInicial(f.texto)}` } : f);
