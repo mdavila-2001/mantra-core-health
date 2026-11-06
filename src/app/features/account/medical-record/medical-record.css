@@ -301,3 +301,16 @@
     box-shadow: inset 0 0 0 1px var(--border-default);
   }
 }
+
+/* Franja 5a · el selector de vista encabeza la tarjeta y la separa de lo que
+   muestra. En teléfono ocupa el ancho para que los dos rótulos no se corten. */
+.historia__vista {
+  display: flex;
+  margin-block-end: var(--sp-4);
+}
+
+@media (max-width: 47.99rem) {
+  .historia__vista app-segmented-control {
+    flex: 1 1 auto;
+  }
+}

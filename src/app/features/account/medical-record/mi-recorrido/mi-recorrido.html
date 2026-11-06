@@ -1,0 +1,336 @@
+<!-- La narración guiada se anuncia desde UNA región viva que está siempre en el
+     DOM: una región que aparece junto con su texto no se anuncia en todos los
+     lectores. El panel visible de la narración no repite el aria-live. -->
+<p class="sr-only" aria-live="polite" aria-atomic="true" data-testid="recorrido-narracion-viva">
+  @if (pasoActual(); as actual) {
+    Paso {{ actual.indice + 1 }} de {{ actual.episodio.pasos.length }}: {{ actual.paso.texto }}
+  }
+</p>
+
+<section class="recorrido" aria-labelledby="recorrido-titulo" data-testid="mi-recorrido">
+  <header class="recorrido__cabecera">
+    <h2 id="recorrido-titulo" class="recorrido__titulo">Mi recorrido</h2>
+    <p class="recorrido__bajada">
+      Su historia agrupada por problema de salud. Despliegue un problema para ver sus consultas, y
+      cada consulta para ver qué se hizo en ella.
+    </p>
+  </header>
+
+  @if (cargando()) {
+    <p class="recorrido__aviso" role="status" data-testid="recorrido-cargando">
+      Estamos trayendo sus estudios y controles. Lo demás ya se muestra.
+    </p>
+  }
+
+  @if (fallo()) {
+    <app-alert tone="warning" title="Falta parte del recorrido" data-testid="recorrido-fallo">
+      No pudimos traer sus estudios ni sus controles. Los diagnósticos, las consultas y las recetas
+      se muestran igual.
+      <div alert-actions>
+        <button app-button variant="secondary" size="sm" type="button" (clicked)="reintentar.emit()">
+          Volver a cargar
+        </button>
+      </div>
+    </app-alert>
+  } @else if (citasSinCargar(); as motivo) {
+    <app-alert tone="warning" title="Faltan los controles" data-testid="recorrido-citas-sin-cargar">
+      {{ motivo }} El recorrido se muestra igual, pero sin los controles agendados.
+    </app-alert>
+  }
+
+  @if (vacio()) {
+    <p class="recorrido__vacio">Todavía no hay consultas ni diagnósticos para mostrar en su recorrido.</p>
+  } @else {
+    <div class="recorrido__hilos" data-testid="recorrido-hilos">
+      @for (episodio of recorrido().episodios; track episodio.id) {
+        <ng-container [ngTemplateOutlet]="hilo" [ngTemplateOutletContext]="{ $implicit: episodio }" />
+      }
+
+      @if (recorrido().otras; as otras) {
+        <ng-container [ngTemplateOutlet]="hilo" [ngTemplateOutletContext]="{ $implicit: otras }" />
+      }
+
+      <!-- Los hilos que terminaron en un descarte van aparte y plegados: no son
+           un problema de salud que la persona tenga, y ponerlos a la par de lo
+           vigente los haría leer como tales. -->
+      @if (recorrido().descartados.length > 0) {
+        <app-accordion-panel
+          class="recorrido__descartados"
+          data-testid="recorrido-descartados"
+          [level]="3"
+          [heading]="'Diagnósticos que se descartaron (' + recorrido().descartados.length + ')'"
+          [expanded]="abierto('grupo-descartados')"
+          (expandedChange)="alternar('grupo-descartados', $event)"
+        >
+          <p class="recorrido__nota">
+            Se pensó en ellos y, después de estudiarlos, se descartaron.
+          </p>
+          @for (episodio of recorrido().descartados; track episodio.id) {
+            <ng-container [ngTemplateOutlet]="hilo" [ngTemplateOutletContext]="{ $implicit: episodio }" />
+          }
+        </app-accordion-panel>
+      }
+    </div>
+  }
+
+  <!-- Pendiente de API: el portal del paciente no recibe sus derivaciones
+       (`GET /referrals` es del profesional). Se dice en vez de callarlo, que se
+       leería como «nunca lo derivaron». -->
+  <p class="recorrido__nota recorrido__nota--pie" data-testid="recorrido-sin-derivaciones">
+    Las derivaciones a otros profesionales todavía no se muestran en este recorrido.
+  </p>
+</section>
+
+<!-- ─── Un hilo: el problema de salud, sus consultas y su paso a paso ──────── -->
+<ng-template #hilo let-episodio>
+  <app-accordion-panel
+    class="recorrido__hilo"
+    [class.is-descartado]="episodio.clase === 'descartado'"
+    data-testid="recorrido-hilo"
+    [level]="3"
+    [heading]="encabezadoDe(episodio)"
+    [expanded]="abierto(episodio.id)"
+    (expandedChange)="alternar(episodio.id, $event)"
+  >
+    <div class="recorrido__hilo-cuerpo">
+      <div class="recorrido__hilo-barra">
+        <app-badge [variant]="episodio.tono">{{ episodio.sello }}</app-badge>
+        @if (episodio.pasos.length > 0 && pasoActual()?.episodio?.id !== episodio.id) {
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            data-testid="recorrido-empezar-guiado"
+            (clicked)="empezarGuiado(episodio)"
+          >
+            Ver paso a paso
+          </button>
+        }
+      </div>
+
+      @if (pasoActual(); as actual) {
+        @if (actual.episodio.id === episodio.id) {
+          <div class="recorrido__guiado" data-testid="recorrido-guiado">
+            <p class="recorrido__guiado-contador">
+              Paso {{ actual.indice + 1 }} de {{ episodio.pasos.length }}
+            </p>
+            <p class="recorrido__guiado-texto" data-testid="recorrido-narracion">
+              {{ actual.paso.texto }}
+            </p>
+            <div class="recorrido__guiado-acciones">
+              <button
+                app-button
+                variant="outline"
+                size="sm"
+                type="button"
+                data-testid="recorrido-anterior"
+                [disabled]="actual.indice === 0"
+                (clicked)="moverGuiado(-1)"
+              >
+                Anterior
+              </button>
+              <button
+                app-button
+                variant="primary"
+                size="sm"
+                type="button"
+                data-testid="recorrido-siguiente"
+                [disabled]="actual.indice === episodio.pasos.length - 1"
+                (clicked)="moverGuiado(1)"
+              >
+                Siguiente
+              </button>
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                data-testid="recorrido-ver-registro"
+                (clicked)="verRegistroDelPaso()"
+              >
+                Ver el registro
+              </button>
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                data-testid="recorrido-terminar"
+                (clicked)="terminarGuiado()"
+              >
+                Terminar
+              </button>
+            </div>
+          </div>
+        }
+      }
+
+      @if (episodio.atenciones.length > 0) {
+        <ol class="recorrido__linea" aria-label="Consultas de este problema, de la más antigua a la más reciente">
+          @for (atencion of episodio.atenciones; track atencion.registro.id) {
+            <li
+              class="recorrido__punto"
+              [class.is-actual]="esActual(atencion.registro.id, episodio)"
+            >
+              <app-accordion-panel
+                [level]="4"
+                [heading]="encabezadoDeAtencion(atencion.registro)"
+                data-testid="recorrido-atencion"
+                [expanded]="abierto(claveDeAtencion(episodio, atencion.registro.id))"
+                (expandedChange)="alternar(claveDeAtencion(episodio, atencion.registro.id), $event)"
+              >
+                <ul class="recorrido__hechos">
+                  <li>
+                    <button
+                      type="button"
+                      class="recorrido__hecho"
+                      [class.is-actual]="esActual(atencion.registro.id, episodio)"
+                      (click)="verDetalle(atencion.registro)"
+                    >
+                      <span class="recorrido__hecho-tipo">Consulta</span>
+                      <span class="recorrido__hecho-texto">{{ atencion.registro.nombre }}</span>
+                    </button>
+                  </li>
+                  @for (hecho of atencion.hechos; track hecho.registro.id) {
+                    <li>
+                      <button
+                        type="button"
+                        class="recorrido__hecho"
+                        [class.is-indirecto]="!hecho.directo"
+                        [class.is-actual]="esActual(hecho.registro.id, episodio)"
+                        [attr.data-testid]="'recorrido-hecho-' + hecho.registro.tipo"
+                        (click)="verDetalle(hecho.registro)"
+                      >
+                        <span class="recorrido__hecho-tipo">{{ tipoDe(hecho.registro) }}</span>
+                        <span class="recorrido__hecho-texto">{{ resumenDe(hecho.registro) }}</span>
+                        @if (!hecho.directo) {
+                          <span class="recorrido__hecho-marca">De esta consulta, sin vínculo a este problema</span>
+                        }
+                      </button>
+                    </li>
+                  }
+                </ul>
+              </app-accordion-panel>
+            </li>
+          }
+        </ol>
+      }
+
+      @if (episodio.sueltos.length > 0) {
+        <ul class="recorrido__hechos" aria-label="Registros sin una consulta asociada">
+          @for (hecho of episodio.sueltos; track hecho.registro.id) {
+            <li>
+              <button
+                type="button"
+                class="recorrido__hecho"
+                [class.is-actual]="esActual(hecho.registro.id, episodio)"
+                (click)="verDetalle(hecho.registro)"
+              >
+                <span class="recorrido__hecho-tipo">{{ tipoDe(hecho.registro) }}</span>
+                <span class="recorrido__hecho-texto">{{ resumenDe(hecho.registro) }}</span>
+                <span class="recorrido__hecho-marca">Sin una consulta asociada</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      <!-- Lo descartado en el camino, plegado: es parte de la historia —«se
+           pensó en esto y no era»— pero no lo que la persona tiene. -->
+      @if (episodio.descartados.length > 0) {
+        <app-accordion-panel
+          class="recorrido__en-el-camino"
+          data-testid="recorrido-descartados-en-el-camino"
+          [level]="4"
+          [heading]="'Lo que se descartó en el camino (' + episodio.descartados.length + ')'"
+          [expanded]="abierto(episodio.id + '/descartados')"
+          (expandedChange)="alternar(episodio.id + '/descartados', $event)"
+        >
+          <ul class="recorrido__hechos">
+            @for (descartado of episodio.descartados; track descartado.id) {
+              <li>
+                <button
+                  type="button"
+                  class="recorrido__hecho is-indirecto"
+                  [class.is-actual]="esActual(descartado.id, episodio)"
+                  (click)="verDetalle(descartado)"
+                >
+                  <span class="recorrido__hecho-tipo">Diagnóstico</span>
+                  <span class="recorrido__hecho-texto">{{ descartado.nombre }} · se descartó</span>
+                </button>
+              </li>
+            }
+          </ul>
+        </app-accordion-panel>
+      }
+    </div>
+  </app-accordion-panel>
+</ng-template>
+
+<!-- ─── La hoja de detalle ─────────────────────────────────────────────────── -->
+<app-drawer-panel
+  [heading]="enDetalle()?.nombre ?? 'Detalle'"
+  [subheading]="enDetalle() === null ? '' : subtituloDe(enDetalle()!)"
+  closeLabel="Cerrar detalle"
+  [open]="detalleAbierto()"
+  (openChange)="detalleAbierto.set($event)"
+>
+  @if (enDetalle(); as registro) {
+    <div class="recorrido__detalle" data-testid="recorrido-detalle">
+      <app-fact-list [hechos]="registro.detalle" [etiqueta]="registro.nombre" />
+
+      @for (ausente of ausentesDe(registro); track ausente) {
+        <p class="recorrido__nota" data-testid="recorrido-detalle-ausente">{{ ausente }}</p>
+      }
+
+      <div class="recorrido__detalle-acciones">
+        @if (registro.tipo === 'estudio' && registro.conResultado && registro.informeId !== null) {
+          <a
+            app-button
+            variant="primary"
+            size="sm"
+            data-testid="recorrido-ver-resultado"
+            routerLink="/my-account/diagnostic-results"
+            [fragment]="registro.informeId"
+          >
+            Ver el resultado
+          </a>
+        }
+        @if (registro.tipo === 'receta') {
+          <button
+            app-button
+            variant="primary"
+            size="sm"
+            type="button"
+            data-testid="recorrido-descargar-receta"
+            [isLoading]="descargandoReceta() === registro.id"
+            (clicked)="descargarReceta.emit(registro.id)"
+          >
+            Descargar receta oficial (PDF)
+          </button>
+          <a
+            app-button
+            variant="ghost"
+            size="sm"
+            [routerLink]="['/my-account/medical-record/where-to-buy', registro.id]"
+          >
+            Dónde comprarla
+          </a>
+        }
+        @if (registro.tipo === 'atencion' || registro.tipo === 'diagnostico' || registro.tipo === 'receta') {
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            type="button"
+            data-testid="recorrido-ir-a-seccion"
+            (clicked)="irAlRegistro(registro)"
+          >
+            Verlo en «Por fecha»
+          </button>
+        }
+      </div>
+    </div>
+  }
+</app-drawer-panel>

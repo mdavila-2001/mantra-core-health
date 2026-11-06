@@ -1,0 +1,232 @@
+/* ============================================================================
+    Mi recorrido — la historia por problema de salud.
+
+    Sólo tokens: el tema oscuro lo resuelven las mismas variables. Una columna
+    en cualquier ancho: el recorrido se lee de arriba abajo, como un relato.
+    ========================================================================== */
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.recorrido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.recorrido__cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.recorrido__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.recorrido__bajada,
+.recorrido__vacio,
+.recorrido__aviso {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.recorrido__nota {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.recorrido__nota--pie {
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.recorrido__hilos {
+  display: flex;
+  flex-direction: column;
+  border-block-start: 1px solid var(--border-default);
+}
+
+.recorrido__hilo.is-descartado {
+  color: var(--text-secondary);
+}
+
+.recorrido__hilo-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.recorrido__hilo-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+/* ---- el paso a paso ------------------------------------------------------ */
+
+.recorrido__guiado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--st-primary-bd);
+  border-radius: var(--r-md);
+  background: var(--st-primary-bg);
+}
+
+.recorrido__guiado-contador {
+  margin: 0;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--st-primary-fg);
+}
+
+.recorrido__guiado-texto {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-primary);
+}
+
+.recorrido__guiado-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* ---- la línea de consultas ----------------------------------------------- */
+
+.recorrido__linea {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* El riel y el punto son decoración: el orden lo dice la lista ordenada. */
+.recorrido__punto {
+  position: relative;
+  padding-inline-start: var(--sp-5);
+}
+
+.recorrido__punto::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: calc(var(--sp-2) - 1px);
+  border-inline-start: 2px solid var(--border-default);
+}
+
+.recorrido__punto::after {
+  content: '';
+  position: absolute;
+  inset-block-start: var(--sp-5);
+  inset-inline-start: calc(var(--sp-2) - var(--sp-1) - 1px);
+  inline-size: calc(var(--sp-2) + 2px);
+  block-size: calc(var(--sp-2) + 2px);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  border: 2px solid var(--brand-primary);
+}
+
+.recorrido__punto.is-actual::after {
+  background: var(--brand-primary);
+}
+
+.recorrido__hechos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.recorrido__hecho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-3);
+  inline-size: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  font: inherit;
+  text-align: start;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+}
+
+.recorrido__hecho:hover {
+  background: var(--bg-inset);
+}
+
+.recorrido__hecho:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Lo que sólo comparte la consulta se ve, pero en segundo plano. */
+.recorrido__hecho.is-indirecto {
+  border-style: dashed;
+  color: var(--text-secondary);
+}
+
+.recorrido__hecho.is-actual {
+  border-color: var(--brand-primary);
+  background: var(--st-primary-bg);
+}
+
+.recorrido__hecho-tipo {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-inline-size: 6rem;
+}
+
+.recorrido__hecho-texto {
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.recorrido__hecho-marca {
+  flex-basis: 100%;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+/* ---- la hoja de detalle -------------------------------------------------- */
+
+.recorrido__detalle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.recorrido__detalle-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recorrido__hecho {
+    transition: none;
+  }
+}
