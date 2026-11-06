@@ -155,6 +155,18 @@ describe('narración por plantillas', () => {
     expect(otras.pasos[0].texto).toBe('El 5 de enero de 2026 consultó por ECG de control.');
   });
 
+  it('un descartado no se narra además como resuelto', () => {
+    const descartadoYResuelto: Condition = { ...DIAGNOSTICOS[0], resolvedAt: dia('2026-02-20') };
+    const pasos = armar(fuentes({ resumen: resumen({ conditions: [descartadoYResuelto, DIAGNOSTICOS[1]] }) })).episodios[0].pasos;
+    expect(pasos.some((p) => p.texto.includes('resuelto'))).toBe(false);
+  });
+
+  it('un resuelto se narra sin forzar el género del nombre', () => {
+    const resuelto: Condition = { ...DIAGNOSTICOS[1], resolvedAt: dia('2026-04-02') };
+    const pasos = armar(fuentes({ resumen: resumen({ conditions: [resuelto] }) })).episodios[0].pasos;
+    expect(pasos.at(-1)?.texto).toBe('El 2 de abril de 2026 el diagnóstico de Cefalea tensional se dio por resuelto.');
+  });
+
   it('no habla de vos ni de tú', () => {
     const textos = armar().episodios[0].pasos.map((p) => p.texto).join(' ');
     expect(textos).not.toMatch(/\b(tu|tus|te|vos|tenés|consultaste|volviste)\b/i);

@@ -363,8 +363,10 @@ function pasosDelDiagnostico(
       conFecha(r.decididoEl, `se descartó ${r.nombre}${enSuLugar === null ? '' : `; en su lugar quedó ${enSuLugar}`}.`),
     );
   }
-  if (r.resueltoEl !== null) {
-    paso(r, r.resueltoEl, 6, conFecha(r.resueltoEl, `${r.nombre} se dio por resuelto.`));
+  // Un descartado no «se resuelve»: ya se dijo que no era. Contar las dos
+  // cosas el mismo día se lee como que la persona tuvo lo que se descartó.
+  if (r.resueltoEl !== null && r.estado !== 'descartado') {
+    paso(r, r.resueltoEl, 6, conFecha(r.resueltoEl, `el diagnóstico de ${r.nombre} se dio por resuelto.`));
   }
 }
 
