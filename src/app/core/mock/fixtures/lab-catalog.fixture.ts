@@ -172,4 +172,28 @@ export const LAB_CATALOG_SECTIONS: readonly LabCatalogSection[] = [
       },
     ],
   },
+  {
+    code: 'URIANALISIS',
+    name: 'Uroanálisis y orina',
+    items: [
+      {
+        conceptId: id(),
+        code: 'EGO',
+        name: 'Examen general de orina',
+        loinc: '24356-8',
+        specimen: 'Orina aislada',
+        sampleType: 'URINE',
+        suggestedPrice: inlasa('LAC-019', 'EXAMEN GENERAL DE ORINA', '29.00'),
+        offeredServiceId: null,
+        components: parts('EGO', [
+          ['COLOR', 'Color', '5778-6', null],
+          ['DENSIDAD', 'Densidad', '5811-5', null],
+          ['PH', 'pH', '5803-2', null],
+          ['PROTEINAS', 'Proteínas', '5804-0', 'mg/dL'],
+          ['GLUCOSA', 'Glucosa', '5792-7', 'mg/dL'],
+          ['LEUCOCITOS', 'Leucocitos (sedimento)', '5821-4', '/[HPF]'],
+        ]),
+      },
+    ],
+  },
 ];
