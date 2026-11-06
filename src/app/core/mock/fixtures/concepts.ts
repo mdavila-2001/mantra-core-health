@@ -1269,22 +1269,17 @@ export const MEDICAMENTO = define('VS_MEDICATION', [
 ]);
 
 /**
- * Concentraciones de demostración que no tienen producto propio en el catálogo
- * universal simulado (ahí todas las de levotiroxina cuelgan de
- * `MED-LEVOTIROXINA`). Van aparte de `MEDICAMENTO` porque la vitrina pública
- * exige un ATC por cada uno de aquéllos. Las usa la historia de `pid-paciente`
- * (`patient-network.data.ts`): tres recetas de 25, 50 y 75 mcg, cada una con
- * el concepto de su concentración para que ni la receta ni la narración digan
- * «50 mcg» de una dosis de 25.
+ * Demo strengths with no product of their own in the simulated universal catalog (there every levothyroxine hangs
+ * from `MED-LEVOTIROXINA`), so apart from `MEDICAMENTO` (the public showcase needs a catalog ATC for each). Used by
+ * `pid-paciente`'s story (`patient-network.data.ts`): 25, 50 and 75 mcg, each with its own concept. `ATC_DE_CONCENTRACION`
+ * ties them to their LINAME ATC, as `DEMONSTRATION_ATC` ties `MED-LEVOTIROXINA`: same `dose_forms` and presentations
+ * (below), and the strength is their own, which the LINAME does not list.
  */
-export const MEDICAMENTO_POR_CONCENTRACION = define(
-  'VS_MEDICATION',
-  [
-    ['MED-LEVOTIROXINA-25', 'Levotiroxina 25 mcg comprimidos', 'Hormona tiroidea.'],
-    ['MED-LEVOTIROXINA-75', 'Levotiroxina 75 mcg comprimidos', 'Hormona tiroidea.'],
-  ],
-  16,
-);
+export const MEDICAMENTO_POR_CONCENTRACION = define('VS_MEDICATION', [
+  ['MED-LEVOTIROXINA-25', 'Levotiroxina 25 mcg comprimidos', 'Hormona tiroidea.'],
+  ['MED-LEVOTIROXINA-75', 'Levotiroxina 75 mcg comprimidos', 'Hormona tiroidea.'],
+], 16);
+const ATC_DE_CONCENTRACION = { 'MED-LEVOTIROXINA-25': ['H03AA01', '25 mcg'], 'MED-LEVOTIROXINA-75': ['H03AA01', '75 mcg'] } as const;
 
 /**
  * Frecuencia por defecto del medicamento (C-20 / H4, reparto de Ender 2026-09-20).
@@ -1350,6 +1345,9 @@ const propertiesLiname = (m: MedicamentoLiname) => ({
 for (const m of MEDICAMENTOS_LINAME) {
   const demostracion = DEMONSTRATION_ATC.get(m.atc);
   if (demostracion !== undefined) declareProperties(demostracion, propertiesLiname(m));
+  for (const [code, [atc, dosis]] of Object.entries(ATC_DE_CONCENTRACION)) {
+    if (atc === m.atc) declareProperties(code, { ...propertiesLiname(m), strengths: [dosis] });
+  }
 }
 export const MEDICATION_LINAME = define(
   'VS_MEDICATION',
