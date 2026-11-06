@@ -9,6 +9,7 @@
       type="text"
       fieldKind="personName"
       formControlName="name"
+      placeholder="Ana"
       autocomplete="given-name"
       [hasError]="errorOf('name') !== ''"
       [testId]="prefijoTestId() + '-nombre'"
@@ -22,6 +23,7 @@
       fieldKind="personName"
       formControlName="middleName"
       [hasError]="errorOfExtra(grupo().controls.middleName) !== ''"
+      placeholder="Lucía"
       autocomplete="additional-name"
       [testId]="prefijoTestId() + '-segundo-nombre'"
     />
@@ -34,6 +36,7 @@
       fieldKind="personName"
       formControlName="thirdName"
       [hasError]="errorOfExtra(grupo().controls.thirdName) !== ''"
+      placeholder="María"
       [testId]="prefijoTestId() + '-tercer-nombre'"
     />
   </app-form-field>
@@ -90,6 +93,7 @@
       type="text"
       fieldKind="personName"
       formControlName="lastName"
+      placeholder="Rojas"
       autocomplete="family-name"
       [hasError]="errorOf('lastName') !== ''"
       [testId]="prefijoTestId() + '-apellido-paterno'"
@@ -103,6 +107,7 @@
       fieldKind="personName"
       formControlName="motherLastName"
       [hasError]="errorOfExtra(grupo().controls.motherLastName) !== ''"
+      placeholder="Paz"
       [testId]="prefijoTestId() + '-apellido-materno'"
     />
   </app-form-field>
