@@ -93,8 +93,8 @@
     (expandedChange)="alternar(episodio.id, $event)"
   >
     <div class="recorrido__hilo-cuerpo">
+      <!-- The status is already in the heading: a badge here said it twice. -->
       <div class="recorrido__hilo-barra">
-        <app-badge [variant]="episodio.tono">{{ episodio.sello }}</app-badge>
         @if (episodio.pasos.length > 0 && pasoActual()?.episodio?.id !== episodio.id) {
           <button
             app-button
@@ -188,8 +188,9 @@
                       [class.is-actual]="esActual(atencion.registro.id, episodio)"
                       (click)="verDetalle(atencion.registro)"
                     >
+                      <!-- The heading already names the consultation: this row opens it. -->
                       <span class="recorrido__hecho-tipo">Consulta</span>
-                      <span class="recorrido__hecho-texto">{{ atencion.registro.nombre }}</span>
+                      <span class="recorrido__hecho-texto">Ver lo que se anotó en esta consulta</span>
                     </button>
                   </li>
                   @for (hecho of atencion.hechos; track hecho.registro.id) {

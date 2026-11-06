@@ -70,8 +70,12 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--sp-2);
+}
+
+.recorrido__hilo-barra:empty {
+  display: none;
 }
 
 /* ---- step by step --------------------------------------------------------- */

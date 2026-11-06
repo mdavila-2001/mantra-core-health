@@ -46,7 +46,7 @@ export function narracion(
           r,
           r.cuando,
           0,
-          conFecha(r.cuando, `consultó por ${minusculaInicial(r.nombre)}.`) +
+          conFecha(r.cuando, fraseDeLaConsulta(r.nombre)) +
             (r.enCurso ? ' La atención sigue abierta.' : ''),
         );
         break;
@@ -114,7 +114,7 @@ function pasosDelDiagnostico(
   // A ruled-out diagnosis is not «resolved»: it was already said it was not.
   // Telling both on the same day reads as if the person had what was ruled out.
   if (r.resueltoEl !== null && r.estado !== 'descartado') {
-    paso(r, r.resueltoEl, 6, conFecha(r.resueltoEl, `el diagnóstico de ${r.nombre} se dio por resuelto.`));
+    paso(r, r.resueltoEl, 6, conFecha(r.resueltoEl, `se resolvió ${r.nombre}.`));
   }
 }
 
@@ -130,4 +130,17 @@ function fraseDelControl(r: RegistroConVinculos): string {
     default:
       return dia === null ? 'Se agendó un control.' : `Se agendó un control para el ${dia}.`;
   }
+}
+
+/**
+ * «consultó por cansancio…»; a follow-up's or a referral visit's reason already
+ * says what it is («Reconsulta: lectura de…», «Interconsulta por…»), and
+ * «consultó por reconsulta» read badly.
+ */
+function fraseDeLaConsulta(motivo: string): string {
+  // «Interconsulta por …» already names the kind of visit: «tuvo una interconsulta por …».
+  if (/^interconsulta\b/i.test(motivo)) return `tuvo una ${minusculaInicial(motivo)}.`;
+  const resto = motivo.replace(/^reconsulta\s*[:·-]?\s*/i, '');
+  if (resto === motivo) return `consultó por ${minusculaInicial(motivo)}.`;
+  return resto === '' ? 'volvió a consulta.' : `volvió a consulta: ${minusculaInicial(resto)}.`;
 }

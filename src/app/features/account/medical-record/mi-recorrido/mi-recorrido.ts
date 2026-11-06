@@ -2,7 +2,6 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AccordionPanel } from '../../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DrawerPanel } from '../../../../shared/components/organisms/drawer-panel/drawer-panel';
@@ -50,7 +49,6 @@ const TIPO_EN_PALABRAS: Readonly<Record<RegistroConVinculos['tipo'], string>> = 
     AccordionPanel,
     Alert,
     AppButton,
-    Badge,
     DrawerPanel,
     NgTemplateOutlet,
     MiRecorridoDetalle,
@@ -207,9 +205,12 @@ export class MiRecorrido {
   }
 
   /** A thread's folded label: the problem, its status and since when. */
+  /** The span, not only the start: the threads are ordered by their latest record, and «desde» alone made that order look random. */
   protected encabezadoDe(episodio: Episodio): string {
     const desde = fechaCorta(episodio.desde ?? undefined);
-    return [episodio.titulo, episodio.sello, desde === null ? null : `desde ${desde}`]
+    const hasta = fechaCorta(episodio.hasta ?? undefined);
+    const lapso = desde === null ? null : hasta === null || hasta === desde ? desde : `${desde} – ${hasta}`;
+    return [episodio.titulo, episodio.sello, lapso]
       .filter((parte) => parte !== null)
       .join(' · ');
   }

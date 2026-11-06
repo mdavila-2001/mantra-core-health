@@ -164,7 +164,7 @@ describe('narración por plantillas', () => {
   it('un resuelto se narra sin forzar el género del nombre', () => {
     const resuelto: Condition = { ...DIAGNOSTICOS[1], resolvedAt: dia('2026-04-02') };
     const pasos = armar(fuentes({ resumen: resumen({ conditions: [resuelto] }) })).episodios[0].pasos;
-    expect(pasos.at(-1)?.texto).toBe('El 2 de abril de 2026 el diagnóstico de Cefalea tensional se dio por resuelto.');
+    expect(pasos.at(-1)?.texto).toBe('El 2 de abril de 2026 se resolvió Cefalea tensional.');
   });
 
   it('no habla de vos ni de tú', () => {
