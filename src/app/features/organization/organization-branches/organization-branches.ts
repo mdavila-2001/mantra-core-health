@@ -14,15 +14,24 @@ import {
 } from '@angular/core';
 
 import { SessionStore } from '../../../core/auth/session.store';
+import {
+  branchCategoryOf,
+  type BranchCategory,
+} from '../../../core/data-access/directory/branch-category';
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
 import type {
   BranchChanges,
   BranchListItem,
+  NewBranch,
 } from '../../../core/data-access/directory/directory.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { Chip } from '../../../shared/components/atoms/chip/chip';
+import { Select } from '../../../shared/components/atoms/select/select';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
+import { AppMap } from '../../../shared/components/organisms/map/map';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
@@ -41,7 +50,6 @@ import {
   BRANCH_DESCRIPTION_MAX_LENGTH,
   BRANCH_LOCATION_URL_MAX_LENGTH,
   BRANCH_NAME_MAX_LENGTH,
-  branchCodeFromName,
   coordinatesFromMapUrl,
   isWebUrl,
   nameKey,
@@ -54,11 +62,18 @@ import {
   type BranchRejection,
 } from './create-branches-in-series';
 import { EMPTY_FORM, type BranchForm, type Editing } from './organization-branches.types';
+import { branchChanges, newBranchFrom } from './branch-form';
+import { BranchCategoryState } from './branch-category-state';
 
 /**
  * **Sucursales** de la organización activa: la pestaña del portal de la
  * farmacia y del laboratorio (01/10/2026) para verlas, editarlas una por una y
  * subirlas en lote con un CSV.
+ *
+ * Since 2026-11-06 it serves every organization (pharmacy, laboratory, imaging,
+ * medical organization): a map with each site's exact point, and its category
+ * (head office, branch, default) as a label and as a "by waves" filter
+ * (`?categoria=`) applied to both the table and the map.
  *
  * La carga masiva es la misma pieza que usan las altas y la ficha de
  * administración (`app-branch-bulk-import`), y crea en serie con
@@ -75,8 +90,10 @@ import { EMPTY_FORM, type BranchForm, type Editing } from './organization-branch
   imports: [
     Alert,
     AppButton,
+    AppMap,
     BranchBulkImport,
     Card,
+    Chip,
     ContentDialog,
     DataTable,
     FormActions,
@@ -85,6 +102,8 @@ import { EMPTY_FORM, type BranchForm, type Editing } from './organization-branch
     Link,
     NgTemplateOutlet,
     PageHeader,
+    SegmentedControl,
+    Select,
     Textarea,
   ],
   templateUrl: './organization-branches.html',
@@ -134,6 +153,15 @@ export class OrganizationBranches {
 
   private readonly dialog = viewChild(ContentDialog);
   protected readonly editing = signal<Editing | null>(null);
+
+  /** Head office / branch / default: the wave filter, the table and the map. */
+  protected readonly categories = new BranchCategoryState(
+    this.branches,
+    computed(() => {
+      const editing = this.editing();
+      return editing?.mode === 'edit' ? editing.branch.id : null;
+    }),
+  );
   protected readonly form = signal<BranchForm>(EMPTY_FORM);
   protected readonly submitted = signal(false);
   protected readonly saving = signal(false);
@@ -188,8 +216,12 @@ export class OrganizationBranches {
   private readonly actionsCell =
     viewChild.required<TemplateRef<{ $implicit: BranchListItem }>>('actionsCell');
 
+  private readonly categoryCell =
+    viewChild.required<TemplateRef<{ $implicit: BranchListItem }>>('categoryCell');
+
   protected readonly columns = computed<readonly ColumnDef<BranchListItem>[]>(() => [
     { key: 'name', header: 'Sucursal', priority: 1, cell: this.nameCell() },
+    { key: 'category', header: 'Categoría', priority: 1, cell: this.categoryCell() },
     { key: 'description', header: 'Descripción', priority: 3, cell: this.descriptionCell() },
     { key: 'location', header: 'Ubicación', priority: 2, cell: this.locationCell() },
     { key: 'actions', header: 'Acciones', priority: 1, align: 'end', cell: this.actionsCell() },
@@ -278,6 +310,7 @@ export class OrganizationBranches {
         code: branch.code,
         description: branch.description ?? '',
         locationUrl: branch.locationUrl ?? '',
+        category: branchCategoryOf(branch),
       },
     );
   }
@@ -289,7 +322,11 @@ export class OrganizationBranches {
     this.editing.set(editing);
   }
 
-  protected setField(field: keyof BranchForm, value: string | number | null): void {
+  protected setCategory(category: BranchCategory | null): void {
+    if (category !== null) this.form.update((current) => ({ ...current, category }));
+  }
+
+  protected setField(field: Exclude<keyof BranchForm, 'category'>, value: string | number | null): void {
     this.form.update((current) => ({ ...current, [field]: value === null ? '' : String(value) }));
   }
 
@@ -339,44 +376,11 @@ export class OrganizationBranches {
     });
   }
 
-  /** Sólo lo que cambió: una clave ausente deja el dato como está. */
   private changesFor(branch: BranchListItem): BranchChanges {
-    const form = this.form();
-    const name = form.name.trim();
-    const description = form.description.trim();
-    const locationUrl = form.locationUrl.trim();
-    const changes: { -readonly [K in keyof BranchChanges]: BranchChanges[K] } = {};
-    if (name !== branch.name) {
-      changes.name = name;
-    }
-    if (description !== (branch.description ?? '')) {
-      changes.description = description === '' ? null : description;
-    }
-    if (locationUrl !== (branch.locationUrl ?? '')) {
-      changes.locationUrl = locationUrl === '' ? null : locationUrl;
-      // El punto viejo era del enlace viejo: se reemplaza o se borra.
-      const point = locationUrl === '' ? null : coordinatesFromMapUrl(locationUrl);
-      changes.latitude = point?.latitude ?? null;
-      changes.longitude = point?.longitude ?? null;
-    }
-    return changes;
+    return branchChanges(this.form(), branch);
   }
 
-  private newBranch() {
-    const form = this.form();
-    const name = form.name.trim();
-    const typed = form.code.trim();
-    const code =
-      typed === '' ? branchCodeFromName(name, new Set(this.loaded().map((b) => b.code))) : typed;
-    const description = form.description.trim();
-    const locationUrl = form.locationUrl.trim();
-    const point = locationUrl === '' ? null : coordinatesFromMapUrl(locationUrl);
-    return {
-      code,
-      name,
-      ...(description === '' ? {} : { description }),
-      ...(locationUrl === '' ? {} : { locationUrl }),
-      ...(point === null ? {} : { latitude: point.latitude, longitude: point.longitude }),
-    };
+  private newBranch(): NewBranch {
+    return newBranchFrom(this.form(), this.loaded().map((b) => b.code));
   }
 }

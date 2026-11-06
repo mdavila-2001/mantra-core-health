@@ -1,4 +1,6 @@
 import type { TenantSimulado } from '../fixtures/directory.types';
+import type { BranchCategory } from '../../data-access/directory/branch-category';
+import { BRANCH_TYPE, branchRows, headOfficeTaken } from './directory-branches.mock';
 import { withMembershipNames } from './directory.membership-names';
 import { registerLegalRepresentative, withCorrectedRepresentative } from './directory.legal-representative';
 import { reservas, recursos } from '../fixtures/agenda';
@@ -48,11 +50,6 @@ import {
 export { ALCANCE_ACCESO, ROL_TENANT };
 
 export type { TenantSimulado } from '../fixtures/directory.types';
-
-const TIPO_SUCURSAL = {
-  CLINIC: uuid('concept-branch-clinic'),
-  OFFICE: uuid('concept-branch-office'),
-} as const;
 
 export const tenants = new Coleccion<TenantSimulado>([
   {
@@ -165,156 +162,6 @@ export const tenants = new Coleccion<TenantSimulado>([
     timeZone: 'America/La_Paz',
   },
 ]);
-
-const sucursales = new Coleccion<{
-  id: string;
-  tenantId: string;
-  code: string;
-  name: string;
-  branchTypeConceptId: string;
-  statusConceptId: string;
-  timeZone: string;
-  createdAt: string;
-  // Lo que la carga masiva de sucursales suma (P54). Opcionales: las
-  // sembradas no los traen.
-  latitude?: number;
-  longitude?: number;
-  description?: string;
-  locationUrl?: string;
-}>([
-  {
-    id: uuid('branch-olivos-central'),
-    tenantId: TENANT_CLINICA,
-    code: 'CENTRAL',
-    name: 'Sede Central',
-    branchTypeConceptId: TIPO_SUCURSAL.CLINIC,
-    statusConceptId: STATUS['ST-ACTIVE']!,
-    timeZone: 'America/La_Paz',
-    createdAt: iso(-900),
-  },
-  {
-    id: uuid('branch-olivos-equipetrol'),
-    tenantId: TENANT_CLINICA,
-    code: 'EQUIP',
-    name: 'Consultorios Equipetrol',
-    branchTypeConceptId: TIPO_SUCURSAL.OFFICE,
-    statusConceptId: STATUS['ST-ACTIVE']!,
-    timeZone: 'America/La_Paz',
-    createdAt: iso(-400),
-  },
-  {
-    id: uuid('branch-sanlucas-central'),
-    tenantId: TENANT_HOSPITAL,
-    code: 'CENTRAL',
-    name: 'Hospital central',
-    branchTypeConceptId: TIPO_SUCURSAL.CLINIC,
-    statusConceptId: STATUS['ST-ACTIVE']!,
-    timeZone: 'America/La_Paz',
-    createdAt: iso(-800),
-  },
-  {
-    id: uuid('branch-sanlucas-norte'),
-    tenantId: TENANT_HOSPITAL,
-    code: 'NORTE',
-    name: 'Anexo Norte',
-    branchTypeConceptId: TIPO_SUCURSAL.CLINIC,
-    statusConceptId: STATUS['ST-ACTIVE']!,
-    timeZone: 'America/La_Paz',
-    createdAt: iso(-300),
-  },
-  // Laboratorio Central: su sede principal, la misma que publica la vitrina
-  // (Calle Sucre N.º 210). Antes «Sucursales» del laboratorio no tenía ni una.
-  {
-    id: uuid('branch-laboratorio-central-principal'),
-    tenantId: TENANT_LABORATORIO,
-    code: 'PRINCIPAL',
-    name: 'Sede principal',
-    branchTypeConceptId: TIPO_SUCURSAL.OFFICE,
-    statusConceptId: STATUS['ST-ACTIVE']!,
-    timeZone: 'America/La_Paz',
-    createdAt: iso(-900),
-    description: 'Toma de muestras y laboratorio · Calle Sucre N.º 210',
-    latitude: -17.784,
-    longitude: -63.1815,
-    locationUrl: 'https://www.openstreetmap.org/?mlat=-17.784&mlon=-63.1815#map=17/-17.784/-63.1815',
-  },
-  // Farmacia Vida: las mismas tres sedes que ofrece la bandeja del mostrador
-  // («Sede») en `pharmacy.handlers`. Antes «Sucursales» decía «Todavía no
-  // cargaste sucursales» mientras la bandeja ya repartía pedidos entre tres.
-  ...(
-    [
-      ['central', 'CENTRAL', 'Sucursal Central', 'Casa matriz · Av. Alemana N.º 2100', -17.769, -63.165, -700],
-      ['equipetrol', 'EQ', 'Sucursal Equipetrol', 'Av. San Martín, Equipetrol', -17.76, -63.199, -420],
-      ['plan3000', 'P3', 'Sucursal Plan 3000', 'Av. Paraguá, Plan 3000', -17.814, -63.137, -210],
-    ] as const
-  ).map(([clave, code, name, description, latitude, longitude, dias]) => ({
-    id: uuid(`branch-farmacia-vida-${clave}`),
-    tenantId: TENANT_FARMACIA,
-    code,
-    name,
-    branchTypeConceptId: TIPO_SUCURSAL.OFFICE,
-    statusConceptId: STATUS['ST-ACTIVE']!,
-    timeZone: 'America/La_Paz',
-    createdAt: iso(dias),
-    description,
-    latitude,
-    longitude,
-    locationUrl: `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=17/${latitude}/${longitude}`,
-  })),
-]);
-
-/**
- * Suma las sucursales que una farmacia declaró en su alta pública, para que
- * «Sucursales» las muestre al entrar: el alta las pide (3.1, «ubicación GPS de
- * cada sucursal») y perderlas obligaba a cargarlas dos veces. Una que ya
- * existe con el mismo nombre no se repite.
- */
-export function sumarSucursalesDelAlta(
-  tenantId: string,
-  declaradas: readonly {
-    readonly name: string;
-    readonly description?: string;
-    readonly latitude?: number;
-    readonly longitude?: number;
-    readonly locationUrl?: string;
-  }[],
-): void {
-  for (const d of declaradas) {
-    const existentes = sucursales.filtrar((s) => s.tenantId === tenantId);
-    if (existentes.some((s) => s.name === d.name)) continue;
-    const base = d.name
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toUpperCase()
-      .replace(/[^A-Z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
-    const usados = new Set(existentes.map((s) => s.code));
-    const raiz = base === '' ? 'SUC' : base;
-    let code = raiz;
-    for (let n = 2; usados.has(code); n++) code = `${raiz}-${n}`;
-    sucursales.agregar({
-      id: nuevoId('branch'),
-      tenantId,
-      code,
-      name: d.name,
-      branchTypeConceptId: TIPO_SUCURSAL.OFFICE,
-      statusConceptId: STATUS['ST-ACTIVE']!,
-      timeZone: 'America/La_Paz',
-      createdAt: ahora(),
-      ...(d.latitude === undefined ? {} : { latitude: d.latitude }),
-      ...(d.longitude === undefined ? {} : { longitude: d.longitude }),
-      ...(d.description === undefined ? {} : { description: d.description }),
-      ...(d.locationUrl === undefined ? {} : { locationUrl: d.locationUrl }),
-    });
-  }
-}
-
-/** Las sucursales activas de una organización, como las carga «Sucursales». */
-export function sucursalesDelTenant(tenantId: string) {
-  return sucursales.filtrar(
-    (s) => s.tenantId === tenantId && s.statusConceptId === STATUS['ST-ACTIVE'],
-  );
-}
 
 export const membresias = new Coleccion<{
   id: string;
@@ -775,7 +622,7 @@ export function registrarDirectorio(router: MockRouter): void {
     const { params } = request;
     const denegado = sinLecturaDe(params['id']!, request);
     if (denegado !== null) return denegado;
-    const items = sucursales
+    const items = branchRows
       .filtrar((s) => s.tenantId === params['id'])
       .map(({ tenantId: _t, ...s }) => s);
     return { items, count: items.length };
@@ -791,24 +638,29 @@ export function registrarDirectorio(router: MockRouter): void {
       longitude?: number;
       description?: string;
       locationUrl?: string;
+      category?: BranchCategory;
     }>(request);
     // Mismo 409 que `DirectoryBranchesService`: el código es único por tenant.
     const tenantId = request.params['id']!;
-    if (sucursales.filtrar((s) => s.tenantId === tenantId && s.code === datos.code).length > 0) {
+    const category = datos.category ?? 'default';
+    const headOfficeConflict = headOfficeTaken(branchRows.filtrar((s) => s.tenantId === tenantId), category, null);
+    if (headOfficeConflict !== null) return headOfficeConflict;
+    if (branchRows.filtrar((s) => s.tenantId === tenantId && s.code === datos.code).length > 0) {
       return conflict('Ya existe una branch con ese código en el tenant', {
         tenantId,
         code: datos.code,
       });
     }
-    const nueva = sucursales.agregar({
+    const nueva = branchRows.agregar({
       id: nuevoId('branch'),
       tenantId: request.params['id']!,
       code: datos.code ?? 'SUC',
       name: datos.name ?? 'Sucursal',
-      branchTypeConceptId: TIPO_SUCURSAL[datos.branchType ?? 'CLINIC'],
+      branchTypeConceptId: BRANCH_TYPE[datos.branchType ?? 'CLINIC'],
       statusConceptId: STATUS['ST-ACTIVE']!,
       timeZone: datos.timeZone ?? 'America/La_Paz',
       createdAt: ahora(),
+      category,
       ...(datos.latitude === undefined ? {} : { latitude: datos.latitude }),
       ...(datos.longitude === undefined ? {} : { longitude: datos.longitude }),
       ...(datos.description === undefined ? {} : { description: datos.description }),
@@ -824,7 +676,7 @@ export function registrarDirectorio(router: MockRouter): void {
   // identidad de la sucursal dentro de la organización.
   router.patch('/tenants/:id/branches/:branchId', (request) => {
     const tenantId = request.params['id']!;
-    const sucursal = sucursales.get(request.params['branchId']!);
+    const sucursal = branchRows.get(request.params['branchId']!);
     if (sucursal === undefined || sucursal.tenantId !== tenantId) {
       return notFound('Sucursal no encontrada');
     }
@@ -834,18 +686,28 @@ export function registrarDirectorio(router: MockRouter): void {
       locationUrl?: string | null;
       latitude?: number | null;
       longitude?: number | null;
+      category?: BranchCategory;
     }>(request);
+    if (datos.category !== undefined) {
+      const headOfficeConflict = headOfficeTaken(
+        branchRows.filtrar((s) => s.tenantId === tenantId),
+        datos.category,
+        sucursal.id,
+      );
+      if (headOfficeConflict !== null) return headOfficeConflict;
+    }
     if (datos.name !== undefined && datos.name.trim() === '') {
       return validation('La sucursal necesita un nombre', [
         { field: 'name', message: 'El nombre no puede quedar vacío.' },
       ]);
     }
-    const actualizada = sucursales.actualizar(sucursal.id, {
+    const actualizada = branchRows.actualizar(sucursal.id, {
       ...(datos.name === undefined ? {} : { name: datos.name.trim() }),
       ...(datos.description === undefined ? {} : { description: datos.description ?? undefined }),
       ...(datos.locationUrl === undefined ? {} : { locationUrl: datos.locationUrl ?? undefined }),
       ...(datos.latitude === undefined ? {} : { latitude: datos.latitude ?? undefined }),
       ...(datos.longitude === undefined ? {} : { longitude: datos.longitude ?? undefined }),
+      ...(datos.category === undefined ? {} : { category: datos.category }),
     })!;
     const { tenantId: _t, ...resto } = actualizada;
     return resto;
@@ -1019,6 +881,5 @@ export function registrarDirectorio(router: MockRouter): void {
 
 /* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
 tenants.persistirEn('mock.directory.tenants');
-sucursales.persistirEn('mock.directory.sucursales');
 membresias.persistirEn('mock.directory.membresias');
 asignaciones.persistirEn('mock.directory.asignaciones');
