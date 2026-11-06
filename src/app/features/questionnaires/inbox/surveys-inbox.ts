@@ -15,7 +15,7 @@ import { SurveyInsightsPanel } from '../insights/survey-insights';
 import { SurveyCard, type SurveyCardData } from '../survey-card/survey-card';
 import { encuestaRoute } from '../questionnaires.routes';
 import { readFailureState } from '../service-surveys/service-surveys.logic';
-import { sendingStatusOf } from '../survey-detail/survey-detail.logic';
+import { PAST_SURVEY_LABEL, sendingStatusOf } from '../survey-detail/survey-detail.logic';
 
 /** Diacritics left loose by `normalize('NFD')`. */
 const DIACRITICS = /[̀-ͯ]/g;
@@ -24,7 +24,7 @@ const SENDING_ORDER = { yes: 0, unknown: 1, no: 2 } as const;
 
 const LABELS = {
   yes: { label: 'Se envía', tone: 'success' },
-  no: { label: 'Encuesta anterior (ya no se envía)', tone: 'secondary' },
+  no: { label: PAST_SURVEY_LABEL, tone: 'warning' },
   unknown: { label: 'Envío sin confirmar', tone: 'secondary' },
 } as const;
 

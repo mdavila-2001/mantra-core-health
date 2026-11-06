@@ -221,6 +221,7 @@ export function failureState(error: unknown, title: string, message: string): Sh
     return {
       title,
       state: forbidden({
+        title,
         message,
         ...(toProfile ? { nextAction: { label: 'Completar mi perfil profesional', route: PROFILE_ROUTE } } : {}),
         ...(requestId ? { requestId } : {}),

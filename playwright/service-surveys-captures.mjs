@@ -1,6 +1,6 @@
 /**
  * Evidence for «Encuestas por servicio», the read-only «Buzón», the read-only
- * survey sheet and the patient's «Mis encuestas» (06/11/2026, fifth round).
+ * survey sheet and the patient's «Mis encuestas» (06/11/2026, sixth round).
  *
  * Against the demo build (`yarn start:demo`, mock backend). One browser, serial
  * captures, VIEWPORT-only screenshots (never full page: the side rail would cover
@@ -11,68 +11,11 @@
  * Usage: `yarn node playwright/service-surveys-captures.mjs`
  * (`BASE`, default http://localhost:4200; `OUT`, default the evidence folder).
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { expect } from '@playwright/test';
 
-import { chromium, expect } from '@playwright/test';
+import { browser, DOCTOR, fresh, go, list, requests, reveal, servicesUrl, shot, signIn, writeLog } from './support/capture-kit.mjs';
 
-const BASE = process.env.BASE ?? 'http://localhost:4200';
-const OUT = process.env.OUT ?? 'docs/refactor-profesional/trabajo/capturas/despues/surveys-per-service-2026-11-06-r5';
-mkdirSync(OUT, { recursive: true });
-
-const browser = await chromium.launch();
 const log = [];
-const DOCTOR = 'medica@alovida.mock';
-
-async function signIn(page, email) {
-  await page.goto(`${BASE}/auth`);
-  await expect(page.getByTestId('login-identifier')).toBeVisible({ timeout: 60_000 });
-  await page.getByTestId('login-identifier').fill(email);
-  await page.getByTestId('login-password').fill('mock');
-  await page.getByTestId('login-submit').click();
-  await page.waitForURL((url) => !url.pathname.startsWith('/auth') || url.pathname.startsWith('/auth/organization'), { timeout: 60_000 });
-  if (page.url().includes('/auth/organization')) {
-    await page.getByTestId('tenant-opcion').first().click();
-    await page.waitForURL((url) => !url.pathname.startsWith('/auth'), { timeout: 60_000 });
-  }
-}
-
-/** Router navigation, like the menu (no reload). */
-async function go(page, path) {
-  await page.evaluate((to) => {
-    window.history.pushState({}, '', to);
-    window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
-  }, path);
-}
-
-async function shot(page, name) {
-  // No hover state in any capture: the pointer goes to a neutral corner first.
-  await page.mouse.move(1, 1);
-  await page.evaluate(async () => {
-    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-    await document.fonts.ready;
-    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-  });
-  const hide = await page.addStyleTag({ content: 'aside.mock { display: none !important; }' });
-  await page.screenshot({ path: join(OUT, `${name}.png`) });
-  await hide.evaluate((node) => node.remove());
-}
-
-async function fresh(width, height, failures = null, theme = 'light') {
-  // Reduced motion: transitions finish at once, so no capture is a cross-fade.
-  const context = await browser.newContext({ viewport: { width, height }, locale: 'es-BO', timezoneId: 'America/La_Paz', reducedMotion: 'reduce', colorScheme: theme });
-  const page = await context.newPage();
-  if (failures) await page.addInitScript((f) => sessionStorage.setItem('mock:fallos', JSON.stringify(f)), failures);
-  // The app's own theme preference (`ThemeService`, `mantra-core-health.theme`).
-  if (theme === 'dark') await page.addInitScript(() => localStorage.setItem('mantra-core-health.theme', 'dark'));
-  return { context, page };
-}
-
-const requests = (page, method, prefix) =>
-  page.evaluate(([m, p]) => (window.__mockRequests ?? []).filter((r) => r.method === m && r.url.startsWith(p)), [method, prefix]);
-
-const servicesUrl = '/questionnaires?encuestas=servicios';
-const list = (page) => page.getByTestId('service-surveys-list');
 
 // 01–07 · Import → reload → Buzón «Se envía» → its sheet → Cambiar → Quitar → reload (1440).
 {
@@ -101,14 +44,16 @@ const list = (page) => page.getByTestId('service-surveys-list');
   await page.getByRole('tab', { name: 'Buzón', exact: true }).click();
   const card = page.getByTestId('surveys-inbox-list').locator('li', { hasText: title });
   await expect(card).toContainText('Se envía', { timeout: 30_000 });
-  await card.scrollIntoViewIfNeeded();
+  await reveal(page, card);
   await shot(page, '04-inbox-after-import-sent-1440');
   await card.getByRole('link', { name: `Ver las respuestas de ${title}` }).click();
   await expect(page.getByTestId('survey-detail-sending')).toHaveText('Se envía', { timeout: 30_000 });
   // Settled: just imported, no answers yet, so the answers tab is an S3 with its next action.
   await expect(page.getByTestId('survey-detail-answers')).toContainText('Todavía no respondió nadie', { timeout: 30_000 });
+  await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, '05-imported-survey-sheet-1440');
-  await page.getByTestId('survey-detail-tabs').scrollIntoViewIfNeeded();
+  // 05b: the S3 answers state itself, framed from the tab strip down.
+  await reveal(page, page.getByTestId('survey-detail-tabs'));
   await shot(page, '05b-imported-survey-no-answers-yet-1440');
   await go(page, servicesUrl);
   await expect(list(page)).toBeVisible({ timeout: 30_000 });
@@ -218,92 +163,24 @@ for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) 
   await expect(page.getByTestId('surveys-inbox-list')).toBeVisible({ timeout: 30_000 });
   const legacy = page.getByTestId('surveys-inbox-list').locator('li', { hasText: 'Experiencia de teleconsulta' });
   if (width === 1440) {
-    await page.getByTestId('surveys-inbox-toolbar').scrollIntoViewIfNeeded();
+    await reveal(page, page.getByTestId('surveys-inbox-toolbar'));
     await shot(page, '19-inbox-read-only-1440');
-    await legacy.scrollIntoViewIfNeeded();
+    await reveal(page, legacy);
     await shot(page, '20-inbox-past-survey-1440');
   }
   await legacy.getByRole('link', { name: /Ver las respuestas/ }).click();
-  await expect(page.getByTestId('survey-detail-sending')).toHaveText('Ya no se envía', { timeout: 30_000 });
+  await expect(page.getByTestId('survey-detail-sending')).toHaveText('Encuesta anterior (ya no se envía)', { timeout: 30_000 });
   await expect(page.locator('.encuesta__respuesta').first()).toBeVisible({ timeout: 30_000 });
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, `21-legacy-sheet-read-only-${suffix}`);
   // The questionnaire tab, scrolled so several questions show.
   await page.getByRole('tab', { name: 'Preguntas', exact: true }).click();
-  await page.getByTestId('survey-detail-questions').scrollIntoViewIfNeeded();
-  await page.evaluate(() => window.scrollBy(0, 120));
+  await reveal(page, page.getByTestId('survey-detail-questions'));
   await shot(page, `22-legacy-sheet-questions-${suffix}`);
   await context.close();
 }
 
 /** Opens a survey's sheet from the Buzón by its title and waits until the answers settled. */
-async function openSheet(page, title) {
-  await go(page, '/questionnaires');
-  const card = page.getByTestId('surveys-inbox-list').locator('li', { hasText: title });
-  await card.getByRole('link', { name: /Ver las respuestas/ }).click();
-  await expect(page.getByTestId('survey-detail-answers')).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByTestId('survey-detail-answers').locator('app-skeleton')).toHaveCount(0);
-}
-
-// 30–37 · The sheet's tabs: Resumen with data and below the minimum (1440, 390), Respuestas with
-// data (390), «Ver como el paciente», the #resumen entry, and an unpublished survey (single tab).
-for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) {
-  const { context, page } = await fresh(width, height);
-  await signIn(page, DOCTOR);
-  await openSheet(page, 'Estudios por imágenes');
-  if (width === 390) {
-    await page.getByTestId('survey-detail-tabs').scrollIntoViewIfNeeded();
-    await shot(page, '30-answers-with-data-390');
-  }
-  await page.getByRole('tab', { name: 'Resumen', exact: true }).click();
-  await expect(page.getByTestId('survey-detail-summary-bars')).toBeVisible();
-  await page.getByTestId('survey-detail-tabs').scrollIntoViewIfNeeded();
-  await shot(page, `31-summary-with-data-${suffix}`);
-  await openSheet(page, 'Satisfacción general con el servicio');
-  await page.getByRole('tab', { name: 'Resumen', exact: true }).click();
-  await expect(page.getByTestId('survey-detail-summary-below-minimum')).toBeVisible();
-  await page.getByTestId('survey-detail-tabs').scrollIntoViewIfNeeded();
-  await shot(page, `32-summary-below-minimum-${suffix}`);
-  await context.close();
-}
-{
-  const { context, page } = await fresh(1440, 900);
-  await signIn(page, DOCTOR);
-  await openSheet(page, 'Estudios por imágenes');
-  await page.getByRole('tab', { name: 'Preguntas', exact: true }).click();
-  await page.getByTestId('encuesta-previa').click();
-  await expect(page.locator('app-survey-form')).toBeVisible();
-  await page.getByTestId('survey-detail-tabs').scrollIntoViewIfNeeded();
-  await shot(page, '33-as-the-patient-sees-it-1440');
-  // The #resumen entry: a full load straight into the summary tab.
-  const sheetUrl = new URL(page.url());
-  await page.goto('about:blank');
-  await page.goto(`${BASE}${sheetUrl.pathname}#resumen`);
-  await expect(page.getByRole('tab', { name: 'Resumen', exact: true })).toHaveAttribute('aria-selected', 'true', { timeout: 30_000 });
-  await expect(page.getByTestId('survey-detail-summary-bars')).toBeVisible({ timeout: 30_000 });
-  await shot(page, '34-entry-by-resumen-link-1440');
-  // An unpublished (draft) survey: only «Preguntas», even if the link asks for answers.
-  await go(page, '/questionnaires');
-  await expect(page.getByTestId('surveys-inbox-list')).toBeVisible({ timeout: 30_000 });
-  const draftId = await page.evaluate(() => {
-    const read = (window.__mockRequests ?? []).filter((r) => r.url.startsWith('/surveys/catalog') && Array.isArray(r.respuesta)).pop();
-    return read?.respuesta.find((s) => s.status === 'DRAFT')?.id ?? null;
-  });
-  await page.goto(`${BASE}/questionnaires/${draftId}#respuestas`);
-  await expect(page.getByTestId('survey-detail-sending')).toHaveText('Nunca se envió', { timeout: 30_000 });
-  await shot(page, '35-unpublished-single-tab-1440');
-  await context.close();
-}
-{
-  const { context, page } = await fresh(1440, 900, null, 'dark');
-  await signIn(page, DOCTOR);
-  await openSheet(page, 'Estudios por imágenes');
-  await page.getByRole('tab', { name: 'Preguntas', exact: true }).click();
-  await page.getByTestId('survey-detail-tabs').scrollIntoViewIfNeeded();
-  await shot(page, '36-dark-questions-1440');
-  await context.close();
-}
-
 // 23–24 · Patient «Mis encuestas» at 390, no surveys yet.
 {
   const { context, page } = await fresh(390, 844, [{ patron: '/surveys/me/invitations', modo: 'empty' }]);
@@ -330,10 +207,10 @@ for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) 
   await page.getByTestId('standard-catalog-cancel').click();
   await page.getByRole('tab', { name: 'Buzón', exact: true }).click();
   await expect(page.getByTestId('surveys-inbox-list')).toBeVisible({ timeout: 30_000 });
-  await page.getByTestId('surveys-inbox-list').scrollIntoViewIfNeeded();
+  await reveal(page, page.getByTestId('surveys-inbox-list'));
   await shot(page, `27-dark-inbox-${suffix}`);
   await page.getByTestId('surveys-inbox-list').locator('li', { hasText: 'Experiencia de teleconsulta' }).getByRole('link', { name: /Ver las respuestas/ }).click();
-  await expect(page.getByTestId('survey-detail-sending')).toHaveText('Ya no se envía', { timeout: 30_000 });
+  await expect(page.getByTestId('survey-detail-sending')).toHaveText('Encuesta anterior (ya no se envía)', { timeout: 30_000 });
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, `28-dark-sheet-${suffix}`);
   await context.close();
@@ -348,6 +225,6 @@ for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) 
   await context.close();
 }
 
-writeFileSync(join(OUT, 'requests.json'), `${JSON.stringify(log, null, 2)}\n`);
+writeLog('requests.json', log);
 await browser.close();
-console.log(`captures in ${OUT}`);
+console.log('service-surveys captures done');

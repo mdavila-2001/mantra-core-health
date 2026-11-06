@@ -10,8 +10,6 @@ import { MY_SERVICES_ROUTE } from '../../my-services/my-services.routes';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
-import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { SupportCode } from '../../../shared/components/molecules/support-code/support-code';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
@@ -33,7 +31,7 @@ import { SurveyQuestionsDialog } from './survey-questions-dialog';
  */
 @Component({
   selector: 'app-service-surveys',
-  imports: [Alert, AppButton, AppButtonLink, Badge, EmptyState, NavIcon, RouterLink, ServiceSurveyRow, Skeleton, SupportCode, SurveyCatalogPicker, SurveyQuestionsDialog, ViewStateHost],
+  imports: [AppButton, AppButtonLink, Badge, EmptyState, NavIcon, RouterLink, ServiceSurveyRow, Skeleton, SurveyCatalogPicker, SurveyQuestionsDialog, ViewStateHost],
   templateUrl: './service-surveys.html',
   styleUrl: './service-surveys.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -178,19 +176,6 @@ export class ServiceSurveys {
   protected viewService(row: Row): void {
     const entry = this.entryFor(row.assignment?.catalogCode);
     if (entry !== null) this.viewing.set(logic.serviceQuestions(row, entry));
-  }
-
-  /** The refusal's text and its door, if any (S5 drawn with our own title). */
-  protected refusalMessage(state: ViewState<never>): string {
-    return state.status === 'forbidden' ? (state.message ?? '') : '';
-  }
-
-  protected refusalCode(state: ViewState<never>): string | null {
-    return state.status === 'forbidden' ? (state.requestId ?? null) : null;
-  }
-
-  protected refusalAction(state: ViewState<never>): { label: string; route: string } | null {
-    return state.status === 'forbidden' && state.nextAction?.route ? { label: state.nextAction.label, route: state.nextAction.route } : null;
   }
 
   private showWriteError(failure: logic.ShownFailure, retry: () => void): void {

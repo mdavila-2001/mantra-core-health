@@ -193,7 +193,7 @@ describe('ServiceSurveys · fallos', () => {
     // Its own title and a door to the profile, not the generic «No tiene acceso a esta sección».
     expect(panel?.textContent).toContain('No se pudo quitar la encuesta de «Electrocardiograma»');
     expect(panel?.textContent).not.toContain('No tiene acceso a esta sección');
-    expect(panel?.querySelector('[data-testid="service-surveys-refusal-action"]')?.getAttribute('href')).toBe('/my-account');
+    expect(panel?.querySelector('a[href="/my-account"]')?.textContent).toContain('Completar mi perfil profesional');
   });
 
   it('el catálogo que falla usa la misma anatomía S9, con su propio texto', () => {

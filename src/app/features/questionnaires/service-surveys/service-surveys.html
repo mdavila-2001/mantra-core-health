@@ -29,19 +29,7 @@
       @if (writeError(); as failure) {
         <!-- A failed removal (or an import whose picker was closed): S9 with «Reintentar»; a refusal
              is S5 with our own title and, for a 412, the way to the professional profile. -->
-        <app-view-state-host class="por-servicio__fallo" [state]="failure.state" (retry)="retryLastWrite()" data-testid="service-surveys-write-error">
-          <app-alert vsh-forbidden tone="error" [title]="failure.title">
-            {{ refusalMessage(failure.state) }}
-            @if (refusalCode(failure.state); as code) {
-              <app-support-code [code]="code" [copyable]="false" />
-            }
-            @if (refusalAction(failure.state); as action) {
-              <div alert-actions>
-                <a app-button size="sm" variant="outline" [routerLink]="action.route" data-testid="service-surveys-refusal-action">{{ action.label }}</a>
-              </div>
-            }
-          </app-alert>
-        </app-view-state-host>
+        <app-view-state-host class="por-servicio__fallo" [state]="failure.state" (retry)="retryLastWrite()" data-testid="service-surveys-write-error" />
       }
 
       <ul class="por-servicio__lista" data-testid="service-surveys-list">

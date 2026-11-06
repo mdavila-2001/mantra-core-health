@@ -152,24 +152,23 @@
 
 .encuesta__barra-fila {
   display: grid;
-  grid-template-columns: minmax(5rem, 12ch) 1fr auto;
+  /* Label column wide enough for the option text (it wraps, never cut); fixed count column so tracks align. */
+  grid-template-columns: minmax(6rem, 2fr) minmax(5rem, 3fr) 8ch;
   align-items: center;
   gap: var(--sp-2);
 }
 
 .encuesta__barra-etiqueta {
-  overflow: hidden;
   font-size: var(--fs-caption);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .encuesta__barra-pista {
   display: block;
   inline-size: 100%;
   block-size: 0.6rem;
-  border-radius: var(--radius-pill, var(--r-full));
-  background: var(--surface-muted, var(--border-default));
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
   overflow: hidden;
 }
 
@@ -184,6 +183,8 @@
 .encuesta__barra-cifra {
   color: var(--text-secondary);
   font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
   white-space: nowrap;
 }
 
@@ -209,7 +210,7 @@
 
 .encuesta__answers {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
   gap: var(--sp-2) var(--sp-4);
   margin: 0;
 }

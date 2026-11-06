@@ -70,6 +70,12 @@ export class ViewStateHost<T> {
   /** S8 y S9: la persona pide reintentar. El dueño de los datos ejecuta. */
   readonly retry = output<void>();
 
+  /**
+   * Whether S8/S9 offer «Reintentar». `false` where the surrounding control is
+   * already the retry (e.g. a dialog whose primary button re-sends).
+   */
+  readonly retryable = input(true);
+
   /** S7: la persona pide datos frescos. */
   readonly refresh = output<void>();
 

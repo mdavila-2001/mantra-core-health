@@ -50,64 +50,57 @@ const preguntaTexto: SurveyQuestion = {
 };
 
 describe('resumirPregunta — dashboard de FT-29', () => {
-  it('cuenta cada valor de escala y calcula el promedio', () => {
-    const respuestas = [
-      respuestaCon({ questionId: 'q-escala', questionText: '', answerType: 'SCALE', valueNumber: 5 }),
-      respuestaCon({ questionId: 'q-escala', questionText: '', answerType: 'SCALE', valueNumber: 5 }),
-      respuestaCon({ questionId: 'q-escala', questionText: '', answerType: 'SCALE', valueNumber: 3 }),
-    ];
+  const scale = (value: number) => respuestaCon({ questionId: 'q-escala', questionText: '', answerType: 'SCALE', valueNumber: value });
 
-    const resumen = resumirPregunta(preguntaEscala, respuestas);
+  it('cuenta cada valor de escala y calcula el promedio (con el mínimo de 5)', () => {
+    const resumen = resumirPregunta(preguntaEscala, [5, 5, 3, 4, 1].map(scale));
 
-    expect(resumen.totalRespondida).toBe(3);
-    expect(resumen.promedio).toBeCloseTo(4.33, 1);
+    expect(resumen.totalRespondida).toBe(5);
+    expect(resumen.suppressed).toBe(false);
+    expect(resumen.promedio).toBeCloseTo(3.6, 1);
     expect(resumen.barras).toEqual([
-      { etiqueta: '1', cantidad: 0, porcentaje: 0 },
+      { etiqueta: '1', cantidad: 1, porcentaje: 20 },
       { etiqueta: '2', cantidad: 0, porcentaje: 0 },
-      { etiqueta: '3', cantidad: 1, porcentaje: 33 },
-      { etiqueta: '4', cantidad: 0, porcentaje: 0 },
-      { etiqueta: '5', cantidad: 2, porcentaje: 67 },
+      { etiqueta: '3', cantidad: 1, porcentaje: 20 },
+      { etiqueta: '4', cantidad: 1, porcentaje: 20 },
+      { etiqueta: '5', cantidad: 2, porcentaje: 40 },
     ]);
   });
 
+  it('una pregunta con 1–4 respuestas no muestra agregado: ni barras ni promedio (privacidad)', () => {
+    const resumen = resumirPregunta(preguntaEscala, [5, 5, 3].map(scale));
+
+    expect(resumen.totalRespondida).toBe(3);
+    expect(resumen.suppressed).toBe(true);
+    expect(resumen.barras).toEqual([]);
+    expect(resumen.promedio).toBeNull();
+  });
+
   it('cuenta cuántos eligieron cada opción de elección simple', () => {
-    const respuestas = [
-      respuestaCon({
-        questionId: 'q-opcion',
-        questionText: '',
-        answerType: 'SINGLE_CHOICE',
-        valueChoices: ['Trato'],
-      }),
-      respuestaCon({
-        questionId: 'q-opcion',
-        questionText: '',
-        answerType: 'SINGLE_CHOICE',
-        valueChoices: ['Trato'],
-      }),
-    ];
+    const respuestas = Array.from({ length: 5 }, () =>
+      respuestaCon({ questionId: 'q-opcion', questionText: '', answerType: 'SINGLE_CHOICE', valueChoices: ['Trato'] }),
+    );
 
     const resumen = resumirPregunta(preguntaOpcion, respuestas);
 
     expect(resumen.barras).toEqual([
       { etiqueta: 'Puntualidad', cantidad: 0, porcentaje: 0 },
-      { etiqueta: 'Trato', cantidad: 2, porcentaje: 100 },
+      { etiqueta: 'Trato', cantidad: 5, porcentaje: 100 },
       { etiqueta: 'Instalaciones', cantidad: 0, porcentaje: 0 },
     ]);
     expect(resumen.promedio).toBeNull();
   });
 
   it('cuenta sí/no en una pregunta booleana', () => {
-    const respuestas = [
-      respuestaCon({ questionId: 'q-bool', questionText: '', answerType: 'BOOLEAN', valueBoolean: true }),
-      respuestaCon({ questionId: 'q-bool', questionText: '', answerType: 'BOOLEAN', valueBoolean: false }),
-      respuestaCon({ questionId: 'q-bool', questionText: '', answerType: 'BOOLEAN', valueBoolean: true }),
-    ];
+    const respuestas = [true, false, true, true, false].map((valueBoolean) =>
+      respuestaCon({ questionId: 'q-bool', questionText: '', answerType: 'BOOLEAN', valueBoolean }),
+    );
 
     const resumen = resumirPregunta(preguntaBooleana, respuestas);
 
     expect(resumen.barras).toEqual([
-      { etiqueta: 'Sí', cantidad: 2, porcentaje: 67 },
-      { etiqueta: 'No', cantidad: 1, porcentaje: 33 },
+      { etiqueta: 'Sí', cantidad: 3, porcentaje: 60 },
+      { etiqueta: 'No', cantidad: 2, porcentaje: 40 },
     ]);
   });
 

@@ -102,7 +102,7 @@ describe('SurveyDetailScreen · solo lectura', () => {
     expect(root().querySelectorAll('app-card')).toHaveLength(1);
     expect(tabLabels()).toEqual(['Preguntas', 'Resumen', 'Respuestas']);
     // A hand-made survey is not sent any more: never «Publicada» alone.
-    expect(find('[data-testid="survey-detail-sending"]')?.textContent?.trim()).toBe('Ya no se envía');
+    expect(find('[data-testid="survey-detail-sending"]')?.textContent?.trim()).toBe('Encuesta anterior (ya no se envía)');
     expectNoManagement();
   });
 
@@ -132,7 +132,8 @@ describe('SurveyDetailScreen · solo lectura', () => {
     expect(root().textContent).toContain('¿Cómo fue la atención?');
     expectNoManagement();
     expect(find('[data-testid="survey-detail-sending"]')?.textContent?.trim()).toBe('Nunca se envió');
-    expect(tabLabels()).toEqual(['Preguntas']);
+    expect(tabLabels()).toEqual([]);
+    expect(find('[data-testid="survey-detail-single"]')).not.toBeNull();
   });
 
   it('una encuesta base del sistema abierta por URL siempre «Se envía»', () => {

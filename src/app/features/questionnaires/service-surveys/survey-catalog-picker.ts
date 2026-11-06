@@ -8,10 +8,7 @@ import type {
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
-import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { SupportCode } from '../../../shared/components/molecules/support-code/support-code';
-import { RouterLink } from '@angular/router';
-import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
+import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { answerFormat, questionCount, sortForService, sourcesLine, type ShownFailure } from './service-surveys.logic';
 
 /**
@@ -26,7 +23,7 @@ import { answerFormat, questionCount, sortForService, sourcesLine, type ShownFai
  */
 @Component({
   selector: 'app-survey-catalog-picker',
-  imports: [Alert, AppButton, AppButtonLink, Badge, ContentDialog, RouterLink, SupportCode],
+  imports: [AppButton, Badge, ContentDialog, ViewStateHost],
   templateUrl: './survey-catalog-picker.html',
   styleUrl: './survey-catalog-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,24 +40,6 @@ export class SurveyCatalogPicker {
 
   readonly pick = output<string>();
   readonly closed = output<void>();
-
-  /** The failure in words, laid out like the page's error banner (never the server's text). */
-  protected readonly failure = computed(() => {
-    const shown = this.error();
-    if (shown === null) return null;
-    const { title, state } = shown;
-    if (state.status === 'error') return { title, message: state.message ?? '', hint: state.hint ?? null, requestId: state.requestId, action: null };
-    if (state.status === 'forbidden') {
-      const action = state.nextAction?.route ? { label: state.nextAction.label, route: state.nextAction.route } : null;
-      return { title, message: state.message ?? '', hint: null, requestId: state.requestId ?? null, action };
-    }
-    return { title, message: 'No hay conexión con el servidor. Revise su red y vuelva a intentar.', hint: null, requestId: null, action: null };
-  });
-
-  /** «Copiar código», as in the page's banner. */
-  protected copyCode(code: string): void {
-    void this.host.nativeElement.ownerDocument.defaultView?.navigator.clipboard?.writeText(code);
-  }
 
   protected readonly options = computed(() => sortForService(this.catalog(), this.kind()));
 

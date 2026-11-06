@@ -5,17 +5,25 @@ import type { AnswerType, SurveyQuestion, SurveyResponse } from '../../../core/d
 /* Pure helpers of the survey sheet: the per-question summary and the CSV. Split
    out of `survey-detail.ts` (frozen over 300 lines) so the screen stays small. */
 
-/** Una barra del gráfico de una pregunta: cuántos eligieron esta opción, y qué porcentaje del total es. */
+/**
+ * The privacy minimum (D-13): below this many answers no aggregate is shown —
+ * not for the survey, not for a single question — and no CSV is offered. Same
+ * rule as the server applies to the «Cómo le va» summary.
+ */
+export const MIN_COHORT = 5;
+
+/** One bar of a question's chart: how many chose this option and its share. */
 export interface SummaryBar {
   readonly etiqueta: string;
   readonly cantidad: number;
-  /** 0 a 100, sobre quienes respondieron *esta* pregunta (no sobre toda la encuesta). */
+  /** 0 to 100, over those who answered THIS question (not the whole survey). */
   readonly porcentaje: number;
 }
 
 /**
- * El resumen de una pregunta: sus barras (vacío en texto libre, donde un
- * gráfico no dice nada) y, para escala, el promedio.
+ * A question's summary: its bars (none for free text, where a chart says
+ * nothing) and, for a scale, the average. `suppressed` when 1–4 people
+ * answered it: then there are no bars nor average (privacy minimum).
  */
 export interface QuestionSummary {
   readonly questionId: string;
@@ -24,15 +32,14 @@ export interface QuestionSummary {
   readonly totalRespondida: number;
   readonly promedio: number | null;
   readonly barras: readonly SummaryBar[];
+  readonly suppressed: boolean;
 }
 
 /**
- * Una barra por etiqueta, con su porcentaje sobre `total`.
- *
- * Es la parte de `resumirPregunta` que no depende de cómo llegaron las
- * respuestas: la reutiliza el resumen general del profesional
- * (`insights/survey-insights.logic.ts`), que recibe los conteos ya agregados por
- * el servidor en vez de respuestas sueltas.
+ * One bar per label, with its share of `total`. The part of `resumirPregunta`
+ * that does not depend on how the answers arrived: the practitioner's overall
+ * summary (`insights/survey-insights.logic.ts`) reuses it with the counts the
+ * server already aggregated.
  */
 export function armarBarras(
   total: number,
@@ -46,14 +53,14 @@ export function armarBarras(
 }
 
 /**
- * El día de envío de una respuesta, `AAAA-MM-DD`, en UTC (el servidor lo manda
- * redondeado al día a medianoche UTC). Sin fecha, vacío. Nunca la hora.
+ * The day an answer was sent, `YYYY-MM-DD`, in UTC (the server rounds it to
+ * midnight UTC). Empty without a date. Never the time.
  */
 export function submissionDay(fecha: Date | null): string {
   return fecha === null || Number.isNaN(fecha.getTime()) ? '' : fecha.toISOString().slice(0, 10);
 }
 
-/** Arma el resumen (barras + promedio) de una pregunta a partir de las respuestas recibidas. */
+/** Builds a question's summary (bars + average) from the answers received. */
 export function resumirPregunta(
   pregunta: SurveyQuestion,
   respuestas: readonly SurveyResponse[],
@@ -98,28 +105,29 @@ export function resumirPregunta(
       break;
     }
     case 'TEXT':
-      // Texto libre no se resume en barras: cada respuesta es distinta y
-      // agruparlas no diría nada. La lista de respuestas de abajo ya las
-      // muestra completas.
+      // Free text has no bars: each answer is different; the «Respuestas» tab shows them whole.
       break;
   }
 
+  // ONE privacy rule: a question with 1–4 answers shows no aggregate either.
+  const suppressed = total > 0 && total < MIN_COHORT;
   return {
     questionId: pregunta.id,
     questionText: pregunta.questionText,
     answerType: pregunta.answerType,
     totalRespondida: total,
-    promedio,
-    barras,
+    promedio: suppressed ? null : promedio,
+    barras: suppressed ? [] : barras,
+    suppressed,
   };
 }
 
-/** Encierra en comillas sólo si hace falta, duplicando las internas (RFC 4180). */
+/** Quotes only when needed, doubling inner quotes (RFC 4180). */
 export function celdaCsv(valor: string): string {
   return /[",\r\n]/.test(valor) ? `"${valor.replace(/"/g, '""')}"` : valor;
 }
 
-/** Nombre de archivo seguro a partir del título de la encuesta. */
+/** A safe file name from the survey's title. */
 export function slugify(texto: string): string {
   return (
     texto
@@ -138,6 +146,9 @@ export const SHEET_TABS = ['resumen', 'respuestas'] as const;
 export function tabOfFragment(fragment: string | null): number {
   return SHEET_TABS.indexOf(fragment as (typeof SHEET_TABS)[number]) + 1;
 }
+
+/** How a survey that is no longer sent is called, in the Buzón and in its sheet. */
+export const PAST_SURVEY_LABEL = 'Encuesta anterior (ya no se envía)';
 
 /** Whether a survey is sent today: `unknown` when the service list could not be read. */
 export type SendingStatus = 'yes' | 'no' | 'unknown';
@@ -158,9 +169,10 @@ export function sendingStatusOf(
 }
 
 /** The «Estado» badge: neutral while checking, never just «Publicada». */
-export function sendingLabelOf(published: boolean, status: SendingStatus | null): { text: string; variant: 'success' | 'secondary' } {
+export function sendingLabelOf(published: boolean, status: SendingStatus | null): { text: string; variant: 'success' | 'secondary' | 'warning' } {
   if (!published) return { text: 'Nunca se envió', variant: 'secondary' };
   if (status === null) return { text: 'Comprobando…', variant: 'secondary' };
   if (status === 'yes') return { text: 'Se envía', variant: 'success' };
-  return { text: status === 'no' ? 'Ya no se envía' : 'Envío sin confirmar', variant: 'secondary' };
+  // Same words and tint as the Buzón's past surveys: clearly not «Se envía».
+  return status === 'no' ? { text: PAST_SURVEY_LABEL, variant: 'warning' } : { text: 'Envío sin confirmar', variant: 'secondary' };
 }

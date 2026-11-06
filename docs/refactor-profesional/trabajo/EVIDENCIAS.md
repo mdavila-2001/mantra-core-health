@@ -1,14 +1,15 @@
 # Evidencias
 
-## Encuestas por servicio, Buzón y ficha de solo lectura, «Mis encuestas» · 2026-11-06 (quinta ronda)
+## Encuestas por servicio, Buzón y ficha de solo lectura, «Mis encuestas» · 2026-11-06 (sexta ronda)
 
-Reemplaza las secciones de rondas anteriores de este cambio (sus carpetas `…-06/`, `-r2/`, `-r3/` y `-r4/` se retiraron).
+Reemplaza las secciones de rondas anteriores de este cambio (sus carpetas `…-06/`, `-r2/` a `-r5/` se retiraron).
 
 Entorno: Linux, `yarn start:demo` (backend simulado) en `http://localhost:4200`, Chromium headless 1234, rama
 `claude/amazing-brown-f2c2a9` (sobre `origin/dev` 68bb79660). Un solo navegador, en serie, esperando elementos (nunca
 la red quieta), movimiento reducido, fuentes cargadas, puntero fuera (sin estados de hover), capturas **solo de la
-ventana**, chip de demostración oculto. Guion: `playwright/service-surveys-captures.mjs` →
-`capturas/despues/surveys-per-service-2026-11-06-r5/` (`requests.json` = lo que anotó `window.__mockRequests`).
+ventana**, chip de demostración oculto. Guiones: `playwright/service-surveys-captures.mjs` y `playwright/survey-sheet-captures.mjs` (kit común en
+`playwright/support/capture-kit.mjs`) →
+`capturas/despues/surveys-per-service-2026-11-06-r6/` (`requests.json` = lo que anotó `window.__mockRequests`).
 
 | Comprobación | Resultado | Evidencia |
 |---|---|---|
@@ -16,22 +17,23 @@ ventana**, chip de demostración oculto. Guion: `playwright/service-surveys-capt
 | Selector | la elegida con borde y fondo de marca; el puntero no la imita (sólo con puntero real) | `02` |
 | Importar → `PUT` → recarga | `PUT …/:serviceId` `{catalogCode}` 200; el `GET` de la recarga trae el `catalogCode` | `03`, `requests.json` |
 | Buzón tras importar | lo que se envía primero; la importada «Se envía» | `04` |
-| Ficha de la recién importada | ya asentada: «Se envía», vigencia desde la importación; Respuestas = S3 con una sola acción | `05`, `05b` |
+| Ficha de la recién importada | ya asentada: «Se envía», vigencia desde la importación (`05`); la pestaña Respuestas como S3 con una sola acción (`05b`, distinta) | `05`, `05b` |
 | «Cambiar», Quitar → `DELETE` → recarga | arranca en la que está en uso; 204 y la fila vuelve a la base | `06`, `07`, `07b` |
 | «Ver preguntas» de la cita | numeradas, «· obligatoria»/«· opcional» como en el selector y la ficha | `08` |
 | Cargando, sin servicios | esqueleto; «Ir a «Mis servicios»» | `09`, `10` |
 | Error de carga (S9) | título y texto de lectura, código, «Copiar código», «Reintentar»; el `GET` 500 está en `requests.json` («load-error») | `11` |
-| Falla el catálogo / el `PUT` / el `DELETE` | misma anatomía; el selector sin un segundo reintento (es «Importar»); el `DELETE` reconfirma al reintentar; 403/412 = S5 con su título y, en 412, «Completar mi perfil profesional» (pruebas unitarias) | `12`–`14`, `requests.json` |
+| Falla el catálogo / el `PUT` / el `DELETE` | el anfitrión de estados en todos (en el selector sin «Reintentar»: lo es «Importar»); el `DELETE` reconfirma al reintentar; 403/412 = S5 con su propio título y, en 412, «Completar mi perfil profesional» (pruebas unitarias) | `12`–`14`, `requests.json` |
 | 390: por servicio y selector | filas iguales, ícono alineado con el nombre; selector con cabecera corta y licencia | `15`–`18` |
-| Buzón de solo lectura | hechas a mano «Encuesta anterior (ya no se envía)», incluida la de teleconsulta sin `catalogCode` | `19`, `20` |
-| Ficha hecha a mano (1440, 390) | el título de la página es la encuesta; metadatos 2×2 en 390; aviso de solo lectura compacto dentro de «Preguntas», las pestañas a la vista | `21-*`, `22-*` |
-| «Respuestas» con datos (390) | lista de respuestas por día, CSV | `30` |
-| «Resumen» con datos (1440, 390) | barras por pregunta (6 respuestas, encuesta de imágenes sembrada) | `31-*` |
-| «Resumen» bajo el mínimo (1440, 390) | «3 de un mínimo de 5 respuestas…», sin barras (Holter, importada hace una semana) | `32-*` |
+| Buzón de solo lectura | hechas a mano «Encuesta anterior (ya no se envía)» con un tinte distinto de «Se envía», incluida la de teleconsulta sin `catalogCode` | `19`, `20` |
+| Ficha hecha a mano (1440, 390) | estado con las mismas palabras que el Buzón; Vigencia «Inicio: …» (no da a entender que sigue); metadatos 2×2 en 390; aviso compacto dentro de «Preguntas» | `21-*`, `22-*` |
+| «Respuestas» con datos (390) | al llegar desde «Ver respuestas» la tira de pestañas queda a la vista (el guion lo comprueba); lista por día, CSV | `30a`, `30` |
+| «Resumen» con datos (1440, 390) | barras por pregunta con las etiquetas completas (envuelven, nunca se cortan) y las pistas alineadas | `31-*` |
+| «Resumen» bajo el mínimo (1440, 390) | misma anatomía y palabras que el resumen del Buzón: «El resumen todavía no se muestra… llevan 3» (Holter); una pregunta con 1–4 respuestas dice «Sin datos suficientes» (pruebas unitarias) | `32-*` |
 | «Ver como el paciente» | el mismo formulario que responde el paciente | `33` |
 | Entrada por `#resumen` | carga directa con «Resumen» abierto | `34` |
-| Encuesta sin publicar | una sola pestaña, aunque el enlace pida `#respuestas` | `35` |
-| Modo oscuro | por servicio, selector, Buzón, ficha (1440 y 390), paciente, «Preguntas» | `25`–`29`, `36` |
+| Encuesta sin publicar | un solo panel sin tira de pestañas, aunque el enlace pida `#respuestas` (la URL se corrige) | `35` |
+| Respuestas rechazadas (S5) / Resumen fallido (S9) | dentro de su pestaña: «No tiene acceso a las respuestas» con código; S9 con código, «Copiar código», «Reintentar» | `37`, `38` |
+| Modo oscuro | por servicio, selector, Buzón, ficha, paciente; «Preguntas» y «Resumen» (1440 y 390) | `25`–`29`, `36-*`, `36b-*` |
 | Paciente 390 | «Mis encuestas» en «Más accesos»; pantalla y pestaña «Mis encuestas» | `23`, `24` |
 | Resumen del médico | capturas de ventana regeneradas tras asentarse | `docs/frontend/evidence/encuestas-resumen-medico-2026-10-28/` |
 
@@ -39,7 +41,7 @@ ventana**, chip de demostración oculto. Guion: `playwright/service-surveys-capt
 |---|---|
 | Playwright de prueba: `carril-27-editor-encuestas` + `mis-encuestas-barra-paciente` + `encuestas-resumen-medico` (simulador) | 11/11 en verde, sin omisiones |
 | Playwright `carril-27-editor-encuestas-api-real` (`E2E_API_REAL=1`) | **no se ejecutó**: no hay API viva sembrada en este entorno; sin la variable se informa omitido (`test.skip`, como los otros specs de API real), nunca verde |
-| Vitest de lo tocado (incluye las pestañas de la ficha: Resumen con ≥5, <5, S3, S5, S6, S8 y S9 con reintento; fragmento acotado y escrito) | 39 archivos, 496/496 |
+| Vitest de lo tocado (pestañas de la ficha en todos los estados, regla de privacidad por pregunta, S5 con título propio y reintento opcional del anfitrión de estados) | 42 archivos, 553/553 |
 | `yarn typecheck`, eslint de lo cambiado, `check-english-identifiers` | limpios |
 
 No se ejecutó / queda abierto: contra la API real. El fondo del diálogo de confirmación (primitivo compartido) no se

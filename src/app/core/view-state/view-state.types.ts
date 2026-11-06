@@ -144,6 +144,8 @@ export interface ValidationViewState {
  */
 export interface ForbiddenViewState {
   readonly status: 'forbidden';
+  /** What was refused, in one line (the alert's title). Without it: «No tiene acceso a esta sección». */
+  readonly title?: string;
   readonly message?: string;
   readonly nextAction?: ViewStateNextAction;
   /**

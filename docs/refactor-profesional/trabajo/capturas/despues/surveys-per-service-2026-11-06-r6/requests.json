@@ -1,0 +1,471 @@
+[
+  {
+    "step": "import",
+    "requests": [
+      {
+        "method": "PUT",
+        "url": "/surveys/service-assignments/7e8452a4-e403-4a92-a609-7c6ea2bf7656",
+        "status": 200,
+        "body": {
+          "catalogCode": "STD_PROCEDURE_V1"
+        },
+        "respuesta": {
+          "serviceId": "7e8452a4-e403-4a92-a609-7c6ea2bf7656",
+          "serviceName": "Electrocardiograma",
+          "assignment": {
+            "assignmentId": "100142a3-652f-4bd5-a556-cd92c82cbbc8",
+            "catalogCode": "STD_PROCEDURE_V1",
+            "title": "Procedimientos y estudios",
+            "templateId": "a5a70019-aab5-4d87-a9ee-108efbace610",
+            "versionId": "b84d9d7d-94ce-4bd9-a634-bdfc9a0706e6",
+            "assignedAt": "2026-11-06T18:21:36.093Z"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "step": "reload-after-import",
+    "requests": [
+      {
+        "method": "GET",
+        "url": "/surveys/service-assignments",
+        "status": 200,
+        "body": null,
+        "respuesta": {
+          "consultation": {
+            "system": true,
+            "title": "Cita médica",
+            "templateTitle": "Encuesta de su consulta médica",
+            "questionCount": 12,
+            "replaceable": false,
+            "questions": [
+              {
+                "text": "¿Qué tan fácil le resultó tener esta consulta, desde pedir la cita hasta que comenzó la atención? (1 = Muy difícil, 5 = Muy fácil)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "esfuerzo_acceso",
+                "scaleMin": 1,
+                "scaleMax": 5
+              },
+              {
+                "text": "Desde la hora acordada, ¿cuánto tiempo esperó hasta que comenzó su consulta? Incluya la espera en sala o en la videollamada.",
+                "answerType": "SINGLE_CHOICE",
+                "required": true,
+                "dimension": "tiempo_espera",
+                "options": [
+                  "Menos de 15 minutos",
+                  "De 15 a 30 minutos",
+                  "De 31 a 60 minutos",
+                  "Más de 1 hora",
+                  "No lo recuerdo"
+                ]
+              },
+              {
+                "text": "En esta consulta, ¿con qué frecuencia el profesional le escuchó con atención? (1 = Nunca, 5 = Siempre)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "comunicacion",
+                "scaleMin": 1,
+                "scaleMax": 5
+              },
+              {
+                "text": "En esta consulta, ¿con qué frecuencia el profesional le explicó las cosas de una forma que usted pudo entender? (1 = Nunca, 5 = Siempre)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "claridad_explicacion",
+                "scaleMin": 1,
+                "scaleMax": 5
+              },
+              {
+                "text": "En esta consulta, ¿con qué frecuencia el profesional le trató con cortesía y respeto? (1 = Nunca, 5 = Siempre)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "trato_respetuoso",
+                "scaleMin": 1,
+                "scaleMax": 5
+              },
+              {
+                "text": "En esta consulta, ¿con qué frecuencia el profesional pasó suficiente tiempo con usted? (1 = Nunca, 5 = Siempre)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "tiempo_suficiente",
+                "scaleMin": 1,
+                "scaleMax": 5
+              },
+              {
+                "text": "¿Salió de la consulta sintiendo que todas sus inquietudes o preguntas habían sido contestadas del todo? (1 = Nada, 5 = Del todo)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "inquietudes_resueltas",
+                "scaleMin": 1,
+                "scaleMax": 5
+              },
+              {
+                "text": "¿Hablaron usted y el profesional sobre todas las medicinas recetadas que estaba tomando?",
+                "answerType": "SINGLE_CHOICE",
+                "required": false,
+                "dimension": "revision_medicacion",
+                "options": [
+                  "Sí, definitivamente",
+                  "Sí, hasta cierto punto",
+                  "No",
+                  "No estoy tomando medicinas recetadas"
+                ]
+              },
+              {
+                "text": "Durante esta consulta, ¿tuvo algún problema de seguridad o de trato que quiera reportar? (por ejemplo: falta de respeto, falta de privacidad, un posible error o una indicación que le pareció insegura)",
+                "answerType": "SINGLE_CHOICE",
+                "required": true,
+                "dimension": "seguridad_percibida",
+                "options": [
+                  "No, no tuve ningún problema",
+                  "Sí, y deseo que ALOVIDA me contacte para dar seguimiento",
+                  "Sí, pero no deseo que me contacten"
+                ]
+              },
+              {
+                "text": "En general, ¿cómo calificaría su experiencia con esta consulta? (1 = Muy mala, 5 = Excelente)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "satisfaccion_global",
+                "scaleMin": 1,
+                "scaleMax": 5
+              },
+              {
+                "text": "¿Qué tan probable es que usted recomiende a este profesional a un familiar o a un amigo que necesite una atención parecida? (0 = Nada probable, 10 = Totalmente probable)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "recomendacion_nps",
+                "scaleMin": 0,
+                "scaleMax": 10
+              },
+              {
+                "text": "Si lo desea, cuéntenos qué podríamos hacer mejor.",
+                "answerType": "TEXT",
+                "required": false,
+                "dimension": "comentario_abierto"
+              }
+            ]
+          },
+          "services": [
+            {
+              "serviceId": "58672581-fe23-4347-a2a1-5de638c82d38",
+              "serviceName": "Ecocardiograma Doppler",
+              "assignment": {
+                "assignmentId": "65168f3a-adcc-46a4-ab87-5eaaefa3001e",
+                "catalogCode": "STD_IMAGING_V1",
+                "title": "Estudios por imágenes",
+                "templateId": "1ae893dc-698b-432c-abb5-3ad01d2919c8",
+                "versionId": "6459d89a-7147-4f46-a828-69ecea13fc40",
+                "assignedAt": "2026-10-25T14:00:00.000Z"
+              }
+            },
+            {
+              "serviceId": "7e8452a4-e403-4a92-a609-7c6ea2bf7656",
+              "serviceName": "Electrocardiograma",
+              "assignment": {
+                "assignmentId": "100142a3-652f-4bd5-a556-cd92c82cbbc8",
+                "catalogCode": "STD_PROCEDURE_V1",
+                "title": "Procedimientos y estudios",
+                "templateId": "a5a70019-aab5-4d87-a9ee-108efbace610",
+                "versionId": "b84d9d7d-94ce-4bd9-a634-bdfc9a0706e6",
+                "assignedAt": "2026-11-06T18:21:36.093Z"
+              }
+            },
+            {
+              "serviceId": "9954680d-0548-48eb-a680-b27ef31e0fa8",
+              "serviceName": "Holter de 24 horas",
+              "assignment": {
+                "assignmentId": "55f13007-5e29-431d-a65e-63f696b3f4f4",
+                "catalogCode": "STD_OTHER_V1",
+                "title": "Satisfacción general con el servicio",
+                "templateId": "a941f324-effb-4f96-aef7-a0f298f01c1a",
+                "versionId": "96d34c62-9c6d-4f34-a003-df12fa1aded6",
+                "assignedAt": "2026-10-30T14:00:00.000Z"
+              }
+            },
+            {
+              "serviceId": "96e1cb76-acf8-4144-a250-348e136370fa",
+              "serviceName": "Prueba de esfuerzo",
+              "assignment": null
+            },
+            {
+              "serviceId": "24ef3d24-bf6f-4be0-a868-033cdb589704",
+              "serviceName": "Teleconsulta cardiológica",
+              "assignment": {
+                "assignmentId": "806f1c64-c1fb-484c-af6f-7868621aa970",
+                "catalogCode": null,
+                "title": "Experiencia de teleconsulta",
+                "templateId": "8ddcd349-2858-48b1-a615-9e883bb5670a",
+                "versionId": "df8d8d0d-513b-405f-a35f-b4f24483335c",
+                "assignedAt": "2026-09-27T14:00:00.000Z"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "step": "remove",
+    "requests": [
+      {
+        "method": "DELETE",
+        "url": "/surveys/service-assignments/7e8452a4-e403-4a92-a609-7c6ea2bf7656",
+        "status": 204,
+        "body": null
+      }
+    ]
+  },
+  {
+    "step": "reload-after-remove",
+    "requests": [
+      {
+        "method": "GET",
+        "url": "/surveys/service-assignments",
+        "status": 200,
+        "body": null,
+        "respuesta": {
+          "consultation": {
+            "system": true,
+            "title": "Cita médica",
+            "templateTitle": "Encuesta de su consulta médica",
+            "questionCount": 12,
+            "replaceable": false,
+            "questions": [
+              {
+                "text": "¿Qué tan fácil le resultó tener esta consulta, desde pedir la cita hasta que comenzó la atención? (1 = Muy difícil, 5 = Muy fácil)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "esfuerzo_acceso",
+                "scaleMin": 1,
+                "scaleMax": 5
+              },
+              {
+                "text": "Desde la hora acordada, ¿cuánto tiempo esperó hasta que comenzó su consulta? Incluya la espera en sala o en la videollamada.",
+                "answerType": "SINGLE_CHOICE",
+                "required": true,
+                "dimension": "tiempo_espera",
+                "options": [
+                  "Menos de 15 minutos",
+                  "De 15 a 30 minutos",
+                  "De 31 a 60 minutos",
+                  "Más de 1 hora",
+                  "No lo recuerdo"
+                ]
+              },
+              {
+                "text": "En esta consulta, ¿con qué frecuencia el profesional le escuchó con atención? (1 = Nunca, 5 = Siempre)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "comunicacion",
+                "scaleMin": 1,
+                "scaleMax": 5
+              },
+              {
+                "text": "En esta consulta, ¿con qué frecuencia el profesional le explicó las cosas de una forma que usted pudo entender? (1 = Nunca, 5 = Siempre)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "claridad_explicacion",
+                "scaleMin": 1,
+                "scaleMax": 5
+              },
+              {
+                "text": "En esta consulta, ¿con qué frecuencia el profesional le trató con cortesía y respeto? (1 = Nunca, 5 = Siempre)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "trato_respetuoso",
+                "scaleMin": 1,
+                "scaleMax": 5
+              },
+              {
+                "text": "En esta consulta, ¿con qué frecuencia el profesional pasó suficiente tiempo con usted? (1 = Nunca, 5 = Siempre)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "tiempo_suficiente",
+                "scaleMin": 1,
+                "scaleMax": 5
+              },
+              {
+                "text": "¿Salió de la consulta sintiendo que todas sus inquietudes o preguntas habían sido contestadas del todo? (1 = Nada, 5 = Del todo)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "inquietudes_resueltas",
+                "scaleMin": 1,
+                "scaleMax": 5
+              },
+              {
+                "text": "¿Hablaron usted y el profesional sobre todas las medicinas recetadas que estaba tomando?",
+                "answerType": "SINGLE_CHOICE",
+                "required": false,
+                "dimension": "revision_medicacion",
+                "options": [
+                  "Sí, definitivamente",
+                  "Sí, hasta cierto punto",
+                  "No",
+                  "No estoy tomando medicinas recetadas"
+                ]
+              },
+              {
+                "text": "Durante esta consulta, ¿tuvo algún problema de seguridad o de trato que quiera reportar? (por ejemplo: falta de respeto, falta de privacidad, un posible error o una indicación que le pareció insegura)",
+                "answerType": "SINGLE_CHOICE",
+                "required": true,
+                "dimension": "seguridad_percibida",
+                "options": [
+                  "No, no tuve ningún problema",
+                  "Sí, y deseo que ALOVIDA me contacte para dar seguimiento",
+                  "Sí, pero no deseo que me contacten"
+                ]
+              },
+              {
+                "text": "En general, ¿cómo calificaría su experiencia con esta consulta? (1 = Muy mala, 5 = Excelente)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "satisfaccion_global",
+                "scaleMin": 1,
+                "scaleMax": 5
+              },
+              {
+                "text": "¿Qué tan probable es que usted recomiende a este profesional a un familiar o a un amigo que necesite una atención parecida? (0 = Nada probable, 10 = Totalmente probable)",
+                "answerType": "SCALE",
+                "required": true,
+                "dimension": "recomendacion_nps",
+                "scaleMin": 0,
+                "scaleMax": 10
+              },
+              {
+                "text": "Si lo desea, cuéntenos qué podríamos hacer mejor.",
+                "answerType": "TEXT",
+                "required": false,
+                "dimension": "comentario_abierto"
+              }
+            ]
+          },
+          "services": [
+            {
+              "serviceId": "58672581-fe23-4347-a2a1-5de638c82d38",
+              "serviceName": "Ecocardiograma Doppler",
+              "assignment": {
+                "assignmentId": "65168f3a-adcc-46a4-ab87-5eaaefa3001e",
+                "catalogCode": "STD_IMAGING_V1",
+                "title": "Estudios por imágenes",
+                "templateId": "1ae893dc-698b-432c-abb5-3ad01d2919c8",
+                "versionId": "6459d89a-7147-4f46-a828-69ecea13fc40",
+                "assignedAt": "2026-10-25T14:00:00.000Z"
+              }
+            },
+            {
+              "serviceId": "7e8452a4-e403-4a92-a609-7c6ea2bf7656",
+              "serviceName": "Electrocardiograma",
+              "assignment": null
+            },
+            {
+              "serviceId": "9954680d-0548-48eb-a680-b27ef31e0fa8",
+              "serviceName": "Holter de 24 horas",
+              "assignment": {
+                "assignmentId": "55f13007-5e29-431d-a65e-63f696b3f4f4",
+                "catalogCode": "STD_OTHER_V1",
+                "title": "Satisfacción general con el servicio",
+                "templateId": "a941f324-effb-4f96-aef7-a0f298f01c1a",
+                "versionId": "96d34c62-9c6d-4f34-a003-df12fa1aded6",
+                "assignedAt": "2026-10-30T14:00:00.000Z"
+              }
+            },
+            {
+              "serviceId": "96e1cb76-acf8-4144-a250-348e136370fa",
+              "serviceName": "Prueba de esfuerzo",
+              "assignment": null
+            },
+            {
+              "serviceId": "24ef3d24-bf6f-4be0-a868-033cdb589704",
+              "serviceName": "Teleconsulta cardiológica",
+              "assignment": {
+                "assignmentId": "806f1c64-c1fb-484c-af6f-7868621aa970",
+                "catalogCode": null,
+                "title": "Experiencia de teleconsulta",
+                "templateId": "8ddcd349-2858-48b1-a615-9e883bb5670a",
+                "versionId": "df8d8d0d-513b-405f-a35f-b4f24483335c",
+                "assignedAt": "2026-09-27T14:00:00.000Z"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "step": "load-error",
+    "requests": [
+      {
+        "method": "GET",
+        "url": "/surveys/service-assignments",
+        "status": 500,
+        "body": null,
+        "respuesta": {
+          "timestamp": "2026-11-06T18:21:54.475Z",
+          "path": "/surveys/service-assignments",
+          "correlationId": "mock-fallo",
+          "code": "INTERNAL",
+          "message": "Simulado: fallo del servidor."
+        }
+      }
+    ]
+  },
+  {
+    "step": "catalog-error",
+    "requests": [
+      {
+        "method": "GET",
+        "url": "/surveys/standard-catalog",
+        "status": 500,
+        "body": null,
+        "respuesta": {
+          "timestamp": "2026-11-06T18:21:58.116Z",
+          "path": "/surveys/standard-catalog",
+          "correlationId": "mock-fallo",
+          "code": "INTERNAL",
+          "message": "Simulado: fallo del servidor."
+        }
+      }
+    ]
+  },
+  {
+    "step": "import-error",
+    "requests": [
+      {
+        "method": "PUT",
+        "url": "/surveys/service-assignments/7e8452a4-e403-4a92-a609-7c6ea2bf7656",
+        "status": 500,
+        "body": {
+          "catalogCode": "STD_PROCEDURE_V1"
+        },
+        "respuesta": {
+          "timestamp": "2026-11-06T18:22:02.380Z",
+          "path": "/surveys/service-assignments/7e8452a4-e403-4a92-a609-7c6ea2bf7656",
+          "correlationId": "mock-fallo",
+          "code": "INTERNAL",
+          "message": "Simulado: fallo del servidor."
+        }
+      }
+    ]
+  },
+  {
+    "step": "remove-error",
+    "requests": [
+      {
+        "method": "DELETE",
+        "url": "/surveys/service-assignments/58672581-fe23-4347-a2a1-5de638c82d38",
+        "status": 500,
+        "body": null,
+        "respuesta": {
+          "timestamp": "2026-11-06T18:22:06.332Z",
+          "path": "/surveys/service-assignments/58672581-fe23-4347-a2a1-5de638c82d38",
+          "correlationId": "mock-fallo",
+          "code": "INTERNAL",
+          "message": "Simulado: fallo del servidor."
+        }
+      }
+    ]
+  }
+]

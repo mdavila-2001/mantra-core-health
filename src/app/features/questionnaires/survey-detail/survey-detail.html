@@ -32,58 +32,67 @@
         <div>
           <dt>Vigencia</dt>
           <dd data-testid="survey-detail-validity">
-            <!-- Day values: formatted in UTC so they never shift a day. -->
-            @if (encuesta.effectiveFrom) {
+            <!-- Day values, in UTC so they never shift a day. A survey no longer sent never reads as ongoing. -->
+            @if (encuesta.effectiveFrom && encuesta.effectiveTo) {
+              Del {{ encuesta.effectiveFrom | date: 'd MMM y' : 'UTC' }} al {{ encuesta.effectiveTo | date: 'd MMM y' : 'UTC' }}
+            } @else if (encuesta.effectiveFrom && sending() === 'no') {
+              Inicio: {{ encuesta.effectiveFrom | date: 'd MMM y' : 'UTC' }}
+            } @else if (encuesta.effectiveFrom) {
               Desde {{ encuesta.effectiveFrom | date: 'd MMM y' : 'UTC' }}
             } @else {
               Sin fecha de inicio
-            }
-            @if (encuesta.effectiveTo) {
-              · hasta {{ encuesta.effectiveTo | date: 'd MMM y' : 'UTC' }}
             }
           </dd>
         </div>
       </dl>
 
-      <app-tabs class="encuesta__pestanas" data-testid="survey-detail-tabs" [selectedIndex]="activeTab()" (selectedIndexChange)="selectTab($event)">
-        <app-tab label="Preguntas">
-          @if (activeTab() === 0) {
-            <!-- Read-only since 06/11/2026 (the API rejects editing hand-made surveys): one compact line. -->
-            <p class="encuesta__solo-lectura" data-testid="survey-detail-read-only">
-              Solo lectura: qué encuesta recibe cada servicio se elige en&nbsp;<a app-link [routerLink]="rutaDeLasEncuestas" [queryParams]="serviceSurveysQuery" data-testid="survey-detail-go-to-services">«Encuestas por servicio»</a>.
-            </p>
-            <div class="encuesta__panel-cabecera">
-              @if (encuesta.questions.length > 0) {
-                <button app-button type="button" variant="outline" size="sm" (click)="alternarPrevia()" data-testid="encuesta-previa">
-                  {{ enPrevia() ? 'Ver la lista de preguntas' : 'Ver como el paciente' }}
-                </button>
-              }
-            </div>
-            @if (enPrevia()) {
-              <!-- The SAME component the patient answers with: it cannot drift. -->
-              <p class="encuesta__previa-nota">Así lo ve quien responde. Nada de lo que marque acá se guarda.</p>
-              <app-survey-form [preguntas]="encuesta.questions" [soloLectura]="true" testIdPrefijo="previa" />
-            } @else if (encuesta.questions.length === 0) {
-              <p class="encuesta__vacio">Esta encuesta no tiene preguntas.</p>
-            } @else {
-              <ol class="encuesta__preguntas" data-testid="survey-detail-questions">
-                @for (pregunta of encuesta.questions; track pregunta.id) {
-                  <li><app-question-view [question]="pregunta" /></li>
-                }
-              </ol>
-            }
+      <!-- The questions panel, shared by the tabbed and the single-panel layouts. -->
+      <ng-template #questionsPanel>
+        <!-- Read-only since 06/11/2026 (the API rejects editing hand-made surveys): one compact line. -->
+        <p class="encuesta__solo-lectura" data-testid="survey-detail-read-only">
+          Solo lectura: qué encuesta recibe cada servicio se elige en&nbsp;<a app-link [routerLink]="rutaDeLasEncuestas" [queryParams]="serviceSurveysQuery" data-testid="survey-detail-go-to-services">«Encuestas por servicio»</a>.
+        </p>
+        <div class="encuesta__panel-cabecera">
+          @if (encuesta.questions.length > 0) {
+            <button app-button type="button" variant="outline" size="sm" (click)="alternarPrevia()" data-testid="encuesta-previa">
+              {{ enPrevia() ? 'Ver la lista de preguntas' : 'Ver como el paciente' }}
+            </button>
           }
-        </app-tab>
-        @if (publicada()) {
+        </div>
+        @if (enPrevia()) {
+          <!-- The SAME component the patient answers with: it cannot drift. -->
+          <p class="encuesta__previa-nota">Así lo ve quien responde. Nada de lo que marque acá se guarda.</p>
+          <app-survey-form [preguntas]="encuesta.questions" [soloLectura]="true" testIdPrefijo="previa" />
+        } @else if (encuesta.questions.length === 0) {
+          <p class="encuesta__vacio">Esta encuesta no tiene preguntas.</p>
+        } @else {
+          <ol class="encuesta__preguntas" data-testid="survey-detail-questions">
+            @for (pregunta of encuesta.questions; track pregunta.id) {
+              <li><app-question-view [question]="pregunta" /></li>
+            }
+          </ol>
+        }
+      </ng-template>
+
+      @if (publicada()) {
+        <app-tabs class="encuesta__pestanas" data-testid="survey-detail-tabs" [selectedIndex]="activeTab()" (selectedIndexChange)="selectTab($event)">
+          <app-tab label="Preguntas">
+            @if (activeTab() === 0) {
+              <ng-container [ngTemplateOutlet]="questionsPanel" />
+            }
+          </app-tab>
           <app-tab label="Resumen">
             @if (activeTab() === 1) {
               <app-view-state-host class="encuesta__panel" [state]="answersView()" (retry)="cargarRespuestas()" data-testid="survey-detail-summary">
                 @if (!suficientesRespuestas()) {
-                  <!-- Below the minimum a chart would point at a single person (D-13). -->
-                  <p class="encuesta__vacio" data-testid="survey-detail-summary-below-minimum">
-                    {{ respuestas().length }} de un mínimo de 5 respuestas necesarias para mostrar un resumen sin arriesgar
-                    identificar a quien respondió.
-                  </p>
+                  <!-- Below the minimum a chart would point at a single person (D-13): same
+                       anatomy and words as the «Cómo le va» summary. -->
+                  <app-empty-state
+                    variant="empty"
+                    title="El resumen todavía no se muestra"
+                    [description]="belowMinimumMessage()"
+                    data-testid="survey-detail-summary-below-minimum"
+                  />
                 } @else {
                   <ul class="encuesta__resumen" data-testid="survey-detail-summary-bars">
                     @for (resumen of resumenPorPregunta(); track resumen.questionId) {
@@ -99,6 +108,10 @@
                         </div>
                         @if (resumen.answerType === 'TEXT') {
                           <p class="encuesta__resumen-nota">Texto libre: se lee completo en la pestaña «Respuestas».</p>
+                        } @else if (resumen.suppressed) {
+                          <p class="encuesta__resumen-nota" data-testid="survey-detail-question-suppressed">
+                            Sin datos suficientes: menos de {{ minCohort }} respuestas a esta pregunta.
+                          </p>
                         } @else if (resumen.totalRespondida === 0) {
                           <p class="encuesta__resumen-nota">Nadie respondió esta pregunta todavía.</p>
                         } @else {
@@ -123,7 +136,7 @@
           </app-tab>
           <app-tab label="Respuestas">
             @if (activeTab() === 2) {
-              <app-view-state-host id="respuestas" class="encuesta__panel" [state]="answersView()" (retry)="cargarRespuestas()" data-testid="survey-detail-answers">
+              <app-view-state-host class="encuesta__panel" [state]="answersView()" (retry)="cargarRespuestas()" data-testid="survey-detail-answers">
                 <div class="encuesta__respuestas-cabecera">
                   @if (suficientesRespuestas()) {
                     <button app-button type="button" variant="outline" size="sm" (click)="descargarCsv()">Descargar CSV</button>
@@ -160,8 +173,13 @@
               </app-view-state-host>
             }
           </app-tab>
-        }
-      </app-tabs>
+        </app-tabs>
+      } @else {
+        <!-- Never published: one panel, no tab strip pretending there is more. -->
+        <div class="encuesta__pestanas" data-testid="survey-detail-single">
+          <ng-container [ngTemplateOutlet]="questionsPanel" />
+        </div>
+      }
     </app-card>
   }
 </app-view-state-host>

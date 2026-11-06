@@ -164,9 +164,6 @@
   margin-block-end: var(--sp-4);
 }
 
-.catalogo__error-pista {
-  margin-block: var(--sp-2);
-}
 
 .catalogo__acciones {
   display: flex;

@@ -14,6 +14,7 @@ import { SurveyDetailScreen } from './survey-detail';
 const questions = [
   { id: 'q-1', position: 1, questionText: '¿Volvería?', answerType: 'BOOLEAN', required: true },
   { id: 'q-2', position: 2, questionText: '¿Qué mejoraría?', answerType: 'TEXT', required: false },
+  { id: 'q-3', position: 3, questionText: '¿Usó el estacionamiento?', answerType: 'BOOLEAN', required: false },
 ];
 
 const sheet = (published = true) => ({
@@ -28,6 +29,8 @@ const answer = (n: number) => ({
   answers: [
     { questionId: 'q-1', questionText: '¿Volvería?', answerType: 'BOOLEAN', valueBoolean: n % 2 === 0 },
     { questionId: 'q-2', questionText: '¿Qué mejoraría?', answerType: 'TEXT', valueText: `Comentario ${n}` },
+    // Optional and answered only by the first two: below the minimum on its own.
+    ...(n <= 2 ? [{ questionId: 'q-3', questionText: '¿Usó el estacionamiento?', answerType: 'BOOLEAN', valueBoolean: true }] : []),
   ],
 });
 
@@ -84,9 +87,22 @@ describe('SurveyDetailScreen · pestañas', () => {
       expect(bars?.textContent).toContain('Texto libre');
     });
 
-    it('con menos de 5 dice «N de un mínimo de 5» y no dibuja barras', async () => {
+    it('UNA regla de privacidad: una pregunta con 1–4 respuestas dice «Sin datos suficientes», sin barras ni promedio', async () => {
+      await open('/questionnaires/s-1#resumen', true, [1, 2, 3, 4, 5].map(answer));
+      const suppressed = find('[data-testid="survey-detail-question-suppressed"]');
+      expect(suppressed?.textContent).toContain('Sin datos suficientes: menos de 5 respuestas a esta pregunta');
+      const item = suppressed!.closest('li')!;
+      expect(item.textContent).toContain('¿Usó el estacionamiento?');
+      expect(item.querySelector('.encuesta__barra-fila')).toBeNull();
+      expect(item.textContent).not.toContain('100%');
+    });
+
+    it('con menos de 5 dice que el resumen no se muestra y cuántas lleva, sin barras', async () => {
       await open('/questionnaires/s-1#resumen', true, [1, 2, 3].map(answer));
-      expect(find('[data-testid="survey-detail-summary-below-minimum"]')?.textContent).toContain('3 de un mínimo de 5');
+      const notice = find('[data-testid="survey-detail-summary-below-minimum"]');
+      // Same anatomy and words as the «Cómo le va» summary.
+      expect(notice?.textContent).toContain('El resumen todavía no se muestra');
+      expect(notice?.textContent).toContain('se necesitan al menos 5 para proteger la privacidad de sus pacientes; llevan 3');
       expect(find('[data-testid="survey-detail-summary-bars"]')).toBeNull();
     });
 
@@ -116,7 +132,7 @@ describe('SurveyDetailScreen · pestañas', () => {
       expect(find('[data-testid="survey-detail-summary-bars"]')).not.toBeNull();
     });
 
-    it('404 (S6) y sin conexión (S8) tampoco se leen como «nadie respondió»', async () => {
+    it('404: S6, tampoco se lee como «nadie respondió»', async () => {
       await open('/questionnaires/s-1#resumen', true, apiError(404, 'NOT_FOUND'));
       expect(find('[data-testid="survey-detail-summary"]')?.textContent).toContain('No encontramos');
       expect(find('[data-testid="survey-detail-summary"]')?.textContent).not.toContain('nadie respondió');
@@ -130,11 +146,13 @@ describe('SurveyDetailScreen · pestañas', () => {
     });
   });
 
-  it('una encuesta sin publicar sólo tiene «Preguntas»: #respuestas no deja un panel vacío', async () => {
+  it('una encuesta sin publicar: un solo panel sin tira de pestañas; #respuestas no deja un panel vacío y la URL lo dice', async () => {
     await open('/questionnaires/s-1#respuestas', false, null);
-    expect(tabs().map((t) => t.textContent?.trim())).toEqual(['Preguntas']);
-    expect(tabs()[0]!.getAttribute('aria-selected')).toBe('true');
+    await harness.fixture.whenStable();
+    expect(tabs()).toHaveLength(0);
+    expect(find('[data-testid="survey-detail-single"]')).not.toBeNull();
     expect(find('[data-testid="survey-detail-questions"]')?.textContent).toContain('¿Volvería?');
+    expect(TestBed.inject(Router).url).toBe('/questionnaires/s-1');
   });
 
   it('cambiar de pestaña la escribe en el fragmento de la URL', async () => {

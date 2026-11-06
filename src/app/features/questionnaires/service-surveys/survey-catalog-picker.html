@@ -10,27 +10,9 @@
     Sus pacientes la recibirán después de cada atención de este servicio, en lugar de la encuesta base de servicios.
   </p>
 
-  <!-- The failure goes first, with the support code; «Importar» below is the retry (no second retry button). -->
-  @if (failure(); as f) {
-    <app-alert class="catalogo__error" tone="error" [title]="f.title" data-testid="standard-catalog-error">
-      {{ f.message }}
-      @if (f.hint) {
-        <p class="catalogo__error-pista"><strong>Qué puede hacer:</strong> {{ f.hint }}</p>
-      }
-      @if (f.requestId) {
-        <app-support-code [code]="f.requestId" [copyable]="false" />
-      }
-      @if (f.requestId || f.action) {
-        <div alert-actions>
-          @if (f.requestId; as code) {
-            <button app-button size="sm" variant="outline" type="button" (clicked)="copyCode(code)">Copiar código</button>
-          }
-          @if (f.action; as action) {
-            <a app-button size="sm" variant="outline" [routerLink]="action.route">{{ action.label }}</a>
-          }
-        </div>
-      }
-    </app-alert>
+  @if (error(); as failure) {
+    <!-- The page's own error anatomy; «Importar» below is the retry, so the banner offers none. -->
+    <app-view-state-host class="catalogo__error" [state]="failure.state" [retryable]="false" data-testid="standard-catalog-error" />
   }
 
   <div class="catalogo" data-testid="standard-catalog">
