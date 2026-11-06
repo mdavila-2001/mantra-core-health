@@ -29,6 +29,7 @@ import {
 import { ChatStore } from '../../../core/messaging/chat.store';
 import { SessionStore } from '../../../core/auth/session.store';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Switch } from '../../../shared/components/atoms/switch/switch';
 
 /** Las esperas que se ofrecen de un toque. El campo admite cualquier otra. */
@@ -107,7 +108,7 @@ function fusionar(editado: Borrador, base: Borrador, llegado: Borrador): Borrado
  */
 @Component({
   selector: 'app-chat-preferences',
-  imports: [AppButton, FormsModule, Switch],
+  imports: [AppButton, FormsModule, NavIcon, Switch],
   templateUrl: './chat-preferences.html',
   styleUrl: './chat-preferences.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
