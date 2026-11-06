@@ -106,7 +106,7 @@ const migrana: Condition = {
     reasonText: 'La tomografía no muestra hallazgos compatibles.',
     basedOn: { kind: 'ANALYSIS', serviceRequestId: ID.tac, encounterId: ID.e2 },
   },
-  ...({ replacedByConditionId: ID.sinusitis } as object),
+  replacedByConditionId: ID.sinusitis,
 };
 
 const sinusitis: Condition = {
@@ -130,7 +130,7 @@ const tac: DiagnosticOrder = {
   codeConceptId: 'cx-tac',
   statusConceptId: 'cx-estado',
   createdAt: dia(2, 3, 14),
-  ...({ reasonConditionId: ID.migrana } as object),
+  reasonConditionId: ID.migrana,
 };
 
 const informeTac: DiagnosticReport = {
@@ -175,7 +175,7 @@ const derivacion: Referral = {
   sourceEncounterId: ID.e2,
   targetDisplayName: 'Otorrinolaringología de Clínica Norte',
   diagnosisText: 'Sinusitis aguda que no cede',
-  ...({ targetEncounterId: ID.e3 } as object),
+  targetEncounterId: ID.e3,
 };
 
 const HISTORIA: RegistrosDelRecorrido = {

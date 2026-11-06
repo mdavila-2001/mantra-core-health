@@ -136,7 +136,7 @@ export function lugarDeDecision(
 }
 
 export function idsDeEvidencia(c: Condition): string[] {
-  const reemplazo = vinculo(c, 'replacedByConditionId');
+  const reemplazo = c.replacedByConditionId;
   const b = c.verification?.basedOn;
   return [b?.serviceRequestId, b?.diagnosticReportId, reemplazo].filter(
     (id): id is string => id !== undefined && id.length > 0,
@@ -172,7 +172,7 @@ export function fraseDeDecision(
   );
   if (motivo === undefined) partes.push('No se registró el motivo del descarte.');
 
-  const reemplazoId = vinculo(c, 'replacedByConditionId');
+  const reemplazoId = c.replacedByConditionId;
   if (reemplazoId !== undefined && reemplazoId !== c.id) {
     const reemplazo = idx.diagnosticos.get(reemplazoId);
     if (reemplazo === undefined) {
@@ -221,7 +221,7 @@ export function textoDeEvidencia(c: Condition, idx: Indices, n: Nombres, fuentes
 
 /** Para qué se pidió el estudio, según el estado del diagnóstico **en el momento del pedido**. */
 export function propositoDeOrden(o: DiagnosticOrder, idx: Indices, n: Nombres): { texto: string; dx?: string } | null {
-  const razonId = vinculo(o, 'reasonConditionId');
+  const razonId = o.reasonConditionId;
   if (razonId === undefined) return null;
   const dx = idx.diagnosticos.get(razonId);
   if (dx === undefined) return { texto: 'para estudiar un diagnóstico que no está en esta lectura' };

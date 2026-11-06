@@ -16,7 +16,6 @@ import {
   libre,
   mayusculaInicial,
   minusculaInicial,
-  vinculo,
 } from './recorrido-guiado.texto';
 
 export function destinoDe(d: Referral): string | undefined {
@@ -48,7 +47,8 @@ export function sucesosDeDerivaciones(lista: readonly Referral[], idx: Indices):
     ];
 
     const origen = emitida.fecha;
-    const llegadaId = vinculo(d, 'targetEncounterId');
+    // Sólo existe tras aceptar la derivación: lo anota el destino.
+    const llegadaId = d.targetEncounterId;
     const deLaDerivacion = origen === null ? 'la derivación' : `la derivación del ${fechaCorta(origen)}`;
     if (llegadaId !== undefined && idx.atenciones.has(llegadaId)) {
       sucesos.push({

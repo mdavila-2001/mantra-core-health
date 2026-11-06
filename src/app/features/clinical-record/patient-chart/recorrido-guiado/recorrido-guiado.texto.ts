@@ -63,7 +63,11 @@ export function enumerar(partes: readonly string[]): string {
   return `${partes.slice(0, -1).join(', ')} y ${partes[partes.length - 1]}`;
 }
 
-/** Lee un vínculo que todavía puede no estar declarado en el tipo (Franja 1). */
+/**
+ * Lee un vínculo que el tipo todavía no declara. Queda sólo para el reemplazo de
+ * recetas (`replacedByRequestId` / `replacesRequestId`): el simulador lo trae y la
+ * API lo está sumando, pero `MedicationRequest` aún no lo tiene.
+ */
 export function vinculo(registro: object, campo: string): string | undefined {
   const valor = (registro as Record<string, unknown>)[campo];
   return typeof valor === 'string' && valor.length > 0 ? valor : undefined;

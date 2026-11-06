@@ -22,6 +22,7 @@ import {
 } from '../../clinical-record/patient-chart/recorrido-guiado/recorrido-guiado.model';
 
 import { outputsRecord } from './exit-log';
+import { ScenarioRecorridoGuiadoSimulador } from './recorrido-guiado.simulador';
 import type { ComponentScenario, ScenarioHost } from './scenario.types';
 
 /* ============================================================================
@@ -41,7 +42,7 @@ import type { ComponentScenario, ScenarioHost } from './scenario.types';
 const KEY = 'features/clinical-record/patient-chart/recorrido-guiado/recorrido-guiado';
 const SOURCE = 'src/app/features/component-stock/scenarios/recorrido-guiado.scenarios.ts';
 
-export const RECORRIDO_GUIADO_VARIANTS = ['historia', 'episodio', 'vacio'] as const;
+export const RECORRIDO_GUIADO_VARIANTS = ['historia', 'episodio', 'vacio', 'simulador'] as const;
 export type RecorridoGuiadoVariant = (typeof RECORRIDO_GUIADO_VARIANTS)[number];
 
 /* -- La historia de demostración ------------------------------------------ */
@@ -121,7 +122,7 @@ const migrana: Condition = {
     reasonText: 'La tomografía no muestra hallazgos compatibles.',
     basedOn: { kind: 'ANALYSIS', serviceRequestId: ID.tac, encounterId: ID.e2 },
   },
-  ...({ replacedByConditionId: ID.sinusitis } as object),
+  replacedByConditionId: ID.sinusitis,
 };
 
 const sinusitis: Condition = {
@@ -145,7 +146,7 @@ const tac: DiagnosticOrder = {
   codeConceptId: 'demo-tac',
   statusConceptId: 'demo-estado',
   createdAt: dia(2, 3, 14),
-  ...({ reasonConditionId: ID.migrana } as object),
+  reasonConditionId: ID.migrana,
 };
 
 const informe: DiagnosticReport = {
@@ -167,7 +168,7 @@ const derivacion: Referral = {
   sourceEncounterId: ID.e2,
   targetDisplayName: 'Otorrinolaringología de Clínica Norte',
   diagnosisText: 'Sinusitis aguda que no cede',
-  ...({ targetEncounterId: ID.e3 } as object),
+  targetEncounterId: ID.e3,
 };
 
 export const HISTORIA_DE_DEMOSTRACION: RegistrosDelRecorrido = {
@@ -391,5 +392,17 @@ export const RECORRIDO_GUIADO_SCENARIOS: readonly ComponentScenario[] = [
     host: ScenarioRecorridoGuiado,
     fuente: SOURCE,
     nivelDePrueba: 'limite',
+  },
+  {
+    id: `${KEY}#simulador`,
+    clave: KEY,
+    variante: 'simulador',
+    titulo: 'Historia de pid-paciente leída del simulador',
+    seVe: 'Los pasos de la historia de demostración de la Franja 1 (diferencial anemia → hipotiroidismo, levotiroxina 25 → 50 → 75, reconsultas, derivaciones, internación), leídos por los clientes reales contra el backend simulado.',
+    interacciones: ['Recorrer con «Siguiente» o la línea de progreso → pasoActual con el título del paso.'],
+    salidasEsperadas: ['pasoActual'],
+    host: ScenarioRecorridoGuiadoSimulador,
+    fuente: 'src/app/features/component-stock/scenarios/recorrido-guiado.simulador.ts',
+    nivelDePrueba: 'correcto',
   },
 ];
