@@ -67,9 +67,17 @@ import { TENANT_CLINICA, TENANT_LABORATORIO } from '../mock-session';
     catálogo de datos, no lógica.
     ========================================================================== */
 
-/** Los profesionales de esta historia, por su slug fijo (`people.ts`). */
-function bySlug(slug: string) {
-  return PROFESSIONALS.find((p) => p.slug === slug) ?? MEDICAL;
+/**
+ * Los profesionales de esta historia, por su clave fija en `people.ts`
+ * (`professional('endocrinologa', …)` → id `hpid-endocrinologa`). Antes se
+ * buscaban por `slug`, que se arma con el nombre («ana-terrazas»): ninguno
+ * coincidía y los tres caían en la médica de la sesión, así que la historia
+ * decía que la derivaron a ella misma (corregido el 06/11/2026).
+ */
+function bySlug(clave: string) {
+  const profesional = PROFESSIONALS.find((p) => p.id === uuid(`hpid-${clave}`));
+  if (profesional === undefined) throw new Error(`patient-network: no hay profesional «${clave}» en people.ts`);
+  return profesional;
 }
 const ENDOCRINOLOGIST = bySlug('endocrinologa');
 const NEUROLOGIST = bySlug('neurologa');
