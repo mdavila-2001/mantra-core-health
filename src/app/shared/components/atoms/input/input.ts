@@ -14,12 +14,13 @@ import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
 import { FieldKindDirective } from '@shared/forms/field-kind.directive';
 import { fieldKindFilter, fieldKindInputMode, fieldKindNormalize } from '@shared/forms/field-kinds';
 import { FORM_CONTROL_CONTEXT, nextControlId } from '@shared/forms/form-control.context';
+import { NativePicker } from '@shared/forms/native-picker.directive';
 import { createValueAccessorBridge } from '@shared/forms/value-accessor';
 import type { InputComboboxAria, InputType } from './input.types';
 
 @Component({
   selector: 'app-input',
-  standalone: true,
+  imports: [NativePicker],
   templateUrl: './input.html',
   styleUrl: './input.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

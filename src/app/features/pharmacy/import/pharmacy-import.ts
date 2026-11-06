@@ -12,7 +12,7 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { Router } from '@angular/router';
 import { catchError, map, of, takeLast, type Subscription } from 'rxjs';
 
@@ -58,7 +58,6 @@ import {
   type CsvReading,
   type LoadMode,
 } from '../catalog-rules/catalog.rules';
-import { EXAMPLE_ROWS } from '../catalog-rules/catalog-example-rows';
 import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import {
   OUTCOME_BADGE,
@@ -66,11 +65,19 @@ import {
   countOutcomes,
   nameOfFields,
   productResultRows,
+  readyRowsOf,
   sendProducts,
   type FileRowResult,
   type ResultRow,
   type RowOutcome,
 } from './bulk-publish';
+import { ImportColumnsHelp } from './import-columns-help/import-columns-help';
+import {
+  PRICE_UPDATE_NOTE,
+  PRODUCT_TEMPLATES,
+  downloadProductTemplate,
+  productHelpColumns,
+} from './product-templates';
 
 /** Tope del catálogo que se relee para comparar códigos: el máximo de `GET /pharmacy/products`. */
 const CATALOG_READ_LIMIT = 500;
@@ -148,6 +155,8 @@ const UPSERT: LoadMode = 'CREAR_Y_ACTUALIZAR';
     DataTable,
     DecimalPipe,
     FileInput,
+    ImportColumnsHelp,
+    NgTemplateOutlet,
     FormField,
     PageHeader,
     Progress,
@@ -247,16 +256,16 @@ export class PharmacyImport {
   });
 
   /**
-   * Sin la columna «disponible», toda fila se lee como «disponible» (vacío =
-   * sí) y una actualización volvería a poner a la venta un producto marcado sin
-   * stock. Se avisa en el paso de columnas.
+   * Without an availability column (e.g. a `codigo,precio` price list) new
+   * products enter as available and existing ones keep their current
+   * availability (`readyRowsOf`). The columns step says so.
    */
   protected readonly lacksAvailability = computed(
     () => this.reading() !== null && !this.mappings().some((mapping) => mapping.field === 'disponible'),
   );
 
   protected readonly readyRows = computed(() =>
-    this.reviewed().flatMap((row) => (row.lista ? [row] : [])),
+    readyRowsOf(this.reviewed(), !this.lacksAvailability()),
   );
   /** Las primeras filas listas, para ver antes de publicar que se leyeron bien. */
   protected readonly sample = computed(() => this.readyRows().slice(0, 5));
@@ -400,31 +409,10 @@ export class PharmacyImport {
 
   /* ─── Lo que la plantilla del archivo y la ayuda necesitan ────────────── */
 
-  /** Las columnas de la ayuda; la categoría dice las de **esta** farmacia. */
-  protected readonly csvColumns = computed(() => {
-    const categories = dataOf(this.categories());
-    return CSV_COLUMNS.map((column) =>
-      column.campo !== 'categoria' || categories === null
-        ? column
-        : {
-            ...column,
-            descripcion:
-              categories.length === 0
-                ? 'Su farmacia todavía no tiene categorías: déjela vacía.'
-                : `Una de las suyas: ${categories.join(' · ')}.`,
-          },
-    );
-  });
-
-  /**
-   * Las filas de ejemplo de la plantilla. Su categoría es la primera de la
-   * farmacia (o ninguna): con la de siempre, la plantilla bajada y subida tal
-   * cual se rechazaría en una farmacia que no la tiene.
-   */
-  private readonly templateRows = computed<readonly ProductFields[]>(() => {
-    const first = dataOf(this.categories())?.[0] ?? '';
-    return EXAMPLE_ROWS.map((row) => ({ ...row, categoria: first }));
-  });
+  /** The format guide: columns (with this pharmacy's categories) and templates. */
+  protected readonly helpColumns = computed(() => productHelpColumns(dataOf(this.categories())));
+  protected readonly templates = PRODUCT_TEMPLATES;
+  protected readonly priceNote = PRICE_UPDATE_NOTE;
 
   protected readonly fieldLabel = (field: keyof ProductFields | null): string =>
     field === null ? '—' : FIELD_LABELS[field];
@@ -487,8 +475,8 @@ export class PharmacyImport {
 
   /* ─── Paso 1: el archivo ──────────────────────────────────────────────── */
 
-  protected downloadTemplate(): void {
-    this.csv.download(this.templateRows(), templateColumns(), 'plantilla-catalogo-farmacia.csv');
+  protected downloadTemplate(kind: string): void {
+    downloadProductTemplate(this.csv, kind, dataOf(this.categories())?.[0] ?? '');
   }
 
   protected showRejection(rejections: readonly RejectedFile[]): void {
@@ -741,9 +729,3 @@ export class PharmacyImport {
 }
 
 /** Las columnas de la plantilla: el encabezado canónico de cada una. */
-function templateColumns(): CsvColumn<ProductFields>[] {
-  return CSV_COLUMNS.map((column) => ({
-    header: column.encabezado,
-    value: (row: ProductFields) => row[column.campo] ?? '',
-  }));
-}

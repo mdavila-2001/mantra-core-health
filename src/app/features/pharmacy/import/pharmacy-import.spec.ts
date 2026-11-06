@@ -98,7 +98,7 @@ interface Internal {
   stop: () => void;
   goTo: (step: 'file' | 'columns' | 'review') => void;
   choosePharmacy: (id: string | null) => void;
-  downloadTemplate: () => void;
+  downloadTemplate: (kind: string) => void;
 }
 
 describe('PharmacyImport', () => {
@@ -301,6 +301,33 @@ describe('PharmacyImport', () => {
       fixture.detectChanges();
 
       expect(byId('import-card')).not.toBeNull();
+    });
+
+    it('sin farmacia publicada igual muestra las columnas y las plantillas: el formato no depende de ella', () => {
+      fixture = TestBed.createComponent(PharmacyImport);
+      fixture.detectChanges();
+      http.expectOne((r) => r.url.endsWith('/pharmacy/pharmacies')).flush({ items: [], count: 0 });
+      fixture.detectChanges();
+
+      expect(root().textContent).toContain('Su organización todavía no tiene una farmacia publicada.');
+      expect(byId('import-card')).toBeNull();
+      expect(root().querySelector('app-import-columns-help')?.textContent).toContain('precio');
+      expect(byId('import-columns-note')?.textContent).toContain('«codigo» y «precio»');
+
+      (byId('import-template-prices') as HTMLButtonElement).click();
+      const [, columns, filename] = download.mock.calls[0]!;
+      expect(filename).toBe('plantilla-precios.csv');
+      expect((columns as { header: string }[]).map((column) => column.header)).toEqual(['codigo', 'precio']);
+    });
+
+    it('con varias farmacias y ninguna elegida, la guía del formato sigue a la vista', () => {
+      fixture = TestBed.createComponent(PharmacyImport);
+      fixture.detectChanges();
+      http.expectOne((r) => r.url.endsWith('/pharmacy/pharmacies')).flush(TWO_PHARMACIES);
+      fixture.detectChanges();
+
+      expect(byId('import-card')).toBeNull();
+      expect(byId('import-template')).not.toBeNull();
     });
 
     it('«Descargar plantilla» arma las filas de ejemplo con una categoría de esta farmacia', () => {
@@ -605,7 +632,8 @@ describe('PharmacyImport', () => {
         rows: [
           { productCode: 'A-1', brandName: 'Uno', requiresPrescription: false, inStock: true },
           { productCode: 'A-2', genericName: 'Dos', requiresPrescription: true, inStock: true },
-          { productCode: 'PAR-500', brandName: 'Ya está', requiresPrescription: false, inStock: true },
+          // No «disponible» column: the update keeps the product's availability.
+          { productCode: 'PAR-500', brandName: 'Ya está', requiresPrescription: false },
         ],
       });
       const figures = textOf('import-preview-figures');
@@ -742,7 +770,8 @@ describe('PharmacyImport', () => {
         rows: [
           { productCode: 'A-1', brandName: 'Uno', requiresPrescription: false, inStock: true },
           { productCode: 'A-2', genericName: 'Dos', requiresPrescription: true, inStock: true },
-          { productCode: 'PAR-500', brandName: 'Ya está', requiresPrescription: false, inStock: true },
+          // No «disponible» column: the update keeps the product's availability.
+          { productCode: 'PAR-500', brandName: 'Ya está', requiresPrescription: false },
         ],
       });
       bulkAnswer(bulk, (_, index) =>

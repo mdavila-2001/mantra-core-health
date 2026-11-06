@@ -923,7 +923,8 @@ export interface NewConversation {
 /** Un mensaje a enviar. */
 export interface NewDirectMessage {
   readonly senderProfileId: string;
-  readonly bodyText: string;
+  /** Absent when the message is only an attachment. */
+  readonly bodyText?: string;
   readonly replyToMessageId?: string;
   /** `MEDIA` con adjunto; `STICKER` si es uno propio (ver `DirectMessage`). */
   readonly contentType?: DirectMessageContentType;

@@ -1,3 +1,5 @@
+import type { BranchCategory } from './branch-category';
+
 /**
  * Tipos de la vista para `directory`: organizaciones (tenants). **No son los
  * DTOs de la API**: se mapean en el cliente, y las fechas ya son `Date`.
@@ -444,6 +446,7 @@ export interface BranchListItem {
   /** El punto en el mapa, si se conoce. Van juntas o no van. */
   readonly latitude?: number;
   readonly longitude?: number;
+  readonly category?: BranchCategory; // v4.2.91: read via `branchCategoryOf`
   readonly createdAt: Date;
 }
 
@@ -460,6 +463,7 @@ export interface BranchChanges {
   readonly locationUrl?: string | null;
   readonly latitude?: number | null;
   readonly longitude?: number | null;
+  readonly category?: BranchCategory;
 }
 
 /** Respuesta plana de sucursales: sin cursor, con recuento. */
@@ -470,7 +474,6 @@ export interface BranchList {
 
 /** Tipos de sede que acepta el alta. */
 export type BranchTypeCode = 'CLINIC' | 'OFFICE';
-
 
 /**
  * Alta de una sucursal (`POST /tenants/{id}/branches`, UC-04-04).
@@ -490,10 +493,10 @@ export interface NewBranch {
   readonly timeZone?: string;
   readonly latitude?: number;
   readonly longitude?: number;
-  /** Suma de la carga masiva; la API todavía no la declara (P54). */
+  /** Description and map link as pasted (P54); category since v4.2.91. */
   readonly description?: string;
-  /** El enlace de mapa tal como lo pegaron; ídem. */
   readonly locationUrl?: string;
+  readonly category?: BranchCategory;
 }
 
 /**

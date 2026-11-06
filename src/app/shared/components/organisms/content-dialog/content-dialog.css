@@ -71,6 +71,13 @@
     position: relative;
 }
 
+/* Opt-in for dialogs whose content switches between views of different
+   heights (`<app-content-dialog data-stable-height>`): the panel always takes
+   the full available height, so switching neither resizes nor re-centers it. */
+:host([data-stable-height]) .content-dialog__panel {
+    block-size: calc(100dvh - var(--sp-4) * 2);
+}
+
 /* -- El encabezado ---------------------------------------------------------
    Se queda quieto mientras el cuerpo se recorre. Su fondo es la superficie
    alterna para que el corte con el cuerpo se lea sin depender del borde, que

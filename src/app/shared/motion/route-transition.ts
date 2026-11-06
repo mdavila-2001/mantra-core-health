@@ -1,4 +1,11 @@
-import type { ViewTransitionsFeatureOptions } from '@angular/router';
+import { DOCUMENT, inject } from '@angular/core';
+import type { ActivatedRouteSnapshot, ViewTransitionsFeatureOptions } from '@angular/router';
+
+/**
+ * Set on `<html>` while a same-path transition runs; `styles.css` drops the
+ * `contenido` capture and every pseudo-layer animation under it.
+ */
+export const QUIET_TRANSITION_ATTR = 'data-vt-quiet';
 
 /**
  * Opciones de `withViewTransitions` para la transición entre rutas.
@@ -29,4 +36,25 @@ import type { ViewTransitionsFeatureOptions } from '@angular/router';
 export const ROUTE_VIEW_TRANSITION_OPTIONS: ViewTransitionsFeatureOptions = {
   // La primera pintura no se anima: no hay página anterior que fundir.
   skipInitialTransition: true,
+  // A navigation that only changes the query (`?tab=`, `?target=`) stays on the
+  // same page: cross-fading it painted the captured content above an open
+  // dialog for a moment. It is quieted, not skipped, for the reason above.
+  onViewTransitionCreated: ({ transition, from, to }) => {
+    if (pathOf(from) !== pathOf(to)) {
+      return;
+    }
+    const root = inject(DOCUMENT).documentElement;
+    root.setAttribute(QUIET_TRANSITION_ATTR, '');
+    const clear = (): void => root.removeAttribute(QUIET_TRANSITION_ATTR);
+    transition.finished.then(clear, clear);
+  },
 };
+
+/** The URL path of a route tree, without query or fragment. */
+export function pathOf(route: ActivatedRouteSnapshot): string {
+  const segments: string[] = [];
+  for (let node: ActivatedRouteSnapshot | null = route; node !== null; node = node.firstChild) {
+    segments.push(...node.url.map((segment) => segment.path));
+  }
+  return segments.join('/');
+}

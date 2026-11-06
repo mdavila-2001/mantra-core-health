@@ -446,6 +446,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       // Gobierno de accesos (fase 5): el tablero del administrador y la administración delegada del jefe de servicio.
       'administration/access-governance',
       'administration/team-management',
+      'administration/medical-branches',
       'administration/medical-center-setup',
       'administration/pharmacy',
       'administration/pharmacy-catalog',
@@ -469,7 +470,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
           : ['HOSPITAL', 'CLINIC', 'PROVIDER', 'MEDICAL_OFFICE']
         : section.path.includes('pharmacy')
         ? ['PHARMACY']
-        : section.path.includes('medical-center')
+        : section.path.includes('medical-center') || section.path === 'administration/medical-branches'
           ? ['HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER']
           : ['DIAGNOSTIC_CENTER'];
       expect(section.onlyForTenantTypes, section.path).toEqual(tipos);
@@ -488,6 +489,25 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     expect(isVisibleTo(orders, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
     expect(isVisibleTo(orders, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
     expect(isVisibleTo(orders, ['PRACTITIONER'], ['t-1'], 'PROVIDER')).toBe(false);
+  });
+
+  it('«Sucursales» existe para toda organización (06/11/2026): farmacia, laboratorio e imagenología, y la médica', () => {
+    const paths: Record<string, readonly string[]> = {
+      'administration/pharmacy-branches': ['PHARMACY'],
+      'administration/laboratory-branches': ['DIAGNOSTIC_CENTER'],
+      'administration/medical-branches': ['HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER'],
+    };
+    for (const [path, tipos] of Object.entries(paths)) {
+      const section = APP_SECTIONS.find((s) => s.path === path)!;
+      expect(section.label, path).toBe('Sucursales');
+      for (const tipo of tipos) {
+        expect(isVisibleTo(section, ['USER'], ['t-1'], tipo), `${path} · ${tipo}`).toBe(true);
+      }
+      expect(isVisibleTo(section, ['PATIENT'], ['t-1'], tipos[0]), path).toBe(false);
+    }
+    const medical = APP_SECTIONS.find((s) => s.path === 'administration/medical-branches')!;
+    expect(isVisibleTo(medical, ['USER'], ['t-1'], 'PHARMACY')).toBe(false);
+    expect(isVisibleTo(medical, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
   });
 
   it('«Configurar práctica» la ve toda organización médica, y no una farmacia ni un laboratorio', () => {

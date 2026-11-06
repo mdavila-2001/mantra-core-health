@@ -85,26 +85,7 @@
                 }
               </div>
 
-              <aside class="import__help" aria-labelledby="import-columns-help">
-                <h2 id="import-columns-help" class="import__subtitle">Las columnas</h2>
-                <dl class="import__columns">
-                  @for (column of csvColumns(); track column.encabezado) {
-                    <div>
-                      <dt><code>{{ column.encabezado }}</code></dt>
-                      <dd>{{ column.descripcion }}</dd>
-                    </div>
-                  }
-                </dl>
-                <button
-                  app-button
-                  variant="outline"
-                  type="button"
-                  (clicked)="downloadTemplate()"
-                  data-testid="import-template"
-                >
-                  Descargar plantilla
-                </button>
-              </aside>
+              <ng-container [ngTemplateOutlet]="formatHelp" />
             </div>
           }
 
@@ -145,9 +126,9 @@
             }
 
             @if (lacksAvailability()) {
-              <app-alert tone="warning" title="Su archivo no trae «disponible»" data-testid="import-no-availability">
-                Sin esa columna, cada fila se lee como «disponible»: un producto de su catálogo
-                que hoy esté sin stock volvería a mostrarse disponible al actualizarlo.
+              <app-alert tone="info" title="Su archivo no trae «disponible»" data-testid="import-no-availability">
+                Los productos que ya están en su catálogo conservan la disponibilidad que tienen;
+                los nuevos se cargan como disponibles.
               </app-alert>
             }
 
@@ -445,6 +426,21 @@
     </div>
   }
 </app-view-state-host>
+
+<!-- The format does not depend on the pharmacy: with none chosen (or none at all) it still shows. -->
+@if (scope.pharmacyId() === null && scope.options().status !== 'loading') {
+  <ng-container [ngTemplateOutlet]="formatHelp" />
+}
+
+<ng-template #formatHelp>
+  <app-import-columns-help
+    headingId="import-columns-help"
+    [columns]="helpColumns()"
+    [templates]="templates"
+    [note]="priceNote"
+    (download)="downloadTemplate($event)"
+  />
+</ng-template>
 
 <!-- ─── Celdas de las tablas ───────────────────────────────────────────── -->
 
