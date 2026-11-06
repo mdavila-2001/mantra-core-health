@@ -1,5 +1,70 @@
 # Evidencias
 
+## Encuestas por servicio · segunda ronda tras revisión (código NO APROBADO, visual 64/100) · 2026-11-06
+
+Entorno: Linux, `yarn start:demo` (backend simulado) en `http://localhost:4200`, Chromium headless 1234,
+rama `claude/amazing-brown-f2c2a9` con `origin/dev` mergeado. Un solo navegador, en serie, sin `networkidle`,
+capturas **de ventana** (no de página entera). Guion reproducible: `playwright/service-surveys-captures.mjs`.
+Capturas y peticiones en `capturas/despues/surveys-per-service-2026-11-06-r2/` (`requests.json` = lo que
+anotó `window.__mockRequests`).
+
+| Comprobación | Resultado | Evidencia |
+|---|---|---|
+| Antes / después de importar (1440) | ECG pasa de «Sin encuesta propia» a «Procedimientos y estudios»; sigue tras recargar | `01`, `02`, `03` |
+| `PUT /surveys/service-assignments/:id` | cuerpo `{ catalogCode: "STD_PROCEDURE_V1" }` → 200 con la fila | `requests.json` («import») |
+| «Cambiar» arranca en la que está en uso | opción con `aria-checked="true"` y «En uso»; «Cambiar a esta» inhabilitado; no manda nada | `04`, `carril-27` |
+| Quitar → confirmación → `DELETE` → recarga | 204; tras recargar la fila vuelve a la base y el GET ya no la trae | `05`, `06`, `requests.json` |
+| «Ver preguntas» numeradas, cuerpo con márgenes parejos | 1…12 en columna propia | `07` |
+| Cargando (S2) | esqueleto de la lista | `08` |
+| Sin servicios (S3) | fila de la cita + «Ir a «Mis servicios»» (`medico.nuevo@alovida.mock`) | `09` |
+| Error de carga con ID | «Código de soporte: mock-fallo» + Reintentar | `10` |
+| Falla el catálogo | la lista se ve, aviso con Reintentar, importar inhabilitado | `11` |
+| Falla el PUT | el aviso va ARRIBA del modal (se ve sin desplazarse) | `12`, `requests.json` («import-error», 500) |
+| 390: filas y acciones | botones juntos (nunca «Quitar» solo), insignia a la izquierda; «Importar» en contorno | `13`, `14` |
+| 390: selector | título corto «Importar encuesta», el servicio en la bajada; vista previa y línea de licencia | `15`, `16` |
+| Buzón de solo lectura | sin «Abrir», sin filtro por estado, sin borradores; hechas a mano = «Encuesta anterior (ya no se envía)» | `17`, `17b` |
+| Paciente 390, «Mis encuestas» | bajo 640 px vive en «Más accesos» (diseño de la barra); aterriza en la pestaña «Mis encuestas» con el S3 | `18`, `19` |
+| Playwright `carril-27-editor-encuestas.spec.ts` + `mis-encuestas-barra-paciente.spec.ts` | 7/7 en verde | corrida local |
+| Vitest (encuestas, mock, cliente, barra, cuestionarios del paciente) | 29 archivos, 446/446 | corrida local |
+
+No se ejecutó / queda abierto: contra la API real; modo oscuro de estas capturas;
+`playwright/encuestas-resumen-medico.spec.ts` sigue usando «Abrir» y la asociación libre de la ficha
+(`survey-detail`, congelado en 697 líneas), que la decisión de producto deja obsoleta: hay que reescribirlo o
+retirarlo con quien decida; la ficha `survey-detail` todavía ofrece asociar a servicio (la API la rechaza).
+Revisión independiente (`NO_SELF_APPROVAL`): **pendiente**.
+
+## Encuestas: «Mis encuestas» siempre visible y «Encuestas por servicio» · 2026-11-06
+
+Entorno: Linux, `yarn start:demo` en `http://localhost:4200` (backend simulado), Chromium headless 1243,
+rama `claude/amazing-brown-f2c2a9` **con `origin/dev` (`cd9e994dd`) mergeado** (merge sin commit: pendiente
+de «Responsable»). Contrato: `GET /surveys/standard-catalog` y `GET|PUT|DELETE /surveys/service-assignments`
+(la API la cambia otro agente en paralelo; acá corre contra el simulador). `GET /surveys/catalog` sigue siendo
+el de `dev` (base + propias, el «Buzón»). Guion de capturas en serie, un solo navegador, sin `networkidle`.
+
+| Comprobación | Resultado |
+|---|---|
+| Paciente sin encuestas (`mock:fallos` modo `vacio` sobre `/surveys/me/invitations`) | ícono «Mis encuestas» visible, sin número; abre `/my-account/questionnaires?seccion=encuestas` con el S3 «Todavía no tiene encuestas» y «Ver mis citas» |
+| Paciente con una pendiente | badge «1» |
+| Médica · Buzón | resumen «Cómo le va» + 6 tarjetas de `dev` (2 base del sistema + 4 propias, con su servicio); **sin** «Nueva encuesta» |
+| Médica · Encuestas por servicio | `?encuestas=servicios`; fila fija «Cita médica» (sin Cambiar/Quitar) + 5 servicios |
+| Selector del catálogo (ECG) | «Procedimientos y estudios» primera y «Recomendada»; «Ítems adaptados de CG-CAHPS 4.0 — Dominio público (AHRQ)» |
+| Mutación UI → PUT → respuesta → recarga → UI | ECG pasa a «Procedimientos y estudios · Importada el 6 nov 2026» y sigue así tras recargar |
+| Desborde lateral en 390 px | paciente 0 px · médica 0 px |
+| `yarn typecheck` | exit 0 |
+| `yarn lint` | 10 errores, todos en archivos de `dev` no tocados (`app.routes.ts`, `files.handlers.ts`, `practice.handlers.ts`, `profile-photos.handlers.spec.ts`); los archivos de este cambio, limpios |
+| Specs afectados (27 archivos) | 439/439 |
+| `mock-backend.spec.ts` | 32 rojos por `POST /diagnostics/lab/services/import`; **idénticos en `origin/dev` limpio** |
+| `check-max-lines` | ningún archivo de este cambio sobre su techo (los congelados no crecen; los nuevos < 300) |
+
+Capturas en `capturas/despues/surveys-per-service-2026-11-06/` (01–11: barra del paciente sin y con pendiente,
+S3 en 1440/390, Buzón, por servicio en 1440/390, selector en 1440/390, tras importar y recargar, preguntas de la
+cita médica). En las de página completa el riel lateral se dibuja sobre el borde del contenido: hallazgo previo
+(ver «Infraestructura F1»), no de este cambio.
+
+No se ejecutó: contra la API real; `playwright/carril-27-editor-encuestas.spec.ts` (API viva; crea encuestas con
+«Nueva encuesta», que ya no existe: hay que adaptarlo); la suite completa de una vez (el proceso muere con 129 en
+este entorno). Revisión independiente (`NO_SELF_APPROVAL`): **pendiente**.
+
 ## Catálogo de farmacia: «Importar CSV» arriba y acciones por fila · 2026-11-05
 
 Rama `claude/gifted-meitner-n7fpia` con `dev` mergeado. Maqueta (`yarn start:demo`, :4200), Chromium,

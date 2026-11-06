@@ -32,6 +32,8 @@ import { registrarInvitacionesDeOrganizacion } from './directory-invitations.han
 import { registerHealthcareServices } from './healthcare-services.handlers';
 import { registerRoleAssignments } from './role-assignments.handlers';
 import { registrarEncuestas } from './surveys-forms.handlers';
+import { registerSurveyCatalog } from './surveys-catalog.handlers';
+import { registerServiceSurveyAssignments } from './surveys-service-assignments.handlers';
 import { registrarFarmacia } from './pharmacy.handlers';
 import { registrarFinanzas } from './finance.handlers';
 import { registrarFacturacionSimulada } from './billing-simulated.handlers';
@@ -168,6 +170,8 @@ export function crearRouterSimulado(): MockRouter {
   registerInsurancePortability(router);
   registerInsuranceCampaigns(router);
   registrarEncuestas(router);
+  registerSurveyCatalog(router);
+  registerServiceSurveyAssignments(router);
   registrarFinanzas(router);
   // FACT-SIAT-MOCK · `/billing/simulated/*`, sin colisión con
   // `/billing/service-catalog`, que es de `registrarPracticas`.

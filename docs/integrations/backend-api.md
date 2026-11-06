@@ -2263,6 +2263,38 @@ Las que el código llama y el catálogo de arriba aún no listaba; las leyó `sc
 |---|---|---|---|
 | `GET` | `/surveys/insights` | `SurveysClient` | No |
 
+### `SurveysCatalogClient` — 1 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/surveys/catalog` | `SurveysCatalogClient` | No |
+
+El «Buzón» (solo lectura): las encuestas base del sistema y las del profesional, para leer
+sus respuestas. No es el catálogo estándar de importación.
+
+### `SurveysServiceAssignmentsClient` — 4 operaciones
+
+Encuestas estándar por servicio (06/11/2026). Reemplaza la creación libre: el profesional
+importa una plantilla del catálogo estándar y la asocia a cada servicio suyo (una activa
+por servicio); la cita médica usa siempre la base del sistema. Consumidor:
+`ServiceSurveys` («Encuestas › Encuestas por servicio»); el «Buzón» lee además el GET de
+asignaciones para saber qué plantilla se envía hoy.
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/surveys/standard-catalog` | `SurveysServiceAssignmentsClient` | No |
+| `GET` | `/surveys/service-assignments` | `SurveysServiceAssignmentsClient` | No |
+| `PUT` | `/surveys/service-assignments/:serviceId` | `SurveysServiceAssignmentsClient` | No |
+| `DELETE` | `/surveys/service-assignments/:serviceId` | `SurveysServiceAssignmentsClient` | No |
+
+Roles `PRACTITIONER` o `CLINICIAN`; sin perfil profesional en la sesión, `412
+PRECONDITION_FAILED`. `PUT` lleva `{ catalogCode }` y devuelve la fila del servicio; responde
+`403 SURVEY_SERVICE_NOT_OWNED` (servicio ajeno), `404 SURVEY_CATALOG_CODE_UNKNOWN` (el front
+relee el catálogo) y `409 ASSIGNMENT_ALREADY_ACTIVE` al perder la carrera del índice de una
+activa por servicio (el front relee la lista). `DELETE` devuelve `204` y el servicio vuelve a
+la encuesta base de servicios. El GET de asignaciones trae `consultation.questions` y
+`services[].serviceKind` (aditivos; sin `serviceKind` el front lo deduce del nombre).
+
 ### `TelemetryClient` — 1 operaciones
 
 | Método | Ruta | Consumidor | Pública |

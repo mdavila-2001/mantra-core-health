@@ -1,0 +1,86 @@
+<!-- Not dismissible while saving: the backdrop and Escape wait for the PUT. -->
+<app-content-dialog
+  size="xl"
+  [heading]="heading()"
+  [description]="description()"
+  [dismissible]="!saving()"
+  (closed)="closed.emit()"
+>
+  <!-- The failure goes first: it must be seen without scrolling the preview. -->
+  @if (error(); as reason) {
+    <app-alert class="catalogo__error" tone="error" title="No se pudo importar la encuesta" data-testid="standard-catalog-error">
+      {{ reason }}
+    </app-alert>
+  }
+
+  <div class="catalogo" data-testid="standard-catalog">
+    <ul class="catalogo__lista" role="radiogroup" aria-label="Encuestas del catálogo">
+      @for (option of options(); track option.entry.code; let i = $index) {
+        <li>
+          <button
+            type="button"
+            role="radio"
+            class="catalogo__opcion"
+            [class.is-elegida]="chosen() === option.entry.code"
+            [attr.aria-checked]="chosen() === option.entry.code"
+            [attr.tabindex]="chosen() === option.entry.code ? 0 : -1"
+            [attr.data-testid]="'standard-catalog-option-' + option.entry.code"
+            (click)="select(option.entry.code)"
+            (keydown)="move($event, i)"
+          >
+            <span class="catalogo__opcion-titulo">{{ option.entry.title }}</span>
+            <span class="catalogo__opcion-meta">{{ questionCount(option.entry.questions.length) }}</span>
+            <span class="catalogo__marcas">
+              @if (option.recommended) {
+                <app-badge variant="info" size="sm">Recomendada</app-badge>
+              }
+              @if (inUse() === option.entry.code) {
+                <app-badge variant="success" size="sm">En uso</app-badge>
+              }
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (preview(); as entry) {
+      <section class="catalogo__vista" aria-live="polite" data-testid="standard-catalog-preview">
+        <h3 class="catalogo__vista-titulo">{{ entry.title }}</h3>
+        <p class="catalogo__vista-descripcion">{{ entry.description }}</p>
+        <p class="catalogo__fuente" data-testid="standard-catalog-source">
+          {{ sourcesLine(entry) }}.
+          @for (source of linkedSources(entry); track source.url) {
+            <a [href]="source.url" target="_blank" rel="noopener noreferrer">Ver {{ source.instrument }}</a>
+          }
+        </p>
+
+        <h4 class="catalogo__preguntas-titulo">{{ questionCount(entry.questions.length) }}</h4>
+        <ol class="catalogo__preguntas">
+          @for (question of entry.questions; track $index) {
+            <li>
+              <span class="catalogo__pregunta">{{ question.text }}</span>
+              <span class="catalogo__respuesta">{{ answerFormat(question) }}</span>
+            </li>
+          }
+        </ol>
+      </section>
+    }
+  </div>
+
+  <div dialog-actions class="catalogo__acciones">
+    <button app-button type="button" variant="ghost" [disabled]="saving()" (clicked)="closed.emit()" data-testid="standard-catalog-cancel">
+      Cancelar
+    </button>
+    <button
+      app-button
+      type="button"
+      variant="primary"
+      [disabled]="!canImport()"
+      [isLoading]="saving()"
+      (clicked)="importChosen()"
+      data-testid="standard-catalog-import"
+    >
+      {{ service().assignment === null ? 'Importar' : 'Cambiar a esta' }}
+    </button>
+  </div>
+</app-content-dialog>

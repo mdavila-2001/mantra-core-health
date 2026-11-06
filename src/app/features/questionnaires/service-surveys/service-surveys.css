@@ -1,0 +1,154 @@
+/* «Encuestas por servicio»: one row per service, the appointment on top. Rows
+   in one bordered list, not stacked cards (composition-rules §5). */
+
+.por-servicio__bajada {
+  margin-block: 0 var(--sp-4);
+  color: var(--text-secondary);
+}
+
+.por-servicio__lista {
+  display: grid;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.por-servicio__fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+  padding: var(--sp-4);
+}
+
+.por-servicio__fila + .por-servicio__fila {
+  border-block-start: 1px solid var(--border-default);
+}
+
+.por-servicio__fila--sistema {
+  background: var(--bg-inset);
+  border-start-start-radius: var(--r-md);
+  border-start-end-radius: var(--r-md);
+}
+
+.por-servicio__marca {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  color: var(--brand-primary);
+}
+
+.por-servicio__marca app-nav-icon {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+
+.por-servicio__datos {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}
+
+.por-servicio__servicio {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  margin-block: 0 var(--sp-1);
+}
+
+.por-servicio__encuesta {
+  margin: 0;
+}
+
+.por-servicio__encuesta--base {
+  color: var(--text-secondary);
+}
+
+.por-servicio__nota {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin-block: var(--sp-1) 0;
+}
+
+.por-servicio__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2) var(--sp-3);
+  margin-inline-start: auto;
+}
+
+/* The buttons of a row stay together: «Quitar» never wraps alone. */
+.por-servicio__botones {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Phones: actions take their own line under the data, badge left, buttons right. */
+@media (max-width: 599px) {
+  .por-servicio__acciones {
+    inline-size: 100%;
+    justify-content: space-between;
+  }
+}
+
+.por-servicio__aviso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-block: 0 var(--sp-4);
+  color: var(--text-secondary);
+}
+
+.por-servicio__preguntas {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: question;
+}
+
+/* Numbered by hand: the number sits in its own column, so the body padding stays even. */
+.por-servicio__preguntas > li {
+  display: grid;
+  grid-template-columns: 2.5ch 1fr;
+  column-gap: var(--sp-2);
+  counter-increment: question;
+}
+
+.por-servicio__preguntas > li::before {
+  content: counter(question) '.';
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.por-servicio__preguntas > li > * {
+  grid-column: 2;
+}
+
+.por-servicio__pregunta {
+  display: block;
+}
+
+.por-servicio__respuesta {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.por-servicio__pie {
+  display: flex;
+  justify-content: flex-end;
+}

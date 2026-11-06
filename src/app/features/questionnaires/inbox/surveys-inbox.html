@@ -1,0 +1,85 @@
+<!-- «Cómo le va»: the overall summary, ABOVE the list. It requests its own data
+     and fails on its own: a summary that does not load does not hide the surveys. -->
+<div id="resumen"><app-survey-insights /></div>
+
+<app-view-state-host [state]="view()" (retry)="load()">
+  <div vsh-skeleton data-testid="surveys-inbox-loading">
+    <app-skeleton variant="text" [lines]="4" />
+  </div>
+
+  <!-- S3 · No survey with answers yet. No `@if` around it on purpose: a control
+       block around a projected node sends it to the default slot (see
+       `view-state-host.html`). The host decides when to draw it. -->
+  <app-empty-state
+    vsh-empty
+    variant="empty"
+    title="Todavía no tiene encuestas"
+    [description]="emptyMessage()"
+    data-testid="surveys-inbox-empty"
+  >
+    <button
+      app-button
+      empty-actions
+      type="button"
+      variant="primary"
+      (clicked)="goToServices.emit()"
+      data-testid="surveys-go-to-services"
+    >
+      Ir a «Encuestas por servicio»
+    </button>
+  </app-empty-state>
+
+  @if (view(); as state) {
+    @if (state.status === 'ready') {
+      <p class="encuestas__bajada">
+        Aquí lee lo que respondieron sus pacientes. Qué encuesta recibe cada servicio se elige en «Encuestas por
+        servicio».
+      </p>
+
+      <div class="encuestas__barra" data-testid="surveys-inbox-toolbar">
+        <app-search-field
+          class="encuestas__buscador"
+          data-testid="surveys-inbox-search"
+          label="Buscar entre sus encuestas"
+          placeholder="Buscar por título o consigna"
+          [(value)]="query"
+        />
+      </div>
+
+      <!-- Announced: someone searching with a screen reader does not see the list shrink. -->
+      <p class="encuestas__recuento" role="status" aria-live="polite" data-testid="surveys-inbox-count">
+        {{ visible().length }} {{ visible().length === 1 ? 'encuesta' : 'encuestas' }}
+        @if (query().trim() !== '') {
+          de {{ loaded().length }}
+        }
+      </p>
+
+      @if (noResults()) {
+        <!-- NOT S3: there are surveys, just no matches; the way out is clearing the search. -->
+        <app-empty-state
+          variant="no-results"
+          title="Ninguna encuesta coincide con la búsqueda"
+          description="Pruebe con otro título u otra consigna."
+          data-testid="surveys-inbox-no-results"
+        >
+          <button
+            app-button
+            empty-actions
+            type="button"
+            variant="outline"
+            (click)="clearSearch()"
+            data-testid="surveys-inbox-clear-search"
+          >
+            Borrar la búsqueda
+          </button>
+        </app-empty-state>
+      } @else {
+        <ul class="encuestas__lista" data-testid="surveys-inbox-list">
+          @for (survey of visible(); track survey.id) {
+            <li><app-survey-card [survey]="survey" /></li>
+          }
+        </ul>
+      }
+    }
+  }
+</app-view-state-host>

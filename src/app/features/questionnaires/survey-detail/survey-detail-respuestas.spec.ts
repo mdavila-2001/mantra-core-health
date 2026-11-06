@@ -85,7 +85,6 @@ describe('SurveyDetailScreen · respuestas recibidas', () => {
         respuesta(4, '2026-10-25'),
         respuesta(5, '2026-10-24'),
       ]);
-    http.expectOne((r) => r.url === '/scheduling/service-offerings').flush({ items: [] });
     harness.detectChanges();
   });
 

@@ -100,4 +100,10 @@ describe('fallos simulados del backend de maqueta', () => {
     expect(inesperado.status).toBe(500);
     expect((inesperado.body as { code: string }).code).toBe('INTERNAL');
   });
+
+  it('«vacio» no es un fallo: un 200 con lista vacía, para mirar el S3', () => {
+    const vacio = failureBody({ patron: '/surveys/me/invitations', modo: 'vacio' }, '/surveys/me/invitations');
+    expect(vacio.status).toBe(200);
+    expect(vacio.body).toEqual([]);
+  });
 });

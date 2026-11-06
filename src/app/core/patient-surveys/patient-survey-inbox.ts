@@ -13,8 +13,9 @@ import type { PatientInvitation } from '../data-access/surveys/surveys.types';
  *
  * - **Hay bandeja** cuando el servidor devolvió al menos una invitación, esté
  *   pendiente, respondida o vencida. Una invitación sólo existe porque una
- *   atención terminó y le generó encuesta: sin ninguna, el ícono no se ofrece
- *   (un acceso que lleva a una pantalla vacía es ruido).
+ *   atención terminó y le generó encuesta. (06/11/2026: the patient's icon is
+ *   offered even with none — the screen explains with an empty state when
+ *   they arrive; this signal stays for whoever needs it.)
  * - **El contador** son las pendientes **no vencidas**: una pendiente cuyo plazo
  *   pasó ya no se puede responder, y contarla prometería una acción imposible.
  *

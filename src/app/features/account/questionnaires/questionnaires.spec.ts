@@ -97,6 +97,22 @@ describe('Questionnaires (Mis cuestionarios)', () => {
     expect(TestBed.inject(PatientSurveyInbox).hayInvitaciones()).toBe(false);
   });
 
+  it('sin ninguna encuesta muestra el S3: de dónde salen y la próxima acción', () => {
+    cargar([]);
+
+    const vacio = raiz().querySelector('[data-testid="questionnaires-no-surveys"]');
+    expect(vacio).not.toBeNull();
+    expect(vacio?.textContent).toContain('Todavía no tiene encuestas');
+    expect(vacio?.textContent).toContain('después de una cita médica');
+    expect(vacio?.textContent).toContain('completó');
+    const accion = raiz().querySelector<HTMLAnchorElement>('[data-testid="questionnaires-see-appointments"]');
+    expect(accion?.textContent?.trim()).toBe('Ver mis citas');
+    expect(accion?.getAttribute('href')).toBeTruthy();
+    // No es la lista vacía ni el vacío genérico del anfitrión.
+    expect(raiz().querySelector('[data-testid="cuestionarios-lista"]')).toBeNull();
+    expect(raiz().textContent).not.toContain('Todavía no hay nada acá');
+  });
+
   it('ofrece «Dejar reseña pública» sólo en las respondidas cuya atención se puede reseñar', () => {
     cargar([
       enElCable('i-1', 'ANSWERED'),

@@ -55,8 +55,10 @@ const KEY = 'mock:fallos';
  * Los estados que una escritura puede encontrarse, en los términos del M34:
  * `red` es S8 —la petición no llegó—; los modos HTTP siguen el modelo de error
  * del backend. `validation` incluye un error estructurado por campo.
+ * `vacio` is not a failure: a 200 with an empty list, to look at the S3 of a
+ * list read that always has data in the mock (e.g. `/surveys/me/invitations`).
  */
-export const FAILURE_MODES = ['red', 'forbidden', 'not-found', 'conflict', 'error', 'validation'] as const;
+export const FAILURE_MODES = ['red', 'forbidden', 'not-found', 'conflict', 'error', 'validation', 'vacio'] as const;
 export type FailureMode = (typeof FAILURE_MODES)[number];
 
 /** Un fallo declarado: a qué rutas alcanza y de qué clase es. */
@@ -105,6 +107,8 @@ export function failureFor(method: string, path: string): SimulatedFailure | nul
 export function failureBody(fallo: SimulatedFailure, path: string): { status: number; body: unknown } {
   const base = { timestamp: new Date().toISOString(), path, correlationId: 'mock-fallo' };
   switch (fallo.modo) {
+    case 'vacio':
+      return { status: 200, body: [] };
     case 'validation':
       return {
         status: 422,

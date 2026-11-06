@@ -1,288 +1,88 @@
-import { Component } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component, output } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { signal } from '@angular/core';
 
-import { API_BASE_URL } from '../../core/data-access/api';
-import { SurveyInsightsPanel } from './insights/survey-insights';
+import { NavigationService } from '../../core/navigation/navigation.service';
+import { SurveysInbox } from './inbox/surveys-inbox';
 import { SurveysHome } from './questionnaires';
+import { ServiceSurveys } from './service-surveys/service-surveys';
 
-/**
- * El bloque «Cómo le va» tiene su propio spec (`insights/survey-insights.spec.ts`)
- * y sus propias peticiones. Acá se reemplaza por un hueco para que estas pruebas
- * sigan midiendo SÓLO el listado —y `http.verify()` siga exigiendo que la única
- * lectura sea la de `GET /surveys/catalog`—.
- */
-@Component({ selector: 'app-survey-insights', template: '' })
-class ResumenHueco {}
-
-/* ============================================================================
-    El listado de encuestas como gestor: buscar, filtrar y tres vacíos.
-
-    Lo que estas pruebas fijan:
-
-    1. El buscador acota por título **y** por consigna, sin distinguir acentos.
-    2. El filtro por estado acota por grupo, y el recuento de cada grupo es el
-       de las encuestas cargadas, no el de las visibles.
-    3. **«No hay encuestas» y «el filtro no encontró nada» son dos estados
-       distintos**, con dos marcas distintas en el DOM. Es la regla S3 del M34
-       llevada al listado: un vacío de la consulta que se dibuja como vacío del
-       dominio le dice a alguien con doce encuestas que no tiene ninguna, y le
-       ofrece crear otra en vez de aflojar el filtro.
-    4. Control negativo: sin criterios puestos no se esconde nada.
-
-    Lo que NO acreditan: que la API filtre. No filtra —`GET /surveys/catalog`
-    no declara `?q=` ni `?status=`—, y por eso el filtrado es de cliente sobre
-    lo ya cargado. Estas pruebas no emiten ninguna petición más que la lectura
-    inicial, y `http.verify()` lo hace cumplir.
-    ========================================================================== */
-
-/** Una fila del listado tal como viaja por el cable. */
-function encuestaEnCable(
-  id: string,
-  title: string,
-  status: 'DRAFT' | 'ACTIVE' | 'INACTIVE',
-  description?: string,
-): Record<string, unknown> {
-  return {
-    id,
-    title,
-    ...(description === undefined ? {} : { description }),
-    status,
-    latestVersionNumber: 1,
-    published: status !== 'DRAFT',
-    questionCount: 3,
-    origin: 'PRACTITIONER',
-    assignments: [],
-  };
+/** Los dos paneles tienen su propio spec; acá se miden sólo las sub-pestañas. */
+@Component({ selector: 'app-surveys-inbox', template: '<p data-testid="stub-inbox">B</p>' })
+class InboxStub {
+  readonly goToServices = output<void>();
 }
 
-/**
- * El catálogo sintético: cuatro encuestas, una por grupo salvo los borradores,
- * que son dos para que «Borradores» y «Todas» no den lo mismo por casualidad.
- */
-const CATALOGO: readonly Record<string, unknown>[] = [
-  encuestaEnCable('s-1', 'Satisfacción post-consulta', 'DRAFT', 'Cómo le fue con el turno.'),
-  encuestaEnCable('s-2', 'Adherencia al tratamiento', 'DRAFT'),
-  encuestaEnCable('s-3', 'Encuesta de ingreso', 'ACTIVE', 'Antecedentes y medicación.'),
-  encuestaEnCable('s-4', 'Derivación a kinesiología', 'INACTIVE'),
-];
+@Component({ selector: 'app-service-surveys', template: '<p data-testid="stub-services">S</p>' })
+class ServicesStub {}
 
-describe('SurveysHome · buscar, filtrar y los vacíos que no se confunden', () => {
+describe('SurveysHome · «Buzón» y «Encuestas por servicio» (06/11/2026)', () => {
   let harness: RouterTestingHarness;
-  let http: HttpTestingController;
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        // Raíz vacía: las rutas se comparan tal cual, sin depender del entorno.
-        { provide: API_BASE_URL, useValue: '' },
         provideRouter([{ path: 'questionnaires', component: SurveysHome }]),
+        { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
       ],
     });
     TestBed.overrideComponent(SurveysHome, {
-      remove: { imports: [SurveyInsightsPanel] },
-      add: { imports: [ResumenHueco] },
+      remove: { imports: [SurveysInbox, ServiceSurveys] },
+      add: { imports: [InboxStub, ServicesStub] },
     });
-
-    http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl('/questionnaires', SurveysHome);
   });
-
-  afterEach(() => http.verify());
-
-  /** Responde la lectura del listado y deja la pantalla pintada. */
-  function responderListado(cuerpo: readonly Record<string, unknown>[]): void {
-    http.expectOne((r) => r.url === '/surveys/catalog').flush(cuerpo);
-    harness.detectChanges();
-  }
 
   const raiz = (): HTMLElement => harness.routeNativeElement as HTMLElement;
-
-  const buscar = (selector: string): HTMLElement | null => raiz().querySelector(selector);
-
-  const titulos = (): readonly string[] =>
-    Array.from(raiz().querySelectorAll('.tarjeta__titulo')).map(
-      (nodo) => nodo.textContent?.trim() ?? '',
+  const pestanas = (): string[] =>
+    [...raiz().querySelectorAll('[data-testid="surveys-subtabs"] [role="tab"]')].map((t) =>
+      (t.textContent ?? '').trim(),
     );
 
-  /** Tipea en el buscador como lo haría una persona: evento `input` real. */
-  function tipear(texto: string): void {
-    const campo = raiz().querySelector<HTMLInputElement>('[data-testid="encuestas-buscar"] input');
-    expect(campo).not.toBeNull();
-    campo!.value = texto;
-    campo!.dispatchEvent(new Event('input'));
+  it('dibuja las dos sub-pestañas en una sola tira, en este orden', async () => {
+    await harness.navigateByUrl('/questionnaires', SurveysHome);
+
+    expect(pestanas()).toEqual(['Buzón', 'Encuestas por servicio']);
+    expect(raiz().querySelectorAll('app-tabs').length).toBe(1);
+  });
+
+  it('sin parámetro abre el Buzón y no monta «Encuestas por servicio»', async () => {
+    await harness.navigateByUrl('/questionnaires', SurveysHome);
+
+    expect(raiz().querySelector('[data-testid="stub-inbox"]')).not.toBeNull();
+    expect(raiz().querySelector('[data-testid="stub-services"]')).toBeNull();
+  });
+
+  it('?encuestas=servicios abre la segunda, y un valor desconocido cae en el Buzón', async () => {
+    await harness.navigateByUrl('/questionnaires?encuestas=servicios', SurveysHome);
+    expect(raiz().querySelector('[data-testid="stub-services"]')).not.toBeNull();
+    expect(raiz().querySelector('[data-testid="stub-inbox"]')).toBeNull();
+
+    await harness.navigateByUrl('/questionnaires?encuestas=otra', SurveysHome);
+    expect(raiz().querySelector('[data-testid="stub-inbox"]')).not.toBeNull();
+  });
+
+  it('elegir una sub-pestaña la escribe en la URL; volver al Buzón la quita', async () => {
+    await harness.navigateByUrl('/questionnaires', SurveysHome);
+    const router = TestBed.inject(Router);
+
+    raiz().querySelectorAll<HTMLButtonElement>('[role="tab"]')[1]!.click();
+    await harness.fixture.whenStable();
     harness.detectChanges();
-  }
+    expect(router.url).toBe('/questionnaires?encuestas=servicios');
+    expect(raiz().querySelector('[data-testid="stub-services"]')).not.toBeNull();
 
-  /** Toca una de las opciones del filtro por estado. */
-  function filtrarPor(grupo: string): void {
-    const opcion = raiz().querySelector<HTMLButtonElement>(
-      `[data-testid="encuestas-filtro-estado"] [data-testid="segmentado-${grupo}"]`,
-    );
-    expect(opcion).not.toBeNull();
-    opcion!.click();
+    raiz().querySelectorAll<HTMLButtonElement>('[role="tab"]')[0]!.click();
+    await harness.fixture.whenStable();
     harness.detectChanges();
-  }
-
-  describe('«Cómo le va»', () => {
-    it('el resumen general va ARRIBA de la lista, no debajo ni aparte', () => {
-      responderListado(CATALOGO);
-
-      const resumen = buscar('app-survey-insights');
-      const lista = buscar('[data-testid="encuestas-lista"]');
-      expect(resumen).not.toBeNull();
-      expect(lista).not.toBeNull();
-      expect(resumen!.compareDocumentPosition(lista!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    });
-
-    it('aparece también cuando todavía no hay encuestas propias: las base ya reciben respuestas', () => {
-      responderListado([]);
-
-      expect(buscar('app-survey-insights')).not.toBeNull();
-    });
+    expect(router.url).toBe('/questionnaires');
   });
 
-  describe('el buscador', () => {
-    beforeEach(() => responderListado(CATALOGO));
+  it('no ofrece «Nueva encuesta» en ningún lado', async () => {
+    await harness.navigateByUrl('/questionnaires', SurveysHome);
 
-    it('acota por título, sin distinguir mayúsculas ni acentos', () => {
-      tipear('SATISFACCION');
-
-      // «SATISFACCION» encuentra «Satisfacción»: quien busca en un listado
-      // recuerda el título, no lo transcribe.
-      expect(titulos()).toEqual(['Satisfacción post-consulta']);
-    });
-
-    it('también acota por la consigna, que es texto de la encuesta', () => {
-      tipear('medicación');
-
-      // «Encuesta de ingreso» no tiene esa palabra en el título: si el buscador
-      // mirara sólo el título, acá no habría nada.
-      expect(titulos()).toEqual(['Encuesta de ingreso']);
-    });
-
-    it('control negativo: sin texto no esconde ninguna', () => {
-      tipear('kinesio');
-      expect(titulos()).toHaveLength(1);
-
-      tipear('');
-
-      expect(titulos()).toHaveLength(CATALOGO.length);
-      expect(buscar('[data-testid="encuestas-sin-resultados"]')).toBeNull();
-    });
-  });
-
-  describe('el filtro por estado', () => {
-    beforeEach(() => responderListado(CATALOGO));
-
-    it('permite que las opciones pasen a otra fila en pantalla angosta, sin cortar su texto', () => {
-      expect(
-        buscar('[data-testid="encuestas-filtro-estado"] .segmentado')?.classList.contains(
-          'segmentado--envuelto',
-        ),
-      ).toBe(true);
-    });
-
-    it('deja sólo el grupo elegido', () => {
-      filtrarPor('DRAFT');
-
-      expect(titulos()).toEqual(['Satisfacción post-consulta', 'Adherencia al tratamiento']);
-    });
-
-    it('muestra el recuento de cada grupo sobre lo cargado, no sobre lo visible', () => {
-      const rotulos = (): string =>
-        buscar('[data-testid="encuestas-filtro-estado"]')?.textContent ?? '';
-
-      expect(rotulos()).toContain('Todas (4)');
-      expect(rotulos()).toContain('Borradores (2)');
-      expect(rotulos()).toContain('Activas (1)');
-      expect(rotulos()).toContain('Desactivadas (1)');
-
-      filtrarPor('ACTIVE');
-
-      // Acotar la vista no reescribe los recuentos: si lo hiciera, los grupos
-      // que no están puestos quedarían todos en cero y dejarían de ser una guía
-      // de a dónde ir.
-      expect(rotulos()).toContain('Todas (4)');
-      expect(rotulos()).toContain('Borradores (2)');
-    });
-
-    it('se combina con el buscador en vez de reemplazarlo', () => {
-      tipear('encuesta');
-      filtrarPor('DRAFT');
-
-      // «Encuesta de ingreso» pasa el texto pero no el estado; los borradores
-      // pasan el estado pero no el texto. La intersección es vacía.
-      expect(titulos()).toEqual([]);
-      expect(buscar('[data-testid="encuestas-sin-resultados"]')).not.toBeNull();
-    });
-  });
-
-  describe('los dos vacíos', () => {
-    it('sin encuestas dibuja el vacío del dominio (S3), no el del filtro', () => {
-      responderListado([]);
-
-      expect(buscar('[data-testid="encuestas-sin-encuestas"]')).not.toBeNull();
-      expect(buscar('[data-testid="encuestas-sin-resultados"]')).toBeNull();
-
-      // Y sin nada cargado no hay nada que filtrar: los controles no están.
-      expect(buscar('[data-testid="encuestas-buscar"]')).toBeNull();
-      expect(buscar('[data-testid="encuestas-filtro-estado"]')).toBeNull();
-    });
-
-    it('con encuestas y filtro sin coincidencias dibuja el vacío de la consulta', () => {
-      responderListado(CATALOGO);
-      tipear('radiología');
-
-      expect(buscar('[data-testid="encuestas-sin-resultados"]')).not.toBeNull();
-
-      // El corazón del criterio: NO es el vacío del dominio. Quien tiene cuatro
-      // encuestas no puede leer «todavía no tenés encuestas».
-      expect(buscar('[data-testid="encuestas-sin-encuestas"]')).toBeNull();
-      expect(raiz().textContent).not.toContain('Todavía no tiene encuestas');
-
-      // Y la salida está a mano: los controles siguen en pantalla.
-      expect(buscar('[data-testid="encuestas-buscar"]')).not.toBeNull();
-      expect(buscar('[data-testid="encuestas-filtro-estado"]')).not.toBeNull();
-    });
-
-    it('limpiar los filtros devuelve la lista entera', () => {
-      responderListado(CATALOGO);
-      tipear('radiología');
-      filtrarPor('ACTIVE');
-
-      const limpiar = raiz().querySelector<HTMLButtonElement>(
-        '[data-testid="encuestas-limpiar-filtros"]',
-      );
-      expect(limpiar).not.toBeNull();
-      limpiar!.click();
-      harness.detectChanges();
-
-      expect(titulos()).toHaveLength(CATALOGO.length);
-      expect(buscar('[data-testid="encuestas-sin-resultados"]')).toBeNull();
-    });
-  });
-
-  describe('lo que no cambió', () => {
-    it('el alta sigue en la pantalla y se abre desde el encabezado', () => {
-      responderListado(CATALOGO);
-
-      expect(buscar('[data-testid="encuestas-form"]')).toBeNull();
-
-      const nueva = raiz().querySelector<HTMLButtonElement>('[data-testid="encuestas-nueva"]');
-      expect(nueva).not.toBeNull();
-      nueva!.click();
-      harness.detectChanges();
-
-      expect(buscar('[data-testid="encuestas-form"]')).not.toBeNull();
-      expect(buscar('[data-testid="encuesta-titulo"]')).not.toBeNull();
-      expect(buscar('[data-testid="encuesta-crear"]')).not.toBeNull();
-    });
+    expect(raiz().textContent).not.toContain('Nueva encuesta');
   });
 });

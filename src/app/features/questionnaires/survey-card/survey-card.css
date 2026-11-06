@@ -9,3 +9,5 @@
 .tarjeta__sin-servicios { color: var(--text-muted); font-size: var(--fs-caption); }
 .tarjeta__acciones { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); }
 .tarjeta__acciones app-nav-icon { inline-size: 1rem; block-size: 1rem; }
+.tarjeta__nota { color: var(--text-secondary); font-size: var(--fs-caption); line-height: var(--lh-caption); margin: 0; }
+.tarjeta--anterior .tarjeta__marca { background: var(--bg-inset); color: var(--text-muted); }

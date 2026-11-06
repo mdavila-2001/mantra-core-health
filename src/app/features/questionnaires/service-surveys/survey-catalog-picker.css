@@ -1,0 +1,151 @@
+/* Two columns from 780 px (list | preview); on phones the preview goes below. */
+.catalogo {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+@media (min-width: 780px) {
+  .catalogo {
+    grid-template-columns: minmax(16rem, 2fr) 3fr;
+    align-items: start;
+  }
+}
+
+.catalogo__lista {
+  display: grid;
+  gap: var(--sp-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.catalogo__opcion {
+  display: grid;
+  gap: var(--sp-1);
+  inline-size: 100%;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-standard);
+}
+
+.catalogo__opcion:hover {
+  border-color: var(--brand-primary);
+}
+
+.catalogo__opcion:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.catalogo__opcion.is-elegida {
+  border-color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary) 8%, var(--bg-surface));
+}
+
+.catalogo__opcion-titulo {
+  font-weight: 600;
+}
+
+.catalogo__opcion-meta {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.catalogo__marcas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.catalogo__marcas:empty {
+  display: none;
+}
+
+.catalogo__vista {
+  min-inline-size: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.catalogo__vista-titulo {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  margin-block: 0 var(--sp-2);
+}
+
+.catalogo__vista-descripcion {
+  color: var(--text-secondary);
+  margin-block: 0 var(--sp-2);
+}
+
+.catalogo__fuente {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin-block: 0 var(--sp-4);
+}
+
+.catalogo__preguntas-titulo {
+  font-size: var(--fs-body);
+  margin-block: 0 var(--sp-2);
+}
+
+.catalogo__preguntas {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: question;
+}
+
+/* Numbered by hand: the number sits in its own column (global lists drop markers). */
+.catalogo__preguntas > li {
+  display: grid;
+  grid-template-columns: 2.5ch 1fr;
+  column-gap: var(--sp-2);
+  counter-increment: question;
+}
+
+.catalogo__preguntas > li::before {
+  content: counter(question) '.';
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.catalogo__preguntas > li > * {
+  grid-column: 2;
+}
+
+.catalogo__pregunta {
+  display: block;
+}
+
+.catalogo__respuesta {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.catalogo__error {
+  display: block;
+  margin-block-end: var(--sp-4);
+}
+
+.catalogo__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+}

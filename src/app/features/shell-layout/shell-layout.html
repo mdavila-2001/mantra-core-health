@@ -466,12 +466,12 @@
           }
         </a>
 
-        <!-- Mis encuestas (propietario, 28/10/2026): la bandeja del paciente.
-             Sólo se ofrece cuando una atención terminada le generó una
-             encuesta (`GET /surveys/me/invitations` devolvió alguna); el número
-             son las pendientes dentro del plazo. Se marca en toda la pantalla
-             «Mis cuestionarios», no sólo con la pestaña de encuestas abierta:
-             por eso ignora los parámetros de consulta. -->
+        <!-- «Mis encuestas» (owner, 28/10/2026): the patient's survey inbox.
+             ALWAYS offered to the patient (06/11/2026), even with none yet: the
+             screen explains when they arrive. The number is the pending ones
+             still in time and is drawn only when there is one. Marked active on
+             the whole «Mis cuestionarios» screen, not only its surveys tab:
+             that is why it ignores query params. -->
         @if (ofreceMisEncuestas()) {
           <a
             class="app-header__ajustes"

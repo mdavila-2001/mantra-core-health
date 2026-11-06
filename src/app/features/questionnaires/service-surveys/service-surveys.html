@@ -1,0 +1,102 @@
+<p class="por-servicio__bajada">
+  Elija qué encuesta estándar recibe el paciente después de cada uno de sus servicios. Una encuesta por
+  servicio, siempre del catálogo; la cita médica usa la del sistema.
+</p>
+
+<app-view-state-host [state]="view()" (retry)="load()">
+  <div vsh-skeleton data-testid="service-surveys-loading">
+    <app-skeleton variant="text" [lines]="5" />
+  </div>
+
+  @if (view(); as state) {
+    @if (state.status === 'ready') {
+      @switch (catalogProblem()) {
+        @case ('empty') {
+          <!-- Catalog S3: nothing to import yet; the catalog is maintained by the system. -->
+          <p class="por-servicio__aviso" role="status" data-testid="service-surveys-catalog-empty">
+            Todavía no hay encuestas estándar en el catálogo, así que por ahora no puede importar ninguna. Mientras
+            tanto, cada servicio usa la encuesta base de servicios.
+          </p>
+        }
+        @case (null) {}
+        @default {
+          <!-- The catalog failed on its own: the list shows, importing is disabled. -->
+          <p class="por-servicio__aviso" role="status" data-testid="service-surveys-catalog-error">
+            No se pudo cargar el catálogo de encuestas, así que por ahora no puede importar ni cambiar.
+            <button app-button type="button" variant="ghost" size="sm" (clicked)="loadCatalog()">Reintentar</button>
+          </p>
+        }
+      }
+
+      <ul class="por-servicio__lista" data-testid="service-surveys-list">
+        <!-- Fixed row: the medical appointment. System survey, mandatory: no
+             «Cambiar» nor «Quitar», only see what the patient is asked. -->
+        <li class="por-servicio__fila por-servicio__fila--sistema" data-testid="service-surveys-appointment">
+          <span class="por-servicio__marca" aria-hidden="true"><app-nav-icon name="lock" /></span>
+          <div class="por-servicio__datos">
+            <h3 class="por-servicio__servicio">{{ state.data.consultation.title }}</h3>
+            <p class="por-servicio__encuesta">
+              {{ state.data.consultation.templateTitle }} · {{ questionCount(state.data.consultation.questionCount) }}
+            </p>
+            <p class="por-servicio__nota">Encuesta del sistema, obligatoria. No se reemplaza ni se quita.</p>
+          </div>
+          <div class="por-servicio__acciones">
+            <app-badge variant="secondary">Del sistema</app-badge>
+            <button
+              app-button
+              type="button"
+              variant="ghost"
+              size="sm"
+              (clicked)="viewAppointment(state.data)"
+              data-testid="service-surveys-appointment-view"
+            >
+              Ver preguntas
+            </button>
+          </div>
+        </li>
+
+        @for (row of state.data.services; track row.serviceId) {
+          <li
+            app-service-survey-row
+            [row]="row"
+            [entry]="entryFor(row.assignment?.catalogCode)"
+            [canPick]="catalog().length > 0"
+            [removing]="removing() === row.serviceId"
+            (pick)="openPicker(row)"
+            (remove)="remove(row)"
+            (viewQuestions)="viewService(row)"
+          ></li>
+        }
+      </ul>
+
+      @if (state.data.services.length === 0) {
+        <!-- S3 · No services offered: the appointment row stays and the next
+             action is declaring services. -->
+        <app-empty-state
+          variant="empty"
+          title="Todavía no ofrece servicios"
+          description="Cuando declare sus servicios (estudios, procedimientos, teleconsulta…), aparecerán aquí para que les asigne una encuesta estándar."
+          data-testid="service-surveys-no-services"
+        >
+          <a app-button empty-actions variant="secondary" [routerLink]="myServicesRoute">Ir a «Mis servicios»</a>
+        </app-empty-state>
+      }
+    }
+  }
+</app-view-state-host>
+
+@if (pickingFor(); as row) {
+  <app-survey-catalog-picker
+    [service]="row"
+    [kind]="pickedKind()"
+    [catalog]="catalog()"
+    [saving]="saving()"
+    [error]="saveError()"
+    (pick)="importSurvey($event)"
+    (closed)="closePicker()"
+  />
+}
+
+@if (viewing(); as survey) {
+  <app-survey-questions-dialog [survey]="survey" (closed)="viewing.set(null)" />
+}

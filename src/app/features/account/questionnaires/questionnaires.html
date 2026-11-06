@@ -22,8 +22,8 @@
   <app-tab
     [label]="
       pendientes() > 0
-        ? 'Encuestas (' + pendientes() + (pendientes() === 1 ? ' pendiente)' : ' pendientes)')
-        : 'Encuestas'
+        ? 'Mis encuestas (' + pendientes() + (pendientes() === 1 ? ' pendiente)' : ' pendientes)')
+        : 'Mis encuestas'
     "
   >
     @if (seccion() === 1) {
@@ -36,6 +36,22 @@
 
 <app-view-state-host [state]="vista()" (retry)="cargar()">
   <div vsh-skeleton><app-skeleton variant="text" [lines]="4" /></div>
+
+  <!-- S3 · No surveys yet (06/11/2026): what the always-visible «Mis encuestas»
+       icon leads to. Copy in `questionnaires.copy.ts`. No `@if` around it on
+       purpose: a control block sends the projected node to the default slot
+       (see `view-state-host.html`). -->
+  <app-empty-state
+    vsh-empty
+    variant="empty"
+    [title]="noSurveys.title"
+    [description]="noSurveys.description"
+    data-testid="questionnaires-no-surveys"
+  >
+    <a app-button empty-actions variant="secondary" [routerLink]="rutaDeTurnos" data-testid="questionnaires-see-appointments">
+      {{ noSurveys.action }}
+    </a>
+  </app-empty-state>
 
   @if (vista(); as estado) {
     @if (estado.status === 'ready') {

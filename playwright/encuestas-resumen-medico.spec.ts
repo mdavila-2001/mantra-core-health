@@ -7,8 +7,8 @@ import type { Actor } from './support/actores';
 import { entrar, esperarAplicacionLista, irA } from './support/sesion';
 
 /**
- * «Cómo le va» (el resumen general del médico) y la asociación de una encuesta
- * a un servicio con un selector real.
+ * «Cómo le va» (el resumen general del médico) en el «Buzón» de solo lectura y
+ * la lectura de las respuestas de una encuesta.
  *
  * Corre contra el **backend simulado** (`ng serve --configuration
  * development,demo`), con la cuenta de la médica. Recorre:
@@ -19,10 +19,11 @@ import { entrar, esperarAplicacionLista, irA } from './support/sesion';
  *   3. Cambiar de servicio: la petición lleva `serviceId`; un servicio con pocas
  *      respuestas se marca «pocas respuestas» sin esconderse; uno sin envíos
  *      muestra el vacío con su próxima acción.
- *   4. Abrir la ficha de una encuesta publicada y asociarla a un servicio:
- *      UI → request (`POST /surveys/assignments`) → response (201) → persistencia
- *      (la ficha relee y lo muestra POR NOMBRE) → recarga de la página → UI.
- *   5. Repetir la asociación: el 409 se dice junto al selector.
+ *   4. Buzón de solo lectura (06/11/2026): una encuesta hecha a mano es
+ *      «anterior», sin «Abrir»; «Ver respuestas» lleva a su ficha, que se lee
+ *      (cuestionario y respuestas, `GET …/responses` → 200) sin gestionar nada
+ *      —la asociación libre ya no existe: la API la rechaza—, sobrevive a la
+ *      recarga y apunta a «Encuestas por servicio».
  *
  * Nunca espera `networkidle`: contra `ng serve` con HMR no llega. Se espera por
  * elementos y por respuestas concretas.
@@ -118,8 +119,8 @@ async function elegirOpcion(page: Page, contenedor: string, nombre: string | Reg
   await page.getByRole('option', { name: nombre }).click();
 }
 
-test.describe('Encuestas · «Cómo le va» y asociar a un servicio', () => {
-  test('resumen general, filtros, ficha y asociación que sobrevive a recargar', async ({ page }) => {
+test.describe('Encuestas · «Cómo le va» y el Buzón de solo lectura', () => {
+  test('resumen general, filtros, privacidad y lectura de las respuestas de una encuesta', async ({ page }) => {
     test.setTimeout(4 * 60_000);
     await page.setViewportSize({ width: 1440, height: 900 });
 
@@ -133,7 +134,7 @@ test.describe('Encuestas · «Cómo le va» y asociar a un servicio', () => {
     await expect(page.getByTestId('resumen-kpis')).toBeVisible();
 
     const arriba = await bloque.boundingBox();
-    const lista = await page.getByTestId('encuestas-lista').boundingBox();
+    const lista = await page.getByTestId('surveys-inbox-list').boundingBox();
     expect(arriba!.y).toBeLessThan(lista!.y);
 
     // Las cinco cifras y el desglose del NPS, con el n siempre a la vista.
@@ -266,61 +267,41 @@ test.describe('Encuestas · «Cómo le va» y asociar a un servicio', () => {
     await capturar(page, '07-resumen-oscuro-1440');
     await aplicarTema(page, 'claro');
 
-    // ── 4. La ficha de una encuesta publicada ──────────────────────────────────
-    await page.getByRole('link', { name: 'Abrir: Experiencia de teleconsulta' }).click();
-    await expect(page.getByTestId('asignacion-servicio')).toBeVisible({ timeout: 30_000 });
+    // ── 4. Buzón de solo lectura → las respuestas de una encuesta ───────────────
+    const tarjeta = page.getByTestId('surveys-inbox-list').locator('li', { hasText: 'Experiencia de teleconsulta' });
+    await expect(tarjeta).toContainText('Encuesta anterior (ya no se envía)');
+    await expect(tarjeta.getByRole('link', { name: /^Abrir/ })).toHaveCount(0);
+    await tarjeta.getByRole('link', { name: 'Ver las respuestas de Experiencia de teleconsulta' }).click();
+    await expect(page).toHaveURL(/\/questionnaires\/[0-9a-f-]{36}#respuestas$/);
 
-    // Hoy está asociada a la teleconsulta cardiológica, dicho POR NOMBRE.
-    const vigentes = page.getByTestId('asignacion-vigentes');
-    await expect(vigentes).toContainText('Teleconsulta cardiológica');
-    await expect(vigentes).not.toContainText(/[0-9a-f]{8}-[0-9a-f]{4}-/i);
-    await expect(page.getByTestId('asignacion-vigente')).toHaveCount(1);
-    await capturar(page, '08-ficha-asociada-hoy-claro-1440');
+    // La ficha se lee: cuestionario y respuestas recibidas.
+    await expect(page.getByTestId('survey-detail-read-only')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('heading', { name: 'Cuestionario', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Respuestas recibidas', exact: true })).toBeVisible();
+    const lecturas = async (): Promise<readonly number[]> =>
+      (await atendidas(page)).filter((r) => r.method === 'GET' && /^\/surveys\/templates\/[^/?]+\/responses/.test(r.url)).map((r) => r.status);
+    await expect.poll(lecturas, { timeout: 15_000 }).toEqual([200]);
 
-    // Ya no hay un campo de texto para pegar un UUID.
-    await expect(page.getByTestId('asignacion-servicio').locator('input[type="text"]')).toHaveCount(0);
+    // Nada que gestione la encuesta: ni asociar, ni publicar, ni corregir, ni desactivar.
+    for (const testId of ['asignacion-vigentes', 'asignacion-servicio', 'asignacion-guardar', 'encuesta-publicar', 'encuesta-agregar-pregunta']) {
+      await expect(page.getByTestId(testId)).toHaveCount(0);
+    }
+    await expect(page.getByText(/Asociar a un servicio|Desactivar encuesta|nueva versión/)).toHaveCount(0);
+    expect((await atendidas(page)).filter((r) => r.method !== 'GET' && r.url.startsWith('/surveys/'))).toEqual([]);
+    await capturar(page, '08-ficha-solo-lectura-claro-1440');
 
-    // UI → request → response.
-    await elegirOpcion(page, 'asignacion-servicio', 'Electrocardiograma');
-    await page.getByTestId('asignacion-guardar').click();
-    await expect(page.getByTestId('asignacion-vigente')).toHaveCount(2);
-    const posts = (await atendidas(page)).filter((r) => r.method === 'POST' && r.url === '/surveys/assignments');
-    expect(posts).toHaveLength(1);
-    const cuerpo = posts[0]!.body as { surveyVersionId: string; targetType: string; targetId: string };
-    expect(cuerpo.targetType).toBe('SERVICE');
-    // Lo que viaja es un id, no el texto del selector.
-    expect(cuerpo.targetId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-/i);
-    expect(cuerpo.surveyVersionId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-/i);
-    expect(posts[0]!.status).toBe(201);
-
-    // Persistencia: la ficha relee y muestra las dos, por nombre.
-    await expect(vigentes).toContainText('Electrocardiograma');
-    await expect(vigentes).toContainText('Teleconsulta cardiológica');
-    await capturar(page, '09-ficha-recien-asociada-claro-1440');
-
-    // Recarga completa de la página → UI.
+    // Recarga completa → sigue legible.
     await page.reload();
     await esperarAplicacionLista(page);
-    await expect(page.getByTestId('asignacion-vigentes')).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByTestId('asignacion-vigentes')).toContainText('Electrocardiograma');
-    await expect(page.getByTestId('asignacion-vigente')).toHaveCount(2);
+    await expect(page.getByTestId('survey-detail-read-only')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('heading', { name: 'Respuestas recibidas', exact: true })).toBeVisible();
 
-    // ── 5. Repetir lo mismo: 409, dicho junto al selector ───────────────────────
-    await elegirOpcion(page, 'asignacion-servicio', 'Electrocardiograma');
-    await page.getByTestId('asignacion-guardar').click();
-    await expect(page.getByTestId('asignacion-error')).toContainText('Ya existe una asignación activa');
-    const repetidas = (await atendidas(page)).filter((r) => r.method === 'POST' && r.url === '/surveys/assignments');
-    expect(repetidas.map((r) => r.status)).toEqual([409]);
-    await expect(page.getByTestId('asignacion-servicio')).toBeVisible();
-    await capturar(page, '10-ficha-conflicto-claro-1440');
-
-    // «Todas mis consultas» también es una opción real.
-    await expect(
-      page.getByTestId('asignacion-servicio').getByRole('combobox'),
-    ).toBeVisible();
-    await page.getByTestId('asignacion-servicio').getByRole('combobox').click();
-    await expect(page.getByRole('option', { name: /Todas mis consultas/ })).toBeVisible();
-    await page.keyboard.press('Escape');
+    // ── 5. La ficha lleva a donde hoy se elige la encuesta de cada servicio ─────
+    await page.getByTestId('survey-detail-go-to-services').click();
+    await expect(page).toHaveURL(/\/questionnaires\?encuestas=servicios$/);
+    await expect(page.getByTestId('service-surveys-list')).toBeVisible({ timeout: 30_000 });
+    await page.goBack();
+    await expect(page.getByTestId('survey-detail-read-only')).toBeVisible({ timeout: 30_000 });
 
     // ── 6. Celular, claro y oscuro ──────────────────────────────────────────────
     await page.setViewportSize({ width: 390, height: 844 });
@@ -334,14 +315,13 @@ test.describe('Encuestas · «Cómo le va» y asociar a un servicio', () => {
     await resumenAsentado(page);
     await capturar(page, '13-resumen-claro-390');
 
-    // A 390 px los chips de estado de la lista no se cortan («Borrado…»): pasan a otra fila.
-    const rotulosDelFiltro = page.locator('[data-testid="encuestas-filtro-estado"] .segmentado__rotulo');
-    await rotulosDelFiltro.first().scrollIntoViewIfNeeded();
-    const recortados = await rotulosDelFiltro.evaluateAll((els) =>
-      els.filter((el) => el.scrollWidth > el.clientWidth + 1).map((el) => el.textContent?.trim()),
-    );
-    expect(recortados, 'ningún chip de estado debe cortar su texto a 390 px').toEqual([]);
-    await page.getByTestId('encuestas-barra').screenshot({ path: join(SALIDA, '17-filtro-de-estado-claro-390.png') });
+    // A 390 px el Buzón sólo tiene el buscador (sin filtro por estado) y no se corta.
+    const barra = page.getByTestId('surveys-inbox-toolbar');
+    await barra.scrollIntoViewIfNeeded();
+    await expect(barra.locator('app-segmented-control')).toHaveCount(0);
+    const cajaBarra = await barra.boundingBox();
+    expect(cajaBarra!.x + cajaBarra!.width, 'el buscador entra en 390 px').toBeLessThanOrEqual(390);
+    await barra.screenshot({ path: join(SALIDA, '17-buscador-claro-390.png') });
     await aplicarTema(page, 'oscuro');
     await capturar(page, '14-resumen-oscuro-390');
 
