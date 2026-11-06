@@ -23,6 +23,8 @@ import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox'
 export class LabCatalogItemCard {
   readonly item = input.required<LabCatalogItem>();
   readonly selected = input(false);
+  /** Its section (Hematología), shown because cards are grouped by sample type. */
+  readonly section = input<string | null>(null);
   readonly toggled = output<void>();
 
   /** The amount in Bs, or «Sin precio sugerido» for a component without one. */

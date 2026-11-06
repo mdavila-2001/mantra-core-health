@@ -58,6 +58,17 @@
   </app-alert>
 }
 
+@if (notLoaded()) {
+  <app-alert
+    tone="warning"
+    title="Falta cargar el catálogo completo"
+    data-testid="lab-catalog-not-loaded"
+  >
+    En este entorno sólo están los análisis básicos, sin muestra, sección ni componentes. Avise a
+    soporte técnico para que carguen el catálogo de análisis; mientras tanto puede agregar estos.
+  </app-alert>
+}
+
 @if (failure(); as message) {
   <app-alert tone="error" title="No se agregaron los análisis" data-testid="lab-catalog-error">{{
     message
@@ -71,12 +82,13 @@
   [collapsible]="true"
   [expandAll]="hasFilter()"
   searchLabel="Buscar un análisis por nombre, código, LOINC o componente"
-  noMatchesText="Ningún análisis del catálogo coincide. Pruebe con otra palabra o quite la sección."
+  noMatchesText="Ningún análisis del catálogo coincide. Pruebe con otra palabra o quite la muestra o la sección."
   (retry)="load()"
 >
   <ng-template let-item>
     <app-lab-catalog-item
       [item]="item"
+      [section]="item.sectionName"
       [selected]="selected().has(item.conceptId)"
       (toggled)="toggle(item)"
     />

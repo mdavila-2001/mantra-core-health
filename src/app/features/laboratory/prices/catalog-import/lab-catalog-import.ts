@@ -5,7 +5,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import type {
   LabCatalog,
   LabCatalogImportResult,
-  LabCatalogItem,
 } from '../../../../core/data-access/lab-portal/lab-import.types';
 import { LabPortalClient } from '../../../../core/data-access/lab-portal/lab-portal.client';
 import { describeApiFailure } from '../../../../core/http/api-failure';
@@ -18,10 +17,11 @@ import type { FilterDef } from '../../../../shared/components/organisms/filter-b
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { SpecialtyBrowser } from '../../../../shared/components/organisms/specialty-browser/specialty-browser';
 import { LabCatalogItemCard } from './lab-catalog-item';
-import { catalogGroups, importSummary } from './lab-catalog.rules';
+import { catalogGroups, importSummary, type CatalogEntry } from './lab-catalog.rules';
 
 const PRICES_ROUTE = '/administration/laboratory-prices';
 const SECTION = 'section';
+const SAMPLE = 'sample';
 
 /**
  * «Agregar del catálogo» (proceso 4.2): the lab picks análisis from the same
@@ -54,6 +54,15 @@ export class LabCatalogImport {
 
   protected readonly filters = computed<readonly FilterDef[]>(() => [
     {
+      key: SAMPLE,
+      label: 'Muestra',
+      placeholder: 'Todas las muestras',
+      options: (dataOf(this.catalog())?.sampleTypes ?? []).map((t) => ({
+        value: t.code,
+        label: t.name,
+      })),
+    },
+    {
       key: SECTION,
       label: 'Sección',
       placeholder: 'Todas las secciones',
@@ -65,11 +74,11 @@ export class LabCatalogImport {
   ]);
 
   protected readonly groups = computed(() =>
-    catalogGroups(
-      dataOf(this.catalog()),
-      this.params().get(SECTION) ?? '',
-      this.params().get('q') ?? '',
-    ),
+    catalogGroups(dataOf(this.catalog()), {
+      sample: this.params().get(SAMPLE) ?? '',
+      section: this.params().get(SECTION) ?? '',
+      text: this.params().get('q') ?? '',
+    }),
   );
 
   protected readonly summary = computed(() => {
@@ -87,9 +96,14 @@ export class LabCatalogImport {
     return n === 0 ? 'Agregar análisis' : n === 1 ? 'Agregar 1 análisis' : `Agregar ${n} análisis`;
   });
   protected readonly priceRule = computed(() => dataOf(this.catalog())?.priceRule ?? null);
-  protected readonly hasFilter = computed(
-    () => (this.params().get('q') ?? '') !== '' || (this.params().get(SECTION) ?? '') !== '',
+  protected readonly hasFilter = computed(() =>
+    ['q', SECTION, SAMPLE].some((key) => (this.params().get(key) ?? '') !== ''),
   );
+  /** Only the basic análisis are there: no LOINC catalog loaded in this environment. */
+  protected readonly notLoaded = computed(() => {
+    const catalog = dataOf(this.catalog());
+    return catalog !== null && catalog.catalogVersion === null;
+  });
 
   constructor() {
     this.load();
@@ -112,7 +126,7 @@ export class LabCatalogImport {
     });
   }
 
-  protected toggle(item: LabCatalogItem): void {
+  protected toggle(item: CatalogEntry): void {
     this.selected.update((current) => {
       const next = new Set(current);
       if (!next.delete(item.conceptId)) next.add(item.conceptId);
