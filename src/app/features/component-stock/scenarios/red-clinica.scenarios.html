@@ -1,0 +1,53 @@
+<div class="red" data-testid="escenario-red-clinica">
+  <app-red-clinica-filtros
+    class="red__filtros"
+    [nodos]="nodos"
+    [(filtro)]="filtro"
+    [visibles]="visibles().length"
+    (filtroChange)="record.anotar('filtroChange', resumen($event))"
+  />
+  <div class="red__cuerpo" [class.red__cuerpo--con-panel]="abierto() !== null && presentacion() !== 'hoja'">
+    <div class="red__izquierda">
+      <app-red-clinica-alertas-lista
+        [alertas]="alertas()"
+        (nodoElegido)="record.anotar('nodoElegido', $event); abrir($event)"
+        (resaltar)="resaltados.set($event)"
+      />
+      <section class="red__mapa" aria-labelledby="red-mapa-titulo">
+        <h2 id="red-mapa-titulo" class="red__mapa-titulo">Nodos de la red</h2>
+        <p class="red__mapa-nota">Sustituto del mapa para el banco: el mapa lo dibuja el recorrido clínico.</p>
+        <ul class="red__nodos">
+          @for (n of visibles(); track n.id) {
+            <li>
+              <button
+                type="button"
+                class="red__nodo"
+                data-testid="escenario-nodo"
+                [class.red__nodo--resaltado]="resaltados().includes(n.id)"
+                [class.red__nodo--abierto]="abierto()?.id === n.id"
+                [attr.aria-pressed]="abierto()?.id === n.id"
+                (click)="abrir(n.id)"
+              >
+                <app-nav-icon [name]="aspecto[n.tipo].icono" />
+                <span class="red__nodo-tipo">{{ aspecto[n.tipo].singular }}</span>
+                <span class="red__nodo-titulo">{{ n.titulo }}</span>
+              </button>
+            </li>
+          } @empty {
+            <li class="red__mapa-nota">Ningún registro coincide con los filtros.</li>
+          }
+        </ul>
+      </section>
+    </div>
+    <app-red-clinica-panel
+      class="red__panel"
+      [nodo]="abierto()"
+      [nodos]="nodos"
+      [aristas]="aristas"
+      [ahora]="ahora"
+      [presentacion]="presentacion()"
+      (nodoElegido)="record.anotar('nodoElegido', $event); abrir($event)"
+      (cerrado)="record.anotar('cerrado'); abierto.set(null)"
+    />
+  </div>
+</div>

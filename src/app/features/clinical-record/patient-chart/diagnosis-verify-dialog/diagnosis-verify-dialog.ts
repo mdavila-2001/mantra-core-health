@@ -42,8 +42,9 @@ import { DatePicker } from '../../../../shared/components/organisms/date-picker/
 import { writeFailureMessage } from '../../write-message';
 import { linkFailureMessage, replacementOptions } from '../diagnosis-link-options';
 import type { DiagnosisOption } from '../medication-block/medication-block';
+import { opcionesDeEvidencia } from './diagnosis-verify-dialog.evidencia';
 
-/** Los 422 de `replacedByConditionId` (API v4291): van al selector, no arriba. */
+/** The 422s of `replacedByConditionId` (API v4291): they go to the selector, not on top. */
 const REPLACEMENT_REASONS = ['CONDITION_REPLACEMENT_INVALID', 'CONDITION_REPLACEMENT_SELF', 'CONDITION_REPLACEMENT_REQUIRES_REFUTED'];
 
 /** Hasta cuánto puede decir el motivo. Es el tope del contrato (§3.4). */
@@ -57,38 +58,6 @@ const TARGET_CURSO_CLINICO = 'clinical.conditions.clinical_course_concept_id';
 
 /** El curso que exime del fin esperado: una crónica no resuelve. */
 const CODIGO_CURSO_CRONICO = 'COND_COURSE_CHRONIC';
-
-/**
- * «Informe · Hemograma completo · 12 sept 2026».
- *
- * Sin una opción vacía propia: `app-select` ya dibuja su `placeholder` como
- * la opción nula, y sumarle otra mostraba «Sin evidencia» dos veces.
- */
-function opcionesDeEvidencia(
-  circuito: PatientDiagnostics | null,
-  notas: ChartNotesPage | null,
-  etiquetas: ConceptLabels,
-): readonly SelectOption<string | null>[] {
-  const nombre = (conceptId: string) => etiquetas.get(conceptId)?.display ?? 'Estudio';
-  const fecha = (instante: Date) =>
-    instante.toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' });
-  return [
-    ...(circuito?.reports ?? []).map((informe) => ({
-      value: `report:${informe.id}`,
-      label: `Informe · ${nombre(informe.codeConceptId)} · ${fecha(informe.createdAt)}`,
-    })),
-    ...(circuito?.orders ?? []).map((orden) => ({
-      value: `order:${orden.id}`,
-      label: `Orden · ${nombre(orden.codeConceptId)} · ${fecha(orden.createdAt)}`,
-    })),
-    ...(notas?.items ?? []).map((nota) => ({
-      value: `note:${nota.noteId}`,
-      // «Nota #a1b2»: cuatro caracteres distinguen dos notas del mismo día sin
-      // mostrar el identificador entero.
-      label: `Nota #${nota.noteId.replace(/-/g, '').slice(-4)} · ${fecha(nota.signedAt ?? nota.createdAt)}`,
-    })),
-  ];
-}
 
 /**
  * **Confirmar o rechazar** un diagnóstico presuntivo — C3.
@@ -170,7 +139,7 @@ export class DiagnosisVerifyDialog {
 
   protected readonly motivo = signal('');
   protected readonly evidencia = signal<string | null>(null);
-  /** Sólo al rechazar: el diagnóstico que se confirmó en su lugar (patch v4291). */
+  /** Only on rejecting: the diagnosis confirmed in its place (patch v4291). */
   protected readonly reemplazo = signal<string | null>(null);
   protected readonly errorDeReemplazo = signal('');
 

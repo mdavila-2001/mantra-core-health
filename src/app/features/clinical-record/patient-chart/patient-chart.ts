@@ -109,11 +109,8 @@ import { consentEncounter } from './informed-consent/consent-encounter';
 import { InformedConsentBadge } from './informed-consent/informed-consent-badge';
 import { InformedConsentDialog } from './informed-consent/informed-consent-dialog';
 import { patientConsents } from './informed-consent/patient-consents';
-import {
-  MedicationBlock,
-  diagnosticoParaReceta,
-  vinculoDeReceta,
-} from './medication-block/medication-block';
+import { MedicationBlock, diagnosticoParaReceta } from './medication-block/medication-block';
+import { vinculoDeReceta } from './medication-block/medication-block.vinculo';
 import type { DiagnosticoEnFicha, RecetaEnFicha } from './medication-block/medication-block';
 import { ObservationBlock } from './observation-block/observation-block';
 import { ReferralBlock } from './referral-block/referral-block';

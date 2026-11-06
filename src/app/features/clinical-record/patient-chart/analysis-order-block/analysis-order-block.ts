@@ -19,7 +19,6 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
 import { previousStudyFromErrorDetails } from '../../../../core/data-access/diagnostics/diagnostics.wire';
 import type {
-  DiagnosticOrder,
   DiagnosticReport,
   DuplicateStudyCheckResult,
   NewDiagnosticOrder,
@@ -52,7 +51,6 @@ import {
   DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS,
   PRIORITY_LABELS,
   conceptosDe,
-  duplicadoDe,
   mensajeDeAlta,
 } from './analysis-order-block.helpers';
 import { createPerformerOrderState } from './performer-selector/performer-order-state';
@@ -60,6 +58,7 @@ import { PerformerSelector } from './performer-selector/performer-selector';
 import { CollectionPointSelect } from './collection-point-select/collection-point-select';
 import { createStudyCategoryState } from './study-category';
 import type { EstudioEnFicha } from './analysis-order-block.helpers';
+import { filasDelCircuito, informesSueltosDe } from './analysis-order-block.filas';
 
 export type { EstudioEnFicha } from './analysis-order-block.helpers';
 
@@ -187,19 +186,19 @@ export class AnalysisOrderBlock {
   readonly ofreceRespuesta = input(false);
 
   /**
-   * Los diagnósticos de la persona, para «Para qué diagnóstico» (patch v4291).
-   * Los arma quien ya leyó el resumen —igual que para la receta— y bajan
-   * hechos: el bloque no vuelve a pedir el resumen. Sin ellos el selector no
-   * se dibuja y la orden sale sin vínculo, que el contrato permite.
+   * The person's diagnoses, for «Para qué diagnóstico» (patch v4291). Built by
+   * whoever already read the summary —as for the prescription— and passed
+   * down: the block does not request the summary again. Without them the
+   * selector is not drawn and the order goes without a link, as allowed.
    */
   readonly diagnosticos = input<readonly DiagnosisOption[]>([]);
 
-  /** El diagnóstico elegido, o `null`: opcional, un control no cuelga de ninguno. */
+  /** The chosen diagnosis, or `null`: optional, a control study hangs from none. */
   protected readonly paraDiagnostico = signal<string | null>(null);
 
   protected readonly opcionesDeDiagnostico = computed(() => diagnosisLinkOptions(this.diagnosticos()));
 
-  /** El 422 `SERVICE_REQUEST_REASON_CONDITION_INVALID`, en el selector que lo corrige. */
+  /** The 422 `SERVICE_REQUEST_REASON_CONDITION_INVALID`, on the selector that fixes it. */
   protected readonly errorDelDiagnostico = signal('');
 
   /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
@@ -316,22 +315,7 @@ export class AnalysisOrderBlock {
    */
   protected readonly estudios = computed<readonly EstudioEnFicha[]>(() => {
     const state = this.circuito();
-    if (state.status !== 'ready') {
-      return [];
-    }
-
-    const conResultado = new Set(
-      state.data.reports
-        .filter((informe) => this.estaLiberado(informe))
-        .map((informe) => informe.serviceRequestId)
-        .filter((id): id is string => id !== undefined),
-    );
-
-    // Sólo hace falta para el texto «Satisfecha por el informe del {fecha}»:
-    // el informe previo del paciente casi siempre está en esta misma lectura.
-    const informesPorId = new Map(state.data.reports.map((informe) => [informe.id, informe]));
-
-    return state.data.orders.map((orden) => this.aFila(orden, conResultado, informesPorId));
+    return state.status === 'ready' ? filasDelCircuito(state.data, (id) => this.etiquetaDe(id), this.diagnosticos()) : [];
   });
 
   /**
@@ -344,14 +328,7 @@ export class AnalysisOrderBlock {
    */
   protected readonly informesSueltos = computed<readonly DiagnosticReport[]>(() => {
     const state = this.circuito();
-    if (state.status !== 'ready') {
-      return [];
-    }
-    const conOrden = new Set(state.data.orders.map((orden) => orden.id));
-    return state.data.reports.filter(
-      (informe) =>
-        informe.serviceRequestId === undefined || !conOrden.has(informe.serviceRequestId),
-    );
+    return state.status === 'ready' ? informesSueltosDe(state.data) : [];
   });
 
   /** Si algún bloque quedó recortado por el tope. */
@@ -646,51 +623,6 @@ export class AnalysisOrderBlock {
     this.paraDiagnostico.set(null);
     this.performer.reset();
     this.collectionPoint()?.reset();
-  }
-
-  /**
-   * Un informe cuenta como resultado sólo si tiene versión **liberada**.
-   *
-   * `currentVersionId` dice que hay algo redactado; `currentReleasedVersionId`
-   * dice que alguien lo validó y lo liberó. Tratar el primero como resultado
-   * mostraría un borrador como diagnóstico.
-   */
-  private estaLiberado(informe: DiagnosticReport): boolean {
-    return informe.currentReleasedVersionId !== undefined;
-  }
-
-  /** Una orden traducida a la fila que la ficha muestra. */
-  private aFila(
-    orden: DiagnosticOrder,
-    conResultado: ReadonlySet<string>,
-    informesPorId: ReadonlyMap<string, DiagnosticReport>,
-  ): EstudioEnFicha {
-    const duplicado = duplicadoDe(orden);
-
-    return {
-      id: orden.id,
-      estudio: this.etiquetaDe(orden.codeConceptId),
-      categoria: this.etiquetaDe(orden.categoryConceptId),
-      estado: this.etiquetaDe(orden.statusConceptId),
-      pedidoEl: orden.createdAt,
-      conResultado: conResultado.has(orden.id),
-      duplicado,
-      informePrevioDel:
-        duplicado === 'reused' && orden.previousDiagnosticReportId !== undefined
-          ? (informesPorId.get(orden.previousDiagnosticReportId)?.createdAt ?? null)
-          : null,
-      justificacion: orden.duplicateOverrideReason ?? null,
-      collectionPoint: orden.suggestedCareSpace ? `${orden.suggestedCareSpace.code} · ${orden.suggestedCareSpace.name}` : null,
-      ...(orden.encounterId === undefined ? {} : { encounterId: orden.encounterId }),
-      ...this.diagnosticoDe(orden.reasonConditionId),
-    };
-  }
-
-  /** «Para: Hipotiroidismo»; un id fuera de la lista se dice, no se calla. */
-  private diagnosticoDe(reasonConditionId: string | undefined): { paraDiagnostico?: string } {
-    if (reasonConditionId === undefined) return {};
-    const dx = this.diagnosticos().find((d) => d.id === reasonConditionId);
-    return { paraDiagnostico: dx?.etiqueta ?? 'Diagnóstico de la historia' };
   }
 
   private cargar(patientProfileId: string): void {

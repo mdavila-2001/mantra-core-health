@@ -31,11 +31,10 @@
 import {
   sucesosDeAtenciones,
   sucesosDeDiagnosticos,
-  sucesosDeInformes,
   sucesosDeInternaciones,
-  sucesosDeOrdenes,
   sucesosDeRecetas,
 } from './recorrido-guiado.sucesos-clinicos';
+import { sucesosDeInformes, sucesosDeOrdenes } from './recorrido-guiado.sucesos-de-estudios';
 import {
   sucesosDeCitas,
   sucesosDeDerivaciones,
