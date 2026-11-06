@@ -15,7 +15,10 @@ import { pushBuildMissing, PUSH_DIST, serveBuild } from './support/push-web';
  *
  * Needs the build: `yarn ng build --configuration real-api` (path in E2E_PUSH_DIST).
  */
-test.skip(pushBuildMissing, `Falta el build en ${PUSH_DIST}. No es un verde.`);
+// Without the build this fails on purpose (never a silent skip): build it first.
+test.beforeAll(() => {
+  if (pushBuildMissing) throw new Error(`Falta el build real-api en ${PUSH_DIST} (E2E_PUSH_DIST).`);
+});
 // The headless shell denies the notifications permission even when granted;
 // the full Chromium build (new headless) shows them.
 test.use({ channel: 'chromium' });

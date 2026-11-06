@@ -22,7 +22,10 @@ import {
  * and its endpoint, the browser subscription, and what the person sees.
  * Screenshots go to docs/trabajo/2026-11-06-push-notificaciones/evidencia/.
  */
-test.skip(pushBuildMissing, `Falta el build en ${PUSH_DIST}. No es un verde.`);
+// Without the build this fails on purpose (never a silent skip): build it first.
+test.beforeAll(() => {
+  if (pushBuildMissing) throw new Error(`Falta el build real-api en ${PUSH_DIST} (E2E_PUSH_DIST).`);
+});
 test.use({ channel: 'chromium' });
 
 let origin = '';
