@@ -152,9 +152,16 @@ test.describe('B.1 · dependientes por CI', () => {
     await lista.getByRole('button', { name: `Actuar por ${DEPENDIENTE.nombre}` }).click();
     await expect(lista.getByText('Perfil activo')).toBeVisible();
     await page.getByRole('link', { name: 'AloVida — ir al panel' }).click();
-    await expect(page.locator('app-symptom-check app-body-map')).toBeVisible({ timeout: 30_000 });
+    const figura = page.locator('app-symptom-check app-body-map');
+    await expect(figura).toBeVisible({ timeout: 30_000 });
     await expect.poll(() => maniquies.includes('male')).toBe(true);
-    await page.screenshot({ path: 'artifacts/playwright/figura-dependiente-jorge.png' });
+    // Shoot the figure itself once it is on screen, not the route transition.
+    await figura.scrollIntoViewIfNeeded();
+    await expect(figura.locator('image').first()).toBeVisible();
+    await figura.screenshot({
+      path: 'artifacts/playwright/figura-dependiente-jorge.png',
+      animations: 'disabled',
+    });
 
     expect(errores).toEqual([]);
   });
