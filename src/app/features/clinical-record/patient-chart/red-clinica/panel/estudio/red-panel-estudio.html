@@ -19,7 +19,7 @@
     <!-- The full report read (values, conclusion, files), with its states.
          The released content is drawn only once the read succeeded (or when
          there is nothing to read): a loading or error state stands alone. -->
-    @if (lectura(); as lectura) {
+    @if (!exito() && lectura(); as lectura) {
       <app-red-clinica-informe-estado [estado]="lectura.estado" (reintentar)="releer.emit()" (volver)="volver.emit()" />
     }
     @if (exito()) {
