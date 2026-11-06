@@ -384,6 +384,13 @@ describe('armarRecorridoGuiado — plantillas', () => {
     expect(pasoDel(pasos, '2026-02-03').narracion).not.toContain('Reemplaza');
   });
 
+  it('la derivación no repite el motivo cuando el servicio pedido ya lo nombra', () => {
+    const conServicio: Referral = { ...derivacion, requestedServiceText: 'Evaluación de sinusitis', diagnosisText: 'Sinusitis en estudio' };
+    expect(pasoDel(armar({ derivaciones: [conServicio] }), '2026-02-17').narracion).toContain(
+      'se derivó a Otorrinolaringología de Clínica Norte para evaluación de sinusitis.',
+    );
+  });
+
   it('la derivación dice a dónde y por qué; la llegada se narra en la atención de destino', () => {
     const pasos = armar();
     expect(pasoDel(pasos, '2026-02-17').narracion).toContain(
