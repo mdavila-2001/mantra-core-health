@@ -1,7 +1,7 @@
 /* ============================================================================
-    Los contratos del recorrido guiado: qué entra (registros de
-    `core/data-access/` y cómo leer sus conceptos) y qué sale (pasos con frases
-    rastreables). Ver `recorrido-guiado.model.ts` y ADR-0022.
+    The guided tour's contracts: what goes in (`core/data-access/` records and
+    how to read their concepts) and what comes out (steps with traceable
+    sentences). See `recorrido-guiado.model.ts` and ADR-0022.
     ========================================================================== */
 
 import type {
@@ -17,7 +17,7 @@ import type { Booking } from '../../../../core/data-access/scheduling/scheduling
 
 /* -- Contrato de entrada --------------------------------------------------- */
 
-/** Los registros del expediente que el recorrido sabe contar. Todos opcionales. */
+/** The chart records the tour knows how to tell. All optional. */
 export interface RegistrosDelRecorrido {
   readonly atenciones?: readonly Encounter[];
   readonly citas?: readonly Booking[];
@@ -31,31 +31,31 @@ export interface RegistrosDelRecorrido {
 }
 
 /**
- * Cómo se leen los datos que llegan como identificador.
+ * How the data arriving as identifiers is read.
  *
- * `etiqueta` traduce un concepto de terminología a su nombre; devuelve
- * `undefined` si no lo conoce. Lo que parezca un identificador (uuid, código
- * de catálogo) se descarta igual: la narración prefiere «sin nombre
- * disponible» a un uuid.
+ * `etiqueta` translates a terminology concept to its name; it returns
+ * `undefined` if it does not know it. Whatever looks like an identifier (uuid,
+ * catalogue code) is discarded anyway: the narration prefers «sin nombre
+ * disponible» to a uuid.
  */
 export interface LectorDelRecorrido {
   readonly etiqueta: (conceptId: string | undefined) => string | undefined;
-  /** El código de catálogo de un concepto (`COND_CONFIRMED`…), para la verificación. */
+  /** A concept's catalogue code (`COND_CONFIRMED`…), for the verification. */
   readonly codigo?: (conceptId: string | undefined) => string | undefined;
-  /** El servicio o especialidad de una atención («Medicina general»), si se sabe. */
+  /** An encounter's service or specialty («Medicina general»), if known. */
   readonly servicioDeAtencion?: (atencion: Encounter) => string | undefined;
-  /** El nombre de un profesional por su perfil, si se sabe. */
+  /** A practitioner's name by their profile, if known. */
   readonly profesional?: (profileId: string | undefined) => string | undefined;
 }
 
 /* -- Contrato de salida ---------------------------------------------------- */
 
-/** Una frase de la narración y los registros de los que sale. */
+/** A sentence of the narration and the records it comes from. */
 export interface FraseDelPaso {
   readonly texto: string;
-  /** Ids reales de los registros que sostienen la frase. Nunca vacío. */
+  /** Real ids of the records backing the sentence. Never empty. */
   readonly fuentes: readonly string[];
-  /** `true` si la frase une registros por coincidencia (misma atención), no por un vínculo del contrato. */
+  /** `true` if the sentence joins records by coincidence (same encounter), not by a contract link. */
   readonly inferida: boolean;
 }
 
@@ -66,11 +66,11 @@ export interface PasoDelRecorrido {
   /** «3 feb 2026», o «Sin fecha». */
   readonly fechaTexto: string;
   readonly titulo: string;
-  /** Las frases unidas: lo que se lee y lo que anuncia el lector de pantalla. */
+  /** The sentences joined: what is read and what the screen reader announces. */
   readonly narracion: string;
   readonly frases: readonly FraseDelPaso[];
-  /** Los nodos de la red que este paso trae al frente. */
+  /** The network nodes this step brings to the front. */
   readonly enfocar: readonly string[];
-  /** Todos los nodos revelados hasta este paso, incluido. */
+  /** Every node revealed up to this step, included. */
   readonly revelados: readonly string[];
 }

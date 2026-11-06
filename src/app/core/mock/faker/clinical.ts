@@ -67,8 +67,8 @@ export interface SignVital {
  * del tramo de edad es lo que separa una demostración de una tabla de relleno:
  * las pantallas de expediente pintan curvas y percentiles con esto.
  *
- * La unidad es de `VS_OBSERVATION_UNIT` (mmHg, lpm, °C…), nunca la de dosis:
- * con `UNIT-MG` la presión salía «118 mg» en el expediente (06/11/2026).
+ * The unit is `VS_OBSERVATION_UNIT`'s (mmHg, lpm, °C…), never the dose one:
+ * with `UNIT-MG` the pressure showed «118 mg» in the chart (06/11/2026).
  */
 export function vitalSigns(f: Faker, edad: number): readonly SignVital[] {
   const bebe = edad < 2;

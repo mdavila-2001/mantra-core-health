@@ -5,16 +5,16 @@ import type { SelectOption } from '../../../shared/components/atoms/select/selec
 import type { DiagnosisOption } from './medication-block/medication-block';
 
 /**
- * Los diagnósticos de la persona como opciones de un vínculo de la red clínica
- * (patch v4291): «Para qué diagnóstico» de una orden de estudio y «Se confirmó
- * en su lugar» de un rechazo.
+ * The person's diagnoses as options of a clinical network link (patch
+ * v4291): a study order's «Para qué diagnóstico» and a rejection's «Se
+ * confirmó en su lugar».
  *
- * Salen de {@link DiagnosisOption} —la misma lista que ya arma la receta con
- * `diagnosticoParaReceta`— para que las tres pantallas digan lo mismo de cada
- * diagnóstico. Un **descartado** no se ofrece: no hay nada que confirmar ni
- * que seguir de él. `excludeId` deja afuera el propio diagnóstico (un
- * rechazado no se reemplaza a sí mismo). Sin opción vacía propia: el
- * `placeholder` de `app-select` ya es la opción nula.
+ * They come from {@link DiagnosisOption} —the same list the prescription
+ * already builds with `diagnosticoParaReceta`— so the three screens say the
+ * same of each diagnosis. A **ruled-out** one is not offered: there is nothing
+ * to confirm nor follow from it. `excludeId` leaves out the diagnosis itself
+ * (a rejected one does not replace itself). No empty option of its own: the
+ * `placeholder` of `app-select` already is the null option.
  */
 export function diagnosisLinkOptions(
   diagnoses: readonly DiagnosisOption[],
@@ -41,10 +41,10 @@ export function replacementOptions(
 }
 
 /**
- * El mensaje de un 422 de vínculo (patch v4291) si su `reason` es uno de
- * `reasons`, o `null`. La API los manda como `PreconditionFailedException`
- * con el campo en `details.field`: el formulario lo muestra **en el control**
- * que lo corrige, no como un error suelto arriba.
+ * The message of a link 422 (patch v4291) if its `reason` is one of
+ * `reasons`, or `null`. The API sends them as `PreconditionFailedException`
+ * with the field in `details.field`: the form shows it **on the control**
+ * that fixes it, not as a loose error on top.
  */
 export function linkFailureMessage(error: unknown, reasons: readonly string[]): string | null {
   if (!(error instanceof HttpErrorResponse)) return null;

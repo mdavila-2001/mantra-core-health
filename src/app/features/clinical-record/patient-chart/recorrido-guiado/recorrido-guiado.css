@@ -1,10 +1,10 @@
 /* ============================================================================
-    Recorrido guiado: la tarjeta de narración arriba y la barra de control abajo.
+    Guided tour: the narration card on top and the control bar below.
 
-    Por debajo de 650 px de ancho del propio componente (--bp-sm; una consulta
-    de contenedor no puede leer la custom property) la barra se compacta: los
-    botones quedan sólo con ícono —el nombre sigue para el lector de pantalla—
-    y se pega abajo, a mano del pulgar, mientras la narración queda encima.
+    Below 650 px of the component's own width (--bp-sm; a container query
+    cannot read the custom property) the bar compacts: the buttons keep only
+    their icon —the name stays for the screen reader— and it sticks to the
+    bottom, within the thumb's reach, while the narration stays above.
     ========================================================================== */
 
 :host {
@@ -125,7 +125,7 @@
   gap: var(--sp-1);
 }
 
-/* El blanco táctil es la celda entera (24 px de alto); la línea visible es fina. */
+/* The touch target is the whole cell (24 px tall); the visible line is thin. */
 .guiado__segmento {
   flex: 1 1 0;
   min-inline-size: var(--sp-2);
@@ -229,10 +229,10 @@
     gap: var(--sp-2);
   }
 
-  /* Con muchos pasos (la historia de pid-paciente tiene 34) los segmentos de
-     8 px más su hueco no entraban en 390 px y la página se desplazaba de
-     costado: en angosto se encogen sin mínimo y el hueco baja a 2 px. Saltar
-     a un paso sigue a mano con «Anterior»/«Siguiente» y las flechas. */
+  /* With many steps (pid-paciente's story has 34) the 8 px segments plus
+     their gap did not fit in 390 px and the page scrolled sideways: when
+     narrow they shrink with no minimum and the gap drops to 2 px. Jumping to
+     a step stays at hand with «Anterior»/«Siguiente» and the arrows. */
   .guiado__progreso {
     gap: 2px;
   }
@@ -241,17 +241,17 @@
     min-inline-size: 0;
   }
 
-  /* Integrada, la superficie ya pone el aire: la barra no sale de ella. */
+  /* Integrated, the surface already provides the room: the bar does not leave it. */
   :host(.recorrido-guiado--integrada) .guiado__barra {
     margin: 0;
     padding-inline: 0;
     border-radius: 0;
-    /* El fondo de la franja que lo aloja (hundido), no el de una tarjeta. */
+    /* The background of the strip hosting it (inset), not a card's. */
     background: var(--bg-inset);
   }
 
-  /* Los tres botones en una fila sin encogerse (encogidos, el de reproducir
-     se quedaba sin ícono) y la velocidad en la fila de abajo, a lo ancho. */
+  /* The three buttons in one row without shrinking (shrunk, the play one lost
+     its icon) and the speed in the row below, full width. */
   .guiado__controles {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

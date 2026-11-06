@@ -51,10 +51,10 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // `REFERRAL_CONTRACT_PENDING_KEYS` —; se borra al regenerar el contrato.
   'POST /referrals': REFERRAL_CONTRACT_PENDING_KEYS,
   'PATCH /referrals/:id/respond': REFERRAL_RESPOND_CONTRACT_PENDING_KEYS,
-  // Red clínica (patch v4291): los vínculos nuevos de la orden y del rechazo.
-  // Mismo caso: el cliente los manda a la API real; se borra al regenerar.
-  // La orden suma además el punto de toma de F5b (ver más abajo): una sola
-  // clave, o la segunda pisaría a la primera.
+  // Clinical network (patch v4291): the order's and the rejection's new links.
+  // Same case: the client sends them to the real API; removed on regenerating.
+  // The order also adds F5b's collection point (see below): a single key, or
+  // the second would overwrite the first.
   'POST /clinical/service-requests': [
     ...DIAGNOSTIC_ORDER_CONTRACT_PENDING_KEYS,
     ...SERVICE_REQUEST_COLLECTION_POINT_PENDING_KEYS,
@@ -69,7 +69,7 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // F5b/F5d: la web **no** las manda mientras `INFRA_INTEGRATION_FLAGS` esté
   // apagada (la API las rechaza con 400); la maqueta las acepta para poder
   // probar la pantalla con la bandera encendida.
-  // F5b: el punto de toma sugerido de la orden va junto con la red clínica, arriba.
+  // F5b: the order's suggested collection point goes with the clinical network, above.
   // F5d: el consultorio de la plantilla de horario.
   'POST /scheduling/resources/:id/templates': TEMPLATE_CARE_SPACE_PENDING_KEYS,
   'POST /community/conversations/:conversationId/messages': DIRECT_MESSAGE_CONTRACT_PENDING_KEYS,

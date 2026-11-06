@@ -24,15 +24,16 @@ import { outputsRecord } from './exit-log';
 import type { ComponentScenario, ScenarioHost } from './scenario.types';
 
 /* ============================================================================
-    Escenarios de la red clínica (franja 3): panel, filtros y alertas juntos.
+    Scenarios of the clinical network (strip 3): panel, filters and alerts
+    together.
 
-    Las tres piezas se montan como las montará el expediente: la barra arriba,
-    las alertas y el mapa a la izquierda, el panel a la derecha. El «mapa» de
-    acá es una lista de nodos —un sustituto, rotulado como tal—: el mapa real
-    lo dibuja `recorrido-clinico/**` (franja 2) y no se importa para no atar
-    este banco a una franja que todavía se está escribiendo.
+    The three pieces are mounted as the chart mounts them: the bar on top, the
+    alerts and the map on the left, the panel on the right. The «map» here is a
+    list of nodes —a stand-in, labelled as such—: the real map is drawn by
+    `recorrido-clinico/**` (strip 2) and is not imported so as not to tie this
+    bench to it.
 
-    Los datos son la historia de demostración de `red-clinica.demo.ts`.
+    The data is the demonstration story of `red-clinica.demo.ts`.
     ========================================================================== */
 
 const SOURCE = 'src/app/features/component-stock/scenarios/red-clinica.scenarios.ts';

@@ -11,20 +11,21 @@ import { AHORA, EPISODIO_SINUSITIS, HISTORIA_DE_DEMOSTRACION, LECTOR, NODOS } fr
 import type { ComponentScenario, ScenarioHost } from './scenario.types';
 
 /* ============================================================================
-    Escenarios del recorrido guiado (Franja 4 de la red clínica).
+    Scenarios of the guided tour (Strip 4 of the clinical network).
 
-    Desde el 06/11/2026 el control va montado en el Recorrido del expediente
-    (`patient-chart/red-clinica/superficie/`), sobre las lecturas reales de la
-    paciente; la variante «simulador» de este banco, que leía lo mismo, se
-    retiró por redundante. Quedan los estados que documentan el control
-    aislado (historia, episodio, vacío): los pasos salen del **modelo real** (`armarRecorridoGuiado`)
-    sobre una historia de demostración tipada con los mismos tipos de
-    `core/data-access/`, y al lado se dibuja una lista de los registros que
-    hace de red de mentira —revelado, enfocado u oculto— para ver lo que emite
-    `pasoActual`. Tocar un registro de esa lista cuenta como interacción con la
-    red y pausa la reproducción.
+    Since 06/11/2026 the control is mounted on the chart's Tour
+    (`patient-chart/red-clinica/superficie/`), over the patient's real reads;
+    this bench's «simulador» variant, which read the same, was retired as
+    redundant. The states documenting the isolated control remain (story,
+    episode, empty): the steps come from the **real model**
+    (`armarRecorridoGuiado`) over a demonstration story
+    (`recorrido-guiado.historia-demo.ts`) typed with the same
+    `core/data-access/` types, and next to it a list of the records acts as a
+    fake network —revealed, focused or hidden— to see what `pasoActual` emits.
+    Touching a record of that list counts as an interaction with the network
+    and pauses playback.
 
-    Se retira borrando este archivo y su línea en `scenarios.ts`.
+    It is retired by deleting these files and its line in `scenarios.ts`.
     ========================================================================== */
 
 const KEY = 'features/clinical-record/patient-chart/recorrido-guiado/recorrido-guiado';

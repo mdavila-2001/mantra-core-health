@@ -1,6 +1,5 @@
 @if (actual(); as paso) {
-  <!-- Enfocable para que las flechas y el espacio funcionen sin tener que
-       llegar antes a un botón. -->
+  <!-- Focusable so arrows and space work without first reaching a button. -->
   <section
     class="guiado"
     tabindex="0"
@@ -8,8 +7,8 @@
     aria-keyshortcuts="ArrowLeft ArrowRight Space Home End"
     data-testid="recorrido-guiado"
   >
-    <!-- La narración se anuncia sola al cambiar de paso; el contador va adentro
-         para que se oiga «Paso 3 de 9» antes del texto. -->
+    <!-- The narration announces itself on changing step; the counter goes
+         inside so «Paso 3 de 9» is heard before the text. -->
     <div class="guiado__relato" aria-live="polite" aria-atomic="true" data-testid="guiado-relato">
       <p class="guiado__contador">
         <span data-testid="guiado-contador">Paso {{ indice() + 1 }} de {{ total() }}</span>

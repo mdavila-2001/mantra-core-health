@@ -94,7 +94,7 @@ export function describirIntervalo(antes: Date, despues: Date): string {
   return anios === 1 ? '1 año' : `${String(anios).replace('.', ',')} años`;
 }
 
-/** Lo mínimo de una arista para recorrer caminos. `clave`, si la trae, manda. */
+/** The minimum of an edge to walk paths. `clave`, if present, rules. */
 export interface AristaConectable {
   readonly desde: string;
   readonly hasta: string;

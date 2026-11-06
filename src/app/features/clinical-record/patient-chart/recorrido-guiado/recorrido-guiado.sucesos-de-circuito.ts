@@ -1,6 +1,6 @@
 /* ============================================================================
-    Plantillas del circuito: derivaciones (emisión, llegada, rechazo,
-    contrarreferencia), citas y reconsultas encadenadas, procedimientos.
+    The circuit's templates: referrals (sending, arrival, rejection,
+    counter-referral), chained appointments and follow-ups, procedures.
     ========================================================================== */
 
 import type { SurgicalCase } from '../../../../core/data-access/procedures/procedures.types';
@@ -47,7 +47,7 @@ export function sucesosDeDerivaciones(lista: readonly Referral[], idx: Indices):
     ];
 
     const origen = emitida.fecha;
-    // Sólo existe tras aceptar la derivación: lo anota el destino.
+    // It only exists after accepting the referral: the destination records it.
     const llegadaId = d.targetEncounterId;
     const deLaDerivacion = origen === null ? 'la derivación' : `la derivación del ${fechaCorta(origen)}`;
     if (llegadaId !== undefined && idx.atenciones.has(llegadaId)) {
@@ -108,7 +108,7 @@ export function sucesosDeDerivaciones(lista: readonly Referral[], idx: Indices):
   });
 }
 
-/** Las fechas de la cadena de reconsultas hacia atrás, sin repetir y sin ciclos. */
+/** The dates of the follow-up chain backwards, without repeats or cycles. */
 export function cadenaDeReconsultas(cita: Booking, idx: Indices): { fechas: (Date | null)[]; ids: string[] } {
   const fechas: (Date | null)[] = [];
   const ids: string[] = [];
@@ -133,7 +133,7 @@ export function cadenaDeReconsultas(cita: Booking, idx: Indices): { fechas: (Dat
 
 const CANTIDADES = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'];
 
-/** «tres», o el número si pasa de diez. */
+/** «tres», or the number if above ten. */
 function cantidad(n: number): string {
   return CANTIDADES[n] ?? String(n);
 }
@@ -157,7 +157,7 @@ export function sucesosDeCitas(lista: readonly Booking[], idx: Indices, n: Nombr
               estado === undefined || futura ? '' : ` (estado: ${minusculaInicial(estado)})`
             }.`,
         },
-        // Una cita común que coincide con una atención es la misma visita: no se repite.
+        // A plain appointment matching an encounter is the same visit: it is not repeated.
         frase: (ctx) =>
           ctx.hayAtencion && !futura
             ? null

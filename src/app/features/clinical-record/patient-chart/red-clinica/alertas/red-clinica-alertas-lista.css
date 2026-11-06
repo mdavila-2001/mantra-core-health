@@ -1,6 +1,6 @@
 /* ============================================================================
-    Alertas de apoyo. La prioridad se lee en texto («Prioridad alta») y en el
-    filete de la izquierda; el color nunca va solo.
+    Support alerts. The priority reads in text («Prioridad alta») and in the
+    left rule; color never goes alone.
     ========================================================================== */
 
 :host {
@@ -22,7 +22,7 @@
   gap: var(--sp-3);
 }
 
-/* -- Compacta: sin recuadro, un resumen que se despliega ------------------- */
+/* -- Compact: no box, a summary that unfolds ------------------------------- */
 
 .alertas--compacta {
   gap: var(--sp-2);

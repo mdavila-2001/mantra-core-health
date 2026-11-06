@@ -44,29 +44,30 @@ import {
   type GuiaDeLaRed,
 } from './guia-de-la-red';
 
-/** «Toda la historia» en el selector de qué recorrer. */
+/** «Toda la historia» in the selector of what to tour. */
 const TODA = '';
 
 /**
- * **La superficie del Recorrido**: barra de filtros, alertas, recorrido guiado
- * y red, en UNA tarjeta (regla 6 de composición). Cada franja se separa de la
- * siguiente con un filete, no con un recuadro propio.
+ * **The Tour's surface**: filter bar, alerts, guided tour and network, in ONE
+ * card (composition rule 6). Each strip is set apart from the next by a rule,
+ * not by a box of its own.
  *
- * ## El recorrido guiado (Franja 4, ADR-0022)
+ * ## The guided tour (Strip 4, ADR-0022)
  *
- * «Recorrido paso a paso» monta `app-recorrido-guiado` con los pasos de
- * `armarRecorridoGuiado` sobre las mismas lecturas que dibujan la red
- * (`guia`). Mientras dura:
+ * «Recorrido paso a paso» mounts `app-recorrido-guiado` with the steps of
+ * `armarRecorridoGuiado` over the same reads that draw the network (`guia`).
+ * While it lasts:
  *
- * - la red dibuja sólo lo revelado hasta el paso, cruzado con los filtros;
- * - lo que el paso enfoca se resalta, y la red lo despliega y lo trae a la
- *   vista (`irANodo`);
- * - cualquier toque o tecla sobre la red o las alertas pausa la reproducción;
- * - se puede seguir un solo episodio: el del nodo abierto o el del filtro de
- *   hilo, propuesto al abrir, o el que se elija.
+ * - the network draws only what has been revealed up to the step, crossed
+ *   with the filters;
+ * - what the step focuses is highlighted, and the network expands it and
+ *   brings it into view (`irANodo`);
+ * - any touch or key on the network or the alerts pauses playback;
+ * - a single episode can be followed: the open node's or the thread filter's,
+ *   proposed on opening, or the one chosen.
  *
- * Salir devuelve la red a como estaba: lo desplegado, lo abierto y el
- * desplazamiento del lienzo.
+ * Leaving returns the network to how it was: what was expanded, what was open
+ * and the canvas' scroll.
  */
 @Component({
   selector: 'app-red-clinica-superficie',
@@ -91,12 +92,12 @@ export class RedClinicaSuperficie {
 
   readonly registros = input.required<readonly RegistroDeLaRed[]>();
   readonly vinculos = input.required<readonly VinculoDeLaRed[]>();
-  /** Los nodos del contrato del panel: de acá salen las opciones de los filtros. */
+  /** The panel contract's nodes: the filters' options come from here. */
   readonly nodos = input<readonly NodoDeRed[]>([]);
-  /** Lo que dejan los filtros (el del expediente y el de la barra). Vacío: todos. */
+  /** What the filters let through (the chart's and the bar's). Empty: all. */
   readonly visibles = input<readonly string[]>([]);
   readonly cuantosVisibles = input<number | null>(null);
-  /** Los filtros juntos no dejan nada: se avisa en lugar de dibujar la red. */
+  /** The filters together let nothing through: it is said instead of drawing the network. */
   readonly sinResultado = input(false);
   readonly alertas = input<readonly AlertaDeApoyo[]>([]);
   /** `false` while the readings they come from load: S2 (loading), not an S3 «nothing open». */
@@ -105,11 +106,11 @@ export class RedClinicaSuperficie {
   readonly alertasComprobadas = input<LecturasComprobadas>({ ordenes: true, informes: true, derivaciones: true });
   readonly seleccionado = input<string | null>(null);
   readonly filtro = model<FiltroDeRed>(FILTRO_VACIO);
-  /** Lo que narra el recorrido guiado. `null`: todavía no hay expediente. */
+  /** What the guided tour narrates. `null`: no chart yet. */
   readonly guia = input<GuiaDeLaRed | null>(null);
 
   readonly elegido = output<NodoElegido>();
-  /** Una alerta pidió abrir su nodo. */
+  /** An alert asked to open its node. */
   readonly nodoElegido = output<string>();
   readonly limpiar = output<void>();
 
@@ -117,23 +118,23 @@ export class RedClinicaSuperficie {
 
   /* -- Alertas ------------------------------------------------------------ */
 
-  /** Los nodos que una alerta (bajo el puntero o con foco) pide resaltar. */
+  /** The nodes an alert (under the pointer or focused) asks to highlight. */
   protected readonly resaltadosPorAlerta = signal<readonly string[]>([]);
 
   /* -- Recorrido guiado -------------------------------------------------- */
 
   protected readonly guiado = signal(false);
   protected readonly paso = signal<PasoActualDelRecorrido | null>(null);
-  /** Cambia con cada toque sobre la red: el recorrido se pausa. */
+  /** Changes with each touch on the network: the tour pauses. */
   protected readonly interaccion = signal(0);
-  /** El episodio que se sigue (su id en la red), o `TODA`. */
+  /** The episode being followed (its network id), or `TODA`. */
   protected readonly episodioSeguido = signal<string>(TODA);
   private plegadoPrevio: PlegadoDeLaRed | null = null;
 
   private readonly porEpisodios = computed(() => agruparEnEpisodios(this.registros(), this.vinculos()));
   private readonly presentes = computed(() => new Set(this.registros().map((r) => r.id)));
 
-  /** Los pasos, sólo mientras el modo guiado está abierto (no se arman de más). */
+  /** The steps, only while the guided mode is open (not built needlessly). */
   protected readonly pasos = computed<readonly PasoDelRecorrido[]>(() => {
     const guia = this.guia();
     return this.guiado() && guia !== null ? armarRecorridoGuiado(guia.registros, guia.lector, guia.ahora) : [];
@@ -156,7 +157,7 @@ export class RedClinicaSuperficie {
   });
   protected readonly nombreDelEpisodio = computed(() => this.episodio()?.nombre ?? null);
 
-  /** Lo que la red dibuja: con el modo guiado, sólo lo revelado (y filtrado). */
+  /** What the network draws: in guided mode, only what is revealed (and filtered). */
   protected readonly visiblesDeLaRed = computed<readonly string[]>(() => {
     const paso = this.paso();
     return this.guiado() && paso !== null
@@ -164,7 +165,7 @@ export class RedClinicaSuperficie {
       : this.visibles();
   });
 
-  /** El paso no deja nada a la vista con los filtros puestos. */
+  /** The step leaves nothing in view with the filters set. */
   protected readonly pasoSinNodos = computed(
     () => this.guiado() && this.visiblesDeLaRed().length === 1 && this.visiblesDeLaRed()[0] === NINGUNO_VISIBLE,
   );
@@ -174,7 +175,7 @@ export class RedClinicaSuperficie {
   );
 
   constructor() {
-    // Otra persona u otra lectura: lo resaltado por una alerta ya no aplica.
+    // Another person or another read: what an alert highlighted no longer applies.
     effect(() => {
       this.registros();
       untracked(() => this.resaltadosPorAlerta.set([]));
@@ -193,7 +194,7 @@ export class RedClinicaSuperficie {
     this.guiado.set(true);
   }
 
-  /** Sale del modo guiado y devuelve la red a como estaba antes. */
+  /** Leaves guided mode and returns the network to how it was before. */
   protected cerrarGuiado(): void {
     if (!this.guiado()) return;
     this.guiado.set(false);
@@ -210,9 +211,9 @@ export class RedClinicaSuperficie {
   }
 
   /**
-   * Un paso nuevo: la red se actualiza (lo revelado) y, ya dibujada, despliega
-   * y trae a la vista lo que el paso enfoca. El principal (el primero) va
-   * último, para que sea el que queda a la vista y con el camino iluminado.
+   * A new step: the network updates (what is revealed) and, once drawn,
+   * expands and brings into view what the step focuses. The main one (the
+   * first) goes last, so it is the one left in view with its path lit.
    */
   protected alPaso(paso: PasoActualDelRecorrido): void {
     this.paso.set(paso);
@@ -226,17 +227,17 @@ export class RedClinicaSuperficie {
     );
   }
 
-  /** Toda interacción con la red o las alertas pausa la reproducción. */
+  /** Any interaction with the network or the alerts pauses playback. */
   protected tocarLaRed(): void {
     if (this.guiado()) this.interaccion.update((n) => n + 1);
   }
 
-  /** Tab sólo recorre: no es «tocar la red». */
+  /** Tab only moves around: it is not «touching the network». */
   protected teclaEnLaRed(evento: KeyboardEvent): void {
     if (evento.key !== 'Tab' && evento.key !== 'Shift') this.tocarLaRed();
   }
 
-  /** La red a un registro, para el panel y las alertas. */
+  /** The network to a record, for the panel and the alerts. */
   irANodo(id: string, opciones: { readonly foco?: boolean } = {}): boolean {
     return this.red()?.irANodo(id, opciones) ?? false;
   }

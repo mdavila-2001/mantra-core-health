@@ -1,10 +1,10 @@
-<!-- Una sola tarjeta: filtros, apoyo (alertas y paso a paso), el relato
-     guiado cuando está abierto, y la red. Las franjas se separan con un
-     filete; ninguna trae su propio recuadro. -->
+<!-- One single card: filters, support (alerts and step by step), the guided
+     story when open, and the network. The strips are separated by a rule;
+     none brings its own box. -->
 <app-card class="superficie" variant="outlined" padding="none" data-testid="red-superficie">
   <div class="superficie__franja">
-    <!-- Los tipos ya los filtra el expediente (arriba, compartido con
-         «Tabla»): la barra no repite sus chips y los dos se cruzan. -->
+    <!-- The chart already filters the types (above, shared with «Tabla»): the
+         bar does not repeat its chips and both are crossed. -->
     <app-red-clinica-filtros
       integrada
       [nodos]="nodos()"

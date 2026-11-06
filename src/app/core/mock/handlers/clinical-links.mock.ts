@@ -2,22 +2,22 @@ import { conditionList, encounterList } from '../fixtures/clinic';
 import { reply, validation, type MockReply } from '../mock-router';
 
 /* ============================================================================
-    Los tres vínculos nuevos de la red clínica (patch v4291) y sus reglas,
-    como las aplica la API (contrato del 06/11/2026):
+    The clinical network's three new links (patch v4291) and their rules, as
+    the API applies them (contract of 06/11/2026):
 
-    - `reasonConditionId` de la orden de estudio,
-    - `replacedByConditionId` del diagnóstico descartado,
-    - `targetEncounterId` de la derivación.
+    - the study order's `reasonConditionId`,
+    - the ruled-out diagnosis' `replacedByConditionId`,
+    - the referral's `targetEncounterId`.
 
-    Las tres comparten la regla principal: lo vinculado tiene que existir y ser
-    **de la misma persona**. Una violación es 422 con su `reason`, con la forma
-    del filtro global de la API; un valor que no es texto es 400, como lo
-    rechazaría el `ValidationPipe`. Los `reason` son los de la API (commit
-    13d2c494, `ClinicalErrorReason`): un `PreconditionFailedException` con el
-    campo en `details.field`, que el front usa para marcar el control.
+    All three share the main rule: what is linked must exist and belong **to
+    the same person**. A violation is a 422 with its `reason`, shaped like the
+    API's global filter; a non-text value is a 400, as the `ValidationPipe`
+    would reject it. The `reason`s are the API's (commit 13d2c494,
+    `ClinicalErrorReason`): a `PreconditionFailedException` with the field in
+    `details.field`, which the front uses to mark the control.
     ========================================================================== */
 
-/** El resultado de revisar un vínculo: su valor (ausente si no vino) o el rechazo. */
+/** The result of checking a link: its value (absent if it did not come) or the rejection. */
 export type LinkCheck = { readonly value?: string } | { readonly rejection: MockReply };
 
 export function isRejection(check: LinkCheck): check is { readonly rejection: MockReply } {
@@ -37,7 +37,7 @@ function linkRejection(reason: string, message: string, field: string): LinkChec
   };
 }
 
-/** Ausente o `null` es «sin vínculo»; cualquier otra cosa que no sea texto, 400. */
+/** Absent or `null` is «no link»; anything else that is not text, 400. */
 function rawId(raw: unknown, field: string): LinkCheck | string | undefined {
   if (raw === undefined || raw === null) return undefined;
   if (typeof raw !== 'string' || raw.trim() === '') {
@@ -47,14 +47,14 @@ function rawId(raw: unknown, field: string): LinkCheck | string | undefined {
 }
 
 /**
- * Mismo custodio (API fbf18626): otro tenant responde igual que un id
- * inexistente. Las filas sembradas no declaran custodio y no se filtran.
+ * Same custodian (API fbf18626): another tenant answers like a missing id.
+ * The seeded rows declare no custodian and are not filtered.
  */
 function sameCustodian(a: string | undefined, b: string | undefined): boolean {
   return a === undefined || b === undefined || a === b;
 }
 
-/** El diagnóstico para el que se pide una orden: de la misma persona y del mismo custodio. */
+/** The diagnosis an order is requested for: same person and same custodian. */
 export function checkReasonCondition(
   raw: unknown,
   patientProfileId: string,
@@ -79,8 +79,8 @@ export function checkReasonCondition(
 }
 
 /**
- * El diagnóstico que reemplaza al que se rechaza: sólo al descartar
- * (`REFUTED`), distinto del rechazado y de la misma persona.
+ * The diagnosis replacing the rejected one: only when ruling out (`REFUTED`),
+ * different from the rejected one and of the same person.
  */
 export function checkReplacedByCondition(
   raw: unknown,
@@ -119,7 +119,7 @@ export function checkReplacedByCondition(
   return { value };
 }
 
-/** La atención del destino en la que se recibió a la persona: de la misma persona. */
+/** The destination's encounter where the person was received: of the same person. */
 export function checkTargetEncounter(raw: unknown, patientProfileId: string): LinkCheck {
   const value = rawId(raw, 'targetEncounterId');
   if (value === undefined) return {};

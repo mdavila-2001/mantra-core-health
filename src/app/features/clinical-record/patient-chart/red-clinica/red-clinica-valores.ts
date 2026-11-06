@@ -1,17 +1,17 @@
 /* ============================================================================
-    Cómo se lee un valor contra su rango de referencia.
+    How a value reads against its reference range.
 
-    Lo usan el panel (para marcar la fila) y las alertas (para avisar). Está en
-    un solo lugar para que «fuera de rango» signifique lo mismo en los dos.
+    Used by the panel (to mark the row) and the alerts (to warn). It lives in
+    one place so that «fuera de rango» means the same in both.
 
-    La regla: la **interpretación del laboratorio manda**. El rango que llega
-    acá es el impreso, y el laboratorio puede haber usado otro por edad, sexo o
-    método. Sólo cuando no hay interpretación se compara el número.
+    The rule: the **lab's interpretation rules**. The range arriving here is
+    the printed one, and the lab may have used another by age, sex or method.
+    Only when there is no interpretation is the number compared.
     ========================================================================== */
 
 import type { InterpretacionDeValor, RangoDeReferencia, ValorDeResultado } from './red-clinica.types';
 
-/** Dónde cae el valor. `sin-referencia` = no hay con qué compararlo. */
+/** Where the value falls. `sin-referencia` = nothing to compare it with. */
 export type LecturaDeValor =
   | 'normal'
   | 'bajo'
@@ -22,7 +22,7 @@ export type LecturaDeValor =
   | 'anormal'
   | 'sin-referencia';
 
-/** Lo que se lee en pantalla junto al valor: el color nunca va solo. */
+/** What reads on screen next to the value: color never goes alone. */
 export const TEXTO_DE_LECTURA: Readonly<Record<LecturaDeValor, string>> = {
   normal: 'Dentro del rango',
   bajo: 'Bajo',
@@ -34,7 +34,7 @@ export const TEXTO_DE_LECTURA: Readonly<Record<LecturaDeValor, string>> = {
   'sin-referencia': 'Sin rango de referencia',
 };
 
-/** El símbolo que acompaña al texto, para leer la tabla de un vistazo. */
+/** The symbol next to the text, to read the table at a glance. */
 export const SIMBOLO_DE_LECTURA: Readonly<Record<LecturaDeValor, string>> = {
   normal: '',
   bajo: '↓',
@@ -48,8 +48,8 @@ export const SIMBOLO_DE_LECTURA: Readonly<Record<LecturaDeValor, string>> = {
 
 function numero(valor: number | string): number | null {
   if (typeof valor === 'number') return Number.isFinite(valor) ? valor : null;
-  // Sólo un número entero escrito como número: «12,5» o «12.5». «<5» o
-  // «Positivo» no se comparan — se respetan como texto.
+  // Only a whole number written as a number: «12,5» or «12.5». «<5» or
+  // «Positivo» are not compared — they are respected as text.
   const limpio = valor.trim().replace(',', '.');
   if (!/^-?\d+(\.\d+)?$/.test(limpio)) return null;
   return Number(limpio);
@@ -60,8 +60,8 @@ function desdeInterpretacion(interpretacion: InterpretacionDeValor): LecturaDeVa
 }
 
 /**
- * Lee un valor. Interpretación del laboratorio primero; si no hay, compara el
- * número con los límites numéricos del rango.
+ * Reads a value. The lab's interpretation first; if none, compares the
+ * number with the range's numeric limits.
  */
 export function leerValor(valor: ValorDeResultado): LecturaDeValor {
   if (valor.interpretacion !== undefined) return desdeInterpretacion(valor.interpretacion);
@@ -74,19 +74,19 @@ export function leerValor(valor: ValorDeResultado): LecturaDeValor {
   return 'normal';
 }
 
-/** `true` si el valor está fuera de rango o el laboratorio lo marcó anormal. */
+/** `true` if the value is out of range or the lab marked it abnormal. */
 export function estaFueraDeRango(valor: ValorDeResultado): boolean {
   const lectura = leerValor(valor);
   return lectura !== 'normal' && lectura !== 'sin-referencia';
 }
 
-/** `true` si el valor es crítico (sólo por interpretación del laboratorio). */
+/** `true` if the value is critical (only by the lab's interpretation). */
 export function esCritico(valor: ValorDeResultado): boolean {
   const lectura = leerValor(valor);
   return lectura === 'critico-bajo' || lectura === 'critico-alto' || lectura === 'critico';
 }
 
-/** El rango como se imprime: «70 – 110», «≥ 40», «≤ 200», o su texto. */
+/** The range as printed: «70 – 110», «≥ 40», «≤ 200», or its text. */
 export function textoDelRango(rango: RangoDeReferencia | undefined, unidad?: string): string {
   if (rango === undefined) return '—';
   const sufijo = unidad ? ` ${unidad}` : '';
@@ -102,7 +102,7 @@ function formatear(n: number): string {
   return n.toLocaleString('es-BO', { maximumFractionDigits: 3 });
 }
 
-/** El valor como se lee: número con coma decimal local, o el texto tal cual. */
+/** The value as it reads: number with the local decimal comma, or the text as is. */
 export function textoDelValor(valor: ValorDeResultado): string {
   const base = typeof valor.valor === 'number' ? formatear(valor.valor) : valor.valor;
   return valor.unidad ? `${base} ${valor.unidad}` : base;

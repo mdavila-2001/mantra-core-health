@@ -5,22 +5,22 @@
     ========================================================================== */
 
 /**
- * - `alta`: conviene mirarlo hoy (valor crítico, plazo muy vencido);
- * - `media`: pasó el plazo de referencia;
- * - `baja`: abierto, pero dentro de lo esperable, o un patrón para tener presente.
+ * - `alta`: worth looking at today (critical value, deadline long past);
+ * - `media`: the reference deadline passed;
+ * - `baja`: open, but within what is expected, or a pattern to keep in mind.
  */
 export type PrioridadDeAlerta = 'alta' | 'media' | 'baja';
 
 const DIA_MS = 24 * 60 * 60 * 1000;
 
-/** Días completos entre dos instantes (nunca negativo). */
+/** Whole days between two instants (never negative). */
 export function diasEntre(desde: Date, hasta: Date): number {
   return Math.max(0, Math.floor((hasta.getTime() - desde.getTime()) / DIA_MS));
 }
 
 /**
- * «hoy», «hace 1 día», «hace 12 días»; desde 60 días, «hace 3 meses (94 días)»:
- * los meses se leen rápido y los días son el dato que se compara con un plazo.
+ * «hoy», «hace 1 día», «hace 12 días»; from 60 days, «hace 3 meses (94 días)»:
+ * months read fast and days are the figure compared with a deadline.
  */
 export function antiguedad(dias: number): string {
   if (dias === 0) return 'hoy';

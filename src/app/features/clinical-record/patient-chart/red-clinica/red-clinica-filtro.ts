@@ -1,10 +1,10 @@
 /* ============================================================================
-    El filtro de la red: un objeto tipado y una función pura que lo aplica.
+    The network's filter: a typed object and a pure function that applies it.
 
-    La barra (`filtros/red-clinica-filtros.ts`) sólo edita un `FiltroDeRed`;
-    quien dibuja la red llama a `aplicarFiltro` y pinta lo que vuelve. Así el
-    criterio se prueba sin navegador, y la barra y la red no pueden discrepar
-    sobre qué significa «del 1 al 15 de octubre».
+    The bar (`filtros/red-clinica-filtros.ts`) only edits a `FiltroDeRed`;
+    whoever draws the network calls `aplicarFiltro` and paints what comes back.
+    So the criterion is tested without a browser, and the bar and the network
+    cannot disagree on what «del 1 al 15 de octubre» means.
     ========================================================================== */
 
 import type { NodoDeRed, Referencia, TipoDeNodo } from './red-clinica.types';
@@ -15,15 +15,15 @@ export interface FiltroDeRed {
   readonly especialidadId: string | null;
   /** Id de profesional; `null` = todos. */
   readonly profesionalId: string | null;
-  /** Inicio del rango, inclusive desde las 00:00 del día. */
+  /** Start of the range, inclusive from the day's 00:00. */
   readonly desde: Date | null;
-  /** Fin del rango, inclusive hasta las 23:59:59.999 del día. */
+  /** End of the range, inclusive up to the day's 23:59:59.999. */
   readonly hasta: Date | null;
-  /** Id del nodo diagnóstico cuyo hilo se quiere ver solo; `null` = todo. */
+  /** Id of the diagnosis node whose thread is to be seen alone; `null` = all. */
   readonly hiloDeDiagnosticoId: string | null;
-  /** Búsqueda libre; sin distinguir mayúsculas ni tildes. */
+  /** Free search; ignoring case and accents. */
   readonly texto: string;
-  /** Tipos de nodo a la vista; vacío = todos. */
+  /** Node types in view; empty = all. */
   readonly tipos: readonly TipoDeNodo[];
 }
 
@@ -37,12 +37,12 @@ export const FILTRO_VACIO: FiltroDeRed = Object.freeze({
   tipos: Object.freeze([]) as readonly TipoDeNodo[],
 });
 
-/** Minúsculas y sin tildes: «Cefalea» encuentra «cefaléa» y al revés. */
+/** Lowercase and without accents: «Cefalea» finds «cefaléa» and vice versa. */
 export function normalizarTexto(texto: string): string {
   return texto.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase('es').trim();
 }
 
-/** Cuántos criterios están puestos: lo que dice el botón «Limpiar (3)». */
+/** How many criteria are set: what the «Limpiar (3)» button says. */
 export function criteriosActivos(filtro: FiltroDeRed): number {
   return (
     (filtro.especialidadId === null ? 0 : 1) +
@@ -62,7 +62,7 @@ function finDelDia(fecha: Date): number {
   return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), 23, 59, 59, 999).getTime();
 }
 
-/** Los tipos que concentran vínculos: entran al hilo, pero no lo propagan. */
+/** The types that concentrate links: they enter the thread, but do not spread it. */
 const TIPOS_DE_CONTEXTO: ReadonlySet<TipoDeNodo> = new Set<TipoDeNodo>([
   'atencion',
   'cita',
@@ -71,22 +71,22 @@ const TIPOS_DE_CONTEXTO: ReadonlySet<TipoDeNodo> = new Set<TipoDeNodo>([
 ]);
 
 /**
- * Los ids del hilo de un diagnóstico.
+ * The ids of a diagnosis' thread.
  *
- * El hilo es lo que **explica** ese diagnóstico: los estudios pedidos para él,
- * sus resultados, la evidencia de la decisión, la medicación indicada, el
- * diagnóstico que lo reemplazó (y el hilo de éste), las derivaciones que
- * cuelgan de esos registros y la atención donde se registró cada uno.
+ * The thread is what **explains** that diagnosis: the studies ordered for it,
+ * their results, the decision's evidence, the medication indicated, the
+ * diagnosis that replaced it (and that one's thread), the referrals hanging
+ * from those records and the encounter where each one was entered.
  *
- * Se recorre la red en los dos sentidos con dos frenos, sin los cuales una
- * atención con cinco diagnósticos metería los cinco en el hilo de uno:
+ * The network is walked both ways with two brakes, without which an encounter
+ * with five diagnoses would put all five into one's thread:
  *
- * 1. una atención, cita, reconsulta o internación **entra** pero no se expande;
- * 2. otro diagnóstico sólo se expande si se llegó a él por `reemplazado-por`
- *    (el diferencial resuelto es el mismo hilo); por otro vínculo entra como
- *    referencia y ahí se detiene.
+ * 1. an encounter, appointment, follow-up or admission **enters** but does not expand;
+ * 2. another diagnosis only expands if reached through `reemplazado-por` (the
+ *    resolved differential is the same thread); through another link it enters
+ *    as a reference and stops there.
  *
- * Un id que no es de un nodo de la red devuelve un conjunto vacío.
+ * An id that is not a network node returns an empty set.
  */
 export function hiloDeDiagnostico(
   diagnosticoId: string,
@@ -124,17 +124,17 @@ export function hiloDeDiagnostico(
 }
 
 /**
- * Aplica el filtro. Todos los criterios se combinan con «y».
+ * Applies the filter. All criteria combine with «and».
  *
- * - Con rango de fechas puesto, un nodo **sin fecha** queda fuera: no se puede
- *   afirmar que ocurrió en ese rango.
- * - Un nodo sin profesional o sin especialidad queda fuera cuando se filtra
- *   por profesional o especialidad, por la misma razón.
- * - El texto busca en título, subtítulo, estado, profesional, especialidad,
- *   `buscable`, el nombre del tipo y los textos del análisis (motivo, nota,
- *   resumen clínico, destino, conclusión del informe).
+ * - With a date range set, a node **without a date** is left out: it cannot be
+ *   asserted that it happened in that range.
+ * - A node without practitioner or specialty is left out when filtering by
+ *   practitioner or specialty, for the same reason.
+ * - The text searches title, subtitle, status, practitioner, specialty,
+ *   `buscable`, the type's name and the analysis' texts (reason, note,
+ *   clinical summary, destination, report conclusion).
  *
- * Devuelve los nodos en el orden en que llegaron.
+ * Returns the nodes in the order they arrived.
  */
 export function aplicarFiltro(
   nodos: readonly NodoDeRed[],
@@ -170,7 +170,7 @@ export function aplicarFiltro(
   });
 }
 
-/** Los textos del análisis que también se buscan: motivo, nota, resumen, destino, conclusión. */
+/** The analysis' texts that are also searched: reason, note, summary, destination, conclusion. */
 function textosDelDetalle(nodo: NodoDeRed): readonly (string | undefined)[] {
   const d = nodo.detalle;
   switch (d?.tipo) {
@@ -214,7 +214,7 @@ export function aristasVisibles(
   return aristas.filter((a) => ids.has(a.desde) && ids.has(a.hasta));
 }
 
-/* -- Las opciones de la barra, sacadas de los propios nodos -------------- */
+/* -- The bar's options, taken from the nodes themselves -------------------- */
 
 function referenciasUnicas(lista: readonly (Referencia | null | undefined)[]): readonly Referencia[] {
   const porId = new Map<string, Referencia>();
@@ -232,14 +232,14 @@ export function profesionalesDe(nodos: readonly NodoDeRed[]): readonly Referenci
   return referenciasUnicas(nodos.map((n) => n.profesional));
 }
 
-/** Los diagnósticos que pueden ser el hilo, del más reciente al más antiguo. */
+/** The diagnoses that can be the thread, most recent first. */
 export function diagnosticosDe(nodos: readonly NodoDeRed[]): readonly NodoDeRed[] {
   return nodos
     .filter((n) => n.tipo === 'diagnostico')
     .sort((a, b) => (b.cuando?.getTime() ?? 0) - (a.cuando?.getTime() ?? 0));
 }
 
-/** Los tipos presentes, en el orden canónico de `TIPOS_DE_NODO`. */
+/** The types present, in the canonical order of `TIPOS_DE_NODO`. */
 export function tiposPresentes(
   nodos: readonly NodoDeRed[],
   orden: readonly TipoDeNodo[],

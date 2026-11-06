@@ -27,23 +27,24 @@ import {
 } from '../red-clinica-filtro';
 import { ASPECTO_DE_TIPO, TIPOS_DE_NODO, type NodoDeRed, type TipoDeNodo } from '../red-clinica.types';
 
-/** El valor de «todas» en un desplegable: el `app-select` no ofrece un vacío elegible. */
+/** The «todas» value of a dropdown: `app-select` offers no selectable empty. */
 const TODAS = '';
 
 /**
- * **Barra de filtros de la red clínica.**
+ * **The clinical network's filter bar.**
  *
- * Edita un {@link FiltroDeRed} y nada más: no filtra. Quien dibuja la red llama
- * a `aplicarFiltro(nodos, filtro, aristas)` con lo que sale de acá.
+ * It edits a {@link FiltroDeRed} and nothing else: it does not filter.
+ * Whoever draws the network calls `aplicarFiltro(nodos, filtro, aristas)` with
+ * what comes out of here.
  *
- * Por qué no es `app-filter-bar`: aquélla guarda su estado en la URL (es la
- * barra de los listados, y la URL es su fuente de verdad) y no tiene rango de
- * fechas ni conmutadores. Ésta vive dentro del expediente, cuya URL ya es de
- * las pestañas; se compone con las mismas primitivas (`app-search-field`,
- * `app-select`, `app-date-picker`, `app-chip`).
+ * Why it is not `app-filter-bar`: that one keeps its state in the URL (it is
+ * the listings' bar, and the URL is its source of truth) and has neither a
+ * date range nor toggles. This one lives inside the chart, whose URL already
+ * belongs to the tabs; it is composed of the same primitives
+ * (`app-search-field`, `app-select`, `app-date-picker`, `app-chip`).
  *
- * Las opciones salen de los propios nodos: sólo se ofrece filtrar por un
- * profesional o una especialidad que aparecen en la historia.
+ * The options come from the nodes themselves: filtering is only offered by a
+ * practitioner or a specialty that appear in the history.
  *
  * ```html
  * <app-red-clinica-filtros [nodos]="nodos()" [(filtro)]="filtro" [visibles]="visibles().length" />
@@ -57,25 +58,25 @@ const TODAS = '';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RedClinicaFiltros {
-  /** Todos los nodos de la red (sin filtrar): de acá salen las opciones. */
+  /** Every network node (unfiltered): the options come from here. */
   readonly nodos = input<readonly NodoDeRed[]>([]);
   /** El filtro vigente; `filtroChange` emite cada cambio. */
   readonly filtro = model<FiltroDeRed>(FILTRO_VACIO);
-  /** Cuántos nodos quedan a la vista tras filtrar, para el resumen. `null` = no se muestra. */
+  /** How many nodes remain in view after filtering, for the summary. `null` = not shown. */
   readonly visibles = input<number | null>(null);
   /**
-   * Si ofrece los chips de tipo. `false` cuando la pantalla ya tiene su propio
-   * filtro por tipo (el expediente lo comparte entre «Tabla» y «Recorrido»):
-   * dos filas de chips para lo mismo serían dos verdades.
+   * Whether it offers the type chips. `false` when the screen already has its
+   * own filter by type (the chart shares it between «Tabla» and «Recorrido»):
+   * two rows of chips for the same thing would be two truths.
    */
   readonly mostrarTipos = input(true);
   /**
-   * Dentro de una superficie que ya tiene su borde (el Recorrido del
-   * expediente): sin recuadro propio, para no apilar uno sobre otro.
+   * Inside a surface that already has its border (the chart's Tour): no box of
+   * its own, so as not to stack one on another.
    */
   readonly integrada = input(false, { transform: booleanAttribute });
 
-  /** En el teléfono los criterios avanzados se pliegan. */
+  /** On the phone the advanced criteria fold. */
   protected readonly desplegado = signal(false);
 
   protected readonly aspecto = ASPECTO_DE_TIPO;
@@ -100,9 +101,9 @@ export class RedClinicaFiltros {
   ]);
 
   /*
-   * Un desplegable que sólo ofrece «Todos» no filtra nada: se oculta. Si ya
-   * hay un valor puesto (otra lectura lo trajo y después no), se sigue
-   * mostrando para poder quitarlo.
+   * A dropdown that only offers «Todos» filters nothing: it is hidden. If a
+   * value is already set (another read brought it and later did not), it is
+   * still shown so it can be removed.
    */
   protected readonly conEspecialidades = computed(
     () => this.opcionesDeEspecialidad().length > 1 || this.filtro().especialidadId !== null,
@@ -126,7 +127,7 @@ export class RedClinicaFiltros {
   protected alternarTipo(tipo: TipoDeNodo): void {
     const actuales = this.filtro().tipos;
     const tipos = actuales.includes(tipo) ? actuales.filter((t) => t !== tipo) : [...actuales, tipo];
-    // En el orden canónico: el mismo filtro escrito en dos órdenes es el mismo filtro.
+    // In the canonical order: the same filter written in two orders is the same filter.
     this.cambiar({ tipos: TIPOS_DE_NODO.filter((t) => tipos.includes(t)) });
   }
 
@@ -154,7 +155,7 @@ export class RedClinicaFiltros {
     this.cambiar({ hasta: fecha });
   }
 
-  /** «Desde» posterior a «hasta»: se avisa, no se corrige en silencio. */
+  /** «Desde» after «hasta»: it is said, not silently corrected. */
   protected readonly rangoInvertido = computed(() => {
     const { desde, hasta } = this.filtro();
     return desde !== null && hasta !== null && desde.getTime() > hasta.getTime();

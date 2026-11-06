@@ -1,7 +1,7 @@
 /* ============================================================================
-    Sucesos: cada hecho fechado de la historia que va a ser una frase. Lo
-    comparten las plantillas clínicas y las del circuito (citas, derivaciones,
-    procedimientos); el armado los agrupa en pasos.
+    Events: each dated fact of the story that will become a sentence. Shared
+    by the clinical templates and the circuit ones (appointments, referrals,
+    procedures); the assembly groups them into steps.
     ========================================================================== */
 
 import type { CareEpisode, Condition, Encounter } from '../../../../core/data-access/clinical/clinical.types';
@@ -16,9 +16,9 @@ import {
 import { fechaValida, legible, minusculaInicial } from './recorrido-guiado.texto';
 import type { FraseDelPaso, LectorDelRecorrido } from './recorrido-guiado.types';
 
-/* -- Sucesos: un hecho fechado que va a ser una frase ---------------------- */
+/* -- Events: a dated fact that will become a sentence ----------------------- */
 
-/** El orden de las frases dentro de un paso: se atiende, se diagnostica, se pide, se trata. */
+/** The order of sentences within a step: attended, diagnosed, ordered, treated. */
 export const ORDEN = {
   internacion: 0,
   llegada: 1,
@@ -40,21 +40,22 @@ export type ClaseDeSuceso = keyof typeof ORDEN;
 export interface Suceso {
   readonly clase: ClaseDeSuceso;
   readonly fecha: Date | null;
-  /** La atención (a la vista) en la que ocurrió, si el contrato lo dice. */
+  /** The encounter (in view) where it happened, if the contract says so. */
   readonly atencionId?: string;
   readonly titulo: string;
   readonly enfocar: readonly string[];
-  /** Arma la frase cuando ya se sabe con quién comparte el paso. */
+  /** Builds the sentence once it is known whom it shares the step with. */
   readonly frase: (contexto: ContextoDelPaso) => FraseDelPaso | null;
   /**
-   * Varios sucesos del mismo paso con la misma `clave` se cuentan en una sola
-   * frase en plural (tres citas iguales el mismo día no son tres frases).
+   * Several events of the same step with the same `clave` are told in one
+   * plural sentence (three equal appointments on the same day are not three
+   * sentences).
    */
   readonly plural?: { readonly clave: string; readonly texto: (cuantos: number) => string };
 }
 
 export interface ContextoDelPaso {
-  /** Atenciones del paso con al menos un diagnóstico propio en el paso. */
+  /** The step's encounters with at least one diagnosis of their own in the step. */
   readonly atencionesConDiagnostico: ReadonlySet<string>;
   readonly hayAtencion: boolean;
 }
@@ -105,7 +106,7 @@ export class Nombres {
     return id === undefined ? undefined : legible(this.lector.profesional?.(id));
   }
 
-  /** El resultado de la verificación: primero la decisión de C3, después el código del catálogo. */
+  /** The verification's result: first C3's decision, then the catalogue code. */
   veredicto(c: Condition): 'CONFIRMED' | 'REFUTED' | null {
     if (c.verification?.outcome !== undefined) return c.verification.outcome;
     const codigo = normalizarCodigoDx(this.lector.codigo?.(c.verificationStatusConceptId));
@@ -120,7 +121,7 @@ export function fechaDeAtencion(idx: Indices, atencionId: string | undefined): D
   return fechaValida(idx.atenciones.get(atencionId)?.startAt);
 }
 
-/** La atención a la vista en la que se registró algo, y la fecha que le corresponde. */
+/** The encounter in view where something was entered, and its date. */
 export function enAtencion(
   idx: Indices,
   atencionId: string | undefined,
@@ -132,7 +133,7 @@ export function enAtencion(
   return { fecha: propia };
 }
 
-/* -- Plantillas por tipo --------------------------------------------------- */
+/* -- Templates by type ------------------------------------------------------- */
 
 export function frase(texto: string, fuentes: readonly string[], inferida = false): FraseDelPaso {
   return { texto, fuentes, inferida };

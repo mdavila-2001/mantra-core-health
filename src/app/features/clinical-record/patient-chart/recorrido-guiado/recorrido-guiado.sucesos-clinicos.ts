@@ -92,7 +92,7 @@ export function sucesosDeDiagnosticos(lista: readonly Condition[], idx: Indices,
     const veredicto = n.veredicto(c);
     const decididoEl = fechaValida(c.verification?.decidedAt);
     const alta = enAtencion(idx, c.encounterId, fechaValida(c.createdAt));
-    // Sin instante de decisión, el veredicto del catálogo se lee como del alta.
+    // Without a decision instant, the catalogue verdict reads as the creation's.
     const mismoDia =
       veredicto !== null &&
       (decididoEl === null || (alta.fecha !== null && diaClinico(decididoEl) === diaClinico(alta.fecha)));
@@ -121,7 +121,7 @@ export function sucesosDeDiagnosticos(lista: readonly Condition[], idx: Indices,
   });
 }
 
-/** La decisión va a su día; se ata a la atención de la evidencia sólo si es ese mismo día. */
+/** The decision goes to its day; it is tied to the evidence's encounter only if on that same day. */
 export function lugarDeDecision(
   c: Condition,
   fecha: Date | null,
@@ -193,7 +193,7 @@ export function fraseDeDecision(
   return frase(partes.join(' '), fuentes);
 }
 
-/** « con base en el resultado de tomografía de cráneo», o vacío. Agrega sus fuentes. */
+/** « con base en el resultado de tomografía de cráneo», or empty. It adds its sources. */
 export function textoDeEvidencia(c: Condition, idx: Indices, n: Nombres, fuentes: string[]): string {
   const b = c.verification?.basedOn;
   if (b === null || b === undefined) return '';
@@ -220,8 +220,8 @@ export function textoDeEvidencia(c: Condition, idx: Indices, n: Nombres, fuentes
 }
 
 export function sucesosDeRecetas(lista: readonly MedicationRequest[], idx: Indices, n: Nombres): Suceso[] {
-  // A quién reemplaza cada receta. El resumen publica sólo el lado de la vieja
-  // (`replacedByRequestId`); el inverso se deduce de la lista.
+  // Whom each prescription replaces. The summary only publishes the old one's
+  // side (`replacedByRequestId`); the inverse is deduced from the list.
   const reemplazaA = new Map<string, MedicationRequest>();
   for (const r of lista) {
     const nueva = r.replacedByRequestId;

@@ -1,9 +1,10 @@
 /* ============================================================================
-    El recorrido guiado (Franja 4, ADR-0022) sobre la red del Recorrido.
+    The guided tour (Strip 4, ADR-0022) over the Tour's network.
 
-    Funciones puras, sin Angular: qué narra el recorrido (las mismas lecturas
-    que ya dibujan la red, sin pedir nada más), qué dibuja la red en cada paso
-    (lo revelado, cruzado con los filtros) y qué episodio seguir.
+    Pure functions, no Angular: what the tour narrates (the same reads that
+    already draw the network, requesting nothing else), what the network draws
+    at each step (what is revealed, crossed with the filters) and which
+    episode to follow.
     ========================================================================== */
 
 import type { ClinicalSummary } from '../../../../../core/data-access/clinical/clinical.types';
@@ -16,15 +17,15 @@ import type {
   RegistrosDelRecorrido,
 } from '../../recorrido-guiado/recorrido-guiado.model';
 
-/** Lo que necesita el recorrido guiado para armar sus pasos. */
+/** What the guided tour needs to build its steps. */
 export interface GuiaDeLaRed {
   readonly registros: RegistrosDelRecorrido;
   readonly lector: LectorDelRecorrido;
-  /** La referencia de «tiene» / «tenía agendada». */
+  /** The reference for «tiene» / «tenía agendada». */
   readonly ahora: Date;
 }
 
-/** Las lecturas del expediente que ya están en pantalla. `null`: no llegó. */
+/** The chart reads already on screen. `null`: it did not arrive. */
 export interface FuenteDeLaGuia {
   readonly resumen: Pick<ClinicalSummary, 'encounters' | 'conditions' | 'medicationRequests' | 'careEpisodes'>;
   readonly citas: readonly Booking[] | null;
@@ -32,24 +33,24 @@ export interface FuenteDeLaGuia {
   readonly estudios: Pick<PatientDiagnostics, 'orders' | 'reports'> | null;
 }
 
-/** Quien mira, si es profesional: el único nombre de profesional que el expediente conoce. */
+/** Who is looking, if a practitioner: the only practitioner name the chart knows. */
 export interface ProfesionalQueMira {
   readonly profileId: string;
   readonly displayName?: string;
 }
 
 /**
- * Del expediente al contrato del recorrido guiado.
+ * From the chart to the guided tour's contract.
  *
- * - Los registros son los mismos que dibuja la red: el resumen clínico y las
- *   lecturas propias de la red (citas, derivaciones, estudios). Los
- *   procedimientos que lee la red son odontológicos (`DentalProcedure`), no
- *   las cirugías (`SurgicalCase`) que narra el recorrido: no se pasan.
- * - `profesional` sólo nombra a quien mira (su perfil propio): ninguna
- *   lectura del expediente trae el nombre de otro profesional.
- * - `servicioDeAtencion` no se pasa: la atención no trae servicio ni
- *   especialidad, y sacarlo de la cita del mismo día sería afirmar lo que la
- *   red sólo infiere. El recorrido dice «Tuvo una atención (…)».
+ * - The records are the same the network draws: the clinical summary and the
+ *   network's own reads (appointments, referrals, studies). The procedures
+ *   the network reads are dental (`DentalProcedure`), not the surgeries
+ *   (`SurgicalCase`) the tour narrates: they are not passed.
+ * - `profesional` only names who is looking (their own profile): no chart
+ *   read brings another practitioner's name.
+ * - `servicioDeAtencion` is not passed: the encounter brings neither service
+ *   nor specialty, and taking it from the same-day appointment would assert
+ *   what the network only infers. The tour says «Tuvo una atención (…)».
  */
 export function guiaDelExpediente(
   fuente: FuenteDeLaGuia,
@@ -80,15 +81,15 @@ export function guiaDelExpediente(
 }
 
 /**
- * Un id que ningún registro tiene. Para la red, `visibles` vacío es «todos»:
- * cuando un paso no revela nada que los filtros dejen, se le pasa esto.
+ * An id no record has. For the network, empty `visibles` is «all»: when a
+ * step reveals nothing the filters let through, this is passed.
  */
 export const NINGUNO_VISIBLE = 'recorrido-guiado:ninguno';
 
 /**
- * Lo que dibuja la red en un paso: lo revelado hasta ese paso **y** lo que
- * dejan los filtros (`filtrados`, vacío = todos), sólo entre los registros que
- * la red tiene. Nunca vacío: si no queda nada, `[NINGUNO_VISIBLE]`.
+ * What the network draws at a step: what is revealed up to that step **and**
+ * what the filters let through (`filtrados`, empty = all), only among the
+ * records the network has. Never empty: if nothing is left, `[NINGUNO_VISIBLE]`.
  */
 export function visiblesDelPaso(
   revelados: readonly string[],
@@ -100,15 +101,15 @@ export function visiblesDelPaso(
   return quedan.length === 0 ? [NINGUNO_VISIBLE] : quedan;
 }
 
-/** Los ids que tocan un episodio: lo que se le pasa al recorrido para seguirlo. */
+/** The ids touching an episode: what is passed to the tour to follow it. */
 export function idsDelEpisodio(episodio: EpisodioClinico): readonly string[] {
   return [...episodio.miembros, ...episodio.compartidos];
 }
 
 /**
- * El episodio que se ofrece seguir al abrir el recorrido: el del nodo abierto
- * en el panel o, si no hay, el del filtro «Solo el hilo de este diagnóstico».
- * El hilo «Sin diagnóstico asociado» no es un problema que seguir.
+ * The episode offered to follow on opening the tour: the panel's open node's
+ * or, if none, the «Solo el hilo de este diagnóstico» filter's. The «Sin
+ * diagnóstico asociado» thread is not a problem to follow.
  */
 export function episodioPropuesto(
   red: RedPorEpisodios,

@@ -1,24 +1,25 @@
 /* ============================================================================
-    El recorrido guiado: la historia del paciente contada paso a paso.
+    The guided tour: the patient's story told step by step.
 
-    Funciones puras y sin Angular. Reciben los registros tal como los devuelve
-    `core/data-access/` y producen una lista ordenada de **pasos**: cada uno con
-    su fecha, un título, una narración armada con plantillas y los ids de los
-    nodos de la red que hay que enfocar y los que ya quedaron revelados.
+    Pure functions, no Angular. They take the records as `core/data-access/`
+    returns them and produce an ordered list of **steps**: each with its date,
+    a title, a narration built from templates and the ids of the network
+    nodes to focus and those already revealed.
 
-    ## Nada inventado (ADR-0022)
+    ## Nothing made up (ADR-0022)
 
-    No hay IA ni texto libre generado. Cada frase sale de una plantilla y lleva
-    la lista de registros de los que sale (`FraseDelPaso.fuentes`): si una frase
-    no se puede rastrear a un registro, no se escribe. Cuando falta un dato se
-    dice que falta («No se registró el motivo»), nunca se rellena.
+    No AI nor generated free text. Each sentence comes from a template and
+    carries the list of records it comes from (`FraseDelPaso.fuentes`): if a
+    sentence cannot be traced to a record, it is not written. When a piece of
+    data is missing it is said to be missing («No se registró el motivo»),
+    never filled in.
 
-    Un vínculo **real** del contrato (`indicationConditionId`,
-    `reasonConditionId`, `replacedByConditionId`, `followUpOf`,
-    `targetEncounterId`) se narra como causa: «para confirmar o descartar…». Un
-    vínculo **inferido** —dos registros de la misma atención sin campo que los
-    una— se narra como coincidencia («en la misma atención») y la frase queda
-    marcada `inferida`. Nunca al revés.
+    A **real** contract link (`indicationConditionId`, `reasonConditionId`,
+    `replacedByConditionId`, `followUpOf`, `targetEncounterId`) is narrated as
+    a cause: «para confirmar o descartar…». An **inferred** link —two records
+    of the same encounter with no field joining them— is narrated as a
+    coincidence («en la misma atención») and the sentence is marked
+    `inferida`. Never the other way round.
 
     ## The clinical day
 
@@ -76,10 +77,10 @@ const TITULO_PRIORIDAD: readonly ClaseDeSuceso[] = [
 /* -- El armado ------------------------------------------------------------- */
 
 /**
- * La historia como lista de pasos en orden cronológico.
+ * The story as a list of steps in chronological order.
  *
- * `ahora` decide el tiempo verbal de lo agendado («tiene agendada» frente a
- * «tenía agendada»); se pasa para que las pruebas no dependan del reloj.
+ * `ahora` decides the tense of what is booked («tiene agendada» versus
+ * «tenía agendada»); it is passed so the tests do not depend on the clock.
  */
 export function armarRecorridoGuiado(
   registros: RegistrosDelRecorrido,
@@ -146,8 +147,8 @@ function agrupar(sucesos: readonly Suceso[], idx: Indices): PasoDelRecorrido[] {
 }
 
 /**
- * La hora que ordena un suceso dentro del día: la de su atención si está atado a
- * una (así lo de una misma atención queda junto), la propia si va suelto.
+ * The time that orders an event within the day: its encounter's if tied to one
+ * (so what belongs to one encounter stays together), its own if loose.
  */
 function horaDeOrden(s: Suceso, idx: Indices): number {
   const deLaAtencion = s.atencionId === undefined ? null : fechaValida(idx.atenciones.get(s.atencionId)?.startAt);
@@ -178,7 +179,7 @@ function armarPaso(
   const frases: FraseDelPaso[] = [];
   const enfocar: string[] = [];
   const usados: Suceso[] = [];
-  // Cuántos sucesos con frase comparten cada clave de plural.
+  // How many events with a sentence share each plural key.
   const iguales = new Map<string, Suceso[]>();
   for (const s of ordenados) {
     if (s.plural === undefined || s.frase(contexto) === null) continue;
@@ -189,7 +190,7 @@ function armarPaso(
     if (f === null) continue;
     const grupo = s.plural === undefined ? undefined : iguales.get(s.plural.clave);
     if (s.plural !== undefined && grupo !== undefined && grupo.length > 1) {
-      // El primero del grupo dice el total; los demás ya están contados.
+      // The group's first says the total; the rest are already counted.
       if (grupo[0] !== s) {
         usados.push(s);
         for (const id of s.enfocar) if (!enfocar.includes(id)) enfocar.push(id);
@@ -197,7 +198,7 @@ function armarPaso(
       }
       f = frase(s.plural.texto(grupo.length), grupo.flatMap((g) => g.enfocar));
     }
-    // Lo suelto en un día con atención se dice como coincidencia de fecha, no de atención.
+    // What is loose on a day with an encounter is said as a date coincidence, not an encounter one.
     const suelto = contexto.hayAtencion && s.atencionId === undefined && frases.length > 0;
     frases.push(suelto ? { ...f, texto: `Ese mismo día, ${minusculaInicial(f.texto)}` } : f);
     usados.push(s);
@@ -241,9 +242,9 @@ function armarPaso(
 /* -- Seguir un solo episodio ----------------------------------------------- */
 
 /**
- * Los pasos que tocan al menos un nodo del episodio, con el foco recortado a
- * esos nodos y los revelados recalculados sobre la lista filtrada. La
- * narración no se recorta: partir una frase cambiaría lo que dice.
+ * The steps touching at least one node of the episode, with the focus trimmed
+ * to those nodes and the revealed ones recomputed over the filtered list. The
+ * narration is not trimmed: splitting a sentence would change what it says.
  */
 export function seguirEpisodio(
   pasos: readonly PasoDelRecorrido[],

@@ -1,7 +1,7 @@
 /* ============================================================================
-    La superficie del Recorrido: una tarjeta, franjas separadas por un filete.
-    Ni color ni sombra propios: la tarjeta (`app-card outlined`) pone el borde
-    y la superficie; acá sólo el aire y los filetes.
+    The Tour's surface: one card, strips separated by a rule. No color nor
+    shadow of its own: the card (`app-card outlined`) provides the border and
+    the surface; here only the room and the rules.
     ========================================================================== */
 
 :host {
@@ -23,8 +23,8 @@
   border-block-start: 1px solid var(--border-subtle);
 }
 
-/* Alertas y «Recorrido paso a paso» en una fila; la lista desplegada baja a
-   lo ancho, empujando sólo cuando se pidió verla. */
+/* Alerts and «Recorrido paso a paso» in one row; the unfolded list drops to
+   full width, pushing only when asked to be seen. */
 .superficie__apoyo {
   display: flex;
   flex-wrap: wrap;

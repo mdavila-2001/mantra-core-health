@@ -36,7 +36,7 @@ interface CuerpoDeVerificacion {
   readonly onsetAt?: unknown;
   readonly expectedResolutionAt?: unknown;
   readonly clinicalCourseConceptId?: unknown;
-  /** Patch v4291: sólo al rechazar, el diagnóstico confirmado en su lugar. */
+  /** Patch v4291: only on rejecting, the diagnosis confirmed in its place. */
   readonly replacedByConditionId?: unknown;
 }
 

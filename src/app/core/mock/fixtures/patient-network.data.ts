@@ -36,43 +36,43 @@ import { iso, isoDia, uuid } from '../mock-store';
 import { TENANT_CLINICA, TENANT_LABORATORIO } from '../mock-session';
 
 /* ============================================================================
-    La historia clínica completa de la paciente de prueba (Ana Lucía Pérez
-    Quiroga, `pid-paciente`) para la red clínica del expediente (Franja 1 de
-    «Recorrido → red de nodos», contrato del 06/11/2026).
+    The test patient's complete clinical history (Ana Lucía Pérez Quiroga,
+    `pid-paciente`) for the chart's clinical network (Strip 1 of «Recorrido →
+    red de nodos», contract of 06/11/2026).
 
-    Son ~18 meses coherentes que ejercitan cada vínculo del contrato:
+    ~18 coherent months exercising every link of the contract:
 
-    - **Episodio tiroideo.** Primera consulta por cansancio, cefalea y caída de
-      cabello (día −540). Dos presuntivos en diferencial —anemia ferropénica e
-      hipotiroidismo—, cada uno con su análisis (`reasonConditionId`). El
-      hemograma normal **descarta** la anemia, que queda reemplazada por el
-      hipotiroidismo (`replacedByConditionId`); la TSH elevada lo **confirma**
-      (`basedOn` → informe). Levotiroxina 25 → 50 → 75 mcg, cada receta
-      reemplazada por la siguiente.
-    - **Citas.** Primera consulta, reconsultas encadenadas con `followUpOf`, una
-      reconsulta cancelada por la paciente y un control al que no asistió.
-    - **Derivaciones.** Endocrinología (aceptada, con la atención de llegada en
-      `targetEncounterId` y la contrarreferencia) y neurología (rechazada con
-      motivo).
-    - **Internación.** Pielonefritis aguda (día −210): urgencia, internación de
-      cuatro días con urocultivo y ecografía pedidos para ese diagnóstico, y
-      ciprofloxacino con indicación.
-    - **Último control** (día −25): palpitaciones; un presuntivo de ansiedad
-      todavía **en estudio** —es el que la demostración rechaza desde el
-      diálogo de verificación— y una TSH suprimida que lo explica.
+    - **Thyroid episode.** First consultation for tiredness, headache and hair
+      loss (day −540). Two presumptives in differential —iron-deficiency
+      anaemia and hypothyroidism—, each with its test (`reasonConditionId`).
+      The normal blood count **rules out** the anaemia, replaced by the
+      hypothyroidism (`replacedByConditionId`); the high TSH **confirms** it
+      (`basedOn` → report). Levothyroxine 25 → 50 → 75 mcg, each prescription
+      replaced by the next.
+    - **Appointments.** First consultation, follow-ups chained with
+      `followUpOf`, a follow-up cancelled by the patient and a missed control.
+    - **Referrals.** Endocrinology (accepted, with the arrival encounter in
+      `targetEncounterId` and the counter-referral) and neurology (rejected
+      with a reason).
+    - **Admission.** Acute pyelonephritis (day −210): emergency, a four-day
+      admission with urine culture and ultrasound ordered for that diagnosis,
+      and ciprofloxacin with its indication.
+    - **Last control** (day −25): palpitations; an anxiety presumptive still
+      **in study** —the one the demo rejects from the verification dialog— and
+      a suppressed TSH explaining it.
 
-    Todo se **agrega** al final de cada colección: los datos que ya usaban las
-    pruebas de la paciente (sus tres diagnósticos, recetas, órdenes y
-    derivaciones) no cambian ni de lugar ni de índice. Archivo `.data.ts`: es un
-    catálogo de datos, no lógica.
+    Everything is **appended** at the end of each collection: the data the
+    patient's tests already used (her three diagnoses, prescriptions, orders
+    and referrals) changes neither place nor index. A `.data.ts` file: it is a
+    data catalogue, not logic.
     ========================================================================== */
 
 /**
- * Los profesionales de esta historia, por su clave fija en `people.ts`
- * (`professional('endocrinologa', …)` → id `hpid-endocrinologa`). Antes se
- * buscaban por `slug`, que se arma con el nombre («ana-terrazas»): ninguno
- * coincidía y los tres caían en la médica de la sesión, así que la historia
- * decía que la derivaron a ella misma (corregido el 06/11/2026).
+ * This story's practitioners, by their fixed key in `people.ts`
+ * (`professional('endocrinologa', …)` → id `hpid-endocrinologa`). They used to
+ * be looked up by `slug`, built from the name («ana-terrazas»): none matched
+ * and all three fell on the session's doctor, so the story said she was
+ * referred to herself (fixed on 06/11/2026).
  */
 function bySlug(clave: string) {
   const profesional = PROFESSIONALS.find((p) => p.id === uuid(`hpid-${clave}`));
@@ -86,7 +86,7 @@ const ER_DOCTOR = bySlug('medgeneral');
 const P = PACIENTE.id;
 const id = (key: string) => uuid(`patient-network-${key}`);
 
-/** Los identificadores que el resto de la historia (y sus pruebas) nombra. */
+/** The identifiers the rest of the story (and its tests) names. */
 export const NETWORK_IDS = {
   firstVisit: id('encounter-first-visit'),
   results: id('encounter-results'),
@@ -177,7 +177,7 @@ export function networkEpisodes(episodeTypeConceptId: string) {
   ];
 }
 
-/* ---- diagnósticos -------------------------------------------------------- */
+/* ---- diagnoses ------------------------------------------------------------- */
 
 export function networkConditions(dxCategory: string): SimulatedCondition[] {
   const base = {
@@ -255,7 +255,7 @@ export function networkConditions(dxCategory: string): SimulatedCondition[] {
   ];
 }
 
-/* ---- órdenes e informes -------------------------------------------------- */
+/* ---- orders and reports ---------------------------------------------------- */
 
 interface NetworkStudy {
   readonly orderId: string;
@@ -293,14 +293,14 @@ export function networkOrders(): SimulatedOrder[] {
   }));
 }
 
-/** Los ids de las órdenes de esta historia: sus informes se siembran aparte, todos liberados. */
+/** The ids of this story's orders: their reports are seeded apart, all released. */
 export const NETWORK_ORDER_IDS: ReadonlySet<string> = new Set(STUDIES.map((s) => s.orderId));
 
 /**
- * Un valor de un informe de esta historia, como lo publica
- * `GET /diagnostics/patients/:id/reports/:reportId` (lectura del profesional,
- * 06/11/2026): el número como texto decimal exacto, el rango impreso y, si el
- * laboratorio lo marcó, su interpretación (código y rótulo, tal cual).
+ * A value of a report of this story, as published by
+ * `GET /diagnostics/patients/:id/reports/:reportId` (the practitioner's read,
+ * 06/11/2026): the number as exact decimal text, the printed range and, if the
+ * lab marked it, its interpretation (code and label, as is).
  */
 export interface ValorDeInformeSimulado {
   readonly code: string;
@@ -327,7 +327,7 @@ const q = (
   interpretation: ValorDeInformeSimulado['interpretation'] = null,
 ): ValorDeInformeSimulado => ({ code, name, value, valueKind: 'QUANTITY', unit, low, high, rangeText: null, interpretation });
 
-/** Los valores de cada informe, coherentes con su conclusión. La ecografía no trae valores. */
+/** Each report's values, consistent with its conclusion. The ultrasound brings no values. */
 const VALORES_POR_ORDEN: Readonly<Record<string, readonly ValorDeInformeSimulado[]>> = {
   [N.bloodCount]: [
     q('LAB-HB', 'Hemoglobina', '13.6', 'g/dL', '12.0', '16.0'),
@@ -358,13 +358,13 @@ const VALORES_POR_ORDEN: Readonly<Record<string, readonly ValorDeInformeSimulado
   ],
 };
 
-/** Los valores del informe `reportId` de esta historia; `[]` si no es de ella o no trae valores. */
+/** The values of this story's `reportId` report; `[]` if it is not hers or brings none. */
 export function valoresDelInforme(reportId: string): readonly ValorDeInformeSimulado[] {
   const estudio = STUDIES.find((s) => report(s.orderId) === reportId);
   return estudio === undefined ? [] : (VALORES_POR_ORDEN[estudio.orderId] ?? []);
 }
 
-/** Los informes, con la misma forma que `InformeSimulado` (`diagnostics.handlers.ts`). */
+/** The reports, with the same shape as `InformeSimulado` (`diagnostics.handlers.ts`). */
 export function networkReports() {
   return STUDIES.map((s) => ({
     id: report(s.orderId),
@@ -384,10 +384,10 @@ export function networkReports() {
   }));
 }
 
-/* ---- medicación ---------------------------------------------------------- */
+/* ---- medication ------------------------------------------------------------ */
 
 export function networkPrescriptions(): SimulatedPrescription[] {
-  // Cada receta con el concepto de su concentración: la de 25 no puede decir
+  // Each prescription with its strength's concept: the 25 one cannot say
   // «Levotiroxina 50 mcg comprimidos».
   const CONCEPTO_DE_LA_DOSIS: Readonly<Record<string, string>> = {
     '25 mcg': MEDICAMENTO_POR_CONCENTRACION['MED-LEVOTIROXINA-25']!,
@@ -474,7 +474,7 @@ export function networkObservations(): SimulatedObservation[] {
   }));
 }
 
-/* ---- nota de la primera consulta ----------------------------------------- */
+/* ---- the first consultation's note ----------------------------------------- */
 
 export function networkNotes(noteTypeConceptId: string): SimulatedNote[] {
   return [
@@ -510,10 +510,10 @@ export function networkNotes(noteTypeConceptId: string): SimulatedNote[] {
 /* ---- citas --------------------------------------------------------------- */
 
 /**
- * Las citas con la médica. Caen antes de la ventana de ±21 días de los cupos
- * generados, así que llevan un cupo propio que no existe en `cupos` —como
- * cualquier cita vieja cuyo horario ya no se publica— y la reconsulta sembrada
- * de `agenda.ts` (la más reciente atendida) no cambia.
+ * The appointments with the doctor. They fall before the ±21-day window of
+ * the generated slots, so they carry a slot of their own that does not exist
+ * in `cupos` —like any old appointment whose schedule is no longer published—
+ * and `agenda.ts`'s seeded follow-up (the latest attended) does not change.
  */
 export function networkBookings(resourceId: string): ReservaSimulada[] {
   const row = (
@@ -581,9 +581,9 @@ export function networkBookings(resourceId: string): ReservaSimulada[] {
 /* ---- derivaciones -------------------------------------------------------- */
 
 /**
- * Las dos derivaciones, con la forma de `SimulatedReferral`
- * (`referrals.handlers.ts`). El estado llega por parámetro para no importar
- * aquel módulo, que importa éste.
+ * The two referrals, shaped like `SimulatedReferral` (`referrals.handlers.ts`).
+ * The status arrives by parameter so as not to import that module, which
+ * imports this one.
  */
 export function networkReferrals(status: { readonly completed: string; readonly rejected: string }) {
   return [

@@ -91,8 +91,8 @@ export class ReferralDetail {
   );
 
   /**
-   * La atención de llegada (`targetEncounterId`, patch v4291) en palabras: la
-   * cita de la lista si está, si no que existe sin poder nombrarla.
+   * The arrival encounter (`targetEncounterId`, patch v4291) in words: the
+   * list's appointment if it is there, otherwise that it exists unnamed.
    */
   protected readonly arrivalEncounterLabel = computed<string | null>(() => {
     const id = this.referral().targetEncounterId;

@@ -1,14 +1,14 @@
 /* ============================================================================
-    Del informe liberado que lee el profesional
-    (`GET /diagnostics/patients/:id/reports/:reportId`) al resultado del panel.
+    From the released report the practitioner reads
+    (`GET /diagnostics/patients/:id/reports/:reportId`) to the panel's result.
 
-    - El valor llega como texto. Sólo un valor numérico (`QUANTITY`, `DECIMAL`,
-      `INTEGER`) con un número decimal limpio se pasa a número: así se compara
-      con el rango. El resto se muestra tal cual (un booleano en palabras).
-    - La interpretación del laboratorio se muestra con su rótulo («Alto») y
-      su código HL7 v3 (ObservationInterpretation: «H», «LL», «A»…) decide la
-      lectura (`interpretacionDelCodigo`). Sólo sin código —o con uno que no es
-      de ese catálogo— se compara el número contra el rango (`leerValor`).
+    - The value arrives as text. Only a numeric value (`QUANTITY`, `DECIMAL`,
+      `INTEGER`) with a clean decimal number becomes a number: so it is
+      compared with the range. The rest shows as is (a boolean in words).
+    - The lab's interpretation shows with its label («Alto») and its HL7 v3
+      code (ObservationInterpretation: «H», «LL», «A»…) decides the reading
+      (`interpretacionDelCodigo`). Only without a code —or with one outside
+      that catalogue— is the number compared against the range (`leerValor`).
     ========================================================================== */
 
 import type {
@@ -91,7 +91,7 @@ export function valorDelInforme(v: PractitionerResultValue): ValorDeResultado {
   };
 }
 
-/** El informe leído, como resultado del panel. */
+/** The report read, as the panel's result. */
 export function resultadoDelInforme(informe: PractitionerDiagnosticResult): ResultadoDeEstudio {
   const conclusion = informe.conclusionText?.trim() || undefined;
   return {

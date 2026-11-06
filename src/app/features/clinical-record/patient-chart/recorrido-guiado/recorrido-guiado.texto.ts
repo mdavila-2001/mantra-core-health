@@ -1,7 +1,7 @@
 /* ============================================================================
-    Fechas y texto del recorrido guiado: el día clínico (`dia-clinico.ts`, el
-    mismo que usa la red) y las barreras para que ningún identificador llegue a
-    la narración.
+    The guided tour's dates and text: the clinical day (`dia-clinico.ts`, the
+    same the network uses) and the barriers so no identifier reaches the
+    narration.
     ========================================================================== */
 
 import { diaClinico, partesDelDia } from '../recorrido-clinico/dia-clinico';
@@ -29,7 +29,7 @@ export function fechaValida(valor: Date | string | null | undefined): Date | nul
 export const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 export const PARECE_CODIGO = /^([A-Z][A-Z0-9]*(_[A-Z0-9]+)+|[a-z_]+:[A-Z0-9_]+)$/;
 
-/** El texto si es legible; `undefined` si está vacío o es un identificador. */
+/** The text if readable; `undefined` if empty or an identifier. */
 export function legible(texto: string | null | undefined): string | undefined {
   const limpio = texto?.trim();
   if (limpio === undefined || limpio.length === 0) return undefined;
@@ -52,7 +52,7 @@ export function mayusculaInicial(texto: string): string {
   return texto.length === 0 ? texto : texto[0].toUpperCase() + texto.slice(1);
 }
 
-/** Texto libre del registro, sin el punto final (la plantilla pone el suyo). */
+/** The record's free text, without the final period (the template adds its own). */
 export function libre(texto: string | null | undefined): string | undefined {
   return legible(texto)?.replace(/[.\s]+$/, '');
 }
@@ -63,7 +63,7 @@ export function enumerar(partes: readonly string[]): string {
   return `${partes.slice(0, -1).join(', ')} y ${partes[partes.length - 1]}`;
 }
 
-/** Última barrera: ningún uuid llega al texto, aunque venga dentro de un texto libre. */
+/** Last barrier: no uuid reaches the text, even inside a free text. */
 export function sinIdentificadores(texto: string): string {
   return texto.replace(UUID, '').replace(/\s{2,}/g, ' ').replace(/\s+([.,;:])/g, '$1').trim();
 }

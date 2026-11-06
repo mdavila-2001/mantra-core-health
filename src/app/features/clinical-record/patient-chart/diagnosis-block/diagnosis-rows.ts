@@ -49,8 +49,8 @@ const SIN_ETIQUETA = 'Diagnóstico sin etiqueta en el catálogo';
 const LARGO_DEL_MOTIVO = 60;
 
 /**
- * Qué respaldó la decisión, en dos palabras, y el motivo recortado. Un
- * descartado que resolvió un diferencial dice además por cuál se reemplazó
+ * What backed the decision, in two words, and the trimmed reason. A ruled-out
+ * one that resolved a differential also says which one replaced it
  * (`replacedByConditionId`, patch v4291).
  */
 function evidenciaDe(condicion: Condition, nombreDe: (conditionId: string) => string | undefined): string {

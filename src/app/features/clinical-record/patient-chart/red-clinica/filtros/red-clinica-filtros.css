@@ -1,10 +1,10 @@
 /* ============================================================================
-    Barra de filtros de la red clínica.
+    The clinical network's filter bar.
 
-    Escritorio: búsqueda e hilo en la primera fila, los cuatro criterios en la
-    segunda, los tipos como chips debajo. Teléfono (< 780 px, el umbral del
-    cajón): los cuatro criterios se pliegan tras «Más filtros» para que el mapa
-    no quede bajo media pantalla de controles.
+    Desktop: search and thread in the first row, the four criteria in the
+    second, the types as chips below. Phone (< 780 px, the drawer threshold):
+    the four criteria fold behind «Más filtros» so the map is not left under
+    half a screen of controls.
     ========================================================================== */
 
 :host {
@@ -93,9 +93,8 @@
   }
 }
 
-/* Hasta cuatro por fila; con menos criterios (sin profesionales ni
-   especialidades que ofrecer) los que quedan se reparten el ancho y no dejan
-   columnas vacías. */
+/* Up to four per row; with fewer criteria (no practitioners nor specialties
+   to offer) the remaining ones share the width and leave no empty columns. */
 @media (min-width: 1120px) {
   .filtros__avanzados {
     grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));

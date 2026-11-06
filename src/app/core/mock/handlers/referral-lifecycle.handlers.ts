@@ -73,7 +73,7 @@ export function registerReferralLifecycle(router: MockRouter): void {
     if (found.statusConceptId !== REFERRAL_STATUS['REF_REQUESTED']) {
       return precondition('REFERRAL_NOT_PENDING', 'La referencia no está en estado solicitado', found.id);
     }
-    // Patch v4291: la atención de llegada sólo al aceptar, y de la misma persona.
+    // Patch v4291: the arrival encounter only on accepting, and of the same person.
     if (body.decision === 'REJECT' && body.targetEncounterId != null) {
       return precondition('REFERRAL_TARGET_ENCOUNTER_NOT_ALLOWED', 'Sólo al aceptar se indica la atención de llegada', found.id);
     }

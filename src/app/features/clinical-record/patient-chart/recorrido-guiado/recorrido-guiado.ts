@@ -24,33 +24,33 @@ import type { SegmentedOption } from '../../../../shared/components/molecules/se
 import { seguirEpisodio, type PasoDelRecorrido } from './recorrido-guiado.model';
 
 /* ============================================================================
-    El control del recorrido guiado: anterior / reproducir-pausa / siguiente.
+    The guided tour's control: previous / play-pause / next.
 
-    Recibe los pasos ya armados (`armarRecorridoGuiado`) y dice cuál es el
-    actual; no mira la red ni sabe de la API. Quien lo monta enfoca y revela
-    los nodos con lo que emite `pasoActual` (ver ADR-0022).
+    It receives the steps already built (`armarRecorridoGuiado`) and says which
+    one is current; it does not look at the network nor know the API. Whoever
+    mounts it focuses and reveals the nodes with what `pasoActual` emits (see
+    ADR-0022).
 
-    ## Reproducir no es obligatorio
+    ## Playing is not mandatory
 
-    Con `prefers-reduced-motion: reduce` no hay reproducción automática: el
-    botón queda deshabilitado y dice por qué, y se avanza con anterior y
-    siguiente. Cualquier interacción con la red (`interaccionEnLaRed`) pausa:
-    si la persona se puso a mirar un nodo, el recorrido no le cambia el foco
-    por debajo.
+    With `prefers-reduced-motion: reduce` there is no autoplay: the button is
+    disabled and says why, and it moves with previous and next. Any
+    interaction with the network (`interaccionEnLaRed`) pauses: if the person
+    started looking at a node, the tour does not change the focus under them.
     ========================================================================== */
 
 export type VelocidadDelRecorrido = 'lenta' | 'normal' | 'rapida';
 
-/** Milisegundos por paso. Pensados para leer una narración de dos o tres frases. */
+/** Milliseconds per step. Meant for reading a two- or three-sentence narration. */
 export const MS_POR_PASO: Readonly<Record<VelocidadDelRecorrido, number>> = {
   lenta: 11000,
   normal: 7000,
   rapida: 4000,
 };
 
-/** Lo que emite el control cada vez que cambia el paso. */
+/** What the control emits every time the step changes. */
 export interface PasoActualDelRecorrido {
-  /** Índice en la lista que se está recorriendo (filtrada si se sigue un episodio). */
+  /** Index in the list being toured (filtered if an episode is followed). */
   readonly indice: number;
   readonly total: number;
   readonly paso: PasoDelRecorrido;
@@ -79,22 +79,22 @@ const VELOCIDADES: readonly SegmentedOption<VelocidadDelRecorrido>[] = [
 export class RecorridoGuiado {
   /** Los pasos en orden, tal como salen de `armarRecorridoGuiado`. */
   readonly pasos = input.required<readonly PasoDelRecorrido[]>();
-  /** Si viene, se recorre sólo lo que toca estos ids (un episodio). */
+  /** If present, only what touches these ids is toured (an episode). */
   readonly episodio = input<readonly string[] | null>(null);
-  /** El nombre del episodio que se sigue, para decirlo en pantalla. */
+  /** The name of the episode followed, to say it on screen. */
   readonly nombreDelEpisodio = input<string | null>(null);
   /**
-   * Cambia cada vez que la persona toca la red (un contador, un id elegido…).
-   * Cualquier cambio pausa la reproducción.
+   * Changes every time the person touches the network (a counter, a chosen
+   * id…). Any change pauses playback.
    */
   readonly interaccionEnLaRed = input<unknown>(undefined);
   /**
-   * Dentro de una superficie que ya tiene su borde (el Recorrido del
-   * expediente): sin tarjeta propia, para no apilar un recuadro en otro.
+   * Inside a surface that already has its border (the chart's Tour): no card
+   * of its own, so as not to stack one box on another.
    */
   readonly integrada = input(false, { transform: booleanAttribute });
 
-  /** El paso actual, con lo que hay que enfocar y lo ya revelado. */
+  /** The current step, with what to focus and what is already revealed. */
   readonly pasoActual = output<PasoActualDelRecorrido>();
 
   protected readonly velocidades = VELOCIDADES;
@@ -104,12 +104,12 @@ export class RecorridoGuiado {
     return episodio === null ? this.pasos() : seguirEpisodio(this.pasos(), episodio);
   });
 
-  /** Vuelve al primer paso cuando cambia la lista (otro paciente, otro episodio). */
+  /** Back to the first step when the list changes (another patient, another episode). */
   protected readonly indice = linkedSignal<readonly PasoDelRecorrido[], number>({
     source: this.lista,
     computation: (lista, anterior) => {
       if (anterior === undefined || lista.length === 0) return 0;
-      // Si la lista cambió pero el paso sigue estando, se queda en él.
+      // If the list changed but the step is still there, it stays on it.
       const clave = anterior.source[anterior.value]?.clave;
       const mismo = lista.findIndex((p) => p.clave === clave);
       return mismo >= 0 ? mismo : 0;
@@ -123,7 +123,7 @@ export class RecorridoGuiado {
 
   protected readonly reproduciendo = signal(false);
   protected readonly velocidad = signal<VelocidadDelRecorrido>('normal');
-  /** Se lee en el navegador; en el servidor se asume reducido (no hay reproducción en SSR). */
+  /** Read in the browser; on the server it is assumed reduced (no playback in SSR). */
   protected readonly movimientoReducido = signal(true);
 
   private readonly segmentos = viewChildren<ElementRef<HTMLButtonElement>>('segmento');
@@ -146,7 +146,7 @@ export class RecorridoGuiado {
       destroyRef.onDestroy(() => consulta.removeEventListener('change', leer));
     });
 
-    // Emitir el paso actual cada vez que cambia.
+    // Emit the current step every time it changes.
     effect(() => {
       const paso = this.actual();
       if (paso === null) return;
@@ -157,7 +157,7 @@ export class RecorridoGuiado {
       );
     });
 
-    // El temporizador de la reproducción: uno por paso, se cancela al cambiar.
+    // The playback timer: one per step, cancelled on change.
     effect((alLimpiar) => {
       if (!this.reproduciendo()) return;
       if (this.esUltimo()) {
@@ -170,7 +170,7 @@ export class RecorridoGuiado {
       alLimpiar(() => clearTimeout(temporizador));
     });
 
-    // Tocar la red pausa. La primera lectura es el valor inicial, no una interacción.
+    // Touching the network pauses. The first read is the initial value, not an interaction.
     let primera = true;
     effect(() => {
       this.interaccionEnLaRed();
@@ -198,7 +198,7 @@ export class RecorridoGuiado {
       this.pausar();
       return;
     }
-    // Reproducir desde el final vuelve a empezar.
+    // Playing from the end starts over.
     if (this.esUltimo()) this.indice.set(0);
     this.reproduciendo.set(true);
   }
@@ -208,7 +208,7 @@ export class RecorridoGuiado {
     this.irA(indice);
   }
 
-  /** Pausa la reproducción. Público para quien monta el control. */
+  /** Pauses playback. Public for whoever mounts the control. */
   pausar(): void {
     this.reproduciendo.set(false);
   }
@@ -217,7 +217,7 @@ export class RecorridoGuiado {
     this.velocidad.set(valor);
   }
 
-  /** Flechas y espacio, salvo dentro de controles que ya usan esas teclas. */
+  /** Arrows and space, except inside controls that already use those keys. */
   protected alTeclado(evento: KeyboardEvent): void {
     const destino = evento.target instanceof HTMLElement ? evento.target : null;
     if (destino !== null && destino.closest('[role="radiogroup"], input, select, textarea') !== null) return;
@@ -238,7 +238,7 @@ export class RecorridoGuiado {
       this.saltarA(this.total() - 1);
       this.enfocarSegmentoSiCorresponde(destino);
     } else if (evento.key === ' ' || evento.key === 'Spacebar') {
-      // Sobre un botón, el espacio ya lo activa: no se duplica.
+      // On a button, space already activates it: it is not duplicated.
       if (destino !== null && destino.closest('button') !== null) return;
       evento.preventDefault();
       this.alternar();
@@ -255,7 +255,7 @@ export class RecorridoGuiado {
     this.indice.set(Math.min(Math.max(indice, 0), total - 1));
   }
 
-  /** Si el foco estaba en la línea de progreso, lo lleva al segmento del paso nuevo. */
+  /** If the focus was on the progress line, it moves it to the new step's segment. */
   private enfocarSegmentoSiCorresponde(destino: HTMLElement | null): void {
     if (destino === null || destino.closest('.guiado__progreso') === null) return;
     this.segmentos()[this.indice()]?.nativeElement.focus();

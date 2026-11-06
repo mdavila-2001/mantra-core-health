@@ -1,7 +1,7 @@
 import { type NodoDeRed } from '../red-clinica.types';
 import { LECTURA_DE_VINCULO, type AristaDeRed, type TipoDeVinculo } from '../red-clinica-vinculos.types';
 
-/** Un vínculo del nodo abierto, ya leído desde su punta. */
+/** A link of the open node, already read from its end. */
 export interface VinculoDelPanel {
   readonly clave: string;
   readonly sentido: 'saliente' | 'entrante';
@@ -9,7 +9,7 @@ export interface VinculoDelPanel {
   /** «Se pidió para estudiar», «Estudio pedido para esto». */
   readonly relacion: string;
   readonly otroId: string;
-  /** `null` si la otra punta no está en `nodos` (filtrada o fuera del tope). */
+  /** `null` if the other end is not in `nodos` (filtered or beyond the cap). */
   readonly otro: NodoDeRed | null;
   readonly inferido: boolean;
 }
@@ -25,7 +25,7 @@ export const SIGUIENTES: ReadonlySet<string> = new Set([
   'saliente:atendida-en',
 ]);
 
-/** Lee los vínculos de un nodo: salientes primero, cada grupo en orden de fecha. */
+/** Reads a node's links: outgoing first, each group in date order. */
 export function vinculosDe(
   nodoId: string,
   aristas: readonly AristaDeRed[],

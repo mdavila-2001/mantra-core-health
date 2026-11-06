@@ -163,10 +163,10 @@ export const HISTORIA_DE_DEMOSTRACION: RegistrosDelRecorrido = {
   derivaciones: [derivacion],
 };
 
-/** El reloj de la demostración: la reconsulta del 20 mar queda en el futuro. */
+/** The demonstration's clock: the 20 Mar follow-up stays in the future. */
 export const AHORA = dia(3, 10);
 
-/** Los registros de la red de mentira, en el orden en que se dibujan. */
+/** The fake network's records, in the order they are drawn. */
 export const NODOS: readonly { readonly id: string; readonly rotulo: string }[] = [
   { id: ID.e1, rotulo: 'Consulta · Medicina general' },
   { id: ID.migrana, rotulo: 'Migraña (presuntivo → descartado)' },

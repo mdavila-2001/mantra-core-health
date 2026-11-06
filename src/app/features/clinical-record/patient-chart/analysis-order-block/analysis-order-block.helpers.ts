@@ -50,8 +50,8 @@ export interface EstudioEnFicha {
   /** La consulta en la que se pidió, si la orden la trae. Ata su consentimiento informado. */
   readonly encounterId?: string;
   /**
-   * Para qué diagnóstico se pidió (`reasonConditionId`, patch v4291), en
-   * palabras. Ausente si la orden no lo trae.
+   * Which diagnosis it was ordered for (`reasonConditionId`, patch v4291), in
+   * words. Absent if the order does not bring it.
    */
   readonly paraDiagnostico?: string;
 }

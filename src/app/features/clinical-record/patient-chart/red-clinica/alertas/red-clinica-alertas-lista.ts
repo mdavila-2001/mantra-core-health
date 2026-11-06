@@ -7,7 +7,7 @@ import type { LecturasComprobadas } from '../lecturas/red-clinica-lecturas';
 import type { PrioridadDeAlerta } from '../red-clinica-alertas';
 import type { AlertaDeApoyo, TipoDeAlerta } from '../red-clinica-alertas.types';
 
-/** Cuántas se ven antes de «Ver todas». */
+/** How many show before «Ver todas». */
 export const ALERTAS_A_LA_VISTA = 5;
 
 const ICONO_DE_TIPO: Readonly<Record<TipoDeAlerta, NavIconName>> = {
@@ -28,15 +28,15 @@ const TEXTO_DE_PRIORIDAD: Readonly<Record<PrioridadDeAlerta, string>> = {
 };
 
 /**
- * **Alertas de apoyo de la red clínica.**
+ * **The clinical network's support alerts.**
  *
- * Lista lo que `alertasDeApoyo()` encontró. Cada alerta es un botón: el clic
- * emite `nodoElegido` (el padre abre ese nodo en el panel y lo centra en el
- * mapa); pasar el puntero o el foco emite `resaltar` con todos sus nodos, y
- * salir emite `[]`.
+ * Lists what `alertasDeApoyo()` found. Each alert is a button: the click emits
+ * `nodoElegido` (the parent opens that node in the panel and centres it on the
+ * map); pointer or focus over it emits `resaltar` with all its nodes, and
+ * leaving emits `[]`.
  *
- * Las alertas no sugieren diagnósticos: señalan registros abiertos, repetidos
- * o fuera de rango. El pie lo dice, para que nadie las lea como otra cosa.
+ * The alerts do not suggest diagnoses: they point at open, repeated or
+ * out-of-range records. The footer says so, so nobody reads them otherwise.
  *
  * ```html
  * <app-red-clinica-alertas-lista [alertas]="alertas()"
@@ -52,25 +52,25 @@ const TEXTO_DE_PRIORIDAD: Readonly<Record<PrioridadDeAlerta, string>> = {
 })
 export class RedClinicaAlertasLista {
   readonly alertas = input<readonly AlertaDeApoyo[]>([]);
-  /** Título de la sección; el padre puede cambiarlo («Pendientes del episodio»). */
+  /** The section title; the parent can change it («Pendientes del episodio»). */
   readonly titulo = input('Para revisar');
   /**
-   * Plegada en un resumen («5 alertas · 2 de prioridad alta») que se despliega
-   * con un botón (`aria-expanded`), y sin recuadro propio: para ir dentro de
-   * otra superficie sin empujar lo que viene debajo (el mapa del Recorrido).
+   * Folded into a summary («5 alertas · 2 de prioridad alta») that unfolds
+   * with a button (`aria-expanded`), and with no box of its own: to sit inside
+   * another surface without pushing what comes below (the Tour's map).
    */
   readonly compacta = input(false, { transform: booleanAttribute });
   /** Which readings arrived whole: the empty text only asserts absences over those. */
   readonly comprobadas = input<LecturasComprobadas>({ ordenes: true, informes: true, derivaciones: true });
 
   readonly nodoElegido = output<string>();
-  /** Los nodos a resaltar en la red mientras la alerta tiene puntero o foco. */
+  /** The nodes to highlight on the network while the alert has pointer or focus. */
   readonly resaltar = output<readonly string[]>();
 
   protected readonly todas = signal(false);
-  /** Compacta: si la lista está desplegada. Arranca plegada. */
+  /** Compact: whether the list is unfolded. It starts folded. */
   protected readonly abierta = signal(false);
-  /** Lo que se ve: siempre, salvo compacta y plegada. */
+  /** What shows: always, except compact and folded. */
   protected readonly lista = computed(() => !this.compacta() || this.abierta());
   protected readonly icono = ICONO_DE_TIPO;
   protected readonly prioridad = TEXTO_DE_PRIORIDAD;
