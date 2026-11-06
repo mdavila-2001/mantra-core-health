@@ -1,5 +1,6 @@
 import { CONTENT_DIALOG_SCENARIOS } from './content-dialog.scenarios';
 import { DATA_TABLE_SCENARIOS } from './data-table.scenarios';
+import { RECORRIDO_GUIADO_SCENARIOS } from './recorrido-guiado.scenarios';
 import type { ComponentScenario } from './scenario.types';
 import { VIEW_STATE_HOST_SCENARIOS } from './view-state-host.scenarios';
 
@@ -20,6 +21,7 @@ export const SCENARIOS: readonly ComponentScenario[] = [
   ...DATA_TABLE_SCENARIOS,
   ...CONTENT_DIALOG_SCENARIOS,
   ...VIEW_STATE_HOST_SCENARIOS,
+  ...RECORRIDO_GUIADO_SCENARIOS,
 ];
 
 const BY_KEY = new Map<string, ComponentScenario[]>();
