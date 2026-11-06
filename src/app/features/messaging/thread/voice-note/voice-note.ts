@@ -9,11 +9,8 @@ import {
   signal,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-
-/** Bars drawn for the waveform: enough to read the shape, few enough to fit 15rem. */
-const BARS = 36;
-/** Speeds offered, in the order the button cycles through them. */
-const RATES = [1, 1.5, 2] as const;
+import { audioBlobOf } from './audio-source';
+import { BARS, RATES, clock, peaksOf } from './waveform';
 
 /**
  * A chat voice note, drawn like a messaging app: play/pause, the real waveform
@@ -46,10 +43,28 @@ export class VoiceNote {
 
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
 
+  /** What the `<audio>` plays: an object URL, the only kind the CSP lets through. */
+  protected readonly playable = signal<string | null>(null);
+
   constructor() {
-    effect(() => {
+    effect((onCleanup) => {
       const src = this.src();
-      if (this.browser) void this.decode(src);
+      if (!this.browser) return;
+      let objectUrl: string | null = null;
+      let alive = true;
+      onCleanup(() => {
+        alive = false;
+        if (objectUrl !== null) URL.revokeObjectURL(objectUrl);
+      });
+      void audioBlobOf(src).then(
+        (blob) => {
+          if (!alive) return;
+          objectUrl = URL.createObjectURL(blob);
+          this.playable.set(objectUrl);
+          void this.decode(blob);
+        },
+        () => undefined, // Unreadable source: the button stays, nothing plays.
+      );
     });
   }
 
@@ -88,9 +103,9 @@ export class VoiceNote {
   protected readonly clock = clock;
 
   /** Real duration and per-bar peaks; on failure the flat bars and the element's metadata stay. */
-  private async decode(src: string): Promise<void> {
+  private async decode(blob: Blob): Promise<void> {
     try {
-      const bytes = await (await fetch(src)).arrayBuffer();
+      const bytes = await blob.arrayBuffer();
       const context = new AudioContext();
       const buffer = await context.decodeAudioData(bytes);
       void context.close();
@@ -100,23 +115,4 @@ export class VoiceNote {
       // Undecodable here (old browser, odd codec): the player still plays.
     }
   }
-}
-
-/** Peak of each slice, scaled so the loudest bar fills the height. */
-function peaksOf(samples: Float32Array): number[] {
-  const size = Math.max(1, Math.floor(samples.length / BARS));
-  const raw = Array.from({ length: BARS }, (_, bar) => {
-    let peak = 0;
-    for (let i = bar * size; i < (bar + 1) * size && i < samples.length; i++) {
-      peak = Math.max(peak, Math.abs(samples[i]!));
-    }
-    return peak;
-  });
-  const loudest = Math.max(...raw, 0.0001);
-  return raw.map((peak) => Math.max(0.15, peak / loudest));
-}
-
-function clock(seconds: number): string {
-  const total = Math.max(0, Math.round(seconds));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 }
