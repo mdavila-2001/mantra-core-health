@@ -132,11 +132,14 @@ test('asignar sede desde la plantilla: POST y relectura confirman (UI → reques
   await expect(dialogo).toBeVisible();
   const select = dialogo.getByTestId('asignacion-sede');
   if (await select.count()) {
-    // `app-select` es un <select> nativo: se elige la primera sede real.
-    const nativo = select.locator('select');
-    const etiquetas = await nativo.locator('option:not([disabled])').allTextContents();
-    const sede = etiquetas.map((t) => t.trim()).find((t) => t !== '' && !t.startsWith('Elija'))!;
-    await nativo.selectOption({ label: sede });
+    // `app-select` abre su propia lista de opciones (no es un <select>
+    // nativo): se abre y se elige la primera sede real.
+    await select.click();
+    const opciones = page.getByRole('option');
+    await expect(opciones.first()).toBeVisible();
+    const etiquetas = (await opciones.allTextContents()).map((t) => t.trim());
+    const sede = etiquetas.find((t) => t !== '' && !t.startsWith('Elija'))!;
+    await opciones.filter({ hasText: sede }).first().click();
     // La maqueta responde dentro de Angular (interceptor): no hay request de
     // red que esperar. Lo que se mira es la relectura que pinta el modal.
     await dialogo.getByTestId('asignacion-guardar').click();
