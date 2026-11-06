@@ -16,6 +16,7 @@ import { expect, test, type Page } from '@playwright/test';
  * 3. Un CI con cuenta le manda una notificación a esa cuenta.
  * 4. Esa cuenta acepta desde Dependientes y el titular la ve en su lista.
  * 5. El modal entra en teléfono, tableta y escritorio.
+ * 6. Actuando por el dependiente, la figura del cuerpo es la de su sexo.
  */
 
 /** La titular: la cuenta de paciente de la maqueta. */
@@ -55,6 +56,10 @@ async function enviarCi(page: Page, documento: string): Promise<void> {
   await campo.fill(documento);
   await page.getByTestId('dependent-submit').click();
 }
+
+test.use({
+  launchOptions: process.env['PW_CHROMIUM'] ? { executablePath: process.env['PW_CHROMIUM'] } : {},
+});
 
 test.describe('B.1 · dependientes por CI', () => {
   test('pedir por CI, aceptar desde la otra cuenta y verla en la lista', async ({ page }) => {
@@ -127,6 +132,22 @@ test.describe('B.1 · dependientes por CI', () => {
     await entrar(page, TITULAR.documento);
     await page.goto('/my-account/dependents');
     await expect(page.getByTestId('dependents-lista')).toContainText(DEPENDIENTE.nombre);
+
+    // 6 · acting for Jorge (MALE), the body map follows him, not Ana: the home
+    // figure loads the male mannequin. In-app navigation only, because a reload
+    // drops the chosen patient. The rendered href is a blob copy, so the image
+    // request is the observable signal.
+    const maniquies: string[] = [];
+    page.on('request', (r) => {
+      const m = /\/body-map\/(\w+)-front\.webp/.exec(r.url());
+      if (m) maniquies.push(m[1]!);
+    });
+    await page.getByTestId('header-paciente-activo').click();
+    await page.getByRole('menuitem', { name: new RegExp(DEPENDIENTE.nombre) }).click();
+    await page.getByRole('link', { name: 'AloVida — ir al panel' }).click();
+    await expect(page.locator('app-symptom-check app-body-map')).toBeVisible({ timeout: 30_000 });
+    await expect.poll(() => maniquies.includes('male')).toBe(true);
+    await page.screenshot({ path: 'artifacts/playwright/figura-dependiente-jorge.png' });
 
     expect(errores).toEqual([]);
   });
