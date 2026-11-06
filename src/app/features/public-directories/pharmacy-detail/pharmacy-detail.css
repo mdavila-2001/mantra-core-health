@@ -35,3 +35,31 @@
     min-block-size: 44px;
   }
 }
+
+/* «Sucursales y receta»: sin «medida de formulario» ni columna vacía
+   (`composition-rules.md` §5). La hoja compartida acota el campo de la receta a
+   34 rem; dentro de la ficha ocupa todo el ancho, y el botón va debajo. */
+.ficha-card .ficha-publica__receta {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.ficha-card .ficha-publica__receta-campo {
+  max-inline-size: none;
+  inline-size: 100%;
+}
+
+/* Una sola sucursal ocupa todo el ancho en vez de un tercio con dos vacíos. */
+.ficha-card .ficha-publica__rejilla > li:only-child {
+  grid-column: 1 / -1;
+}
+
+/* «Usar mi ubicación para ver la más cercana» es largo: en 390 px parte línea en
+   vez de salirse de la tarjeta. */
+.ficha-card__ubicacion {
+  max-inline-size: 100%;
+  white-space: normal;
+  text-align: center;
+  block-size: auto;
+  min-block-size: 44px;
+}

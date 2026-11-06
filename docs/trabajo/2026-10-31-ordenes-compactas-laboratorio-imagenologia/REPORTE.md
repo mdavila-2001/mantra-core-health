@@ -1,80 +1,74 @@
-> **AVANCE: 4 / 8 — 50,0 %.**
+> **AVANCE: 7 / 8 — 87,5 %.**
 
-# Reporte — Órdenes compactas de laboratorio e imagenología
+# Reporte — Órdenes compactas de laboratorio e imagenología + marketplace en una tarjeta
 
-- Fecha: 2026-10-31 · Plan: [PLAN.md](./PLAN.md) · Rama: `claude/compassionate-franklin-0rqq5g` (rebasada sobre `origin/dev`)
-- Peldaño de evidencia alcanzado: **web, H1 → `VERIFIED` funcional** (flujo observado en navegador con persistencia tras recarga); **visual → `VERIFIED_FUNCTIONAL_ONLY`** hasta que el juego final de capturas pase la segunda revisión independiente. H2 y H3: `UNKNOWN`.
-- Solo contra el **simulador** (P52): la API real no publica `/diagnostics/lab/*`, así que el ciclo de órdenes no existe en el backend.
+- Fecha: 2026-11-06 (trabajo iniciado 2026-10-31) · Plan: [PLAN.md](./PLAN.md) · Rama: `claude/compassionate-franklin-0rqq5g` (rebasada sobre `origin/dev`) · PR: [mantra-core-health#1755](https://github.com/mdavila-2001/mantra-core-health/pull/1755) (borrador)
+- Peldaño de evidencia alcanzado: **H1 y H2 web → `VERIFIED`** (flujo y medición en navegador, claro y oscuro, 390/768/1440, con revisión visual independiente que terminó en «entregable con reservas»). **H3 Flutter → `TESTED`** (analyze + tests, sin emulador).
+- Todo el ciclo de órdenes corre **solo contra el simulador** (P52): la API real no publica `/diagnostics/lab/*`.
 
 ## Completado
 | ID | Qué se logró | Comando | Resultado |
 |---|---|---|---|
-| H1.S1.M1 | El menú del laboratorio queda en Resumen, Órdenes, Precios y Sucursales; recepción, cola y resultados redirigen a Órdenes | `yarn ng test` (navigation, app.routes, diagnostics, lab-reception, laboratory, mock) | PASS, 141 archivos / 2026 tests |
-| H1.S1.M2 | «Órdenes»: una tarjeta con pestañas por estado (Todas, Borrador, Recibidas, Procesadas, Subidos, Canceladas y rechazadas), conteo, búsqueda, vacío orientador y error con reintento | `laboratory-orders.spec.ts`, `laboratory-orders.logic.spec.ts` | PASS (24 tests) |
-| H1.S1.M3 | Acciones Recibir, Marcar como procesada, Subir resultados y Descargar; un paso fuera de orden responde 409; subir exige orden procesada | `lab-portal.handlers.spec.ts` + Playwright «laboratorio: portal…» | PASS; en navegador 390 y 1440: Borrador → Recibida → Procesada → Subidos, descarga byte a byte igual, estado «Subidos» tras recargar (`evidencia/recorrido-final.log`) |
+| H1.S1.M1 | El menú del laboratorio queda en Resumen, Órdenes, Precios y Sucursales; las rutas viejas redirigen a Órdenes | `yarn ng test` (navigation, app.routes, diagnostics, laboratory, mock) | PASS |
+| H1.S1.M2 | «Órdenes»: una tarjeta con pestañas por estado, conteo, búsqueda, vacío orientador y error con reintento | `laboratory-orders*.spec.ts` | PASS |
+| H1.S1.M3 | Acciones Recibir, Marcar como procesada, Subir resultados y Descargar; 409 ante un paso fuera de orden; subir exige orden procesada | `lab-portal.handlers.spec.ts` + Playwright `hito2 · laboratorio` (390 y 1440) | PASS; descarga idéntica byte a byte; estado «Subidos» tras recargar |
+| H1.S1.M4 | Evidencia visual en 3 viewports con 3 pasadas independientes (la última sin BLOQUEANTE ni MAYOR) | `evidencia/doble-revision.md` | PASS con reservas |
+| H2.S1.M1 | `/my-services`: una tarjeta con pestañas Todos / Activos / Inactivos | specs + `evidencia/recorrido-marketplace.log` | PASS: 1 `app-card`, holguras 0/0 px, 100 % del área, sin desborde, 390/768/1440 |
+| H2.S1.M2 | Ficha del laboratorio: una tarjeta con pestañas Estudios / Sedes (y Equipos / Acreditaciones si hay datos) | ídem | PASS: ídem; sin desbordes en la segunda pestaña |
+| H2.S1.M3 | Ficha pública de farmacia: una tarjeta con pestañas Medicamentos / Sucursales (la búsqueda de receta vive en Sucursales) | specs + Playwright `chat-marketplace` (12/12) | PASS: ídem; la segunda pestaña ya no desborda ni queda acotada |
 
-| H1.S1.M4 | Evidencia visual en 3 viewports; 3 pasadas independientes, la última sin BLOQUEANTE ni MAYOR («entregable con reservas») | `evidencia/doble-revision.md` | PASS con reservas |
-
-Otros gates: `tsc -p tsconfig.app.json --noEmit` limpio · `eslint` limpio sobre lo tocado · `tsc -p playwright/tsconfig.json` limpio · `check-architecture` sin el ciclo nuevo.
+Otros gates: `tsc` limpio · `eslint` limpio · Playwright `chat-marketplace` + `hito2-laboratory-insurance` → 16 passed · Flutter `analyze` sin problemas y 215 tests.
 
 ## A medias
-
-### H2.S1.M1 / M2 / M3 — Marketplace de servicios con una tarjeta y pestañas
-- Qué anda: código de las tres pantallas escrito por tres agentes en paralelo con archivos disjuntos. `tsc` y `eslint` limpios. Specs en verde: `yarn ng test` sobre my-services, laboratory-directory, public-directories, laboratory, navigation y shared → **147 archivos / 2245 tests PASS** (tras corregir un tipo en `laboratory-detail.spec.ts`: `detail: unknown` → `object`).
-- Qué no anda / no se probó: ningún navegador, ninguna captura, ninguna medición de centrado (§5: holguras ≤2 px, bloque ≥85 %), ningún tema oscuro, ningún Playwright (`carril-22-mis-servicios`, `chat-marketplace`, `mockup-barrido` apuntan a estas pantallas).
-- Qué falta exactamente:
-  1. Levantar `yarn ng serve --configuration development,demo` (NO `ng serve` a secas: apunta a la API real) y capturar en 390/768/1440, claro y oscuro: `/my-services`, `/laboratory-directory/<id>`, `/pharmacies-directory/farmacia-vida` (ver `flow3.cjs` en esta carpeta de evidencia como guion; ojo: usar viewport alto y NO `fullPage` en 1440, que dispara la animación de la barra lateral).
-  2. Correr los Playwright citados arriba con Chromium del entorno (`/opt/pw-browsers/chromium`, config temporal que sobrescribe `launchOptions.executablePath`).
-  3. Doble revisión independiente (agente distinto) de esas capturas; corregir y recapturar.
-  4. Medir centrado según `docs/components/composition-rules.md` §5.
-- Decisiones de los agentes que conviene confirmar: «Mis servicios» usa Todos/Activos/Inactivos (el filtro «Estado» que ya existía) y no «Condiciones/Altas» (no hay lista que mostrar); la ficha del laboratorio muestra pestañas Equipos/Sedes/Acreditaciones solo si hay datos; la ficha de farmacia tiene Medicamentos y Sucursales y receta, sin pestaña «Horarios» (los horarios solo existen dentro de cada sucursal). El **listado** `/laboratory-directory` y `/pharmacies-directory` no cambió: lo dibuja `DirectoryPage`, componente compartido.
-- Hallazgos para quien sea dueño de lo compartido: `directory-page` (`.mercado__orden select` y `.directorio__vista` miden 40 px, el comentario dice 44); `open-now-pharmacies` («Ver más» en `size="sm"` = 32 px); `laboratory-directory.ts` carga `directory-map.css` que la plantilla ya no usa.
-- Dónde quedó: rama `claude/compassionate-franklin-0rqq5g`, compila, specs verdes.
-
 ### H3.S1.M1 — Paridad móvil Flutter
-- Qué anda: repo `mantra_core_health_mobile` (misma rama). Pantalla «Órdenes» con pestañas por estado y menú de cuatro acciones, `actionsOf` espejo de la web, repositorio abstracto con doble en memoria probado en tres niveles (regla 65). `flutter analyze`: sin problemas; `flutter test`: 215 PASS (29 nuevos). SDK: `git clone https://github.com/flutter/flutter.git -b stable --depth 1 /home/user/flutter-sdk/flutter` funciona por el proxy; `export PATH=/home/user/flutter-sdk/flutter/bin:$PATH`.
-- Qué no anda: signup, login y flujos de laboratorio/farmacia no existen; no hay cliente HTTP contra la API real (que además no publica el ciclo de órdenes, P52); «Subir» usa un archivo sintético y «Descargar» solo avisa; sin capturas ni emulador.
-- Qué falta exactamente: construir signup/login con los átomos existentes; `OrdersRepository` HTTP cuando la API lo publique; selector de archivo y descarga reales; verificación visual.
-- Dónde quedó: commit en la rama del repo móvil; **cuidado**: `flutter pub get/analyze` modifica `analysis_options.yaml` y `pubspec.lock`; revertir con `git checkout --` antes de commitear.
+- Qué anda: repo `mantra_core_health_mobile`, misma rama (commit subido). Pantalla «Órdenes» con pestañas por estado y menú de cuatro acciones, `actionsOf` espejo de la web, repositorio abstracto con un doble en memoria probado en tres niveles (regla 65). 29 tests nuevos; suite completa 215 PASS.
+- Qué no anda: signup, login y los flujos de laboratorio/farmacia no existen; no hay cliente HTTP (la API no publica el ciclo); «Subir» usa un archivo sintético y «Descargar» solo avisa; sin capturas ni emulador.
+- Qué falta exactamente: signup y login con los átomos existentes; `OrdersRepository` HTTP cuando la API lo publique; selector de archivo y descarga reales; verificación visual. SDK: `git clone https://github.com/flutter/flutter.git -b stable --depth 1 /home/user/flutter-sdk/flutter` funciona por el proxy. `flutter pub get/analyze` modifica `analysis_options.yaml` y `pubspec.lock`: revertir con `git checkout --` antes de commitear.
+- Dónde quedó: rama `claude/compassionate-franklin-0rqq5g` del repo móvil.
 
 ## Pendiente
 | ID | Estado | Qué lo destraba |
 |---|---|---|
-| Dos PRs (`dev` y `test`) | `dev` abierto como borrador; `test`: ver descripción del PR | Que alguien cierre H2 (capturas + revisión) y lo pase a «listo» |
-| Signup/login/flujos móviles | TODO | Trabajo de producto en Flutter (ver H3) |
-| Decisión: ¿el laboratorio puede rechazar/cancelar órdenes? | DECISION_REQUIRED | Usuario/producto; hoy la UI ofrece solo las cuatro acciones pedidas |
-| Borrar `LabReception` / `LaboratoryResults` (sin ruta) | Decisión | Usuario |
+| PR hermano hacia `test` | No abierto | Permiso para subir una rama nueva desde `test`; los 3 commits de la web aplican limpio por cherry-pick (probado en local) |
+| Signup/login/flujos móviles | TODO | Trabajo de producto en Flutter |
+| ¿El laboratorio puede rechazar/cancelar órdenes? | DECISION_REQUIRED | Producto; se mantuvieron las cuatro acciones pedidas |
 
 ## Evidencia
 ```text
-yarn ng test (141 archivos, H1)  → Tests 2026 passed
-yarn ng test (147 archivos, H1+H2) → Test Files 147 passed · Tests 2245 passed
+yarn ng test (152 archivos: marketplace + laboratorio + navegación + mock + rutas) → 151 passed / 1 failed · 2194 passed / 1 failed
+  └ falla: core/mock/handlers/diagnostic-coverage.handlers.spec.ts «aceptado: con su único estudio de imagen pendiente…» (esperaba [ECO], recibió 2 conceptos).
+    Aislado: 13/13 PASS. Clasificación: sin determinar (¿estado compartido entre archivos o intermitente?); NO toca archivos de este cambio. Se repite la corrida para ver si reproduce.
+playwright chat-marketplace + hito2-laboratory-insurance → 16 passed (1440 y 390 px)
+recorrido-final.log        → Órdenes: descarga iguales=true · tras recargar: Subidos · errores de consola/red: ninguno (390/768/1440)
+recorrido-marketplace.log  → tres pantallas × 390/768/1440 (claro) y 390/1440 (oscuro): una app-card, holguras 0/0, ocupa 100 %, desbordes=[]
 flutter test → All tests passed (+215) · flutter analyze → No issues found
-playwright hito2 · laboratorio → 2 passed (1440 y 390 px)
-recorrido-final.log → descarga … iguales=true · tras recargar: Subidos · errores de consola/red: ninguno (390/768/1440)
 ```
-Archivos en `evidencia/`: `01…08-*.png`, `doble-revision.md`, `recorrido-final.log` y dos logs de tandas previas (`recorrido-1.log`, `recorrido-2-flujo.log`, superados).
+Archivos en `evidencia/`: capturas `01…08-*.png` (Órdenes) y `m1…m3-*.png` (marketplace), `doble-revision.md`, logs, y los guiones `flow3.cjs`, `pw.config.ts` (el de marketplace se describe en el log).
 
 ## No cubierto
-- Petición/respuesta de red: el simulador responde dentro del navegador, así que no hay tráfico HTTP que mostrar; lo observado es la UI, el estado persistido en `sessionStorage` y la descarga.
-- Contra la API real: nada (no existe el contrato).
-- Teclado, foco visible, contraste medido, estados de carga y de error en navegador, tema oscuro en 768.
-- Orden **Rechazada** en pantalla (solo tests) y estado «Subiendo» con progreso (solo test del componente).
-- `yarn test` completo (4985 pruebas): se corrió solo lo afectado.
+- Contra la API real: nada (no existe el contrato de órdenes). `carril-22-mis-servicios` y `datos-bolivia-en-pantalla` corren contra la API real y no se ejecutaron.
+- Mis servicios: pestañas Activos/Inactivos y su vacío/error en navegador; oscuro 768 y Sedes en oscuro; estados de carga y error en navegador.
+- Teclado, foco visible, contraste medido, objetivos táctiles medidos.
+- Orden **Rechazada** en pantalla (solo tests) y estado «Subiendo» con progreso (solo test del componente: la maqueta termina la subida al instante).
+- Petición/respuesta de red de la maqueta: el simulador responde dentro del navegador.
+- `yarn test` completo (4985): solo se corrió lo afectado.
 
 ## Desvíos del plan
-- La rama salía de `master` (413 commits atrás de `dev`): se rebasó sobre `origin/dev`.
+- La rama salía de `master` (413 commits atrás de `dev`): se rebasó sobre `origin/dev` (force-with-lease sobre mi propio commit de docs).
+- **Se borraron las pantallas retiradas** por decisión («lo más recomendado»): `features/lab-reception/` completo (incluido `lab-reception.spec.ts`, 568 líneas) y `laboratory/results/laboratory-results.{ts,html,css}`. Justificación (regla 80.5.5): no tienen ruta ni menú desde 31/10; su flujo es hoy una acción de «Órdenes», probada por `laboratory-orders*.spec.ts`, `lab-portal.handlers.spec.ts` y el Playwright de `hito2`. Se conservaron `ResultUploadQueue` y `picked-files` (reusados). Se quitaron sus 3 entradas de `scripts/baselines/{max-lines,colores-sueltos}.json`.
 - Se pidió «tres puntos»: se usó `app-row-actions` (ADR-0012), cuyo disparador dice «Acciones» con ícono.
-- `lab-portal.handlers.ts` está congelado en 1008 líneas: las órdenes se movieron a `lab-orders.handlers.ts`; aun así el original quedó en **1009** (+1 sobre el techo). `app.routes.ts` (2486) ya superaba su techo de 2273 en `dev`.
-- Se actualizaron dos Playwright que dependían de pantallas retiradas: `hito2-laboratory-insurance` (reescrito al flujo de Órdenes) y `modales-fuera-de-consulta` (se quitó el caso del modal «Recibir muestra», que ya no existe).
+- Dos Playwright dependían de pantallas retiradas y se actualizaron: `hito2-laboratory-insurance` (reescrito al flujo de Órdenes) y `modales-fuera-de-consulta` (se quitó el caso del modal «Recibir muestra»).
+- Farmacia: la pestaña «Sucursales y receta» pasó a «Sucursales» tras la revisión independiente (en 390 px la etiqueta larga quedaba cortada); se actualizaron los 3 asertos de rótulo del spec sin debilitar nada.
+- `lab-portal.handlers.ts` queda en 1009 líneas (techo congelado 1008); `app.routes.ts` ya superaba su techo en `dev`.
 
 ## Riesgos residuales
-- `LabReception` y `LaboratoryResults` quedan en el repo sin ruta (código muerto con sus tests); `ResultUploadQueue` y `picked-files` se reusan. Borrarlos es una decisión aparte.
-- `Pedida` en prioridad 1 hace la tabla más justa en tablet.
-- Hallazgos de componentes compartidos sin tocar (menú pegado al borde en 390, pestañas cortadas, botón «Acciones» de ≈40 px).
-- El servidor `ng serve` que levanté fue detenido; no queda ningún proceso en segundo plano.
+- Hallazgos de componentes compartidos sin tocar: menú de acciones pegado al borde en 390; pestañas cortadas bajo la flecha; doble borde tarjeta + caja de pestañas; botón «Acciones» ≈40 px; `directory-page` con controles de 40 px y `open-now-pharmacies` con «Ver más» de 32 px.
+- Formato de dinero inconsistente dentro del marketplace (Mis servicios muestra «520.00 Bs», las fichas «60,00 Bs»): preexistente, no se tocó.
+- Contadores repetidos (cabecera / pestaña / título de sección) en las fichas de laboratorio y farmacia.
+- Los listados `/laboratory-directory` y `/pharmacies-directory` no cambiaron: los dibuja `DirectoryPage`, compartido.
 
 ## Decisiones y ambigüedades
-- «Subidos» se tomó como estado final tras Procesada (confirmado por el usuario); Cancelada y Rechazada salen de una orden recibida/borrador (cancelar) o recibida (rechazar). La UI **no ofrece** cancelar ni rechazar: el pedido listó solo cuatro acciones. Confirmar con el usuario si el laboratorio debe poder rechazar.
+- «Subidos» = estado final tras Procesada (confirmado). La UI no ofrece cancelar ni rechazar: el pedido listó solo cuatro acciones y se mantuvo («lo más recomendado»). Confirmar con producto si el laboratorio debe poder rechazar.
 - Alcance: laboratorio + imagenología (cuenta `DIAGNOSTIC_CENTER`), sin farmacia (confirmado).
+- «Mis servicios» usa Todos/Activos/Inactivos (el filtro «Estado» que ya existía); no se inventaron pestañas sin contenido. La ficha de farmacia no tiene «Horarios»: los horarios solo existen dentro de cada sucursal.
 - «Horarios y equipos» aparece en la captura del usuario pero no existe en `dev`; no se tocó.

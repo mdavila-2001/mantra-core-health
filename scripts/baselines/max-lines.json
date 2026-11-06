@@ -123,7 +123,6 @@
   "src/app/features/shell-layout/shell-layout.ts": 645,
   "src/app/core/mock/fixtures/people.ts": 643,
   "src/app/features/component-stock/scenarios/data-table.scenarios.ts": 641,
-  "src/app/features/lab-reception/lab-reception.ts": 641,
   "src/app/features/alovida/buscar/hospitales-listado/hospitales-listado.ts": 635,
   "src/app/core/data-access/terminology/terminology.client.ts": 632,
   "src/app/features/insurance/insurance-campaigns/insurance-campaigns.ts": 623,

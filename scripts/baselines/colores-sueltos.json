@@ -29,7 +29,6 @@
   "src/app/features/component-stock/scenarios/view-state-host.scenarios.ts": 1,
   "src/app/features/emergency/panic-button/panic-button.css": 1,
   "src/app/features/glossary/glossary.css": 1,
-  "src/app/features/laboratory/results/laboratory-results.css": 1,
   "src/app/features/messaging/conversation-list/conversation-list.css": 1,
   "src/app/features/messaging/thread/composer/composer.css": 1,
   "src/app/features/messaging/thread/composer/recorder.css": 1,
