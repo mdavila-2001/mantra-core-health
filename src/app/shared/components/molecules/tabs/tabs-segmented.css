@@ -21,10 +21,12 @@
 
 :host(.tabs--segmented) .tabs__tab {
     flex: 0 0 auto;
-    padding: var(--sp-1) var(--sp-4);
+    min-block-size: 32px;
+    padding: 0 var(--sp-4);
+    border: 1px solid transparent;
     border-radius: var(--r-pill);
     font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
+    line-height: 1;
     white-space: nowrap;
 }
 
@@ -32,18 +34,26 @@
     display: none;
 }
 
-/* Hover and focus never look like the selected pill (no surface, no shadow). */
+/* Same look as `app-segmented-control`: hover is a veil (works in light and
+   dark) and never looks like the selected pill. */
 :host(.tabs--segmented) .tabs__tab:hover:not(:disabled):not(.is-selected) {
-    background: transparent;
+    background: var(--bg-hover);
     color: var(--text-primary);
-    text-decoration: underline;
-    text-underline-offset: 3px;
 }
 
+/* Outside the track, so the frame never hides it. */
+:host(.tabs--segmented) .tabs__tab:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+/* Selected: surface, strong border (≥ 3:1 against the track, WCAG 1.4.11), ink and weight. */
 :host(.tabs--segmented) .tabs__tab.is-selected {
+    border-color: var(--border-strong);
     background: var(--bg-surface);
     box-shadow: var(--shadow-sm);
     color: var(--text-primary);
+    font-weight: 600;
 }
 
 :host(.tabs--segmented) .tabs__panels {

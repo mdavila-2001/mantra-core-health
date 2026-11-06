@@ -94,9 +94,11 @@
 
 /* Phones: actions take their own line under the data, badge left, buttons right. */
 @media (max-width: 599px) {
+  /* Every row the same: badge on its line, the buttons on the next, under the text. */
   .por-servicio__acciones {
     inline-size: 100%;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: flex-start;
     /* Aligned with the text column, not with the icon. */
     padding-inline-start: calc(2.25rem + var(--sp-4));
     box-sizing: border-box;

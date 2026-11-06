@@ -45,16 +45,18 @@
           </div>
           <div class="por-servicio__acciones">
             <app-badge variant="secondary">Del sistema</app-badge>
-            <button
-              app-button
-              type="button"
-              variant="ghost"
-              size="sm"
-              (clicked)="viewAppointment(state.data)"
-              data-testid="service-surveys-appointment-view"
-            >
-              Ver preguntas
-            </button>
+            <div class="por-servicio__botones">
+              <button
+                app-button
+                type="button"
+                variant="ghost"
+                size="sm"
+                (clicked)="viewAppointment(state.data)"
+                data-testid="service-surveys-appointment-view"
+              >
+                Ver preguntas
+              </button>
+            </div>
           </div>
         </li>
 

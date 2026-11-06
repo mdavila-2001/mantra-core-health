@@ -1,49 +1,48 @@
 # Evidencias
 
-## Encuestas por servicio, Buzón y ficha de solo lectura, «Mis encuestas» · 2026-11-06 (tercera ronda)
+## Encuestas por servicio, Buzón y ficha de solo lectura, «Mis encuestas» · 2026-11-06 (cuarta ronda)
 
-Reemplaza las dos secciones anteriores de este cambio: sus capturas eran de página entera o no mostraban lo que
-la fila decía, y se retiraron (`surveys-per-service-2026-11-06/` y `-r2/`).
+Reemplaza las secciones de rondas anteriores de este cambio (sus carpetas `…-06/`, `-r2/` y `-r3/` se retiraron).
 
 Entorno: Linux, `yarn start:demo` (backend simulado) en `http://localhost:4200`, Chromium headless 1234, rama
-`claude/amazing-brown-f2c2a9` (sobre `origin/dev` 68bb79660). Un solo navegador, en serie, esperando elementos
-(nunca la red quieta), capturas **solo de la ventana**, chip de demostración oculto. Guion reproducible:
-`playwright/service-surveys-captures.mjs`. Capturas y peticiones en
-`capturas/despues/surveys-per-service-2026-11-06-r3/` (`requests.json` = lo que anotó `window.__mockRequests`,
-con la respuesta de cada lectura y escritura).
+`claude/amazing-brown-f2c2a9` (sobre `origin/dev` 68bb79660). Un solo navegador, en serie, esperando elementos (nunca
+la red quieta), movimiento reducido, fuentes cargadas, capturas **solo de la ventana**, chip de demostración oculto.
+Guion: `playwright/service-surveys-captures.mjs` → `capturas/despues/surveys-per-service-2026-11-06-r4/`
+(`requests.json` = lo que anotó `window.__mockRequests`, con la respuesta de cada lectura y escritura).
 
 | Comprobación | Resultado | Evidencia |
 |---|---|---|
-| Antes de importar (1440) | fila fija «Cita médica»; ECG, Holter… «Sin encuesta propia (se usa la base de servicios)», «Importar» en contorno | `01` |
-| Selector: pasar el mouse no parece elegir | la elegida tiene borde y fondo de marca; la que está bajo el puntero, sólo fondo hundido | `02` |
-| Importar → `PUT` → recarga | `PUT …/:serviceId` `{catalogCode}` 200; el `GET` de la recarga ya trae el `catalogCode` | `03`, `requests.json` («import», «reload-after-import») |
-| Buzón después de importar | «Procedimientos y estudios» con «Se envía» y su servicio; «Ver respuestas» abre la ficha | `04` |
-| Ficha de la importada | Estado «Se envía», aviso de solo lectura con botón real; respuestas legibles | `05`, `05b` |
-| «Cambiar» arranca en la que está en uso | marcada y con «En uso»; «Cambiar a esta» inhabilitado | `06` |
-| Quitar → confirmación → `DELETE` → recarga | 204; tras recargar la fila vuelve a la base y el `GET` la trae sin encuesta | `07`, `07b`, `requests.json` |
+| Antes de importar (1440) | fila fija «Cita médica»; servicios sin encuesta con «Importar» en contorno | `01` |
+| Selector: el puntero no parece elegir | elegida = borde y fondo de marca; bajo el puntero = sólo fondo hundido (y sólo con puntero real) | `02` |
+| Importar → `PUT` → recarga | `PUT …/:serviceId` `{catalogCode}` 200; el `GET` de la recarga trae el `catalogCode` | `03`, `requests.json` («import», «reload-after-import») |
+| Buzón después de importar | lo que se envía va primero: «Procedimientos y estudios» con «Se envía» y su servicio | `04` |
+| Ficha de la importada | UNA tarjeta con pestañas Preguntas · Resumen · Respuestas; Estado «Se envía»; Vigencia desde la fecha de importación | `05` |
+| Recién importada, sin respuestas | la pestaña Respuestas es un S3 con próxima acción (el simulador ya no inventa respuestas anteriores) | `05b` |
+| «Cambiar» arranca en la que está en uso | marcada, «En uso», «Cambiar a esta» inhabilitado | `06` |
+| Quitar → confirmación → `DELETE` → recarga | 204; tras recargar la fila vuelve a la base | `07`, `07b`, `requests.json` |
 | «Ver preguntas» numeradas | 1…12 en columna propia | `08` |
-| Cargando (S2) | esqueleto de la lista | `09` |
-| Sin servicios (S3) | «Ir a «Mis servicios»» como botón | `10` |
+| Cargando (S2) / sin servicios (S3) | esqueleto; «Ir a «Mis servicios»» como botón, sin desplazar | `09`, `10` |
 | Error de carga (S9, lectura) | «No pudimos cargar sus servicios», código de soporte, «Copiar código», «Reintentar» | `11` |
-| Falla el catálogo (S9) | misma anatomía; la lista se ve e importar queda inhabilitado | `12` |
-| Falla el `PUT` (S9) | misma anatomía dentro del selector, arriba; ningún texto del servidor | `13`, `requests.json` («import-error», 500) |
-| Falla el `DELETE` (S9) | misma anatomía arriba de la lista; «Reintentar» vuelve a quitar sin repreguntar | `14`, `requests.json` («remove-error», 500) |
-| 390: filas | insignia y botones alineados con la columna del texto, botones juntos | `15`, `16` |
-| 390: selector | cabecera corta («Importar encuesta» / «Para «…»»), vista previa y línea de licencia | `17`, `18` |
-| Buzón de solo lectura | sin «Abrir», sin filtro por estado ni borradores; hechas a mano = «Encuesta anterior (ya no se envía)», también la de teleconsulta que sigue ligada sin `catalogCode` | `19`, `20` |
-| Ficha de una encuesta hecha a mano (1440 y 390) | Estado «Ya no se envía» (no «Publicada»), aviso de solo lectura, preguntas sin edición | `21-*`, `22-*` |
-| Paciente 390, «Mis encuestas» | bajo 640 px vive en «Más accesos»; título de la pantalla y pestaña «Mis encuestas»; S3 con «Ver mis citas» | `23`, `24` |
-| Resumen del médico (`encuestas-resumen-medico`) | capturas de ventana regeneradas en `docs/frontend/evidence/encuestas-resumen-medico-2026-10-28/` | 01–17 |
+| Falla el catálogo (S9) | misma anatomía; la petición queda en `requests.json` («catalog-error», 500) | `12` |
+| Falla el `PUT` | aviso arriba del selector con el servicio nombrado, código y «Copiar código»; el reintento es «Importar» (sin un segundo botón) | `13`, `requests.json` («import-error», 500) |
+| Falla el `DELETE` (S9) | anatomía S9 nombrando el servicio; «Reintentar» vuelve a pedir confirmación. Un rechazo 403/412 es S5, sin «Reintentar» (pruebas unitarias) | `14`, `requests.json` («remove-error», 500) |
+| 390: filas | todas igual: insignia en su renglón y botones debajo, alineados con el texto | `15`, `16` |
+| 390: selector | cabecera corta; vista previa y línea de licencia | `17`, `18` |
+| Buzón de solo lectura | sin «Abrir», sin filtro ni borradores; hechas a mano = «Encuesta anterior (ya no se envía)», también la de teleconsulta ligada sin `catalogCode` | `19`, `20` |
+| Ficha de una encuesta hecha a mano (1440 y 390) | Estado «Ya no se envía», Vigencia «… · ya no se envía», metadatos en 2 columnas en 390; preguntas como texto, con la misma redacción que el selector | `21-*`, `22-*` |
+| Paciente 390 | «Mis encuestas» en «Más accesos» (bajo 640 px); pantalla y pestaña «Mis encuestas»; S3 con «Ver mis citas» | `23`, `24` |
+| Modo oscuro (1440 y 390) | por servicio, selector, Buzón, ficha, paciente | `25`–`29` |
+| Resumen del médico | capturas regeneradas tras asentarse (movimiento reducido), sólo de ventana; 17 ya no es un recorte | `docs/frontend/evidence/encuestas-resumen-medico-2026-10-28/` |
 
 | Prueba | Resultado |
 |---|---|
-| Playwright `carril-27-editor-encuestas` + `mis-encuestas-barra-paciente` + `encuestas-resumen-medico` (simulador) | 11/11 en verde |
-| Playwright `carril-27` contra la API real (`E2E_REAL_API=1`) | **no se ejecutó**: no hay API viva sembrada en este entorno |
-| Vitest de lo tocado (encuestas, simulador, clientes, bandeja, barra, cuestionarios del paciente, Tabs, precios de consulta, hub) | 536 en verde; 32 rojos de `mock-backend.spec.ts` por `POST /diagnostics/lab/services/import`, ajenos (ver ronda anterior: idénticos en `dev`) |
-| `yarn typecheck`, eslint de lo cambiado, `check-english-identifiers`, `check-api-contract-drift` (rutas de encuestas) | limpios |
+| Playwright `carril-27-editor-encuestas` + `mis-encuestas-barra-paciente` + `encuestas-resumen-medico` (simulador) | 11 en verde, 1 omitido (el modo API real) |
+| Playwright `carril-27` contra la API real (`E2E_API_REAL=1`) | **no se ejecutó**: no hay API viva sembrada en este entorno. Sin la variable se informa como omitido, no como verde |
+| Vitest de lo tocado (encuestas, simulador, clientes, bandeja, barra, cuestionarios del paciente, Tabs, precios de consulta, hub) | 38 archivos, 487/487 |
+| `yarn typecheck`, eslint de lo cambiado, `check-english-identifiers` | limpios |
 
-No se ejecutó / queda abierto: modo oscuro de estas capturas; contra la API real. Revisión independiente
-(`NO_SELF_APPROVAL`): **pendiente**.
+No se ejecutó / queda abierto: contra la API real. El fondo del diálogo de confirmación (primitivo compartido) no se
+igualó al del selector. Revisión independiente (`NO_SELF_APPROVAL`): **pendiente**.
 
 ## Catálogo de farmacia: «Importar CSV» arriba y acciones por fila · 2026-11-05
 

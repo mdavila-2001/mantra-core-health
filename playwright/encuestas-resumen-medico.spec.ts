@@ -50,10 +50,19 @@ async function aplicarTema(page: Page, tema: Tema): Promise<void> {
   }, tema);
 }
 
-/** Viewport-only capture (a full-page one lets the side rail cover content), without the demo chip. */
+/**
+ * Viewport-only capture (a full-page one lets the side rail cover content),
+ * without the demo chip, once fonts and icons are in and two frames painted
+ * (transitions are instant: the test runs with reduced motion).
+ */
 async function capturar(page: Page, nombre: string): Promise<void> {
   mkdirSync(SALIDA, { recursive: true });
   const estilo = await page.addStyleTag({ content: 'aside.mock { display: none !important; } * { scroll-behavior: auto !important; }' });
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    await new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done())));
+  });
   await page.screenshot({ path: join(SALIDA, `${nombre}.png`) });
   await estilo.evaluate((nodo) => (nodo as Element).remove());
 }
@@ -114,6 +123,8 @@ test.describe('Encuestas · «Cómo le va» y el Buzón de solo lectura', () => 
   test('resumen general, filtros, privacidad y lectura de las respuestas de una encuesta', async ({ page }) => {
     test.setTimeout(4 * 60_000);
     await page.setViewportSize({ width: 1440, height: 900 });
+    // Theme and route transitions finish at once: captures never catch a cross-fade.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
 
     await entrar(page, MEDICA);
     await irA(page, '/questionnaires');
@@ -267,7 +278,9 @@ test.describe('Encuestas · «Cómo le va» y el Buzón de solo lectura', () => 
 
     // La ficha se lee: cuestionario y respuestas recibidas.
     await expect(page.getByTestId('survey-detail-read-only')).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole('heading', { name: 'Cuestionario', exact: true })).toBeVisible();
+    // ONE card with tabs; `#respuestas` opens the answers tab.
+    await expect(page.getByRole('tab', { name: 'Preguntas', exact: true })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Respuestas', exact: true })).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('heading', { name: 'Respuestas recibidas', exact: true })).toBeVisible();
     const lecturas = async (): Promise<readonly number[]> =>
       (await atendidas(page)).filter((r) => r.method === 'GET' && /^\/surveys\/templates\/[^/?]+\/responses/.test(r.url)).map((r) => r.status);
@@ -312,7 +325,7 @@ test.describe('Encuestas · «Cómo le va» y el Buzón de solo lectura', () => 
     await expect(barra.locator('app-segmented-control')).toHaveCount(0);
     const cajaBarra = await barra.boundingBox();
     expect(cajaBarra!.x + cajaBarra!.width, 'el buscador entra en 390 px').toBeLessThanOrEqual(390);
-    await barra.screenshot({ path: join(SALIDA, '17-buscador-claro-390.png') });
+    await capturar(page, '17-buscador-claro-390');
     await aplicarTema(page, 'oscuro');
     await capturar(page, '14-resumen-oscuro-390');
 

@@ -25,7 +25,8 @@ import { SurveyQuestionsDialog } from './survey-questions-dialog';
  * «Encuestas por servicio» (06/11/2026). Fixed «Cita médica» row (system survey,
  * view only), then one row per service. Import or change opens the standard
  * catalog → PUT; remove asks first → DELETE. Every failure uses the S9 anatomy
- * (support code, «Copiar código», «Reintentar») and never the server's text.
+ * (support code, «Copiar código», «Reintentar»; a refusal is S5, without retry)
+ * and never the server's text.
  * Authorization stays in the API.
  */
 @Component({
@@ -79,7 +80,7 @@ export class ServiceSurveys {
     this.listRead = this.surveys.list().subscribe({
       next: (assignments) => this.state.set(ready(assignments)),
       error: (error: unknown) =>
-        this.state.set(logic.readFailureState(error, 'No pudimos cargar sus servicios', 'El servidor tuvo un problema al leer la lista. No se cambió nada.')),
+        this.state.set(logic.readFailureState(error, 'No pudimos cargar sus servicios', 'El servidor tuvo un problema al leer la lista de sus servicios y sus encuestas.')),
     });
   }
 
@@ -127,20 +128,26 @@ export class ServiceSurveys {
       },
       error: (error: unknown) => {
         this.saving.set(false);
-        const failure = logic.importFailure(error);
-        const shown = logic.failureState(error, failure.title, failure.message);
+        const failure = logic.importFailure(error, row.serviceName);
+        if (failure.followUp === 'reload-list') {
+          // The row changed elsewhere: nothing to retry; say so and show the fresh list.
+          this.closePicker();
+          this.toast.warning(failure.message, failure.title);
+          this.load();
+          return;
+        }
         if (failure.followUp === 'reload-catalog') this.loadCatalog();
-        if (failure.followUp === 'reload-list') this.closePicker();
+        const shown = logic.failureState(error, failure.title, failure.message);
         if (this.pickingFor()?.serviceId === row.serviceId) this.saveError.set(shown);
         else this.showWriteError(shown, () => this.openPicker(row));
-        if (failure.followUp === 'reload-list') this.load();
       },
     });
   }
 
-  protected async remove(row: Row, confirmed = false): Promise<void> {
+  /** Always asks first, also when retrying: a DELETE is never repeated without confirmation. */
+  protected async remove(row: Row): Promise<void> {
     if (row.assignment === null || this.removing() !== null) return;
-    if (!confirmed && !(await this.dialogs.confirm(logic.removeConfirmation(row)))) return;
+    if (!(await this.dialogs.confirm(logic.removeConfirmation(row)))) return;
     this.removing.set(row.serviceId);
     this.writeError.set(null);
     this.surveys.remove(row.serviceId).subscribe({
@@ -151,9 +158,8 @@ export class ServiceSurveys {
       },
       error: (error: unknown) => {
         this.removing.set(null);
-        const failure = logic.removeFailure(error);
-        this.showWriteError(logic.failureState(error, failure.title, failure.message), () => void this.remove(row, true));
-        if (failure.followUp === 'reload-list') this.load();
+        const failure = logic.removeFailure(error, row.serviceName);
+        this.showWriteError(logic.failureState(error, failure.title, failure.message), () => void this.remove(row));
       },
     });
   }

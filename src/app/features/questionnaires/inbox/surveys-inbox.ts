@@ -18,6 +18,8 @@ import { readFailureState } from '../service-surveys/service-surveys.logic';
 /** Diacritics left loose by `normalize('NFD')`. */
 const DIACRITICS = /[̀-ͯ]/g;
 
+const SENDING_ORDER = { yes: 0, unknown: 1, no: 2 } as const;
+
 const LABELS = {
   yes: { label: 'Se envía', tone: 'success' },
   no: { label: 'Encuesta anterior (ya no se envía)', tone: 'secondary' },
@@ -38,11 +40,12 @@ interface InboxSurvey extends SurveyCardData {
  * «Buzón» (06/11/2026): the first sub-tab of «Encuestas», READ-ONLY. The «Cómo
  * le va» summary on top and, below, the surveys whose answers can be read
  * (`GET /surveys/catalog`). Nothing is managed here: no editing, no status
- * filters, no drafts. A practitioner survey is «current» only when it is the
+ * filters, no drafts. A practitioner survey is sent only when it is the
  * catalog survey imported for one of their services (its template is in
- * `GET /surveys/service-assignments`); any other hand-made survey is shown as
- * a past one («ya no se envía»), never as active. Unsent drafts have no
- * answers and are not listed. Search stays client-side (no `?q=` in the API).
+ * `GET /surveys/service-assignments`); any other hand-made survey is a past one
+ * («ya no se envía»), and without the service list it is «sin confirmar». Sent
+ * ones come first. Unsent drafts have no answers and are not listed. Search
+ * stays client-side (no `?q=` in the API).
  */
 @Component({
   selector: 'app-surveys-inbox',
@@ -97,7 +100,11 @@ export class SurveysInbox {
     );
     this.read = forkJoin([this.catalog.list(), currentTemplates]).subscribe({
       next: ([entries, current]) => {
-        const shown = entries.map((entry) => this.toInbox(entry, current)).filter((s) => s.sending === 'yes' || s.status !== 'DRAFT');
+        // What is sent today first, then what cannot be confirmed, then past surveys; server order within each.
+        const shown = entries
+          .map((entry) => this.toInbox(entry, current))
+          .filter((s) => s.sending === 'yes' || s.status !== 'DRAFT')
+          .sort((a, b) => SENDING_ORDER[a.sending] - SENDING_ORDER[b.sending]);
         this.state.set(
           shown.length === 0
             ? empty(
@@ -108,7 +115,7 @@ export class SurveysInbox {
         );
       },
       error: (error: unknown) =>
-        this.state.set(readFailureState(error, 'No pudimos cargar sus encuestas', 'El servidor tuvo un problema al leer la lista. No se cambió nada.')),
+        this.state.set(readFailureState(error, 'No pudimos cargar sus encuestas', 'El servidor tuvo un problema al leer la lista de sus encuestas.')),
     });
   }
 

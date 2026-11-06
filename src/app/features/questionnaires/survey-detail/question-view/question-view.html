@@ -5,27 +5,12 @@
     <span class="pregunta__texto">
       {{ question().questionText }}
       @if (question().required) {
-        <span class="pregunta__obligatoria" aria-label="obligatoria">*</span>
+        <span class="pregunta__obligatoria" aria-hidden="true">*</span>
+        <span class="sr-only">(obligatoria)</span>
       }
     </span>
-    <span class="pregunta__meta">
-      {{ typeLabel() }}
-      @if (detail()) {
-        · {{ detail() }}
-      }
-    </span>
-    <!-- aria-hidden: text, type and detail are already said above. -->
-    <span class="pregunta__muestra" aria-hidden="true">
-      @if (listsOptions()) {
-        @for (option of options(); track $index) {
-          <span class="pregunta__opcion">
-            <span class="pregunta__opcion-marca">{{ question().answerType === 'SINGLE_CHOICE' ? '○' : '☐' }}</span>
-            <app-input [value]="option" [disabled]="true" />
-          </span>
-        }
-      } @else {
-        <app-input [placeholder]="sample()" [disabled]="true" />
-      }
-    </span>
+    @if (answer()) {
+      <span class="pregunta__meta">{{ answer() }}</span>
+    }
   </span>
 </div>

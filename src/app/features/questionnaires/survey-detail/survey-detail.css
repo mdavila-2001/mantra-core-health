@@ -3,14 +3,29 @@
 }
 
 .encuesta {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-4);
+  display: block;
   margin-block-start: var(--sp-4);
 }
 
-.encuesta__card--ancha {
-  grid-column: 1 / -1;
+.encuesta__titulo {
+  margin: 0;
+}
+
+.encuesta__aviso {
+  display: block;
+  margin-block: var(--sp-4) 0;
+}
+
+.encuesta__pestanas {
+  display: block;
+  margin-block-start: var(--sp-5);
+}
+
+/* The questionnaire tab's own action, aligned to the end above the list. */
+.encuesta__panel-cabecera {
+  display: flex;
+  justify-content: flex-end;
+  margin-block: var(--sp-4) var(--sp-3);
 }
 
 .encuesta__consigna {
@@ -20,7 +35,7 @@
 
 .encuesta__datos {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: var(--sp-4);
   margin: 0;
 }
@@ -51,29 +66,13 @@
   font-size: var(--fs-caption);
 }
 
-/* La lista de preguntas: sin viñeta ni sangría. Cada `app-question-editor`
-   trae su propia caja y el número de pregunta va dentro de ella, así que el
-   marcador del `<ol>` sería un segundo número al lado del primero. */
+/* The question list: no marker, each `app-question-view` brings its own box and number. */
 .encuesta__preguntas {
   display: grid;
   gap: var(--sp-2);
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.encuesta__cabecera {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  inline-size: 100%;
-}
-
-.encuesta__cabecera-acciones {
-  display: flex;
-  gap: var(--sp-2);
 }
 
 /* La nota de la previa: dice que lo que se toca no se guarda. Va arriba del
@@ -107,6 +106,13 @@
   justify-content: space-between;
   gap: var(--sp-2);
   inline-size: 100%;
+  margin-block: var(--sp-4) var(--sp-3);
+}
+
+.encuesta__respuestas-cabecera h3 {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
 }
 
 .encuesta__resumen {
@@ -234,14 +240,13 @@
   margin: 0;
 }
 
+/* Phones: the metadata in two columns, not one long column. */
 @media (max-width: 48rem) {
-  .encuesta,
-  .encuesta__datos,
-  .encuesta__escala {
-    grid-template-columns: 1fr;
+  .encuesta__datos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .encuesta__card--ancha {
-    grid-column: auto;
+  .encuesta__escala {
+    grid-template-columns: 1fr;
   }
 }

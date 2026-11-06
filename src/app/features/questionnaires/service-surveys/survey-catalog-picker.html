@@ -10,9 +10,17 @@
     Sus pacientes la recibirán después de cada atención de este servicio, en lugar de la encuesta base de servicios.
   </p>
 
-  <!-- The failure goes first: it must be seen without scrolling the preview. -->
-  @if (error(); as failure) {
-    <app-view-state-host class="catalogo__error" [state]="failure" (retry)="importChosen()" data-testid="standard-catalog-error" />
+  <!-- The failure goes first, with the support code; «Importar» below is the retry (no second retry button). -->
+  @if (failure(); as f) {
+    <app-alert class="catalogo__error" tone="error" [title]="f.title" data-testid="standard-catalog-error">
+      {{ f.message }}
+      @if (f.hint) {
+        <p class="catalogo__error-pista"><strong>Qué puede hacer:</strong> {{ f.hint }}</p>
+      }
+      @if (f.requestId) {
+        <app-support-code [code]="f.requestId" />
+      }
+    </app-alert>
   }
 
   <div class="catalogo" data-testid="standard-catalog">

@@ -1,9 +1,14 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { catchError, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { SurveysClient } from '../../../core/data-access/surveys/surveys.client';
+import { SurveysCatalogClient } from '../../../core/data-access/surveys/surveys-catalog.client';
 import { SurveysServiceAssignmentsClient } from '../../../core/data-access/surveys/surveys-service-assignments.client';
+import type { BreadcrumbItem } from '../../../shared/components/molecules/breadcrumb/breadcrumb.types';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import type {
   SurveyDetail,
   SurveyResponse,
@@ -20,11 +25,12 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { SurveyForm } from '../../../shared/components/organisms/survey-form/survey-form';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { QuestionView } from './question-view/question-view';
-import { celdaCsv, diaDeEnvio, resumirPregunta, slugify, type ResumenDePregunta } from './survey-detail.logic';
+import { celdaCsv, resumirPregunta, sendingLabelOf, sendingStatusOf, SHEET_TABS, slugify, submissionDay, type QuestionSummary, type SendingStatus } from './survey-detail.logic';
 import { ENCUESTAS_ROUTE, SERVICE_SURVEYS_QUERY } from '../questionnaires.routes';
 
 /**
@@ -47,8 +53,9 @@ import { ENCUESTAS_ROUTE, SERVICE_SURVEYS_QUERY } from '../questionnaires.routes
 const UMBRAL_MINIMO_RESPUESTAS = 5;
 
 /**
- * A survey's sheet, READ-ONLY (06/11/2026): its questionnaire, the summary and
- * the responses received. Hand-made surveys are no longer edited, published,
+ * A survey's sheet, READ-ONLY (06/11/2026), in ONE card with tabs
+ * (composition-rules §5): identity, status and the read-only notice on top,
+ * then Preguntas · Resumen · Respuestas. Hand-made surveys are no longer edited, published,
  * attached or deactivated — the API rejects new non-catalog assignments
  * (`SURVEY_ASSIGNMENT_REQUIRES_CATALOG_TEMPLATE`) — so the sheet points to
  * «Encuestas por servicio», where each service's standard survey is chosen.
@@ -64,11 +71,14 @@ const UMBRAL_MINIMO_RESPUESTAS = 5;
     Card,
     DatePipe,
     DecimalPipe,
+    EmptyState,
     PageHeader,
     QuestionView,
     RouterLink,
     Skeleton,
     SurveyForm,
+    Tab,
+    Tabs,
     ViewStateHost,
   ],
   templateUrl: './survey-detail.html',
@@ -78,10 +88,10 @@ const UMBRAL_MINIMO_RESPUESTAS = 5;
 export class SurveyDetailScreen {
   private readonly surveys = inject(SurveysClient);
   private readonly serviceAssignments = inject(SurveysServiceAssignmentsClient);
+  private readonly catalog = inject(SurveysCatalogClient);
   private readonly route = inject(ActivatedRoute);
   private readonly navigation = inject(NavigationService);
 
-  protected readonly breadcrumbs = this.navigation.breadcrumbs;
   /** A dónde vuelve quien entró a una encuesta: al listado del que salió. */
   protected readonly rutaDeLasEncuestas = ENCUESTAS_ROUTE;
   protected readonly serviceSurveysQuery = SERVICE_SURVEYS_QUERY;
@@ -121,40 +131,25 @@ export class SurveyDetailScreen {
     () => this.estadoRespuestas().status === 'forbidden',
   );
 
-  /**
-   * El motivo del 403, tal como lo dio el servidor, para pintarlo en el muro.
-   *
-   * El respaldo es el mismo texto que usa `app-view-state-host` para S5: un 403
-   * sin mensaje no puede quedar como un bloque en blanco, que se leería como
-   * «no hay nada» —justo la confusión que esta pantalla evita—.
-   */
+  /** The 403 reason for the answers, as S5: never read as «nadie respondió». */
   protected readonly motivoRespuestasProhibidas = computed(() => {
     const actual = this.estadoRespuestas();
     return actual.status === 'forbidden'
-      ? (actual.message ??
-          'Su rol o el propósito de uso declarado no alcanzan para ver este contenido.')
+      ? (actual.message ?? 'Su rol o el propósito de uso declarado no alcanzan para ver este contenido.')
       : '';
   });
 
   /** Si ya hay respuestas suficientes para un agregado o un CSV sin poner en riesgo el anonimato (D-13). */
-  protected readonly suficientesRespuestas = computed(
-    () => this.respuestas().length >= UMBRAL_MINIMO_RESPUESTAS,
-  );
+  protected readonly suficientesRespuestas = computed(() => this.respuestas().length >= UMBRAL_MINIMO_RESPUESTAS);
 
-  /**
-   * El dashboard que pide FT-29: un gráfico de barras por pregunta.
-   *
-   * Se arma en el cliente a partir de `respuestas()`, ya cargadas para la
-   * lista de abajo — no hace falta un endpoint de agregación nuevo. Vacío
-   * mientras no haya respuestas suficientes: ver {@link UMBRAL_MINIMO_RESPUESTAS}.
-   */
-  protected readonly resumenPorPregunta = computed<readonly ResumenDePregunta[]>(() => {
+  /** One bar chart per question, built from the answers already loaded; empty below the threshold. */
+  protected readonly resumenPorPregunta = computed<readonly QuestionSummary[]>(() => {
     const encuesta = this.encuesta();
     if (!encuesta || !this.suficientesRespuestas()) return [];
     return encuesta.questions.map((pregunta) => resumirPregunta(pregunta, this.respuestas()));
   });
 
-  /** Si la pantalla está mostrando la vista previa en vez de la lista de preguntas. */
+  /** Whether the questionnaire tab shows it as the patient sees it. */
   protected readonly enPrevia = signal(false);
 
   /** El texto de cada pregunta por id, para rotular las respuestas recibidas. */
@@ -162,19 +157,19 @@ export class SurveyDetailScreen {
     () => new Map((this.encuesta()?.questions ?? []).map((p) => [p.id, p.questionText])),
   );
 
-  /**
-   * Whether a service sends this survey TODAY (its template is the one a
-   * service uses in `GET /surveys/service-assignments`). A hand-made survey
-   * never is: its sheet says «Ya no se envía», never just «Publicada».
-   */
-  protected readonly sending = signal<'yes' | 'no' | 'unknown' | null>(null);
-  protected readonly sendingLabel = computed(() => {
-    const survey = this.encuesta();
-    if (survey === null || survey === undefined) return { text: '', variant: 'secondary' as const };
-    if (!survey.published) return { text: 'Nunca se envió', variant: 'secondary' as const };
-    const sending = this.sending();
-    if (sending === 'yes') return { text: 'Se envía', variant: 'success' as const };
-    return sending === 'no' ? { text: 'Ya no se envía', variant: 'secondary' as const } : { text: 'Envío sin confirmar', variant: 'secondary' as const };
+  /** Whether this survey is sent today; `null` while it is being checked. */
+  protected readonly sending = signal<SendingStatus | null>(null);
+  protected readonly sendingLabel = computed(() => sendingLabelOf(this.encuesta()?.published ?? false, this.sending()));
+
+  /** The open tab: Preguntas · Resumen · Respuestas. `#resumen` / `#respuestas` deep-link to theirs. */
+  protected readonly selectedTab = signal(SHEET_TABS.indexOf(this.route.snapshot.fragment as (typeof SHEET_TABS)[number]) + 1 || 0);
+
+  /** The section's crumbs, then the survey itself (the section becomes a link back). */
+  protected readonly crumbs = computed<readonly BreadcrumbItem[]>(() => {
+    const base = this.navigation.breadcrumbs();
+    const title = this.encuesta()?.title;
+    if (title === undefined || base.length === 0) return base;
+    return [...base.slice(0, -1), { ...base[base.length - 1]!, routerLink: ENCUESTAS_ROUTE }, { label: title }];
   });
 
   /** Published: there may be responses to read. */
@@ -185,10 +180,11 @@ export class SurveyDetailScreen {
 
   constructor() {
     this.cargar();
-    this.serviceAssignments.list().subscribe({
-      next: (data) => this.sending.set(data.services.some((row) => row.assignment?.templateId === this.surveyId) ? 'yes' : 'no'),
-      error: () => this.sending.set('unknown'),
-    });
+    // Sent today = a system base survey, or the template a service uses now. Either read may fail on its own.
+    forkJoin([
+      this.catalog.list().pipe(catchError(() => of(null))),
+      this.serviceAssignments.list().pipe(catchError(() => of(null))),
+    ]).subscribe(([catalog, assignments]) => this.sending.set(sendingStatusOf(this.surveyId, catalog, assignments)));
   }
 
   /** Trae la encuesta con su cuestionario. */
@@ -261,7 +257,7 @@ export class SurveyDetailScreen {
     const filas = this.respuestas().map((respuesta) => {
       const porPregunta = new Map(respuesta.answers.map((a) => [a.questionId, this.valorDe(a)]));
       return [
-        diaDeEnvio(respuesta.submittedAt),
+        submissionDay(respuesta.submittedAt),
         ...encuesta.questions.map((p) => porPregunta.get(p.id) ?? ''),
       ];
     });

@@ -5,7 +5,7 @@ import type {
   InsightsTrendPoint,
 } from '../../../core/data-access/surveys/surveys.types';
 import type { MetricTone } from '../../../shared/components/molecules/metric-card/metric-card.types';
-import { armarBarras, type BarraDeResumen } from '../survey-detail/survey-detail.logic';
+import { armarBarras, type SummaryBar } from '../survey-detail/survey-detail.logic';
 
 /* ============================================================================
     «Cómo le va» — la lógica de presentación del resumen general.
@@ -308,7 +308,7 @@ export function combinarPorDimension(
 export interface ResumenAgregado {
   readonly totalRespondida: number;
   readonly promedio: number | null;
-  readonly barras: readonly BarraDeResumen[];
+  readonly barras: readonly SummaryBar[];
   /** `1-5`, `0-10` o `null` si no es de escala: es lo que dice el eje. */
   readonly escala: '1-5' | '0-10' | null;
 }

@@ -142,6 +142,10 @@ describe('SurveysInbox · Buzón de solo lectura', () => {
       expect(statusOf('old')).toBe('Encuesta anterior (ya no se envía)');
     });
 
+    it('lo que se envía va primero, después lo anterior', () => {
+      expect(titles()).toEqual(['Encuesta de su consulta médica', 'Estudios por imágenes', 'Satisfacción con la consulta', 'Derivación a kinesiología']);
+    });
+
     it('nunca dice «Activa» ni ofrece gestionar: sin «Abrir», sin filtro por estado, sin borradores', () => {
       expect(root().textContent).not.toMatch(/\bActiva\b|Borradores?|Desactivad|\bAbrir\b|Nueva encuesta/);
       expect(titles()).not.toContain('Borrador sin enviar');

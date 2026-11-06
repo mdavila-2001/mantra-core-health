@@ -49,10 +49,13 @@
   white-space: nowrap;
 }
 
-/* Hover and focus never look like the selected option (no brand border, no tint). */
-.catalogo__opcion:hover:not(.is-elegida) {
-  border-color: var(--border-strong);
-  background: var(--bg-inset);
+/* Hover never looks like the selected option (no brand border, no tint), and only
+   where there is a real pointer: on touch it would stick after a tap. */
+@media (hover: hover) {
+  .catalogo__opcion:hover:not(.is-elegida) {
+    border-color: var(--border-strong);
+    background: var(--bg-inset);
+  }
 }
 
 .catalogo__opcion:focus-visible {
@@ -159,6 +162,10 @@
 .catalogo__error {
   display: block;
   margin-block-end: var(--sp-4);
+}
+
+.catalogo__error-pista {
+  margin-block: var(--sp-2);
 }
 
 .catalogo__acciones {

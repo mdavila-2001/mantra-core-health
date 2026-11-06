@@ -1,6 +1,6 @@
 /**
  * Evidence for «Encuestas por servicio», the read-only «Buzón», the read-only
- * survey sheet and the patient's «Mis encuestas» (06/11/2026, third round).
+ * survey sheet and the patient's «Mis encuestas» (06/11/2026, fourth round).
  *
  * Against the demo build (`yarn start:demo`, mock backend). One browser, serial
  * captures, VIEWPORT-only screenshots (never full page: the side rail would cover
@@ -17,7 +17,7 @@ import { join } from 'node:path';
 import { chromium, expect } from '@playwright/test';
 
 const BASE = process.env.BASE ?? 'http://localhost:4200';
-const OUT = process.env.OUT ?? 'docs/refactor-profesional/trabajo/capturas/despues/surveys-per-service-2026-11-06-r3';
+const OUT = process.env.OUT ?? 'docs/refactor-profesional/trabajo/capturas/despues/surveys-per-service-2026-11-06-r4';
 mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch();
@@ -46,17 +46,23 @@ async function go(page, path) {
 }
 
 async function shot(page, name) {
-  await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
+  await page.evaluate(async () => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    await document.fonts.ready;
+    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+  });
   const hide = await page.addStyleTag({ content: 'aside.mock { display: none !important; }' });
   await page.screenshot({ path: join(OUT, `${name}.png`) });
   await hide.evaluate((node) => node.remove());
 }
 
-async function fresh(width, height, failures = null) {
+async function fresh(width, height, failures = null, theme = 'light') {
   // Reduced motion: transitions finish at once, so no capture is a cross-fade.
-  const context = await browser.newContext({ viewport: { width, height }, locale: 'es-BO', timezoneId: 'America/La_Paz', reducedMotion: 'reduce' });
+  const context = await browser.newContext({ viewport: { width, height }, locale: 'es-BO', timezoneId: 'America/La_Paz', reducedMotion: 'reduce', colorScheme: theme });
   const page = await context.newPage();
   if (failures) await page.addInitScript((f) => sessionStorage.setItem('mock:fallos', JSON.stringify(f)), failures);
+  // The app's own theme preference (`ThemeService`, `mantra-core-health.theme`).
+  if (theme === 'dark') await page.addInitScript(() => localStorage.setItem('mantra-core-health.theme', 'dark'));
   return { context, page };
 }
 
@@ -98,8 +104,10 @@ const list = (page) => page.getByTestId('service-surveys-list');
   await card.getByRole('link', { name: `Ver las respuestas de ${title}` }).click();
   await expect(page.getByTestId('survey-detail-sending')).toHaveText('Se envía', { timeout: 30_000 });
   await shot(page, '05-imported-survey-sheet-1440');
-  await page.getByRole('heading', { name: 'Respuestas recibidas', exact: true }).scrollIntoViewIfNeeded();
-  await shot(page, '05b-imported-survey-answers-1440');
+  // Just imported: no answers yet, so the answers tab is an S3 with its next action.
+  await expect(page.getByTestId('survey-detail-no-answers-list')).toBeVisible();
+  await page.getByTestId('survey-detail-tabs').scrollIntoViewIfNeeded();
+  await shot(page, '05b-imported-survey-no-answers-yet-1440');
   await go(page, servicesUrl);
   await expect(list(page)).toBeVisible({ timeout: 30_000 });
 
@@ -147,7 +155,6 @@ const list = (page) => page.getByTestId('service-surveys-list');
   await signIn(page, 'medico.nuevo@alovida.mock');
   await go(page, servicesUrl);
   await expect(page.getByTestId('service-surveys-go-to-my-services')).toBeVisible({ timeout: 30_000 });
-  await page.getByTestId('service-surveys-no-services').scrollIntoViewIfNeeded();
   await shot(page, '10-no-services-1440');
   await context.close();
 }
@@ -164,6 +171,7 @@ for (const [name, failures, ready] of [
   await go(page, servicesUrl);
   await expect(page.locator(ready).first()).toBeVisible({ timeout: 30_000 });
   if (name.startsWith('11')) await expect(page.getByText(/mock-fallo/).first()).toBeVisible({ timeout: 30_000 });
+  if (name.startsWith('12')) log.push({ step: 'catalog-error', requests: await requests(page, 'GET', '/surveys/standard-catalog') });
   if (name.startsWith('13')) {
     await page.locator('[data-testid^="service-survey-import-"]').first().click();
     await page.getByTestId('standard-catalog-import').click();
@@ -212,10 +220,14 @@ for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) 
   }
   await legacy.getByRole('link', { name: /Ver las respuestas/ }).click();
   await expect(page.getByTestId('survey-detail-sending')).toHaveText('Ya no se envía', { timeout: 30_000 });
+  await expect(page.locator('.encuesta__respuesta').first()).toBeVisible({ timeout: 30_000 });
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, `21-legacy-sheet-read-only-${suffix}`);
-  await page.getByTestId('survey-detail-read-only').scrollIntoViewIfNeeded();
-  await shot(page, `22-legacy-sheet-notice-and-questions-${suffix}`);
+  // The questionnaire tab, scrolled so several questions show.
+  await page.getByRole('tab', { name: 'Preguntas', exact: true }).click();
+  await page.getByTestId('survey-detail-questions').scrollIntoViewIfNeeded();
+  await page.evaluate(() => window.scrollBy(0, 120));
+  await shot(page, `22-legacy-sheet-questions-${suffix}`);
   await context.close();
 }
 
@@ -229,6 +241,37 @@ for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) 
   await page.getByTestId('header-encuestas').click();
   await expect(page.getByTestId('questionnaires-no-surveys')).toBeVisible({ timeout: 30_000 });
   await shot(page, '24-patient-my-surveys-empty-390');
+  await context.close();
+}
+
+// 25–30 · Dark mode of the new screens, 1440 and 390.
+for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) {
+  const { context, page } = await fresh(width, height, null, 'dark');
+  await signIn(page, DOCTOR);
+  await go(page, servicesUrl);
+  await expect(list(page)).toBeVisible({ timeout: 30_000 });
+  await shot(page, `25-dark-per-service-${suffix}`);
+  await page.locator('[data-testid^="service-survey-import-"]').first().click();
+  await expect(page.getByTestId('standard-catalog-preview')).toBeVisible();
+  await shot(page, `26-dark-picker-${suffix}`);
+  await page.getByTestId('standard-catalog-cancel').click();
+  await page.getByRole('tab', { name: 'Buzón', exact: true }).click();
+  await expect(page.getByTestId('surveys-inbox-list')).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId('surveys-inbox-list').scrollIntoViewIfNeeded();
+  await shot(page, `27-dark-inbox-${suffix}`);
+  await page.getByTestId('surveys-inbox-list').locator('li', { hasText: 'Experiencia de teleconsulta' }).getByRole('link', { name: /Ver las respuestas/ }).click();
+  await expect(page.getByTestId('survey-detail-sending')).toHaveText('Ya no se envía', { timeout: 30_000 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await shot(page, `28-dark-sheet-${suffix}`);
+  await context.close();
+}
+{
+  const { context, page } = await fresh(390, 844, [{ patron: '/surveys/me/invitations', modo: 'empty' }], 'dark');
+  await signIn(page, 'paciente@alovida.mock');
+  await page.getByTestId('header-mas').click();
+  await page.getByTestId('header-encuestas').click();
+  await expect(page.getByTestId('questionnaires-no-surveys')).toBeVisible({ timeout: 30_000 });
+  await shot(page, '29-dark-patient-my-surveys-390');
   await context.close();
 }
 

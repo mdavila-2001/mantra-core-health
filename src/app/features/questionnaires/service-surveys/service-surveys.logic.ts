@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { readApiError } from '../../../core/http/api-error';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { unexpectedError } from '../../../core/view-state/view-state';
+import { forbidden, unexpectedError } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import type {
   ServiceSurveyAssignments,
@@ -65,8 +65,8 @@ export function answerFormat(question: StandardSurveyQuestion): string {
     case 'BOOLEAN':
       return `Sí / No${optional}`;
     case 'SCALE': {
-      // The text already spells the scale out («(1 = Nunca, 5 = Siempre)»): do not repeat it.
-      if (/\(\s*\d+\s*=/.test(question.text)) return question.required ? '' : 'Opcional';
+      // The text already spells the scale out («(1 = Nunca, 5 = Siempre)»): only the type.
+      if (/\(\s*\d+\s*=/.test(question.text)) return `Escala${optional}`;
       const min = question.scaleMin ?? 1;
       const max = question.scaleMax ?? 5;
       const recommendation =
@@ -154,20 +154,20 @@ function statusAndReason(error: unknown): { status: number | undefined; reason: 
 }
 
 /** Shared by both writes: no practitioner profile, offline, or a foreign service. */
-function commonFailure(status: number | undefined): string | null {
+function commonFailure(status: number | undefined, service: string): string | null {
   if (status === 412) return 'Su cuenta no tiene un perfil profesional asociado. Complete su perfil profesional para elegir encuestas.';
-  if (status === 403) return 'Ese servicio no figura entre los suyos, así que no puede cambiar su encuesta.';
+  if (status === 403) return `«${service}» no figura entre sus servicios, así que no puede cambiar su encuesta.`;
   if (status === 0) return 'No hay conexión con el servidor. Revise su red y vuelva a intentar.';
   return null;
 }
 
 /**
- * Why an import (`PUT`) failed, and what to refresh.
+ * Why an import (`PUT`) failed for a service, and what to refresh.
  * 404 `SURVEY_CATALOG_CODE_UNKNOWN` → the catalog changed: reload it.
  * 409 `ASSIGNMENT_ALREADY_ACTIVE` → another session changed the row: reload the list.
  */
-export function importFailure(error: unknown): WriteFailure {
-  const title = 'No se pudo importar la encuesta';
+export function importFailure(error: unknown, service: string): WriteFailure {
+  const title = `No se pudo importar la encuesta de «${service}»`;
   const { status, reason } = statusAndReason(error);
   if (status === 404 || reason === 'SURVEY_CATALOG_CODE_UNKNOWN') {
     return { title, message: 'Esa encuesta ya no está en el catálogo. Actualizamos el catálogo: elija otra.', followUp: 'reload-catalog' };
@@ -175,34 +175,38 @@ export function importFailure(error: unknown): WriteFailure {
   if (status === 409 || reason === 'ASSIGNMENT_ALREADY_ACTIVE') {
     return {
       title,
-      message: 'La encuesta de este servicio cambió al mismo tiempo en otra sesión. Actualizamos la lista: revísela y vuelva a intentar.',
+      message: `La encuesta de «${service}» cambió al mismo tiempo en otra sesión. Actualizamos la lista: revísela.`,
       followUp: 'reload-list',
     };
   }
-  return { title, message: commonFailure(status) ?? 'El servidor no pudo guardar el cambio. La encuesta del servicio sigue como estaba.', followUp: null };
+  return { title, message: commonFailure(status, service) ?? `El servidor no pudo guardar el cambio. «${service}» sigue con la encuesta que tenía.`, followUp: null };
 }
 
-/** Why a removal (`DELETE`) failed. 404/409: the row changed elsewhere, reload the list. */
-export function removeFailure(error: unknown): WriteFailure {
-  const title = 'No se pudo quitar la encuesta';
+/** Why a removal (`DELETE`) failed. The API's removal is idempotent: it only refuses (403/412) or fails. */
+export function removeFailure(error: unknown, service: string): WriteFailure {
+  const title = `No se pudo quitar la encuesta de «${service}»`;
   const { status } = statusAndReason(error);
-  if (status === 404 || status === 409) {
-    return { title, message: 'La encuesta de este servicio ya había cambiado. Actualizamos la lista: revísela.', followUp: 'reload-list' };
-  }
-  return { title, message: commonFailure(status) ?? 'El servidor no pudo quitar la encuesta. El servicio sigue usándola.', followUp: null };
+  return { title, message: commonFailure(status, service) ?? `El servidor no pudo quitar la encuesta. «${service}» sigue usándola.`, followUp: null };
+}
+
+/** A refusal (403/412) cannot succeed by retrying: it gets the S5 anatomy, without «Reintentar». */
+function isRefusal(error: unknown): boolean {
+  return error instanceof HttpErrorResponse && (error.status === 403 || error.status === 412);
 }
 
 /**
- * Any failure drawn with the S9 anatomy (alert, support code, «Copiar código»,
- * next action), with our own title and message: never the server's text. A
- * request that never arrived keeps its S8 (offline) anatomy.
+ * Any failure drawn with the host's anatomy, with our own title and message:
+ * never the server's text. A refusal (403/412) is S5 (no retry); a request that
+ * never arrived keeps S8; anything else is S9 with support code and retry.
  */
 export function failureState(error: unknown, title: string, message: string): ViewState<never> {
   const base = errorToViewState<never>(error);
   if (base.status === 'offline') return base;
   const fromBase = 'requestId' in base ? base.requestId : undefined;
   const fromBody = error instanceof HttpErrorResponse ? (readApiError(error)?.correlationId ?? error.headers.get('x-request-id')) : null;
-  return unexpectedError(fromBase ?? fromBody ?? 'sin-id', message, {
+  const requestId = fromBase ?? fromBody ?? undefined;
+  if (isRefusal(error)) return forbidden({ message: `${title}. ${message}`, ...(requestId ? { requestId } : {}) });
+  return unexpectedError(requestId ?? 'sin-id', message, {
     title,
     hint: 'Intente de nuevo en unos segundos. Si vuelve a pasar, comparta el código de soporte con el equipo de ayuda.',
   });

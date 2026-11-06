@@ -6,7 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 
 import { API_BASE_URL } from '../../../core/data-access/api';
 import { SurveyDetailScreen } from './survey-detail';
-import { diaDeEnvio } from './survey-detail.logic';
+import { submissionDay } from './survey-detail.logic';
 
 /* ============================================================================
     «Respuestas recibidas»: privacidad de la fecha.
@@ -75,7 +75,9 @@ describe('SurveyDetailScreen · respuestas recibidas', () => {
     });
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
-    pantalla = await harness.navigateByUrl('/questionnaires/s-1', SurveyDetailScreen);
+    // `#respuestas` deep-links to the «Respuestas» tab of the sheet.
+    pantalla = await harness.navigateByUrl('/questionnaires/s-1#respuestas', SurveyDetailScreen);
+    http.expectOne((r) => r.url === '/surveys/catalog').flush([]);
     http.expectOne((r) => r.url === '/surveys/service-assignments').flush({ consultation: {}, services: [] });
     http.expectOne((r) => r.url === '/surveys/templates/s-1').flush(ficha());
     http
@@ -153,14 +155,14 @@ describe('SurveyDetailScreen · respuestas recibidas', () => {
   });
 });
 
-describe('diaDeEnvio', () => {
+describe('submissionDay', () => {
   it('devuelve el día en UTC, sin hora', () => {
-    expect(diaDeEnvio(new Date('2026-10-28T00:00:00.000Z'))).toBe('2026-10-28');
-    expect(diaDeEnvio(new Date('2026-10-28T23:59:59.000Z'))).toBe('2026-10-28');
+    expect(submissionDay(new Date('2026-10-28T00:00:00.000Z'))).toBe('2026-10-28');
+    expect(submissionDay(new Date('2026-10-28T23:59:59.000Z'))).toBe('2026-10-28');
   });
 
   it('sin fecha o con una fecha inválida devuelve vacío', () => {
-    expect(diaDeEnvio(null)).toBe('');
-    expect(diaDeEnvio(new Date('no es una fecha'))).toBe('');
+    expect(submissionDay(null)).toBe('');
+    expect(submissionDay(new Date('no es una fecha'))).toBe('');
   });
 });

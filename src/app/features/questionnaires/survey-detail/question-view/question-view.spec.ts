@@ -10,19 +10,18 @@ function render(question: SurveyQuestion): HTMLElement {
   return fixture.nativeElement as HTMLElement;
 }
 
-describe('QuestionView · solo lectura', () => {
-  it('muestra texto, obligatoria, tipo y una muestra apagada; no hay nada que abrir', () => {
-    const view = render({ id: 'q', position: 2, questionText: '¿Volvería?', answerType: 'BOOLEAN', required: true } as SurveyQuestion);
+describe('QuestionView · solo lectura, como texto', () => {
+  it('muestra texto, la marca de obligatoria (dicha en palabras) y cómo se responde; nada editable', () => {
+    const view = render({ id: 'q', position: 2, questionText: '¿Volvería?', answerType: 'BOOLEAN', required: true });
     expect(view.textContent).toContain('¿Volvería?');
-    expect(view.querySelector('[aria-label="obligatoria"]')).not.toBeNull();
-    expect(view.textContent).toContain('Sí / No');
-    expect(view.querySelector('button, [role="button"]')).toBeNull();
-    expect(view.querySelector('input')?.disabled).toBe(true);
+    expect(view.querySelector('.sr-only')?.textContent).toContain('obligatoria');
+    expect(view.querySelector('.pregunta__meta')?.textContent?.trim()).toBe('Sí / No');
+    expect(view.querySelector('input, button, [role="button"]')).toBeNull();
   });
 
-  it('resume hasta tres opciones y cuenta el resto', () => {
-    const view = render({ id: 'q', position: 1, questionText: '¿Cuál?', answerType: 'SINGLE_CHOICE', required: false, options: ['A', 'B', 'C', 'D', 'E'] } as SurveyQuestion);
-    expect(view.querySelector('.pregunta__meta')?.textContent).toContain('A · B · C · y 2 más');
-    expect(view.querySelectorAll('.pregunta__opcion')).toHaveLength(5);
+  it('lista las opciones una sola vez, con las mismas palabras que el selector', () => {
+    const view = render({ id: 'q', position: 1, questionText: '¿Cuál?', answerType: 'SINGLE_CHOICE', required: false, options: ['A', 'B', 'C'] });
+    expect(view.querySelector('.pregunta__meta')?.textContent?.trim()).toBe('Una opción: A · B · C · opcional');
+    expect(view.textContent?.match(/\bA\b/g)).toHaveLength(1);
   });
 });

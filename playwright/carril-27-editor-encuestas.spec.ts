@@ -11,7 +11,7 @@ import { entrar, esperarAplicacionLista, irA } from './support/sesion';
  * Two runs of the same flow:
  *   - Mock (default): `yarn start:demo`, the mock practitioner. The mock answers
  *     inside the browser, so requests/responses come from `window.__mockRequests`.
- *   - Real API (opt-in, `E2E_REAL_API=1`): `ng serve` proxied to a live API
+ *   - Real API (opt-in, `E2E_API_REAL=1`): `ng serve` proxied to a live API
  *     seeded with `tools/alovida/seed-dev-data.mjs`; requests/responses are read
  *     from the network.
  *
@@ -23,7 +23,8 @@ import { entrar, esperarAplicacionLista, irA } from './support/sesion';
  */
 
 const MOCK_DOCTOR: Actor = { rol: 'doctora', identificador: 'medica@alovida.mock', clave: 'mock', nombre: 'Médica' };
-const REAL_API = process.env['E2E_REAL_API'] === '1';
+/** Same switch as the other real-API specs (`altas-api-real-tres-escenarios.spec.ts`). */
+const API_REAL = process.env['E2E_API_REAL'] === '1';
 
 /** The three widths required by the TAREA-27 sheet. */
 const VIEWPORTS = [
@@ -83,6 +84,11 @@ async function reloadServiceSurveys(page: Page): Promise<void> {
 }
 
 test.describe('Encuestas por servicio · backend simulado', () => {
+  // Each mode runs alone: with the real API on, the mock run is reported as skipped (not as a pass).
+  test.beforeAll(() => {
+    test.info().skip(API_REAL, 'Omitido: E2E_API_REAL=1 corre el modo contra la API real.');
+  });
+
   test('importar y quitar persisten tras recargar; la cita médica es fija; lo importado se lee en el Buzón', async ({ page }) => {
     test.setTimeout(4 * 60_000);
     await entrar(page, MOCK_DOCTOR);
@@ -223,21 +229,23 @@ test.describe('Encuestas por servicio · backend simulado', () => {
 });
 
 /*
- * Real API, opt-in. Only declared when `E2E_REAL_API=1`: against `yarn start`
- * (not demo) proxied to a live API seeded with `tools/alovida/seed-dev-data.mjs`,
- * with a seeded practitioner that offers at least one service.
+ * Real API, opt-in with `E2E_API_REAL=1`: against `yarn start` (not demo)
+ * proxied to a live API seeded with `tools/alovida/seed-dev-data.mjs`, with a
+ * seeded practitioner that offers at least one service. Without it the group is
+ * reported as skipped, never as a pass.
  */
-if (REAL_API) {
-  test.describe('Encuestas por servicio · API real', () => {
-    let api: APIRequestContext;
+test.describe('Encuestas por servicio · API real', () => {
+    let api: APIRequestContext | undefined;
 
     test.beforeAll(async () => {
-      api = await contextoDeApi();
-      expect(await apiViva(api), `La API no responde en ${urlDeApi()}. Levántela y siémbrela con \`node tools/alovida/seed-dev-data.mjs\`.`).toBe(true);
+      test.info().skip(!API_REAL, 'Omitido: hace falta E2E_API_REAL=1 con la API sembrada y el front en modo real. No es un verde.');
+      const context = await contextoDeApi();
+      api = context;
+      expect(await apiViva(context), `La API no responde en ${urlDeApi()}. Levántela y siémbrela con \`node tools/alovida/seed-dev-data.mjs\`.`).toBe(true);
     });
 
     test.afterAll(async () => {
-      await api.dispose();
+      await api?.dispose();
     });
 
     test('GET/PUT/DELETE service-assignments contra la API, con recarga', async ({ page }) => {
@@ -264,10 +272,10 @@ if (REAL_API) {
       expect(persisted.services.find((s) => s.serviceId === serviceId)?.assignment?.catalogCode).toBe(code);
       await expect(row).toContainText(title);
 
-      const del = page.waitForResponse((r) => r.request().method() === 'DELETE' && r.url().endsWith(`/surveys/service-assignments/${serviceId}`));
+      const removal = page.waitForResponse((r) => r.request().method() === 'DELETE' && r.url().endsWith(`/surveys/service-assignments/${serviceId}`));
       await row.getByTestId(`service-survey-remove-${serviceId}`).click();
       await page.getByTestId('dialogo-confirmar').click();
-      expect((await del).status()).toBe(204);
+      expect((await removal).status()).toBe(204);
 
       const afterRemove = page.waitForResponse((r) => r.request().method() === 'GET' && r.url().endsWith('/surveys/service-assignments'));
       await reloadServiceSurveys(page);
@@ -276,4 +284,3 @@ if (REAL_API) {
       await expect(row.getByTestId('service-surveys-base-only')).toBeVisible();
     });
   });
-}

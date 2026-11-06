@@ -9,7 +9,8 @@ import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
-import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { SupportCode } from '../../../shared/components/molecules/support-code/support-code';
 import { answerFormat, questionCount, sortForService, sourcesLine } from './service-surveys.logic';
 
 /**
@@ -20,11 +21,11 @@ import { answerFormat, questionCount, sortForService, sourcesLine } from './serv
  * Choosing only changes the preview; nothing is sent until «Importar». Only
  * opened with a non-empty catalog (the container shows the empty S3 instead).
  * Presentational: the container does the PUT and passes `saving` and `error`;
- * «Reintentar» on the error re-sends the chosen survey.
+ * «Importar» is the retry after a failure.
  */
 @Component({
   selector: 'app-survey-catalog-picker',
-  imports: [AppButton, Badge, ContentDialog, ViewStateHost],
+  imports: [Alert, AppButton, Badge, ContentDialog, SupportCode],
   templateUrl: './survey-catalog-picker.html',
   styleUrl: './survey-catalog-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +42,15 @@ export class SurveyCatalogPicker {
 
   readonly pick = output<string>();
   readonly closed = output<void>();
+
+  /** The failure in words: title, message, hint and support code (never the server's text). */
+  protected readonly failure = computed(() => {
+    const state = this.error();
+    if (state === null) return null;
+    if (state.status === 'error') return { title: state.title ?? 'No se pudo importar la encuesta', message: state.message ?? '', hint: state.hint ?? null, requestId: state.requestId };
+    if (state.status === 'forbidden') return { title: 'No se pudo importar la encuesta', message: state.message ?? '', hint: null, requestId: state.requestId ?? null };
+    return { title: 'No se pudo importar la encuesta', message: 'No hay conexión con el servidor. Revise su red y vuelva a intentar.', hint: null, requestId: null };
+  });
 
   protected readonly options = computed(() => sortForService(this.catalog(), this.kind()));
 

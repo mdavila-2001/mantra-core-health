@@ -18,13 +18,26 @@ describe('simulador: encuestas estándar por servicio', () => {
 
   afterEach(() => resetServiceSurveyAssignments());
 
-  function call(method: MockMethod, path: string, caller = doctor, body: unknown = {}) {
+  interface Row {
+    readonly serviceId: string;
+    readonly assignment: { readonly catalogCode: string | null; readonly templateId: string } | null;
+  }
+  interface Body {
+    readonly items: readonly { code: string; source: { license: string }; questions: readonly { answerType: string; required: boolean }[] }[];
+    readonly consultation: unknown;
+    readonly services: readonly Row[];
+    readonly assignment: { readonly catalogCode: string };
+    readonly reason: string;
+  }
+
+  /** Calls a mock route; the body is typed loosely as the union of what these routes return. */
+  function call(method: MockMethod, path: string, caller = doctor, body: unknown = {}): { status: number; body: Body } {
     const match = router.match(method, path);
     if (match === null) throw new Error(`No existe ${method} ${path}`);
-    const r = match.handler({ method, path, params: match.params, query: new URLSearchParams(), body, headers: new HttpHeaders(), user: caller });
+    const r: unknown = match.handler({ method, path, params: match.params, query: new URLSearchParams(), body, headers: new HttpHeaders(), user: caller });
     return r !== null && typeof r === 'object' && 'status' in r && 'body' in r
-      ? (r as { status: number; body: any }) // eslint-disable-line @typescript-eslint/no-explicit-any
-      : { status: 200, body: r as any }; // eslint-disable-line @typescript-eslint/no-explicit-any
+      ? (r as { status: number; body: Body })
+      : { status: 200, body: r as Body };
   }
 
   const ECG = uuid('service-ECG');
@@ -47,7 +60,9 @@ describe('simulador: encuestas estándar por servicio', () => {
     const { body } = call('GET', '/surveys/service-assignments');
     expect(body.consultation).toMatchObject({ system: true, title: 'Cita médica', replaceable: false });
     expect(body.services.length).toBe(5);
-    expect(body.services.find((s: { serviceId: string }) => s.serviceId === ECG).assignment).toBeNull();
+    expect(body.services.find((s) => s.serviceId === ECG)?.assignment).toBeNull();
+    // Legacy hand-made attachment: reported with catalogCode null (the front reads it as none).
+    expect(body.services.find((s) => s.serviceId === uuid('service-TELE-CARDIO'))?.assignment?.catalogCode).toBeNull();
   });
 
   it('PUT deja UNA activa por servicio, cambiar la reemplaza y DELETE vuelve a la base', () => {
@@ -57,15 +72,14 @@ describe('simulador: encuestas estándar por servicio', () => {
     expect(change.body.assignment.catalogCode).toBe('STD_LAB_V1');
 
     const read = call('GET', '/surveys/service-assignments').body.services.filter(
-      (s: { serviceId: string }) => s.serviceId === ECG,
+      (s) => s.serviceId === ECG,
     );
     expect(read).toHaveLength(1);
-    expect(read[0].assignment.catalogCode).toBe('STD_LAB_V1');
+    expect(read[0]!.assignment?.catalogCode).toBe('STD_LAB_V1');
 
     expect(call('DELETE', `/surveys/service-assignments/${ECG}`).status).toBe(204);
     expect(
-      call('GET', '/surveys/service-assignments').body.services.find((s: { serviceId: string }) => s.serviceId === ECG)
-        .assignment,
+      call('GET', '/surveys/service-assignments').body.services.find((s) => s.serviceId === ECG)?.assignment,
     ).toBeNull();
   });
 
@@ -75,5 +89,12 @@ describe('simulador: encuestas estándar por servicio', () => {
     expect(unknown.body.reason).toBe('SURVEY_CATALOG_CODE_UNKNOWN');
     expect(call('PUT', `/surveys/service-assignments/${uuid('service-MAPA')}`, doctor, { catalogCode: 'STD_LAB_V1' }).status).toBe(403);
     expect(call('GET', '/surveys/service-assignments', patient).status).toBe(403);
+  });
+
+  it('una importación nueva no trae respuestas viejas; la sembrada sí trae algunas', () => {
+    const imported = call('PUT', `/surveys/service-assignments/${ECG}`, doctor, { catalogCode: 'STD_PROCEDURE_V1' }).body.assignment as unknown as { templateId: string };
+    const fresh = router.match('GET', `/surveys/templates/${imported.templateId}/responses`)!;
+    const freshAnswers = fresh.handler({ method: 'GET', path: '', params: fresh.params, query: new URLSearchParams(), body: null, headers: new HttpHeaders(), user: doctor });
+    expect(freshAnswers).toEqual([]);
   });
 });

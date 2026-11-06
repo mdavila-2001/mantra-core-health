@@ -116,12 +116,17 @@ function templateSummary(id: string, template: StandardTemplate) {
   return { id, title: template.title, description: template.description, status: 'ACTIVE', latestVersionNumber: 1, published: true, questionCount: template.questions.length };
 }
 
-/** A few deterministic answers per imported template, so its sheet has something to read. */
-function responsesFor(id: string, template: StandardTemplate) {
-  return Array.from({ length: 6 }, (_, n) => ({
+/**
+ * Deterministic answers for an imported template, only AFTER it was imported:
+ * one every two days since then, up to six. A fresh import has none.
+ */
+function responsesFor(id: string, template: StandardTemplate, importedAt: string) {
+  const days = Math.floor((Date.now() - new Date(importedAt).getTime()) / 86_400_000);
+  const count = Math.max(0, Math.min(6, Math.floor(days / 2)));
+  return Array.from({ length: count }, (_, n) => ({
     id: uuid(`${id}-response-${n}`),
     invitationId: uuid(`${id}-invitation-${n}`),
-    submittedAt: `${iso(-(n * 3 + 1), 0).slice(0, 10)}T00:00:00.000Z`,
+    submittedAt: `${iso(-(n * 2 + 1), 0).slice(0, 10)}T00:00:00.000Z`,
     answers: template.questions.map((q, i) => ({
       questionId: uuid(`${id}-q-${i}`),
       questionText: q.text,
@@ -233,6 +238,6 @@ export function registerServiceSurveyAssignments(router: MockRouter): void {
   });
   router.wrap('GET', '/surveys/templates/:id/responses', (request, next) => {
     const found = imported(request);
-    return found === undefined ? next(request) : responsesFor(found.id, found.template);
+    return found === undefined ? next(request) : responsesFor(found.id, found.template, found.records[0]!.assignedAt);
   });
 }
