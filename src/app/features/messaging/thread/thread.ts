@@ -17,6 +17,7 @@ import { ActivatedRoute, Router, RouterLink, type UrlTree } from '@angular/route
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { pointerOutside } from '../menu-dismiss';
 import { placeMessageMenu } from './message-menu';
+import { clockSkew } from './clock-skew';
 import { ChatWallpaper } from '../../../core/messaging/chat-wallpaper';
 import { WallpaperDialog } from './wallpaper-dialog/wallpaper-dialog';
 
@@ -345,6 +346,7 @@ export class Thread {
 
   private readonly injector = inject(Injector);
   private anclaDelMenu: HTMLElement | null = null; // the fixed menu follows it on scroll
+  private enviadoEn = 0; // local time of the last send, to measure the server clock skew
 
   /** Qué mensaje tiene el menú abierto. */
   protected readonly menuAbierto = signal<string | null>(null);
@@ -733,6 +735,12 @@ export class Thread {
   protected readonly fotosEnGrilla = FOTOS_EN_GRILLA;
 
   constructor() {
+    effect(() => {
+      const skew = clockSkew(this.store.enOrden(), this.store.perfil(), this.enviadoEn);
+      if (skew === null) return;
+      this.store.desfase.set(skew);
+      this.enviadoEn = 0;
+    });
     // Por `paramMap` y no por `snapshot`: al ir de un hilo a otro el router
     // reutiliza el componente, y con el snapshot quedaría mostrando el
     // anterior.
@@ -825,16 +833,9 @@ export class Thread {
   }
 
   /**
-   * Recoge la barra fijada mientras la tarjeta original está a la vista.
-   *
-   * Un solo observador por marco, con el marco como raíz: lo que importa es
-   * si la tarjeta se ve **dentro del hilo**, no en la ventana. Cuando cambia
-   * la tarjeta (llega otra más nueva, una búsqueda la saca de la lista) se
-   * deja de observar la anterior. Sólo en el navegador y con
-   * `IntersectionObserver`; al destruir se desconecta.
-   *
-   * Toggling the bar compensates the scroll by its height (at the bottom the
-   * `ResizeObserver` already keeps it pinned).
+   * Collapses the pinned bar while the original card is visible inside the
+   * thread (one `IntersectionObserver` rooted at the frame, browser only),
+   * compensating the scroll by the bar's height.
    */
   private observarLaTarjetaFijada(destroyRef: DestroyRef): void {
     if (!this.isBrowser || typeof IntersectionObserver === 'undefined') {
@@ -1344,11 +1345,8 @@ export class Thread {
   /**
    * Abre la hoja del contacto.
    *
-   * Antes navegaba a `/public-profile/<profileId>`, **una ruta que no existe**:
-   * las fichas públicas son `/p|o|f|l|s/:slug` y se llega por slug, no por id.
-   * Así que «Ver perfil» caía en el 404 desde el menú del hilo y desde el de la
-   * fila de la bandeja. Ver `ContactPanel` para por qué la respuesta es un
-   * panel y no un enlace arreglado.
+   * A panel, not a link: public profiles are reached by slug, not by id
+   * (`/public-profile/<id>` was a 404). See `ContactPanel`.
    */
   protected verPerfil(): void {
     this.menuCabecera.set(false);
@@ -1478,7 +1476,7 @@ export class Thread {
    * el menú lo ofrece.
    */
   protected puedeEditarse(mensaje: MensajeDelHilo): boolean {
-    return editable(mensaje, this.store.perfil(), this.ahora() + this.store.desfaseDelReloj());
+    return editable(mensaje, this.store.perfil(), this.ahora() + this.store.desfase());
   }
 
   /**
@@ -1705,6 +1703,7 @@ export class Thread {
   /** Al enviar siempre se baja: escribió usted. */
   protected alEnviar(): void {
     this.pegadoAbajo = true;
+    this.enviadoEn = Date.now();
   }
 }
 

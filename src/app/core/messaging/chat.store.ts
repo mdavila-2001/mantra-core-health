@@ -221,7 +221,7 @@ function requestIdDe(error: unknown): string {
 /**
  * How long a message can be edited after sending it: 15 minutes, as WhatsApp.
  *
- * Counted against `sentAt` (server time). The view adds `desfaseDelReloj` to
+ * Counted against `sentAt` (server time). The view adds `desfase` to
  * the browser clock: a laptop clock two minutes ahead used to close the
  * window at minute three. The API enforces the same rule (`EDIT_WINDOW_MS`).
  */
@@ -473,7 +473,7 @@ export class ChatStore {
   readonly hiloCargado = signal(false);
   readonly enviando = signal(false);
 
-  readonly desfaseDelReloj = signal(0); // server clock minus browser clock, per send ack
+  readonly desfase = signal(0); // server minus browser clock, measured by the thread
   /** Los que todavía no acusó el servidor, de todas las conversaciones. */
   readonly pendientes = signal<readonly MensajePendiente[]>([]);
 
@@ -1661,7 +1661,7 @@ export class ChatStore {
       this.editando.set(null);
       return;
     }
-    if (!editable(mensaje, this.perfil(), Date.now() + this.desfaseDelReloj())) {
+    if (!editable(mensaje, this.perfil(), Date.now() + this.desfase())) {
       return;
     }
     this.respondiendoA.set(null);
@@ -1941,7 +1941,6 @@ export class ChatStore {
       .subscribe({
         next: (acuse) => {
           this.enviando.set(false);
-          if (acuse.sentAt) this.desfaseDelReloj.set(acuse.sentAt.getTime() - Date.now());
           alTerminar?.();
           // El mensaje real entra en la lista y el pendiente sale en el mismo
           // paso, así la burbuja no parpadea. Sólo si se sigue mirando ese

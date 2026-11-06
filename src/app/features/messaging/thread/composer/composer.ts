@@ -310,7 +310,7 @@ export class Composer {
       this.enviar();
     }
     const ultimo = evento.key === 'ArrowUp' && this.texto() === '' && this.editando() === null
-      ? lastOwnText(this.store.enOrden(), this.store.perfil(), Date.now() + this.store.desfaseDelReloj()) : undefined;
+      ? lastOwnText(this.store.enOrden(), this.store.perfil(), Date.now() + this.store.desfase()) : undefined;
     if (ultimo) {
       evento.preventDefault();
       this.store.editar(ultimo);

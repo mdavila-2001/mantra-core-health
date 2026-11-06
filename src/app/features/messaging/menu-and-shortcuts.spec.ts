@@ -2,6 +2,7 @@ import { pointerOutside } from './menu-dismiss';
 import { placeMessageMenu } from './thread/message-menu';
 import { lastOwnText } from './thread/composer/last-own-message';
 import { shortcutOf } from './shortcuts/shortcuts';
+import { clockSkew } from './thread/clock-skew';
 import type { MensajeDelHilo } from '../../core/messaging/chat.store';
 
 const rect = (left: number, top: number, width: number, height: number): DOMRect =>
@@ -97,5 +98,21 @@ describe('shortcutOf', () => {
   it('tells Mod+E (emojis) from Mod+Shift+E (archive)', () => {
     expect(shortcutOf(key('KeyE', { ctrlKey: true, altKey: true }))?.accion).toBe('emojis');
     expect(shortcutOf(key('KeyE', { ctrlKey: true, altKey: true, shiftKey: true }))?.accion).toBe('archivar');
+  });
+});
+
+describe('clockSkew', () => {
+  const msg = (sentAt: number, sender = 'me', pendiente?: object) =>
+    ({ id: 'm', senderProfileId: sender, estado: 'enviado', sentAt: new Date(sentAt), pendiente }) as unknown as MensajeDelHilo;
+
+  it('measures server minus browser clock on the acknowledged own message (bug: «5 min» at minute 3)', () => {
+    // The laptop clock runs 2 minutes ahead of the server.
+    expect(clockSkew([msg(1_000_000)], 'me', 1_000_000 + 120_000)).toBe(-120_000);
+  });
+
+  it('waits while the message is still pending, someone else wrote last, or nothing was sent', () => {
+    expect(clockSkew([msg(1_000, 'me', {})], 'me', 5_000)).toBeNull();
+    expect(clockSkew([msg(1_000, 'other')], 'me', 5_000)).toBeNull();
+    expect(clockSkew([msg(1_000)], 'me', 0)).toBeNull();
   });
 });
