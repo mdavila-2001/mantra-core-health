@@ -135,13 +135,13 @@ const NO = new Set(['no', 'n', 'false', '0']);
 /**
  * Revisa un producto y, si está bien, arma el alta.
  *
- * Devuelve **todos** los problemas de una vez: cortar en el primero obliga a
- * corregir y reintentar tantas veces como errores haya.
- */
+ * Devuelve **todos** los problemas de una vez (cortar en el primero obliga a
+ * reintentar). `existente`: already in the catalog, so a name is not required. */
 export function reviewProduct(
   campos: ProductFields,
   categoriasPermitidas: readonly string[] = CATEGORIES,
   vinculo?: LinkWithCatalog,
+  existente = false,
 ): ProductReview {
   const errores: string[] = [];
   const codigo = campos.codigo.trim();
@@ -165,7 +165,7 @@ export function reviewProduct(
   // Con vínculo al catálogo esto lo trae el registro oficial: ni se pide ni se revisa.
   const receta = vinculo === undefined ? yesOrNo(campos.receta) : null;
   if (vinculo === undefined) {
-    if (marca === '' && generico === '') {
+    if (!existente && marca === '' && generico === '') {
       errores.push('Ponga la marca, el nombre genérico o los dos: sin nombre nadie lo encuentra.');
     }
     if (marca.length > NAME_LONG_MAX) {
@@ -290,7 +290,7 @@ export function draftChanges(
     unitPrice: valor(borrador.unitPrice),
     category: valor(borrador.category),
     description: valor(borrador.description),
-    inStock: borrador.inStock ?? true,
+    inStock: borrador.inStock ?? (completo ? true : undefined),
   };
   return Object.fromEntries(
     Object.entries(cambios).filter(([, dato]) => dato !== undefined),
@@ -681,7 +681,7 @@ export function reviewLoad(
         errores: [fila.errorDeForma],
       };
     }
-    const revision = reviewProduct(fila.campos, categoriasPermitidas);
+    const revision = reviewProduct(fila.campos, categoriasPermitidas, undefined, catalogo.has(fila.campos.codigo.trim()));
     if (!revision.valido) {
       return { ...fila, lista: false, motivo: 'INVALIDA', errores: revision.errores };
     }

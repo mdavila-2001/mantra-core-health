@@ -686,6 +686,16 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
 .app-main__inner {
     view-transition-name: contenido;
 }
+/* Same page, only the query changed (route-transition.ts): nothing is captured
+   apart from the root and nothing animates, so an open dialog never flickers. */
+:root[data-vt-quiet] .app-main__inner {
+    view-transition-name: none;
+}
+:root[data-vt-quiet]::view-transition-group(*),
+:root[data-vt-quiet]::view-transition-old(*),
+:root[data-vt-quiet]::view-transition-new(*) {
+    animation: none !important;
+}
 @media (prefers-reduced-motion: reduce) {
     ::view-transition-group(*),
     ::view-transition-old(*),

@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -47,6 +48,10 @@ import {
   type EntityCsvReading,
   type ImportEntity,
 } from './entity-csv';
+import {
+  ImportColumnsHelp,
+  type ImportTemplateLink,
+} from '../import-columns-help/import-columns-help';
 
 /** Dónde está el paso que sigue: la carga sin escribir, la escrita y su resultado. */
 type Phase = 'file' | 'previewing' | 'preview' | 'applying' | 'result';
@@ -69,23 +74,10 @@ const COPY: Readonly<Record<ImportEntity, EntityCopy>> = {
     note: 'Las categorías se reconocen por el nombre sin mayúsculas ni tildes: «analgesicos» renombra a «Analgésicos».',
     done: { label: 'Ver categorías', url: '/administration/pharmacy-catalog?tab=categories' },
   },
-  prices: {
-    title: 'Suba su archivo de precios',
-    keyHeader: 'Código',
-    note: 'Cambia el precio de venta vigente de cada producto de su catálogo. El mismo importe queda sin cambios.',
-    done: { label: 'Ver precios', url: '/administration/pharmacy-catalog?tab=prices' },
-  },
-  sites: {
-    title: 'Suba su archivo de sucursales',
-    keyHeader: 'Código',
-    note: 'Se crean como sedes de venta de su farmacia: aparecen en Sucursales → «Horario y turnos» y en «Dónde comprar», no en la lista de sucursales de su organización.',
-    done: { label: 'Ver horario y turnos', url: '/administration/pharmacy-branches?tab=horario' },
-  },
 };
 
 /**
- * **Importación de categorías, precios o sucursales** con un CSV, por la carga
- * masiva de la API (`POST /pharmacies/:id/{entity}/bulk`): plantilla para
+ * **Categories import** with a CSV, through the API bulk load (`POST /pharmacies/:id/{entity}/bulk`): plantilla para
  * descargar, el archivo, el modo, la vista previa del servidor (`dryRun`, no
  * escribe nada), «Aplicar» y el resultado fila por fila.
  *
@@ -95,7 +87,18 @@ const COPY: Readonly<Record<ImportEntity, EntityCopy>> = {
  */
 @Component({
   selector: 'app-entity-import',
-  imports: [Alert, AppButton, Badge, DataTable, FileInput, FormField, Select, ViewStateHost],
+  imports: [
+    Alert,
+    AppButton,
+    Badge,
+    DataTable,
+    FileInput,
+    FormField,
+    ImportColumnsHelp,
+    NgTemplateOutlet,
+    Select,
+    ViewStateHost,
+  ],
   providers: [providePharmacyScope()],
   templateUrl: './entity-import.html',
   styleUrl: './entity-import.css',
@@ -112,6 +115,9 @@ export class EntityImport {
   protected readonly maxBytes = FILE_MAX_BYTES;
   protected readonly copy = computed(() => COPY[this.entity()]);
   protected readonly columns = computed(() => ENTITY_COLUMNS[this.entity()]);
+  protected readonly templates: readonly ImportTemplateLink[] = [
+    { value: 'template', label: 'Descargar plantilla', testId: 'entity-import-template' },
+  ];
 
   protected readonly phase = signal<Phase>('file');
   /** A write is in flight: closing the import modal now would cut it. */

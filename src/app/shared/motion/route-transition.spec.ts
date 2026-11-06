@@ -6,7 +6,7 @@ import { provideRouter, Router, withViewTransitions } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { prefersReducedMotion } from './motion-tokens';
-import { ROUTE_VIEW_TRANSITION_OPTIONS } from './route-transition';
+import { QUIET_TRANSITION_ATTR, ROUTE_VIEW_TRANSITION_OPTIONS } from './route-transition';
 
 /**
  * Lo que estas pruebas fijan (issue #1449).
@@ -220,9 +220,37 @@ describe('transición entre rutas con movimiento reducido (#1449)', () => {
     expect(transiciones).toHaveLength(1);
   });
 
-  it('las opciones no traen un onViewTransitionCreated que salte transiciones', () => {
+  it('las opciones no saltan transiciones: el callback sólo aquieta las de misma ruta', () => {
     expect(ROUTE_VIEW_TRANSITION_OPTIONS.skipInitialTransition).toBe(true);
-    expect(ROUTE_VIEW_TRANSITION_OPTIONS.onViewTransitionCreated).toBeUndefined();
+    expect(String(ROUTE_VIEW_TRANSITION_OPTIONS.onViewTransitionCreated)).not.toMatch(/skipTransition/u);
+  });
+
+  // An open dialog flickered on every option of «Importar CSV»: changing only
+  // `?target=` cross-faded the captured page above it.
+  it('cambiar sólo la query aquieta la transición mientras dura, y la limpia al terminar', async () => {
+    fijarReducedMotion(false);
+    const router = configurar(ROUTE_VIEW_TRANSITION_OPTIONS);
+    const set = vi.spyOn(document.documentElement, 'setAttribute');
+
+    await router.navigateByUrl('/a');
+    await router.navigateByUrl('/a?tab=import&target=categories');
+    expect(set).toHaveBeenCalledWith(QUIET_TRANSITION_ATTR, '');
+    await asentar();
+    expect(document.documentElement.hasAttribute(QUIET_TRANSITION_ATTR)).toBe(false);
+    expect(transiciones.every((transicion) => !transicion.skipTransition.mock.calls.length)).toBe(true);
+  });
+
+  it('cambiar de ruta sigue con su transición animada', async () => {
+    fijarReducedMotion(false);
+    const router = configurar(ROUTE_VIEW_TRANSITION_OPTIONS);
+    const set = vi.spyOn(document.documentElement, 'setAttribute');
+
+    await router.navigateByUrl('/a?tab=x');
+    await router.navigateByUrl('/b?tab=x');
+    await asentar();
+
+    expect(transiciones).toHaveLength(1);
+    expect(set).not.toHaveBeenCalledWith(QUIET_TRANSITION_ATTR, '');
   });
 
   describe('app.config y styles.css', () => {
@@ -250,6 +278,13 @@ describe('transición entre rutas con movimiento reducido (#1449)', () => {
         expect(bloque).toContain(`::view-transition-${capa}(*)`);
       }
       expect(bloque).toMatch(/::view-transition-new\(\*\)[^}]*animation:\s*none\s*!important/u);
+    });
+
+    it('una transición aquietada no captura el contenido ni anima sus pseudo-capas', () => {
+      const css = readFileSync('src/styles.css', 'utf8');
+
+      expect(css).toMatch(/:root\[data-vt-quiet\] \.app-main__inner \{\s*view-transition-name: none;/u);
+      expect(css).toMatch(/:root\[data-vt-quiet\]::view-transition-new\(\*\) \{\s*animation: none !important;/u);
     });
   });
 });
