@@ -375,7 +375,9 @@ export function networkReports() {
     lifecycleStatusConceptId: STATUS['ST-COMPLETED']!,
     currentVersionId: uuid(`report-version-${s.orderId}`),
     released: true,
-    patientVisible: true,
+    // The kidney ultrasound is released to the practitioner but not yet
+    // published to the patient (to be discussed first): the demo shows that state.
+    patientVisible: s.study !== 'STUDY-ECO-ABD',
     conclusionText: s.conclusion,
     issuedAt: iso(s.day + 2, 14),
     releasedAt: iso(s.day + 2, 16),
@@ -411,7 +413,7 @@ export function networkPrescriptions(): SimulatedPrescription[] {
     statusConceptId: PRESCRIPTION_STATUS[to === null ? 'MR_ISSUED' : 'MR_COMPLETED']!,
     prescriberProfileId: prescriber,
     doseText: dose,
-    frequencyText: 'En ayunas, 30 minutos antes del desayuno',
+    frequencyText: 'Una vez al día, en ayunas, 30 minutos antes del desayuno',
     validFrom: isoDia(from),
     validTo: to === null ? null : isoDia(to),
     patientInstructionsText: `Tomar ${dose} en ayunas con agua, siempre a la misma hora.`,

@@ -1,6 +1,7 @@
 import {
   PLAN_ACTIVITY,
   ALLERGY_CATEGORY,
+  ALLERGEN_SUBSTANCE,
   CATEGORY_DOCUMENTAL,
   ORDER_CATEGORY,
   ENCOUNTER_CLASS,
@@ -268,7 +269,7 @@ const CLINICAL_PROFILES: readonly {
     ],
     alergias: [['MED-IBUPROFENO', 'CRIT-LOW']],
     recetas: [
-      ['MED-LEVOTIROXINA', '50 mcg', 'En ayunas, 30 minutos antes del desayuno', 'clinical:MEDICATION_REQUEST_ISSUED'],
+      ['MED-LEVOTIROXINA', '50 mcg', 'Una vez al día, en ayunas, 30 minutos antes del desayuno', 'clinical:MEDICATION_REQUEST_ISSUED'],
       ['MED-SULFATO-FERROSO', '300 mg', 'Una vez al día con jugo de naranja', 'clinical:MEDICATION_REQUEST_ISSUED'],
     ],
   },
@@ -310,8 +311,9 @@ const CLINICAL_PROFILES: readonly {
   },
 ];
 
-export const PEANUT_SUBSTANCE = uuid('concept-allergen-peanut');
-export const POWDER_SUBSTANCE = uuid('concept-allergen-dust');
+// The terminology catalog's own ids: a made-up uuid resolved to «Sin registrar».
+export const PEANUT_SUBSTANCE = ALLERGEN_SUBSTANCE['ALG_SUB_PEANUT']!;
+export const POWDER_SUBSTANCE = ALLERGEN_SUBSTANCE['ALG_SUB_DUST']!;
 
 function clinicalProfileOf(p: PacienteSimulado) {
   const indice = PATIENTS.indexOf(p);
