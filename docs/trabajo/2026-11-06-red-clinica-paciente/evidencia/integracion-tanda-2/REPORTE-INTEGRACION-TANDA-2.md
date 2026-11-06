@@ -1,7 +1,7 @@
 # Red clínica del paciente — integración, tanda 2
 
-06/11/2026 · rama `claude/charming-cerf-q7sgmk` · commits `d88d9a3c7`, el de los profesionales de la demo y el de
-este reporte. Lo reporta quien implementó; **no es una aprobación** (`NO_SELF_APPROVAL`).
+06/11/2026 · rama `claude/charming-cerf-q7sgmk` · commits `d88d9a3c7` (integración), `ebc2a3eb5` (profesionales de la demo) y el de
+este reporte (retoques de panel y paso a paso + evidencia). Capturas tomadas después del último cambio de código. Lo reporta quien implementó; **no es una aprobación** (`NO_SELF_APPROVAL`).
 
 ## Qué se hizo
 
@@ -97,8 +97,6 @@ sin errores en las 12 sesiones.
 ## Pendientes
 
 - **Suite completa en una sola corrida**: no cabe en la memoria del entorno; se corrió entera en tandas.
-- Las capturas `*-03` de 390 se tomaron antes del último retoque de fondo de la barra compacta (ahora el de la franja
-  hundida); las aserciones de esa corrida son las de la última pasada (121 ok).
 - Lo fuera de rango sólo se marca cuando el valor es numérico; un texto con interpretación del laboratorio
   («Urocultivo … Anormal») muestra el rótulo pero no cuenta como «fuera de rango» (no se mapean códigos).
 - `servicioDeAtencion` sigue sin dato: las atenciones se narran «Tuvo una atención (ambulatorio)».
