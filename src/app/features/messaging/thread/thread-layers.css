@@ -142,6 +142,8 @@
   border-radius: var(--r-menu);
   background: var(--sup-tarjeta);
   box-shadow: var(--sombra);
+  /* Own bubbles have light text; without this the items were white on white. */
+  color: var(--tinta);
 }
 
 .hilo__burbuja:not(.is-propio) .hilo__menu {
@@ -291,11 +293,13 @@
   min-inline-size: 15.5rem;
 }
 
-/* Cerca del pie del hilo el menú se abre hacia arriba: hacia abajo lo cortaba
-   el borde de la pantalla. */
-.hilo__menu--arriba {
-  inset-block-start: auto;
-  inset-block-end: 20px;
+/* Fixed and placed by `placeMessageMenu()` so the scrolling list never clips it. */
+.hilo__menu.hilo__menu--mensaje {
+  position: fixed;
+  inset: auto;
+  visibility: hidden;
+  max-block-size: calc(100dvh - 1rem);
+  overflow-y: auto;
 }
 
 .hilo__menu-reacciones {
