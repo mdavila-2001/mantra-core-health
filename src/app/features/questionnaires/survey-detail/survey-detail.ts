@@ -1,119 +1,65 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { catchError, forkJoin, of, type Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import { SurveysClient } from '../../../core/data-access/surveys/surveys.client';
+import { SurveysCatalogClient } from '../../../core/data-access/surveys/surveys-catalog.client';
+import { SurveysServiceAssignmentsClient } from '../../../core/data-access/surveys/surveys-service-assignments.client';
+import type { BreadcrumbItem } from '../../../shared/components/molecules/breadcrumb/breadcrumb.types';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import type {
-  AnswerType,
   SurveyDetail,
-  SurveyQuestion,
-  SurveyQuestionEdit,
   SurveyResponse,
 } from '../../../core/data-access/surveys/surveys.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { dataOf, loading, ready } from '../../../core/view-state/view-state';
+import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { BackLink } from '../../../shared/components/atoms/back-link/back-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { releaseObjectUrlLater } from '../../../shared/utils/file-download/release-object-url';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Select } from '../../../shared/components/atoms/select/select';
-import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
-import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { Link } from '../../../shared/components/atoms/link/link';
 import { Card } from '../../../shared/components/molecules/card/card';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { SurveyForm } from '../../../shared/components/organisms/survey-form/survey-form';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { QuestionEditor, ETIQUETA_TIPO as ETIQUETAS } from './question-editor/question-editor';
-import {
-  asociacionesVisibles,
-  destinoDeOpcion,
-  opcionesDeDestino,
-  serviciosAsociables,
-  type ServicioAsociable,
-} from './survey-destinos';
-import { ENCUESTAS_ROUTE } from '../questionnaires.routes';
+import { QuestionView } from './question-view/question-view';
+import { celdaCsv, MIN_COHORT, resumirPregunta, sendingLabelOf, sendingStatusOf, SHEET_TABS, slugify, submissionDay, tabOfFragment, type QuestionSummary, type SendingStatus } from './survey-detail.logic';
+import { ENCUESTAS_ROUTE, SERVICE_SURVEYS_QUERY } from '../questionnaires.routes';
+import { readFailureState } from '../service-surveys/service-surveys.logic';
+
 
 /**
- * Piso de respuestas para mostrar un agregado o habilitar el CSV.
- *
- * El README de `surveys` (backend) documenta la decisión **D-13** —cuál es el
- * umbral mínimo de participantes para publicar un agregado— como abierta, y
- * dice literalmente que congela "indicadores agregados y exportación
- * anonimizada" hasta que se resuelva. Con menos respuestas que este número, un
- * gráfico de barras o un CSV equivalen a señalar la respuesta de una persona
- * puntual, que es justo lo que la encuesta promete no hacer.
- *
- * 5 es el piso convencional de control de divulgación estadística (la misma
- * cifra que usa, por ejemplo, el criterio de tamaño de celda mínimo de HIPAA
- * Safe Harbor para reportes públicos de salud) — un valor conservador para no
- * bloquear la función mientras D-13 se resuelve formalmente, no la resolución
- * de D-13 en sí. Cuando el equipo fije el número real, este es el único lugar
- * que hay que tocar.
- */
-const UMBRAL_MINIMO_RESPUESTAS = 5;
-
-/** Una barra del gráfico de una pregunta: cuántos eligieron esta opción, y qué porcentaje del total es. */
-export interface BarraDeResumen {
-  readonly etiqueta: string;
-  readonly cantidad: number;
-  /** 0 a 100, sobre quienes respondieron *esta* pregunta (no sobre toda la encuesta). */
-  readonly porcentaje: number;
-}
-
-/**
- * El resumen de una pregunta: sus barras (vacío en texto libre, donde un
- * gráfico no dice nada) y, para escala, el promedio.
- */
-export interface ResumenDePregunta {
-  readonly questionId: string;
-  readonly questionText: string;
-  readonly answerType: AnswerType;
-  readonly totalRespondida: number;
-  readonly promedio: number | null;
-  readonly barras: readonly BarraDeResumen[];
-}
-
-/**
- * La ficha de una encuesta: componer el cuestionario, publicarlo, asociarlo y
- * leer lo que respondieron.
- *
- * ## Por qué todo vive en una pantalla
- *
- * Son cuatro tareas distintas, pero encadenadas y sobre el mismo objeto:
- * agregar preguntas → publicar → asociar a un servicio → leer respuestas. Cada
- * paso solo tiene sentido si el anterior se hizo, y la pantalla lo refleja
- * habilitando lo que corresponde en vez de ofrecer cuatro rutas donde tres
- * darían error.
- *
- * ## Publicar es irreversible y la pantalla lo dice
- *
- * Una versión publicada ya no acepta preguntas. No es una limitación técnica:
- * es lo que hace que una respuesta dada hace meses se pueda seguir
- * interpretando. El aviso está antes del botón, no después del error.
+ * A survey's sheet, READ-ONLY (06/11/2026), in ONE card with tabs
+ * (composition-rules §5): identity, status and the read-only notice on top,
+ * then Preguntas · Resumen · Respuestas. Hand-made surveys are no longer edited, published,
+ * attached or deactivated — the API rejects new non-catalog assignments
+ * (`SURVEY_ASSIGNMENT_REQUIRES_CATALOG_TEMPLATE`) — so the sheet points to
+ * «Encuestas por servicio», where each service's standard survey is chosen.
  */
 @Component({
   selector: 'app-survey-detail',
   imports: [
-    Alert,
     AppButton,
     BackLink,
     Badge,
     Card,
     DatePipe,
     DecimalPipe,
-    FormField,
+    EmptyState,
+    Link,
+    NgTemplateOutlet,
     PageHeader,
-    QuestionEditor,
-    ReactiveFormsModule,
-    Select,
-    Skeleton,
+    QuestionView,
+    RouterLink,
     SurveyForm,
+    Tab,
+    Tabs,
     ViewStateHost,
   ],
   templateUrl: './survey-detail.html',
@@ -122,414 +68,178 @@ export interface ResumenDePregunta {
 })
 export class SurveyDetailScreen {
   private readonly surveys = inject(SurveysClient);
-  private readonly scheduling = inject(SchedulingClient);
+  private readonly serviceAssignments = inject(SurveysServiceAssignmentsClient);
+  private readonly catalog = inject(SurveysCatalogClient);
   private readonly route = inject(ActivatedRoute);
-  private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
   private readonly navigation = inject(NavigationService);
 
-  protected readonly breadcrumbs = this.navigation.breadcrumbs;
-  /** A dónde vuelve quien entró a una encuesta: al listado del que salió. */
+  /** Where the sheet goes back to: the list it came from. */
   protected readonly rutaDeLasEncuestas = ENCUESTAS_ROUTE;
-  /** Etiqueta legible de un tipo de respuesta. La usa el resumen de abajo. */
-  protected etiquetaDe(tipo: AnswerType): string {
-    return ETIQUETAS[tipo];
-  }
+  protected readonly serviceSurveysQuery = SERVICE_SURVEYS_QUERY;
 
   private readonly surveyId = this.route.snapshot.paramMap.get('surveyId') ?? '';
 
   private readonly estado = signal<ViewState<SurveyDetail>>(loading());
   protected readonly vista = this.estado.asReadonly();
 
-  /** Los datos cuando los hay. La unión de estados no se indexa desde la plantilla. */
+  /** The data when there is some (the template cannot index the state union). */
   protected readonly encuesta = computed(() => dataOf(this.estado()));
 
   /**
-   * Lo recogido, **como estado de vista y no como una lista suelta**.
-   *
-   * Leer respuestas es un permiso aparte de componer la encuesta y de
-   * publicarla (`surveys-forms.handlers.ts`, las tres capacidades), así que
-   * `GET /surveys/templates/:id/responses` puede volver 403 sobre una encuesta
-   * que la sesión sí puede abrir y corregir. Antes ese 403 se tragaba en
-   * silencio y la lista quedaba vacía: la pantalla decía «todavía no respondió
-   * nadie» —que es una afirmación sobre los datos— cuando lo cierto era que no
-   * había permiso para saberlo. Son dos cosas distintas y ahora se distinguen
-   * por `status`, con la misma traducción que el resto de la aplicación
-   * (`errorToViewState`).
+   * The answers received, as a VIEW STATE, not a bare list: reading answers is
+   * a permission of its own, so `GET …/responses` can be 403 on a survey the
+   * session may open. A refusal or a failure is never «nadie respondió».
    */
-  protected readonly estadoRespuestas = signal<ViewState<readonly SurveyResponse[]>>(ready([]));
+  protected readonly estadoRespuestas = signal<ViewState<readonly SurveyResponse[]>>(loading());
 
-  /** Las respuestas cuando las hay. Vacío en todo estado que no las transporta. */
+  /** The answers when there are some; empty in any state without data. */
   protected readonly respuestas = computed(() => dataOf(this.estadoRespuestas()) ?? []);
 
-  protected readonly cargandoRespuestas = computed(
-    () => this.estadoRespuestas().status === 'loading',
-  );
-
-  /** S5 sobre lo recogido: hay encuesta, pero este rol no puede leer respuestas. */
-  protected readonly respuestasProhibidas = computed(
-    () => this.estadoRespuestas().status === 'forbidden',
-  );
-
   /**
-   * El motivo del 403, tal como lo dio el servidor, para pintarlo en el muro.
-   *
-   * El respaldo es el mismo texto que usa `app-view-state-host` para S5: un 403
-   * sin mensaje no puede quedar como un bloque en blanco, que se leería como
-   * «no hay nada» —justo la confusión que esta pantalla evita—.
+   * The answers as ONE view state, drawn by `app-view-state-host` in both the
+   * Resumen and the Respuestas tabs: none yet is S3 with a next action; a refusal
+   * S5, missing S6, offline S8, anything else S9 with retry — never «nadie respondió».
    */
-  protected readonly motivoRespuestasProhibidas = computed(() => {
-    const actual = this.estadoRespuestas();
-    return actual.status === 'forbidden'
-      ? (actual.message ??
-          'Su rol o el propósito de uso declarado no alcanzan para ver este contenido.')
-      : '';
+  protected readonly answersView = computed<ViewState<readonly SurveyResponse[]>>(() => {
+    const state = this.estadoRespuestas();
+    if (state.status !== 'ready' || state.data.length > 0) return state;
+    return empty(
+      { label: 'Ver qué encuesta recibe cada servicio', route: ENCUESTAS_ROUTE, queryParams: SERVICE_SURVEYS_QUERY },
+      'Las respuestas llegan cuando sus pacientes completan la encuesta después de una atención.',
+      'Todavía no respondió nadie',
+    );
   });
 
-  /** Si ya hay respuestas suficientes para un agregado o un CSV sin poner en riesgo el anonimato (D-13). */
-  protected readonly suficientesRespuestas = computed(
-    () => this.respuestas().length >= UMBRAL_MINIMO_RESPUESTAS,
+  /** The same state in «Resumen»: a failed read says the SUMMARY could not be loaded. */
+  protected readonly summaryView = computed<ViewState<readonly SurveyResponse[]>>(() => {
+    const state = this.answersView();
+    return state.status === 'error' ? { ...state, title: 'No pudimos cargar el resumen' } : state;
+  });
+
+  protected readonly minCohort = MIN_COHORT;
+  protected readonly belowMinimumMessage = computed(
+    () =>
+      `Todavía no hay suficientes respuestas para mostrar el resumen: se necesitan al menos ${MIN_COHORT} para proteger la privacidad de sus pacientes; llevan ${this.respuestas().length}.`,
   );
 
-  /**
-   * El dashboard que pide FT-29: un gráfico de barras por pregunta.
-   *
-   * Se arma en el cliente a partir de `respuestas()`, ya cargadas para la
-   * lista de abajo — no hace falta un endpoint de agregación nuevo. Vacío
-   * mientras no haya respuestas suficientes: ver {@link UMBRAL_MINIMO_RESPUESTAS}.
-   */
-  protected readonly resumenPorPregunta = computed<readonly ResumenDePregunta[]>(() => {
+  /** Enough answers for an aggregate or a CSV without risking anonymity (D-13). */
+  protected readonly suficientesRespuestas = computed(() => this.respuestas().length >= MIN_COHORT);
+
+  /** One bar chart per question, built from the answers already loaded; empty below the threshold. */
+  protected readonly resumenPorPregunta = computed<readonly QuestionSummary[]>(() => {
     const encuesta = this.encuesta();
     if (!encuesta || !this.suficientesRespuestas()) return [];
     return encuesta.questions.map((pregunta) => resumirPregunta(pregunta, this.respuestas()));
   });
 
-  /* -- el editor del cuestionario ------------------------------------------ */
-
-  /** La pregunta cuyo modal de edición está abierto, o `null` si no hay ninguno. */
-  protected readonly preguntaAbierta = signal<string | null>(null);
-
-  /** El id de la pregunta con una petición en vuelo, para su botón. */
-  protected readonly guardandoPregunta = signal<string | null>(null);
-
-  /** Si se está agregando una pregunta nueva. */
-  protected readonly agregando = signal(false);
-
-  /** Si la pantalla está mostrando la vista previa en vez del editor. */
+  /** Whether the questionnaire tab shows it as the patient sees it. */
   protected readonly enPrevia = signal(false);
 
-  protected readonly publicando = signal(false);
-  protected readonly asignando = signal(false);
-  protected readonly creandoVersion = signal(false);
-
-  /** El texto de cada pregunta por id, para rotular las respuestas recibidas. */
+  /** Each question's text by id, to label the answers received. */
   protected readonly textoDePregunta = computed(
     () => new Map((this.encuesta()?.questions ?? []).map((p) => [p.id, p.questionText])),
   );
 
-  /** Si la versión vigente todavía admite preguntas. */
-  protected readonly editable = computed(() => {
-    const actual = this.estado();
-    return actual.status === 'ready' && !actual.data.published;
+  /** Whether this survey is sent today; `null` while it is being checked. */
+  protected readonly sending = signal<SendingStatus | null>(null);
+  protected readonly sendingLabel = computed(() => sendingLabelOf(this.encuesta()?.published ?? false, this.sending()));
+
+  /** The asked tab: Preguntas · Resumen · Respuestas. `#resumen` / `#respuestas` deep-link to theirs. */
+  private readonly selectedTab = signal(tabOfFragment(this.route.snapshot.fragment));
+  /** The tab actually shown: an unpublished survey only has «Preguntas», whatever the link asked. */
+  protected readonly activeTab = computed(() => Math.min(this.selectedTab(), this.publicada() ? SHEET_TABS.length : 0));
+
+  /** The section's crumbs, then the survey itself (the section becomes a link back). */
+  protected readonly crumbs = computed<readonly BreadcrumbItem[]>(() => {
+    const base = this.navigation.breadcrumbs();
+    const title = this.encuesta()?.title;
+    if (title === undefined || base.length === 0) return base;
+    return [...base.slice(0, -1), { ...base[base.length - 1]!, routerLink: ENCUESTAS_ROUTE }, { label: title }];
   });
 
-  /** Si ya hay algo publicado que se pueda asociar a un servicio. */
+  /** Published: there may be responses to read. */
   protected readonly publicada = computed(() => {
     const actual = this.estado();
     return actual.status === 'ready' && actual.data.published;
   });
 
-  /* -- asociar a un servicio -------------------------------------------------- */
-
-  /**
-   * Los servicios del médico, para el selector y para decir **por nombre** a qué
-   * está asociada la encuesta. Es un estado propio: si la lista no llega, el
-   * resto de la ficha sigue sirviendo y «Todas mis consultas» sigue ofrecida.
-   */
-  protected readonly estadoServicios = signal<ViewState<readonly ServicioAsociable[]>>(loading());
-  protected readonly servicios = computed(() => dataOf(this.estadoServicios()) ?? []);
-  protected readonly serviciosFallaron = computed(() => this.estadoServicios().status !== 'ready' && this.estadoServicios().status !== 'loading');
-  protected readonly opcionesDestino = computed(() => opcionesDeDestino(this.servicios()));
-
-  /** A qué está asociada hoy, en palabras. `null` si el servidor no lo informó. */
-  protected readonly asociaciones = computed(() => {
-    const dadas = this.encuesta()?.assignments;
-    return dadas === undefined ? null : asociacionesVisibles(dadas, this.servicios());
-  });
-
-  /** El motivo por el que la última asociación no se pudo guardar, o `''`. */
-  protected readonly errorAsignacion = signal('');
-
-  protected readonly formularioAsignacion = new FormGroup({
-    destino: new FormControl<string | null>(null, {
-      validators: [Validators.required],
-    }),
-  });
+  private answersRead?: Subscription;
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.answersRead?.unsubscribe());
+    // A link that changes only the fragment (#resumen, #respuestas) also opens its tab.
+    this.route.fragment.pipe(takeUntilDestroyed()).subscribe((fragment) => this.selectedTab.set(tabOfFragment(fragment)));
     this.cargar();
-    this.cargarServicios();
+    // Sent today = a system base survey, or the template a service uses now. Either read may fail on its own.
+    forkJoin([
+      this.catalog.list().pipe(catchError(() => of(null))),
+      this.serviceAssignments.list().pipe(catchError(() => of(null))),
+    ])
+      .pipe(takeUntilDestroyed())
+      .subscribe(([catalog, assignments]) => this.sending.set(sendingStatusOf(this.surveyId, catalog, assignments)));
   }
 
-  /** Trae los servicios que el médico ofrece. */
-  protected cargarServicios(): void {
-    this.estadoServicios.set(loading());
-    this.scheduling.listServiceOfferings().subscribe({
-      next: (ofertas) => this.estadoServicios.set(ready(serviciosAsociables(ofertas))),
-      error: (error: unknown) => this.estadoServicios.set(errorToViewState(error)),
+  /** Opens a tab and writes it to the URL fragment, so the link can be shared and reloaded. */
+  protected selectTab(index: number): void {
+    this.selectedTab.set(index);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      fragment: index === 0 ? undefined : SHEET_TABS[index - 1],
+      queryParamsHandling: 'preserve',
+      replaceUrl: true,
     });
   }
 
-  /** Trae la encuesta con su cuestionario. */
+  /** Loads the survey with its questions. */
   protected cargar(): void {
     this.estado.set(loading());
     this.surveys.getSurvey(this.surveyId).subscribe({
       next: (encuesta) => {
         this.estado.set(ready(encuesta));
-        // Sin publicar no hay nada recogido que pedir, y el estado vuelve a
-        // cero: un 403 de una lectura anterior no puede quedar pegado a una
-        // encuesta que ya no consulta respuestas.
+        // Unpublished: no answers to ask for (and no stale 403 left behind).
         if (encuesta.published) this.cargarRespuestas();
         else this.estadoRespuestas.set(ready([]));
+        // A link to a tab this survey does not have: the URL says what is shown.
+        if (!encuesta.published && this.selectedTab() > 0) this.selectTab(0);
       },
       error: (error: unknown) => this.estado.set(errorToViewState(error)),
     });
   }
 
   /**
-   * Trae las respuestas recibidas.
-   *
-   * El fallo se guarda **en su propio estado** y no en el de la ficha: el
-   * cuestionario sigue siendo legible y editable aunque lo recogido no haya
-   * llegado, y volcar un 403 de respuestas sobre `estado` convertiría la
-   * pantalla entera en un muro para quien sí puede corregirla. Lo que ya no
-   * pasa es que el fallo se pierda: un 403 queda como S5, un 404 como S6 y
-   * cualquier otro como S9, y ninguno de los tres se confunde con «no hay
-   * respuestas».
+   * Loads the answers into their OWN state: the questionnaire stays readable if
+   * they fail (403 → S5, 404 → S6, offline → S8, else S9). A new load cancels the
+   * one in flight; leaving the screen cancels it too.
    */
   protected cargarRespuestas(): void {
+    this.answersRead?.unsubscribe();
     this.estadoRespuestas.set(loading());
-    this.surveys.listResponses(this.surveyId).subscribe({
+    this.answersRead = this.surveys.listResponses(this.surveyId).subscribe({
       next: (recibidas) => this.estadoRespuestas.set(ready(recibidas)),
-      error: (error: unknown) => this.estadoRespuestas.set(errorToViewState(error)),
+      error: (error: unknown) => {
+        const state = readFailureState<readonly SurveyResponse[]>(error, 'No pudimos cargar las respuestas', 'El servidor tuvo un problema al leer las respuestas de esta encuesta.');
+        // A refusal says what was refused, not «esta sección».
+        this.estadoRespuestas.set(
+          state.status === 'forbidden'
+            ? {
+                ...state,
+                title: 'No tiene acceso a las respuestas',
+                message: 'Su rol o permiso no alcanza para leer las respuestas de esta encuesta.',
+                nextAction: { label: 'Pida acceso a quien administra la cuenta del profesional.' },
+              }
+            : state,
+        );
+      },
     });
   }
 
-  /* -- el editor del cuestionario ------------------------------------------ */
-
-  /** Abre el modal de edición de una pregunta. Sólo uno a la vez. */
-  protected abrirPregunta(questionId: string): void {
-    this.preguntaAbierta.set(questionId);
-  }
-
-  protected cerrarPregunta(): void {
-    this.preguntaAbierta.set(null);
-  }
-
-  /** Alterna entre el editor y la vista previa, cerrando el modal que estuviera abierto. */
+  /** Toggles between the question list and the preview. */
   protected alternarPrevia(): void {
-    this.preguntaAbierta.set(null);
     this.enPrevia.update((activa) => !activa);
   }
 
-  /**
-   * Agrega una pregunta vacía **y abre su modal**.
-   *
-   * Vacía y no con un formulario aparte que la componga: aparece la fila y su
-   * modal queda abierto para escribirla, sin decidir de antemano su tipo. El enunciado provisional lo pide el backend,
-   * que no acepta texto vacío; se reemplaza en cuanto se escribe el de verdad.
-   */
-  protected agregarPregunta(): void {
-    if (this.agregando()) return;
-    this.agregando.set(true);
-    this.surveys
-      .addQuestion(this.surveyId, { questionText: 'Pregunta nueva', answerType: 'TEXT' })
-      .subscribe({
-        next: (creada) => {
-          this.agregando.set(false);
-          this.recargarYAbrir(creada.id);
-        },
-        error: (error: unknown) => {
-          this.agregando.set(false);
-          this.estado.set(errorToViewState(error));
-        },
-      });
-  }
-
-  /** Guarda lo editado en una pregunta. */
-  protected guardarPregunta(questionId: string, cambios: SurveyQuestionEdit): void {
-    if (this.guardandoPregunta() !== null) return;
-    this.guardandoPregunta.set(questionId);
-    this.surveys.updateQuestion(this.surveyId, questionId, cambios).subscribe({
-      next: () => {
-        this.guardandoPregunta.set(null);
-        this.preguntaAbierta.set(null);
-        this.toast.success('Pregunta guardada.');
-        this.cargar();
-      },
-      error: (error: unknown) => {
-        this.guardandoPregunta.set(null);
-        this.estado.set(errorToViewState(error));
-      },
-    });
-  }
-
-  /**
-   * Borra una pregunta.
-   *
-   * Sin diálogo de confirmación: la encuesta está en borrador —nadie la
-   * respondió— y volver a escribirla cuesta menos que el diálogo. Sobre una
-   * versión publicada este botón no existe, que es donde borrar sí importaría.
-   */
-  protected borrarPregunta(questionId: string): void {
-    this.surveys.deleteQuestion(this.surveyId, questionId).subscribe({
-      next: () => {
-        this.preguntaAbierta.set(null);
-        this.toast.success('Pregunta borrada.');
-        this.cargar();
-      },
-      error: (error: unknown) => this.estado.set(errorToViewState(error)),
-    });
-  }
-
-  /**
-   * Mueve una pregunta un lugar arriba o abajo.
-   *
-   * Se manda **el orden entero** y no «subí ésta»: ver `reorderQuestions`. El
-   * estado local se adelanta al servidor para que la fila se mueva en el acto —
-   * esperar la ida y vuelta para ver el cambio hace que se pulse dos veces.
-   */
-  protected moverPregunta(indice: number, direccion: -1 | 1): void {
-    const encuesta = this.encuesta();
-    if (!encuesta) return;
-    const destino = indice + direccion;
-    if (destino < 0 || destino >= encuesta.questions.length) return;
-
-    const orden = [...encuesta.questions];
-    const [movida] = orden.splice(indice, 1);
-    orden.splice(destino, 0, movida!);
-    this.estado.set(
-      ready({ ...encuesta, questions: orden.map((q, i) => ({ ...q, position: i + 1 })) }),
-    );
-
-    this.surveys.reorderQuestions(this.surveyId, orden.map((q) => q.id)).subscribe({
-      // Se recarga igual: el servidor es quien fija las posiciones, y si el
-      // reordenamiento se rechazó la pantalla tiene que volver a la verdad.
-      next: () => this.cargar(),
-      error: (error: unknown) => this.estado.set(errorToViewState(error)),
-    });
-  }
-
-  /** Recarga la encuesta y deja abierto el modal de la pregunta indicada. */
-  private recargarYAbrir(questionId: string): void {
-    this.surveys.getSurvey(this.surveyId).subscribe({
-      next: (encuesta) => {
-        this.estado.set(ready(encuesta));
-        this.enPrevia.set(false);
-        this.preguntaAbierta.set(questionId);
-      },
-      error: (error: unknown) => this.estado.set(errorToViewState(error)),
-    });
-  }
-
-  /** Publica la versión vigente y le da vigencia abierta. */
-  protected publicar(): void {
-    const actual = this.estado();
-    if (actual.status !== 'ready' || this.publicando()) return;
-
-    this.publicando.set(true);
-    this.surveys.publishSurvey(this.surveyId, actual.data.latestVersionNumber).subscribe({
-      next: () => {
-        this.publicando.set(false);
-        this.toast.success('Encuesta publicada: ya se puede asociar a un servicio.');
-        this.cargar();
-      },
-      error: (error: unknown) => {
-        this.publicando.set(false);
-        this.estado.set(errorToViewState(error));
-      },
-    });
-  }
-
-  /**
-   * Asocia la versión publicada a lo elegido: un servicio o «Todas mis consultas».
-   *
-   * Un rechazo (duplicada, 412, 404) se dice **junto al selector** y no
-   * reemplaza la ficha por una pantalla de error: la encuesta está bien, lo que
-   * no se pudo fue esta asociación.
-   */
-  protected asignar(): void {
-    const actual = this.estado();
-    const valor = this.formularioAsignacion.getRawValue().destino;
-    if (actual.status !== 'ready' || valor === null || this.asignando()) {
-      this.formularioAsignacion.markAllAsTouched();
-      return;
-    }
-
-    const destino = destinoDeOpcion(valor);
-    this.asignando.set(true);
-    this.errorAsignacion.set('');
-    this.surveys
-      .assignSurvey({ surveyVersionId: actual.data.latestVersionId, ...destino })
-      .subscribe({
-        next: () => {
-          this.asignando.set(false);
-          this.formularioAsignacion.reset();
-          this.toast.success(
-            'Encuesta asociada. Se le ofrecerá al paciente al cerrar una consulta de ese servicio.',
-          );
-          // Se vuelve a leer: lo que la pantalla muestra como «asociada a» es lo
-          // que el servidor guardó, no lo que se acaba de mandar.
-          this.recargarEncuesta();
-        },
-        error: (error: unknown) => {
-          this.asignando.set(false);
-          const estado = errorToViewState(error);
-          this.errorAsignacion.set(mensajeDe(estado));
-        },
-      });
-  }
-
-  /** Relee la encuesta sin pasar por el esqueleto de página entera. */
-  private recargarEncuesta(): void {
-    this.surveys.getSurvey(this.surveyId).subscribe({
-      next: (encuesta) => this.estado.set(ready(encuesta)),
-      error: (error: unknown) => this.estado.set(errorToViewState(error)),
-    });
-  }
-
-  /**
-   * Abre una versión nueva en borrador, para corregir el cuestionario de una
-   * encuesta ya publicada (FT-31). La versión vieja sigue vigente para lo ya
-   * asociado hasta que ésta se publique y alguien la reasocie.
-   */
-  protected crearNuevaVersion(): void {
-    if (this.creandoVersion()) return;
-    this.creandoVersion.set(true);
-    this.surveys.createNextVersion(this.surveyId).subscribe({
-      next: () => {
-        this.creandoVersion.set(false);
-        this.toast.success('Versión nueva creada. Agréguele preguntas y publíquela.');
-        this.cargar();
-      },
-      error: (error: unknown) => {
-        this.creandoVersion.set(false);
-        this.estado.set(errorToViewState(error));
-      },
-    });
-  }
-
-  /** Desactiva la encuesta: corta las emisiones nuevas. */
-  protected desactivar(): void {
-    this.surveys.deactivateSurvey(this.surveyId).subscribe({
-      next: () => {
-        this.toast.success('Encuesta desactivada. Lo ya respondido sigue disponible.');
-        this.cargar();
-      },
-      error: (error: unknown) => this.estado.set(errorToViewState(error)),
-    });
-  }
-
-  /** Texto legible de una respuesta, sea del tipo que sea. */
+  /** An answer as readable text, whatever its type. */
   protected valorDe(answer: SurveyResponse['answers'][number]): string {
     if (answer.valueText !== undefined) return answer.valueText;
     if (answer.valueNumber !== undefined) return String(answer.valueNumber);
@@ -559,7 +269,7 @@ export class SurveyDetailScreen {
     const filas = this.respuestas().map((respuesta) => {
       const porPregunta = new Map(respuesta.answers.map((a) => [a.questionId, this.valorDe(a)]));
       return [
-        diaDeEnvio(respuesta.submittedAt),
+        submissionDay(respuesta.submittedAt),
         ...encuesta.questions.map((p) => porPregunta.get(p.id) ?? ''),
       ];
     });
@@ -577,120 +287,4 @@ export class SurveyDetailScreen {
     enlace.click();
     releaseObjectUrlLater(url);
   }
-}
-
-/**
- * Una barra por etiqueta, con su porcentaje sobre `total`.
- *
- * Es la parte de `resumirPregunta` que no depende de cómo llegaron las
- * respuestas: la reutiliza el resumen general del profesional
- * (`insights/survey-insights.logic.ts`), que recibe los conteos ya agregados por
- * el servidor en vez de respuestas sueltas.
- */
-export function armarBarras(
-  total: number,
-  etiquetas: readonly string[],
-  cantidadDe: (etiqueta: string) => number,
-): readonly BarraDeResumen[] {
-  return etiquetas.map((etiqueta) => {
-    const cantidad = cantidadDe(etiqueta);
-    return { etiqueta, cantidad, porcentaje: total === 0 ? 0 : Math.round((cantidad / total) * 100) };
-  });
-}
-
-/**
- * El día de envío de una respuesta, `AAAA-MM-DD`, en UTC (el servidor lo manda
- * redondeado al día a medianoche UTC). Sin fecha, vacío. Nunca la hora.
- */
-export function diaDeEnvio(fecha: Date | null): string {
-  return fecha === null || Number.isNaN(fecha.getTime()) ? '' : fecha.toISOString().slice(0, 10);
-}
-
-/** El texto de un estado de error, sin inventar uno si no trae. */
-function mensajeDe(estado: ViewState<unknown>): string {
-  if ('message' in estado && typeof estado.message === 'string' && estado.message !== '') {
-    return estado.message;
-  }
-  if (estado.status === 'validation' && estado.issues.length > 0) {
-    return estado.issues.map((i) => i.message).join(' ');
-  }
-  return 'No se pudo asociar la encuesta. Intente de nuevo en unos segundos.';
-}
-
-/** Arma el resumen (barras + promedio) de una pregunta a partir de las respuestas recibidas. */
-export function resumirPregunta(
-  pregunta: SurveyQuestion,
-  respuestas: readonly SurveyResponse[],
-): ResumenDePregunta {
-  const respondidas = respuestas
-    .map((r) => r.answers.find((a) => a.questionId === pregunta.id))
-    .filter((a): a is SurveyResponse['answers'][number] => a !== undefined);
-  const total = respondidas.length;
-
-  const conBarras = (etiquetas: readonly string[], cantidadDe: (etiqueta: string) => number) =>
-    armarBarras(total, etiquetas, cantidadDe);
-
-  let barras: readonly BarraDeResumen[] = [];
-  let promedio: number | null = null;
-
-  switch (pregunta.answerType) {
-    case 'BOOLEAN':
-      barras = conBarras(
-        ['Sí', 'No'],
-        (etiqueta) => respondidas.filter((a) => a.valueBoolean === (etiqueta === 'Sí')).length,
-      );
-      break;
-    case 'SINGLE_CHOICE':
-    case 'MULTIPLE_CHOICE':
-      barras = conBarras(
-        pregunta.options ?? [],
-        (opcion) => respondidas.filter((a) => a.valueChoices?.includes(opcion)).length,
-      );
-      break;
-    case 'SCALE': {
-      const min = pregunta.scaleMin ?? 1;
-      const max = pregunta.scaleMax ?? 5;
-      const valores = Array.from({ length: Math.max(0, max - min + 1) }, (_, i) => min + i);
-      barras = conBarras(
-        valores.map(String),
-        (etiqueta) => respondidas.filter((a) => a.valueNumber === Number(etiqueta)).length,
-      );
-      const numeros = respondidas
-        .map((a) => a.valueNumber)
-        .filter((n): n is number => n !== undefined);
-      promedio = numeros.length === 0 ? null : numeros.reduce((a, b) => a + b, 0) / numeros.length;
-      break;
-    }
-    case 'TEXT':
-      // Texto libre no se resume en barras: cada respuesta es distinta y
-      // agruparlas no diría nada. La lista de respuestas de abajo ya las
-      // muestra completas.
-      break;
-  }
-
-  return {
-    questionId: pregunta.id,
-    questionText: pregunta.questionText,
-    answerType: pregunta.answerType,
-    totalRespondida: total,
-    promedio,
-    barras,
-  };
-}
-
-/** Encierra en comillas sólo si hace falta, duplicando las internas (RFC 4180). */
-export function celdaCsv(valor: string): string {
-  return /[",\r\n]/.test(valor) ? `"${valor.replace(/"/g, '""')}"` : valor;
-}
-
-/** Nombre de archivo seguro a partir del título de la encuesta. */
-export function slugify(texto: string): string {
-  return (
-    texto
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '') || 'encuesta'
-  );
 }

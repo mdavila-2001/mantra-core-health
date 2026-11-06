@@ -1703,27 +1703,15 @@ Todas exigen `PRACTITIONER` o `CLINICIAN`. Sólo se puede invitar a colegas de l
 organización que la práctica del servicio (`eligible-members` aplica la misma regla que el
 alta), y el nombre del paciente viaja sólo al creador y a los miembros que aceptaron.
 
-### `SurveysClient` — 17 operaciones
+### `SurveysClient` — 5 operaciones
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
-| `POST` | `/surveys/assignments` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `POST` | `/surveys/invitations` | `QuestionnaireAnswer` y 3 pantallas más | No |
 | `GET` | `/surveys/me/invitations` | `QuestionnaireAnswer` y 3 pantallas más | No |
 | `GET` | `/surveys/me/invitations/:invitationId` | `QuestionnaireAnswer` y 3 pantallas más | No |
 | `POST` | `/surveys/me/invitations/:invitationId/responses` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `GET` | `/surveys/templates` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `POST` | `/surveys/templates` | `QuestionnaireAnswer` y 3 pantallas más | No |
 | `GET` | `/surveys/templates/:surveyId` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `PATCH` | `/surveys/templates/:surveyId` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `POST` | `/surveys/templates/:surveyId/deactivate` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `POST` | `/surveys/templates/:surveyId/questions` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `DELETE` | `/surveys/templates/:surveyId/questions/:questionId` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `PATCH` | `/surveys/templates/:surveyId/questions/:questionId` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `PUT` | `/surveys/templates/:surveyId/questions/order` | `QuestionnaireAnswer` y 3 pantallas más | No |
 | `GET` | `/surveys/templates/:surveyId/responses` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `POST` | `/surveys/templates/:surveyId/versions` | `QuestionnaireAnswer` y 3 pantallas más | No |
-| `POST` | `/surveys/templates/:surveyId/versions/:versionNumber/publish` | `QuestionnaireAnswer` y 3 pantallas más | No |
 
 
 ## Consumos incorporados en Hito 2
@@ -2264,6 +2252,38 @@ Las que el código llama y el catálogo de arriba aún no listaba; las leyó `sc
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
 | `GET` | `/surveys/insights` | `SurveysClient` | No |
+
+### `SurveysCatalogClient` — 1 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/surveys/catalog` | `SurveysCatalogClient` | No |
+
+El «Buzón» (solo lectura): las encuestas base del sistema y las del profesional, para leer
+sus respuestas. No es el catálogo estándar de importación.
+
+### `SurveysServiceAssignmentsClient` — 4 operaciones
+
+Encuestas estándar por servicio (06/11/2026). Reemplaza la creación libre: el profesional
+importa una plantilla del catálogo estándar y la asocia a cada servicio suyo (una activa
+por servicio); la cita médica usa siempre la base del sistema. Consumidor:
+`ServiceSurveys` («Encuestas › Encuestas por servicio»); el «Buzón» lee además el GET de
+asignaciones para saber qué plantilla se envía hoy.
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/surveys/standard-catalog` | `SurveysServiceAssignmentsClient` | No |
+| `GET` | `/surveys/service-assignments` | `SurveysServiceAssignmentsClient` | No |
+| `PUT` | `/surveys/service-assignments/:serviceId` | `SurveysServiceAssignmentsClient` | No |
+| `DELETE` | `/surveys/service-assignments/:serviceId` | `SurveysServiceAssignmentsClient` | No |
+
+Roles `PRACTITIONER` o `CLINICIAN`; sin perfil profesional en la sesión, `412
+PRECONDITION_FAILED`. `PUT` lleva `{ catalogCode }` y devuelve la fila del servicio; responde
+`403 SURVEY_SERVICE_NOT_OWNED` (servicio ajeno), `404 SURVEY_CATALOG_CODE_UNKNOWN` (el front
+relee el catálogo) y `409 ASSIGNMENT_ALREADY_ACTIVE` al perder la carrera del índice de una
+activa por servicio (el front relee la lista). `DELETE` devuelve `204` y el servicio vuelve a
+la encuesta base de servicios. El GET de asignaciones trae `consultation.questions` y
+`services[].serviceKind` (aditivos; sin `serviceKind` el front lo deduce del nombre).
 
 ### `TelemetryClient` — 1 operaciones
 

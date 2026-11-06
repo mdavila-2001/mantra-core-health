@@ -15,3 +15,12 @@ export const ENCUESTAS_ROUTE = '/questionnaires';
 export function encuestaRoute(surveyId: string): string {
   return `${ENCUESTAS_ROUTE}/${surveyId}`;
 }
+
+/** Query param holding the open sub-tab of «Encuestas». */
+export const SURVEYS_SUBTAB_PARAM = 'encuestas';
+
+/** Sub-tabs in order. The first is the default and is kept out of the URL. */
+export const SURVEYS_SUBTABS = ['buzon', 'servicios'] as const;
+
+/** Query params that open «Encuestas por servicio». */
+export const SERVICE_SURVEYS_QUERY = { [SURVEYS_SUBTAB_PARAM]: 'servicios' } as const;

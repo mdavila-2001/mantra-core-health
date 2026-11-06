@@ -1,7 +1,7 @@
 <!-- La tira y sus flechas. El marco de ventana lo dibuja `.tabs__bar` cuando la
      apariencia es `browser`; con la de siempre es una fila transparente y no
      cambia nada de lo que ya había. -->
-<div class="tabs__bar">
+<div #tabbar class="tabs__bar">
   @if (desborda()) {
     <!-- Atajo de puntero: fuera del recorrido de teclado a propósito — las
          flechas del teclado ya recorren las pestañas y traen la enfocada a la

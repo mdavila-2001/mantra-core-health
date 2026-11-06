@@ -260,15 +260,15 @@ export class ShellLayout {
   protected readonly esPacienteDelCarrito = computed(() => esPaciente(this.auth.roles()));
 
   /**
-   * «Mis encuestas» en la barra superior (propietario, 28/10/2026): la bandeja
-   * del paciente. Sólo la ve el paciente y sólo si alguna atención terminada le
-   * generó una encuesta —lo dice `GET /surveys/me/invitations`, no un rol
-   * escrito acá—. El número es el de pendientes dentro del plazo.
+   * «Mis encuestas» in the top bar (owner, 28/10/2026): the patient's survey
+   * inbox. Since 06/11/2026 the patient ALWAYS sees it, with or without
+   * invitations: hiding it until the first survey meant nobody knew where to
+   * look, and the screen explains with an empty state when they arrive. The
+   * number (only pending ones still in time) still comes from
+   * `GET /surveys/me/invitations`.
    */
   private readonly encuestas = inject(PatientSurveyInbox);
-  protected readonly ofreceMisEncuestas = computed(
-    () => this.esPacienteDelCarrito() && this.encuestas.hayInvitaciones(),
-  );
+  protected readonly ofreceMisEncuestas = this.esPacienteDelCarrito;
   protected readonly encuestasPendientes = this.encuestas.pendientes;
   protected readonly rutaDeEncuestas = MIS_CUESTIONARIOS_ROUTE;
   protected readonly parametrosDeEncuestas = { seccion: 'encuestas' } as const;

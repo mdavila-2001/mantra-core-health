@@ -11,10 +11,9 @@ import type { PatientInvitation } from '../data-access/surveys/surveys.types';
  *
  * ## Qué cuenta y por qué
  *
- * - **Hay bandeja** cuando el servidor devolvió al menos una invitación, esté
- *   pendiente, respondida o vencida. Una invitación sólo existe porque una
- *   atención terminó y le generó encuesta: sin ninguna, el ícono no se ofrece
- *   (un acceso que lleva a una pantalla vacía es ruido).
+ * - **The inbox** is what the server returned: pending, answered or expired.
+ *   (06/11/2026: the patient's icon is offered even with none — the screen
+ *   explains with an empty state when they arrive.)
  * - **El contador** son las pendientes **no vencidas**: una pendiente cuyo plazo
  *   pasó ya no se puede responder, y contarla prometería una acción imposible.
  *
@@ -41,9 +40,6 @@ export class PatientSurveyInbox {
 
   /** Si ya hubo una lectura que terminó bien. */
   readonly cargada = signal(false);
-
-  /** Si el paciente tiene alguna encuesta, de cualquier estado. */
-  readonly hayInvitaciones = computed(() => this.invitaciones().length > 0);
 
   /** Las que se pueden responder hoy: pendientes y dentro del plazo. */
   readonly pendientes = computed(() => {
