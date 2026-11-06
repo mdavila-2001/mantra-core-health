@@ -29,10 +29,7 @@ import {
   type HelpCard,
 } from '../../../shared/components/organisms/registration-help/registration-help';
 import { MAX_ATTACHMENT_BYTES } from '../shared-registration/doctor-credentials';
-import {
-  MESSAGE_SHORT_PASSWORD,
-  passwordValidators,
-} from '../shared-registration/password-policy';
+import { accessPasswordFields, passwordWithConfirmation } from '../shared-registration/password-confirmation';
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
@@ -309,12 +306,6 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
   ],
   representante: [
     {
-      icono: 'mail',
-      titulo: 'Con este correo se entra',
-      texto:
-        'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
-    },
-    {
       icono: 'folder',
       titulo: 'El poder va con quien lo firma',
       texto:
@@ -346,6 +337,12 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
     },
   ],
   acceso: [
+    {
+      icono: 'mail',
+      titulo: 'Con este correo se entra',
+      texto:
+        'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
+    },
     {
       icono: 'lock',
       titulo: 'Una clave nueva, no la del correo',
@@ -679,10 +676,7 @@ export class RegisterImagingCenter {
     }),
     openingHours: openingHoursControl(),
     // --- la cuenta ---------------------------------------------------------
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [...passwordValidators],
-    }),
+    ...passwordWithConfirmation(),
   });
 
   /**
@@ -872,17 +866,6 @@ export class RegisterImagingCenter {
           testId: 'registro-imagen-representante-documento',
           mensajeDeError: 'Escriba el documento del representante (al menos cuatro caracteres).',
         },
-        {
-          key: 'legalRepEmail',
-          label: 'Correo del representante legal',
-          hint: 'Con este correo va a entrar a la plataforma.',
-          control: 'email' as const,
-          required: true,
-          icono: 'mail' as const,
-          autocomplete: 'username',
-          testId: 'registro-imagen-representante-correo',
-          mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
-        },
         // El poder (1.8.1) va con quien lo firma. Obligatorio para todas (propietario, 05/11/2026).
         {
           key: 'poderFile',
@@ -989,18 +972,21 @@ export class RegisterImagingCenter {
       clave: 'acceso',
       icon: 'lock' as const,
       hint: 'Entra con el correo del representante legal y esta contraseña.',
+      disposicion: 'dos-columnas' as const,
       campos: [
         {
-          key: 'password',
-          label: 'Contraseña',
-          hint: 'Al menos 8 caracteres.',
-          control: 'password' as const,
+          key: 'legalRepEmail',
+          ancho: 'completo' as const,
+          label: 'Correo de acceso',
+          hint: 'El del representante legal: con este correo va a entrar a la plataforma.',
+          control: 'email' as const,
           required: true,
-          icono: 'lock' as const,
-          autocomplete: 'new-password',
-          testId: 'registro-imagen-password',
-          mensajeDeError: MESSAGE_SHORT_PASSWORD,
+          icono: 'mail' as const,
+          autocomplete: 'username',
+          testId: 'registro-imagen-representante-correo',
+          mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
         },
+        ...accessPasswordFields('registro-imagen-password'),
       ],
     },
   ]);

@@ -78,6 +78,10 @@ describe('Dashboard', () => {
     )) {
       pedido.flush(null, { status: 422, statusText: 'Unprocessable Entity' });
     }
+    // El inicio de una cuenta de organización lee su propia ficha; en estas pruebas no es lo que se mira.
+    for (const pedido of http.match((request) => request.url.endsWith('/tenants/me'))) {
+      pedido.flush({ items: [] });
+    }
     http.verify();
   });
 
@@ -379,6 +383,18 @@ describe('Dashboard', () => {
         .flush({ items: [], count: 0, limit: 5, nextCursor: null });
 
       http.expectNone((request) => request.url.endsWith('/practitioners/me/onboarding'));
+    });
+  });
+  describe('la cuenta de una organización', () => {
+    it('suma su propio inicio —estado, equipo y actividad— al panel; no lo reemplaza', () => {
+      crear({ sub: 'u-1', roles: ['USER'], tenants: ['t-1'], tenantTypes: { 't-1': 'MEDICAL_OFFICE' } });
+
+      const raizDelPanel = raiz();
+
+      expect(raizDelPanel.querySelector('app-organization-home')).not.toBeNull();
+      expect(raizDelPanel.querySelector('app-patient-home')).toBeNull();
+      expect(raizDelPanel.querySelector('[data-testid="panel-ultimos-pacientes"]')).toBeNull();
+      expect(raizDelPanel.querySelector('[data-testid="panel-profesionales-que-piden"]')).toBeNull();
     });
   });
 });

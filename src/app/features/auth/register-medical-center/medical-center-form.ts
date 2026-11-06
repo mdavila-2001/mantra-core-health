@@ -11,7 +11,7 @@ import {
 import { executivesControls } from '../shared-registration/executives';
 import type { Coordinates } from '../shared-registration/map-location-picker/map-location-picker';
 import { nameGroup } from '../shared-registration/name-fields/person-name';
-import { passwordValidators } from '../shared-registration/password-policy';
+import { passwordWithConfirmation } from '../shared-registration/password-confirmation';
 import {
   sucursalesCompletas,
   type SucursalDeclarada,
@@ -125,7 +125,7 @@ export function createMedicalCenterForm(tipoOfrecido: ValidatorFn) {
     ...executivesControls(),
     openingHours: openingHoursControl(),
     // --- la cuenta -----------------------------------------------------------
-    password: new FormControl('', { nonNullable: true, validators: [...passwordValidators] }),
+    ...passwordWithConfirmation(),
   });
 }
 

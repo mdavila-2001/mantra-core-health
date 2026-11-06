@@ -48,12 +48,6 @@ export const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
   ],
   representante: [
     {
-      icono: 'mail',
-      titulo: 'Con este correo se entra',
-      texto:
-        'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
-    },
-    {
       icono: 'folder',
       titulo: 'El poder va con quien lo firma',
       texto:
@@ -85,6 +79,12 @@ export const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
     },
   ],
   acceso: [
+    {
+      icono: 'mail',
+      titulo: 'Con este correo se entra',
+      texto:
+        'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
+    },
     {
       icono: 'lock',
       titulo: 'Una clave nueva, no la del correo',

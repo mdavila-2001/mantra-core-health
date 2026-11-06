@@ -607,11 +607,9 @@ export interface PayerOrganizationRegistration {
  * Alta pública de un laboratorio o un centro de imagenología
  * (`POST /iam/auth/register-organization` con `tenantType: 'DIAGNOSTIC_CENTER'`).
  *
- * Es otra rama de la unión y no una aseguradora con campos de más: **no lleva
- * `payer`** (el cuerpo de una aseguradora no lleva `diagnosticUnit` ni al revés),
- * y sus documentos legales distinguen lo que una unipersonal no tiene: la
- * constitución y el poder del representante son opcionales acá y la API decide
- * por el tipo societario (422 si falta donde se exige).
+ * Another branch of the union, not an insurer with extra fields: it never
+ * carries `payer` (nor does an insurer carry `diagnosticUnit`). The API decides
+ * which legal documents are required by entity type (422 when one is missing).
  */
 export interface DiagnosticCenterRegistration {
   readonly tenantType: 'DIAGNOSTIC_CENTER';

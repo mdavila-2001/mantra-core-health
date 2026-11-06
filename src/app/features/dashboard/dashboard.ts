@@ -25,6 +25,7 @@ import { SetupNotice } from '../admin/getting-started/setup-notice/setup-notice'
 import { TodayAgenda } from './today-agenda/today-agenda';
 import { SummaryConsultations } from './consultations-summary/consultations-summary';
 import { PatientHome } from './patient-home/patient-home';
+import { OrganizationHome } from './organization-home/organization-home';
 import { PlatformHome } from './platform-home/platform-home';
 import { type OnboardingProgress, PractitionerWelcome } from './practitioner-welcome/practitioner-welcome';
 
@@ -48,18 +49,8 @@ const ROLES_DE_TRABAJO: readonly string[] = [
  *
  * ## Qué era y por qué cambió (dos veces)
  *
- * Nació como pantalla de diagnóstico: dos tarjetas, una con los claims del
- * token y otra que pedía el directorio público «para comprobar de punta a punta
- * que hay API del otro lado». Después se le sumaron cuatro cifras —pacientes,
- * secciones habilitadas, organizaciones alcanzadas, estado de la identidad—.
- *
- * El 19/09/2026 el propietario mandó sacar todo eso del inicio de sesión del
- * médico, con el argumento que se sostiene solo: **ninguno de esos bloques
- * contesta la pregunta con la que alguien abre el panel a las siete de la
- * mañana.** «Tu cuenta» enumeraba los roles del propio token, el directorio
- * público contaba registros que no son de nadie que mire esta pantalla, y las
- * dos cifras que quedaban —cuántas secciones habilita la cuenta y cuántas
- * organizaciones alcanza— describen la aplicación, no el trabajo.
+ * Nació como pantalla de diagnóstico y fue sumando cifras de la aplicación. El 19/09/2026 el
+ * propietario mandó sacarlas: ninguna contestaba lo que se pregunta a las siete de la mañana.
  *
  * Lo que quedó responde dos preguntas, en este orden:
  *
@@ -94,6 +85,7 @@ const ROLES_DE_TRABAJO: readonly string[] = [
     TutorialTarget,
     ViewStateHost,
     PatientHome,
+    OrganizationHome,
     PlatformHome,
     SetupNotice,
     AdmissionStatusCard,
@@ -206,6 +198,9 @@ export class Dashboard {
    */
   /** Quien sólo gestiona la plataforma entra por su portada, no por el panel clínico. */
   protected readonly esGestion = computed(() => esPerfilDeGestion(this.roles()));
+
+  /** El inicio propio de la cuenta de una organización. */
+  protected readonly esOrganizacion = this.auth.isOrganizationAccount;
 
   protected readonly esPaciente = computed(() => {
     const roles = this.roles();

@@ -1,0 +1,73 @@
+<app-view-state-host [state]="organization()" (retry)="load()">
+  @if (org(); as org) {
+    <div class="inicio" data-testid="inicio-organizacion">
+      <app-card variant="outlined" padding="lg" class="inicio__estado">
+        <div class="inicio__encabezado">
+          <h2 class="inicio__titulo">Estado de la organización</h2>
+          <app-badge
+            data-testid="inicio-verificacion"
+            [variant]="org.isVerified ? 'success' : 'warning'"
+            [value]="org.isVerified ? 'Verificada' : 'Pendiente de verificación'"
+          />
+        </div>
+        @if (!org.isVerified) {
+          <p class="inicio__nota">
+            La plataforma revisa sus documentos. Mientras tanto puede completar lo que falta.
+          </p>
+        }
+        <app-organization-checklist [items]="checklist()" />
+        <a app-button variant="secondary" size="sm" routerLink="/my-account">Ver y completar el perfil</a>
+      </app-card>
+
+      <app-card variant="outlined" padding="lg" class="inicio__equipo">
+        <h2 class="inicio__titulo">Equipo y accesos</h2>
+        <app-view-state-host [state]="team()" (retry)="loadTeam()">
+          @if (team(); as t) {
+            @if (t.status === 'ready') {
+              <app-metric-card
+                data-testid="inicio-equipo-total"
+                label="Personas en la organización"
+                [value]="t.data.total + (t.data.partial ? '+' : '')"
+                icon="people"
+              />
+              <ul class="inicio__roles" role="list">
+                @for (role of t.data.byRole; track role.label) {
+                  <li>{{ role.label }}: <strong>{{ role.count }}</strong></li>
+                }
+              </ul>
+            }
+          }
+        </app-view-state-host>
+        <a app-button variant="secondary" size="sm" routerLink="/administration/my-organization">Ver a su gente</a>
+      </app-card>
+
+      @if (showsActivity()) {
+        <app-card variant="outlined" padding="lg" class="inicio__actividad">
+          <h2 class="inicio__titulo">Actividad de hoy</h2>
+          <app-view-state-host [state]="activity()" (retry)="loadActivity()">
+            @if (activity(); as a) {
+              @if (a.status === 'ready') {
+                <div class="inicio__cifras">
+                  <app-metric-card
+                    data-testid="inicio-citas-hoy"
+                    label="Citas de hoy"
+                    [value]="a.data.appointmentsToday"
+                    icon="calendar"
+                  />
+                  <app-metric-card
+                    data-testid="inicio-solicitudes"
+                    label="Médicos esperando respuesta"
+                    [value]="a.data.pendingRequests"
+                    [tone]="a.data.pendingRequests > 0 ? 'warning' : 'neutral'"
+                    icon="people"
+                  />
+                </div>
+              }
+            }
+          </app-view-state-host>
+          <a app-button variant="secondary" size="sm" routerLink="/administration/my-organization">Abrir la agenda y las solicitudes</a>
+        </app-card>
+      }
+    </div>
+  }
+</app-view-state-host>

@@ -8,8 +8,11 @@ import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 
-/** Modalities the catalog has a device type for (same list as the API). */
-const CON_TIPO: readonly ModalityCode[] = ['ECO', 'RX', 'MG', 'DXA', 'TC'];
+/**
+ * Modalities the catalog has a device type for (same list as the API,
+ * mantra-core-health-api#1359). ECG has no modality in the API yet.
+ */
+const CON_TIPO: readonly ModalityCode[] = ['ECO', 'RX', 'RM', 'TC', 'MG', 'DXA', 'LAB'];
 const SIN_MODALIDAD = 'NONE';
 
 /**

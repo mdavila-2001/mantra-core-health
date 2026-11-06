@@ -1,0 +1,40 @@
+@if (editing()) {
+  <form class="editor" data-testid="representante-editor" (submit)="$event.preventDefault()">
+    <app-form-field label="Nombre" [required]="true" [errorMessage]="missing(name())">
+      <app-input [(value)]="name" data-testid="representante-nombre" />
+    </app-form-field>
+    <app-form-field label="Segundo nombre">
+      <app-input [(value)]="middleName" />
+    </app-form-field>
+    <app-form-field label="Apellido paterno" [required]="true" [errorMessage]="missing(lastName())">
+      <app-input [(value)]="lastName" data-testid="representante-apellido" />
+    </app-form-field>
+    <app-form-field label="Apellido materno">
+      <app-input [(value)]="motherLastName" />
+    </app-form-field>
+
+    @if (failure()) {
+      <p class="editor__error" role="alert" data-testid="representante-error">{{ failure() }}</p>
+    }
+
+    <app-form-actions
+      class="editor__acciones"
+      submitLabel="Guardar nombre"
+      cancelLabel="Cancelar"
+      [pending]="pending()"
+      (submitted)="save()"
+      (cancelled)="cancel()"
+    />
+  </form>
+} @else {
+  <button
+    app-button
+    variant="ghost"
+    size="sm"
+    type="button"
+    data-testid="representante-cambiar-nombre"
+    (clicked)="open()"
+  >
+    Cambiar el nombre
+  </button>
+}

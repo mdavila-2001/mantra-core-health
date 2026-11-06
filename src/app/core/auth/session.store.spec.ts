@@ -367,6 +367,22 @@ describe('SessionStore', () => {
       expect(store.isOrganizationAccount()).toBe(true);
     });
 
+    it('sin el claim, la cuenta dueña de una organización médica (sólo USER, sin perfil) es la de la organización', () => {
+      for (const tipo of ['CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER']) {
+        sesion({ tenantTypes: { 't-1': tipo } });
+        expect(store.isOrganizationAccount()).toBe(true);
+      }
+    });
+
+    it('en una organización médica, quien trae un rol de trabajo o un perfil sigue siendo una persona', () => {
+      sesion({ roles: ['USER', 'SECURITY_ADMIN'], tenantTypes: { 't-1': 'CLINIC' } });
+      expect(store.isOrganizationAccount()).toBe(false);
+      sesion({ roles: ['USER'], hpid: 'h-1', tenantTypes: { 't-1': 'CLINIC' } });
+      expect(store.isOrganizationAccount()).toBe(false);
+      sesion({ roles: ['USER'], pid: 'p-1', tenantTypes: { 't-1': 'MEDICAL_OFFICE' } });
+      expect(store.isOrganizationAccount()).toBe(false);
+    });
+
     it('sin el claim, una farmacia, un laboratorio o una aseguradora sin perfil de persona lo son', () => {
       for (const tipo of ['PHARMACY', 'DIAGNOSTIC_CENTER', 'PAYER']) {
         sesion({ tenantTypes: { 't-1': tipo } });

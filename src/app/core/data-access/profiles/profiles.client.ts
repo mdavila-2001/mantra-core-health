@@ -48,7 +48,6 @@ import type {
   DependentCandidate,
   DependentLinkRequestSent,
   DependentLinkTarget,
-  DependentRelationshipCode,
   IncomingDependentLinkRequest,
   NewDependent,
   PractitionerOnboarding,
@@ -96,21 +95,9 @@ function fechaIso(fecha: Date): string {
  * La fecha llega como instante ISO aunque la columna sea `date`, y los
  * opcionales vacíos llegan como `null`: las dos cosas las arregla
  * {@link toDependent} en la frontera, que es donde corresponde.
+ * Derived from {@link Dependent} so a new field cannot be forgotten here.
  */
-interface WireDependent {
-  id: string;
-  patientProfileId: string;
-  personId: string;
-  fullName: string;
-  name?: string;
-  lastName?: string;
-  birthDate?: string;
-  ageYears?: number;
-  nationalId?: string;
-  relationshipCode: DependentRelationshipCode;
-  relationshipDisplay: string;
-  isLegalGuardian: boolean;
-}
+type WireDependent = Omit<Dependent, 'birthDate'> & { birthDate?: string };
 
 /**
  * Normaliza un dependiente del transporte al tipo de la vista.

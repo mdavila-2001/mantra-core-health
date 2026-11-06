@@ -29,6 +29,13 @@ test.use({
 test('la reserva muestra la figura del cuerpo conectada al motivo', async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
+  // Which mannequin renders cannot be read from the DOM (the href is a blob
+  // copy), so the request for the image file is the observable signal.
+  const maniquies: string[] = [];
+  page.on('request', (r) => {
+    const m = /\/body-map\/(\w+)-front\.webp/.exec(r.url());
+    if (m) maniquies.push(m[1]!);
+  });
   await entrar(page, PACIENTE);
 
   // Slot ids are rebuilt from the mock seeds (`core/mock/fixtures/agenda.ts`):
@@ -79,6 +86,9 @@ test('la reserva muestra la figura del cuerpo conectada al motivo', async ({ pag
 
   const figura = page.getByTestId('reserva-figura');
   await expect(figura).toBeVisible();
+  // The silhouette follows the booking patient (Ana, FEMALE in the mock), not
+  // the neutral fallback it always showed before (bug 2026-11-05).
+  await expect.poll(() => maniquies.includes('female')).toBe(true);
   await figura.scrollIntoViewIfNeeded();
 
   // The figure sits to the right of the form, not below it.

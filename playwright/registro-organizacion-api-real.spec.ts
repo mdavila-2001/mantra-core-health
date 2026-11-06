@@ -115,19 +115,19 @@ async function llegarADocumentos(page: Page, sigla: string): Promise<void> {
 /**
  * Todo el camino del alta, con los 5 PDF, el poder y las 3 gerencias, y la
  * envía. El representante legal es el owner: `correo` es el de su login.
- * El último «Continuar» —el de «Directorio ejecutivo»— es el envío, así que la
+ * El último «Continuar» —el de «Su acceso»— es el envío, así que la
  * escucha de la respuesta se arma antes de pulsarlo.
  */
 async function llegarYEnviarElAlta(page: Page, sigla: string, correo: string): Promise<Response> {
   await llegarADocumentos(page, sigla);
   await subirLosCincoDocumentos(page);
-  await completarRepresentanteLegal(page, { email: correo });
+  await completarRepresentanteLegal(page);
   await expect(page.locator('.paginated-form__titulo')).toContainText('Directorio ejecutivo');
   const respuesta = page.waitForResponse(
     (r) => r.url().includes('/iam/auth/register-organization') && r.request().method() === 'POST',
     { timeout: 30_000 },
   );
-  await completarGerencias(page);
+  await completarGerencias(page, { email: correo });
   return respuesta;
 }
 

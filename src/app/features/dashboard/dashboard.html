@@ -85,6 +85,12 @@
     </div>
   }
 
+  <!-- El inicio de la cuenta de una organización: cómo está en los papeles, su equipo y lo
+       de hoy. Se suma al aviso de arriba, no lo reemplaza: la aseguradora conserva su puerta. -->
+  @if (esOrganizacion()) {
+    <app-organization-home />
+  }
+
   <!-- ─── Lo que toca hoy ─────────────────────────────────────────────────
        La primera franja de quien atiende, y lo primero que se ve al entrar.
 

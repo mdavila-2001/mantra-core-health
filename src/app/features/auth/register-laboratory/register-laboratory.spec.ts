@@ -143,6 +143,7 @@ describe('RegisterLaboratory', () => {
       // Una S.R.L. no puede omitir el poder (BR-09): la API responde 422.
       powerOfAttorneyFileId: 'file-poder',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
     });
     // El punto de la central es obligatorio (pedido del cliente del 26/10/2026).
     component.fijarGpsCentral(PUNTO_CENTRAL);
@@ -293,6 +294,7 @@ describe('RegisterLaboratory', () => {
     'legalRepIdNumber',
     'legalRepEmail',
     'password',
+    'confirmPassword',
   ] as const)('sin %s no se envía', (clave) => {
     completarLoObligatorio();
     // `patchValue` y no `controls[clave].setValue`: el tipo de sociedad se
@@ -340,10 +342,11 @@ describe('RegisterLaboratory', () => {
     expect(pagina('representante')?.campos.map((c) => c.key)).toEqual([
       'legalRepName',
       'legalRepIdNumber',
-      'legalRepEmail',
       'powerOfAttorneyFileId',
     ]);
     expect(pagina('documentos')?.campos.map((c) => c.key)).not.toContain('powerOfAttorneyFileId');
+    // The access email sits with the password and its confirmation.
+    expect(pagina('acceso')?.campos.map((c) => c.key)).toEqual(['legalRepEmail', 'password', 'confirmPassword']);
   });
 
   it('con papeles a medias no viaja el bloque: el DTO lo pide todo o nada', () => {

@@ -390,6 +390,7 @@ test.describe('alta de doctor · universidad, lugar de estudio y segunda profesi
     await avanzar(page, 'Su contraseña');
 
     await page.getByTestId('registro-pro-password').fill('secreto12');
+    await page.getByTestId('registro-pro-password-confirm').fill('secreto12');
     const enviar = page.getByTestId('paginated-form-continuar');
     await expect(enviar).toHaveText(/Crear cuenta/);
     await enviar.click();

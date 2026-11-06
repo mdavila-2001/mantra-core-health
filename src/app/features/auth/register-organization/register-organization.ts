@@ -34,10 +34,7 @@ import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-
 import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import { mensajeDeError } from '../../../shared/forms/paginated/error-message';
-import {
-  MESSAGE_SHORT_PASSWORD,
-  passwordValidators,
-} from '../shared-registration/password-policy';
+import { accessPasswordFields, passwordWithConfirmation } from '../shared-registration/password-confirmation';
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
@@ -336,10 +333,7 @@ export class RegisterOrganization {
     // no hay un segundo juego de nombre y correo («Tu cuenta»). El nombre y
     // el correo salen de `legalRepresentative` y `legalRepresentativeEmail`;
     // acá sólo falta la clave con la que va a entrar. Ver `datos()`.
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [...passwordValidators],
-    }),
+    ...passwordWithConfirmation(),
   });
 
   /** Las opciones crudas del catálogo, sin filtrar por país. */
@@ -545,26 +539,6 @@ export class RegisterOrganization {
             mensajeDeError: 'Escriba el número de cédula.',
           },
           {
-            key: 'legalRepresentativeEmail',
-            label: 'Correo',
-            hint: 'Con este correo y la contraseña de abajo se inicia sesión. También recibe las notificaciones oficiales.',
-            control: 'email' as const,
-            required: true,
-            autocomplete: 'username',
-            testId: 'registro-organizacion-representante-correo',
-            mensajeDeError: 'Ingrese un correo válido.',
-          },
-          {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            control: 'password' as const,
-            required: true,
-            autocomplete: 'new-password',
-            testId: 'registro-organizacion-representante-password',
-            mensajeDeError: MESSAGE_SHORT_PASSWORD,
-          },
-          {
             key: 'legalRepresentativePhone',
             label: 'Teléfono de contacto (opcional)',
             control: 'tel' as const,
@@ -591,6 +565,27 @@ export class RegisterOrganization {
             ancho: 'completo' as const,
             mensajeDeError: 'Complete nombre, celular y correo de las tres gerencias.',
           },
+        ],
+      },
+      {
+        titulo: 'Su acceso',
+        clave: 'acceso',
+        hint: 'Entra con el correo del representante legal y esta contraseña.',
+        disposicion: 'dos-columnas' as const,
+        campos: [
+          {
+            key: 'legalRepresentativeEmail',
+            ancho: 'completo' as const,
+            label: 'Correo de acceso',
+            hint: 'El del representante legal: con este correo y la contraseña se inicia sesión. También recibe las notificaciones oficiales.',
+            control: 'email' as const,
+            required: true,
+            icono: 'mail' as const,
+            autocomplete: 'username',
+            testId: 'registro-organizacion-representante-correo',
+            mensajeDeError: 'Ingrese un correo válido.',
+          },
+          ...accessPasswordFields('registro-organizacion-representante-password'),
         ],
       },
     ]),
