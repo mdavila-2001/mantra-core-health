@@ -42,6 +42,7 @@ import {
   type MockRouter,
 } from '../mock-router';
 import { cerrarAcciones, emitirNotificacion } from './notifications.handlers';
+import { resumenDeDependiente } from './profiles-dependents.mock';
 import {
   ahora,
   bodyAsQuery,
@@ -598,7 +599,15 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
     licenses: visiblesDelPerfil(matriculasPropiasDe(p)),
     languages: languagesOf(p),
     affiliations: affiliationList.filtrar((a) => a.practitionerProfileId === p.id),
-    activity: p.origen !== undefined ? cuentasDeActividad(p) : { ...cuentasDeActividad(p), ...(environment.mockBackend ? { monthlyEncounters: serieMensualDemo(), quality: CALIDAD_DEMO } : {}) },
+    activity:
+      p.origen !== undefined
+        ? cuentasDeActividad(p)
+        : {
+            ...cuentasDeActividad(p),
+            ...(environment.mockBackend
+              ? { monthlyEncounters: serieMensualDemo(), quality: CALIDAD_DEMO }
+              : {}),
+          },
     createdAt: iso(-500),
   };
 }
@@ -619,7 +628,10 @@ function itemDeGuia(p: ProfesionalSimulado) {
       specialtyConceptId,
       isPrimary: i === 0,
     })),
-    workplaces: p.origen !== undefined ? [p.organizacion, p.direccion].filter((x) => x !== '') : [p.organizacion, `Consultorio ${p.lastName}`],
+    workplaces:
+      p.origen !== undefined
+        ? [p.organizacion, p.direccion].filter((x) => x !== '')
+        : [p.organizacion, `Consultorio ${p.lastName}`],
     activity: cuentasDeActividad(p),
   };
 }
@@ -636,14 +648,16 @@ function cuentasDeActividad(p: ProfesionalSimulado) {
    hay dependientes de ejemplo, los crea quien los registra. */
 
 /** Un apoderamiento vigente, tal como lo guarda la maqueta. */
-interface ApoderamientoSimulado {
+export interface ApoderamientoSimulado {
   readonly id: string;
   readonly titularId: string;
   readonly dependienteId: string;
   readonly relationshipConceptId: string;
 }
 
-const apoderamientos = new Coleccion<ApoderamientoSimulado>([]).persistirEn('mock.profiles.apoderamientos');
+const apoderamientos = new Coleccion<ApoderamientoSimulado>([]).persistirEn(
+  'mock.profiles.apoderamientos',
+);
 
 interface SolicitudDeVinculo {
   readonly id: string;
@@ -702,55 +716,6 @@ export function representaA(titularId: string | undefined, pacienteId: string): 
   return apoderamientos
     .todos()
     .some((a) => a.titularId === titularId && a.dependienteId === pacienteId);
-}
-
-/**
- * Qué es el dependiente para quien lo representa, ya dado vuelta.
- *
- * Espeja `describeDependentRelationship` de la API: la maqueta tiene que decir
- * lo mismo que el servidor, o la pantalla se vería distinta según contra qué
- * corra.
- */
-function parentescoInvertido(conceptId: string): { code: string; display: string } {
-  const codigo = Object.entries(KINSHIP).find(([, id]) => id === conceptId)?.[0];
-  if (codigo === 'RELATIONSHIP_MOTHER' || codigo === 'RELATIONSHIP_FATHER') {
-    return { code: 'CHILD', display: 'Hijo/a' };
-  }
-  if (codigo === 'RELATIONSHIP_CHILD') return { code: 'PARENT', display: 'Padre/Madre' };
-  if (codigo === 'RELATIONSHIP_SPOUSE') return { code: 'SPOUSE', display: 'Cónyuge' };
-  if (codigo === 'RELATIONSHIP_GUARDIAN') return { code: 'WARD', display: 'Tutelado/a' };
-  return { code: 'OTHER', display: 'Otro/a' };
-}
-
-/** El resumen que devuelve la API para cada dependiente. */
-function resumenDeDependiente(apoderamiento: ApoderamientoSimulado) {
-  const p = patientById(apoderamiento.dependienteId);
-  const relacion = parentescoInvertido(apoderamiento.relationshipConceptId);
-  return {
-    id: apoderamiento.id,
-    patientProfileId: apoderamiento.dependienteId,
-    personId: p?.personId ?? apoderamiento.dependienteId,
-    fullName: p?.displayName ?? '',
-    ...(p?.name === undefined || p.name === '' ? {} : { name: p.name }),
-    ...(p?.lastName === undefined || p.lastName === '' ? {} : { lastName: p.lastName }),
-    ...(p?.birthDate === undefined || p.birthDate === ''
-      ? {}
-      : { birthDate: p.birthDate, ageYears: edadEnAnios(p.birthDate) }),
-    ...(p?.nationalId === undefined || p.nationalId === '' ? {} : { nationalId: p.nationalId }),
-    relationshipCode: relacion.code,
-    relationshipDisplay: relacion.display,
-    isLegalGuardian: true,
-  };
-}
-
-/** Edad cumplida, con la misma cuenta que hace el servidor. */
-function edadEnAnios(fecha: string): number {
-  const nacimiento = new Date(fecha);
-  const hoy = new Date();
-  let anios = hoy.getUTCFullYear() - nacimiento.getUTCFullYear();
-  const mes = hoy.getUTCMonth() - nacimiento.getUTCMonth();
-  if (mes < 0 || (mes === 0 && hoy.getUTCDate() < nacimiento.getUTCDate())) anios -= 1;
-  return Math.max(anios, 0);
 }
 
 export function registrarPerfiles(router: MockRouter): void {
@@ -890,7 +855,10 @@ export function registrarPerfiles(router: MockRouter): void {
     patientList.actualizar(p.id, { photoFileId });
     const vitrina = showcases.todos().find((v) => v.targetId === p.id);
     if (vitrina !== undefined) {
-      showcases.actualizar(vitrina.id, { avatarFileId: photoFileId, avatarUrl: urlDeArchivoSimulado(photoFileId) ?? vitrina.avatarUrl });
+      showcases.actualizar(vitrina.id, {
+        avatarFileId: photoFileId,
+        avatarUrl: urlDeArchivoSimulado(photoFileId) ?? vitrina.avatarUrl,
+      });
     }
     return perfilPropioDe(patientList.get(p.id)!);
   });
@@ -996,6 +964,7 @@ export function registrarPerfiles(router: MockRouter): void {
       lastName?: string;
       motherLastName?: string;
       birthDate?: string;
+      sexAtBirth?: string;
       nationalId?: string;
       issuerAdministrativeAreaConceptId?: string;
       relationshipConceptId?: string;
@@ -1025,6 +994,10 @@ export function registrarPerfiles(router: MockRouter): void {
       lastName: apellido,
       motherLastName: materno,
       birthDate: datos.birthDate ?? '',
+      // The mock only models the two sexes the silhouette draws.
+      ...(datos.sexAtBirth === 'MALE' || datos.sexAtBirth === 'FEMALE'
+        ? { sexAtBirth: datos.sexAtBirth }
+        : {}),
       nationalId: documento,
       email: '',
       phone: '',
