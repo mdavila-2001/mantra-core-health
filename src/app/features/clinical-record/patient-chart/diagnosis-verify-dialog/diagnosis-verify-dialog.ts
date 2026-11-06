@@ -40,6 +40,12 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { writeFailureMessage } from '../../write-message';
+import { linkFailureMessage, replacementOptions } from '../diagnosis-link-options';
+import type { DiagnosisOption } from '../medication-block/medication-block';
+import { opcionesDeEvidencia } from './diagnosis-verify-dialog.evidencia';
+
+/** The 422s of `replacedByConditionId` (API v4291): they go to the selector, not on top. */
+const REPLACEMENT_REASONS = ['CONDITION_REPLACEMENT_INVALID', 'CONDITION_REPLACEMENT_SELF', 'CONDITION_REPLACEMENT_REQUIRES_REFUTED'];
 
 /** Hasta cuánto puede decir el motivo. Es el tope del contrato (§3.4). */
 export const MAX_MOTIVO = 500;
@@ -52,38 +58,6 @@ const TARGET_CURSO_CLINICO = 'clinical.conditions.clinical_course_concept_id';
 
 /** El curso que exime del fin esperado: una crónica no resuelve. */
 const CODIGO_CURSO_CRONICO = 'COND_COURSE_CHRONIC';
-
-/**
- * «Informe · Hemograma completo · 12 sept 2026».
- *
- * Sin una opción vacía propia: `app-select` ya dibuja su `placeholder` como
- * la opción nula, y sumarle otra mostraba «Sin evidencia» dos veces.
- */
-function opcionesDeEvidencia(
-  circuito: PatientDiagnostics | null,
-  notas: ChartNotesPage | null,
-  etiquetas: ConceptLabels,
-): readonly SelectOption<string | null>[] {
-  const nombre = (conceptId: string) => etiquetas.get(conceptId)?.display ?? 'Estudio';
-  const fecha = (instante: Date) =>
-    instante.toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' });
-  return [
-    ...(circuito?.reports ?? []).map((informe) => ({
-      value: `report:${informe.id}`,
-      label: `Informe · ${nombre(informe.codeConceptId)} · ${fecha(informe.createdAt)}`,
-    })),
-    ...(circuito?.orders ?? []).map((orden) => ({
-      value: `order:${orden.id}`,
-      label: `Orden · ${nombre(orden.codeConceptId)} · ${fecha(orden.createdAt)}`,
-    })),
-    ...(notas?.items ?? []).map((nota) => ({
-      value: `note:${nota.noteId}`,
-      // «Nota #a1b2»: cuatro caracteres distinguen dos notas del mismo día sin
-      // mostrar el identificador entero.
-      label: `Nota #${nota.noteId.replace(/-/g, '').slice(-4)} · ${fecha(nota.signedAt ?? nota.createdAt)}`,
-    })),
-  ];
-}
 
 /**
  * **Confirmar o rechazar** un diagnóstico presuntivo — C3.
@@ -136,6 +110,9 @@ export class DiagnosisVerifyDialog {
   /** El nombre del diagnóstico, para el título. Sin él: «el diagnóstico». */
   readonly nombre = input('');
 
+  /** The person's diagnoses, as the host already has them (like `AnalysisOrderBlock`): no second summary read. */
+  readonly diagnosticos = input<readonly DiagnosisOption[]>([]);
+
   /** La condición como quedó en el servidor. */
   readonly verified = output<Condition>();
 
@@ -162,6 +139,9 @@ export class DiagnosisVerifyDialog {
 
   protected readonly motivo = signal('');
   protected readonly evidencia = signal<string | null>(null);
+  /** Only on rejecting: the diagnosis confirmed in its place (patch v4291). */
+  protected readonly reemplazo = signal<string | null>(null);
+  protected readonly errorDeReemplazo = signal('');
 
   /**
    * El inicio, o `undefined` mientras nadie lo tocó: entonces vale el que el
@@ -185,6 +165,11 @@ export class DiagnosisVerifyDialog {
   /* -- Lo que se lee ------------------------------------------------------- */
 
   protected readonly opcionesDeEvidencia = signal<readonly SelectOption<string | null>[]>([]);
+  /**
+   * The person's other **confirmed** diagnoses: the candidates for «Se confirmó
+   * en su lugar» (`diagnosticos`). None: the rejection goes without a link.
+   */
+  protected readonly opcionesDeReemplazo = computed(() => replacementOptions(this.diagnosticos(), this.condition().id));
   protected readonly cargandoEvidencia = signal(true);
   private readonly circuito = signal<PatientDiagnostics | null>(null);
 
@@ -224,10 +209,7 @@ export class DiagnosisVerifyDialog {
           ];
           return this.terminology.readConceptLabels(conceptos).pipe(
             catchError(() => of<ConceptLabels>(new Map())),
-            map((etiquetas) => ({
-              circuito,
-              opciones: opcionesDeEvidencia(circuito, notas, etiquetas),
-            })),
+            map((etiquetas) => ({ circuito, opciones: opcionesDeEvidencia(circuito, notas, etiquetas) })),
           );
         }),
       )
@@ -284,6 +266,7 @@ export class DiagnosisVerifyDialog {
     () =>
       this.motivo().trim() !== '' ||
       this.evidencia() !== null ||
+      this.reemplazo() !== null ||
       this.fin() !== null ||
       this.cronica() ||
       this.inicioElegido() !== undefined,
@@ -347,6 +330,7 @@ export class DiagnosisVerifyDialog {
     const inicio = this.inicio();
     const fin = this.fin();
     const cursoCronico = this.cursoCronico();
+    const reemplazo = this.reemplazo();
 
     const decision: NewDiagnosisVerification = {
       outcome: this.outcome(),
@@ -359,10 +343,12 @@ export class DiagnosisVerifyDialog {
       ...(this.confirma() && this.cronica() && cursoCronico !== null
         ? { clinicalCourseConceptId: cursoCronico }
         : {}),
+      ...(!this.confirma() && reemplazo !== null ? { replacedByConditionId: reemplazo } : {}),
     };
 
     this.enviando.set(true);
     this.resultado.set(loading());
+    this.errorDeReemplazo.set('');
     this.clinical.verifyCondition(this.condition().id, decision).subscribe({
       next: (condicion) => {
         this.enviando.set(false);
@@ -372,6 +358,12 @@ export class DiagnosisVerifyDialog {
       },
       error: (error: unknown) => {
         this.enviando.set(false);
+        const vinculo = linkFailureMessage(error, REPLACEMENT_REASONS);
+        if (vinculo !== null) {
+          this.resultado.set(ready(null));
+          this.errorDeReemplazo.set(vinculo);
+          return;
+        }
         this.resultado.set(errorToViewState<null>(error));
       },
     });

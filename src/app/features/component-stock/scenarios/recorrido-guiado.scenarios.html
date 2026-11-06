@@ -1,0 +1,33 @@
+<div class="escenario-guiado">
+  <app-recorrido-guiado
+    [pasos]="pasos()"
+    [episodio]="episodio()"
+    [nombreDelEpisodio]="episodio() === null ? null : 'Sinusitis aguda'"
+    [interaccionEnLaRed]="toques()"
+    (pasoActual)="alCambiar($event)"
+  />
+
+  <section class="escenario-guiado__red" aria-label="Red de demostración" data-testid="escenario-red">
+    <h3 class="escenario-guiado__titulo">Red de demostración</h3>
+    <p class="escenario-guiado__nota">
+      Hace de red: muestra lo que emite el control. Tocar un registro cuenta como interacción con la red y pausa.
+    </p>
+    <ul class="escenario-guiado__nodos">
+      @for (nodo of nodos; track nodo.id) {
+        <li>
+          <button
+            type="button"
+            class="escenario-guiado__nodo"
+            [class.is-revelado]="revelados().has(nodo.id)"
+            [class.is-enfocado]="enfocados().has(nodo.id)"
+            [attr.aria-pressed]="enfocados().has(nodo.id)"
+            [attr.data-estado]="enfocados().has(nodo.id) ? 'enfocado' : revelados().has(nodo.id) ? 'revelado' : 'oculto'"
+            (click)="tocar(nodo.id)"
+          >
+            {{ nodo.rotulo }}
+          </button>
+        </li>
+      }
+    </ul>
+  </section>
+</div>

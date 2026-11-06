@@ -7,6 +7,8 @@ import {
   PATIENT_SEARCH_SIMULATOR_EXTENSIONS,
   PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS,
 } from '../../data-access/profiles/profiles.types';
+import { DIAGNOSIS_VERIFICATION_CONTRACT_PENDING_KEYS } from '../../data-access/clinical/clinical.types';
+import { DIAGNOSTIC_ORDER_CONTRACT_PENDING_KEYS } from '../../data-access/diagnostics/diagnostics.types';
 import { INFORMED_CONSENT_CONTRACT_PENDING_KEYS } from '../../data-access/informed-consents/informed-consents.types';
 import {
   REFERRAL_CONTRACT_PENDING_KEYS,
@@ -50,6 +52,16 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // `REFERRAL_CONTRACT_PENDING_KEYS` —; se borra al regenerar el contrato.
   'POST /referrals': REFERRAL_CONTRACT_PENDING_KEYS,
   'PATCH /referrals/:id/respond': REFERRAL_RESPOND_CONTRACT_PENDING_KEYS,
+  // Clinical network (patch v4291): the order's and the rejection's new links.
+  // Same case: the client sends them to the real API; removed on regenerating.
+  // The order also adds F5b's collection point (see below): a single key, or
+  // the second would overwrite the first.
+  'POST /clinical/service-requests': [
+    ...DIAGNOSTIC_ORDER_CONTRACT_PENDING_KEYS,
+    ...SERVICE_REQUEST_COLLECTION_POINT_PENDING_KEYS,
+    ...STUDY_DETAIL_CONTRACT_PENDING_KEYS,
+  ],
+  'POST /clinical/conditions/:id/verification': DIAGNOSIS_VERIFICATION_CONTRACT_PENDING_KEYS,
   // Consentimiento informado DIRIGIDO (v4266): mismo caso que el de arriba.
   'POST /consent/treatment-informed-consents': INFORMED_CONSENT_CONTRACT_PENDING_KEYS,
   // Infraestructura hospitalaria F5a/F5c (`CONTRATO-F2-F5.md`): sala, AE Title
@@ -59,9 +71,7 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // F5b/F5d: la web **no** las manda mientras `INFRA_INTEGRATION_FLAGS` esté
   // apagada (la API las rechaza con 400); la maqueta las acepta para poder
   // probar la pantalla con la bandera encendida.
-  // F5b: el punto de toma sugerido de la orden. Más la muestra y el detalle de imagen (v4.2.82):
-  // el `openapi.json` de la API ya los declara, el contrato generado de la maqueta todavía no.
-  'POST /clinical/service-requests': [...SERVICE_REQUEST_COLLECTION_POINT_PENDING_KEYS, ...STUDY_DETAIL_CONTRACT_PENDING_KEYS],
+  // F5b and the study detail (v4.2.82): the order's keys go in the clinical network entry, above.
   // F5d: el consultorio de la plantilla de horario.
   'POST /scheduling/resources/:id/templates': TEMPLATE_CARE_SPACE_PENDING_KEYS,
   'POST /community/conversations/:conversationId/messages': DIRECT_MESSAGE_CONTRACT_PENDING_KEYS,

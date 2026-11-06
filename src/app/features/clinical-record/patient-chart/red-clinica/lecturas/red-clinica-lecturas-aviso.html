@@ -1,0 +1,33 @@
+@let f = faltas();
+@if (f.cargando) {
+  <p class="aviso__nota" role="status" data-testid="red-cargando">Leyendo citas, derivaciones, estudios y procedimientos…</p>
+} @else {
+  @if (f.faltan !== '') {
+    <app-alert tone="warning" title="El recorrido está incompleto" data-testid="red-faltan">
+      No se pudieron leer {{ f.faltan }}: el recorrido muestra el resto.
+      @if (f.peticion !== '') {
+        Id. de petición: {{ f.peticion }}.
+      }
+      <div alert-actions>
+        <button app-button variant="outline" size="sm" type="button" (clicked)="reintentar.emit()">Reintentar</button>
+      </div>
+    </app-alert>
+  }
+  <!-- A 403 is the access scope, not a failure: no retry offered. -->
+  @if (f.sinAcceso !== '') {
+    <app-alert tone="info" title="Fuera de su acceso" data-testid="red-sin-acceso">
+      Su acceso a esta historia no incluye {{ f.sinAcceso }}: el recorrido muestra lo que sí puede ver.
+    </app-alert>
+  }
+  <!-- A 404 says nothing about whether the records exist (S6). -->
+  @if (f.noDisponibles !== '') {
+    <p class="aviso__nota" data-testid="red-no-disponibles">
+      No están disponibles {{ f.noDisponibles }} de esta historia: el recorrido no los incluye.
+    </p>
+  }
+  @if (f.recortadas !== '') {
+    <p class="aviso__nota" data-testid="red-recortadas">
+      Se muestran hasta {{ f.tope }} registros de {{ f.recortadas }}: hay más que el recorrido no incluye.
+    </p>
+  }
+}

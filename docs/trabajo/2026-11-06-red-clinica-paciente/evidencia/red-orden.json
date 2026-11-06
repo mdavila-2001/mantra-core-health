@@ -1,0 +1,125 @@
+[
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505"
+  },
+  {
+    "kind": "console",
+    "type": "log",
+    "text": "NG0751: Angular has detected that this application contains `@defer` blocks and the hot module replacement (HMR) mode is enabled. All `@defer` block dependencies will be loaded eagerly. Find more at https://v21.angular.dev/errors/NG0751"
+  },
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505"
+  },
+  {
+    "kind": "console",
+    "type": "log",
+    "text": "NG0751: Angular has detected that this application contains `@defer` blocks and the hot module replacement (HMR) mode is enabled. All `@defer` block dependencies will be loaded eagerly. Find more at https://v21.angular.dev/errors/NG0751"
+  },
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all the items in the collection. Duplicated keys were: \nkey \"Consulta\" at index \"0\" and \"1\". Find more at https://v21.angular.dev/errors/NG0955"
+  },
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all the items in the collection. Duplicated keys were: \nkey \"Consulta\" at index \"0\" and \"1\". Find more at https://v21.angular.dev/errors/NG0955"
+  },
+  {
+    "kind": "mock",
+    "label": "orden",
+    "row": {
+      "method": "POST",
+      "url": "/clinical/service-requests",
+      "status": 201,
+      "body": {
+        "custodianTenantId": "7008ddb3-957c-4095-a68f-a9425d52b798",
+        "patientProfileId": "c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0",
+        "codeConceptId": "45c6e5ca-24a6-4f14-a7bc-228ab4d2261e",
+        "category": "OTHER",
+        "encounterId": "5403189e-09fd-4f66-a65d-fa88fde10e64",
+        "reasonConditionId": "9e0e63a2-7299-4774-a657-a8123a417256"
+      },
+      "respuesta": {
+        "id": "ac389335-3248-49cb-ad22-5d360309b9b0",
+        "patientProfileId": "c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0",
+        "category": "OTHER",
+        "basedOnNoteIds": [],
+        "reasonConditionId": "9e0e63a2-7299-4774-a657-a8123a417256",
+        "status": "ACTIVE",
+        "createdAt": "2026-11-06T04:36:26.406Z"
+      }
+    }
+  },
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505"
+  },
+  {
+    "kind": "console",
+    "type": "log",
+    "text": "NG0751: Angular has detected that this application contains `@defer` blocks and the hot module replacement (HMR) mode is enabled. All `@defer` block dependencies will be loaded eagerly. Find more at https://v21.angular.dev/errors/NG0751"
+  },
+  {
+    "kind": "relectura-derivacion",
+    "gets": []
+  },
+  {
+    "kind": "sessionStorage",
+    "sizes": [
+      [
+        "mock.comunidad.vitrinas",
+        3933332
+      ],
+      [
+        "mock.clinica.ordenes",
+        448270
+      ],
+      [
+        "mock.agenda.reservas",
+        303224
+      ],
+      [
+        "mock.clinica.encuentros",
+        253006
+      ],
+      [
+        "mock.agenda.plantillas",
+        43212
+      ],
+      [
+        "mock.agenda.recursos",
+        36205
+      ],
+      [
+        "mock.comunidad.mensajes",
+        17528
+      ],
+      [
+        "mock.apoyo.permisos",
+        11252
+      ],
+      [
+        "mock.apoyo.vinculos",
+        6436
+      ],
+      [
+        "mock.comunidad.conversaciones",
+        6298
+      ],
+      [
+        "mock.practice.servicios",
+        4078
+      ],
+      [
+        "mock.apoyo.asignaciones",
+        2325
+      ]
+    ]
+  }
+]

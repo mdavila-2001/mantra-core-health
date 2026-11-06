@@ -1,33 +1,34 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import type { Actor } from './support/actores';
 import { entrar, esperarAplicacionLista, irA } from './support/sesion';
 
 /**
- * «Cómo le va» (el resumen general del médico) y la asociación de una encuesta
- * a un servicio con un selector real.
+ * «Cómo le va» (the practitioner's overall summary) in the read-only «Buzón»,
+ * and reading the answers of one survey.
  *
- * Corre contra el **backend simulado** (`ng serve --configuration
- * development,demo`), con la cuenta de la médica. Recorre:
+ * Runs against the **mock backend** (`ng serve --configuration
+ * development,demo`), with the doctor's account. It walks through:
  *
- *   1. Pestaña «Encuestas» de Formularios: el bloque «Cómo le va» sobre la lista.
- *   2. Cambiar de período (Este mes → 12 meses; el de abertura es «3 meses»): sólo
- *      presets de meses calendario, nunca rangos libres; cambia la petición y las cifras.
- *   3. Cambiar de servicio: la petición lleva `serviceId`; un servicio con pocas
- *      respuestas se marca «pocas respuestas» sin esconderse; uno sin envíos
- *      muestra el vacío con su próxima acción.
- *   4. Abrir la ficha de una encuesta publicada y asociarla a un servicio:
- *      UI → request (`POST /surveys/assignments`) → response (201) → persistencia
- *      (la ficha relee y lo muestra POR NOMBRE) → recarga de la página → UI.
- *   5. Repetir la asociación: el 409 se dice junto al selector.
+ *   1. The «Encuestas» tab of Formularios: the «Cómo le va» block above the list.
+ *   2. Changing the period (Este mes → 12 meses; it opens on «3 meses»): only
+ *      calendar-month presets, never free ranges; the request and the figures change.
+ *   3. Changing the service: the request carries `serviceId`; a service with few
+ *      answers is marked «pocas respuestas» without hiding; one with no sends
+ *      shows the empty state with its next action.
+ *   4. Read-only Buzón (06/11/2026): a hand-made survey is «anterior», without
+ *      «Abrir»; «Ver respuestas» leads to its sheet, which reads (questionnaire
+ *      and answers, `GET …/responses` → 200) without managing anything — free
+ *      association no longer exists: the API rejects it —, survives a reload
+ *      and points to «Encuestas por servicio».
  *
- * Nunca espera `networkidle`: contra `ng serve` con HMR no llega. Se espera por
- * elementos y por respuestas concretas.
+ * Never waits for the network to go quiet: against `ng serve` with HMR it never
+ * does. It waits on elements and on concrete responses.
  *
- * Las capturas (claro y oscuro; 1440 y 390 px) se guardan en `SALIDA`.
+ * The captures (light and dark; 1440 and 390 px; viewport only) go to `SALIDA`.
  */
 
 const SALIDA = join('docs', 'frontend', 'evidence', 'encuestas-resumen-medico-2026-10-28');
@@ -49,21 +50,32 @@ async function aplicarTema(page: Page, tema: Tema): Promise<void> {
   }, tema);
 }
 
+/**
+ * Viewport-only capture (a full-page one lets the side rail cover content),
+ * without the demo chip, once fonts and icons are in and two frames painted
+ * (transitions are instant: the test runs with reduced motion). A scrolled page
+ * is framed from under the sticky top bar, so nothing shows through its glass.
+ */
 async function capturar(page: Page, nombre: string): Promise<void> {
   mkdirSync(SALIDA, { recursive: true });
-  // La cabecera es `sticky`: en una captura de página entera queda flotando a
-  // mitad de la imagen y tapa contenido. Se suelta sólo para la foto.
-  const estilo = await page.addStyleTag({
-    content: '.app-header { position: static !important; } * { scroll-behavior: auto !important; }',
+  const estilo = await page.addStyleTag({ content: 'aside.mock { display: none !important; } * { scroll-behavior: auto !important; }' });
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    await new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done())));
   });
-  await page.evaluate(() => {
-    window.scrollTo(0, 0);
-    for (const el of Array.from(document.querySelectorAll('*'))) {
-      if (el.scrollTop > 0) el.scrollTop = 0;
-    }
-  });
-  await page.screenshot({ path: join(SALIDA, `${nombre}.png`), fullPage: true });
+  const top = await page.evaluate(() => (window.scrollY > 0 ? Math.ceil(document.querySelector('header[app-header]')?.getBoundingClientRect().bottom ?? 0) : 0));
+  const { width, height } = page.viewportSize()!;
+  await page.screenshot({ path: join(SALIDA, `${nombre}.png`), ...(top > 0 ? { clip: { x: 0, y: top, width, height: height - top } } : {}) });
   await estilo.evaluate((nodo) => (nodo as Element).remove());
+}
+
+/** Scrolls so `target` starts just under the sticky top bar. */
+async function scrollToTopOf(page: Page, target: Locator): Promise<void> {
+  await target.evaluate((node) => {
+    const bar = document.querySelector('header[app-header]')?.getBoundingClientRect().bottom ?? 0;
+    window.scrollBy(0, node.getBoundingClientRect().top - bar - 16);
+  });
 }
 
 /** Lo que el simulador atendió, según `window.__mockRequests` (no hay tráfico de red que escuchar). */
@@ -118,10 +130,12 @@ async function elegirOpcion(page: Page, contenedor: string, nombre: string | Reg
   await page.getByRole('option', { name: nombre }).click();
 }
 
-test.describe('Encuestas · «Cómo le va» y asociar a un servicio', () => {
-  test('resumen general, filtros, ficha y asociación que sobrevive a recargar', async ({ page }) => {
+test.describe('Encuestas · «Cómo le va» y el Buzón de solo lectura', () => {
+  test('resumen general, filtros, privacidad y lectura de las respuestas de una encuesta', async ({ page }) => {
     test.setTimeout(4 * 60_000);
     await page.setViewportSize({ width: 1440, height: 900 });
+    // Theme and route transitions finish at once: captures never catch a cross-fade.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
 
     await entrar(page, MEDICA);
     await irA(page, '/questionnaires');
@@ -133,7 +147,7 @@ test.describe('Encuestas · «Cómo le va» y asociar a un servicio', () => {
     await expect(page.getByTestId('resumen-kpis')).toBeVisible();
 
     const arriba = await bloque.boundingBox();
-    const lista = await page.getByTestId('encuestas-lista').boundingBox();
+    const lista = await page.getByTestId('surveys-inbox-list').boundingBox();
     expect(arriba!.y).toBeLessThan(lista!.y);
 
     // Las cinco cifras y el desglose del NPS, con el n siempre a la vista.
@@ -223,6 +237,8 @@ test.describe('Encuestas · «Cómo le va» y asociar a un servicio', () => {
     for (const seccion of ['resumen-nps', 'resumen-preguntas', 'resumen-tendencia', 'resumen-comentarios']) {
       await expect(page.getByTestId(seccion)).toHaveCount(0);
     }
+    // The «Cómo le va» card from its top, just under the sticky bar: the whole notice in frame.
+    await scrollToTopOf(page, page.getByTestId('resumen-medico'));
     await capturar(page, '04-suprimido-privacidad-claro-1440');
 
     // Su acción amplía el alcance: con todas las consultas el resumen sale completo.
@@ -266,61 +282,46 @@ test.describe('Encuestas · «Cómo le va» y asociar a un servicio', () => {
     await capturar(page, '07-resumen-oscuro-1440');
     await aplicarTema(page, 'claro');
 
-    // ── 4. La ficha de una encuesta publicada ──────────────────────────────────
-    await page.getByRole('link', { name: 'Abrir: Experiencia de teleconsulta' }).click();
-    await expect(page.getByTestId('asignacion-servicio')).toBeVisible({ timeout: 30_000 });
+    // ── 4. Read-only Buzón → one survey's answers ──────────────────────────────
+    const tarjeta = page.getByTestId('surveys-inbox-list').locator('li', { hasText: 'Experiencia de teleconsulta' });
+    await expect(tarjeta).toContainText('Encuesta anterior (ya no se envía)');
+    await expect(tarjeta.getByRole('link', { name: /^Abrir/ })).toHaveCount(0);
+    await tarjeta.getByRole('link', { name: 'Ver las respuestas de Experiencia de teleconsulta' }).click();
+    await expect(page).toHaveURL(/\/questionnaires\/[0-9a-f-]{36}#respuestas$/);
 
-    // Hoy está asociada a la teleconsulta cardiológica, dicho POR NOMBRE.
-    const vigentes = page.getByTestId('asignacion-vigentes');
-    await expect(vigentes).toContainText('Teleconsulta cardiológica');
-    await expect(vigentes).not.toContainText(/[0-9a-f]{8}-[0-9a-f]{4}-/i);
-    await expect(page.getByTestId('asignacion-vigente')).toHaveCount(1);
-    await capturar(page, '08-ficha-asociada-hoy-claro-1440');
+    // The sheet reads. ONE card with tabs; `#respuestas` opens the answers tab, with the answers.
+    await expect(page.getByRole('tab', { name: 'Respuestas', exact: true })).toHaveAttribute('aria-selected', 'true', { timeout: 30_000 });
+    await expect(page.getByTestId('survey-detail-answer-list')).toBeVisible({ timeout: 30_000 });
+    const lecturas = async (): Promise<readonly number[]> =>
+      (await atendidas(page)).filter((r) => r.method === 'GET' && /^\/surveys\/templates\/[^/?]+\/responses/.test(r.url)).map((r) => r.status);
+    await expect.poll(lecturas, { timeout: 15_000 }).toEqual([200]);
 
-    // Ya no hay un campo de texto para pegar un UUID.
-    await expect(page.getByTestId('asignacion-servicio').locator('input[type="text"]')).toHaveCount(0);
+    // Nothing that manages the survey: no attach, publish, edit or deactivate.
+    for (const testId of ['asignacion-vigentes', 'asignacion-servicio', 'asignacion-guardar', 'encuesta-publicar', 'encuesta-agregar-pregunta']) {
+      await expect(page.getByTestId(testId)).toHaveCount(0);
+    }
+    await expect(page.getByText(/Asociar a un servicio|Desactivar encuesta|nueva versión/)).toHaveCount(0);
+    expect((await atendidas(page)).filter((r) => r.method !== 'GET' && r.url.startsWith('/surveys/'))).toEqual([]);
+    await capturar(page, '08-ficha-solo-lectura-claro-1440');
 
-    // UI → request → response.
-    await elegirOpcion(page, 'asignacion-servicio', 'Electrocardiograma');
-    await page.getByTestId('asignacion-guardar').click();
-    await expect(page.getByTestId('asignacion-vigente')).toHaveCount(2);
-    const posts = (await atendidas(page)).filter((r) => r.method === 'POST' && r.url === '/surveys/assignments');
-    expect(posts).toHaveLength(1);
-    const cuerpo = posts[0]!.body as { surveyVersionId: string; targetType: string; targetId: string };
-    expect(cuerpo.targetType).toBe('SERVICE');
-    // Lo que viaja es un id, no el texto del selector.
-    expect(cuerpo.targetId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-/i);
-    expect(cuerpo.surveyVersionId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-/i);
-    expect(posts[0]!.status).toBe(201);
-
-    // Persistencia: la ficha relee y muestra las dos, por nombre.
-    await expect(vigentes).toContainText('Electrocardiograma');
-    await expect(vigentes).toContainText('Teleconsulta cardiológica');
-    await capturar(page, '09-ficha-recien-asociada-claro-1440');
-
-    // Recarga completa de la página → UI.
+    // Full reload → still readable, on the same tab.
     await page.reload();
     await esperarAplicacionLista(page);
-    await expect(page.getByTestId('asignacion-vigentes')).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByTestId('asignacion-vigentes')).toContainText('Electrocardiograma');
-    await expect(page.getByTestId('asignacion-vigente')).toHaveCount(2);
+    await expect(page.getByTestId('survey-detail-answer-list')).toBeVisible({ timeout: 30_000 });
 
-    // ── 5. Repetir lo mismo: 409, dicho junto al selector ───────────────────────
-    await elegirOpcion(page, 'asignacion-servicio', 'Electrocardiograma');
-    await page.getByTestId('asignacion-guardar').click();
-    await expect(page.getByTestId('asignacion-error')).toContainText('Ya existe una asignación activa');
-    const repetidas = (await atendidas(page)).filter((r) => r.method === 'POST' && r.url === '/surveys/assignments');
-    expect(repetidas.map((r) => r.status)).toEqual([409]);
-    await expect(page.getByTestId('asignacion-servicio')).toBeVisible();
-    await capturar(page, '10-ficha-conflicto-claro-1440');
+    // «Resumen»: the tab writes its fragment and shows the summary of the answers.
+    await page.getByRole('tab', { name: 'Resumen', exact: true }).click();
+    await expect(page).toHaveURL(/#resumen$/);
+    await expect(page.getByTestId('survey-detail-summary-bars').or(page.getByTestId('survey-detail-summary-below-minimum'))).toBeVisible();
 
-    // «Todas mis consultas» también es una opción real.
-    await expect(
-      page.getByTestId('asignacion-servicio').getByRole('combobox'),
-    ).toBeVisible();
-    await page.getByTestId('asignacion-servicio').getByRole('combobox').click();
-    await expect(page.getByRole('option', { name: /Todas mis consultas/ })).toBeVisible();
-    await page.keyboard.press('Escape');
+    // ── 5. The sheet leads to where each service's survey is chosen today ──────
+    await page.getByRole('tab', { name: 'Preguntas', exact: true }).click();
+    await expect(page.getByTestId('survey-detail-read-only')).toContainText('Solo lectura');
+    await page.getByTestId('survey-detail-go-to-services').click();
+    await expect(page).toHaveURL(/\/questionnaires\?encuestas=servicios$/);
+    await expect(page.getByTestId('service-surveys-list')).toBeVisible({ timeout: 30_000 });
+    await page.goBack();
+    await expect(page.getByTestId('survey-detail-read-only')).toBeVisible({ timeout: 30_000 });
 
     // ── 6. Celular, claro y oscuro ──────────────────────────────────────────────
     await page.setViewportSize({ width: 390, height: 844 });
@@ -334,14 +335,13 @@ test.describe('Encuestas · «Cómo le va» y asociar a un servicio', () => {
     await resumenAsentado(page);
     await capturar(page, '13-resumen-claro-390');
 
-    // A 390 px los chips de estado de la lista no se cortan («Borrado…»): pasan a otra fila.
-    const rotulosDelFiltro = page.locator('[data-testid="encuestas-filtro-estado"] .segmentado__rotulo');
-    await rotulosDelFiltro.first().scrollIntoViewIfNeeded();
-    const recortados = await rotulosDelFiltro.evaluateAll((els) =>
-      els.filter((el) => el.scrollWidth > el.clientWidth + 1).map((el) => el.textContent?.trim()),
-    );
-    expect(recortados, 'ningún chip de estado debe cortar su texto a 390 px').toEqual([]);
-    await page.getByTestId('encuestas-barra').screenshot({ path: join(SALIDA, '17-filtro-de-estado-claro-390.png') });
+    // At 390 px the Buzón only has the search box (no status filter) and is not cut.
+    const barra = page.getByTestId('surveys-inbox-toolbar');
+    await barra.scrollIntoViewIfNeeded();
+    await expect(barra.locator('app-segmented-control')).toHaveCount(0);
+    const cajaBarra = await barra.boundingBox();
+    expect(cajaBarra!.x + cajaBarra!.width, 'el buscador entra en 390 px').toBeLessThanOrEqual(390);
+    await capturar(page, '17-buscador-claro-390');
     await aplicarTema(page, 'oscuro');
     await capturar(page, '14-resumen-oscuro-390');
 
@@ -350,6 +350,7 @@ test.describe('Encuestas · «Cómo le va» y asociar a un servicio', () => {
     await cambiandoElFiltro(page, () => page.getByTestId('resumen-periodo').getByRole('radio', { name: '12 meses' }).click());
     await cambiandoElFiltro(page, () => elegirOpcion(page, 'resumen-servicio', 'Prueba de esfuerzo'));
     await expect(page.getByTestId('resumen-suprimido')).toBeVisible();
+    await scrollToTopOf(page, page.getByTestId('resumen-medico'));
     await capturar(page, '15-suprimido-claro-390');
     await aplicarTema(page, 'oscuro');
     await capturar(page, '16-suprimido-oscuro-390');

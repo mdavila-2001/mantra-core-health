@@ -1,0 +1,31 @@
+/* -- Tour: network, filters, alerts and panel --------------------------------
+   With no node open, a single full-width column (rule 6: never an empty
+   column next to it). With a node open and ≥ 780 px, a map | panel grid; the
+   panel sticks to the top on scroll (its own CSS does it). */
+:host {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+:host(.expediente__red--con-panel) {
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
+}
+
+.expediente__red-mapa {
+  display: grid;
+  gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+/* With no node open the panel takes no cell; open as a sheet it is a modal
+   `<dialog>` and does not either. */
+:host(:not(.expediente__red--con-panel)) .expediente__red-panel {
+  display: contents;
+}
+
+:host(.expediente__red--con-panel) .expediente__red-panel {
+  position: sticky;
+  inset-block-start: calc(var(--header-height, 4rem) + var(--sp-4));
+}

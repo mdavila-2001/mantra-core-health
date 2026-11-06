@@ -1,56 +1,49 @@
 <app-card variant="outlined" padding="lg">
-  <div class="tarjeta">
+  <div class="tarjeta" [class.tarjeta--anterior]="survey().sending === 'no'">
     <span class="tarjeta__marca" aria-hidden="true"><app-nav-icon name="survey" /></span>
 
     <div class="tarjeta__datos">
-      <h2 class="tarjeta__titulo">{{ encuesta().title }}</h2>
-      @if (encuesta().description) {
-        <p class="tarjeta__consigna">{{ encuesta().description }}</p>
+      <h2 class="tarjeta__titulo">{{ survey().title }}</h2>
+      @if (survey().description) {
+        <p class="tarjeta__consigna">{{ survey().description }}</p>
       }
       <p class="tarjeta__meta">
-        Versión {{ encuesta().latestVersionNumber }} · {{ encuesta().questionCount }}
-        {{ encuesta().questionCount === 1 ? 'pregunta' : 'preguntas' }}
-        @if (!encuesta().published) {
-          · sin publicar
-        }
+        {{ survey().questionCount }} {{ survey().questionCount === 1 ? 'pregunta' : 'preguntas' }}
       </p>
-      <ul class="tarjeta__servicios" data-testid="encuesta-servicios" aria-label="Servicios asociados">
-        @for (nombre of servicios(); track $index) {
-          <li><app-badge variant="info">{{ nombre }}</app-badge></li>
-        } @empty {
-          <li class="tarjeta__sin-servicios" data-testid="encuesta-sin-servicios">Sin servicio asociado</li>
-        }
-      </ul>
+      @if (survey().sending === 'yes') {
+        <ul class="tarjeta__servicios" data-testid="survey-card-targets" aria-label="Se envía en">
+          @for (name of targets(); track $index) {
+            <li><app-badge variant="info">{{ name }}</app-badge></li>
+          }
+        </ul>
+      } @else if (survey().sending === 'no') {
+        <p class="tarjeta__nota" data-testid="survey-card-past-note">
+          Ya no se envía a sus pacientes. Puede leer las respuestas que recibió.
+        </p>
+      } @else {
+        <p class="tarjeta__nota" data-testid="survey-card-unknown-note">
+          No pudimos confirmar si se envía hoy. Sus respuestas se pueden leer igual.
+        </p>
+      }
     </div>
 
     <div class="tarjeta__acciones">
-      @if (esBase()) {
+      @if (isBase()) {
         <app-badge variant="secondary">Base del sistema</app-badge>
       }
-      <app-badge [variant]="encuesta().tono">{{ encuesta().palabra }}</app-badge>
+      <app-badge [variant]="survey().tone" [attr.data-testid]="'survey-card-status-' + survey().id">{{ survey().label }}</app-badge>
       <a
         app-button
         variant="secondary"
         size="sm"
-        [routerLink]="destinoRespuestas()"
-        [fragment]="fragmento()"
-        [attr.data-testid]="'respuestas-' + encuesta().id"
+        [routerLink]="responsesRoute()"
+        [fragment]="responsesFragment()"
+        [attr.data-testid]="'survey-responses-' + survey().id"
+        [attr.aria-label]="'Ver las respuestas de ' + survey().title"
       >
         <app-nav-icon name="chat" aria-hidden="true" />
         Ver respuestas
       </a>
-      @if (!esBase()) {
-        <a
-          app-button
-          variant="secondary"
-          size="sm"
-          [routerLink]="encuesta().ruta"
-          [attr.data-testid]="'abrir-' + encuesta().id"
-          [attr.aria-label]="'Abrir: ' + encuesta().title"
-        >
-          Abrir
-        </a>
-      }
     </div>
   </div>
 </app-card>

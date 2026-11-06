@@ -1,0 +1,33 @@
+@let h = hilo();
+<button
+  type="button"
+  class="red__alternar"
+  [attr.aria-expanded]="h.desplegado"
+  [attr.aria-controls]="h.desplegado ? 'red-' + h.episodio.id : null"
+  [attr.aria-label]="nombre()"
+  data-testid="red-episodio"
+  (click)="alternar.emit(h.episodio.id)"
+>
+  <span class="red__chevron" aria-hidden="true"></span>
+  <span class="red__episodio-nombre">{{ h.episodio.nombre }}</span>
+  @if (h.episodio.estado !== '') {
+    <span [class]="'red__estado tono--' + (h.episodio.tonoDelEstado ?? 'info')">{{ h.episodio.estado }}</span>
+  }
+  <span class="red__episodio-datos">
+    @if (h.episodio.desde) {
+      <span class="red__episodio-rango"
+        >{{ h.episodio.desde | date: 'MMM y' }}@if (h.episodio.hasta && (h.episodio.hasta | date: 'MMM y') !== (h.episodio.desde | date: 'MMM y')) {
+          – {{ h.episodio.hasta | date: 'MMM y' }}
+        }</span
+      >
+    }
+    @for (conteo of conteos(); track conteo) {
+      <span class="red__episodio-conteo">{{ conteo }}</span>
+    }
+    @if (h.episodio.descartados > 0) {
+      <span class="red__episodio-descartados">
+        {{ h.episodio.descartados }} descartado{{ h.episodio.descartados === 1 ? '' : 's' }}
+      </span>
+    }
+  </span>
+</button>

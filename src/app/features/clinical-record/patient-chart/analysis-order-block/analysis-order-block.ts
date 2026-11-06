@@ -16,10 +16,8 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../../core/auth/auth.service';
-import {
-  DiagnosticsClient,
-  previousStudyFromErrorDetails,
-} from '../../../../core/data-access/diagnostics/diagnostics.client';
+import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
+import { previousStudyFromErrorDetails } from '../../../../core/data-access/diagnostics/diagnostics.wire';
 import type {
   DiagnosticReport,
   DuplicateStudyCheckResult,
@@ -39,6 +37,9 @@ import { ConceptSelect } from '../../../../shared/components/molecules/concept-s
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
+import { Select } from '../../../../shared/components/atoms/select/select';
+import { diagnosisLinkOptions, linkFailureMessage } from '../diagnosis-link-options';
+import type { DiagnosisOption } from '../medication-block/medication-block';
 import { writeFailureMessage } from '../../write-message';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { consentTargetState } from '../informed-consent/consent-target';
@@ -50,7 +51,6 @@ import {
   DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS,
   PRIORITY_LABELS,
   conceptosDe,
-  filaDeOrden,
   mensajeDeAlta,
 } from './analysis-order-block.helpers';
 import { createPerformerOrderState } from './performer-selector/performer-order-state';
@@ -59,6 +59,7 @@ import { CollectionPointSelect } from './collection-point-select/collection-poin
 import { StudyDetailSection } from './study-detail-section/study-detail-section';
 import { createStudyCategoryState } from './study-category';
 import type { EstudioEnFicha } from './analysis-order-block.helpers';
+import { filasDelCircuito, informesSueltosDe } from './analysis-order-block.filas';
 
 export type { EstudioEnFicha } from './analysis-order-block.helpers';
 
@@ -146,6 +147,7 @@ const TOPE = 25;
     FormActions,
     FormField,
     PerformerSelector,
+    Select,
     InformedConsentBadge,
     InformedConsentDialog,
     CollectionPointSelect,
@@ -184,6 +186,22 @@ export class AnalysisOrderBlock {
 
   /** Ofrece la respuesta sin exigirla (30/10/2026): se emite sin formulario, no sin encuentro. */
   readonly ofreceRespuesta = input(false);
+
+  /**
+   * The person's diagnoses, for «Para qué diagnóstico» (patch v4291). Built by
+   * whoever already read the summary —as for the prescription— and passed
+   * down: the block does not request the summary again. Without them the
+   * selector is not drawn and the order goes without a link, as allowed.
+   */
+  readonly diagnosticos = input<readonly DiagnosisOption[]>([]);
+
+  /** The chosen diagnosis, or `null`: optional, a control study hangs from none. */
+  protected readonly paraDiagnostico = signal<string | null>(null);
+
+  protected readonly opcionesDeDiagnostico = computed(() => diagnosisLinkOptions(this.diagnosticos()));
+
+  /** The 422 `SERVICE_REQUEST_REASON_CONDITION_INVALID`, on the selector that fixes it. */
+  protected readonly errorDelDiagnostico = signal('');
 
   /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
   protected readonly respuestaDelFormulario = signal<string | null>(null);
@@ -301,22 +319,7 @@ export class AnalysisOrderBlock {
    */
   protected readonly estudios = computed<readonly EstudioEnFicha[]>(() => {
     const state = this.circuito();
-    if (state.status !== 'ready') {
-      return [];
-    }
-
-    const conResultado = new Set(
-      state.data.reports
-        .filter((informe) => this.estaLiberado(informe))
-        .map((informe) => informe.serviceRequestId)
-        .filter((id): id is string => id !== undefined),
-    );
-
-    // Sólo hace falta para el texto «Satisfecha por el informe del {fecha}»:
-    // el informe previo del paciente casi siempre está en esta misma lectura.
-    const informesPorId = new Map(state.data.reports.map((informe) => [informe.id, informe]));
-
-    return state.data.orders.map((orden) => filaDeOrden(orden, conResultado, informesPorId, (id) => this.etiquetas().get(id)?.display));
+    return state.status === 'ready' ? filasDelCircuito(state.data, (id) => this.etiquetas().get(id)?.display, this.diagnosticos()) : [];
   });
 
   /**
@@ -329,14 +332,7 @@ export class AnalysisOrderBlock {
    */
   protected readonly informesSueltos = computed<readonly DiagnosticReport[]>(() => {
     const state = this.circuito();
-    if (state.status !== 'ready') {
-      return [];
-    }
-    const conOrden = new Set(state.data.orders.map((orden) => orden.id));
-    return state.data.reports.filter(
-      (informe) =>
-        informe.serviceRequestId === undefined || !conOrden.has(informe.serviceRequestId),
-    );
+    return state.status === 'ready' ? informesSueltosDe(state.data) : [];
   });
 
   /** Si algún bloque quedó recortado por el tope. */
@@ -505,6 +501,7 @@ export class AnalysisOrderBlock {
     }
 
     const prioridad = this.prioridad();
+    const paraDiagnostico = this.paraDiagnostico();
     // Una recomendación a medias (sin sede) no se manda: la API la rechazaría con 422.
     const performerFields = this.performer.fields();
     if (performerFields === null) {
@@ -513,6 +510,7 @@ export class AnalysisOrderBlock {
 
     this.pidiendo.set(true);
     this.registro.set(loading());
+    this.errorDelDiagnostico.set('');
 
     const cuerpo: NewDiagnosticOrder = {
       custodianTenantId,
@@ -529,6 +527,7 @@ export class AnalysisOrderBlock {
       // Los opcionales sin elegir se **omiten**: el backend valida con
       // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
       ...(prioridad === null ? {} : { priorityConceptId: prioridad }),
+      ...(paraDiagnostico === null ? {} : { reasonConditionId: paraDiagnostico }),
       ...performerFields,
       ...(this.collectionPoint()?.fields() ?? {}),
       ...(this.detail()?.fields() ?? {}),
@@ -563,6 +562,12 @@ export class AnalysisOrderBlock {
    * error, en vez de mandar a pedir el estudio otra vez desde cero.
    */
   private handleSubmitError(error: unknown): void {
+    const vinculo = linkFailureMessage(error, ['SERVICE_REQUEST_REASON_CONDITION_INVALID']);
+    if (vinculo !== null) {
+      this.registro.set(ready(null));
+      this.errorDelDiagnostico.set(vinculo);
+      return;
+    }
     if (error instanceof HttpErrorResponse) {
       const body = readApiError(error);
       if (body?.code === 'PRECONDITION_FAILED' && body.details?.['reason'] === 'DUPLICATE_STUDY_DETECTED') {
@@ -622,20 +627,10 @@ export class AnalysisOrderBlock {
   private limpiar(): void {
     this.estudio.set(null);
     this.prioridad.set(null);
+    this.paraDiagnostico.set(null);
     this.performer.reset();
     this.collectionPoint()?.reset();
     this.detail()?.reset();
-  }
-
-  /**
-   * Un informe cuenta como resultado sólo si tiene versión **liberada**.
-   *
-   * `currentVersionId` dice que hay algo redactado; `currentReleasedVersionId`
-   * dice que alguien lo validó y lo liberó. Tratar el primero como resultado
-   * mostraría un borrador como diagnóstico.
-   */
-  private estaLiberado(informe: DiagnosticReport): boolean {
-    return informe.currentReleasedVersionId !== undefined;
   }
 
   private cargar(patientProfileId: string): void {

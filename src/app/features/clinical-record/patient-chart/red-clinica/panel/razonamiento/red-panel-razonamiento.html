@@ -1,0 +1,52 @@
+<h3 class="panel__seccion-titulo" id="red-panel-razonamiento">Razonamiento</h3>
+<p class="panel__linea">
+  Certeza:
+  <strong>
+    @switch (d().certeza) {
+      @case ('presuntivo') { Presuntivo, en estudio }
+      @case ('confirmado') { Confirmado }
+      @case ('descartado') { Descartado }
+    }
+  </strong>
+  @if (d().inicio) {
+    · inicio {{ d().inicio | date: "d MMM y" }}
+  }
+</p>
+@if (d().nota) {
+  <div class="panel__texto">
+    <p class="panel__rotulo">Hallazgos y justificación</p>
+    <p>{{ d().nota }}</p>
+  </div>
+}
+@if (d().decision; as dec) {
+  <div class="panel__texto">
+    <p class="panel__rotulo">
+      {{ dec.resultado === 'confirmado' ? 'Confirmado' : 'Descartado' }}
+      el {{ dec.decididoEn | date: "d 'de' MMMM 'de' y" }}
+      @if (dec.decididoPor) {
+        por {{ dec.decididoPor }}
+      }
+    </p>
+    @if (dec.motivo) {
+      <p>{{ dec.motivo }}</p>
+    }
+    @if (dec.evidencia; as ev) {
+      <p class="panel__linea">
+        Basado en {{ ev.tipo === 'nota' ? 'la nota' : 'el análisis' }}:
+        @if (ev.nodoId) {
+          <button type="button" class="panel__enlace" (click)="elegir.emit(ev.nodoId)">{{ ev.etiqueta }}</button>
+        } @else {
+          {{ ev.etiqueta }}
+        }
+      </p>
+    }
+  </div>
+} @else if (d().certeza === 'presuntivo') {
+  <p class="panel__pendiente">Todavía no se confirmó ni se descartó · registrado {{ hace() }}</p>
+}
+@if (d().reemplazadoPor; as rp) {
+  <p class="panel__linea" data-testid="red-panel-reemplazo">
+    Se descartó en favor de
+    <button type="button" class="panel__enlace" (click)="elegir.emit(rp.nodoId)">{{ rp.etiqueta }}</button>
+  </p>
+}

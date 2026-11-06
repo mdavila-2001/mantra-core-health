@@ -1,242 +1,209 @@
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
-import { apiViva, contextoDeApi, doctora, urlDeApi } from './support/actores';
-import { entrar, estable, irA } from './support/sesion';
+import type { Actor } from './support/actores';
+import { firstServiceWithoutSurvey, openServiceSurveys, pickFirstCatalogOption, reloadServiceSurveys } from './support/service-surveys';
+import { entrar, irA } from './support/sesion';
 
 /**
- * TAREA-27 · el editor de preguntas del módulo `surveys` (módulo 65).
+ * TAREA-27 · the practitioner's «Encuestas» after standard surveys per service
+ * (06/11/2026). Free creation («Nueva encuesta») is gone: a practitioner only
+ * attaches a standard catalog survey to each of their services.
  *
- * Cubre únicamente lo que existe hoy en el repositorio:
- * `features/questionnaires/questionnaires.ts` (lista «Encuestas», lado
- * profesional) y `features/questionnaires/survey-detail/survey-detail.ts` (el
- * editor: agregar pregunta, publicar, asignar), más la contracara del
- * paciente en `features/account/questionnaires/`.
+ * Against `yarn start:demo` (mock backend), the mock practitioner. The mock
+ * answers inside the browser, so requests/responses come from
+ * `window.__mockRequests`. The same flow against a live API lives in
+ * `carril-27-editor-encuestas-api-real.spec.ts` (opt-in, `E2E_API_REAL=1`).
  *
- * No cubre secciones, editar/eliminar una pregunta ya creada, cambiar el tipo
- * de una existente, la opción «otros», ni mínimos/máximos de cantidad de
- * respuestas: la ficha TAREA-27 §2.2 documenta que el editor de `surveys` no
- * los tiene todavía. Este spec deja constancia de esa ausencia con
- * aserciones negativas en vez de simularlos.
- *
- * Hallazgo de `navigation.map.ts:532`: la sección «Encuestas» está
- * `fueraDelMenuPara: ['PRACTITIONER']` — la doctora de demostración no la ve
- * en el menú (se arma desde la consulta del paciente, no como tarea suelta).
- * La ruta existe igual y es alcanzable de forma directa, como hace
- * `carril-14-crear-cita.spec.ts` con el alta de citas.
- *
- * ## Por qué hay tan pocos `test()`
- *
- * `POST /iam/auth/login` admite diez por minuto y por IP, y este entorno
- * corre varias suites en paralelo (se midieron ~40 procesos `node`/
- * `chrome-headless-shell` concurrentes). Un `test()` por escenario —cada uno
- * con su propio `entrar()`— agota el cupo y deja la suite entera roja por
- * `ThrottlerException`, que no es un defecto del producto. Por eso el flujo
- * funcional entero vive en un solo `test()`, con una sola sesión, navegando
- * por `irA` (sin recargar) como recomienda `sesion.ts`.
+ * Proves UI → request → response → persistence → reload → UI for both writes
+ * («Importar» = PUT, «Quitar» = DELETE), that the fixed «Cita médica» row offers
+ * neither, that a legacy hand-made attachment (catalogCode null) is NOT the
+ * service's survey, and that the imported survey is «Se envía» in the Buzón with
+ * its answers reachable. Waits on elements, never on network quiescence.
  */
 
-const ENCUESTAS = '/questionnaires';
-const MIS_CUESTIONARIOS = '/my-account/questionnaires';
+const MOCK_DOCTOR: Actor = { rol: 'doctora', identificador: 'medica@alovida.mock', clave: 'mock', nombre: 'Médica' };
 
-/** Los tres anchos obligatorios de la ficha. */
+/** The three widths required by the TAREA-27 sheet. */
 const VIEWPORTS = [
-  { nombre: 'movil', width: 390, height: 844 },
-  { nombre: 'tablet', width: 768, height: 1024 },
-  { nombre: 'escritorio', width: 1440, height: 900 },
+  { name: 'mobile', width: 390, height: 844 },
+  { name: 'tablet', width: 768, height: 1024 },
+  { name: 'desktop', width: 1440, height: 900 },
 ] as const;
 
-let api: APIRequestContext;
-
-test.beforeAll(async () => {
-  api = await contextoDeApi();
-  expect(
-    await apiViva(api),
-    `La API no responde en ${urlDeApi()}. Levantala y sembrá con ` +
-      '`node tools/alovida/seed-dev-data.mjs`.',
-  ).toBe(true);
-});
-
-test.afterAll(async () => {
-  await api.dispose();
-});
-
-/** El `<input>` real de un campo del sistema: el `data-testid` queda en el host. */
-function campo(page: Page, testId: string) {
-  return page.getByTestId(testId).locator('input');
+interface ServedRequest {
+  readonly method: string;
+  readonly url: string;
+  readonly status: number;
+  readonly body: unknown;
+  readonly respuesta?: unknown;
 }
 
-/** Crea una encuesta nueva desde la lista y devuelve su título, único por corrida. */
-async function crearEncuesta(page: Page): Promise<string> {
-  const titulo = `Encuesta E2E ${Date.now()}`;
-
-  await page.getByTestId('encuestas-nueva').click();
-  await expect(page.getByTestId('encuestas-form')).toBeVisible();
-
-  await campo(page, 'encuesta-titulo').fill(titulo);
-  await page.getByTestId('encuesta-consigna').locator('textarea').fill('Consigna de prueba E2E.');
-  await page.getByTestId('encuesta-crear').click();
-
-  const fila = page.getByTestId('encuestas-lista').getByText(titulo);
-  await expect(fila).toBeVisible({ timeout: 15_000 });
-  return titulo;
+/** What the mock served, from `window.__mockRequests`. */
+async function served(page: Page, method: string, prefix: string): Promise<readonly ServedRequest[]> {
+  const all = await page.evaluate(() => (window as unknown as { __mockRequests?: ServedRequest[] }).__mockRequests ?? []);
+  return all.filter((r) => r.method === method && r.url.startsWith(prefix));
 }
 
-/** Abre el editor de la encuesta cuya fila muestra `titulo`. */
-async function abrirEditorDe(page: Page, titulo: string): Promise<void> {
-  const fila = page.locator('li', { has: page.getByText(titulo, { exact: true }) }).first();
-  await fila.getByRole('link', { name: 'Abrir' }).click();
-  await estable(page);
-  await expect(page.getByRole('heading', { name: titulo })).toBeVisible();
-}
+test.describe('Encuestas por servicio · backend simulado', () => {
+  test('importar y quitar persisten tras recargar; la cita médica es fija; lo importado se lee en el Buzón', async ({ page }) => {
+    test.setTimeout(4 * 60_000);
+    await entrar(page, MOCK_DOCTOR);
+    await openServiceSurveys(page);
 
-/** Agrega una pregunta de texto libre y espera a que quede listada. */
-async function agregarPreguntaDeTexto(page: Page, enunciado: string): Promise<void> {
-  await page.getByTestId('pregunta-texto').fill(enunciado);
-  await page.getByRole('button', { name: 'Agregar pregunta' }).click();
-  await expect(page.getByText(enunciado)).toBeVisible({ timeout: 15_000 });
-}
+    // Free creation is gone from both sub-tabs.
+    await expect(page.getByTestId('encuestas-nueva')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /nueva encuesta/i })).toHaveCount(0);
 
-test('recorrido completo del editor: lista, alta, preguntas, publicación y huecos documentados', async ({
-  page,
-}) => {
-  // --- AC-27-1/2: la lista carga por URL directa (fuera del menú de la
-  // doctora) y muestra versión y estado. ---------------------------------
-  await entrar(page, doctora());
-  await irA(page, ENCUESTAS);
-  await estable(page);
+    // --- Fixed «Cita médica» row: system survey, only «Ver preguntas». ------
+    const appointment = page.getByTestId('service-surveys-appointment');
+    await expect(appointment).toContainText('Cita médica');
+    await expect(appointment).toContainText('Del sistema');
+    await expect(appointment.getByRole('button', { name: /importar|quitar|cambiar/i })).toHaveCount(0);
+    await expect(appointment.getByTestId('service-surveys-appointment-view')).toBeVisible();
 
-  await expect(page.getByRole('heading', { name: 'Encuestas' })).toBeVisible();
+    // --- Legacy hand-made attachment (catalogCode null): not the service's survey.
+    const legacyRow = page.locator('li[data-testid^="service-survey-"]', { hasText: 'Teleconsulta cardiológica' });
+    await expect(legacyRow.getByTestId('service-surveys-base-only')).toBeVisible();
+    await expect(legacyRow).not.toContainText('Experiencia de teleconsulta');
+    await expect(legacyRow).not.toContainText('Estándar');
+    await expect(legacyRow).not.toContainText('Importada el');
+    await expect(legacyRow.getByRole('button', { name: /^Importar una encuesta/ })).toBeVisible();
 
-  const lista = page.getByTestId('encuestas-lista');
-  const vacio = page.getByText('Todavía no creó ninguna encuesta');
-  await expect(lista.or(vacio)).toBeVisible({ timeout: 15_000 });
-  if (await lista.isVisible()) {
-    await expect(lista.getByText(/Versión \d+/).first()).toBeVisible();
-  }
+    // --- Importar: UI → PUT → response → row. -------------------------------
+    const serviceId = await firstServiceWithoutSurvey(page);
+    const row = page.getByTestId(`service-survey-${serviceId}`);
+    await expect(row.getByTestId('service-surveys-base-only')).toBeVisible();
+    await row.getByTestId(`service-survey-import-${serviceId}`).click();
+    const { code, title } = await pickFirstCatalogOption(page);
+    await page.getByTestId('standard-catalog-import').click();
+    await expect(page.getByTestId('standard-catalog')).toHaveCount(0);
+    await expect(row).toContainText(title);
+    await expect(row.getByText('Estándar')).toBeVisible();
 
-  // --- AC-27-2/4: crear una encuesta, abrir su fila, agregar preguntas. --
-  const titulo = await crearEncuesta(page);
-  await abrirEditorDe(page, titulo);
+    const path = `/surveys/service-assignments/${serviceId}`;
+    const puts = await served(page, 'PUT', path);
+    expect(puts, 'one PUT per import').toHaveLength(1);
+    expect(puts[0]!.status).toBe(200);
+    expect(puts[0]!.body).toEqual({ catalogCode: code });
+    expect(puts[0]!.respuesta).toMatchObject({ serviceId, assignment: { catalogCode: code, title } });
 
-  await expect(page.getByText('Todavía no tiene preguntas')).toBeVisible();
+    // --- Persistence: reload and the import is still there. -----------------
+    await reloadServiceSurveys(page);
+    await expect(row).toContainText(title);
+    await expect(row.getByTestId(`service-survey-remove-${serviceId}`)).toBeVisible();
+    await expect(row.getByTestId(`service-survey-import-${serviceId}`)).toHaveCount(0);
+    const reread = await served(page, 'GET', '/surveys/service-assignments');
+    expect(reread.at(-1)?.respuesta).toMatchObject({ services: expect.arrayContaining([expect.objectContaining({ serviceId, assignment: expect.objectContaining({ catalogCode: code }) })]) });
 
-  await agregarPreguntaDeTexto(page, '¿Cómo calificaría la atención?');
+    // --- «Cambiar» opens on the survey in use and does not offer re-importing it.
+    await row.getByTestId(`service-survey-change-${serviceId}`).click();
+    const inUse = page.getByTestId(`standard-catalog-option-${code}`);
+    await expect(inUse).toHaveAttribute('aria-checked', 'true');
+    await expect(inUse).toContainText('En uso');
+    await expect(page.getByTestId('standard-catalog-import')).toHaveAttribute('aria-disabled', 'true');
+    await page.getByTestId('standard-catalog-cancel').click();
+    await expect(page.getByTestId('standard-catalog')).toHaveCount(0);
+    expect(await served(page, 'PUT', path), 'opening «Cambiar» sends nothing').toHaveLength(0);
 
-  await page.getByTestId('pregunta-texto').fill('¿Qué servicios usó?');
-  await page.getByLabel('Tipo de respuesta').selectOption({ label: 'Elección múltiple' });
-  await expect(page.getByTestId('pregunta-opciones')).toBeVisible();
-  await page
-    .getByTestId('pregunta-opciones')
-    .locator('textarea')
-    .fill('Consulta\nLaboratorio\nImágenes');
-  await page.getByRole('button', { name: 'Agregar pregunta' }).click();
-  await expect(page.getByText('Consulta · Laboratorio · Imágenes')).toBeVisible({
-    timeout: 15_000,
+    // --- The Buzón: the imported survey is «Se envía» and its answers open. --
+    await page.getByRole('tab', { name: 'Buzón', exact: true }).click();
+    const imported = page.getByTestId('surveys-inbox-list').locator('li', { hasText: title });
+    await expect(imported).toContainText('Se envía', { timeout: 30_000 });
+    await imported.getByRole('link', { name: `Ver las respuestas de ${title}` }).click();
+    await expect(page.getByTestId('survey-detail-sending')).toHaveText('Se envía', { timeout: 30_000 });
+    // Just imported: no answers yet, said as S3 in the answers tab.
+    await expect(page.getByTestId('survey-detail-answers')).toContainText('Todavía no respondió nadie');
+    await page.goBack();
+    await page.getByRole('tab', { name: 'Encuestas por servicio', exact: true }).click();
+    await expect(page.getByTestId('service-surveys-list')).toBeVisible({ timeout: 30_000 });
+
+    // --- Quitar: confirm → DELETE 204 → row back to the base survey. --------
+    await row.getByTestId(`service-survey-remove-${serviceId}`).click();
+    await page.getByTestId('dialogo-confirmar').click();
+    await expect(row.getByTestId('service-surveys-base-only')).toBeVisible();
+    const deletes = await served(page, 'DELETE', path);
+    expect(deletes, 'one DELETE per removal').toHaveLength(1);
+    expect(deletes[0]!.status).toBe(204);
+
+    // --- Persistence: reload and it is gone. --------------------------------
+    await reloadServiceSurveys(page);
+    await expect(row.getByTestId('service-surveys-base-only')).toBeVisible();
+    await expect(row).not.toContainText(title);
+    await expect(row.getByTestId(`service-survey-remove-${serviceId}`)).toHaveCount(0);
+    await expect(appointment.getByRole('button', { name: /importar|quitar|cambiar/i })).toHaveCount(0);
   });
-  await expect(page.getByText('¿Qué servicios usó?')).toBeVisible();
 
-  // --- AC-27-4 parcial: persiste al recargar. ----------------------------
-  await page.reload();
-  await estable(page);
-  await expect(page.getByText('¿Cómo calificaría la atención?')).toBeVisible({
-    timeout: 15_000,
+  test('Buzón de solo lectura: las hechas a mano son «anteriores», nada se gestiona', async ({ page }) => {
+    await entrar(page, MOCK_DOCTOR);
+    await irA(page, '/form-builder');
+    await page.getByRole('tab', { name: 'Encuestas', exact: true }).click();
+    const list = page.getByTestId('surveys-inbox-list');
+    await expect(list).toBeVisible({ timeout: 30_000 });
+
+    // Hand-made surveys, even one still linked to a service (teleconsultation): past, readable.
+    for (const legacyTitle of ['Satisfacción con la consulta', 'Experiencia de teleconsulta']) {
+      const legacy = list.locator('li', { hasText: legacyTitle });
+      await expect(legacy).toContainText('Encuesta anterior (ya no se envía)');
+      await expect(legacy.getByRole('link', { name: /Ver las respuestas/ })).toBeVisible();
+    }
+    await expect(list.locator('li', { hasText: 'Base del sistema' }).first()).toContainText('Se envía');
+    // The template imported for the echo (seeded) is sent.
+    await expect(list.locator('li', { hasText: 'Estudios por imágenes' })).toContainText('Se envía');
+
+    await expect(list.getByText(/^(Activa|Borrador|Desactivada)$/)).toHaveCount(0);
+    await expect(list.getByRole('link', { name: /^Abrir/ })).toHaveCount(0);
+    await expect(page.locator('app-surveys-inbox app-view-state-host app-segmented-control')).toHaveCount(0);
+    await expect(list).not.toContainText('Encuesta post-cirugía'); // unsent draft: no answers to read
   });
-  await expect(page.getByText('Consulta · Laboratorio · Imágenes')).toBeVisible();
 
-  // --- Hueco documentado (ficha §2.2): no hay editar ni eliminar pregunta.
-  const preguntaExistente = page.locator('.encuesta__pregunta', {
-    has: page.getByText('¿Cómo calificaría la atención?'),
+  test('ficha de una encuesta anterior en 390 px: el estado no pisa el dato de al lado ni el de abajo', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await entrar(page, MOCK_DOCTOR);
+    await irA(page, '/form-builder');
+    await page.getByRole('tab', { name: 'Encuestas', exact: true }).click();
+    const legacy = page.getByTestId('surveys-inbox-list').locator('li', { hasText: 'Experiencia de teleconsulta' });
+    await legacy.getByRole('link', { name: /Ver las respuestas/ }).click();
+    const badge = page.getByTestId('survey-detail-sending');
+    await expect(badge).toHaveText('Encuesta anterior (ya no se envía)', { timeout: 30_000 });
+
+    // Every other metadata value: the badge's box must not intersect any of them.
+    const facts = page.getByTestId('survey-detail-facts');
+    const own = (await badge.boundingBox())!;
+    for (const value of await facts.locator('dd').all()) {
+      if ((await value.getByTestId('survey-detail-sending').count()) > 0) continue;
+      const other = (await value.boundingBox())!;
+      const intersects = own.x < other.x + other.width && other.x < own.x + own.width && own.y < other.y + other.height && other.y < own.y + own.height;
+      expect(intersects, `the badge overlaps «${(await value.textContent())?.trim()}»`).toBe(false);
+    }
+    const factsBox = (await facts.boundingBox())!;
+    expect(own.x + own.width, 'the badge stays inside the metadata grid').toBeLessThanOrEqual(factsBox.x + factsBox.width + 0.5);
   });
-  await expect(preguntaExistente.getByRole('button', { name: /editar/i })).toHaveCount(0);
-  await expect(preguntaExistente.getByRole('button', { name: /eliminar|borrar/i })).toHaveCount(
-    0,
-  );
 
-  // --- Hueco documentado (ficha §2.2): no hay «otros» ni cardinalidad de
-  // cantidad de respuestas (el único mínimo/máximo que ofrece el formulario
-  // es el de la escala numérica, no el de cuántas opciones se pueden marcar).
-  const formularioTexto = (await page.locator('form').first().textContent()) ?? '';
-  expect(formularioTexto.toLowerCase()).not.toContain('otros');
-  expect(formularioTexto.toLowerCase()).not.toMatch(/exactamente\s*n|m[ií]nimo de respuestas/);
+  test.describe('AC-27-21 · sin scroll horizontal en los tres anchos obligatorios', () => {
+    for (const viewport of VIEWPORTS) {
+      test(`Buzón, Encuestas por servicio y el catálogo en ${viewport.width}px`, async ({ page }) => {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        await entrar(page, MOCK_DOCTOR);
+        await openServiceSurveys(page);
 
-  // --- AC-27-9: publicar congela el cuestionario y la pantalla lo explica
-  // antes de que se apriete el botón. --------------------------------------
-  await expect(page.getByText('Publicar es definitivo')).toBeVisible();
-  await expect(page.getByText('Una versión publicada ya no acepta preguntas')).toBeVisible();
+        const overflows = (): Promise<boolean> =>
+          page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
 
-  await page.getByTestId('encuesta-publicar').click();
-  await expect(page.getByText('Publicada')).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByTestId('pregunta-texto')).toHaveCount(0);
+        expect(await overflows(), `«Encuestas por servicio» desborda en ${viewport.width}px`).toBe(false);
+        await page.screenshot({ path: `artifacts/playwright/tarea-27-encuestas/per-service-${viewport.name}.png` });
 
-  // --- La contracara del paciente: «Mis cuestionarios» resuelve un estado
-  // terminal (no hay cuenta de paciente sembrada con invitaciones propias,
-  // así que sólo se mide que la pantalla no se cuelga en `loading`). ------
-  await irA(page, MIS_CUESTIONARIOS);
-  await estable(page);
-  const forbidden = page.getByText(/no tiene permiso|acceso denegado/i);
-  const encabezado = page.getByRole('heading', { name: 'Mis cuestionarios' });
-  await expect(encabezado.or(forbidden)).toBeVisible({ timeout: 15_000 });
-});
+        await page.locator('[data-testid^="service-survey-import-"]').first().click();
+        await expect(page.getByTestId('standard-catalog-preview')).toBeVisible();
+        expect(await overflows(), `el catálogo desborda en ${viewport.width}px`).toBe(false);
+        await page.screenshot({ path: `artifacts/playwright/tarea-27-encuestas/catalog-${viewport.name}.png` });
+        await page.getByTestId('standard-catalog-cancel').click();
+        await expect(page.getByTestId('standard-catalog')).toHaveCount(0);
 
-test.describe('AC-27-21 · sin scroll horizontal en los tres anchos obligatorios', () => {
-  for (const viewport of VIEWPORTS) {
-    test(`lista, editor y «mis cuestionarios» en ${viewport.width}px`, async ({ page }) => {
-      await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      await entrar(page, doctora());
-
-      // Lista -----------------------------------------------------------
-      await irA(page, ENCUESTAS);
-      await estable(page);
-      let desborde = await page.evaluate(
-        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
-      );
-      expect(desborde, `la lista de encuestas desborda a lo ancho en ${viewport.width}px`).toBe(
-        false,
-      );
-      await page.screenshot({
-        path: `artifacts/playwright/tarea-27-editor/lista-${viewport.nombre}.png`,
-        fullPage: true,
+        await page.getByRole('tab', { name: 'Buzón', exact: true }).click();
+        await expect(page.getByTestId('surveys-inbox-list').or(page.getByTestId('surveys-inbox-empty'))).toBeVisible({ timeout: 30_000 });
+        expect(await overflows(), `el Buzón desborda en ${viewport.width}px`).toBe(false);
+        await page.screenshot({ path: `artifacts/playwright/tarea-27-encuestas/inbox-${viewport.name}.png` });
       });
-
-      // Editor, con preguntas cargadas ------------------------------------
-      const titulo = await crearEncuesta(page);
-      await abrirEditorDe(page, titulo);
-      await agregarPreguntaDeTexto(page, 'Pregunta de texto para la captura');
-
-      await page.getByTestId('pregunta-texto').fill('¿Con qué frecuencia volvería?');
-      await page.getByLabel('Tipo de respuesta').selectOption({ label: 'Elección múltiple' });
-      await page
-        .getByTestId('pregunta-opciones')
-        .locator('textarea')
-        .fill('Siempre\nA veces\nNunca');
-      await page.getByRole('button', { name: 'Agregar pregunta' }).click();
-      await expect(page.getByText('Siempre · A veces · Nunca')).toBeVisible({ timeout: 15_000 });
-
-      desborde = await page.evaluate(
-        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
-      );
-      expect(desborde, `el editor de encuesta desborda a lo ancho en ${viewport.width}px`).toBe(
-        false,
-      );
-      await page.screenshot({
-        path: `artifacts/playwright/tarea-27-editor/editor-${viewport.nombre}.png`,
-        fullPage: true,
-      });
-
-      // «Mis cuestionarios» (paciente), sin recargar la sesión -----------
-      await irA(page, MIS_CUESTIONARIOS);
-      await estable(page);
-      desborde = await page.evaluate(
-        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
-      );
-      expect(
-        desborde,
-        `«mis cuestionarios» desborda a lo ancho en ${viewport.width}px`,
-      ).toBe(false);
-      await page.screenshot({
-        path: `artifacts/playwright/tarea-27-editor/mis-cuestionarios-${viewport.nombre}.png`,
-        fullPage: true,
-      });
-    });
-  }
+    }
+  });
 });

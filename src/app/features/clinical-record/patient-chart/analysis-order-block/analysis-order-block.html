@@ -74,6 +74,25 @@
         />
       </app-form-field>
 
+      <!-- Clinical network (patch v4291): the diagnosis the study seeks to
+           confirm, rule out or follow. Optional: only the not ruled out ones. -->
+      @if (opcionesDeDiagnostico().length > 0) {
+        <app-form-field
+          class="app-form-grid__ancho"
+          label="Para qué diagnóstico"
+          hint="Opcional. El diagnóstico que este estudio busca confirmar, descartar o seguir."
+          [errorMessage]="errorDelDiagnostico()"
+        >
+          <app-select
+            data-testid="estudios-para-diagnostico"
+            [value]="paraDiagnostico()"
+            (valueChange)="paraDiagnostico.set($event); errorDelDiagnostico.set('')"
+            [options]="opcionesDeDiagnostico()"
+            placeholder="Sin diagnóstico asociado"
+          />
+        </app-form-field>
+      }
+
       @if (performer.isProcedure()) {
         <!-- Quién realiza el procedimiento: una recomendación, no una asignación.
              Por defecto «Que elija el paciente»; nada viaja hasta que el médico
@@ -139,6 +158,9 @@
             <div class="estudios__principal">
               <span class="estudios__nombre">{{ estudio.estudio }}</span>
               <span class="estudios__categoria">{{ estudio.categoria }}</span>
+              @if (estudio.paraDiagnostico; as dx) {
+                <span class="estudios__categoria" data-testid="estudios-fila-diagnostico">Para: {{ dx }}</span>
+              }
               <app-informed-consent-badge [consent]="consent.consents.of('SERVICE_REQUEST', estudio.id)" />
             </div>
             <div class="estudios__meta">

@@ -24,8 +24,10 @@ export type TabsOrientation = (typeof TABS_ORIENTATIONS)[number];
  *   scroll cruda del navegador —que dejaba la primera pestaña cortada por la
  *   mitad, y eso se lee como un error de dibujo, no como «hay más a la
  *   izquierda»—.
+ * - `segmented` — a compact second level inside a section that already has
+ *   tabs: inset track, raised selected pill (`tabs-segmented.css`).
  */
-export const TABS_APPEARANCES = ['underline', 'browser'] as const;
+export const TABS_APPEARANCES = ['underline', 'browser', 'segmented'] as const;
 export type TabsAppearance = (typeof TABS_APPEARANCES)[number];
 
 /**

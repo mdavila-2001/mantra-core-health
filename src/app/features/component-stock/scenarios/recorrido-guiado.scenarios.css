@@ -1,0 +1,54 @@
+.escenario-guiado {
+  display: grid;
+  gap: var(--sp-4);
+}
+.escenario-guiado__red {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-lg);
+}
+.escenario-guiado__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+}
+.escenario-guiado__nota {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+.escenario-guiado__nodos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.escenario-guiado__nodo {
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--bg-surface-alt);
+  color: var(--text-tertiary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  opacity: 0.55;
+  cursor: pointer;
+}
+.escenario-guiado__nodo.is-revelado {
+  opacity: 1;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+}
+.escenario-guiado__nodo.is-enfocado {
+  border-color: var(--brand-primary);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+  font-weight: 600;
+}
+.escenario-guiado__nodo:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}

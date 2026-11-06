@@ -88,7 +88,7 @@
   @case ('forbidden') {
     @if (forbiddenState(); as prohibido) {
       <ng-content select="[vsh-forbidden]">
-        <app-alert tone="error" title="No tiene acceso a esta sección">
+        <app-alert tone="error" [title]="prohibido.title ?? 'No tiene acceso a esta sección'">
           {{ prohibido.message ?? 'Su rol o el propósito de uso declarado no alcanzan para ver este contenido.' }}
           @if (prohibido.requestId) {
             <app-support-code class="view-state-host__request-id" [code]="prohibido.requestId" [copyable]="false" />
@@ -140,9 +140,11 @@
         [title]="offlineText().title"
         [description]="offlineText().cause + ' ' + offlineText().action"
       >
-        <button app-button empty-actions variant="outline" (clicked)="requestRetry()">
-          Reintentar
-        </button>
+        @if (retryable()) {
+          <button app-button empty-actions variant="outline" (clicked)="requestRetry()">
+            Reintentar
+          </button>
+        }
       </app-empty-state>
     </ng-content>
   }
@@ -169,9 +171,11 @@
             <button app-button size="sm" variant="outline" (clicked)="copyRequestId()">
               Copiar código
             </button>
-            <button app-button size="sm" variant="secondary" (clicked)="requestRetry()">
-              Reintentar
-            </button>
+            @if (retryable()) {
+              <button app-button size="sm" variant="secondary" (clicked)="requestRetry()">
+                Reintentar
+              </button>
+            }
           </div>
         </app-alert>
       </ng-content>

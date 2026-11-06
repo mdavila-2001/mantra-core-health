@@ -1,12 +1,8 @@
 import type {
   DiagnosticOrder,
-  DiagnosticReport,
   PatientDiagnostics,
 } from '../../../../core/data-access/diagnostics/diagnostics.types';
-import {
-  studyDetailConceptIds,
-  studyDetailSummary,
-} from '../../../../core/data-access/diagnostics/study-detail.summary';
+import { studyDetailConceptIds } from '../../../../core/data-access/diagnostics/study-detail.summary';
 
 /**
  * Las prioridades en castellano, por código estable.
@@ -54,6 +50,11 @@ export interface EstudioEnFicha {
   readonly collectionPoint: string | null;
   /** La consulta en la que se pidió, si la orden la trae. Ata su consentimiento informado. */
   readonly encounterId?: string;
+  /**
+   * Which diagnosis it was ordered for (`reasonConditionId`, patch v4291), in
+   * words. Absent if the order does not bring it.
+   */
+  readonly paraDiagnostico?: string;
   /** La muestra o la parte del cuerpo, en una línea; `null` en las órdenes que no la traen. */
   readonly detalle: string | null;
 }
@@ -110,36 +111,4 @@ export function mensajeDeAlta(decision: {
     return ['Queda pedido con su justificación; la aseguradora la va a ver.', 'Estudio solicitado'];
   }
   return ['Queda pedido y va a verlo acá abajo con su resultado.', 'Estudio solicitado'];
-}
-
-/**
- * Una orden traducida a la fila que la ficha muestra.
- *
- * @param labelOf - El nombre de un concepto, o `undefined` si el catálogo no lo tiene.
- */
-export function filaDeOrden(
-  orden: DiagnosticOrder,
-  conResultado: ReadonlySet<string>,
-  informesPorId: ReadonlyMap<string, DiagnosticReport>,
-  labelOf: (conceptId: string) => string | undefined,
-): EstudioEnFicha {
-  const duplicado = duplicadoDe(orden);
-  const nombre = (id: string | undefined): string => (id === undefined ? '—' : (labelOf(id) ?? '—'));
-  return {
-    id: orden.id,
-    estudio: nombre(orden.codeConceptId),
-    categoria: nombre(orden.categoryConceptId),
-    estado: nombre(orden.statusConceptId),
-    pedidoEl: orden.createdAt,
-    conResultado: conResultado.has(orden.id),
-    duplicado,
-    informePrevioDel:
-      duplicado === 'reused' && orden.previousDiagnosticReportId !== undefined
-        ? (informesPorId.get(orden.previousDiagnosticReportId)?.createdAt ?? null)
-        : null,
-    justificacion: orden.duplicateOverrideReason ?? null,
-    collectionPoint: orden.suggestedCareSpace ? `${orden.suggestedCareSpace.code} · ${orden.suggestedCareSpace.name}` : null,
-    detalle: studyDetailSummary(orden, labelOf),
-    ...(orden.encounterId === undefined ? {} : { encounterId: orden.encounterId }),
-  };
 }

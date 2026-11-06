@@ -1,0 +1,94 @@
+[
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505"
+  },
+  {
+    "kind": "console",
+    "type": "log",
+    "text": "NG0751: Angular has detected that this application contains `@defer` blocks and the hot module replacement (HMR) mode is enabled. All `@defer` block dependencies will be loaded eagerly. Find more at https://v21.angular.dev/errors/NG0751"
+  },
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505"
+  },
+  {
+    "kind": "console",
+    "type": "log",
+    "text": "NG0751: Angular has detected that this application contains `@defer` blocks and the hot module replacement (HMR) mode is enabled. All `@defer` block dependencies will be loaded eagerly. Find more at https://v21.angular.dev/errors/NG0751"
+  },
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505"
+  },
+  {
+    "kind": "console",
+    "type": "log",
+    "text": "NG0751: Angular has detected that this application contains `@defer` blocks and the hot module replacement (HMR) mode is enabled. All `@defer` block dependencies will be loaded eagerly. Find more at https://v21.angular.dev/errors/NG0751"
+  },
+  {
+    "kind": "console",
+    "type": "warning",
+    "text": "NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all the items in the collection. Duplicated keys were: \nkey \"Consulta\" at index \"0\" and \"1\". Find more at https://v21.angular.dev/errors/NG0955"
+  },
+  {
+    "kind": "relectura-derivacion",
+    "gets": []
+  },
+  {
+    "kind": "sessionStorage",
+    "sizes": [
+      [
+        "mock.comunidad.vitrinas",
+        3933332
+      ],
+      [
+        "mock.agenda.reservas",
+        303224
+      ],
+      [
+        "mock.clinica.encuentros",
+        253006
+      ],
+      [
+        "mock.agenda.plantillas",
+        43212
+      ],
+      [
+        "mock.agenda.recursos",
+        36205
+      ],
+      [
+        "mock.comunidad.mensajes",
+        17528
+      ],
+      [
+        "mock.apoyo.permisos",
+        11252
+      ],
+      [
+        "mock.apoyo.vinculos",
+        6436
+      ],
+      [
+        "mock.comunidad.conversaciones",
+        6298
+      ],
+      [
+        "mock.practice.servicios",
+        4078
+      ],
+      [
+        "mock.apoyo.asignaciones",
+        2325
+      ],
+      [
+        "mock.apoyo.delegados",
+        1576
+      ]
+    ]
+  }
+]

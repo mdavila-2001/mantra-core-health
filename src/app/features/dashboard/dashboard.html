@@ -4,7 +4,11 @@
      cosas que no son suyas (F-16 y F-17 de la analista). No se rediseña
      ninguno de los dos: se separan. -->
 @if (esPaciente()) {
-  <app-patient-home />
+  <!-- Deferred like the panels below: PatientHome pulls ClinicalClient, which
+       otherwise ships in the initial bundle that dev keeps at its budget. -->
+  @defer (on immediate) {
+    <app-patient-home />
+  }
 } @else if (esGestion()) {
   <!-- Quien administra la plataforma entra por su portada: las dos puertas —portal
        administrativo y de reportería— y el estado de todo. Diferido por la misma

@@ -1,0 +1,42 @@
+PASS 1440-light: tema light
+PASS 1440-light: sin panel, el mapa se lleva el ancho entero (1070/1070 px)
+PASS 1440-light: panel del estudio TSH con «Resultado liberado» y categoría
+PASS 1440-light: el estudio muestra el vínculo «Se pidió para estudiar»
+PASS 1440-light: el panel es lateral (<aside>)
+PASS 1440-light: rejilla mapa | panel (panel a la derecha del mapa)
+PASS 1440-light: el nodo abierto queda marcado en la red
+PASS 1440-light: panel del descartado con «Se descartó en favor de Hipotiroidismo»
+PASS 1440-light: el vínculo abre el diagnóstico de reemplazo en el panel
+PASS 1440-light: la red marca el nodo navegado
+PASS 1440-light: cerrar devuelve el foco al nodo (hipotiroidismo)
+PASS 1440-light: «solo el hilo de Hipotiroidismo»: 7 → 1 episodios; «15 de 114 registros · 1 filtro aplicado»
+PASS 1440-light: pasar por la alerta resalta 1 nodos/episodios
+PASS 1440-light: clic en la alerta «Presuntivo sin resolver: Dislipidemia» abre el panel
+PASS 1440-light: consola sin errores
+PASS 390-light: sin desplazamiento horizontal de la página
+PASS 390-light: el panel es una hoja (<dialog>)
+PASS 390-light: el vínculo de la hoja abre el diagnóstico
+PASS 390-light: cerrar la hoja devuelve el foco al nodo
+PASS 390-light: el foco en la alerta resalta
+PASS 390-light: consola sin errores
+PASS 1440-dark: tema dark
+PASS 1440-dark: sin panel, el mapa se lleva el ancho entero (1070/1070 px)
+PASS 1440-dark: panel del estudio TSH con «Resultado liberado» y categoría
+PASS 1440-dark: el estudio muestra el vínculo «Se pidió para estudiar»
+PASS 1440-dark: el panel es lateral (<aside>)
+PASS 1440-dark: rejilla mapa | panel (panel a la derecha del mapa)
+PASS 1440-dark: el nodo abierto queda marcado en la red
+PASS 1440-dark: panel del descartado con «Se descartó en favor de Hipotiroidismo»
+PASS 1440-dark: el vínculo abre el diagnóstico de reemplazo en el panel
+PASS 1440-dark: la red marca el nodo navegado
+PASS 1440-dark: cerrar devuelve el foco al nodo (hipotiroidismo)
+PASS 1440-dark: «solo el hilo de Hipotiroidismo»: 7 → 1 episodios; «15 de 114 registros · 1 filtro aplicado»
+PASS 1440-dark: pasar por la alerta resalta 1 nodos/episodios
+PASS 1440-dark: clic en la alerta «Presuntivo sin resolver: Dislipidemia» abre el panel
+PASS 1440-dark: consola sin errores
+PASS 390-dark: sin desplazamiento horizontal de la página
+PASS 390-dark: el panel es una hoja (<dialog>)
+PASS 390-dark: el vínculo de la hoja abre el diagnóstico
+PASS 390-dark: cerrar la hoja devuelve el foco al nodo
+PASS 390-dark: el foco en la alerta resalta
+PASS 390-dark: consola sin errores

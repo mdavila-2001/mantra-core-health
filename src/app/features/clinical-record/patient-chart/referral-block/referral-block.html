@@ -554,7 +554,7 @@
     <app-referral-detail
       [referral]="referral"
       [patientProfileId]="patientProfileId()"
-      [encounterId]="encounterId()"
+      [encounterId]="encounterId()" [arrivalEncounterId]="offersOpenEncounter() ? encounterId() : null"
       [appointments]="appointments()"
       [canWrite]="canWrite()"
       [justIssued]="detail.justIssued()"

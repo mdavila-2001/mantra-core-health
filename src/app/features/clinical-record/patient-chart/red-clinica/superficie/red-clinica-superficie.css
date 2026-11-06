@@ -1,0 +1,94 @@
+/* ============================================================================
+    The Tour's surface: one card, strips separated by a rule. No color nor
+    shadow of its own: the card (`app-card outlined`) provides the border and
+    the surface; here only the room and the rules.
+    ========================================================================== */
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.superficie {
+  display: block;
+  min-inline-size: 0;
+}
+
+.superficie__franja {
+  padding: var(--sp-4);
+  min-inline-size: 0;
+}
+
+.superficie__franja + .superficie__franja {
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+/* Alerts and «Recorrido paso a paso» in one row; the unfolded list drops to
+   full width, pushing only when asked to be seen. */
+.superficie__apoyo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-block: var(--sp-3);
+}
+
+.superficie__alertas {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}
+
+.superficie__guiar {
+  flex: none;
+}
+
+.superficie__guiado {
+  display: grid;
+  gap: var(--sp-3);
+  background: var(--bg-inset);
+}
+
+.superficie__episodio {
+  max-inline-size: 100%;
+}
+
+.superficie__nota {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+@media (min-width: 780px) {
+  .superficie__guiado {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .superficie__episodio {
+    inline-size: min(100%, 24rem);
+  }
+}
+
+@media (max-width: 779px) {
+  .superficie__franja {
+    padding: var(--sp-3);
+  }
+
+  .superficie__guiar {
+    inline-size: 100%;
+    justify-content: center;
+  }
+}
+
+/* On the phone the chart's card already frames the page: a second outline
+   inside it was a nested border. The strips keep their rules. */
+@media (max-width: 649px) {
+  .superficie.superficie {
+    border-color: transparent;
+  }
+
+  .superficie__franja:not(.superficie__guiado) {
+    padding-inline: 0;
+  }
+}

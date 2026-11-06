@@ -1,346 +1,191 @@
 <app-page-header
-  title="Encuesta"
-  subtitle="Componga el cuestionario, publíquelo, asociálo a un servicio y lea lo que respondieron."
-  [breadcrumbs]="breadcrumbs()"
+  [title]="encuesta()?.title ?? 'Encuesta'"
+  [subtitle]="publicada() ? 'Encuesta de sus pacientes: lea el cuestionario y lo que respondieron.' : 'Encuesta de sus pacientes: lea el cuestionario.'"
+  [breadcrumbs]="crumbs()"
 >
   <app-back-link page-actions [fallback]="rutaDeLasEncuestas" label="Volver a las encuestas" />
 </app-page-header>
 
 <app-view-state-host [state]="vista()" (retry)="cargar()">
   @if (encuesta(); as encuesta) {
-    <div class="encuesta">
-      <app-card variant="outlined" padding="lg" class="encuesta__card encuesta__card--ancha">
-        <h2 card-header>{{ encuesta.title }}</h2>
-        @if (encuesta.description) {
-          <p class="encuesta__consigna">{{ encuesta.description }}</p>
-        }
-        <dl class="encuesta__datos">
-          <div>
-            <dt>Versión</dt>
-            <dd>{{ encuesta.latestVersionNumber }}</dd>
-          </div>
-          <div>
-            <dt>Estado</dt>
-            <dd>
-              <app-badge [variant]="encuesta.published ? 'success' : 'warning'">
-                {{ encuesta.published ? 'Publicada' : 'Borrador' }}
-              </app-badge>
-            </dd>
-          </div>
-          <div>
-            <dt>Preguntas</dt>
-            <dd>{{ encuesta.questionCount }}</dd>
-          </div>
-          <div>
-            <dt>Plazo para responder</dt>
-            <dd>{{ encuesta.responseWindowDays }} días</dd>
-          </div>
-          <div>
-            <dt>Vigencia</dt>
-            <dd>
-              @if (encuesta.effectiveFrom) {
-                Desde {{ encuesta.effectiveFrom | date: 'longDate' }}
-              } @else {
-                Sin fecha de inicio
-              }
-              @if (encuesta.effectiveTo) {
-                · hasta {{ encuesta.effectiveTo | date: 'longDate' }}
-              }
-            </dd>
-          </div>
-        </dl>
-      </app-card>
-
-      <!-- ─── El cuestionario: se lee y se edita en el mismo sitio ────────────
-           Cada pregunta es una card que se abre al pulsarla. Antes había una
-           lista de sólo lectura acá y un asistente aparte que sólo sabía
-           agregar al final: corregir la tercera pregunta era imposible. -->
-      <app-card variant="outlined" padding="lg" class="encuesta__card encuesta__card--ancha">
-        <div card-header class="encuesta__cabecera">
-          <h2>Cuestionario</h2>
-          <div class="encuesta__cabecera-acciones">
-            @if (encuesta.questions.length > 0) {
-              <button
-                app-button
-                type="button"
-                variant="outline"
-                size="sm"
-                (click)="alternarPrevia()"
-                data-testid="encuesta-previa"
-              >
-                {{ enPrevia() ? 'Volver a editar' : 'Vista previa' }}
-              </button>
-            }
-          </div>
+    <!-- ONE card with tabs (composition-rules §5): description and status on top,
+         then Preguntas · Resumen · Respuestas. The survey's name is the page title. -->
+    <app-card variant="outlined" padding="lg" class="encuesta">
+      @if (encuesta.description) {
+        <p class="encuesta__consigna">{{ encuesta.description }}</p>
+      }
+      <dl class="encuesta__datos" data-testid="survey-detail-facts">
+        <div class="encuesta__datos-estado">
+          <dt>Estado</dt>
+          <dd>
+            <app-badge [variant]="sendingLabel().variant" data-testid="survey-detail-sending">{{ sendingLabel().text }}</app-badge>
+          </dd>
         </div>
+        <div>
+          <dt>Preguntas</dt>
+          <dd>{{ encuesta.questionCount }}</dd>
+        </div>
+        <div>
+          <dt>Plazo para responder</dt>
+          <dd>{{ encuesta.responseWindowDays }} días</dd>
+        </div>
+        <div>
+          <dt>Vigencia</dt>
+          <dd data-testid="survey-detail-validity">
+            <!-- Day values, in UTC so they never shift a day. One format everywhere; «Estado» says whether it is still sent. -->
+            @if (encuesta.effectiveFrom && encuesta.effectiveTo) {
+              Del {{ encuesta.effectiveFrom | date: 'd MMM y' : 'UTC' }} al {{ encuesta.effectiveTo | date: 'd MMM y' : 'UTC' }}
+            } @else if (encuesta.effectiveFrom) {
+              Desde {{ encuesta.effectiveFrom | date: 'd MMM y' : 'UTC' }}
+            } @else {
+              Sin fecha de inicio
+            }
+          </dd>
+        </div>
+      </dl>
 
-        @if (enPrevia()) {
-          <!-- La previa es el MISMO componente con el que responde el paciente:
-               `app-survey-form`. No es una imitación — no puede desviarse. -->
-          <p class="encuesta__previa-nota">
-            Así lo va a ver quien responda. Puede tocar los controles: nada de lo
-            que marque acá se guarda.
+      <!-- The questions panel, shared by the tabbed and the single-panel layouts. -->
+      <ng-template #questionsPanel>
+        <!-- Read-only since 06/11/2026 (the API rejects editing hand-made surveys): one compact line. -->
+        <div class="encuesta__panel-cabecera">
+          <p class="encuesta__solo-lectura" data-testid="survey-detail-read-only">
+            Solo lectura: qué encuesta recibe cada servicio se elige en&nbsp;<a app-link [routerLink]="rutaDeLasEncuestas" [queryParams]="serviceSurveysQuery" data-testid="survey-detail-go-to-services">«Encuestas por servicio»</a>.
           </p>
-          @if (encuesta.description) {
-            <p class="encuesta__consigna">{{ encuesta.description }}</p>
+          @if (encuesta.questions.length > 0) {
+            <button app-button type="button" variant="outline" size="sm" (click)="alternarPrevia()" data-testid="encuesta-previa">
+              {{ enPrevia() ? 'Ver la lista de preguntas' : 'Ver como el paciente' }}
+            </button>
           }
-          <app-survey-form
-            [preguntas]="encuesta.questions"
-            [soloLectura]="true"
-            testIdPrefijo="previa"
-          />
+        </div>
+        @if (enPrevia()) {
+          <!-- The SAME component the patient answers with: it cannot drift. -->
+          <p class="encuesta__previa-nota">Así lo ve quien responde. Nada de lo que marque acá se guarda.</p>
+          <app-survey-form [preguntas]="encuesta.questions" [soloLectura]="true" testIdPrefijo="previa" />
         } @else if (encuesta.questions.length === 0) {
-          <p class="encuesta__vacio">
-            Todavía no tiene preguntas. Agregue la primera con el botón de abajo.
-          </p>
+          <p class="encuesta__vacio">Esta encuesta no tiene preguntas.</p>
         } @else {
-          <ol class="encuesta__preguntas">
-            @for (pregunta of encuesta.questions; track pregunta.id; let i = $index) {
-              <li>
-                <app-question-editor
-                  [pregunta]="pregunta"
-                  [abierta]="preguntaAbierta() === pregunta.id"
-                  [editable]="editable()"
-                  [esPrimera]="i === 0"
-                  [esUltima]="i === encuesta.questions.length - 1"
-                  [guardando]="guardandoPregunta() === pregunta.id"
-                  (abrir)="abrirPregunta(pregunta.id)"
-                  (cerrar)="cerrarPregunta()"
-                  (guardar)="guardarPregunta(pregunta.id, $event)"
-                  (borrar)="borrarPregunta(pregunta.id)"
-                  (mover)="moverPregunta(i, $event)"
-                />
-              </li>
+          <ol class="encuesta__preguntas" data-testid="survey-detail-questions">
+            @for (pregunta of encuesta.questions; track pregunta.id) {
+              <li><app-question-view [question]="pregunta" /></li>
             }
           </ol>
         }
-
-        @if (editable() && !enPrevia()) {
-          <div class="encuesta__agregar">
-            <button
-              app-button
-              type="button"
-              variant="secondary"
-              [disabled]="agregando()"
-              (click)="agregarPregunta()"
-              data-testid="encuesta-agregar-pregunta"
-            >
-              {{ agregando() ? 'Agregando…' : '+ Agregar pregunta' }}
-            </button>
-          </div>
-        }
-      </app-card>
-
-      @if (editable()) {
-        <app-card variant="outlined" padding="lg" class="encuesta__card encuesta__card--ancha">
-          <h2 card-header>Publicar</h2>
-          <!-- El aviso va antes del botón, no después del error: publicar cierra
-               la versión y una respuesta vieja se tiene que poder seguir
-               interpretando. -->
-          <app-alert tone="warning" title="Publicar es definitivo">
-            Una versión publicada ya no acepta cambios en el cuestionario. Si después hace falta
-            corregirlo, se crea una versión nueva y las respuestas anteriores quedan atadas a la
-            que respondieron.
-          </app-alert>
-          <div class="encuesta__acciones">
-            <button
-              app-button
-              type="button"
-              variant="primary"
-              [disabled]="publicando() || encuesta.questions.length === 0"
-              (click)="publicar()"
-              data-testid="encuesta-publicar"
-            >
-              {{ publicando() ? 'Publicando…' : 'Publicar versión ' + encuesta.latestVersionNumber }}
-            </button>
-          </div>
-        </app-card>
-      }
+      </ng-template>
 
       @if (publicada()) {
-        <app-card variant="outlined" padding="lg" class="encuesta__card encuesta__card--ancha">
-          <h2 card-header>Asociar a un servicio</h2>
-
-          <!-- A qué está asociada HOY, con el nombre del servicio y nunca el
-               identificador. Si el servidor no lo informó (`null`) no se
-               afirma nada: «sin asociar» sólo se dice cuando llegó vacío. -->
-          @if (asociaciones(); as vigentes) {
-            <div class="encuesta__asociada" data-testid="asignacion-vigentes">
-              <p class="encuesta__asociada-titulo">Asociada hoy a</p>
-              @if (vigentes.length === 0) {
-                <p class="encuesta__vacio" data-testid="asignacion-ninguna">
-                  Todavía no está asociada a nada: no se le ofrece a ningún paciente.
-                </p>
-              } @else {
-                <ul class="encuesta__asociaciones">
-                  @for (a of vigentes; track a.id) {
-                    <li class="encuesta__asociacion" data-testid="asignacion-vigente">
-                      <app-badge variant="success">{{ a.tipo }}</app-badge>
-                      <span class="encuesta__asociacion-nombre">{{ a.nombre }}</span>
+        <app-tabs class="encuesta__pestanas" data-testid="survey-detail-tabs" [selectedIndex]="activeTab()" (selectedIndexChange)="selectTab($event)">
+          <app-tab label="Preguntas">
+            @if (activeTab() === 0) {
+              <ng-container [ngTemplateOutlet]="questionsPanel" />
+            }
+          </app-tab>
+          <app-tab label="Resumen">
+            @if (activeTab() === 1) {
+              <app-view-state-host class="encuesta__panel" [state]="summaryView()" (retry)="cargarRespuestas()" data-testid="survey-detail-summary">
+                @if (!suficientesRespuestas()) {
+                  <!-- Below the minimum a chart would point at a single person (D-13): same
+                       anatomy and words as the «Cómo le va» summary. -->
+                  <app-empty-state
+                    variant="empty"
+                    title="El resumen todavía no se muestra"
+                    [description]="belowMinimumMessage()"
+                    data-testid="survey-detail-summary-below-minimum"
+                  >
+                    <!-- Next action: the answers themselves are readable one by one. -->
+                    <button app-button empty-actions type="button" variant="outline" (click)="selectTab(2)" data-testid="survey-detail-see-answers">
+                      Ver las respuestas
+                    </button>
+                  </app-empty-state>
+                } @else {
+                  <ul class="encuesta__resumen" data-testid="survey-detail-summary-bars">
+                    @for (resumen of resumenPorPregunta(); track resumen.questionId) {
+                      <li class="encuesta__resumen-pregunta">
+                        <div class="encuesta__resumen-cabecera">
+                          <span class="encuesta__resumen-texto">{{ resumen.questionText }}</span>
+                          <span class="encuesta__resumen-total">
+                            {{ resumen.totalRespondida }} {{ resumen.totalRespondida === 1 ? 'respuesta' : 'respuestas' }}
+                            @if (resumen.promedio !== null) {
+                              · promedio {{ resumen.promedio | number: '1.1-1' }}
+                            }
+                          </span>
+                        </div>
+                        @if (resumen.answerType === 'TEXT') {
+                          <p class="encuesta__resumen-nota">Texto libre: se lee completo en la pestaña «Respuestas».</p>
+                        } @else if (resumen.suppressed) {
+                          <p class="encuesta__resumen-nota" data-testid="survey-detail-question-suppressed">
+                            Sin datos suficientes: menos de {{ minCohort }} respuestas a esta pregunta.
+                          </p>
+                        } @else if (resumen.totalRespondida === 0) {
+                          <p class="encuesta__resumen-nota">Nadie respondió esta pregunta todavía.</p>
+                        } @else {
+                          <ul class="encuesta__barras">
+                            @for (barra of resumen.barras; track barra.etiqueta) {
+                              <li class="encuesta__barra-fila">
+                                <span class="encuesta__barra-etiqueta">{{ barra.etiqueta }}</span>
+                                <span class="encuesta__barra-pista">
+                                  <span class="encuesta__barra-relleno" [style.inline-size.%]="barra.porcentaje"></span>
+                                </span>
+                                <span class="encuesta__barra-cifra">{{ barra.cantidad }} · {{ barra.porcentaje }}%</span>
+                              </li>
+                            }
+                          </ul>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </app-view-state-host>
+            }
+          </app-tab>
+          <app-tab label="Respuestas">
+            @if (activeTab() === 2) {
+              <app-view-state-host class="encuesta__panel" [state]="answersView()" (retry)="cargarRespuestas()" data-testid="survey-detail-answers">
+                <div class="encuesta__respuestas-cabecera">
+                  <span class="encuesta__respuestas-total" data-testid="survey-detail-answer-count">
+                    {{ respuestas().length }} {{ respuestas().length === 1 ? 'respuesta' : 'respuestas' }}
+                  </span>
+                  @if (suficientesRespuestas()) {
+                    <button app-button type="button" variant="outline" size="sm" (click)="descargarCsv()">Descargar CSV</button>
+                  } @else {
+                    <p class="encuesta__nota-csv">
+                      El CSV se habilita con un mínimo de {{ minCohort }} respuestas, para no exponer una respuesta puntual como si fuera
+                      identificable.
+                    </p>
+                  }
+                </div>
+                <ul class="encuesta__respuestas" data-testid="survey-detail-answer-list">
+                  @for (respuesta of respuestas(); track respuesta.id) {
+                    <li class="encuesta__respuesta">
+                      <span class="encuesta__respuesta-fecha">
+                        <!-- Day only, in UTC: the server rounds it to the day; an exact time next to a comment would identify its author. -->
+                        @if (respuesta.submittedAt) {
+                          {{ respuesta.submittedAt | date: 'd MMM y' : 'UTC' }}
+                        } @else {
+                          Sin enviar
+                        }
+                      </span>
+                      <!-- Each value with its question: «3» or «Sí» alone mean nothing. -->
+                      <dl class="encuesta__answers">
+                        @for (answer of respuesta.answers; track answer.questionId) {
+                          <div class="encuesta__answer">
+                            <dt>{{ textoDePregunta().get(answer.questionId) ?? 'Pregunta retirada' }}</dt>
+                            <dd>{{ valorDe(answer) }}</dd>
+                          </div>
+                        }
+                      </dl>
                     </li>
                   }
                 </ul>
-              }
-            </div>
-          }
-
-          <form [formGroup]="formularioAsignacion" (ngSubmit)="asignar()">
-            <app-form-field
-              icon="stethoscope"
-              label="Servicio de salud"
-              hint="Se le ofrecerá al paciente al cerrar una consulta o un servicio de ese tipo. «Todas mis consultas» cubre cualquier consulta."
-              [required]="true"
-            >
-              <app-select
-                formControlName="destino"
-                [options]="opcionesDestino()"
-                placeholder="Elija un servicio"
-                data-testid="asignacion-servicio"
-              />
-            </app-form-field>
-            @if (serviciosFallaron()) {
-              <app-alert tone="warning" title="No pudimos traer sus servicios">
-                Puede asociarla a «Todas mis consultas» igual.
-                <div alert-actions>
-                  <button app-button size="sm" variant="outline" type="button" (click)="cargarServicios()">
-                    Reintentar
-                  </button>
-                </div>
-              </app-alert>
+              </app-view-state-host>
             }
-            @if (errorAsignacion(); as motivo) {
-              <app-alert tone="error" title="No se pudo asociar" data-testid="asignacion-error">
-                {{ motivo }}
-              </app-alert>
-            }
-            <div class="encuesta__acciones">
-              <button
-                app-button
-                type="submit"
-                variant="primary"
-                [disabled]="asignando()"
-                data-testid="asignacion-guardar"
-              >
-                {{ asignando() ? 'Asociando…' : 'Asociar' }}
-              </button>
-              <button app-button type="button" variant="outline" (click)="desactivar()">
-                Desactivar encuesta
-              </button>
-              <button
-                app-button
-                type="button"
-                variant="outline"
-                [disabled]="creandoVersion()"
-                (click)="crearNuevaVersion()"
-              >
-                {{ creandoVersion() ? 'Creando…' : 'Corregir el cuestionario (nueva versión)' }}
-              </button>
-            </div>
-          </form>
-        </app-card>
-
-        <app-card variant="outlined" padding="lg" class="encuesta__card encuesta__card--ancha">
-          <h2 card-header>Resumen</h2>
-          @if (cargandoRespuestas()) {
-            <app-skeleton />
-          } @else if (respuestas().length === 0) {
-            <p class="encuesta__vacio">Todavía no respondió nadie.</p>
-          } @else if (!suficientesRespuestas()) {
-            <p class="encuesta__vacio">
-              {{ respuestas().length }} de un mínimo de 5 respuestas necesarias para mostrar un
-              resumen sin arriesgar identificar a quien respondió.
-            </p>
-          } @else {
-            <ul class="encuesta__resumen">
-              @for (resumen of resumenPorPregunta(); track resumen.questionId) {
-                <li class="encuesta__resumen-pregunta">
-                  <div class="encuesta__resumen-cabecera">
-                    <span class="encuesta__resumen-texto">{{ resumen.questionText }}</span>
-                    <span class="encuesta__resumen-total">
-                      {{ resumen.totalRespondida }}
-                      {{ resumen.totalRespondida === 1 ? 'respuesta' : 'respuestas' }}
-                      @if (resumen.promedio !== null) {
-                        · promedio {{ resumen.promedio | number: '1.1-1' }}
-                      }
-                    </span>
-                  </div>
-                  @if (resumen.answerType === 'TEXT') {
-                    <p class="encuesta__resumen-nota">
-                      Texto libre: se lee completo en la lista de respuestas, más abajo.
-                    </p>
-                  } @else if (resumen.totalRespondida === 0) {
-                    <p class="encuesta__resumen-nota">Nadie respondió esta pregunta todavía.</p>
-                  } @else {
-                    <ul class="encuesta__barras">
-                      @for (barra of resumen.barras; track barra.etiqueta) {
-                        <li class="encuesta__barra-fila">
-                          <span class="encuesta__barra-etiqueta">{{ barra.etiqueta }}</span>
-                          <span class="encuesta__barra-pista">
-                            <span
-                              class="encuesta__barra-relleno"
-                              [style.inline-size.%]="barra.porcentaje"
-                            ></span>
-                          </span>
-                          <span class="encuesta__barra-cifra">
-                            {{ barra.cantidad }} · {{ barra.porcentaje }}%
-                          </span>
-                        </li>
-                      }
-                    </ul>
-                  }
-                </li>
-              }
-            </ul>
-          }
-        </app-card>
-
-        <app-card id="respuestas" variant="outlined" padding="lg" class="encuesta__card encuesta__card--ancha">
-          <div card-header class="encuesta__respuestas-cabecera">
-            <h2>Respuestas recibidas</h2>
-            @if (suficientesRespuestas()) {
-              <button app-button type="button" variant="outline" (click)="descargarCsv()">
-                Descargar CSV
-              </button>
-            }
-          </div>
-          @if (respuestas().length > 0 && !suficientesRespuestas()) {
-            <p class="encuesta__nota-csv">
-              El CSV se habilita con un mínimo de 5 respuestas, para no exponer una respuesta
-              puntual como si fuera identificable.
-            </p>
-          }
-          @if (cargandoRespuestas()) {
-            <app-skeleton />
-          } @else if (respuestas().length === 0) {
-            <p class="encuesta__vacio">Todavía no respondió nadie.</p>
-          } @else {
-            <ul class="encuesta__respuestas">
-              @for (respuesta of respuestas(); track respuesta.id) {
-                <li class="encuesta__respuesta">
-                  <span class="encuesta__respuesta-fecha">
-                    <!-- Sólo el día, en UTC: el servidor lo redondea al día (medianoche UTC) y
-                         la hora exacta junto a un comentario reconocería a quien lo escribió. -->
-                    @if (respuesta.submittedAt) {
-                      {{ respuesta.submittedAt | date: 'd MMM y' : 'UTC' }}
-                    } @else {
-                      Sin enviar
-                    }
-                  </span>
-                  <!-- Cada valor con su pregunta: «3» o «Sí» a secas no se entienden. -->
-                  <dl class="encuesta__answers">
-                    @for (answer of respuesta.answers; track answer.questionId) {
-                      <div class="encuesta__answer">
-                        <dt>{{ textoDePregunta().get(answer.questionId) ?? 'Pregunta retirada' }}</dt>
-                        <dd>{{ valorDe(answer) }}</dd>
-                      </div>
-                    }
-                  </dl>
-                </li>
-              }
-            </ul>
-          }
-        </app-card>
+          </app-tab>
+        </app-tabs>
+      } @else {
+        <!-- Never published: one panel, no tab strip pretending there is more. -->
+        <div class="encuesta__pestanas" data-testid="survey-detail-single">
+          <ng-container [ngTemplateOutlet]="questionsPanel" />
+        </div>
       }
-    </div>
+    </app-card>
   }
 </app-view-state-host>

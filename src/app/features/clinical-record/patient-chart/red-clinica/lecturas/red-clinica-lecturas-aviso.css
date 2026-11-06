@@ -1,0 +1,12 @@
+/* The notices stay in the page flow, as when they lived in the chart template. */
+:host {
+  display: contents;
+}
+
+/* Same as the chart's `expediente__aviso-filtro`: it informs, it does not alarm. */
+.aviso__nota {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
