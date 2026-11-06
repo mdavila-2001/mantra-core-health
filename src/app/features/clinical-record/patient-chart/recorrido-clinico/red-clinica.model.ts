@@ -299,11 +299,12 @@ const HEREDA_DEL_ORIGEN: ReadonlySet<MotivoDelVinculo> = new Set<MotivoDelVincul
   'resultado-de',
   'plan-para',
   'receta-reemplazada',
-  'inferido-misma-atencion',
 ]);
 
-/** Los que arrastran sólo si el destino no tiene episodio propio. */
+/** Los que arrastran sólo si el destino no tiene episodio propio; los inferidos, últimos (ADR-0021). */
 const HEREDA_SI_HUERFANO: ReadonlySet<MotivoDelVinculo> = new Set<MotivoDelVinculo>([
+  'resultado-de',
+  'inferido-misma-atencion',
   'registrado-en',
   'derivado-desde',
   'recibido-en',
@@ -409,6 +410,9 @@ export function agruparEnEpisodios(
     propio.set(id, ordenados[0]);
   };
 
+  const huerfanos = validos // Inferred last: they never replace a real link.
+    .filter((v) => HEREDA_SI_HUERFANO.has(v.motivo))
+    .sort((a, b) => Number(a.motivo.startsWith('inferido')) - Number(b.motivo.startsWith('inferido')));
   let vueltas = 0;
   cambio = true;
   while (cambio && vueltas++ < registros.length + 2) {
@@ -444,8 +448,7 @@ export function agruparEnEpisodios(
       }
     }
     // Los huérfanos heredan el episodio propio de su origen.
-    for (const v of validos) {
-      if (!HEREDA_SI_HUERFANO.has(v.motivo)) continue;
+    for (const v of huerfanos) {
       // En `inferido-mismo-dia` el origen es la cita y el destino la
       // atención: hereda la que no tenga.
       const pares: [string, string][] =

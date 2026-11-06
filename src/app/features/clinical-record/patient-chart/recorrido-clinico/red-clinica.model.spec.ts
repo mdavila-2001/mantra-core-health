@@ -153,8 +153,42 @@ describe('agruparEnEpisodios', () => {
   it('lleva recetas, estudios y resultados al episodio de su diagnóstico', () => {
     expect(episodioDe('rx1')).toBe(HTA);
     expect(episodioDe('rx2')).toBe(ERGE);
-    expect(episodioDe('est1')).toBe(HTA); // por el vínculo inferido
+    expect(episodioDe('est1')).toBe(HTA); // donde se dibuja su atención (e1)
     expect(episodioDe('res1')).toBe(HTA); // resultado del estudio
+  });
+
+  it('un vínculo inferido nunca reemplaza a uno real (ADR-0021): el estudio sin motivo va donde se dibuja su atención', () => {
+    const registros = [
+      r('e', 'atencion', d(2026, 1)),
+      r('p', 'diagnostico', d(2026, 1), { encuentroId: 'e', certeza: 'presuntivo', concepto: 'C-P' }),
+      r('c', 'diagnostico', d(2025, 1), { encuentroId: 'e', certeza: 'confirmado', concepto: 'C-C' }),
+      r('rx', 'medicacion', d(2026, 1), { encuentroId: 'e' }),
+      r('est', 'estudio', d(2026, 1), { encuentroId: 'e' }),
+      r('res', 'resultado', d(2026, 2)),
+    ];
+    const reales: VinculoDeLaRed[] = [
+      { desde: 'e', hasta: 'p', motivo: 'registrado-en' },
+      { desde: 'e', hasta: 'c', motivo: 'registrado-en' },
+      { desde: 'e', hasta: 'rx', motivo: 'registrado-en' },
+      { desde: 'c', hasta: 'rx', motivo: 'indicado-para' },
+      { desde: 'e', hasta: 'est', motivo: 'registrado-en' },
+      { desde: 'est', hasta: 'res', motivo: 'resultado-de' },
+    ];
+    const inferidos = inferirVinculos(registros, reales);
+    expect(inferidos).toContainEqual({ desde: 'p', hasta: 'est', motivo: 'inferido-misma-atencion' });
+    const red = agruparEnEpisodios(registros, [...inferidos, ...reales]);
+    expect(red.episodioDe.get('e')).toBe('episodio:c'); // c + rx outweigh p
+    expect(red.episodioDe.get('est')).toBe('episodio:c');
+    expect(red.episodioDe.get('res')).toBe('episodio:c');
+  });
+
+  it('sin la atención en la lectura, el inferido sí ubica al estudio huérfano junto al presuntivo', () => {
+    const registros = [
+      r('p', 'diagnostico', d(2026, 1), { encuentroId: 'e', certeza: 'presuntivo' }),
+      r('est', 'estudio', d(2026, 1), { encuentroId: 'e' }),
+    ];
+    const red = agruparEnEpisodios(registros, inferirVinculos(registros, []));
+    expect(red.episodioDe.get('est')).toBe('episodio:p');
   });
 
   it('la receta que reemplaza a otra sigue en el episodio de la reemplazada', () => {
