@@ -16,6 +16,7 @@ import { ChartNotesClient } from '../../../../core/data-access/chart-notes/chart
 import type { ChartNotesPage } from '../../../../core/data-access/chart-notes/chart-notes.types';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import type {
+  ClinicalSummary,
   Condition,
   DiagnosisEvidence,
   DiagnosisOutcome,
@@ -40,6 +41,15 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { writeFailureMessage } from '../../write-message';
+import { diagnosisLinkOptions, linkFailureMessage } from '../diagnosis-link-options';
+
+/** Los 422 de `replacedByConditionId` (API v4291): van al selector, no arriba. */
+const REPLACEMENT_REASONS = [
+  'CONDITION_REPLACEMENT_INVALID',
+  'CONDITION_REPLACEMENT_SELF',
+  'CONDITION_REPLACEMENT_REQUIRES_REFUTED',
+];
+import { diagnosticoParaReceta } from '../medication-block/medication-block';
 
 /** Hasta cuánto puede decir el motivo. Es el tope del contrato (§3.4). */
 export const MAX_MOTIVO = 500;
@@ -162,6 +172,9 @@ export class DiagnosisVerifyDialog {
 
   protected readonly motivo = signal('');
   protected readonly evidencia = signal<string | null>(null);
+  /** Sólo al rechazar: el diagnóstico que se confirmó en su lugar (patch v4291). */
+  protected readonly reemplazo = signal<string | null>(null);
+  protected readonly errorDeReemplazo = signal('');
 
   /**
    * El inicio, o `undefined` mientras nadie lo tocó: entonces vale el que el
@@ -185,6 +198,12 @@ export class DiagnosisVerifyDialog {
   /* -- Lo que se lee ------------------------------------------------------- */
 
   protected readonly opcionesDeEvidencia = signal<readonly SelectOption<string | null>[]>([]);
+  /**
+   * Los otros diagnósticos de la persona, no descartados: los candidatos a
+   * «Se confirmó en su lugar». Salen de su resumen; si la lectura falla, la
+   * lista queda vacía y el rechazo se manda sin vínculo, que el contrato permite.
+   */
+  protected readonly opcionesDeReemplazo = signal<readonly SelectOption<string | null>[]>([]);
   protected readonly cargandoEvidencia = signal(true);
   private readonly circuito = signal<PatientDiagnostics | null>(null);
 
@@ -215,25 +234,45 @@ export class DiagnosisVerifyDialog {
       notas: this.chartNotes
         .listNotes({ patientProfileId })
         .pipe(catchError(() => of<ChartNotesPage | null>(null))),
+      resumen: this.clinical
+        .getSummary(patientProfileId)
+        .pipe(catchError(() => of<ClinicalSummary | null>(null))),
     })
       .pipe(
-        switchMap(({ circuito, notas }) => {
+        switchMap(({ circuito, notas, resumen }) => {
+          const diagnosticos = resumen?.conditions ?? [];
           const conceptos = [
             ...(circuito?.orders ?? []).map((orden) => orden.codeConceptId),
             ...(circuito?.reports ?? []).map((informe) => informe.codeConceptId),
+            ...diagnosticos.flatMap((dx) =>
+              [dx.codeConceptId, dx.verificationStatusConceptId].filter(
+                (id): id is string => id !== undefined,
+              ),
+            ),
           ];
           return this.terminology.readConceptLabels(conceptos).pipe(
             catchError(() => of<ConceptLabels>(new Map())),
             map((etiquetas) => ({
               circuito,
               opciones: opcionesDeEvidencia(circuito, notas, etiquetas),
+              reemplazos: diagnosisLinkOptions(
+                diagnosticos.map((dx) =>
+                  diagnosticoParaReceta(
+                    dx,
+                    etiquetas.get(dx.codeConceptId)?.display ?? 'Diagnóstico sin etiqueta',
+                    (id) => (id === undefined ? undefined : etiquetas.get(id)?.code),
+                  ),
+                ),
+                this.condition().id,
+              ),
             })),
           );
         }),
       )
-      .subscribe(({ circuito, opciones }) => {
+      .subscribe(({ circuito, opciones, reemplazos }) => {
         this.circuito.set(circuito);
         this.opcionesDeEvidencia.set(opciones);
+        this.opcionesDeReemplazo.set(reemplazos);
         this.cargandoEvidencia.set(false);
       });
   }
@@ -284,6 +323,7 @@ export class DiagnosisVerifyDialog {
     () =>
       this.motivo().trim() !== '' ||
       this.evidencia() !== null ||
+      this.reemplazo() !== null ||
       this.fin() !== null ||
       this.cronica() ||
       this.inicioElegido() !== undefined,
@@ -347,6 +387,7 @@ export class DiagnosisVerifyDialog {
     const inicio = this.inicio();
     const fin = this.fin();
     const cursoCronico = this.cursoCronico();
+    const reemplazo = this.reemplazo();
 
     const decision: NewDiagnosisVerification = {
       outcome: this.outcome(),
@@ -359,10 +400,12 @@ export class DiagnosisVerifyDialog {
       ...(this.confirma() && this.cronica() && cursoCronico !== null
         ? { clinicalCourseConceptId: cursoCronico }
         : {}),
+      ...(!this.confirma() && reemplazo !== null ? { replacedByConditionId: reemplazo } : {}),
     };
 
     this.enviando.set(true);
     this.resultado.set(loading());
+    this.errorDeReemplazo.set('');
     this.clinical.verifyCondition(this.condition().id, decision).subscribe({
       next: (condicion) => {
         this.enviando.set(false);
@@ -372,6 +415,12 @@ export class DiagnosisVerifyDialog {
       },
       error: (error: unknown) => {
         this.enviando.set(false);
+        const vinculo = linkFailureMessage(error, REPLACEMENT_REASONS);
+        if (vinculo !== null) {
+          this.resultado.set(ready(null));
+          this.errorDeReemplazo.set(vinculo);
+          return;
+        }
         this.resultado.set(errorToViewState<null>(error));
       },
     });

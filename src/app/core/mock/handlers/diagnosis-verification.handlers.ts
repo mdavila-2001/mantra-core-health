@@ -11,6 +11,7 @@ import { MEDICAL } from '../fixtures/people';
 import { conflict, notFound, validation, type MockRouter } from '../mock-router';
 import { ahora, cuerpo } from '../mock-store';
 import { informes } from './diagnostics.handlers';
+import { checkReplacedByCondition, isRejection } from './clinical-links.mock';
 
 /* ============================================================================
     La verificación del diagnóstico (C3): un presuntivo se confirma o se
@@ -35,6 +36,8 @@ interface CuerpoDeVerificacion {
   readonly onsetAt?: unknown;
   readonly expectedResolutionAt?: unknown;
   readonly clinicalCourseConceptId?: unknown;
+  /** Patch v4291: sólo al rechazar, el diagnóstico confirmado en su lugar. */
+  readonly replacedByConditionId?: unknown;
 }
 
 function texto(valor: unknown): string | undefined {
@@ -136,6 +139,9 @@ export function registerDiagnosisVerification(router: MockRouter): void {
       );
     }
 
+    const reemplazo = checkReplacedByCondition(datos.replacedByConditionId, condicion, outcome);
+    if (isRejection(reemplazo)) return reemplazo.rejection;
+
     const decidedAt = ahora();
     const verification: SimulatedVerification = {
       outcome,
@@ -152,6 +158,7 @@ export function registerDiagnosisVerification(router: MockRouter): void {
         verificationStatusConceptId: VERIFICATION_DX['COND_REFUTED']!,
         resolvedAt: decidedAt,
         verification,
+        ...(reemplazo.value === undefined ? {} : { replacedByConditionId: reemplazo.value }),
       };
     } else {
       const curso = texto(datos.clinicalCourseConceptId);

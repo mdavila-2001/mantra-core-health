@@ -1,6 +1,6 @@
 import type { fakerES } from '@faker-js/faker';
 
-import { DIAGNOSIS, MEDICAMENTO, OBSERVATION, SEVERITY, UNIDAD, VIA } from '../fixtures/concepts';
+import { DIAGNOSIS, MEDICAMENTO, OBSERVATION, OBSERVATION_UNIT, SEVERITY, UNIDAD, VIA } from '../fixtures/concepts';
 
 /* ============================================================================
     Datos clínicos plausibles.
@@ -66,6 +66,9 @@ export interface SignVital {
  * Un lactante no pesa 70 kg ni tiene 60 pulsaciones. Que los números salgan
  * del tramo de edad es lo que separa una demostración de una tabla de relleno:
  * las pantallas de expediente pintan curvas y percentiles con esto.
+ *
+ * La unidad es de `VS_OBSERVATION_UNIT` (mmHg, lpm, °C…), nunca la de dosis:
+ * con `UNIT-MG` la presión salía «118 mg» en el expediente (06/11/2026).
  */
 export function vitalSigns(f: Faker, edad: number): readonly SignVital[] {
   const bebe = edad < 2;
@@ -98,21 +101,21 @@ export function vitalSigns(f: Faker, edad: number): readonly SignVital[] {
   const imc = peso / (talla / 100) ** 2;
 
   return [
-    { observationConceptId: OBSERVATION['OBS-BP-SYS']!, value: String(sistolica), unitConceptId: UNIDAD['UNIT-MG']! },
-    { observationConceptId: OBSERVATION['OBS-BP-DIA']!, value: String(diastolica), unitConceptId: UNIDAD['UNIT-MG']! },
-    { observationConceptId: OBSERVATION['OBS-HR']!, value: String(pulso), unitConceptId: UNIDAD['UNIT-MG']! },
+    { observationConceptId: OBSERVATION['OBS-BP-SYS']!, value: String(sistolica), unitConceptId: OBSERVATION_UNIT['OBSU-MMHG']! },
+    { observationConceptId: OBSERVATION['OBS-BP-DIA']!, value: String(diastolica), unitConceptId: OBSERVATION_UNIT['OBSU-MMHG']! },
+    { observationConceptId: OBSERVATION['OBS-HR']!, value: String(pulso), unitConceptId: OBSERVATION_UNIT['OBSU-BPM']! },
     {
       observationConceptId: OBSERVATION['OBS-TEMP']!,
       value: f.number.float({ min: 36, max: 37.8, fractionDigits: 1 }).toFixed(1),
-      unitConceptId: UNIDAD['UNIT-MG']!,
+      unitConceptId: OBSERVATION_UNIT['OBSU-CELSIUS']!,
     },
-    { observationConceptId: OBSERVATION['OBS-WEIGHT']!, value: peso.toFixed(1), unitConceptId: UNIDAD['UNIT-MG']! },
-    { observationConceptId: OBSERVATION['OBS-HEIGHT']!, value: String(talla), unitConceptId: UNIDAD['UNIT-MG']! },
-    { observationConceptId: OBSERVATION['OBS-BMI']!, value: imc.toFixed(1), unitConceptId: UNIDAD['UNIT-MG']! },
+    { observationConceptId: OBSERVATION['OBS-WEIGHT']!, value: peso.toFixed(1), unitConceptId: OBSERVATION_UNIT['OBSU-KG']! },
+    { observationConceptId: OBSERVATION['OBS-HEIGHT']!, value: String(talla), unitConceptId: OBSERVATION_UNIT['OBSU-CM']! },
+    { observationConceptId: OBSERVATION['OBS-BMI']!, value: imc.toFixed(1), unitConceptId: OBSERVATION_UNIT['OBSU-KGM2']! },
     {
       observationConceptId: OBSERVATION['OBS-SPO2']!,
       value: String(f.number.int({ min: 93, max: 99 })),
-      unitConceptId: UNIDAD['UNIT-MG']!,
+      unitConceptId: OBSERVATION_UNIT['OBSU-PERCENT']!,
     },
   ];
 }
