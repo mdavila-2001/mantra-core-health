@@ -26,7 +26,7 @@ import { entrar } from './support/sesion';
  * WebGL en Chromium sin pantalla corre por SwiftShader; sin él el visor avisa
  * y la lista accesible sigue sirviendo, que también se prueba.
  *
- * Nunca se espera `networkidle` (CLAUDE.md §5).
+ * Nunca se espera a que la red quede quieta: con HMR no llega (CLAUDE.md §5).
  */
 
 /**
