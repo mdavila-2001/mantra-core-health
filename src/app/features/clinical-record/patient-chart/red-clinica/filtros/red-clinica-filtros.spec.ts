@@ -11,7 +11,7 @@ import { RedClinicaFiltros } from './red-clinica-filtros';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-red-clinica-filtros
-      [nodos]="nodos"
+      [nodos]="nodos()"
       [(filtro)]="filtro"
       [visibles]="visibles().length"
       [mostrarTipos]="mostrarTipos()"
@@ -20,9 +20,9 @@ import { RedClinicaFiltros } from './red-clinica-filtros';
   `,
 })
 class Anfitrion {
-  readonly nodos = NODOS_DEMO;
+  readonly nodos = signal(NODOS_DEMO);
   readonly filtro = signal<FiltroDeRed>(FILTRO_VACIO);
-  readonly visibles = computed(() => aplicarFiltro(this.nodos, this.filtro(), ARISTAS_DEMO));
+  readonly visibles = computed(() => aplicarFiltro(this.nodos(), this.filtro(), ARISTAS_DEMO));
   readonly emitidos: FiltroDeRed[] = [];
   readonly mostrarTipos = signal(true);
 }
@@ -156,5 +156,22 @@ describe('RedClinicaFiltros', () => {
     await fixture.whenStable();
     expect(boton.getAttribute('aria-expanded')).toBe('true');
     expect(el().querySelector('#red-filtros-avanzados')?.classList).toContain('filtros__avanzados--abierto');
+  });
+
+  it('sin profesionales ni especialidades en la historia, esos desplegables no se ofrecen (sólo dirían «Todos»)', async () => {
+    const select = (id: string) => el().querySelector(`[data-testid="red-filtro-${id}"]`);
+    expect(select('especialidad')).not.toBeNull();
+    expect(select('profesional')).not.toBeNull();
+    host.nodos.set(NODOS_DEMO.map(({ profesional: _p, especialidad: _e, ...resto }) => resto));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(select('especialidad')).toBeNull();
+    expect(select('profesional')).toBeNull();
+    expect(select('desde')).not.toBeNull();
+    // Con un valor ya puesto, sigue a la vista para poder quitarlo.
+    host.filtro.set({ ...FILTRO_VACIO, profesionalId: 'pr-viejo' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(select('profesional')).not.toBeNull();
   });
 });

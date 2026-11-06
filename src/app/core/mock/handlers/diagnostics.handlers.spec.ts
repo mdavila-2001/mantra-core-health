@@ -4,6 +4,7 @@ import { orderList, type SimulatedOrder } from '../fixtures/clinic';
 import { STATUS, ESTUDIO, ORDER_CATEGORY } from '../fixtures/concepts';
 import { PERFORMER_MODE } from '../fixtures/performer-concepts';
 import { MEDICAL, PACIENTE, professionalById } from '../fixtures/people';
+import { NETWORK_IDS } from '../fixtures/patient-network.data';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { uuid } from '../mock-store';
@@ -403,5 +404,98 @@ describe('el ejecutor de la orden en «Mis órdenes» (CM-10)', () => {
     );
 
     expect(propias().find((o) => o.id === creada.body.id)?.suggestedPracticeSiteName).toBeNull();
+  });
+});
+
+/**
+ * Para qué diagnóstico se pidió cada estudio, en el portal del paciente
+ * (`PatientOrderSummaryDto.reasonConditionId`, patch v4291): presente sólo si
+ * la orden lo indicó, como en la API.
+ */
+describe('«Mis órdenes» con el diagnóstico de cada estudio (v4291)', () => {
+  const router = new MockRouter();
+  const patient = buscarUsuario('paciente')!;
+  registrarDiagnostico(router);
+
+  const propias = () => {
+    const match = router.match('GET', '/diagnostic-results/me/orders')!;
+    return (
+      match.handler({
+        method: 'GET',
+        path: '/diagnostic-results/me/orders',
+        params: match.params,
+        query: new URLSearchParams(),
+        body: undefined,
+        headers: new HttpHeaders(),
+        user: patient,
+      }) as { items: readonly { id: string; reasonConditionId?: string }[] }
+    ).items;
+  };
+
+  it('las órdenes sembradas de la historia traen su diagnóstico', () => {
+    const tsh = propias().find((o) => o.id === NETWORK_IDS.tshControl);
+    expect(tsh?.reasonConditionId).toBe(NETWORK_IDS.hypothyroidism);
+    const conDiagnostico = propias().filter((o) => o.reasonConditionId !== undefined);
+    for (const o of conDiagnostico) {
+      expect(orderList.get(o.id)?.reasonConditionId).toBe(o.reasonConditionId);
+    }
+  });
+
+  it('una orden sin diagnóstico no manda la clave', () => {
+    const sin = propias().filter((o) => orderList.get(o.id)?.reasonConditionId === undefined);
+    expect(sin.length).toBeGreaterThan(0);
+    for (const o of sin) expect('reasonConditionId' in o).toBe(false);
+  });
+});
+
+/**
+ * El informe liberado para el profesional (API 8271ebc0):
+ * `GET /diagnostics/patients/:id/reports/:reportId` y su archivo.
+ */
+describe('el informe liberado, leído por el profesional', () => {
+  const router = new MockRouter();
+  const medica = buscarUsuario('medica')!;
+  registrarDiagnostico(router);
+  const tsh = uuid(`report-${NETWORK_IDS.tsh}`);
+
+  function get(path: string, user: MockUser | null = medica): { status?: number; body?: unknown; headers?: Record<string, string> } & Record<string, unknown> {
+    const match = router.match('GET', path);
+    if (match === null) throw new Error(`No existe GET ${path}`);
+    return match.handler({ method: 'GET', path, params: match.params, query: new URLSearchParams(), body: undefined, headers: new HttpHeaders(), user }) as never;
+  }
+
+  it('trae los valores con su rango e interpretación tal cual, y la TSH alta', () => {
+    const r = get(`/diagnostics/patients/${PACIENTE.id}/reports/${tsh}`) as unknown as {
+      patientVisible: boolean;
+      releasedAt: string;
+      values: { name: string; value: string; unit: string; referenceRange: { low: string; high: string } | null; interpretationCode: string | null; interpretation: string | null }[];
+      files: { fileId: string }[];
+    };
+    expect(r.patientVisible).toBe(true);
+    expect(typeof r.releasedAt).toBe('string');
+    expect(r.values[0]).toMatchObject({ name: 'TSH', value: '8.9', unit: 'mUI/L', referenceRange: { low: '0.4', high: '4.0' }, interpretationCode: 'H', interpretation: 'Alto' });
+    expect(r.values.some((v) => v.interpretation === null)).toBe(false);
+    expect(r.files).toHaveLength(1);
+  });
+
+  it('un informe de otro paciente, o inexistente, es el mismo 404 con su motivo', () => {
+    const ajeno = get(`/diagnostics/patients/otro-paciente/reports/${tsh}`, buscarUsuario('superadmin') ?? medica);
+    const inexistente = get(`/diagnostics/patients/${PACIENTE.id}/reports/no-existe`);
+    for (const respuesta of [ajeno, inexistente]) {
+      expect(respuesta.status).toBe(404);
+      expect(respuesta.body).toMatchObject({ reason: 'DIAGNOSTICS_RESOURCE_NOT_AVAILABLE' });
+    }
+  });
+
+  it('sin sesión, 403', () => {
+    expect(get(`/diagnostics/patients/${PACIENTE.id}/reports/${tsh}`, null).status).toBe(403);
+  });
+
+  it('el archivo del informe baja como PDF; uno ajeno a la versión es 404', () => {
+    const r = get(`/diagnostics/patients/${PACIENTE.id}/reports/${tsh}`) as unknown as { files: { fileId: string }[] };
+    const pdf = get(`/diagnostics/patients/${PACIENTE.id}/reports/${tsh}/files/${r.files[0].fileId}/content`);
+    expect(pdf.body).toBeInstanceOf(Blob);
+    expect(pdf.headers?.['Content-Disposition']).toContain('attachment');
+    expect(get(`/diagnostics/patients/${PACIENTE.id}/reports/${tsh}/files/otro/content`).status).toBe(404);
   });
 });

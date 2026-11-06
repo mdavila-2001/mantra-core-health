@@ -24,6 +24,14 @@
   box-shadow: var(--shadow-sm);
 }
 
+:host(.recorrido-guiado--integrada) .guiado {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .guiado:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
@@ -210,6 +218,13 @@
     border-radius: 0 0 var(--r-lg) var(--r-lg);
     background: var(--bg-surface);
     gap: var(--sp-2);
+  }
+
+  /* Integrada, la superficie ya pone el aire: la barra no sale de ella. */
+  :host(.recorrido-guiado--integrada) .guiado__barra {
+    margin: 0;
+    padding-inline: 0;
+    border-radius: 0;
   }
 
   /* Los tres botones en una fila sin encogerse (encogidos, el de reproducir

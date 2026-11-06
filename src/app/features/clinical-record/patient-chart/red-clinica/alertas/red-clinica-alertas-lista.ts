@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { booleanAttribute, ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
@@ -56,12 +56,22 @@ export class RedClinicaAlertasLista {
   readonly alertas = input<readonly AlertaDeApoyo[]>([]);
   /** Título de la sección; el padre puede cambiarlo («Pendientes del episodio»). */
   readonly titulo = input('Para revisar');
+  /**
+   * Plegada en un resumen («5 alertas · 2 de prioridad alta») que se despliega
+   * con un botón (`aria-expanded`), y sin recuadro propio: para ir dentro de
+   * otra superficie sin empujar lo que viene debajo (el mapa del Recorrido).
+   */
+  readonly compacta = input(false, { transform: booleanAttribute });
 
   readonly nodoElegido = output<string>();
   /** Los nodos a resaltar en la red mientras la alerta tiene puntero o foco. */
   readonly resaltar = output<readonly string[]>();
 
   protected readonly todas = signal(false);
+  /** Compacta: si la lista está desplegada. Arranca plegada. */
+  protected readonly abierta = signal(false);
+  /** Lo que se ve: siempre, salvo compacta y plegada. */
+  protected readonly lista = computed(() => !this.compacta() || this.abierta());
   protected readonly icono = ICONO_DE_TIPO;
   protected readonly prioridad = TEXTO_DE_PRIORIDAD;
 

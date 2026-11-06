@@ -50,6 +50,13 @@ export interface NodoElegido {
   readonly episodio: string;
 }
 
+/** Lo que `plegado()` guarda y `restaurarPlegado()` repone. */
+export interface PlegadoDeLaRed {
+  readonly desplegados: ReadonlySet<string>;
+  readonly abiertos: ReadonlySet<string>;
+  readonly desplazamiento: number | null;
+}
+
 /** Los vínculos que tiene la leyenda, en el orden en que se explican. */
 const ORDEN_DE_LA_LEYENDA: readonly MotivoDelVinculo[] = [
   'registrado-en',
@@ -279,15 +286,7 @@ export class RecorridoClinico {
 
   protected alternarEpisodio(id: string): void {
     const desplegar = !this.desplegados().has(id);
-    this.desplegados.update((actual) => {
-      const siguiente = new Set(actual);
-      if (desplegar) {
-        siguiente.add(id);
-      } else {
-        siguiente.delete(id);
-      }
-      return siguiente;
-    });
+    this.desplegados.update((actual) => (desplegar ? new Set([...actual, id]) : new Set([...actual].filter((e) => e !== id))));
     if (desplegar) {
       // Desplegado, el episodio puede tener sus registros a la izquierda de lo
       // que se ve (empezó hace un año): el lienzo va a su primer momento, para
@@ -326,15 +325,22 @@ export class RecorridoClinico {
   }
 
   private alternarAbierto(clave: string, abrir: boolean): void {
-    this.abiertos.update((actual) => {
-      const siguiente = new Set(actual);
-      if (abrir) {
-        siguiente.add(clave);
-      } else {
-        siguiente.delete(clave);
-      }
-      return siguiente;
-    });
+    this.abiertos.update((actual) => (abrir ? new Set([...actual, clave]) : new Set([...actual].filter((c) => c !== clave))));
+  }
+
+  /** Qué está desplegado y abierto, y dónde está el lienzo: para volver ahí (al salir del recorrido guiado). */
+  plegado(): PlegadoDeLaRed {
+    return { desplegados: this.desplegados(), abiertos: this.abiertos(), desplazamiento: this.lienzo()?.nativeElement.scrollLeft ?? null };
+  }
+
+  restaurarPlegado(previo: PlegadoDeLaRed): void {
+    this.desplegados.set(previo.desplegados);
+    this.abiertos.set(previo.abiertos);
+    this.bajoElPuntero.set(null);
+    this.conElFoco.set(null);
+    this.pegadoAlFinal = false;
+    const izquierda = previo.desplazamiento;
+    if (izquierda !== null) afterNextRender(() => this.lienzo()?.nativeElement.scrollTo?.({ left: izquierda }), { injector: this.injector });
   }
 
   /** Un registro abre su detalle; los controles abren o cierran lo suyo. */
@@ -532,12 +538,8 @@ export class RecorridoClinico {
     columna: ColumnaDeLaRed | undefined,
   ): { readonly rotulo: string; readonly fecha: Date; readonly formato: string } | null {
     const r = nodo.registro;
-    if (nodo.forma !== 'tarjeta' || r === undefined || r.cuando === null || columna === undefined || columna.fecha === null) {
-      return null;
-    }
-    if (r.cuando.toDateString() === columna.fecha.toDateString()) {
-      return null;
-    }
+    if (nodo.forma !== 'tarjeta' || r === undefined || r.cuando === null || columna === undefined || columna.fecha === null) return null;
+    if (r.cuando.toDateString() === columna.fecha.toDateString()) return null;
     const rotulo = r.clase === 'diagnostico' ? 'Inicio' : r.clase === 'medicacion' ? 'Desde' : 'Del';
     const dias = Math.abs(r.cuando.getTime() - columna.fecha.getTime()) / 86_400_000;
     const formato = this.angosto()
@@ -555,10 +557,7 @@ export class RecorridoClinico {
   }
 
   protected tonoDe(nodo: NodoDeLaRed): string {
-    if (nodo.forma === 'grupo') {
-      return 'neutral';
-    }
-    return this.aspecto[nodo.registro!.clase].tono;
+    return nodo.forma === 'grupo' ? 'neutral' : this.aspecto[nodo.registro!.clase].tono;
   }
 
   /* -- La versión vertical ---------------------------------------------- */

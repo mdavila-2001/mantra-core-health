@@ -819,6 +819,8 @@ Laboratorios e imagenología (M52).
 |---|---|---|
 | `GET` | `/diagnostics/patients/:patientProfileId/orders` | `DiagnosticsBlock` · `Diagnostics` |
 | `GET` | `/diagnostics/patients/:patientProfileId/imaging-studies` | `DiagnosticsBlock` · `Diagnostics` |
+| `GET` | `/diagnostics/patients/:patientProfileId/reports/:reportId` | `RedClinicaPanel` (informe liberado para el profesional: valores, conclusión, archivos; API 8271ebc0) |
+| `GET` | `/diagnostics/patients/:patientProfileId/reports/:reportId/files/:fileId/content` | `RedClinicaPanel` (PDF del informe para el médico) |
 | `GET` | `/diagnostics/work-orders` | `Diagnostics` |
 | `POST` | `/clinical/service-requests/duplicate-check` | `DiagnosticsBlock` (antiduplicación de estudios · T-26, subtarea 3.2) |
 | `POST` | `/clinical/service-requests` | `Diagnostics` (pedir un estudio) |

@@ -15,12 +15,11 @@ import {
   enAtencion,
   fechaDeAtencion,
   frase,
-  porId,
   type Indices,
   type Nombres,
   type Suceso,
 } from './recorrido-guiado.sucesos';
-import { diaUtc, fechaCorta, fechaValida, libre, minusculaInicial, vinculo } from './recorrido-guiado.texto';
+import { diaUtc, fechaCorta, fechaValida, libre, minusculaInicial } from './recorrido-guiado.texto';
 import type { FraseDelPaso } from './recorrido-guiado.types';
 
 export function sucesosDeInternaciones(lista: readonly CareEpisode[], n: Nombres): Suceso[] {
@@ -300,17 +299,12 @@ export function sucesosDeInformes(lista: readonly DiagnosticReport[], idx: Indic
 }
 
 export function sucesosDeRecetas(lista: readonly MedicationRequest[], idx: Indices, n: Nombres): Suceso[] {
-  // A quién reemplaza cada receta: el vínculo puede venir de cualquiera de los dos lados.
+  // A quién reemplaza cada receta. El resumen publica sólo el lado de la vieja
+  // (`replacedByRequestId`); el inverso se deduce de la lista.
   const reemplazaA = new Map<string, MedicationRequest>();
-  const porIdReceta = porId(lista);
   for (const r of lista) {
-    const nueva = vinculo(r, 'replacedByRequestId');
-    if (nueva !== undefined && nueva !== r.id) reemplazaA.set(nueva, r);
-  }
-  for (const r of lista) {
-    const vieja = vinculo(r, 'replacesRequestId');
-    const anterior = vieja === undefined ? undefined : porIdReceta.get(vieja);
-    if (anterior !== undefined && anterior.id !== r.id && !reemplazaA.has(r.id)) reemplazaA.set(r.id, anterior);
+    const nueva = r.replacedByRequestId;
+    if (nueva !== undefined && nueva !== '' && nueva !== r.id) reemplazaA.set(nueva, r);
   }
 
   return lista.map((r) => {

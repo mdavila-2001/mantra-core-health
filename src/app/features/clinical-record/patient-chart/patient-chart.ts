@@ -130,12 +130,13 @@ import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import type { SortState } from '../../../shared/components/organisms/data-table/data-table.types';
-import { RecorridoClinico, type NodoElegido } from './recorrido-clinico/recorrido-clinico';
+import type { NodoElegido } from './recorrido-clinico/recorrido-clinico';
 import { Breakpoints } from '../../../core/layout/breakpoints';
 import { RedClinicaPanel } from './red-clinica/panel/red-clinica-panel';
-import { RedClinicaFiltros } from './red-clinica/filtros/red-clinica-filtros';
-import { RedClinicaAlertasLista } from './red-clinica/alertas/red-clinica-alertas-lista';
+import { RedClinicaSuperficie } from './red-clinica/superficie/red-clinica-superficie';
+import { guiaDelExpediente } from './red-clinica/superficie/guia-de-la-red';
 import { alertasDeApoyo } from './red-clinica/red-clinica-alertas';
+import type { ValorDeResultado } from './red-clinica/red-clinica.types';
 import { aplicarFiltro, criteriosActivos, FILTRO_VACIO, type FiltroDeRed } from './red-clinica/red-clinica-filtro';
 import {
   nodosDeLaRed,
@@ -509,10 +510,8 @@ interface Expediente {
     ReferralBlock,
     ReceivedServicesPanel,
     Progress,
-    RecorridoClinico,
-    RedClinicaAlertasLista,
-    RedClinicaFiltros,
     RedClinicaPanel,
+    RedClinicaSuperficie,
     SegmentedControl,
     Tab,
     Tabs,
@@ -649,7 +648,7 @@ export class PatientChart {
    * `withComponentInputBinding()`: activarlo acá cambiaría cómo se enlazan las
    * entradas de todas las pantallas.
    */
-  private readonly profileId = toSignal(
+  protected readonly profileId = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('profileId') ?? '')),
     { initialValue: '' },
   );
@@ -1530,6 +1529,7 @@ export class PatientChart {
       informes: estudios?.reports ?? [],
       derivaciones: (lecturas === null ? null : dataOf(lecturas.derivaciones)) ?? [],
       atenciones: datos.resumen.encounters,
+      resultados: [...this.informesLeidos()].map(([nodoId, valores]) => ({ nodoId, valores, estudio: this.registrosDeLaRed().find((r) => r.id === nodoId)?.titulo ?? 'el estudio' })),
       codigoDe: (id) => (id === undefined ? undefined : (etiquetas.get(id)?.code ?? deLaRed.get(id)?.code)),
       etiquetaDe: (id) => (id === undefined ? undefined : (etiquetas.get(id)?.display ?? deLaRed.get(id)?.display)),
     }).filter((alerta) => presentes.has(alerta.nodoId));
@@ -1542,8 +1542,12 @@ export class PatientChart {
     return new Date();
   });
 
-  /** Los nodos que una alerta (bajo el puntero o con foco) pide resaltar. */
-  protected readonly resaltadosDeLaRed = signal<readonly string[]>([]);
+  /** Los informes que el panel ya leyó: sus valores alimentan las alertas, sin leer de más. */
+  private readonly informesLeidos = signal<ReadonlyMap<string, readonly ValorDeResultado[]>>(new Map());
+
+  protected alLeerInforme(leido: { readonly informeId: string; readonly valores: readonly ValorDeResultado[] }): void {
+    this.informesLeidos.update((actual) => new Map(actual).set(leido.informeId, leido.valores));
+  }
 
   /** El nodo cuyo detalle está abierto en el panel. */
   protected readonly nodoAbiertoId = signal<string | null>(null);
@@ -1566,7 +1570,23 @@ export class PatientChart {
           .find((fila) => fila.id === id) ?? null);
   });
 
-  private readonly recorrido = viewChild(RecorridoClinico);
+  private readonly recorrido = viewChild(RedClinicaSuperficie);
+
+  /** Lo que narra el recorrido paso a paso: las mismas lecturas que la red. */
+  protected readonly guiaDeLaRed = computed(() => {
+    const datos = this.datos();
+    const lecturas = this.lecturasDeLaRed();
+    const [etiquetas, deLaRed] = [this.etiquetas(), this.etiquetasDeLaRed()];
+    const leida = <T>(estado: ViewState<T> | undefined): T | null => (estado === undefined ? null : dataOf(estado));
+    return datos === null
+      ? null
+      : guiaDelExpediente(
+          { resumen: datos.resumen, citas: leida(lecturas?.citas), derivaciones: leida(lecturas?.derivaciones), estudios: leida(lecturas?.estudios) },
+          (id) => etiquetas.get(id) ?? deLaRed.get(id),
+          this.perfilPropio(),
+          this.ahoraDeLaRed(),
+        );
+  });
 
   /**
    * Se eligió un nodo en la red: su detalle va al panel. También se lo lleva
@@ -2700,7 +2720,7 @@ export class PatientChart {
       untracked(() => {
         this.filtroDeLaRed.set(FILTRO_VACIO);
         this.nodoAbiertoId.set(null);
-        this.resaltadosDeLaRed.set([]);
+        this.informesLeidos.set(new Map());
       });
       untracked(() => this.cargar());
     });

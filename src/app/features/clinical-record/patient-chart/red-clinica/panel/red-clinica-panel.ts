@@ -18,10 +18,10 @@ import {
 } from '@angular/core';
 import type { Subscription } from 'rxjs';
 
-import { parseBlobError } from '../../../../../core/data-access/files/blob-error';
-import { FileDownloader } from '../../../../../core/data-access/files/file-downloader';
-import { FilesClient } from '../../../../../core/data-access/files/files.client';
+import { DiagnosticsClient } from '../../../../../core/data-access/diagnostics/diagnostics.client';
+import { FileDownloadService } from '../../../../../shared/utils/file-download/file-download.service';
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
+import { ready } from '../../../../../core/view-state/view-state';
 import { Breakpoints } from '../../../../../core/layout/breakpoints';
 import type { ViewState } from '../../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
@@ -30,6 +30,7 @@ import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-ico
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { nextControlId } from '../../../../../shared/forms/form-control.context';
 import { antiguedad, diasEntre } from '../red-clinica-alertas';
+import { resultadoDelInforme } from '../red-clinica-informe';
 import {
   leerValor,
   SIMBOLO_DE_LECTURA,
@@ -43,6 +44,7 @@ import {
   LECTURA_DE_VINCULO,
   type ArchivoDeInforme,
   type AristaDeRed,
+  type ResultadoDeEstudio,
   type AspectoDeTipo,
   type TipoDeNodo,
   type NodoDeRed,
@@ -139,8 +141,11 @@ export function vinculosDe(
  *   queda tapado; `Escape` y «Cerrar» lo devuelven igual.
  *
  * Es presentacional: no lee el expediente. Lo único que pide por su cuenta es
- * el archivo del informe cuando se lo piden (`FilesClient.contentDataUrl`), y
- * esa carga tiene sus estados M34.
+ * el informe liberado de un estudio al abrirlo (con `pacienteId` y el
+ * `informeId` del resultado: `DiagnosticsClient.getPractitionerResult`) y sus
+ * archivos cuando se los piden (`downloadPractitionerResultFile`, la ruta del
+ * médico: `/common/files` sólo sirve a quien subió el archivo). Las dos
+ * lecturas tienen sus estados M34.
  *
  * ```html
  * <app-red-clinica-panel
@@ -159,8 +164,8 @@ export class RedClinicaPanel {
   private readonly document = inject(DOCUMENT);
   private readonly injector = inject(Injector);
   private readonly breakpoints = inject(Breakpoints);
-  private readonly files = inject(FilesClient);
-  private readonly downloader = inject(FileDownloader);
+  private readonly diagnostics = inject(DiagnosticsClient);
+  private readonly downloads = inject(FileDownloadService);
 
   /** El nodo abierto; `null` = panel cerrado. */
   readonly nodo = input<NodoDeRed | null>(null);
@@ -176,11 +181,19 @@ export class RedClinicaPanel {
    * ser el primero): el panel sólo cierra la hoja y no compite por el foco.
    */
   readonly devolverFoco = input(true);
+  /**
+   * La persona del expediente. Con él, un estudio con informe liberado se lee
+   * entero al abrirlo y sus archivos se bajan por la ruta del médico. Sin él
+   * (el banco de componentes), el panel muestra lo que trae el nodo.
+   */
+  readonly pacienteId = input<string | null>(null);
 
   /** Se eligió otro nodo desde un vínculo o una referencia del panel. */
   readonly nodoElegido = output<string>();
   /** Se pidió cerrar (botón, `Escape`). El padre pone `nodo` en `null`. */
   readonly cerrado = output<void>();
+  /** Se leyó un informe: sus valores, para las alertas de «fuera de rango» (sin leer de más). */
+  readonly informeLeido = output<{ readonly informeId: string; readonly valores: readonly ValorDeResultado[] }>();
 
   protected readonly tituloId = nextControlId('red-panel-titulo');
   /** El nombre y el ícono de un tipo. Método y no índice: el contexto de `ng-template` no está tipado. */
@@ -208,10 +221,24 @@ export class RedClinicaPanel {
     this.vinculos().filter((v) => SIGUIENTES.has(`${v.sentido}:${v.tipo}`)),
   );
 
-  protected readonly filas = computed<readonly FilaDeValor[]>(() => {
+  /** La lectura del informe del estudio abierto, con sus estados M34. */
+  protected readonly lecturaDelInforme = signal<{ readonly informeId: string; readonly estado: ViewState<ResultadoDeEstudio> } | null>(null);
+  private lecturaEnCurso: Subscription | null = null;
+
+  /** El resultado a mostrar: el leído, si llegó; si no, el que trae el nodo. */
+  protected readonly resultado = computed<ResultadoDeEstudio | null>(() => {
     const d = this.nodo()?.detalle;
-    if (d?.tipo !== 'estudio' || d.resultado === null) return [];
-    return d.resultado.valores.map((valor) => {
+    if (d?.tipo !== 'estudio' || d.resultado === null) return null;
+    const leido = this.lecturaDelInforme();
+    return leido !== null && leido.informeId === d.resultado.informeId && leido.estado.status === 'ready'
+      ? leido.estado.data
+      : d.resultado;
+  });
+
+  protected readonly filas = computed<readonly FilaDeValor[]>(() => {
+    const r = this.resultado();
+    if (r === null) return [];
+    return r.valores.map((valor) => {
       const lectura = leerValor(valor);
       return {
         valor,
@@ -243,7 +270,25 @@ export class RedClinicaPanel {
   private abiertoAntes = false;
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => this.suscripcion?.unsubscribe());
+    inject(DestroyRef).onDestroy(() => {
+      this.suscripcion?.unsubscribe();
+      this.lecturaEnCurso?.unsubscribe();
+    });
+
+    // Un estudio con informe liberado se lee entero al abrirlo: una lectura por
+    // nodo abierto, nunca por adelantado.
+    effect(() => {
+      const d = this.nodo()?.detalle;
+      const paciente = this.pacienteId();
+      const informeId = d?.tipo === 'estudio' ? d.resultado?.informeId : undefined;
+      untracked(() => {
+        if (this.lecturaDelInforme()?.informeId === informeId && informeId !== undefined) return;
+        this.lecturaEnCurso?.unsubscribe();
+        this.lecturaEnCurso = null;
+        this.lecturaDelInforme.set(null);
+        if (paciente !== null && informeId !== undefined) this.leerInforme(paciente, informeId);
+      });
+    });
 
     // Abrir, cambiar de nodo y cerrar: foco y diálogo.
     effect(() => {
@@ -294,14 +339,40 @@ export class RedClinicaPanel {
     this.nodoElegido.emit(id);
   }
 
+  /** Vuelve a leer el informe (el «Reintentar» de su aviso). */
+  protected releerInforme(): void {
+    const leido = this.lecturaDelInforme();
+    const paciente = this.pacienteId();
+    if (leido !== null && paciente !== null) this.leerInforme(paciente, leido.informeId);
+  }
+
+  private leerInforme(paciente: string, informeId: string): void {
+    this.lecturaEnCurso?.unsubscribe();
+    this.lecturaDelInforme.set({ informeId, estado: { status: 'loading' } });
+    this.lecturaEnCurso = this.diagnostics.getPractitionerResult(paciente, informeId).subscribe({
+      next: (informe) => {
+        const resultado = resultadoDelInforme(informe);
+        this.lecturaDelInforme.set({ informeId, estado: ready(resultado) });
+        this.informeLeido.emit({ informeId, valores: resultado.valores });
+      },
+      error: (error: unknown) => this.lecturaDelInforme.set({ informeId, estado: errorToViewState<ResultadoDeEstudio>(error) }),
+    });
+  }
+
+  /** Se puede bajar: hay paciente y el informe del que cuelga el archivo. */
+  protected readonly descargable = computed(() => this.pacienteId() !== null && this.resultado()?.informeId !== undefined);
+
   protected abrirArchivo(archivo: ArchivoDeInforme): void {
+    const paciente = this.pacienteId();
+    const informeId = this.resultado()?.informeId;
+    if (paciente === null || informeId === undefined) return;
     this.cancelarDescarga();
     this.descarga.set({ fileId: archivo.fileId, estado: { status: 'loading' } });
-    // `parseBlobError`: con `responseType: 'blob'` el cuerpo del error llega como Blob y,
-    // sin releerlo, un 403 del contrato se vería como un error genérico.
-    this.suscripcion = this.files.contentDataUrl(archivo.fileId).pipe(parseBlobError()).subscribe({
-      next: (dataUrl) => {
-        this.downloader.trigger(dataUrl, archivo.nombre);
+    // El cliente ya relee el cuerpo Blob del error (`parseBlobError`): un 403
+    // del contrato se ve como 403 y no como un error genérico.
+    this.suscripcion = this.diagnostics.downloadPractitionerResultFile(paciente, informeId, archivo.fileId).subscribe({
+      next: ({ blob, fileName }) => {
+        this.downloads.save(blob, fileName ?? archivo.nombre);
         this.descarga.set({ fileId: archivo.fileId, estado: { status: 'ready', data: null } });
       },
       error: (error: unknown) =>

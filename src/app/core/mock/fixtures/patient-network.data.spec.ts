@@ -2,6 +2,7 @@ import { conditionList, encounterList, episodeList, noteList, observationList, o
 import { reservas } from './agenda';
 import {
   BOOKING_STATUS,
+  displayOf,
   ENCOUNTER_CLASS,
   OBSERVATION,
   OBSERVATION_UNIT,
@@ -71,6 +72,13 @@ describe('historia clínica de la paciente de prueba (red clínica)', () => {
     expect(chain[1]!.replacedByRequestId).toBe(N.levo75);
     expect(chain[2]!.replacedByRequestId).toBeUndefined();
     expect(chain.every((r) => r.indicationConditionId === N.hypothyroidism)).toBe(true);
+    // El concepto dice la misma concentración que la dosis: la narración no
+    // puede contar «Levotiroxina 50 mcg» de la receta de 25.
+    expect(chain.map((r) => displayOf(r.medicationConceptId))).toEqual([
+      'Levotiroxina 25 mcg comprimidos',
+      'Levotiroxina 50 mcg comprimidos',
+      'Levotiroxina 75 mcg comprimidos',
+    ]);
     expect(prescriptionList.get(N.ciprofloxacin)?.indicationConditionId).toBe(N.pyelonephritis);
   });
 

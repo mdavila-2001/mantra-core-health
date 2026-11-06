@@ -2,7 +2,7 @@ import { CATALOGO_MEDICAMENTOS, type CatalogFixtureRow } from '../fixtures/medic
 import { CORPUS_PHARMACIES } from '../fixtures/bolivia-central-axis';
 import { patientSettlementForItems } from '../fixtures/patient-settlements';
 import { CONCEPT, conversationList, showcaseOf, showcases } from '../fixtures/community';
-import { MEDICAMENTO, displayOf } from '../fixtures/concepts';
+import { MEDICAMENTO, MEDICAMENTO_POR_CONCENTRACION, displayOf } from '../fixtures/concepts';
 import { prescriptionList } from '../fixtures/clinic';
 import { PACIENTE, patientById, professionalById } from '../fixtures/people';
 // T-I3 · los identificadores de los pedidos de ejemplo de la bandeja viven en
@@ -419,9 +419,15 @@ function nombreDeCategoriaInvalido() {
  */
 const STOCK_SIN_CONTEO = null;
 
+/*
+ * Las concentraciones aparte (`MEDICAMENTO_POR_CONCENTRACION`) van al final:
+ * las farmacias también venden levotiroxina de 25 y de 75 mcg, y «dónde
+ * comprarla» busca por el concepto de la receta. Al final, para que los
+ * productos de siempre conserven su precio y sus existencias.
+ */
 export const productos = new Coleccion<ProductoSimulado>(
   FARMACIAS.flatMap((f, fi) =>
-    Object.entries(MEDICAMENTO).map(([code, conceptId], i) => {
+    Object.entries({ ...MEDICAMENTO, ...MEDICAMENTO_POR_CONCENTRACION }).map(([code, conceptId], i) => {
       const display = displayOf(conceptId);
       const [generico, ...resto] = display.split(' ');
       const forma = display.includes('inhalador') ? c('INHALER', 'Inhalador') : display.includes('cápsulas') ? c('CAPSULE', 'Cápsula') : display.includes('UI/ml') ? c('INJECTABLE', 'Inyectable') : c('TABLET', 'Comprimido');

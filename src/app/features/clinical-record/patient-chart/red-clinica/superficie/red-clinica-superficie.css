@@ -1,0 +1,82 @@
+/* ============================================================================
+    La superficie del Recorrido: una tarjeta, franjas separadas por un filete.
+    Ni color ni sombra propios: la tarjeta (`app-card outlined`) pone el borde
+    y la superficie; acá sólo el aire y los filetes.
+    ========================================================================== */
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.superficie {
+  display: block;
+  min-inline-size: 0;
+}
+
+.superficie__franja {
+  padding: var(--sp-4);
+  min-inline-size: 0;
+}
+
+.superficie__franja + .superficie__franja {
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+/* Alertas y «Recorrido paso a paso» en una fila; la lista desplegada baja a
+   lo ancho, empujando sólo cuando se pidió verla. */
+.superficie__apoyo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-block: var(--sp-3);
+}
+
+.superficie__alertas {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}
+
+.superficie__guiar {
+  flex: none;
+}
+
+.superficie__guiado {
+  display: grid;
+  gap: var(--sp-3);
+  background: var(--bg-inset);
+}
+
+.superficie__episodio {
+  max-inline-size: 100%;
+}
+
+.superficie__nota {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+@media (min-width: 780px) {
+  .superficie__guiado {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .superficie__episodio {
+    inline-size: min(100%, 24rem);
+  }
+}
+
+@media (max-width: 779px) {
+  .superficie__franja {
+    padding: var(--sp-3);
+  }
+
+  .superficie__guiar {
+    inline-size: 100%;
+    justify-content: center;
+  }
+}

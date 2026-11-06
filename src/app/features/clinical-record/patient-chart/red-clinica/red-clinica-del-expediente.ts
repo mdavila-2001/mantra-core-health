@@ -14,9 +14,9 @@
     - **Ids reales.** El id del nodo es el del registro; las aristas, también.
     - **Nada inventado.** Lo que la lectura no trae queda ausente: sin nombre
       del profesional (ningún contrato del expediente lo publica), sin fecha de
-      liberación de un informe (la lectura del profesional sólo dice que hay
-      versión liberada), sin valores del resultado (no hay lectura de valores
-      para el profesional). El panel dice lo que hay y nada más.
+      liberación ni valores de un informe en la lista de órdenes (sólo dice
+      que hay versión liberada): el panel los lee al abrir el estudio, con el
+      id del informe. El panel dice lo que hay y nada más.
     - **Los inferidos siguen siendo inferidos**: `inferido: true` en la arista.
     ========================================================================== */
 
@@ -211,15 +211,16 @@ export function nodosDeLaRed(
   const detalleDeEstudio = (ordenId: string | undefined, informe: InformeDelDetalle | undefined): DetalleDeNodo => {
     const orden = ordenId === undefined ? undefined : ordenes.get(ordenId);
     const candidatos = informe !== undefined ? [informe] : ordenId === undefined ? [] : (informesDeLaOrden.get(ordenId) ?? []);
-    const liberado = candidatos.some((i) => i.currentReleasedVersionId !== undefined);
+    const liberado = candidatos.find((i) => i.currentReleasedVersionId !== undefined);
     const prioridad = texto(rotular(orden?.priorityConceptId).display);
     return {
       tipo: 'estudio',
       ...(orden?.category === undefined ? {} : { categoria: CATEGORIA[orden.category] }),
       ...(prioridad === undefined ? {} : { prioridad }),
-      // La lectura no trae ni la fecha de liberación ni los valores: se dice
-      // que hay resultado liberado, sin inventar lo demás.
-      resultado: liberado ? { liberadoEn: null, valores: [], archivos: [] } : null,
+      // La lista de órdenes no trae ni la fecha de liberación ni los valores:
+      // se dice que hay resultado liberado, sin inventar lo demás. Con el id
+      // del informe, el panel los lee al abrirlo (`getPractitionerResult`).
+      resultado: liberado === undefined ? null : { liberadoEn: null, valores: [], archivos: [], informeId: liberado.id },
     };
   };
 

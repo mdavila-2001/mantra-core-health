@@ -3,9 +3,10 @@
     contrato guarda.
 
     Las formas de entrada son los tipos de `core/data-access` recortados con
-    `Pick`. Los tres campos de la Franja 1 (`reasonConditionId`,
-    `targetEncounterId` —sólo tras aceptar—, `replacedByConditionId`) son
-    opcionales en el contrato: ausentes, la red no dibuja esos vínculos.
+    `Pick`. Los campos de la Franja 1 (`reasonConditionId`,
+    `targetEncounterId` —sólo tras aceptar—, `replacedByConditionId`) y
+    `replacedByRequestId` de las recetas son opcionales en el contrato:
+    ausentes, la red no dibuja esos vínculos.
     ========================================================================== */
 
 import type { Tone } from '../../../../shared/components/tone/tone.types';
@@ -67,14 +68,10 @@ export interface FuenteDeLaRed {
   readonly conditions: readonly (Pick<Condition, 'id' | 'encounterId' | 'replacedByConditionId'> & {
     readonly verification?: { readonly basedOn: DiagnosisEvidence | null } | null;
   })[];
-  readonly medicationRequests: readonly (Pick<MedicationRequest, 'id' | 'encounterId' | 'indicationConditionId'> & {
-    /**
-     * El reemplazo de una receta. El simulador lo siembra y la API lo guarda
-     * (`medication_requests.replaced_by_request_id`), pero el resumen todavía
-     * no lo publica ni `MedicationRequest` lo declara: se lee si viene.
-     */
-    readonly replacedByRequestId?: string | null;
-  })[];
+  readonly medicationRequests: readonly Pick<
+    MedicationRequest,
+    'id' | 'encounterId' | 'indicationConditionId' | 'replacedByRequestId'
+  >[];
   readonly observations: readonly Pick<Observation, 'id' | 'encounterId'>[];
   readonly notes: readonly Pick<ChartNote, 'noteId' | 'encounterId'>[];
   readonly carePlans: readonly Pick<CarePlan, 'id' | 'conditionId'>[];

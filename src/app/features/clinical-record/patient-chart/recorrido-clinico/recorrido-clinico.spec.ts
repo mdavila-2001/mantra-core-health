@@ -312,6 +312,20 @@ describe('RecorridoClinico · la red por episodios', () => {
       expect(await ir('rx')).toBe(false);
     });
 
+    it('`plegado` y `restaurarPlegado` devuelven la red a como estaba (salir del paso a paso)', async () => {
+      const antes = componente().plegado();
+      expect(antes.desplegados.size).toBe(0);
+      await ir('dx-x');
+      await ir('o3');
+      expect(episodios()[0].getAttribute('aria-expanded')).toBe('true');
+      componente().restaurarPlegado(antes);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(episodios()[0].getAttribute('aria-expanded')).toBe('false');
+      expect(botones()).toHaveLength(0);
+      expect(componente().plegado().abiertos.size).toBe(0);
+    });
+
     it('`seleccionado` marca el registro abierto en el panel', () => {
       desplegarTodo();
       fixture.componentInstance.seleccionado.set('rx');

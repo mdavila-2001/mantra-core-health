@@ -148,7 +148,7 @@ const receta = (
   med: string,
   encounterId: string,
   cuando: Date,
-  extra: Partial<MedicationRequest> & Record<string, unknown> = {},
+  extra: Partial<MedicationRequest> = {},
 ): MedicationRequest => ({
   id,
   medicationConceptId: med,
@@ -366,11 +366,16 @@ describe('armarRecorridoGuiado — plantillas', () => {
     expect(enfocar).toContain(ID.amoxicilina);
   });
 
-  it('el reemplazo también se lee desde replacesRequestId', () => {
-    const vieja = receta(u(70), 'cx-amoxicilina', ID.e1, dia(2, 3));
-    const nueva = receta(u(71), 'cx-claritromicina', ID.e1, dia(2, 9), { replacesRequestId: u(70) });
-    const pasos = armar({ recetas: [vieja, nueva] });
-    expect(pasoDel(pasos, '2026-02-09').narracion).toContain('Reemplaza a la receta de Amoxicilina 500 mg del 3 feb 2026.');
+  it('el reemplazo se deduce del lado que publica el resumen, venga en el orden que venga', () => {
+    // El resumen sólo publica `replacedByRequestId` (en la receta vieja): la
+    // nueva dice a quién reemplaza aunque llegue antes en la lista.
+    const vieja = receta(u(70), 'cx-amoxicilina', ID.e1, dia(2, 3), { replacedByRequestId: u(71) });
+    const nueva = receta(u(71), 'cx-claritromicina', ID.e1, dia(2, 9));
+    const pasos = armar({ recetas: [nueva, vieja] });
+    const paso = pasoDel(pasos, '2026-02-09');
+    expect(paso.narracion).toContain('Reemplaza a la receta de Amoxicilina 500 mg del 3 feb 2026.');
+    expect(paso.enfocar).toContain(u(70));
+    expect(pasoDel(pasos, '2026-02-03').narracion).not.toContain('Reemplaza');
   });
 
   it('la derivación dice a dónde y por qué; la llegada se narra en la atención de destino', () => {

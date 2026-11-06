@@ -24,7 +24,8 @@ puede decir y qué no.
 3. **Vínculo real ⇒ causa; vínculo inferido ⇒ coincidencia.** Sólo los campos del contrato se narran como causa:
    `reasonConditionId` («para confirmar o descartar migraña»), `indicationConditionId` («para tratar»),
    `replacedByConditionId` («en su lugar se confirmó»), `followUpOf` («vuelve a la cita del…»), `targetEncounterId`
-   («llegó por la derivación del…»), `replacedByRequestId`/`replacesRequestId` («reemplaza a…»), `basedOn` de la
+   («llegó por la derivación del…»), `replacedByRequestId` («reemplaza a…»; el resumen sólo publica ese lado y el inverso
+   se deduce de la lista, 06/11/2026), `basedOn` de la
    verificación («con base en el resultado de…»). Dos registros que sólo comparten atención se dicen «en la misma
    atención» y la frase queda `inferida: true`. Lo que sólo comparte el día se dice «Ese mismo día».
 4. **El estado se narra en su momento.** Una orden pedida antes de la decisión sobre su diagnóstico es «para confirmar o

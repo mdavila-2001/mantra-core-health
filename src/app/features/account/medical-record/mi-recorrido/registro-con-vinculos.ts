@@ -30,10 +30,17 @@ import {
     publique el modelo compartido de la red clínica, se reemplaza **este**
     archivo y la agrupación queda igual.
 
-    // INTEGRACION-FRANJA-2: `RegistroConVinculos` es el sustituto local del
-    // nodo de la red clínica del expediente (`patient-chart/recorrido-clinico`).
-    // Cuando ese modelo exista en un lugar compartido, este adaptador debe
-    // producir esos nodos y este tipo desaparece.
+    ## Por qué no es el `RegistroDeLaRed` del expediente (06/11/2026)
+
+    Se evaluó producir los nodos de la red clínica del profesional
+    (`patient-chart/recorrido-clinico/red-clinica.model.ts`, ADR-0021) y se
+    descartó: aquel registro es una tarjeta ya redactada para el médico
+    (`titulo`, `detalle`, `estado` en su jerga, sin la hoja de datos ni los
+    vínculos que no constan), y su red **deduce** vínculos (`inferido-*`) que
+    el portal no muestra a propósito (decisión 3 de la Franja 5). Adaptar uno
+    a otro obligaría a des-redactar y a filtrar inferencias: más código que el
+    que se ahorra. Las dos entradas comparten los ids reales y los campos del
+    contrato, que es lo que tiene que coincidir.
 
     ## Sólo lo que el portal ya recibe
 
@@ -114,23 +121,6 @@ export interface FuentesDelPortal {
 
 /** Resuelve un concepto a su etiqueta legible. */
 export type ResolverEtiqueta = (conceptId: string | undefined) => string;
-
-/**
- * `reasonConditionId` del estudio, leído **de forma tolerante**.
- *
- * Franja 1 lo declaró en las órdenes del profesional (`DiagnosticOrder`), pero
- * NO en la orden que recibe el portal del paciente (`PatientOrder`, de
- * `GET /diagnostic-results/me/orders`), y el simulador tampoco lo manda ahí.
- * Hasta que la API lo publique en ese DTO, el vínculo no llega y el estudio se
- * marca como «no consta para qué diagnóstico se pidió». Pendiente de API.
- *
- * // INTEGRACION-FRANJA-2: cuando `PatientOrder.reasonConditionId` exista,
- * // esta lectura pasa a ser acceso directo (`orden.reasonConditionId`).
- */
-function motivoDelEstudio(orden: PatientOrder): string | null {
-  const valor = (orden as PatientOrder & { readonly reasonConditionId?: string | null }).reasonConditionId;
-  return typeof valor === 'string' && valor !== '' ? valor : null;
-}
 
 /** Todos los registros del portal, en la forma neutra. */
 export function registrosDelPortal(
@@ -289,7 +279,9 @@ function desdeEstudio(
   diagnosticos: ReadonlyMap<string, Condition>,
   nombreDelDiagnostico: (id: string | null) => string | null,
 ): RegistroConVinculos {
-  const motivo = motivoDelEstudio(orden);
+  // `reasonConditionId` llega en `GET /diagnostic-results/me/orders` desde el
+  // 06/11/2026 (`PatientOrderSummaryDto`, ausente si la orden no lo indicó).
+  const motivo = orden.reasonConditionId ?? null;
   // Un vínculo a un diagnóstico que el resumen no trajo no se puede nombrar:
   // se trata como si no constara, en vez de dibujar una arista al vacío.
   const diagnosticoId = motivo !== null && diagnosticos.has(motivo) ? motivo : null;

@@ -306,6 +306,12 @@ p.panel__tenue {
   border-color: var(--st-error-bd);
 }
 
+.panel__lectura--informe {
+  color: var(--text-secondary);
+  background: var(--bg-inset);
+  border-color: var(--border-default);
+}
+
 .panel__archivos {
   display: flex;
   flex-wrap: wrap;

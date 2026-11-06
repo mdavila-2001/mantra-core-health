@@ -158,44 +158,25 @@
             [class.expediente__red--con-panel]="panelAlLado()"
             data-testid="expediente-red"
           >
-            <div class="expediente__red-mapa">
-              <!-- Los tipos ya los filtra el expediente (arriba, compartido con
-                   «Tabla»): la barra no repite sus chips y los dos se cruzan. -->
-              <app-red-clinica-filtros
-                [nodos]="nodosDeLaRed()"
-                [(filtro)]="filtroDeLaRed"
-                [visibles]="cuantosVisiblesEnLaRed()"
-                [mostrarTipos]="false"
-              />
-              <!-- Las alertas, sólo con las lecturas resueltas: mientras se leen
-                   los estudios, «nada abierto» sería falso (S1, no S2). -->
-              @if (!faltasDeLaRed().cargando) {
-                <app-red-clinica-alertas-lista
-                  [alertas]="alertasDeLaRed()"
-                  (resaltar)="resaltadosDeLaRed.set($event)"
-                  (nodoElegido)="abrirNodoDeLaRed($event)"
-                />
-              }
-              @if (filtrosDeLaRedSinResultado()) {
-                <app-alert tone="info" title="Los filtros no dejan ningún registro a la vista" data-testid="red-sin-resultado">
-                  Ningún registro cumple a la vez el filtro por tipo y los de la red.
-                  <div alert-actions>
-                    <button app-button variant="outline" size="sm" type="button" (clicked)="limpiarFiltrosDeLaRed()">
-                      Limpiar los filtros
-                    </button>
-                  </div>
-                </app-alert>
-              } @else {
-                <app-recorrido-clinico
-                  [registros]="registrosDeLaRed()"
-                  [vinculos]="vinculosDeLaRed()"
-                  [visibles]="visiblesDeLaRed()"
-                  [resaltados]="resaltadosDeLaRed()"
-                  [seleccionado]="nodoAbiertoId()"
-                  (elegido)="elegirEnLaRed($event)"
-                />
-              }
-            </div>
+            <!-- Filtros, alertas, recorrido paso a paso y red: una sola
+                 superficie (regla 6), en `red-clinica/superficie/`. -->
+            <app-red-clinica-superficie
+              class="expediente__red-mapa"
+              [registros]="registrosDeLaRed()"
+              [vinculos]="vinculosDeLaRed()"
+              [nodos]="nodosDeLaRed()"
+              [visibles]="visiblesDeLaRed()"
+              [cuantosVisibles]="cuantosVisiblesEnLaRed()"
+              [sinResultado]="filtrosDeLaRedSinResultado()"
+              [alertas]="alertasDeLaRed()"
+              [alertasListas]="!faltasDeLaRed().cargando"
+              [seleccionado]="nodoAbiertoId()"
+              [guia]="guiaDeLaRed()"
+              [(filtro)]="filtroDeLaRed"
+              (elegido)="elegirEnLaRed($event)"
+              (nodoElegido)="abrirNodoDeLaRed($event)"
+              (limpiar)="limpiarFiltrosDeLaRed()"
+            />
             <app-red-clinica-panel
               class="expediente__red-panel"
               [nodo]="nodoAbierto()"
@@ -203,6 +184,8 @@
               [aristas]="aristasDeLaRed()"
               [ahora]="ahoraDeLaRed()"
               [devolverFoco]="false"
+              [pacienteId]="profileId()"
+              (informeLeido)="alLeerInforme($event)"
               (nodoElegido)="abrirNodoDeLaRed($event)"
               (cerrado)="cerrarPanelDeLaRed()"
             >

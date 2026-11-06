@@ -1,0 +1,97 @@
+<!-- Una sola tarjeta: filtros, apoyo (alertas y paso a paso), el relato
+     guiado cuando está abierto, y la red. Las franjas se separan con un
+     filete; ninguna trae su propio recuadro. -->
+<app-card class="superficie" variant="outlined" padding="none" data-testid="red-superficie">
+  <div class="superficie__franja">
+    <!-- Los tipos ya los filtra el expediente (arriba, compartido con
+         «Tabla»): la barra no repite sus chips y los dos se cruzan. -->
+    <app-red-clinica-filtros
+      integrada
+      [nodos]="nodos()"
+      [(filtro)]="filtro"
+      [visibles]="cuantosVisibles()"
+      [mostrarTipos]="false"
+    />
+  </div>
+
+  <div class="superficie__franja superficie__apoyo">
+    <!-- Las alertas, sólo con las lecturas resueltas: mientras se leen los
+         estudios, «nada abierto» sería falso (S1, no S2). -->
+    @if (alertasListas()) {
+      <app-red-clinica-alertas-lista
+        class="superficie__alertas"
+        compacta
+        [alertas]="alertas()"
+        (resaltar)="resaltadosPorAlerta.set($event)"
+        (nodoElegido)="tocarLaRed(); nodoElegido.emit($event)"
+      />
+    } @else {
+      <p class="superficie__nota superficie__alertas" role="status">Las alertas aparecen cuando terminen de leerse los estudios.</p>
+    }
+    <button
+      app-button
+      class="superficie__guiar"
+      [variant]="guiado() ? 'secondary' : 'outline'"
+      size="sm"
+      type="button"
+      data-testid="red-guiado-alternar"
+      [attr.aria-pressed]="guiado()"
+      [attr.aria-controls]="guiado() ? 'red-guiado' : null"
+      (clicked)="guiado() ? cerrarGuiado() : abrirGuiado()"
+    >
+      <app-nav-icon [name]="guiado() ? 'close' : 'route'" />
+      {{ guiado() ? 'Salir del paso a paso' : 'Recorrido paso a paso' }}
+    </button>
+  </div>
+
+  @if (guiado()) {
+    <div id="red-guiado" class="superficie__franja superficie__guiado" data-testid="red-guiado">
+      <app-form-field class="superficie__episodio" label="Qué recorrer">
+        <app-select
+          data-testid="red-guiado-episodio"
+          [options]="opcionesDeEpisodio()"
+          [value]="episodioSeguido()"
+          placeholder="Toda la historia"
+          (valueChange)="elegirEpisodio($event)"
+        />
+      </app-form-field>
+      <app-recorrido-guiado
+        integrada
+        [pasos]="pasos()"
+        [episodio]="idsDelEpisodio()"
+        [nombreDelEpisodio]="nombreDelEpisodio()"
+        [interaccionEnLaRed]="interaccion()"
+        (pasoActual)="alPaso($event)"
+      />
+      @if (pasoSinNodos()) {
+        <p class="superficie__nota" role="status" data-testid="red-guiado-sin-nodos">
+          Lo que cuenta este paso no queda a la vista con los filtros puestos.
+        </p>
+      }
+    </div>
+  }
+
+  <div class="superficie__franja superficie__red">
+    @if (sinResultado()) {
+      <app-alert tone="info" title="Los filtros no dejan ningún registro a la vista" data-testid="red-sin-resultado">
+        Ningún registro cumple a la vez el filtro por tipo y los de la red.
+        <div alert-actions>
+          <button app-button variant="outline" size="sm" type="button" (clicked)="limpiar.emit()">
+            Limpiar los filtros
+          </button>
+        </div>
+      </app-alert>
+    } @else {
+      <app-recorrido-clinico
+        [registros]="registros()"
+        [vinculos]="vinculos()"
+        [visibles]="visiblesDeLaRed()"
+        [resaltados]="resaltados()"
+        [seleccionado]="seleccionado()"
+        (elegido)="elegido.emit($event)"
+        (pointerdown)="tocarLaRed()"
+        (keydown)="teclaEnLaRed($event)"
+      />
+    }
+  </div>
+</app-card>

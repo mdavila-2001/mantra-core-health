@@ -11,7 +11,8 @@ import { abrirAgendaDeCentro, ZONA_HORARIA_POR_OMISION } from '../fixtures/agend
 import { patientSettlementFixture } from '../fixtures/patient-settlements';
 import { PHARMACIES_AND_LABS } from '../fixtures/markdown-institutions.generated';
 import { orderList } from '../fixtures/clinic';
-import { NETWORK_ORDER_IDS, networkReports } from '../fixtures/patient-network.data';
+import { NETWORK_ORDER_IDS, networkReports, valoresDelInforme } from '../fixtures/patient-network.data';
+import { puedeLeer } from './clinical.handlers';
 import { checkReasonCondition, isRejection } from './clinical-links.mock';
 import { analisisInlasaDe, TARIFA_INLASA } from '../fixtures/inlasa';
 import { ANALISIS_INLASA } from '../fixtures/inlasa-tariffs.generated';
@@ -31,7 +32,7 @@ import {
   displayOf,
 } from '../fixtures/concepts';
 import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, patientById, professionalById } from '../fixtures/people';
-import { conflict, forbidden, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, preconditionFailed, reply, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENANT_TYPES, type MockUser } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 import { decodeInboxCursor, encodeInboxCursor } from './diagnostics-inbox-cursor';
@@ -1136,6 +1137,76 @@ export function registrarDiagnostico(router: MockRouter): void {
     };
   });
 
+  /*
+   * El informe liberado, leído por el profesional (API 8271ebc0, 06/11/2026).
+   * Misma puerta que la historia: 403 sin acceso; y un solo 404, con el mismo
+   * cuerpo, para inexistente, de otro paciente, sin liberar o archivo ajeno.
+   */
+  const noDisponible = (): MockReply => {
+    const base = notFound('Recurso diagnóstico no disponible');
+    return { ...base, body: { ...(base.body as object), reason: 'DIAGNOSTICS_RESOURCE_NOT_AVAILABLE' } };
+  };
+  const informeDelProfesional = (request: MockRequest): InformeSimulado | MockReply => {
+    const pacienteId = request.params['id']!;
+    if (!puedeLeer(request, pacienteId)) return forbidden('No tiene cita hoy ni vínculo vigente con esta persona');
+    const r = informes.get(request.params['reportId']!);
+    return r === undefined || r.patientProfileId !== pacienteId || !r.released ? noDisponible() : r;
+  };
+  const archivosDelInforme = (r: InformeSimulado) => [
+    { id: uuid(`result-file-${r.id}`), fileId: uuid(`file-lab-${r.patientProfileId}`), name: `Informe de ${displayOf(r.codeConceptId)}.pdf`, contentRoleConceptId: ROL_CONTENIDO, presentationFormatConceptId: FORMATO_PDF, ordinal: 1 },
+  ];
+
+  router.get('/diagnostics/patients/:id/reports/:reportId', (request) => {
+    const r = informeDelProfesional(request);
+    if ('status' in r) return r;
+    return {
+      reportId: r.id,
+      patientProfileId: r.patientProfileId,
+      serviceRequestId: r.serviceRequestId ?? null,
+      codeConceptId: r.codeConceptId,
+      codeDisplay: displayOf(r.codeConceptId),
+      categoryConceptId: r.categoryConceptId ?? null,
+      versionId: r.currentVersionId,
+      versionNumber: 1,
+      clinicalStatusConceptId: STATUS['ST-COMPLETED']!,
+      issuedAt: r.issuedAt ?? null,
+      releasedAt: r.releasedAt ?? r.issuedAt,
+      patientVisible: r.patientVisible,
+      conclusionText: r.conclusionText ?? null,
+      values: valoresDelInforme(r.id).map((v, i) => ({
+        observationId: uuid(`obs-result-${r.id}-${i + 1}`),
+        codeConceptId: uuid(`concept-${v.code}`),
+        name: v.name,
+        value: v.value,
+        valueKind: v.valueKind,
+        valueConceptId: null,
+        unitConceptId: null,
+        unit: v.unit,
+        referenceRange:
+          v.low === null && v.high === null && v.rangeText === null
+            ? null
+            : { low: v.low, high: v.high, text: v.rangeText, unitConceptId: null, unit: v.unit },
+        interpretationConceptId: v.interpretation === null ? null : uuid(`concept-interpretation-${v.interpretation.code}`),
+        interpretationCode: v.interpretation?.code ?? null,
+        interpretation: v.interpretation?.label ?? null,
+        statusConceptId: STATUS['ST-COMPLETED']!,
+        effectiveAt: r.issuedAt ?? null,
+      })),
+      files: archivosDelInforme(r),
+    };
+  });
+
+  router.get('/diagnostics/patients/:id/reports/:reportId/files/:fileId/content', (request) => {
+    const r = informeDelProfesional(request);
+    if ('status' in r) return r;
+    if (!archivosDelInforme(r).some((f) => f.fileId === request.params['fileId'])) return noDisponible();
+    const nombre = `informe-${r.id.slice(0, 8)}.pdf`;
+    return {
+      body: new Blob([pdfMinimo(`Informe ${displayOf(r.codeConceptId)}`)], { type: 'application/pdf' }),
+      headers: { 'Cache-Control': 'private, no-store', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(nombre)}` },
+    };
+  });
+
   /**
    * CL-56: una orden pendiente no tiene ningún estudio DICOM que mostrar —el
    * `studyInstanceUid` sólo existe una vez que el equipo produjo la imagen
@@ -1490,6 +1561,8 @@ export function registrarDiagnostico(router: MockRouter): void {
           : patientSettlementFixture(o.id, (['APPROVED', 'PARTIALLY_APPROVED', 'DENIED'] as const)[index % 3]!, '100.00', displayOf(o.codeConceptId))),
         id: o.id,
         encounterId: o.encounterId,
+        // Patch v4291: para qué diagnóstico, sólo si se indicó (como la API).
+        ...('reasonConditionId' in o && o.reasonConditionId ? { reasonConditionId: o.reasonConditionId } : {}),
         codeConceptId: o.codeConceptId,
         categoryConceptId: o.categoryConceptId,
         // P40: la categoría sí viaja al portal; las notas del médico no.

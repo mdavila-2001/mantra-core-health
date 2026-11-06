@@ -20,6 +20,8 @@ import {
   type ContextoDelDocumento,
 } from '../../../shared/utils/clinical-pdf/from-summary';
 import { PatientChart } from './patient-chart';
+import { RecorridoClinico } from './recorrido-clinico/recorrido-clinico';
+import { By } from '@angular/platform-browser';
 
 /**
  * El expediente de una persona. Lo que estas pruebas fijan:
@@ -2383,9 +2385,15 @@ describe('PatientChart', () => {
       const estudio = alertas.find((a) => a.tipo === 'estudio-sin-resultado');
       expect(estudio?.nodoIds).toEqual(['ord-1', 'c-1']);
       expect(raiz.querySelector('[data-testid="red-alertas"]')).not.toBeNull();
+      // Compactas: arrancan plegadas en su resumen y se despliegan con su botón.
+      expect(raiz.querySelector('[data-testid="red-alerta"]')).toBeNull();
+      raiz.querySelector<HTMLButtonElement>('[data-testid="red-alertas-plegar"]')!.click();
+      harness.fixture.detectChanges();
       const boton = raiz.querySelector<HTMLButtonElement>('[data-testid="red-alerta"][data-tipo="estudio-sin-resultado"]')!;
       boton.dispatchEvent(new Event('mouseenter'));
-      expect(interno<() => readonly string[]>('resaltadosDeLaRed')()).toEqual(['ord-1', 'c-1']);
+      harness.fixture.detectChanges();
+      const red = harness.fixture.debugElement.query(By.directive(RecorridoClinico)).componentInstance as RecorridoClinico;
+      expect(red.resaltados()).toEqual(['ord-1', 'c-1']);
       boton.click();
       harness.fixture.detectChanges();
       expect(interno<() => { id: string } | null>('nodoAbierto')()?.id).toBe('ord-1');

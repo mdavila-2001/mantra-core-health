@@ -153,6 +153,16 @@ export interface MedicationRequest {
    * legítimo del contrato: una prescripción sintomática o profiláctica.
    */
   readonly indicationConditionId?: string;
+  /**
+   * La receta que sustituyó a ésta (cambio de dosis o de fármaco).
+   *
+   * `GET /clinical/patients/:id/summary` lo publica desde el 06/11/2026
+   * (`MedicationRequestSummaryDto.replacedByRequestId`, ausente si no fue
+   * reemplazada). Es un `medication_requests.id` del mismo expediente. El
+   * resumen no publica el lado inverso (`replacesRequestId`): quien necesite
+   * «a quién reemplaza» lo deduce de esta lista.
+   */
+  readonly replacedByRequestId?: string;
   readonly signedAt?: Date;
   readonly issuedAt?: Date;
   readonly createdAt: Date;

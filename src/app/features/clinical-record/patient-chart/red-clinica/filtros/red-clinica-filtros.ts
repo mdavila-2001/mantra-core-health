@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -68,6 +69,11 @@ export class RedClinicaFiltros {
    * dos filas de chips para lo mismo serían dos verdades.
    */
   readonly mostrarTipos = input(true);
+  /**
+   * Dentro de una superficie que ya tiene su borde (el Recorrido del
+   * expediente): sin recuadro propio, para no apilar uno sobre otro.
+   */
+  readonly integrada = input(false, { transform: booleanAttribute });
 
   /** En el teléfono los criterios avanzados se pliegan. */
   protected readonly desplegado = signal(false);
@@ -92,6 +98,18 @@ export class RedClinicaFiltros {
       ...(d.estado ? { description: d.estado.etiqueta } : {}),
     })),
   ]);
+
+  /*
+   * Un desplegable que sólo ofrece «Todos» no filtra nada: se oculta. Si ya
+   * hay un valor puesto (otra lectura lo trajo y después no), se sigue
+   * mostrando para poder quitarlo.
+   */
+  protected readonly conEspecialidades = computed(
+    () => this.opcionesDeEspecialidad().length > 1 || this.filtro().especialidadId !== null,
+  );
+  protected readonly conProfesionales = computed(
+    () => this.opcionesDeProfesional().length > 1 || this.filtro().profesionalId !== null,
+  );
 
   protected readonly tipos = computed(() => tiposPresentes(this.nodos(), TIPOS_DE_NODO));
   protected readonly activos = computed(() => criteriosActivos(this.filtro()));

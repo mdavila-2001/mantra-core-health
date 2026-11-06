@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { FileDownloader } from '../../../../../core/data-access/files/file-downloader';
+import { FileDownloadService } from '../../../../../shared/utils/file-download/file-download.service';
 import { AHORA_DEMO, ARISTAS_DEMO, NODOS_DEMO } from '../red-clinica.demo';
 import type { NodoDeRed } from '../red-clinica.types';
 import { RedClinicaPanel, vinculosDe, type PresentacionDelPanel } from './red-clinica-panel';
@@ -20,6 +20,7 @@ import { RedClinicaPanel, vinculosDe, type PresentacionDelPanel } from './red-cl
       [aristas]="aristas"
       [ahora]="ahora"
       [presentacion]="presentacion()"
+      [pacienteId]="paciente()"
       (nodoElegido)="elegidos.push($event); abrir($event)"
       (cerrado)="cierres = cierres + 1; nodo.set(null)"
     />
@@ -31,6 +32,8 @@ class Anfitrion {
   readonly ahora = AHORA_DEMO;
   readonly nodo = signal<NodoDeRed | null>(null);
   readonly presentacion = signal<PresentacionDelPanel>('lateral');
+  /** Sin paciente (como en el banco), el panel muestra lo que trae el nodo y no lee nada. */
+  readonly paciente = signal<string | null>(null);
   readonly elegidos: string[] = [];
   cierres = 0;
 
@@ -151,27 +154,47 @@ describe('RedClinicaPanel', () => {
       expect(el().querySelector('[data-testid="red-panel-valor"]')).toBeNull();
     });
 
-    it('descarga el PDF del informe por el endpoint de contenido', async () => {
-      const downloader = TestBed.inject(FileDownloader);
-      const trigger = vi.spyOn(downloader, 'trigger').mockImplementation(() => undefined);
+    /** Con paciente, abrir el MAPA lee su informe; se responde con lo mismo que trae el nodo. */
+    async function abrirMapaConInforme(): Promise<void> {
+      host.paciente.set('pac-1');
       await abrir('e1');
+      http.expectOne((r) => r.url.endsWith('/diagnostics/patients/pac-1/reports/inf-mapa')).flush({
+        reportId: 'inf-mapa', patientProfileId: 'pac-1', serviceRequestId: null, codeConceptId: 'mapa', codeDisplay: 'MAPA',
+        categoryConceptId: null, versionId: 'v1', versionNumber: 1, clinicalStatusConceptId: 'st', issuedAt: null,
+        releasedAt: '2026-08-20T12:00:00.000Z', patientVisible: true, conclusionText: 'Patrón hipertensivo.',
+        values: [], files: [{ id: 'f', fileId: 'file-mapa', name: 'Informe MAPA.pdf', contentRoleConceptId: 'rol', presentationFormatConceptId: null, ordinal: 1 }],
+      });
+      fixture.detectChanges();
+      await fixture.whenStable();
+    }
+    const URL_DEL_PDF = '/diagnostics/patients/pac-1/reports/inf-mapa/files/file-mapa/content';
+
+    it('sin paciente no ofrece bajar el archivo: no tiene por dónde', async () => {
+      await abrir('e1');
+      expect(el().querySelector('[data-testid="red-panel-archivo"]')).toBeNull();
+    });
+
+    it('descarga el PDF por la ruta del informe para el médico, no por /common/files', async () => {
+      const save = vi.spyOn(TestBed.inject(FileDownloadService), 'save').mockImplementation(() => undefined);
+      await abrirMapaConInforme();
       el().querySelector<HTMLElement>('[data-testid="red-panel-archivo"]')!.click();
       fixture.detectChanges();
-      const req = http.expectOne((r) => r.url.endsWith('/common/files/file-mapa/content'));
+      const req = http.expectOne((r) => r.url.endsWith(URL_DEL_PDF));
       expect(req.request.method).toBe('GET');
       req.flush(new Blob(['%PDF'], { type: 'application/pdf' }));
-      await vi.waitFor(() => expect(trigger).toHaveBeenCalled());
-      expect(trigger.mock.calls[0][1]).toBe('Informe MAPA.pdf');
+      await vi.waitFor(() => expect(save).toHaveBeenCalled());
+      expect(save.mock.calls[0][1]).toBe('Informe MAPA.pdf');
       fixture.detectChanges();
       expect(texto()).toContain('Descarga iniciada');
+      http.expectNone((r) => r.url.includes('/common/files/'));
     });
 
     it('un 403 se muestra como «no puede abrir», sin romper el resto (S5)', async () => {
-      await abrir('e1');
+      await abrirMapaConInforme();
       el().querySelector<HTMLElement>('[data-testid="red-panel-archivo"]')!.click();
       fixture.detectChanges();
       http
-        .expectOne((r) => r.url.endsWith('/common/files/file-mapa/content'))
+        .expectOne((r) => r.url.endsWith(URL_DEL_PDF))
         .flush(new Blob([JSON.stringify({ code: 'FORBIDDEN', message: 'Sin acceso', correlationId: 'req-403' })], { type: 'application/json' }), {
           status: 403,
           statusText: 'Forbidden',
@@ -180,15 +203,15 @@ describe('RedClinicaPanel', () => {
         fixture.detectChanges();
         expect(texto()).toContain('No puede abrir este archivo');
       });
-      expect(el().querySelectorAll('[data-testid="red-panel-valor"]')).toHaveLength(3);
+      expect(texto()).toContain('Patrón hipertensivo');
     });
 
     it('un 500 muestra el código de soporte (S9)', async () => {
-      await abrir('e1');
+      await abrirMapaConInforme();
       el().querySelector<HTMLElement>('[data-testid="red-panel-archivo"]')!.click();
       fixture.detectChanges();
       http
-        .expectOne((r) => r.url.endsWith('/common/files/file-mapa/content'))
+        .expectOne((r) => r.url.endsWith(URL_DEL_PDF))
         .flush(new Blob(['x']), { status: 500, statusText: 'Error', headers: { 'x-request-id': 'req-123' } });
       await vi.waitFor(() => {
         fixture.detectChanges();
@@ -198,10 +221,10 @@ describe('RedClinicaPanel', () => {
     });
 
     it('cambiar de nodo cancela la descarga en curso', async () => {
-      await abrir('e1');
+      await abrirMapaConInforme();
       el().querySelector<HTMLElement>('[data-testid="red-panel-archivo"]')!.click();
       fixture.detectChanges();
-      const req = http.expectOne((r) => r.url.endsWith('/common/files/file-mapa/content'));
+      const req = http.expectOne((r) => r.url.endsWith(URL_DEL_PDF));
       await abrir('e2');
       expect(req.cancelled).toBe(true);
     });

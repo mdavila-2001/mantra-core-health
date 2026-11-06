@@ -1,10 +1,35 @@
-<section class="alertas" aria-labelledby="red-alertas-titulo" data-testid="red-alertas">
+<section
+  class="alertas"
+  [class.alertas--compacta]="compacta()"
+  aria-labelledby="red-alertas-titulo"
+  data-testid="red-alertas"
+>
   <header class="alertas__cabecera">
     <h2 class="alertas__titulo" id="red-alertas-titulo">
-      {{ titulo() }}
-      <span class="alertas__cuenta">{{ alertas().length }}</span>
+      @if (compacta() && alertas().length > 0) {
+        <!-- Patrón de divulgación: el encabezado lleva el botón; su nombre
+             dice cuántas hay y cuántas son de prioridad alta. -->
+        <button
+          type="button"
+          class="alertas__plegar"
+          data-testid="red-alertas-plegar"
+          [attr.aria-expanded]="abierta()"
+          aria-controls="red-alertas-cuerpo"
+          (click)="abierta.set(!abierta())"
+        >
+          <span class="alertas__chevron" [class.alertas__chevron--abierto]="abierta()" aria-hidden="true"></span>
+          {{ titulo() }}
+          <span class="alertas__cuenta">{{ alertas().length }} {{ alertas().length === 1 ? 'alerta' : 'alertas' }}</span>
+          @if (altas() > 0) {
+            <span class="alertas__resumen">{{ altas() }} de prioridad alta</span>
+          }
+        </button>
+      } @else {
+        {{ titulo() }}
+        <span class="alertas__cuenta">{{ alertas().length }}</span>
+      }
     </h2>
-    @if (altas() > 0) {
+    @if (!compacta() && altas() > 0) {
       <p class="alertas__resumen">{{ altas() }} de prioridad alta</p>
     }
   </header>
@@ -14,40 +39,47 @@
       Nada abierto en los registros a la vista: sin presuntivos por resolver, estudios sin resultado,
       derivaciones pendientes ni valores fuera de rango.
     </p>
-  } @else {
-    <ul class="alertas__lista">
-      @for (alerta of aLaVista(); track alerta.id) {
-        <li>
-          <button
-            type="button"
-            class="alerta alerta--{{ alerta.prioridad }}"
-            data-testid="red-alerta"
-            [attr.data-tipo]="alerta.tipo"
-            (click)="elegir(alerta)"
-            (mouseenter)="entrar(alerta)"
-            (mouseleave)="salir()"
-            (focus)="entrar(alerta)"
-            (blur)="salir()"
-          >
-            <span class="alerta__icono" aria-hidden="true"><app-nav-icon [name]="icono[alerta.tipo]" /></span>
-            <span class="alerta__texto">
-              <span class="alerta__prioridad">{{ prioridad[alerta.prioridad] }}</span>
-              <span class="alerta__titulo">{{ alerta.titulo }}</span>
-              <span class="alerta__detalle">{{ alerta.detalle }}</span>
-            </span>
-            <span class="alerta__ir" aria-hidden="true"><app-nav-icon name="arrow-right" /></span>
-          </button>
-        </li>
+  } @else if (lista()) {
+    <div id="red-alertas-cuerpo" class="alertas__cuerpo">
+      <ul class="alertas__lista">
+        @for (alerta of aLaVista(); track alerta.id) {
+          <li>
+            <button
+              type="button"
+              class="alerta alerta--{{ alerta.prioridad }}"
+              data-testid="red-alerta"
+              [attr.data-tipo]="alerta.tipo"
+              (click)="elegir(alerta)"
+              (mouseenter)="entrar(alerta)"
+              (mouseleave)="salir()"
+              (focus)="entrar(alerta)"
+              (blur)="salir()"
+            >
+              <span class="alerta__icono" aria-hidden="true"><app-nav-icon [name]="icono[alerta.tipo]" /></span>
+              <span class="alerta__texto">
+                <span class="alerta__prioridad">{{ prioridad[alerta.prioridad] }}</span>
+                <span class="alerta__titulo">{{ alerta.titulo }}</span>
+                <span class="alerta__detalle">{{ alerta.detalle }}</span>
+              </span>
+              <span class="alerta__ir" aria-hidden="true"><app-nav-icon name="arrow-right" /></span>
+            </button>
+          </li>
+        }
+      </ul>
+      @if (ocultas() > 0) {
+        <button app-button variant="ghost" size="sm" data-testid="red-alertas-todas" [attr.aria-expanded]="todas()" (clicked)="todas.set(!todas())">
+          {{ todas() ? 'Ver menos' : 'Ver las ' + alertas().length + ' alertas' }}
+        </button>
       }
-    </ul>
-    @if (ocultas() > 0) {
-      <button app-button variant="ghost" size="sm" data-testid="red-alertas-todas" [attr.aria-expanded]="todas()" (clicked)="todas.set(!todas())">
-        {{ todas() ? 'Ver menos' : 'Ver las ' + alertas().length + ' alertas' }}
-      </button>
-    }
+      <p class="alertas__pie">
+        Señalan registros abiertos, repetidos o fuera de rango. No sugieren ni descartan diagnósticos.
+      </p>
+    </div>
   }
 
-  <p class="alertas__pie">
-    Señalan registros abiertos, repetidos o fuera de rango. No sugieren ni descartan diagnósticos.
-  </p>
+  @if (!compacta() && alertas().length === 0) {
+    <p class="alertas__pie">
+      Señalan registros abiertos, repetidos o fuera de rango. No sugieren ni descartan diagnósticos.
+    </p>
+  }
 </section>

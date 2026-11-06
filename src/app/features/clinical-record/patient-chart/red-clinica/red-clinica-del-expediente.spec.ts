@@ -189,10 +189,11 @@ describe('nodosDeLaRed', () => {
     const d = detalle(de(nodos, 'ord-tsh'), 'estudio');
     expect(d.categoria).toBe('Laboratorio');
     expect(d.prioridad).toBe('Rutina');
-    expect(d.resultado).toEqual({ liberadoEn: null, valores: [], archivos: [] });
+    // Sin valores ni fecha: los lee el panel al abrirlo, con el id del informe liberado.
+    expect(d.resultado).toEqual({ liberadoEn: null, valores: [], archivos: [], informeId: 'inf-tsh' });
     // El informe es un estudio para el panel, con el mismo análisis.
     expect(de(nodos, 'inf-tsh').tipo).toBe('estudio');
-    expect(detalle(de(nodos, 'inf-tsh'), 'estudio').resultado).not.toBeNull();
+    expect(detalle(de(nodos, 'inf-tsh'), 'estudio').resultado?.informeId).toBe('inf-tsh');
   });
 
   it('un estudio sin informe liberado queda pendiente', () => {

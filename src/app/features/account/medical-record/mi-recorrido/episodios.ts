@@ -28,10 +28,19 @@ import type {
     consulta», y no entra en la narración del hilo. Las atenciones que no tocan
     ningún diagnóstico van a «Otras consultas».
 
-    // INTEGRACION-FRANJA-2: la agrupación por episodios del expediente
-    // (`patient-chart/recorrido-clinico`) resuelve la misma pregunta para el
-    // médico. Cuando su modelo sea compartido, `recorridoDelPaciente` debería
-    // delegar en él y quedarse sólo con la redacción para el paciente.
+    ## Por qué no delega en `agruparEnEpisodios` del expediente (06/11/2026)
+
+    La red del profesional (`patient-chart/recorrido-clinico/red-clinica.model.ts`,
+    ADR-0021) resuelve la misma pregunta con otras reglas, deliberadamente:
+    une dos registros del mismo concepto en un problema, reparte una atención
+    entre varios episodios y **deduce** vínculos (el estudio pedido junto a un
+    presuntivo, la cita y la atención del mismo día). Para el paciente, cada
+    hecho entra a un hilo sólo por un vínculo declarado y lo demás se marca
+    «de esta consulta» (decisión 3 de la Franja 5). Delegar exigiría desactivar
+    justo lo que distingue a aquel modelo, así que se queda aparte; lo que sí
+    comparten es la fuente: los mismos ids y los mismos campos del contrato
+    (`replacedByConditionId`, `reasonConditionId`, `indicationConditionId`,
+    `verification.basedOn`, `followUpOf`).
     ========================================================================== */
 
 /** Un hecho dentro de una atención del episodio. */

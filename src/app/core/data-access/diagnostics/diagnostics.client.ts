@@ -25,6 +25,7 @@ import type {
   PatientDiagnosticResults,
   PatientDiagnostics,
   PatientOrder,
+  PractitionerDiagnosticResult,
   PatientOwnOrders,
   PreviousStudy,
 } from './diagnostics.types';
@@ -97,6 +98,53 @@ export class DiagnosticsClient {
           orders: body.orders.map(toOrder),
           reports: body.reports.map(toReport),
         })),
+      );
+  }
+
+  /**
+   * `GET /diagnostics/patients/:patientProfileId/reports/:reportId` — un
+   * informe **liberado**, leído por el profesional: valores con su rango,
+   * conclusión y archivos.
+   *
+   * Misma autorización que `getPatientDiagnostics`. Todo lo que no se puede
+   * leer (inexistente, de otra persona u organización, sin liberar) es el
+   * mismo 404, sin revelar cuál.
+   */
+  getPractitionerResult(patientProfileId: string, reportId: string): Observable<PractitionerDiagnosticResult> {
+    return this.http
+      .get<WirePractitionerResult>(
+        this.url(
+          `/diagnostics/patients/${encodeURIComponent(patientProfileId)}/reports/${encodeURIComponent(reportId)}`,
+        ),
+      )
+      .pipe(map(toPractitionerResult));
+  }
+
+  /**
+   * `GET /diagnostics/patients/:patientProfileId/reports/:reportId/files/:fileId/content`
+   * — el archivo de un informe liberado, para el profesional.
+   *
+   * `/common/files/:id/content` sólo sirve a quien subió el archivo (el
+   * laboratorio): el médico lo baja por acá, autorizado por la historia.
+   */
+  downloadPractitionerResultFile(
+    patientProfileId: string,
+    reportId: string,
+    fileId: string,
+  ): Observable<DownloadedFile> {
+    return this.http
+      .get(
+        this.url(
+          `/diagnostics/patients/${encodeURIComponent(patientProfileId)}/reports/${encodeURIComponent(reportId)}/files/${encodeURIComponent(fileId)}/content`,
+        ),
+        { responseType: 'blob', observe: 'response' },
+      )
+      .pipe(
+        map((respuesta) => {
+          const fileName = nombreDeContentDisposition(respuesta.headers.get('Content-Disposition'));
+          return { blob: respuesta.body ?? new Blob([]), ...(fileName === undefined ? {} : { fileName }) };
+        }),
+        parseBlobError(),
       );
   }
 
@@ -580,6 +628,15 @@ function toPatientResult({
   ...resto
 }: WirePatientResult): PatientDiagnosticResult {
   return { ...resto, ...fecha('issuedAt', issuedAt), releasedAt: new Date(releasedAt) };
+}
+
+type WirePractitionerResult = Omit<PractitionerDiagnosticResult, 'issuedAt' | 'releasedAt'> & {
+  readonly issuedAt: string | null;
+  readonly releasedAt: string;
+};
+
+function toPractitionerResult({ issuedAt, releasedAt, ...resto }: WirePractitionerResult): PractitionerDiagnosticResult {
+  return { ...resto, issuedAt: issuedAt === null ? null : new Date(issuedAt), releasedAt: new Date(releasedAt) };
 }
 
 function toPatientOrder({ createdAt, ...resto }: WirePatientOrder): PatientOrder {

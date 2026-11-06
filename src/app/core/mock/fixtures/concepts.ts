@@ -1267,6 +1267,24 @@ export const MEDICAMENTO = define('VS_MEDICATION', [
 ]);
 
 /**
+ * Concentraciones de demostración que no tienen producto propio en el catálogo
+ * universal simulado (ahí todas las de levotiroxina cuelgan de
+ * `MED-LEVOTIROXINA`). Van aparte de `MEDICAMENTO` porque la vitrina pública
+ * exige un ATC por cada uno de aquéllos. Las usa la historia de `pid-paciente`
+ * (`patient-network.data.ts`): tres recetas de 25, 50 y 75 mcg, cada una con
+ * el concepto de su concentración para que ni la receta ni la narración digan
+ * «50 mcg» de una dosis de 25.
+ */
+export const MEDICAMENTO_POR_CONCENTRACION = define(
+  'VS_MEDICATION',
+  [
+    ['MED-LEVOTIROXINA-25', 'Levotiroxina 25 mcg comprimidos', 'Hormona tiroidea.'],
+    ['MED-LEVOTIROXINA-75', 'Levotiroxina 75 mcg comprimidos', 'Hormona tiroidea.'],
+  ],
+  16,
+);
+
+/**
  * Frecuencia por defecto del medicamento (C-20 / H4, reparto de Ender 2026-09-20).
  *
  * `property_code: 'default_frequency'` es una **extensión declarada del

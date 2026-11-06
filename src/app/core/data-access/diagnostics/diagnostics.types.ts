@@ -102,6 +102,91 @@ export interface DiagnosticReport {
   readonly createdAt: Date;
 }
 
+/* ============================================================================
+ * El informe liberado, leído por el profesional (06/11/2026)
+ *
+ * `GET /diagnostics/patients/:patientProfileId/reports/:reportId`
+ * (`PractitionerDiagnosticResultDto`). Misma puerta que la lista de órdenes del
+ * profesional: 403 sin acceso a la historia; 404 idéntico
+ * (`DIAGNOSTICS_RESOURCE_NOT_AVAILABLE`) para un informe inexistente, de otro
+ * paciente u organización, o sin liberar. Los nulables llegan siempre, con
+ * `null`: el tipo los conserva así.
+ * ========================================================================== */
+
+/** Cómo viene escrito el valor (`value` siempre llega como texto). */
+export type PractitionerResultValueKind =
+  | 'QUANTITY'
+  | 'DECIMAL'
+  | 'INTEGER'
+  | 'TEXT'
+  | 'BOOLEAN'
+  | 'CONCEPT'
+  | 'DATETIME'
+  | 'DATE';
+
+export interface PractitionerResultRange {
+  /** Texto decimal exacto («0.4»), como el valor. */
+  readonly low: string | null;
+  readonly high: string | null;
+  /** El rango impreso cuando no es numérico («Negativo»). */
+  readonly text: string | null;
+  readonly unitConceptId: string | null;
+  readonly unit: string | null;
+}
+
+/** Un valor del informe. */
+export interface PractitionerResultValue {
+  readonly observationId: string;
+  readonly codeConceptId: string;
+  readonly name: string | null;
+  /**
+   * El valor como texto: numéricos en decimal exacto («126.0»), booleanos
+   * «true»/«false», un concepto por su rótulo, fechas ISO o `AAAA-MM-DD`.
+   */
+  readonly value: string | null;
+  readonly valueKind: PractitionerResultValueKind | null;
+  readonly valueConceptId: string | null;
+  readonly unitConceptId: string | null;
+  readonly unit: string | null;
+  readonly referenceRange: PractitionerResultRange | null;
+  readonly interpretationConceptId: string | null;
+  /** El código del laboratorio («H»). No se traduce en el cliente. */
+  readonly interpretationCode: string | null;
+  /** El rótulo de la interpretación («Alto»): lo que se muestra. */
+  readonly interpretation: string | null;
+  readonly statusConceptId: string;
+  readonly effectiveAt: string | null;
+}
+
+export interface PractitionerResultFile {
+  readonly id: string;
+  /** El archivo; se baja por la ruta del informe, no por `/common/files`. */
+  readonly fileId: string;
+  readonly name: string | null;
+  readonly contentRoleConceptId: string;
+  readonly presentationFormatConceptId: string | null;
+  readonly ordinal: number | null;
+}
+
+export interface PractitionerDiagnosticResult {
+  readonly reportId: string;
+  readonly patientProfileId: string;
+  readonly serviceRequestId: string | null;
+  readonly codeConceptId: string;
+  readonly codeDisplay: string | null;
+  readonly categoryConceptId: string | null;
+  readonly versionId: string;
+  readonly versionNumber: number;
+  readonly clinicalStatusConceptId: string;
+  readonly issuedAt: Date | null;
+  readonly releasedAt: Date;
+  /** `false`: liberado, pero no publicado al paciente. */
+  readonly patientVisible: boolean;
+  readonly conclusionText: string | null;
+  readonly values: readonly PractitionerResultValue[];
+  readonly files: readonly PractitionerResultFile[];
+}
+
 /**
  * El circuito diagnóstico de un paciente en una lectura.
  *
@@ -342,6 +427,13 @@ export interface PatientDiagnosticResults {
 export interface PatientOrder extends PatientSettlementFields, ServiceRequestPerformerFields {
   readonly id: string;
   readonly encounterId?: string;
+  /**
+   * El diagnóstico propio para el que se pidió (patch v4291). La API lo
+   * publica en `PatientOrderSummaryDto` desde el 06/11/2026; ausente si la
+   * orden no lo indicó. Es un `clinical.conditions.id`: se resuelve contra los
+   * diagnósticos que el paciente ya ve en su resumen.
+   */
+  readonly reasonConditionId?: string;
   readonly codeConceptId: string;
   readonly categoryConceptId?: string;
   /**

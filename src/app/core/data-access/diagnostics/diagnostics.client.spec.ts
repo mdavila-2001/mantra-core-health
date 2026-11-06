@@ -111,6 +111,60 @@ describe('DiagnosticsClient', () => {
     });
   });
 
+  describe('getPractitionerResult (informe liberado para el profesional)', () => {
+    const LEIDO = {
+      reportId: 'dr-1',
+      patientProfileId: 'p-1',
+      serviceRequestId: 'sr-1',
+      codeConceptId: 'code-1',
+      codeDisplay: 'TSH',
+      categoryConceptId: null,
+      versionId: 'v-1',
+      versionNumber: 1,
+      clinicalStatusConceptId: 'st-final',
+      issuedAt: null,
+      releasedAt: '2026-08-16T16:00:00.000Z',
+      patientVisible: false,
+      conclusionText: null,
+      values: [
+        {
+          observationId: 'o-1',
+          codeConceptId: 'tsh',
+          name: 'TSH',
+          value: '8.9',
+          valueKind: 'QUANTITY',
+          valueConceptId: null,
+          unitConceptId: null,
+          unit: 'mUI/L',
+          referenceRange: { low: '0.4', high: '4.0', text: null, unitConceptId: null, unit: 'mUI/L' },
+          interpretationConceptId: 'i-h',
+          interpretationCode: 'H',
+          interpretation: 'Alto',
+          statusConceptId: 'st-final',
+          effectiveAt: null,
+        },
+      ],
+      files: [],
+    };
+
+    it('lee la ruta del paciente y del informe, y convierte las fechas', () => {
+      let leido: unknown;
+      client.getPractitionerResult('p/1', 'dr-1').subscribe((r) => (leido = r));
+      http.expectOne((r) => r.url === '/diagnostics/patients/p%2F1/reports/dr-1').flush(LEIDO);
+      expect(leido).toMatchObject({ issuedAt: null, patientVisible: false, values: [{ value: '8.9', interpretation: 'Alto' }] });
+      expect((leido as { releasedAt: Date }).releasedAt).toEqual(new Date('2026-08-16T16:00:00.000Z'));
+    });
+
+    it('el archivo baja por la ruta del informe, con el nombre de Content-Disposition', () => {
+      let nombre: string | undefined;
+      client.downloadPractitionerResultFile('p-1', 'dr-1', 'f-1').subscribe((r) => (nombre = r.fileName));
+      const req = http.expectOne((r) => r.url === '/diagnostics/patients/p-1/reports/dr-1/files/f-1/content');
+      expect(req.request.responseType).toBe('blob');
+      req.flush(new Blob(['%PDF']), { headers: { 'Content-Disposition': "attachment; filename*=UTF-8''tsh.pdf" } });
+      expect(nombre).toBe('tsh.pdf');
+    });
+  });
+
   describe('listImagingStudies', () => {
     it('pega contra la lectura de estudios, que es otra tabla que la orden', () => {
       client.listImagingStudies('p-1').subscribe();

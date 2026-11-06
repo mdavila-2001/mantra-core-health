@@ -21,6 +21,13 @@
   background: var(--bg-surface);
 }
 
+.filtros--integrada {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
 .filtros__fila {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -86,8 +93,11 @@
   }
 }
 
+/* Hasta cuatro por fila; con menos criterios (sin profesionales ni
+   especialidades que ofrecer) los que quedan se reparten el ancho y no dejan
+   columnas vacías. */
 @media (min-width: 1120px) {
   .filtros__avanzados {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   }
 }

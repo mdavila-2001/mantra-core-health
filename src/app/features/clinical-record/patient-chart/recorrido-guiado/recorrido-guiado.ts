@@ -1,5 +1,6 @@
 import {
   afterNextRender,
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -71,6 +72,7 @@ const VELOCIDADES: readonly SegmentedOption<VelocidadDelRecorrido>[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'recorrido-guiado',
+    '[class.recorrido-guiado--integrada]': 'integrada()',
     '(keydown)': 'alTeclado($event)',
   },
 })
@@ -86,6 +88,11 @@ export class RecorridoGuiado {
    * Cualquier cambio pausa la reproducción.
    */
   readonly interaccionEnLaRed = input<unknown>(undefined);
+  /**
+   * Dentro de una superficie que ya tiene su borde (el Recorrido del
+   * expediente): sin tarjeta propia, para no apilar un recuadro en otro.
+   */
+  readonly integrada = input(false, { transform: booleanAttribute });
 
   /** El paso actual, con lo que hay que enfocar y lo ya revelado. */
   readonly pasoActual = output<PasoActualDelRecorrido>();

@@ -125,6 +125,7 @@ export const NODOS_DEMO: readonly NodoDeRed[] = [
           { nombre: 'Frecuencia cardíaca media', valor: 78, unidad: 'lpm', rango: { bajo: 60, alto: 100 } },
         ],
         archivos: [{ fileId: 'file-mapa', nombre: 'Informe MAPA.pdf' }],
+        informeId: 'inf-mapa',
       },
     },
   },

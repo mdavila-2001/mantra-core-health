@@ -22,27 +22,29 @@ import {
 } from '../../clinical-record/patient-chart/recorrido-guiado/recorrido-guiado.model';
 
 import { outputsRecord } from './exit-log';
-import { ScenarioRecorridoGuiadoSimulador } from './recorrido-guiado.simulador';
 import type { ComponentScenario, ScenarioHost } from './scenario.types';
 
 /* ============================================================================
     Escenarios del recorrido guiado (Franja 4 de la red clínica).
 
-    Hasta que la red por episodios lo monte en el expediente, el control se
-    acredita acá: los pasos salen del **modelo real** (`armarRecorridoGuiado`)
+    Desde el 06/11/2026 el control va montado en el Recorrido del expediente
+    (`patient-chart/red-clinica/superficie/`), sobre las lecturas reales de la
+    paciente; la variante «simulador» de este banco, que leía lo mismo, se
+    retiró por redundante. Quedan los estados que documentan el control
+    aislado (historia, episodio, vacío): los pasos salen del **modelo real** (`armarRecorridoGuiado`)
     sobre una historia de demostración tipada con los mismos tipos de
     `core/data-access/`, y al lado se dibuja una lista de los registros que
     hace de red de mentira —revelado, enfocado u oculto— para ver lo que emite
     `pasoActual`. Tocar un registro de esa lista cuenta como interacción con la
     red y pausa la reproducción.
 
-    Se retira sin rastro borrando este archivo y su línea en `scenarios.ts`.
+    Se retira borrando este archivo y su línea en `scenarios.ts`.
     ========================================================================== */
 
 const KEY = 'features/clinical-record/patient-chart/recorrido-guiado/recorrido-guiado';
 const SOURCE = 'src/app/features/component-stock/scenarios/recorrido-guiado.scenarios.ts';
 
-export const RECORRIDO_GUIADO_VARIANTS = ['historia', 'episodio', 'vacio', 'simulador'] as const;
+export const RECORRIDO_GUIADO_VARIANTS = ['historia', 'episodio', 'vacio'] as const;
 export type RecorridoGuiadoVariant = (typeof RECORRIDO_GUIADO_VARIANTS)[number];
 
 /* -- La historia de demostración ------------------------------------------ */
@@ -392,17 +394,5 @@ export const RECORRIDO_GUIADO_SCENARIOS: readonly ComponentScenario[] = [
     host: ScenarioRecorridoGuiado,
     fuente: SOURCE,
     nivelDePrueba: 'limite',
-  },
-  {
-    id: `${KEY}#simulador`,
-    clave: KEY,
-    variante: 'simulador',
-    titulo: 'Historia de pid-paciente leída del simulador',
-    seVe: 'Los pasos de la historia de demostración de la Franja 1 (diferencial anemia → hipotiroidismo, levotiroxina 25 → 50 → 75, reconsultas, derivaciones, internación), leídos por los clientes reales contra el backend simulado.',
-    interacciones: ['Recorrer con «Siguiente» o la línea de progreso → pasoActual con el título del paso.'],
-    salidasEsperadas: ['pasoActual'],
-    host: ScenarioRecorridoGuiadoSimulador,
-    fuente: 'src/app/features/component-stock/scenarios/recorrido-guiado.simulador.ts',
-    nivelDePrueba: 'correcto',
   },
 ];

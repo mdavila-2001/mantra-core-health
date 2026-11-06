@@ -20,6 +20,7 @@ import {
   ENCOUNTER_STATUS,
   ESTUDIO,
   MEDICAMENTO,
+  MEDICAMENTO_POR_CONCENTRACION,
   OBSERVATION,
   OBSERVATION_CATEGORY,
   OBSERVATION_UNIT,
@@ -287,6 +288,74 @@ export function networkOrders(): SimulatedOrder[] {
 /** Los ids de las órdenes de esta historia: sus informes se siembran aparte, todos liberados. */
 export const NETWORK_ORDER_IDS: ReadonlySet<string> = new Set(STUDIES.map((s) => s.orderId));
 
+/**
+ * Un valor de un informe de esta historia, como lo publica
+ * `GET /diagnostics/patients/:id/reports/:reportId` (lectura del profesional,
+ * 06/11/2026): el número como texto decimal exacto, el rango impreso y, si el
+ * laboratorio lo marcó, su interpretación (código y rótulo, tal cual).
+ */
+export interface ValorDeInformeSimulado {
+  readonly code: string;
+  readonly name: string;
+  readonly value: string;
+  readonly valueKind: 'QUANTITY' | 'TEXT';
+  readonly unit: string | null;
+  readonly low: string | null;
+  readonly high: string | null;
+  readonly rangeText: string | null;
+  readonly interpretation: { readonly code: string; readonly label: string } | null;
+}
+
+const ALTO = { code: 'H', label: 'Alto' } as const;
+const BAJO = { code: 'L', label: 'Bajo' } as const;
+const ANORMAL = { code: 'A', label: 'Anormal' } as const;
+const q = (
+  code: string,
+  name: string,
+  value: string,
+  unit: string,
+  low: string,
+  high: string,
+  interpretation: ValorDeInformeSimulado['interpretation'] = null,
+): ValorDeInformeSimulado => ({ code, name, value, valueKind: 'QUANTITY', unit, low, high, rangeText: null, interpretation });
+
+/** Los valores de cada informe, coherentes con su conclusión. La ecografía no trae valores. */
+const VALORES_POR_ORDEN: Readonly<Record<string, readonly ValorDeInformeSimulado[]>> = {
+  [N.bloodCount]: [
+    q('LAB-HB', 'Hemoglobina', '13.6', 'g/dL', '12.0', '16.0'),
+    q('LAB-VCM', 'Volumen corpuscular medio', '89', 'fL', '80', '100'),
+    q('LAB-FERRITINA', 'Ferritina', '64', 'ng/mL', '15', '150'),
+  ],
+  [N.tsh]: [
+    q('LAB-TSH', 'TSH', '8.9', 'mUI/L', '0.4', '4.0', ALTO),
+    q('LAB-T4L', 'T4 libre', '0.68', 'ng/dL', '0.80', '1.80', BAJO),
+  ],
+  [N.tshControl]: [q('LAB-TSH', 'TSH', '5.6', 'mUI/L', '0.4', '4.0', ALTO)],
+  [N.urineCulture]: [
+    {
+      code: 'LAB-UROCULTIVO',
+      name: 'Urocultivo',
+      value: 'Más de 100.000 UFC/mL de Escherichia coli',
+      valueKind: 'TEXT',
+      unit: null,
+      low: null,
+      high: null,
+      rangeText: 'Menos de 10.000 UFC/mL',
+      interpretation: ANORMAL,
+    },
+  ],
+  [N.tshSuppressed]: [
+    q('LAB-TSH', 'TSH', '0.09', 'mUI/L', '0.4', '4.0', BAJO),
+    q('LAB-T4L', 'T4 libre', '1.9', 'ng/dL', '0.80', '1.80', ALTO),
+  ],
+};
+
+/** Los valores del informe `reportId` de esta historia; `[]` si no es de ella o no trae valores. */
+export function valoresDelInforme(reportId: string): readonly ValorDeInformeSimulado[] {
+  const estudio = STUDIES.find((s) => report(s.orderId) === reportId);
+  return estudio === undefined ? [] : (VALORES_POR_ORDEN[estudio.orderId] ?? []);
+}
+
 /** Los informes, con la misma forma que `InformeSimulado` (`diagnostics.handlers.ts`). */
 export function networkReports() {
   return STUDIES.map((s) => ({
@@ -310,6 +379,13 @@ export function networkReports() {
 /* ---- medicación ---------------------------------------------------------- */
 
 export function networkPrescriptions(): SimulatedPrescription[] {
+  // Cada receta con el concepto de su concentración: la de 25 no puede decir
+  // «Levotiroxina 50 mcg comprimidos».
+  const CONCEPTO_DE_LA_DOSIS: Readonly<Record<string, string>> = {
+    '25 mcg': MEDICAMENTO_POR_CONCENTRACION['MED-LEVOTIROXINA-25']!,
+    '50 mcg': MEDICAMENTO['MED-LEVOTIROXINA']!,
+    '75 mcg': MEDICAMENTO_POR_CONCENTRACION['MED-LEVOTIROXINA-75']!,
+  };
   const levo = (
     rxId: string,
     dose: string,
@@ -321,7 +397,7 @@ export function networkPrescriptions(): SimulatedPrescription[] {
   ): SimulatedPrescription => ({
     id: rxId,
     patientProfileId: P,
-    medicationConceptId: MEDICAMENTO['MED-LEVOTIROXINA']!,
+    medicationConceptId: CONCEPTO_DE_LA_DOSIS[dose]!,
     encounterId,
     indicationConditionId: N.hypothyroidism,
     statusConceptId: PRESCRIPTION_STATUS[to === null ? 'MR_ISSUED' : 'MR_COMPLETED']!,

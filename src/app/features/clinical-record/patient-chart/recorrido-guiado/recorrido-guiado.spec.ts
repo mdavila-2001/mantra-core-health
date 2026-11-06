@@ -36,6 +36,7 @@ const PASOS: readonly PasoDelRecorrido[] = [
       [episodio]="episodio()"
       [nombreDelEpisodio]="nombre()"
       [interaccionEnLaRed]="interaccion()"
+      [integrada]="integrada()"
       (pasoActual)="emitidos.push($event)"
     />
   `,
@@ -45,6 +46,7 @@ class Anfitrion {
   readonly episodio = signal<readonly string[] | null>(null);
   readonly nombre = signal<string | null>(null);
   readonly interaccion = signal(0);
+  readonly integrada = signal(false);
   readonly emitidos: PasoActualDelRecorrido[] = [];
 }
 
@@ -88,6 +90,15 @@ describe('RecorridoGuiado', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+  });
+
+  it('integrada en otra superficie, pierde su tarjeta propia (clase en el anfitrión)', () => {
+    montar();
+    const anfitrion = raiz().querySelector('app-recorrido-guiado')!;
+    expect(anfitrion.classList).not.toContain('recorrido-guiado--integrada');
+    host.integrada.set(true);
+    fixture.detectChanges();
+    expect(anfitrion.classList).toContain('recorrido-guiado--integrada');
   });
 
   it('muestra el primer paso con contador, fecha y narración en una región viva', () => {

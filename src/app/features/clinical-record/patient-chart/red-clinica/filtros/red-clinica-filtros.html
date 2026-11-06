@@ -1,4 +1,4 @@
-<section class="filtros" aria-label="Filtros de la red clínica" data-testid="red-filtros">
+<section class="filtros" [class.filtros--integrada]="integrada()" aria-label="Filtros de la red clínica" data-testid="red-filtros">
   <div class="filtros__fila">
     <app-search-field
       class="filtros__buscar"
@@ -33,25 +33,29 @@
   </div>
 
   <div id="red-filtros-avanzados" class="filtros__avanzados" [class.filtros__avanzados--abierto]="desplegado()">
-    <app-form-field label="Especialidad">
-      <app-select
-        data-testid="red-filtro-especialidad"
-        [options]="opcionesDeEspecialidad()"
-        [value]="especialidad()"
-        placeholder="Todas las especialidades"
-        (valueChange)="elegirEspecialidad($event)"
-      />
-    </app-form-field>
+    @if (conEspecialidades()) {
+      <app-form-field label="Especialidad">
+        <app-select
+          data-testid="red-filtro-especialidad"
+          [options]="opcionesDeEspecialidad()"
+          [value]="especialidad()"
+          placeholder="Todas las especialidades"
+          (valueChange)="elegirEspecialidad($event)"
+        />
+      </app-form-field>
+    }
 
-    <app-form-field label="Profesional">
-      <app-select
-        data-testid="red-filtro-profesional"
-        [options]="opcionesDeProfesional()"
-        [value]="profesional()"
-        placeholder="Todos los profesionales"
-        (valueChange)="elegirProfesional($event)"
-      />
-    </app-form-field>
+    @if (conProfesionales()) {
+      <app-form-field label="Profesional">
+        <app-select
+          data-testid="red-filtro-profesional"
+          [options]="opcionesDeProfesional()"
+          [value]="profesional()"
+          placeholder="Todos los profesionales"
+          (valueChange)="elegirProfesional($event)"
+        />
+      </app-form-field>
+    }
 
     <app-form-field label="Desde">
       <app-date-picker

@@ -111,7 +111,45 @@
 
           <section class="panel__seccion" aria-labelledby="red-panel-resultado" data-testid="red-panel-resultado">
             <h3 class="panel__seccion-titulo" id="red-panel-resultado">Resultado</h3>
-            @if (d.resultado; as r) {
+            @if (resultado(); as r) {
+              <!-- La lectura del informe completo (valores, conclusión,
+                   archivos), con sus estados: mientras llega o si falla, lo
+                   que ya se sabe (que está liberado) sigue a la vista. -->
+              @if (lecturaDelInforme(); as lectura) {
+                @switch (lectura.estado.status) {
+                  @case ('loading') {
+                    <p class="panel__tenue" role="status" data-testid="red-panel-informe-cargando">Leyendo los valores del informe…</p>
+                  }
+                  @case ('forbidden') {
+                    <app-alert tone="warning" title="No puede ver este informe" data-testid="red-panel-informe-error">
+                      El servidor no le da acceso a los valores de este informe.
+                    </app-alert>
+                  }
+                  @case ('not-found') {
+                    <app-alert tone="warning" title="El informe no está disponible" data-testid="red-panel-informe-error">
+                      No se encontró un informe liberado para este estudio.
+                    </app-alert>
+                  }
+                  @case ('offline') {
+                    <app-alert tone="warning" title="Sin conexión" data-testid="red-panel-informe-error">
+                      No se pudieron leer los valores del informe.
+                      <div alert-actions>
+                        <button app-button variant="outline" size="sm" type="button" (clicked)="releerInforme()">Reintentar</button>
+                      </div>
+                    </app-alert>
+                  }
+                  @case ('error') {
+                    <app-alert tone="error" title="No se pudieron leer los valores del informe" data-testid="red-panel-informe-error">
+                      @if (lectura.estado.status === 'error') {
+                        Código de soporte: <code>{{ lectura.estado.requestId }}</code>
+                      }
+                      <div alert-actions>
+                        <button app-button variant="outline" size="sm" type="button" (clicked)="releerInforme()">Reintentar</button>
+                      </div>
+                    </app-alert>
+                  }
+                }
+              }
               <p class="panel__linea" data-testid="red-panel-liberado">
                 @if (r.liberadoEn) {
                   Liberado el
@@ -126,6 +164,9 @@
                   </strong>
                 }
               </p>
+              @if (r.publicadoAlPaciente === false) {
+                <p class="panel__linea panel__tenue" data-testid="red-panel-sin-publicar">Liberado sin publicar al paciente.</p>
+              }
               @if (filas().length > 0) {
                 <div class="panel__tabla-caja">
                   <table class="panel__tabla">
@@ -143,7 +184,19 @@
                           <th scope="row">{{ f.valor.nombre }}</th>
                           <td>
                             <span class="panel__valor">{{ f.texto }}</span>
-                            @if (tonoDeLectura(f.lectura); as tono) {
+                            @if (f.valor.interpretacionDelInforme; as rotulo) {
+                              <!-- El rótulo del laboratorio, tal cual; el símbolo y el
+                                   tono salen del número contra el rango. -->
+                              <span class="panel__lectura panel__lectura--{{ tonoDeLectura(f.lectura) ?? 'informe' }}" data-testid="red-panel-interpretacion">
+                                @if (f.simbolo) {
+                                  <span aria-hidden="true">{{ f.simbolo }}</span>
+                                }
+                                {{ rotulo }}
+                                @if (f.fuera) {
+                                  <span class="panel__oculto">, fuera de rango</span>
+                                }
+                              </span>
+                            } @else if (tonoDeLectura(f.lectura); as tono) {
                               <span class="panel__lectura panel__lectura--{{ tono }}">
                                 <span aria-hidden="true">{{ f.simbolo }}</span>
                                 {{ textoDeLectura[f.lectura] }}
@@ -163,7 +216,7 @@
                   <p>{{ r.conclusion }}</p>
                 </div>
               }
-              @if (r.archivos.length > 0) {
+              @if (r.archivos.length > 0 && descargable()) {
                 <ul class="panel__archivos">
                   @for (archivo of r.archivos; track archivo.fileId) {
                     <li>

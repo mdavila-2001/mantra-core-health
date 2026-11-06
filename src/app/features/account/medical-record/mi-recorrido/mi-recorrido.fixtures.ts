@@ -106,9 +106,8 @@ export const ORDENES: readonly PatientOrder[] = [
     encounterId: 'e1',
     hasReleasedResult: true,
     reportId: 'rep-1',
-    // No declarado en `PatientOrder` (el portal todavía no lo recibe): se
-    // simula el día en que la API lo publique.
-    ...({ reasonConditionId: 'c-migrana' } as object),
+    // `PatientOrderSummaryDto.reasonConditionId` (publicado el 06/11/2026).
+    reasonConditionId: 'c-migrana',
   }),
   orden({ id: 'sr-hem', encounterId: 'e3', codeConceptId: 'hemograma', createdAt: dia('2026-04-01') }),
 ];

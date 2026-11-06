@@ -6,7 +6,7 @@ import { registrosDelPortal } from './registro-con-vinculos';
 const armar = (f = fuentes()) => recorridoDelPaciente(registrosDelPortal(f, etiqueta, codigo, AHORA));
 
 describe('registrosDelPortal (adaptador)', () => {
-  it('lee replacedByConditionId (tipo de franja 1) y reasonConditionId si algún día llega al portal', () => {
+  it('lee replacedByConditionId y reasonConditionId del contrato (los dos vínculos de la franja 1)', () => {
     const registros = registrosDelPortal(fuentes(), etiqueta, codigo, AHORA);
     const migrana = registros.find((r) => r.id === 'c-migrana')!;
     const rm = registros.find((r) => r.id === 'sr-rm')!;
@@ -38,7 +38,7 @@ describe('registrosDelPortal (adaptador)', () => {
 
   it('un vínculo a un diagnóstico que no llegó se trata como ausente', () => {
     const registros = registrosDelPortal(
-      fuentes({ ordenes: [{ ...ORDENES[0], reasonConditionId: 'c-que-no-vino' } as never] }),
+      fuentes({ ordenes: [{ ...ORDENES[0], reasonConditionId: 'c-que-no-vino' }] }),
       etiqueta,
       codigo,
       AHORA,

@@ -17,6 +17,70 @@
   background: var(--bg-surface);
 }
 
+.alertas__cuerpo {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* -- Compacta: sin recuadro, un resumen que se despliega ------------------- */
+
+.alertas--compacta {
+  gap: var(--sp-2);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.alertas--compacta .alertas__titulo {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.alertas--compacta .alertas__vacio {
+  font-size: var(--fs-caption);
+}
+
+.alertas__plegar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-block-size: 2.75rem;
+  margin: calc(var(--sp-2) * -1) 0;
+  padding: var(--sp-1) var(--sp-2);
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+.alertas__plegar:hover {
+  background: var(--bg-hover);
+}
+
+.alertas__plegar:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.alertas__chevron {
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-inline-end: 2px solid currentColor;
+  border-block-end: 2px solid currentColor;
+  rotate: -45deg;
+  transition: rotate var(--dur-fast) var(--ease-standard);
+}
+
+.alertas__chevron--abierto {
+  rotate: 45deg;
+}
+
 .alertas__cabecera {
   display: flex;
   flex-wrap: wrap;

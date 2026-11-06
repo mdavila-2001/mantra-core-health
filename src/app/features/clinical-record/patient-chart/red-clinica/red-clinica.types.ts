@@ -134,11 +134,18 @@ export interface ValorDeResultado {
   readonly unidad?: string;
   readonly rango?: RangoDeReferencia;
   readonly interpretacion?: InterpretacionDeValor;
+  /**
+   * La interpretación tal como la rotula el laboratorio en el informe
+   * («Alto», «Anormal»). Se muestra en texto y **no** se traduce a
+   * `interpretacion`: el código («H») no se mapea en el cliente. Si está
+   * fuera de rango lo decide el número contra el rango impreso.
+   */
+  readonly interpretacionDelInforme?: string;
 }
 
 /** Un archivo del informe: lo que se abre o se descarga. */
 export interface ArchivoDeInforme {
-  /** El `fileId` de `GET /common/files/:id/content`. */
+  /** El archivo, que se baja por la ruta del informe (`…/reports/:reportId/files/:fileId/content`). */
   readonly fileId: string;
   readonly nombre: string;
 }
@@ -155,6 +162,15 @@ export interface ResultadoDeEstudio {
   readonly conclusion?: string;
   readonly valores: readonly ValorDeResultado[];
   readonly archivos: readonly ArchivoDeInforme[];
+  /**
+   * El informe liberado. Con él (y el paciente, que el panel recibe aparte)
+   * el panel lee valores, conclusión y archivos por
+   * `GET /diagnostics/patients/:id/reports/:reportId` y baja los archivos por
+   * esa misma ruta.
+   */
+  readonly informeId?: string;
+  /** `false`: el informe se liberó sin publicarlo al paciente. Ausente: no se sabe. */
+  readonly publicadoAlPaciente?: boolean;
 }
 
 export interface DetalleDeEstudio {
