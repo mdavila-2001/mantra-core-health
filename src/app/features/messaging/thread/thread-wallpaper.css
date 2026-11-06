@@ -1,0 +1,32 @@
+/* A chosen wallpaper (`ChatWallpaper`) replaces the paper and its doodle.
+   Fixed to the host, not the scrolling frame, like the default paper.
+   `--chat-fondo` is the `url()` the host binds from `ChatWallpaper.cssUrl`. */
+:host {
+  --chat-fondo: none;
+}
+
+:host(.con-fondo) {
+  background: var(--chat-papel) var(--chat-fondo) center / cover no-repeat;
+}
+
+:host(.con-fondo)::before {
+  display: none;
+}
+
+/* Loose text over a wallpaper (light or dark) becomes a chip, like the day
+   separators, so it keeps its contrast whatever the image. */
+:host(.con-fondo) .hilo__cargando {
+  inline-size: fit-content;
+  margin-inline: auto;
+  padding: 4px var(--e3);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+}
+
+:host(.con-fondo) app-empty-state {
+  display: block;
+  max-inline-size: 28rem;
+  margin-inline: auto;
+  border-radius: var(--r-menu);
+  background: var(--sup-tarjeta);
+}

@@ -1,22 +1,8 @@
-/* El índice de secciones a la izquierda y el panel a la derecha, que es como se
-   lee unos ajustes. La molécula ya pinta la lista vertical; acá sólo se le da
-   el ancho de columna y el aire, y se vuelve a apilar cuando no entra. */
-.ajustes__tabs {
-  --ajustes-indice: 15rem;
-}
-
+/* Section index on the left, panel on the right. The tabs molecule draws the
+   column and, on a phone, turns it into the horizontal strip above the panel
+   (tabs.css): component encapsulation keeps this sheet out of its inside. */
 .ajustes__tabs.tabs--vertical {
   gap: var(--e5);
-}
-
-.ajustes__tabs.tabs--vertical > .tabs__list {
-  flex: 0 0 var(--ajustes-indice);
-}
-
-@media (width < 48rem) {
-  .ajustes__tabs {
-    --ajustes-indice: auto;
-  }
 }
 
 .ajustes__bloque {
@@ -88,17 +74,16 @@
   flex-shrink: 0;
 }
 
-/* On a phone a row's button drops under the text instead of squeezing it to one word per line. */
+/* On a phone a row's button takes a second line under the text, aligned with it. */
 @media (width < 36rem) {
   .ajustes__fila:has(.ajustes__accion) {
-    flex-wrap: wrap;
-  }
-
-  .ajustes__fila .ajustes__texto {
-    flex-basis: 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .ajustes__fila .ajustes__accion {
+    grid-column: 2;
+    justify-self: start;
     max-inline-size: 100%;
     white-space: normal;
   }
