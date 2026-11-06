@@ -116,24 +116,19 @@ export interface FuentesDelPortal {
 export type ResolverEtiqueta = (conceptId: string | undefined) => string;
 
 /**
- * Los tres vínculos nuevos del contrato de la red clínica (franja 1), leídos
- * **de forma tolerante**: hasta que `core/data-access` los declare, llegan por
- * el `...resto` de los mapeadores o no llegan.
+ * `reasonConditionId` del estudio, leído **de forma tolerante**.
  *
- * // INTEGRACION-FRANJA-2: cuando `Condition.replacedByConditionId` y
- * // `PatientOrder.reasonConditionId` estén declarados en los tipos, estas dos
- * // lecturas pasan a ser acceso directo.
+ * Franja 1 lo declaró en las órdenes del profesional (`DiagnosticOrder`), pero
+ * NO en la orden que recibe el portal del paciente (`PatientOrder`, de
+ * `GET /diagnostic-results/me/orders`), y el simulador tampoco lo manda ahí.
+ * Hasta que la API lo publique en ese DTO, el vínculo no llega y el estudio se
+ * marca como «no consta para qué diagnóstico se pidió». Pendiente de API.
+ *
+ * // INTEGRACION-FRANJA-2: cuando `PatientOrder.reasonConditionId` exista,
+ * // esta lectura pasa a ser acceso directo (`orden.reasonConditionId`).
  */
-interface ConVinculosNuevos {
-  readonly replacedByConditionId?: string | null;
-  readonly reasonConditionId?: string | null;
-}
-
-function vinculoNuevo(
-  registro: object,
-  campo: keyof ConVinculosNuevos,
-): string | null {
-  const valor = (registro as ConVinculosNuevos)[campo];
+function motivoDelEstudio(orden: PatientOrder): string | null {
+  const valor = (orden as PatientOrder & { readonly reasonConditionId?: string | null }).reasonConditionId;
   return typeof valor === 'string' && valor !== '' ? valor : null;
 }
 
@@ -254,7 +249,7 @@ function desdeDiagnostico(
   const estado = estadoDelDiagnostico(condicion, codigo, ahora);
   const decision = condicion.verification ?? null;
   const decididoEl = decision === null ? null : fechaValida(decision.decidedAt);
-  const reemplazadoPorId = vinculoNuevo(condicion, 'replacedByConditionId');
+  const reemplazadoPorId = condicion.replacedByConditionId ?? null;
   const motivo = decision?.reasonText?.trim() || null;
   const ausentes: VinculoAusente[] =
     estado === 'descartado' && reemplazadoPorId === null ? ['descartado-sin-reemplazo'] : [];
@@ -294,7 +289,7 @@ function desdeEstudio(
   diagnosticos: ReadonlyMap<string, Condition>,
   nombreDelDiagnostico: (id: string | null) => string | null,
 ): RegistroConVinculos {
-  const motivo = vinculoNuevo(orden, 'reasonConditionId');
+  const motivo = motivoDelEstudio(orden);
   // Un vínculo a un diagnóstico que el resumen no trajo no se puede nombrar:
   // se trata como si no constara, en vez de dibujar una arista al vacío.
   const diagnosticoId = motivo !== null && diagnosticos.has(motivo) ? motivo : null;

@@ -58,9 +58,8 @@ export const DIAGNOSTICOS: readonly Condition[] = [
       reasonText: 'La resonancia salió normal.',
       basedOn: null,
     },
-    // Vínculo nuevo de franja 1, todavía no declarado en el tipo.
-    ...({ replacedByConditionId: 'c-tensional' } as object),
-  } as Condition,
+    replacedByConditionId: 'c-tensional',
+  },
   {
     id: 'c-tensional',
     codeConceptId: 'dx-tensional',
@@ -107,6 +106,8 @@ export const ORDENES: readonly PatientOrder[] = [
     encounterId: 'e1',
     hasReleasedResult: true,
     reportId: 'rep-1',
+    // No declarado en `PatientOrder` (el portal todavía no lo recibe): se
+    // simula el día en que la API lo publique.
     ...({ reasonConditionId: 'c-migrana' } as object),
   }),
   orden({ id: 'sr-hem', encounterId: 'e3', codeConceptId: 'hemograma', createdAt: dia('2026-04-01') }),

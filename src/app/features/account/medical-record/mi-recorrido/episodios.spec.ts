@@ -6,7 +6,7 @@ import { registrosDelPortal } from './registro-con-vinculos';
 const armar = (f = fuentes()) => recorridoDelPaciente(registrosDelPortal(f, etiqueta, codigo, AHORA));
 
 describe('registrosDelPortal (adaptador)', () => {
-  it('lee los vínculos nuevos de franja 1 aunque el tipo todavía no los declare', () => {
+  it('lee replacedByConditionId (tipo de franja 1) y reasonConditionId si algún día llega al portal', () => {
     const registros = registrosDelPortal(fuentes(), etiqueta, codigo, AHORA);
     const migrana = registros.find((r) => r.id === 'c-migrana')!;
     const rm = registros.find((r) => r.id === 'sr-rm')!;
@@ -25,7 +25,7 @@ describe('registrosDelPortal (adaptador)', () => {
     const sinReemplazo = registrosDelPortal(
       fuentes({
         resumen: resumen({
-          conditions: [{ ...DIAGNOSTICOS[0], replacedByConditionId: undefined } as unknown as Condition],
+          conditions: [{ ...DIAGNOSTICOS[0], replacedByConditionId: undefined }],
         }),
       }),
       etiqueta,
@@ -92,15 +92,15 @@ describe('recorridoDelPaciente (agrupación)', () => {
   });
 
   it('un hilo que termina en descarte va al grupo de descartados', () => {
-    const soloMigrana = { ...DIAGNOSTICOS[0], replacedByConditionId: undefined } as unknown as Condition;
+    const soloMigrana: Condition = { ...DIAGNOSTICOS[0], replacedByConditionId: undefined };
     const recorrido = armar(fuentes({ resumen: resumen({ conditions: [soloMigrana] }) }));
     expect(recorrido.episodios).toEqual([]);
     expect(recorrido.descartados.map((e) => e.titulo)).toEqual(['Migraña']);
   });
 
   it('corta un ciclo de reemplazos en vez de colgarse', () => {
-    const a = { ...DIAGNOSTICOS[0], id: 'a', replacedByConditionId: 'b' } as unknown as Condition;
-    const b = { ...DIAGNOSTICOS[0], id: 'b', replacedByConditionId: 'a' } as unknown as Condition;
+    const a: Condition = { ...DIAGNOSTICOS[0], id: 'a', replacedByConditionId: 'b' };
+    const b: Condition = { ...DIAGNOSTICOS[0], id: 'b', replacedByConditionId: 'a' };
     const recorrido = armar(fuentes({ resumen: resumen({ conditions: [a, b] }), ordenes: [] }));
     expect(recorrido.descartados.length + recorrido.episodios.length).toBeGreaterThan(0);
   });
