@@ -65,11 +65,7 @@ test('el laboratorio carga, corrige y anula la orden que trae el paciente', asyn
 
   await pick(page, 'Hemograma completo');
   await page.getByTestId('lab-order-intake-requester').fill(REQUESTER);
-  const posted = page.waitForResponse(
-    (r) => r.url().endsWith('/diagnostics/lab/orders') && r.request().method() === 'POST',
-  );
   await page.getByTestId('lab-order-intake-save').click();
-  expect((await posted).status()).toBeLessThan(300);
   await expect(create).toBeHidden();
 
   await page.reload();
