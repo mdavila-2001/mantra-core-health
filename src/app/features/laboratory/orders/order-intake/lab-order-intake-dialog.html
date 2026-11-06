@@ -1,0 +1,103 @@
+<app-content-dialog
+  [heading]="editing() ? 'Corregir la orden' : 'Nueva orden'"
+  [description]="
+    editing()
+      ? 'Corrige el estudio, la prioridad o quien la firmó. El paciente no cambia: si es otro, anule esta y cargue una nueva.'
+      : 'Cargue la orden que el paciente trae en papel o pide en el mostrador.'
+  "
+  size="lg"
+  [dismissible]="!saving()"
+  (closed)="closed.emit()"
+  data-testid="lab-order-intake"
+>
+  @if (error(); as message) {
+    <app-alert tone="error" dismissible (dismissed)="error.set(null)" data-testid="lab-order-intake-error">
+      {{ message }}
+    </app-alert>
+  }
+
+  <form id="lab-order-intake-form" class="intake" (submit)="save($event)">
+    @if (editing()) {
+      <p class="intake__patient" data-testid="lab-order-intake-patient">
+        Paciente: <strong>{{ order()?.patientName }}</strong>
+      </p>
+    } @else {
+      <div class="intake__lookup intake__wide">
+        <app-form-field label="Documento de identidad del paciente (el número exacto del carnet)" [required]="true">
+          <app-input
+            [value]="nationalId()"
+            (valueChange)="nationalId.set(text($event)); patient.set(null)"
+            (keydown.enter)="$event.preventDefault(); lookUp()"
+            testId="lab-order-intake-national-id"
+            ariaLabel="Documento de identidad del paciente"
+          />
+        </app-form-field>
+        <button
+          app-button
+          type="button"
+          variant="secondary"
+          [isLoading]="lookingUp()"
+          [disabled]="nationalId().trim() === ''"
+          (clicked)="lookUp()"
+          data-testid="lab-order-intake-lookup"
+        >
+          Buscar
+        </button>
+      </div>
+      @if (patient(); as found) {
+        <p class="intake__patient intake__wide" role="status" data-testid="lab-order-intake-patient">
+          Paciente: <strong>{{ found.displayName }}</strong>
+          @if (found.patientCode) {
+            · {{ found.patientCode }}
+          }
+        </p>
+      }
+    }
+
+    <app-form-field
+      class="intake__wide"
+      label="Estudio"
+      [required]="true"
+      [hint]="notDiagnostic() ? 'Elija un estudio de laboratorio o de imagen.' : 'Busque por nombre: hemograma, radiografía de tórax…'"
+    >
+      <app-concept-select
+        [target]="targetStudy"
+        [(value)]="study"
+        [clearable]="false"
+        placeholder="Elija un estudio"
+        data-testid="lab-order-intake-study"
+      />
+    </app-form-field>
+
+    <app-form-field label="Prioridad" hint="Opcional. La que figura en la orden.">
+      <app-concept-select [target]="targetPriority" [(value)]="priority" [labels]="priorityLabels" placeholder="Sin especificar" />
+    </app-form-field>
+
+    <app-form-field label="Médico que firmó la orden" hint="Vacío si el paciente lo pide sin orden.">
+      <app-input
+        [value]="requester()"
+        (valueChange)="requester.set(text($event))"
+        testId="lab-order-intake-requester"
+        ariaLabel="Médico que firmó la orden"
+      />
+    </app-form-field>
+
+    <app-form-field label="Matrícula" hint="Opcional, si figura en la orden.">
+      <app-input [value]="license()" (valueChange)="license.set(text($event))" ariaLabel="Matrícula del médico" />
+    </app-form-field>
+  </form>
+
+  <div dialog-actions>
+    <button app-button variant="ghost" type="button" [disabled]="saving()" (clicked)="closed.emit()">Cancelar</button>
+    <button
+      app-button
+      type="submit"
+      form="lab-order-intake-form"
+      [disabled]="!canSave()"
+      [isLoading]="saving()"
+      data-testid="lab-order-intake-save"
+    >
+      {{ editing() ? 'Guardar cambios' : 'Cargar la orden' }}
+    </button>
+  </div>
+</app-content-dialog>

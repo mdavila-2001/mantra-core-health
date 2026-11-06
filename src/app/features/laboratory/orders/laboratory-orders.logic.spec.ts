@@ -70,7 +70,7 @@ describe('órdenes del laboratorio: acciones por estado', () => {
     expect(habilitadas(order('UPLOADED', 0))).toEqual(['upload']);
   });
 
-  it('Cancelar nunca se ofrece (la API responde 422 a CANCEL) y imagenología, sin muestra, tampoco ofrece Rechazar', () => {
+  it('en la orden de un médico nunca se ofrece anular ni corregir, y imagenología, sin muestra, tampoco ofrece Rechazar', () => {
     const imaging = (status: LabOrderStatus, canReject?: boolean) => ({
       ...order(status, 1),
       studyName: 'Ecografía abdominal',
@@ -78,19 +78,20 @@ describe('órdenes del laboratorio: acciones por estado', () => {
     });
     for (const status of ['DRAFT', 'RECEIVED', 'PROCESSED', 'UPLOADED'] as const) {
       for (const canReject of [undefined, false, true]) {
-        expect(actionsOf(imaging(status, canReject)).some((a) => a.code === ('cancel' as string))).toBe(false);
+        expect(actionsOf(imaging(status, canReject)).some((a) => a.code === 'cancel')).toBe(false);
+        expect(actionsOf(imaging(status, canReject)).some((a) => a.code === 'edit')).toBe(false);
       }
       expect(actionsOf(imaging(status)).some((a) => a.code === 'reject')).toBe(false);
       expect(actionsOf(imaging(status, false)).some((a) => a.code === 'reject')).toBe(false);
     }
   });
 
-  it('Rechazar es una acción destructiva que lleva su paso REJECT y su motivo mínimo; es la única salida', () => {
+  it('en la orden de un médico, Rechazar es una acción destructiva con su paso REJECT y su motivo mínimo, y es la única salida', () => {
     const recibida = { ...order('RECEIVED'), canReject: true };
     const exits = actionsOf(recibida).filter((a) => a.code === 'reject');
     expect(exits).toHaveLength(1);
     expect(exits.every((a) => a.destructive === true)).toBe(true);
-    expect(Object.keys(REASON_STEPS)).toEqual(['reject']);
+    expect(Object.keys(REASON_STEPS)).toEqual(['reject', 'cancel']);
     expect(REASON_STEPS.reject.action).toBe('REJECT');
     expect(REASON_FIELD.minLength).toBeGreaterThanOrEqual(3);
     expect(REASON_STEPS.reject.dialog(order('RECEIVED')).message).toContain('Hemograma completo');
@@ -102,6 +103,21 @@ describe('órdenes del laboratorio: acciones por estado', () => {
     const rechazar = actionsOf(recibida).find((a) => a.code === 'reject');
     expect(rechazar).toMatchObject({ label: 'Rechazar', destructive: true });
     expect(actionsOf(order('RECEIVED')).some((a) => a.code === 'reject')).toBe(false);
+  });
+
+  it('en la orden que cargó el centro: Corregir sólo con canEdit y Anular (CANCEL, con motivo) mientras siga viva', () => {
+    const own = (status: LabOrderStatus, canEdit: boolean) => ({
+      ...order(status),
+      registeredByPerformer: true,
+      canEdit,
+    });
+    expect(habilitadas(own('DRAFT', true))).toEqual(['receive', 'edit', 'cancel']);
+    expect(habilitadas(own('RECEIVED', false))).toEqual(['process', 'cancel']);
+    const anular = actionsOf(own('DRAFT', true)).find((a) => a.code === 'cancel');
+    expect(anular).toMatchObject({ label: 'Anular', destructive: true });
+    expect(REASON_STEPS.cancel.action).toBe('CANCEL');
+    expect(REASON_STEPS.cancel.dialog(own('DRAFT', true)).message).toContain('Hemograma completo');
+    expect(actionsOf(own('CANCELLED', false))).toEqual([]);
   });
 
   it('una orden cancelada o rechazada no tiene acciones', () => {

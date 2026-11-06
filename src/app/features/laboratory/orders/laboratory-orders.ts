@@ -19,10 +19,11 @@ import type {
   LabOrderAction,
 } from '../../../core/data-access/lab-portal/lab-portal.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { empty, loading, ready } from '../../../core/view-state/view-state';
+import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
@@ -38,8 +39,9 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { formatBytes } from '../file-size';
 import { downloadOrderFiles } from './order-download';
 import { filesFromInput } from '../results/picked-files';
-import { ResultUploadQueue, type UploadItem } from '../results/result-upload-queue';
+import { ResultUploadQueue } from '../results/result-upload-queue';
 import { ACCEPT_ATTRIBUTE } from '../results/upload-rules';
+import { LabOrderIntakeDialog } from './order-intake/lab-order-intake-dialog';
 import {
   actionsOf,
   apiMessageOf,
@@ -52,6 +54,8 @@ import {
   orderTabIndexOf,
   orderTabKeyOf,
   ordersOfTab,
+  percentOf,
+  tableOf,
   type OrderActionCode,
 } from './laboratory-orders.logic';
 
@@ -89,10 +93,12 @@ import {
   selector: 'app-laboratory-orders',
   imports: [
     Alert,
+    AppButton,
     Badge,
     Card,
     DataTable,
     DatePipe,
+    LabOrderIntakeDialog,
     NgTemplateOutlet,
     PageHeader,
     RowActions,
@@ -131,6 +137,10 @@ export class LaboratoryOrders {
   protected readonly acceptedFormats = ACCEPT_ATTRIBUTE;
   protected readonly actionsOf = actionsOf;
   protected readonly disabledAll = disabledAll;
+  protected readonly percentOf = percentOf;
+  protected readonly statusBadge = (order: LabOrder) => ORDER_STATUS_BADGE[order.status];
+  /** The intake dialog: `undefined` closed, `null` a new order, an order to fix it. */
+  protected readonly intakeFor = signal<LabOrder | null | undefined>(undefined);
 
   protected readonly selected = signal(
     orderTabIndexOf(this.route.snapshot.queryParamMap.get('estado')),
@@ -155,25 +165,9 @@ export class LaboratoryOrders {
   /** Lo que ve la tabla de la pestaña elegida, ya con la búsqueda aplicada. */
   protected readonly table = computed<ViewState<readonly LabOrder[]>>(() => {
     const state = this.orders();
-    if (state.status !== 'ready') return state;
-    const tab = orderTabKeyOf(this.selected());
-    const query = this.search().trim().toLocaleLowerCase('es');
-    const rows = ordersOfTab(state.data, tab).filter(
-      (order) =>
-        query === '' ||
-        order.patientName.toLocaleLowerCase('es').includes(query) ||
-        order.requesterName.toLocaleLowerCase('es').includes(query) ||
-        order.studyName.toLocaleLowerCase('es').includes(query),
-    );
-    if (rows.length > 0) return ready(rows);
-    return query !== ''
-      ? empty({ label: 'Ver todas las órdenes' }, 'Ninguna orden coincide con la búsqueda.')
-      : empty(
-          { label: 'Ver todas las órdenes' },
-          tab === 'all'
-            ? 'Todavía no le derivaron ninguna orden.'
-            : `No hay órdenes en «${ORDER_TAB_LABELS[tab]}».`,
-        );
+    return state.status === 'ready'
+      ? tableOf(state.data, orderTabKeyOf(this.selected()), this.search())
+      : state;
   });
 
   protected readonly columns = computed<readonly ColumnDef<LabOrder>[]>(() => [
@@ -211,15 +205,6 @@ export class LaboratoryOrders {
     });
   }
 
-  protected statusBadge(order: LabOrder) {
-    return ORDER_STATUS_BADGE[order.status];
-  }
-
-  /** Cuánto de un archivo ya salió, de 0 a 100. */
-  protected percentOf(item: UploadItem): number {
-    return item.file.size === 0 ? 100 : Math.floor((item.sentBytes / item.file.size) * 100);
-  }
-
   /** A qué orden va un archivo de la cola, en palabras: «Paciente · Estudio». */
   protected uploadTargetLabel(orderId: string | null): string {
     const state = this.orders();
@@ -252,7 +237,8 @@ export class LaboratoryOrders {
   protected run(code: string, order: LabOrder): void {
     if (this.busyOrderId() !== null) return;
     this.actionError.set(null);
-    switch (code as OrderActionCode) {
+    const action = code as OrderActionCode;
+    switch (action) {
       case 'receive':
         return this.transition(order, 'RECEIVE', 'Orden recibida.');
       case 'process':
@@ -263,14 +249,25 @@ export class LaboratoryOrders {
         return;
       case 'download':
         return this.download(order);
+      case 'cancel':
+        if (order.registeredByPerformer !== true) return;
+        return void this.askReason(order, action);
       case 'reject':
-        return void this.askReason(order);
+        return void this.askReason(order, action);
+      case 'edit':
+        return this.intakeFor.set(order);
     }
   }
 
-  /** Rejecting needs a reason: the dialog will not confirm without one, and the API requires it. */
-  private async askReason(order: LabOrder): Promise<void> {
-    const step = REASON_STEPS.reject;
+  protected intakeSaved(): void {
+    this.toasts.success(this.intakeFor() ? 'Orden corregida.' : 'Orden cargada.');
+    this.intakeFor.set(undefined);
+    this.load();
+  }
+
+  /** Rejecting and annulling need a reason: the dialog will not confirm without one, and the API requires it. */
+  private async askReason(order: LabOrder, code: 'reject' | 'cancel'): Promise<void> {
+    const step = REASON_STEPS[code];
     const reason = await this.dialogs.confirmWithReason(step.dialog(order), REASON_FIELD);
     if (reason !== null) this.transition(order, step.action, step.done, reason);
   }
