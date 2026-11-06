@@ -5,21 +5,20 @@ import { SessionStore } from '../../../core/auth/session.store';
 import { UxConsent } from '../../../core/observability/consent/ux-consent.service';
 import { UxConsentNotice } from '../../ux-consent/ux-consent-notice';
 import { DeniedTenantsBanner } from '../denied-tenants-banner/denied-tenants-banner';
-import { NewDeviceBanner } from '../new-device-banner/new-device-banner';
 import { WebPushOffer } from '../web-push-offer/web-push-offer';
 
 /**
- * The notices of the private area, in the flow above the content and in a fixed
- * order: new device, denied organizations, usage-measurement consent, push offer.
+ * The optional notices of the private area, in the flow above the content and in a
+ * fixed order: denied organizations, usage-measurement consent, push offer. The
+ * new-device security notice stays in the shell itself, eager, right above these.
  *
- * The push offer is the only optional one, so it waits while any of the others is
- * up: never two calls to action at once. The shell loads this whole component as its
- * own chunk (`@defer (on immediate)`): none of the notices is needed to paint the first
- * screen, and keeping them out of the initial bundle pays for the push offer.
+ * The push offer waits while any other notice (the new-device one included) is up:
+ * never two calls to action at once. The shell loads this component as its own chunk
+ * (`@defer (on immediate)`): none of these is needed to paint the first screen.
  */
 @Component({
   selector: 'app-shell-notices',
-  imports: [NewDeviceBanner, DeniedTenantsBanner, UxConsentNotice, WebPushOffer],
+  imports: [DeniedTenantsBanner, UxConsentNotice, WebPushOffer],
   templateUrl: './shell-notices.html',
   styleUrl: './shell-notices.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

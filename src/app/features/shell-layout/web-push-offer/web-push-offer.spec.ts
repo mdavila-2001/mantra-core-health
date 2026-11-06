@@ -1,7 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
-import { provideRouter } from '@angular/router';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SessionStore } from '../../../core/auth/session.store';
@@ -57,7 +56,6 @@ describe('WebPushOffer', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: WebPushService, useValue: fake },
-        provideRouter([]),
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -93,16 +91,17 @@ describe('WebPushOffer', () => {
     expect(query('web-push-offer')).toBeNull();
   });
 
-  it('blocked by the browser: says why and offers Settings and «Entendido», not a useless retry', async () => {
+  it('blocked by the browser: says how to unblock it and offers only «Entendido»', async () => {
     outcome = 'denied';
     await mountSignedIn();
     query('web-push-offer-activar')!.click();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(query('web-push-offer-notice')?.textContent).toContain('bloqueados');
+    expect(query('web-push-offer-notice')?.textContent).toContain('candado');
     expect(query('web-push-offer-notice')?.getAttribute('role')).toBeNull();
-    expect(query('web-push-offer-ajustes')?.getAttribute('href')).toBe('/settings');
+    // The app cannot undo a browser block: no link that would pretend otherwise.
+    expect(query('web-push-offer-ajustes')).toBeNull();
     expect(query('web-push-offer-activar')).toBeNull();
     query('web-push-offer-entendido')!.click();
     fixture.detectChanges();
@@ -125,6 +124,12 @@ describe('WebPushOffer', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(query('web-push-offer-activar')?.textContent).toContain('Reintentar');
+
+    // While retrying, «Entendido» is disabled too.
+    fake.busy.set(true);
+    fixture.detectChanges();
+    expect(query('web-push-offer-entendido')?.getAttribute('aria-disabled')).toBe('true');
+    fake.busy.set(false);
   });
 
   it('a disabled «Ahora no» while activating does not fire', async () => {

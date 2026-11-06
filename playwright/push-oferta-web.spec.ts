@@ -127,13 +127,16 @@ test('mientras activa: «Activar» ocupado y «Ahora no» deshabilitado', async 
   await expect(offer(page)).toBeHidden({ timeout: 10_000 });
 });
 
-test('errores: bloqueado lleva a Ajustes, no disponible solo «Entendido», fallo permite reintentar', async ({ browser }) => {
-  const denied = await start(browser, mockApi('u-a'), { answer: 'denied' });
-  await denied.getByTestId('web-push-offer-activar').click();
-  await expect(denied.getByTestId('web-push-offer-notice')).toHaveAttribute('data-reason', 'denied');
-  await expect(denied.getByTestId('web-push-offer-ajustes')).toHaveAttribute('href', '/settings');
-  await expect(denied.getByTestId('web-push-offer-activar')).toHaveCount(0);
-  await shot(denied, 'oferta-push-error-denied-390');
+test('errores: bloqueado dice cómo desbloquearlo, no disponible solo «Entendido», fallo permite reintentar', async ({ browser }) => {
+  for (const theme of ['light', 'dark']) {
+    const denied = await start(browser, mockApi('u-a'), { answer: 'denied', theme });
+    await denied.getByTestId('web-push-offer-activar').click();
+    await expect(denied.getByTestId('web-push-offer-notice')).toHaveAttribute('data-reason', 'denied');
+    await expect(denied.getByTestId('web-push-offer-notice')).toContainText('candado');
+    await expect(denied.getByTestId('web-push-offer-ajustes')).toHaveCount(0);
+    await expect(denied.getByTestId('web-push-offer-activar')).toHaveCount(0);
+    await shot(denied, theme === 'light' ? 'oferta-push-error-denied-390' : 'oferta-push-error-denied-dark-390');
+  }
 
   const off = mockApi('u-a');
   off.config = [true, false];
@@ -152,6 +155,10 @@ test('errores: bloqueado lleva a Ajustes, no disponible solo «Entendido», fall
   await expect(failed.getByTestId('web-push-offer-notice')).toHaveAttribute('data-reason', 'failed');
   await expect(failed.getByTestId('web-push-offer-activar')).toContainText('Reintentar');
   await shot(failed, 'oferta-push-error-failed-390');
+  // While retrying, «Entendido» is disabled as well.
+  broken.putDelayMs = 3000;
+  await failed.getByTestId('web-push-offer-activar').click();
+  await expect(failed.getByTestId('web-push-offer-entendido')).toHaveAttribute('aria-disabled', 'true');
 });
 
 test('sin PushManager (no soportado) no se ofrece ni se pregunta al servidor', async ({ browser }) => {
@@ -237,7 +244,9 @@ test('Ajustes › Permisos: si encender «Avisos del navegador» no deja el push
   await page.getByRole('tab', { name: 'Permisos' }).click();
   await page.getByTestId('permission-avisos').locator('.switch-track').click();
   await expect(page.getByTestId('permission-avisos-notice')).toContainText('todavía no están disponibles');
-  await expect(page.getByTestId('permission-avisos').locator('input[role="switch"]')).toBeChecked();
+  // Permission granted but push unavailable: the switch says off, as the notice does.
+  await expect(page.getByTestId('permission-avisos').locator('input[role="switch"]')).not.toBeChecked();
+  await expect(page.getByTestId('permission-avisos').locator('input[role="switch"]')).toBeEnabled();
   await page.getByTestId('permission-avisos-notice').scrollIntoViewIfNeeded();
   await shot(page, 'ajustes-avisos-no-disponible-390');
 });

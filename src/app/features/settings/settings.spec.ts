@@ -12,6 +12,7 @@ import {
   type PermisoDelNavegador,
 } from '../../core/permissions/browser-permissions.service';
 import { ThemeService } from '../../core/tokens/theme.service';
+import { WebPushService } from '../../core/notifications/web-push.service';
 import { Settings } from './settings';
 
 /**
@@ -307,6 +308,26 @@ describe('Settings', () => {
     fixture.detectChanges();
 
     expect(toggle('avisos').checked).toBe(false);
+  });
+
+  it('el interruptor de avisos refleja la suscripción push, no sólo el permiso', () => {
+    // jsdom has no push: pretend support, and keep `refresh` from reading a worker.
+    const push = TestBed.inject(WebPushService);
+    Object.defineProperty(push, 'supported', { get: () => true });
+    vi.spyOn(push, 'refresh').mockResolvedValue();
+    const subscribed = push.subscribed;
+    states.set({ avisos: 'concedido', ubicacion: 'concedido', camara: 'denegado' });
+    mount();
+    goTo('Permisos');
+
+    // Permission granted but push not on (or unavailable): off, and it can be turned on.
+    expect(toggle('avisos').checked).toBe(false);
+    expect(toggle('avisos').disabled).toBe(false);
+
+    subscribed.set(true);
+    fixture.detectChanges();
+    expect(toggle('avisos').checked).toBe(true);
+    expect(toggle('avisos').disabled).toBe(true);
   });
 
   it('si encender los avisos no deja el push andando, lo dice debajo de los permisos', () => {

@@ -18,8 +18,9 @@ export type WebPushOutcome = 'enabled' | 'unsupported' | 'unavailable' | 'denied
 export const WEB_PUSH_NOTICES: Record<Exclude<WebPushOutcome, 'enabled'>, string> = {
   unsupported: 'Este navegador no admite avisos fuera de la página.',
   unavailable: 'Los avisos del navegador todavía no están disponibles en este entorno.',
+  // AloVida cannot undo a browser block: say where the person does it.
   denied:
-    'El navegador tiene bloqueados los avisos. Puede permitirlos desde la configuración del sitio.',
+    'El navegador tiene bloqueados los avisos. Para permitirlos, toque el candado junto a la dirección de la página y active «Notificaciones».',
   failed: 'No pudimos activar los avisos. Intente de nuevo en unos minutos.',
 };
 
@@ -46,7 +47,7 @@ export class WebPushService {
   private readonly session = inject(SessionStore);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private pendingEnable: Promise<WebPushOutcome> | null = null;
-  private pendingResync: Promise<void> | null = null;
+  private pendingResync: { readonly userId: string | null; readonly run: Promise<void> } | null = null;
 
   /** Si este navegador está suscrito ahora. */
   readonly subscribed = signal(false);
@@ -112,8 +113,14 @@ export class WebPushService {
    * share one run.
    */
   resync(): Promise<void> {
-    this.pendingResync ??= this.runResync().finally(() => (this.pendingResync = null));
-    return this.pendingResync;
+    const userId = this.session.userId();
+    // Shared only by calls for the same person: a run for the previous one aborts on its own.
+    if (this.pendingResync?.userId === userId) return this.pendingResync.run;
+    const run: Promise<void> = this.runResync().finally(() => {
+      if (this.pendingResync?.run === run) this.pendingResync = null;
+    });
+    this.pendingResync = { userId, run };
+    return run;
   }
 
   /** Resyncs on the worker's `pushsubscriptionchange` message (it has no token). Returns the disposer. */

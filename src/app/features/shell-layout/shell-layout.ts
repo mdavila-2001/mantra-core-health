@@ -60,6 +60,7 @@ import { PHARMACY_CART_ROUTE } from '../account/pharmacy/pharmacy.routes';
 import { MIS_CUESTIONARIOS_ROUTE } from '../account/questionnaires/questionnaires.routes';
 import { PHARMACY_TESTIDS } from '../account/pharmacy/pharmacy.testids';
 import { TenantMenu } from './tenant-menu/tenant-menu';
+import { NewDeviceBanner } from './new-device-banner/new-device-banner';
 import { ShellNotices } from './shell-notices/shell-notices';
 
 /**
@@ -144,6 +145,7 @@ const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
     BackLink,
     Badge,
     NavIcon,
+    NewDeviceBanner,
     ShellNotices,
     TenantMenu,
     Tooltip,

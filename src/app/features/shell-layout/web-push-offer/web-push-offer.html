@@ -1,25 +1,29 @@
 @if (offering() && !held()) {
-  <section class="ux-aviso" data-testid="web-push-offer" aria-label="Avisos en este navegador">
+  <section class="aviso-unico" data-testid="web-push-offer" aria-label="Avisos en este navegador">
     <app-alert tone="info" title="¿Le avisamos aunque AloVida esté cerrada?">
       Le mostramos un aviso breve, sin datos de su salud, cuando tenga algo nuevo. El detalle lo ve al
       abrir la aplicación. Puede cambiarlo cuando quiera en Ajustes.
       @if (failure(); as reason) {
         <!-- No role here: the alert is already a polite live region. -->
-        <span class="ux-aviso__error" data-testid="web-push-offer-notice" [attr.data-reason]="reason">{{
+        <span class="aviso-unico__error" data-testid="web-push-offer-notice" [attr.data-reason]="reason">{{
           notices[reason]
         }}</span>
       }
-      <div alert-actions class="ux-aviso__acciones">
+      <div alert-actions class="aviso-unico__acciones">
         @if (failure(); as reason) {
-          @if (reason === 'denied') {
-            <a app-button routerLink="/settings" data-testid="web-push-offer-ajustes" (click)="dismiss()">Ir a Ajustes</a>
-          }
           @if (reason === 'failed') {
             <button app-button type="button" data-testid="web-push-offer-activar" [isLoading]="webPush.busy()" (clicked)="activate()">
               Reintentar
             </button>
           }
-          <button app-button variant="outline" type="button" data-testid="web-push-offer-entendido" (clicked)="dismiss()">
+          <button
+            app-button
+            variant="outline"
+            type="button"
+            data-testid="web-push-offer-entendido"
+            [disabled]="webPush.busy()"
+            (clicked)="dismiss()"
+          >
             Entendido
           </button>
         } @else {

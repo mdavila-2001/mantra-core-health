@@ -1,12 +1,10 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import { WebPushClient } from '../../../core/data-access/notifications/web-push.client';
 import { WEB_PUSH_NOTICES, WebPushService, type WebPushOutcome } from '../../../core/notifications/web-push.service';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 
 /**
@@ -20,13 +18,13 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
  *
  * The permission prompt only opens from the «Activar avisos» click (user gesture).
  * `held` (from `ShellNotices`) keeps it hidden while another notice is showing.
- * Styles are the one-time-notice styles of the usage-consent notice, shared on purpose.
+ * Styles: `shared/styles/aviso-unico.css`, shared with the usage-consent notice.
  */
 @Component({
   selector: 'app-web-push-offer',
-  imports: [Alert, AppButton, AppButtonLink, RouterLink],
+  imports: [Alert, AppButton],
   templateUrl: './web-push-offer.html',
-  styleUrl: '../../ux-consent/ux-consent-notice.css',
+  styleUrl: '../../../shared/styles/aviso-unico.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   // Marks that this sign-in's decision (resync, offer or not) is done: lets a browser
   // test assert «no offer» on a condition instead of a timeout.
@@ -42,7 +40,7 @@ export class WebPushOffer {
 
   protected readonly offering = signal(false);
   protected readonly ready = signal(false);
-  /** Why activation did not work; while set, the only actions are «Entendido» (and Settings when blocked). */
+  /** Why activation did not work; while set, the actions are «Entendido» (and «Reintentar» for a transient failure). */
   protected readonly failure = signal<Exclude<WebPushOutcome, 'enabled'> | null>(null);
   protected readonly notices = WEB_PUSH_NOTICES;
 

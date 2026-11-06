@@ -752,7 +752,9 @@
     <!-- El índice negativo lo hace enfocable por script tras navegar sin
          meterlo en el orden de tabulación. -->
     <main class="app-main__inner" id="contenido-principal" tabindex="-1">
-      <!-- Avisos del área privada, en el flujo y en orden fijo (`ShellNotices`); chunk propio. -->
+      <!-- Security notice: eager, never behind a chunk that could fail to load (`NewDeviceAlert`). -->
+      <app-new-device-banner />
+      <!-- Los demás avisos, en el flujo y en orden fijo (`ShellNotices`); chunk propio. -->
       @defer (on immediate) { <app-shell-notices /> }
       <router-outlet />
     </main>

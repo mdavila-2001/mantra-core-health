@@ -12,6 +12,7 @@ import {
 } from '../../core/permissions/browser-permissions.service';
 import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-toggle.directive';
 import { ThemeService } from '../../core/tokens/theme.service';
+import { WebPushService } from '../../core/notifications/web-push.service';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
@@ -38,7 +39,7 @@ const BROWSER_PERMISSIONS: readonly {
   {
     key: 'avisos',
     label: 'Avisos del navegador',
-    purpose: 'Para verlos aunque tengas AloVida en otra pestaña.',
+    purpose: 'Para recibirlos aunque AloVida esté cerrada.',
     icon: 'bell',
   },
   {
@@ -98,6 +99,7 @@ export class Settings {
   private readonly theme = inject(ThemeService);
   private readonly session = inject(SessionStore);
   protected readonly permissions = inject(BrowserPermissionsService);
+  private readonly webPush = inject(WebPushService);
 
   protected readonly browserPermissions = BROWSER_PERMISSIONS;
 
@@ -124,6 +126,15 @@ export class Settings {
    */
   protected readonly attendsPatients = computed(() => this.session.practitionerProfileId() !== null);
 
+  constructor() {
+    void this.webPush.refresh();
+  }
+
+  /** The notices row is really a push switch: it reflects the subscription, not the bare permission. */
+  private isPush(permission: PermisoDelNavegador): boolean {
+    return permission === 'avisos' && this.webPush.supported;
+  }
+
   protected stateOf(permission: PermisoDelNavegador): EstadoPermiso {
     return this.permissions.estado()[permission];
   }
@@ -138,10 +149,17 @@ export class Settings {
    * permiso que nadie concedió.
    */
   protected isOn(permission: PermisoDelNavegador): boolean {
-    return this.permissions.estado()[permission] === 'concedido' || this.requesting(permission);
+    const on = this.isPush(permission)
+      ? this.webPush.subscribed()
+      : this.permissions.estado()[permission] === 'concedido';
+    return on || this.requesting(permission);
   }
 
+  /** Granted but not subscribed (push off, or unavailable earlier) can still be turned on from here. */
   protected canRequest(permission: PermisoDelNavegador): boolean {
+    if (this.isPush(permission) && this.permissions.estado()[permission] === 'concedido') {
+      return !this.webPush.subscribed();
+    }
     return this.permissions.sePuedePedir(permission);
   }
 
