@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@ang
 
 import { AccountSecurityClient } from '../../../core/data-access/iam/account-security.client';
 import type { MyDevice } from '../../../core/data-access/iam/iam-new-device';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -19,7 +21,7 @@ type Load = 'loading' | 'error' | 'ready';
  */
 @Component({
   selector: 'app-my-devices',
-  imports: [Alert, AppButton, Badge, DeviceVerify, LoadingState],
+  imports: [Alert, AppButton, Badge, DeviceVerify, LoadingState, NavIcon],
   templateUrl: './my-devices.html',
   styleUrl: './my-devices.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,6 +54,17 @@ export class MyDevices implements OnInit {
   protected verified(): void {
     this.verifying.set(null);
     this.reload();
+  }
+
+  /**
+   * A phone for a mobile platform, a screen for everything else. The platform the API declares
+   * wins; without it, the name it composed («Chrome en iOS») still says which one it is.
+   */
+  protected iconOf(device: MyDevice): NavIconName {
+    if (device.platform === 'IOS' || device.platform === 'ANDROID') {
+      return 'phone';
+    }
+    return /\b(ios|ipados|iphone|ipad|android)\b/i.test(device.name) ? 'phone' : 'monitor';
   }
 
   protected when(date: Date | undefined): string {

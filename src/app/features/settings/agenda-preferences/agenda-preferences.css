@@ -26,12 +26,19 @@
 .ajustes__fila {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--e3);
   padding: var(--e3);
   border: 1px solid var(--border-default);
   border-radius: var(--radio-md, 0.75rem);
   background: var(--bg-surface);
+}
+
+/* Decorative, like the Permisos rows: `app-nav-icon` is `aria-hidden`. */
+.ajustes__icono {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  color: var(--text-secondary);
 }
 
 .ajustes__texto {
@@ -64,4 +71,9 @@
 .agenda-prefs__alert {
   display: block;
   margin-bottom: var(--e3);
+}
+
+/* The intro paragraph gets air before the first row card. */
+.ajustes__bloque > p.ajustes__detalle {
+  margin: 0 0 var(--e3);
 }
