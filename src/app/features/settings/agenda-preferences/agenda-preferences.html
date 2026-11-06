@@ -23,6 +23,7 @@
       <ul class="ajustes__lista" data-testid="agenda-prefs-list">
         @for (agenda of agendas(); track agenda.id) {
           <li class="ajustes__fila" [attr.data-testid]="'agenda-prefs-' + agenda.id">
+            <app-nav-icon class="ajustes__icono" name="calendar" />
             <span class="ajustes__texto">
               <span class="ajustes__nombre">{{ agenda.name }}</span>
               <span class="ajustes__detalle" data-testid="agenda-prefs-caption">{{

@@ -68,8 +68,7 @@
    quedaba flotando contra el párrafo de arriba. */
 .chat-prefs__interruptor {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--e3);
   padding: var(--e3);
   border: 1px solid var(--filete);
@@ -86,6 +85,7 @@
 }
 
 .chat-prefs__interruptor-texto {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -227,13 +227,18 @@
 .chat-prefs__plantilla {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--e3);
   padding: var(--e2) var(--e3);
   border: 1px solid var(--filete);
   border-radius: var(--r-ctrl);
   font-size: var(--fs-body);
   color: var(--tinta-2);
+}
+
+.chat-prefs__plantilla-texto {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
 }
 
 .chat-prefs__quitar {
@@ -316,9 +321,11 @@
 
 /* Cada opción es una tarjeta entera que se toca: el radio y su explicación
    son un solo destino, de 44 px como mínimo. */
+/* Same row as Ajustes › Permisos: icon, what it does, and the control (here
+   the radio) at the end. */
 .chat-prefs__modo {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--e3);
   min-block-size: 44px;
   padding: var(--e3) var(--e4);
@@ -342,7 +349,7 @@
   flex: none;
   inline-size: 20px;
   block-size: 20px;
-  margin: 2px 0 0;
+  margin: 0;
   accent-color: var(--petroleo);
 }
 
@@ -352,6 +359,7 @@
 }
 
 .chat-prefs__modo-texto {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -497,4 +505,17 @@
   .chat-prefs__modo {
     transition: none;
   }
+}
+
+/* Decorative icon at the start of every row, as in Ajustes › Permisos.
+   `app-nav-icon` is `aria-hidden`: it never adds to the accessible name. */
+.chat-prefs__icono {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  flex: none;
+  color: var(--text-secondary);
+}
+
+.chat-prefs__modo.is-elegido .chat-prefs__icono {
+  color: var(--petroleo);
 }

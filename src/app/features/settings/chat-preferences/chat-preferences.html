@@ -45,6 +45,11 @@
         <legend class="ajustes__nombre">Cuando le escriben y usted no está</legend>
 
         <label class="chat-prefs__modo" [class.is-elegido]="modo() === 'apagado'">
+          <app-nav-icon class="chat-prefs__icono" name="clock" />
+          <span class="chat-prefs__modo-texto">
+            <span class="chat-prefs__modo-nombre">No responder automáticamente</span>
+            <span class="ajustes__detalle">El mensaje espera a que usted lo lea.</span>
+          </span>
           <input
             type="radio"
             name="chat-prefs-modo"
@@ -53,13 +58,14 @@
             [checked]="modo() === 'apagado'"
             (change)="elegirModo('apagado')"
           />
-          <span class="chat-prefs__modo-texto">
-            <span class="chat-prefs__modo-nombre">No responder automáticamente</span>
-            <span class="ajustes__detalle">El mensaje espera a que usted lo lea.</span>
-          </span>
         </label>
 
         <label class="chat-prefs__modo" [class.is-elegido]="modo() === 'fijo'">
+          <app-nav-icon class="chat-prefs__icono" name="chat" />
+          <span class="chat-prefs__modo-texto">
+            <span class="chat-prefs__modo-nombre">Responder con un mensaje fijo</span>
+            <span class="ajustes__detalle">Se envía siempre el mismo texto, el que usted escriba.</span>
+          </span>
           <input
             type="radio"
             name="chat-prefs-modo"
@@ -68,10 +74,6 @@
             [checked]="modo() === 'fijo'"
             (change)="elegirModo('fijo')"
           />
-          <span class="chat-prefs__modo-texto">
-            <span class="chat-prefs__modo-nombre">Responder con un mensaje fijo</span>
-            <span class="ajustes__detalle">Se envía siempre el mismo texto, el que usted escriba.</span>
-          </span>
         </label>
 
       </fieldset>
@@ -174,6 +176,7 @@
               </div>
 
               <div class="chat-prefs__interruptor">
+                <app-nav-icon class="chat-prefs__icono" name="moon" />
                 <span class="chat-prefs__interruptor-texto">
                   <span class="ajustes__nombre">Sólo fuera del horario de atención</span>
                   <span class="ajustes__detalle">
@@ -289,7 +292,8 @@
   <ul class="chat-prefs__plantillas">
     @for (plantilla of plantillasPropias(); track plantilla) {
       <li class="chat-prefs__plantilla">
-        <span>{{ plantilla }}</span>
+        <app-nav-icon class="chat-prefs__icono" name="note" />
+        <span class="chat-prefs__plantilla-texto">{{ plantilla }}</span>
         <button
           type="button"
           class="chat-prefs__quitar"

@@ -68,7 +68,7 @@ describe('Settings', () => {
   const query = (testid: string): HTMLElement | null =>
     fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
   const iconsPerRow = (): number[] =>
-    [...fixture.nativeElement.querySelectorAll('.ajustes__fila')].map(
+    [...fixture.nativeElement.querySelectorAll('.ajustes__fila--permiso')].map(
       (row) => row.querySelectorAll('app-nav-icon').length,
     );
 

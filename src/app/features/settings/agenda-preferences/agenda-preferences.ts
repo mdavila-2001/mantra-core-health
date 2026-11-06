@@ -8,6 +8,7 @@ import {
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
@@ -29,7 +30,7 @@ export const REVIEW_EACH_TEXT = 'Usted acepta o rechaza cada solicitud.';
  */
 @Component({
   selector: 'app-agenda-preferences',
-  imports: [Alert, Switch, ViewStateHost],
+  imports: [Alert, NavIcon, Switch, ViewStateHost],
   templateUrl: './agenda-preferences.html',
   styleUrl: './agenda-preferences.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
