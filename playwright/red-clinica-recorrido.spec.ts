@@ -20,6 +20,8 @@ import { entrar, estable, irA } from './support/sesion';
  * 5. Si la lectura del informe falla (fallo provocado con `mock:fallos`, ver
  *    `src/app/core/mock/simulated-failures.ts`), el panel dice qué pasó, da el
  *    código de soporte y «Reintentar» trae los valores.
+ * 6. At 768 and 1440 px, with and without the side panel, every episode name
+ *    reads whole (the text's own box fits its span: no ellipsis).
  */
 
 const MEDICA: Actor = { rol: 'doctora', identificador: 'medica@alovida.mock', clave: 'mock', nombre: 'Médica' };
@@ -59,6 +61,25 @@ async function nodoTsh(page: Page) {
   const tsh = page.locator('[data-testid="recorrido-nodo"][data-clase="estudio"]').filter({ hasText: 'TSH' }).first();
   await expect(tsh).toBeVisible();
   return tsh;
+}
+
+/**
+ * Episode names whose text does not fit their span. The text's own laid-out
+ * box (a `Range`) is compared with the span's: `scrollWidth` rounds to whole
+ * pixels and let a sub-pixel cut (an ellipsis eating two letters) pass.
+ */
+function nombresCortados(page: Page): Promise<string[]> {
+  return page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('.red__episodio-nombre')]
+      .filter((nombre) => {
+        const caja = nombre.getBoundingClientRect();
+        const rango = document.createRange();
+        rango.selectNodeContents(nombre);
+        const texto = rango.getBoundingClientRect();
+        return texto.width > caja.width || texto.height > caja.height;
+      })
+      .map((nombre) => nombre.textContent?.trim() ?? ''),
+  );
 }
 
 test.describe('Red clínica · recorrido y panel lateral', () => {
@@ -143,4 +164,21 @@ test.describe('Red clínica · recorrido y panel lateral', () => {
     await expect(panel.getByTestId('red-panel-informe-error')).toHaveCount(0);
     await expect(panel.getByTestId('red-panel-valor')).toHaveCount(2);
   });
+
+  for (const [ancho, alto] of [
+    [768, 1024],
+    [1440, 900],
+  ] as const) {
+    test(`a ${ancho} px, con el panel abierto, ningún nombre de episodio se corta`, async ({ page }) => {
+      await page.setViewportSize({ width: ancho, height: alto });
+      await abrirRecorrido(page);
+      await expect(page.getByTestId('red-episodio').first()).toBeVisible();
+      expect(await nombresCortados(page)).toEqual([]);
+
+      await (await nodoTsh(page)).click();
+      await expect(page.getByTestId('red-panel')).toBeVisible();
+      await expect(page.getByTestId('red-panel-valor').first()).toBeVisible();
+      expect(await nombresCortados(page)).toEqual([]);
+    });
+  }
 });

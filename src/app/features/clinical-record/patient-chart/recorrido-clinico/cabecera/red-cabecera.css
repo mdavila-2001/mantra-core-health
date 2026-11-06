@@ -39,9 +39,11 @@
 }
 
 .red__episodio-nombre {
-  /* The name gives way last: the counts are cut first. */
-  flex: 0 1 auto;
-  min-inline-size: 8ch;
+  /* The name never shrinks: any shrink share, however small, turns into an
+     ellipsis that eats letters. The counts give way instead; a long name is
+     capped so the toggle still fits its row. */
+  flex: 0 0 auto;
+  max-inline-size: min(100%, 36ch);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
