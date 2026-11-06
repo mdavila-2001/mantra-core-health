@@ -128,10 +128,31 @@
             Filtrado: no se muestran {{ tiposOcultosEnPalabras() }}.
           </p>
         }
+        <!-- Las lecturas propias de la red (citas, derivaciones, estudios,
+             procedimientos) fallan por su cuenta: la red se dibuja con lo que
+             hay y dice qué falta, con reintento y el id de petición. -->
+        @if (faltasDeLaRed().cargando) {
+          <p class="expediente__aviso-filtro" role="status" data-testid="red-cargando">
+            Leyendo citas, derivaciones, estudios y procedimientos…
+          </p>
+        } @else if (faltasDeLaRed().faltan !== '') {
+          <app-alert tone="warning" title="El recorrido está incompleto" data-testid="red-faltan">
+            No se pudieron leer {{ faltasDeLaRed().faltan }}: el recorrido muestra el resto.
+            @if (faltasDeLaRed().peticion !== '') {
+              Id. de petición: {{ faltasDeLaRed().peticion }}.
+            }
+            <div alert-actions>
+              <button app-button variant="outline" size="sm" type="button" (clicked)="releerLaRed()">
+                Reintentar
+              </button>
+            </div>
+          </app-alert>
+        }
         <app-view-state-host [state]="estadoDelRecorrido()" (retry)="recargar()">
           <app-recorrido-clinico
-            [nodos]="nodosDelRecorrido()"
-            [aristas]="aristasDelRecorrido()"
+            [registros]="registrosDeLaRed()"
+            [vinculos]="vinculosDeLaRed()"
+            [visibles]="visiblesDeLaRed()"
             (abrir)="abrirDesdeElRecorrido($event)"
           />
         </app-view-state-host>
