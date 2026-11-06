@@ -176,7 +176,8 @@
   inline-size: 100%;
   block-size: 0.6rem;
   border-radius: var(--r-full);
-  background: var(--bg-inset);
+  /* The divider token: visible in both themes (`--bg-inset` vanished on the dark card). */
+  background: var(--border-default);
   overflow: hidden;
 }
 

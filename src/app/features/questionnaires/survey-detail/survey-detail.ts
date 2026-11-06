@@ -22,7 +22,6 @@ import { BackLink } from '../../../shared/components/atoms/back-link/back-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { releaseObjectUrlLater } from '../../../shared/utils/file-download/release-object-url';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
@@ -47,7 +46,6 @@ import { readFailureState } from '../service-surveys/service-surveys.logic';
   selector: 'app-survey-detail',
   imports: [
     AppButton,
-    AppButtonLink,
     BackLink,
     Badge,
     Card,
@@ -224,7 +222,12 @@ export class SurveyDetailScreen {
         // A refusal says what was refused, not «esta sección».
         this.estadoRespuestas.set(
           state.status === 'forbidden'
-            ? { ...state, title: 'No tiene acceso a las respuestas', message: 'Su rol o permiso no alcanza para leer las respuestas de esta encuesta.' }
+            ? {
+                ...state,
+                title: 'No tiene acceso a las respuestas',
+                message: 'Su rol o permiso no alcanza para leer las respuestas de esta encuesta.',
+                nextAction: { label: 'Pida acceso a quien administra la cuenta del profesional.' },
+              }
             : state,
         );
       },

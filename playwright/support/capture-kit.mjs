@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { chromium, expect } from '@playwright/test';
 
 export const BASE = process.env.BASE ?? 'http://localhost:4200';
-export const OUT = process.env.OUT ?? 'docs/refactor-profesional/trabajo/capturas/despues/surveys-per-service-2026-11-06-r7';
+export const OUT = process.env.OUT ?? 'docs/refactor-profesional/trabajo/capturas/despues/surveys-per-service-2026-11-06-r8';
 mkdirSync(OUT, { recursive: true });
 
 export const DOCTOR = 'medica@alovida.mock';
@@ -55,7 +55,10 @@ export async function settledSheet(page) {
 /** Bottom edge of the sticky top bar (0 when there is none). */
 const headerBottom = (page) => page.evaluate(() => document.querySelector('header[app-header]')?.getBoundingClientRect().bottom ?? 0);
 
-/** `belowHeader`: the frame starts under the sticky top bar, so nothing scrolled shows through it. */
+/**
+ * A scrolled page (or `belowHeader`) is framed from under the sticky top bar, so
+ * nothing scrolled shows through its glass.
+ */
 export async function shot(page, name, { belowHeader = false } = {}) {
   if ((await page.locator('app-survey-detail').count()) > 0) await settledSheet(page);
   // No hover state in any capture: the pointer goes to a neutral corner first.
@@ -66,7 +69,8 @@ export async function shot(page, name, { belowHeader = false } = {}) {
     await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
   });
   const hide = await page.addStyleTag({ content: 'aside.mock { display: none !important; }' });
-  const top = belowHeader ? Math.ceil(await headerBottom(page)) : 0;
+  const scrolled = await page.evaluate(() => window.scrollY > 0);
+  const top = belowHeader || scrolled ? Math.ceil(await headerBottom(page)) : 0;
   const { width, height } = page.viewportSize();
   await page.screenshot({ path: join(OUT, `${name}.png`), ...(top > 0 ? { clip: { x: 0, y: top, width, height: height - top } } : {}) });
   await hide.evaluate((node) => node.remove());

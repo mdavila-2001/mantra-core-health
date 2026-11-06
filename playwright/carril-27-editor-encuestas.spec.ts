@@ -175,8 +175,8 @@ test.describe('Encuestas por servicio · backend simulado', () => {
       const intersects = own.x < other.x + other.width && other.x < own.x + own.width && own.y < other.y + other.height && other.y < own.y + own.height;
       expect(intersects, `the badge overlaps «${(await value.textContent())?.trim()}»`).toBe(false);
     }
-    const card = (await facts.boundingBox())!;
-    expect(own.x + own.width, 'the badge stays inside the card').toBeLessThanOrEqual(card.x + card.width + 0.5);
+    const factsBox = (await facts.boundingBox())!;
+    expect(own.x + own.width, 'the badge stays inside the metadata grid').toBeLessThanOrEqual(factsBox.x + factsBox.width + 0.5);
   });
 
   test.describe('AC-27-21 · sin scroll horizontal en los tres anchos obligatorios', () => {

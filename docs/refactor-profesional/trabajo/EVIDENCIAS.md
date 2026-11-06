@@ -1,17 +1,17 @@
 # Evidencias
 
-## Encuestas por servicio, Buzón y ficha de solo lectura, «Mis encuestas» · 2026-11-06 (séptima ronda)
+## Encuestas por servicio, Buzón y ficha de solo lectura, «Mis encuestas» · 2026-11-06 (octava ronda)
 
-Reemplaza las secciones de rondas anteriores de este cambio (sus carpetas `…-06/`, `-r2/` a `-r6/` se retiraron).
+Reemplaza las secciones de rondas anteriores de este cambio (sus carpetas `…-06/`, `-r2/` a `-r7/` se retiraron).
 
 Entorno: Linux, `yarn start:demo` (backend simulado) en `http://localhost:4200`, Chromium headless 1234, rama
 `claude/amazing-brown-f2c2a9` (sobre `origin/dev` 68bb79660). Un solo navegador, en serie, esperando elementos (nunca
 la red quieta), movimiento reducido, fuentes cargadas, puntero fuera (sin estados de hover), capturas **solo de la
 ventana**, chip de demostración oculto; toda captura de la ficha espera a que esté asentada (estado comprobado, sin
-esqueleto, el panel abierto con su contenido) y las desplazadas empiezan bajo la barra fija (recorte medido, sin texto
-detrás del vidrio). Guiones: `playwright/service-surveys-captures.mjs` y `playwright/survey-sheet-captures.mjs` (kit común en
+esqueleto, el panel abierto con su contenido). Toda captura con la página desplazada se recorta desde el borde inferior
+de la barra fija (medido), así que no se ve texto detrás del vidrio; las tarjetas se encuadran desde su borde superior. Guiones: `playwright/service-surveys-captures.mjs` y `playwright/survey-sheet-captures.mjs` (kit común en
 `playwright/support/capture-kit.mjs`) →
-`capturas/despues/surveys-per-service-2026-11-06-r7/` (`requests.json` = lo que anotó `window.__mockRequests`).
+`capturas/despues/surveys-per-service-2026-11-06-r8/` (`requests.json` = lo que anotó `window.__mockRequests`).
 
 | Comprobación | Resultado | Evidencia |
 |---|---|---|
@@ -26,19 +26,21 @@ detrás del vidrio). Guiones: `playwright/service-surveys-captures.mjs` y `playw
 | Error de carga (S9) | título y texto de lectura, código, «Copiar código», «Reintentar»; el `GET` 500 está en `requests.json` («load-error») | `11` |
 | Falla el catálogo / el `PUT` / el `DELETE` | el anfitrión de estados en todos (en el selector sin «Reintentar»: lo es «Importar»); el `DELETE` reconfirma al reintentar; 403/412 = S5 con su propio título y, en 412, «Completar mi perfil profesional» (pruebas unitarias) | `12`–`14`, `requests.json` |
 | 390: por servicio y selector | filas iguales, ícono alineado con el nombre; selector con cabecera corta y licencia | `15`–`18` |
-| Buzón de solo lectura | `19` llega hasta las «Encuesta anterior (ya no se envía)», con un tinte distinto de «Se envía», incluida la de teleconsulta sin `catalogCode` | `19`, `20` |
-| Ficha hecha a mano (1440, 390) | estado con las mismas palabras que el Buzón; en 390 «Estado» ocupa la fila entera y el distintivo no pisa «Preguntas» (lo afirma `carril-27`, que falla con el diseño anterior); Vigencia «Inicio: …»; la línea de solo lectura y «Ver como el paciente» en una sola fila | `21-*`, `22-*` |
+| Buzón de solo lectura | `19` va desde «Estudios por imágenes» hasta las «Encuesta anterior (ya no se envía)», todas enteras, con un tinte distinto de «Se envía», incluida la de teleconsulta sin `catalogCode` | `19`, `20` |
+| Ficha hecha a mano (1440, 390) | estado con las mismas palabras que el Buzón; en 390 «Estado» ocupa la fila entera y el distintivo no pisa «Preguntas» (lo afirma `carril-27`, que falla con el diseño anterior); Vigencia con un solo formato («Desde …», «Del … al …», «Sin fecha de inicio»); la línea de solo lectura y «Ver como el paciente» en una sola fila | `21-*`, `22-*` |
 | «Respuestas» con datos (390) | al llegar desde «Ver respuestas» la tira de pestañas queda a la vista (el guion lo comprueba); el conteo a la izquierda de «Descargar CSV»; lista por día | `30a`, `30`, `21-390`, `28-390` |
 | «Resumen» con datos (1440, 390) | barras por pregunta con las etiquetas completas y las pistas alineadas | `31-*` |
 | Pregunta por debajo de su propio mínimo (1440, 390) | dentro de un resumen que sí se muestra, la opcional «¿Le explicaron cuándo estaría listo el informe?» (3 de 6) dice «Sin datos suficientes: menos de 5 respuestas a esta pregunta», sin barras | `31b-*` |
-| «Resumen» bajo el mínimo (1440, 390) | misma anatomía y palabras que el resumen del Buzón: «El resumen todavía no se muestra… llevan 3» (Holter) | `32-*` |
+| «Resumen» bajo el mínimo (1440, 390) | misma anatomía y palabras que el resumen del Buzón: «El resumen todavía no se muestra… llevan 3» (Holter), con su próxima acción «Ver las respuestas», que abre esa pestaña (prueba unitaria) | `32-*` |
 | «Ver como el paciente» | el mismo formulario que responde el paciente; la acción en la fila de la línea de solo lectura | `33` |
 | Entrada por `#resumen` | carga directa con «Resumen» abierto | `34` |
-| Encuesta sin publicar | un solo panel; el guion afirma que no hay tira de pestañas y que la URL perdió `#respuestas` | `35` |
-| Respuestas rechazadas (S5) / Resumen fallido (S9) | dentro de su pestaña: «No tiene acceso a las respuestas» con código; en «Resumen», S9 «No pudimos cargar el resumen» con código, «Copiar código», «Reintentar» | `37`, `38` |
+| Encuesta sin publicar | el subtítulo no promete respuestas («lea el cuestionario.»); un solo panel; el guion afirma que no hay tira de pestañas y que la URL perdió `#respuestas` | `35` |
+| Respuestas rechazadas (S5) / Resumen fallido (S9) | dentro de su pestaña: «No tiene acceso a las respuestas» con código y a quién pedir acceso; en «Resumen», S9 «No pudimos cargar el resumen» con código, «Copiar código», «Reintentar» | `37`, `38` |
 | Modo oscuro | por servicio, selector, Buzón, ficha, paciente; «Preguntas» y «Resumen» (1440 y 390) | `25`–`29`, `36-*`, `36b-*` |
 | Paciente 390 | «Mis encuestas» en «Más accesos»; pantalla y pestaña «Mis encuestas» | `23`, `24` |
-| Resumen del médico | capturas de ventana regeneradas tras asentarse; `04-suprimido` ya no corta el aviso | `docs/frontend/evidence/encuestas-resumen-medico-2026-10-28/` |
+| Pestañas al cambiar de ancho (primitivo compartido) | de 1440 a 390 px la tira vuelve a «entra»: sin flechas y con la pestaña activa entera (antes quedaban las flechas y «eguntas» cortado). El desborde se mide contra el ancho sin flechas (`tabs-overflow.ts`, prueba unitaria) y, tras cada cambio de ancho, la activa se trae a la vista | `playwright/tabs-resize.spec.ts`, `11-ficha-claro-390`, `12-ficha-oscuro-390` |
+| Barras en oscuro | la pista usa `--border-default`, visible en los dos temas | `36b-*` |
+| Resumen del médico | capturas de ventana regeneradas tras asentarse; `04`, `15` y `16` encuadran «Cómo le va» desde su borde, bajo la barra fija | `docs/frontend/evidence/encuestas-resumen-medico-2026-10-28/` |
 
 **Alcance de la regla de privacidad (D-13, `MIN_COHORT` = 5).** Cubre los agregados (el resumen entero y cada pregunta
 por separado) y el CSV. La pestaña «Respuestas» sigue listando cada respuesta tal como llegó, solo con el día y sin
@@ -47,9 +49,9 @@ evita que un gráfico o un promedio señalen a una persona, pero no oculta las r
 
 | Prueba | Resultado |
 |---|---|
-| Playwright de prueba: `carril-27-editor-encuestas` + `mis-encuestas-barra-paciente` + `encuestas-resumen-medico` (simulador) | 12/12 en verde, sin omisiones (incluye la nueva prueba de 390 px sobre el distintivo) |
+| Playwright de prueba: `carril-27-editor-encuestas` + `mis-encuestas-barra-paciente` + `encuestas-resumen-medico` (simulador) | 13/13 en verde, sin omisiones; los mismos más `tabs-resize` (nuevo). `tabs-resize` falla con el primitivo anterior («Expected: 0, Received: 2» flechas) y pasa con la corrección |
 | Playwright `carril-27-editor-encuestas-api-real` (`E2E_API_REAL=1`) | **no se ejecutó**: no hay API viva sembrada en este entorno; sin la variable se informa omitido (`test.skip`, como los otros specs de API real), nunca verde |
-| Vitest de lo tocado: cuestionarios, anfitrión de estados (S5 y S8 con título propio), estados de vista, simulador, barra superior, «Mis encuestas», clientes de encuestas | 201 de 203 archivos en verde. Fallan 2 que esta rama no toca: `mock-backend.spec` (el `POST /diagnostics/lab/services/import`, que también falla en `dev`) y `support-access.chat.handlers.spec` (fechas, `NaN`) |
+| Vitest: cuestionarios, anfitrión de estados y pestañas, 20 archivos y 229/229. Todos los specs de las carpetas que usan `<app-tabs>`: 235 archivos, 3 489 pruebas. En verde salvo 4 archivos de `features/account` que fallan igual con el primitivo anterior: `practitioner-profile-edit` (3), `diagnostic-orders` (2), `my-requests` (12) y `doctor-profile-tabs` (1, un campo `email` del alta). La suite completa no se pudo correr de una vez: esbuild se cae (`all goroutines are asleep`) en este contenedor |
 | `yarn typecheck`, eslint de lo cambiado, `check-english-identifiers` | limpios |
 
 No se ejecutó / queda abierto: contra la API real. El fondo del diálogo de confirmación (primitivo compartido) no se

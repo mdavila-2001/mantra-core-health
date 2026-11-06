@@ -1,7 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import type { Actor } from './support/actores';
 import { entrar, esperarAplicacionLista, irA } from './support/sesion';
@@ -53,7 +53,8 @@ async function aplicarTema(page: Page, tema: Tema): Promise<void> {
 /**
  * Viewport-only capture (a full-page one lets the side rail cover content),
  * without the demo chip, once fonts and icons are in and two frames painted
- * (transitions are instant: the test runs with reduced motion).
+ * (transitions are instant: the test runs with reduced motion). A scrolled page
+ * is framed from under the sticky top bar, so nothing shows through its glass.
  */
 async function capturar(page: Page, nombre: string): Promise<void> {
   mkdirSync(SALIDA, { recursive: true });
@@ -63,8 +64,18 @@ async function capturar(page: Page, nombre: string): Promise<void> {
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     await new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done())));
   });
-  await page.screenshot({ path: join(SALIDA, `${nombre}.png`) });
+  const top = await page.evaluate(() => (window.scrollY > 0 ? Math.ceil(document.querySelector('header[app-header]')?.getBoundingClientRect().bottom ?? 0) : 0));
+  const { width, height } = page.viewportSize()!;
+  await page.screenshot({ path: join(SALIDA, `${nombre}.png`), ...(top > 0 ? { clip: { x: 0, y: top, width, height: height - top } } : {}) });
   await estilo.evaluate((nodo) => (nodo as Element).remove());
+}
+
+/** Scrolls so `target` starts just under the sticky top bar. */
+async function scrollToTopOf(page: Page, target: Locator): Promise<void> {
+  await target.evaluate((node) => {
+    const bar = document.querySelector('header[app-header]')?.getBoundingClientRect().bottom ?? 0;
+    window.scrollBy(0, node.getBoundingClientRect().top - bar - 16);
+  });
 }
 
 /** Lo que el simulador atendió, según `window.__mockRequests` (no hay tráfico de red que escuchar). */
@@ -226,11 +237,8 @@ test.describe('Encuestas · «Cómo le va» y el Buzón de solo lectura', () => 
     for (const seccion of ['resumen-nps', 'resumen-preguntas', 'resumen-tendencia', 'resumen-comentarios']) {
       await expect(page.getByTestId(seccion)).toHaveCount(0);
     }
-    // The whole notice in frame: its bottom edge above the viewport's.
-    await page.getByTestId('resumen-suprimido').evaluate((node) => {
-      const box = node.getBoundingClientRect();
-      if (box.bottom > window.innerHeight - 16) window.scrollBy(0, box.bottom - window.innerHeight + 24);
-    });
+    // The «Cómo le va» card from its top, just under the sticky bar: the whole notice in frame.
+    await scrollToTopOf(page, page.getByTestId('resumen-medico'));
     await capturar(page, '04-suprimido-privacidad-claro-1440');
 
     // Su acción amplía el alcance: con todas las consultas el resumen sale completo.
@@ -342,6 +350,7 @@ test.describe('Encuestas · «Cómo le va» y el Buzón de solo lectura', () => 
     await cambiandoElFiltro(page, () => page.getByTestId('resumen-periodo').getByRole('radio', { name: '12 meses' }).click());
     await cambiandoElFiltro(page, () => elegirOpcion(page, 'resumen-servicio', 'Prueba de esfuerzo'));
     await expect(page.getByTestId('resumen-suprimido')).toBeVisible();
+    await scrollToTopOf(page, page.getByTestId('resumen-medico'));
     await capturar(page, '15-suprimido-claro-390');
     await aplicarTema(page, 'oscuro');
     await capturar(page, '16-suprimido-oscuro-390');

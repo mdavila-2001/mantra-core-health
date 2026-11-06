@@ -59,7 +59,7 @@ describe('SurveyDetailScreen · pestañas', () => {
   afterEach(() => http.verify());
 
   const root = (): HTMLElement => harness.routeNativeElement as HTMLElement;
-  const find = (selector: string): HTMLElement | null => root().querySelector(selector);
+  const find = <E extends HTMLElement = HTMLElement>(selector: string): E | null => root().querySelector<E>(selector);
   const tabs = (): HTMLButtonElement[] => [...root().querySelectorAll<HTMLButtonElement>('[data-testid="survey-detail-tabs"] [role="tab"]')];
 
   /** Opens the sheet at `url`; answers: a list, or an HTTP failure, or `null` when not asked (unpublished). */
@@ -106,6 +106,15 @@ describe('SurveyDetailScreen · pestañas', () => {
       expect(find('[data-testid="survey-detail-summary-bars"]')).toBeNull();
     });
 
+    it('bajo el mínimo ofrece «Ver las respuestas», que abre esa pestaña', async () => {
+      await open('/questionnaires/s-1#resumen', true, [1, 2, 3].map(answer));
+      find<HTMLButtonElement>('[data-testid="survey-detail-see-answers"]')!.click();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+      expect(TestBed.inject(Router).url).toBe('/questionnaires/s-1#respuestas');
+      expect(find('[data-testid="survey-detail-answer-list"]')).not.toBeNull();
+    });
+
     it('sin respuestas es S3 con próxima acción, no un resumen vacío', async () => {
       await open('/questionnaires/s-1#resumen', true, []);
       const summary = find('[data-testid="survey-detail-summary"]');
@@ -118,6 +127,7 @@ describe('SurveyDetailScreen · pestañas', () => {
       const summary = find('[data-testid="survey-detail-summary"]');
       expect(summary?.textContent).toContain('No tiene acceso a las respuestas');
       expect(summary?.textContent).not.toContain('No tiene acceso a esta sección');
+      expect(summary?.textContent).toContain('Pida acceso a quien administra la cuenta del profesional.');
       expect(summary?.textContent).not.toContain('nadie respondió');
     });
 
@@ -159,6 +169,20 @@ describe('SurveyDetailScreen · pestañas', () => {
     });
   });
 
+  it('«Respuestas» cuenta en singular y plural; bajo el mínimo, la nota del CSV dice el mínimo', async () => {
+    await open('/questionnaires/s-1#respuestas', true, [answer(1)]);
+    const count = (): string => (find('[data-testid="survey-detail-answer-count"]')?.textContent ?? '').trim();
+    expect(count()).toBe('1 respuesta');
+    expect(find('[data-testid="survey-detail-answers"]')?.textContent).toContain('El CSV se habilita con un mínimo de 5 respuestas');
+    expect(find('[data-testid="survey-detail-answers"]')?.textContent).not.toContain('Descargar CSV');
+  });
+
+  it('«Respuestas» con 5: «5 respuestas» y «Descargar CSV»', async () => {
+    await open('/questionnaires/s-1#respuestas', true, [1, 2, 3, 4, 5].map(answer));
+    expect((find('[data-testid="survey-detail-answer-count"]')?.textContent ?? '').trim()).toBe('5 respuestas');
+    expect(find('[data-testid="survey-detail-answers"]')?.textContent).toContain('Descargar CSV');
+  });
+
   it('«Respuestas» con 500: S9 dice que no se pudieron cargar las respuestas', async () => {
     await open('/questionnaires/s-1#respuestas', true, apiError(500, 'INTERNAL'));
     expect(find('[data-testid="survey-detail-answers"]')?.textContent).toContain('No pudimos cargar las respuestas');
@@ -171,6 +195,9 @@ describe('SurveyDetailScreen · pestañas', () => {
     expect(find('[data-testid="survey-detail-single"]')).not.toBeNull();
     expect(find('[data-testid="survey-detail-questions"]')?.textContent).toContain('¿Volvería?');
     expect(TestBed.inject(Router).url).toBe('/questionnaires/s-1');
+    // Never sent: the subtitle does not promise answers.
+    expect(root().textContent).toContain('Encuesta de sus pacientes: lea el cuestionario.');
+    expect(root().textContent).not.toContain('lo que respondieron');
   });
 
   it('cambiar de pestaña la escribe en el fragmento de la URL', async () => {

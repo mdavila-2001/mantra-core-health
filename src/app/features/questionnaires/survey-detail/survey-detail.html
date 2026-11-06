@@ -1,6 +1,6 @@
 <app-page-header
   [title]="encuesta()?.title ?? 'Encuesta'"
-  subtitle="Encuesta de sus pacientes: lea el cuestionario y lo que respondieron."
+  [subtitle]="publicada() ? 'Encuesta de sus pacientes: lea el cuestionario y lo que respondieron.' : 'Encuesta de sus pacientes: lea el cuestionario.'"
   [breadcrumbs]="crumbs()"
 >
   <app-back-link page-actions [fallback]="rutaDeLasEncuestas" label="Volver a las encuestas" />
@@ -32,11 +32,9 @@
         <div>
           <dt>Vigencia</dt>
           <dd data-testid="survey-detail-validity">
-            <!-- Day values, in UTC so they never shift a day. A survey no longer sent never reads as ongoing. -->
+            <!-- Day values, in UTC so they never shift a day. One format everywhere; «Estado» says whether it is still sent. -->
             @if (encuesta.effectiveFrom && encuesta.effectiveTo) {
               Del {{ encuesta.effectiveFrom | date: 'd MMM y' : 'UTC' }} al {{ encuesta.effectiveTo | date: 'd MMM y' : 'UTC' }}
-            } @else if (encuesta.effectiveFrom && sending() === 'no') {
-              Inicio: {{ encuesta.effectiveFrom | date: 'd MMM y' : 'UTC' }}
             } @else if (encuesta.effectiveFrom) {
               Desde {{ encuesta.effectiveFrom | date: 'd MMM y' : 'UTC' }}
             } @else {
@@ -92,7 +90,12 @@
                     title="El resumen todavía no se muestra"
                     [description]="belowMinimumMessage()"
                     data-testid="survey-detail-summary-below-minimum"
-                  />
+                  >
+                    <!-- Next action: the answers themselves are readable one by one. -->
+                    <button app-button empty-actions type="button" variant="outline" (click)="selectTab(2)" data-testid="survey-detail-see-answers">
+                      Ver las respuestas
+                    </button>
+                  </app-empty-state>
                 } @else {
                   <ul class="encuesta__resumen" data-testid="survey-detail-summary-bars">
                     @for (resumen of resumenPorPregunta(); track resumen.questionId) {

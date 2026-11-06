@@ -1,6 +1,6 @@
 /**
  * Evidence for «Encuestas por servicio», the read-only «Buzón», the read-only
- * survey sheet and the patient's «Mis encuestas» (06/11/2026, seventh round).
+ * survey sheet and the patient's «Mis encuestas» (06/11/2026, eighth round).
  *
  * Against the demo build (`yarn start:demo`, mock backend). One browser, serial
  * captures, VIEWPORT-only screenshots (never full page: the side rail would cover
@@ -151,7 +151,7 @@ for (const [name, failures, ready] of [
   await go(page, servicesUrl);
   await expect(list(page)).toBeVisible({ timeout: 30_000 });
   await shot(page, '15-per-service-390');
-  await page.locator('[data-testid^="service-survey-change-"]').first().scrollIntoViewIfNeeded();
+  await reveal(page, page.locator('li[app-service-survey-row]', { has: page.locator('[data-testid^="service-survey-change-"]') }).first());
   await shot(page, '16-per-service-row-actions-390');
   await page.locator('[data-testid^="service-survey-import-"]').first().click();
   await expect(page.getByTestId('standard-catalog-preview')).toBeVisible();
@@ -169,10 +169,12 @@ for (const [width, height, suffix] of [[1440, 900, '1440'], [390, 844, '390']]) 
   await expect(page.getByTestId('surveys-inbox-list')).toBeVisible({ timeout: 30_000 });
   const legacy = page.getByTestId('surveys-inbox-list').locator('li', { hasText: 'Experiencia de teleconsulta' });
   if (width === 1440) {
-    // 19: the list down to a «ya no se envía» card (the last group), at the frame's bottom.
+    // 19: from the imported surveys down to the «ya no se envía» ones, each card whole.
     await expect(legacy).toContainText('Encuesta anterior (ya no se envía)');
-    await legacy.evaluate((card) => window.scrollBy(0, card.getBoundingClientRect().bottom - window.innerHeight + 24));
-    await shot(page, '19-inbox-read-only-1440', { belowHeader: true });
+    await reveal(page, page.getByTestId('surveys-inbox-list').locator('li', { hasText: 'Estudios por imágenes' }));
+    const legacyBox = await legacy.boundingBox();
+    if (legacyBox.y + legacyBox.height > 900) throw new Error('19: the «ya no se envía» card is out of frame');
+    await shot(page, '19-inbox-read-only-1440');
     await reveal(page, legacy);
     await shot(page, '20-inbox-past-survey-1440', { belowHeader: true });
   }
