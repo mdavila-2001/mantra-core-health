@@ -10,6 +10,7 @@ import { MyDevices } from './my-devices';
 const DEVICES: readonly MyDevice[] = [
   { id: 'd-1', name: 'Chrome en Windows', platform: 'WEB', trusted: false, current: true, activeSessions: 1, createdAt: new Date('2026-11-01T10:00:00Z'), lastSeenAt: new Date('2026-11-04T09:00:00Z') },
   { id: 'd-2', name: 'Safari en iOS', platform: 'IOS', trusted: true, current: false, activeSessions: 0, createdAt: new Date('2026-10-01T10:00:00Z') },
+  { id: 'd-3', name: 'Chrome en Android', trusted: true, current: false, activeSessions: 0, createdAt: new Date('2026-10-01T10:00:00Z') },
 ];
 
 describe('MyDevices', () => {
@@ -94,5 +95,16 @@ describe('MyDevices', () => {
     expect(byId('my-devices-retry')).not.toBeNull();
     await click('my-devices-retry');
     expect(byId('device-d-1')).not.toBeNull();
+  });
+
+  it('draws one icon per device: a phone for mobile, a screen for the rest', () => {
+    const icon = (id: string): string => {
+      const icons = byId(id)!.querySelectorAll('app-nav-icon');
+      expect(icons.length).toBe(1);
+      return icons[0].innerHTML;
+    };
+    // d-2 declares IOS; d-3 has no platform and is told apart by its name.
+    expect(icon('device-d-3')).toBe(icon('device-d-2'));
+    expect(icon('device-d-1')).not.toBe(icon('device-d-2'));
   });
 });

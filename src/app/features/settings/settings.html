@@ -36,6 +36,8 @@
       <!-- El mismo interruptor sol/luna del encabezado: un solo control para
            claro/oscuro en toda la aplicación. -->
       <div class="ajustes__fila ajustes__fila--tema">
+        <app-nav-icon class="ajustes__icono" name="moon" />
+
         <span class="ajustes__texto">
           <span class="ajustes__nombre">Modo oscuro</span>
           <span class="ajustes__detalle">
@@ -96,15 +98,22 @@
         Los roles con los que entra. Los concede y los hace cumplir el servidor.
       </p>
 
-      @if (roles().length > 0) {
-        <ul class="ajustes__roles" data-testid="settings-roles">
-          @for (role of roles(); track role) {
-            <li class="ajustes__pastilla" data-tono="neutro">{{ role }}</li>
+      <div class="ajustes__fila ajustes__fila--arriba">
+        <app-nav-icon class="ajustes__icono" name="shield" />
+
+        <span class="ajustes__texto">
+          <span class="ajustes__nombre">Roles de esta sesión</span>
+          @if (roles().length > 0) {
+            <ul class="ajustes__roles" data-testid="settings-roles">
+              @for (role of roles(); track role) {
+                <li class="ajustes__pastilla" data-tono="neutro">{{ role }}</li>
+              }
+            </ul>
+          } @else {
+            <span class="ajustes__detalle">Su sesión no declara ningún rol.</span>
           }
-        </ul>
-      } @else {
-        <p class="ajustes__nota">Su sesión no declara ningún rol.</p>
-      }
+        </span>
+      </div>
     </section>
 
     <section class="ajustes__bloque">
@@ -112,18 +121,24 @@
       <!-- Se dice lo que hay, no lo que quedaría lindo: la lista no existe
            porque la API no se la responde a la propia persona. Ver la nota del
            componente. Una lista vacía acá se leería como «nadie tiene acceso». -->
-      <p class="ajustes__detalle" data-testid="settings-access-note">
-        Todavía no podemos mostrarle quién tiene acceso a su historia clínica: el servidor sólo le
-        responde esa consulta a quien atiende y a quien administra la seguridad.
-      </p>
+      <div class="ajustes__fila ajustes__fila--arriba">
+        <app-nav-icon class="ajustes__icono" name="lock" />
 
-      @if (managesPermissions()) {
-        <p class="ajustes__nota">
-          Como administra la seguridad, sí puede hacerlo desde
-          <a routerLink="/administration/delegated-access">Acceso delegado</a>: ahí se otorgan,
-          se acotan y se revocan los permisos delegados, y se administran sus conjuntos.
-        </p>
-      }
+        <span class="ajustes__texto">
+          <span class="ajustes__nombre">Acceso a su historia clínica</span>
+          <span class="ajustes__detalle" data-testid="settings-access-note">
+            Todavía no podemos mostrarle quién tiene acceso a su historia clínica: el servidor sólo
+            le responde esa consulta a quien atiende y a quien administra la seguridad.
+          </span>
+          @if (managesPermissions()) {
+            <span class="ajustes__nota">
+              Como administra la seguridad, sí puede hacerlo desde
+              <a routerLink="/administration/delegated-access">Acceso delegado</a>: ahí se otorgan,
+              se acotan y se revocan los permisos delegados, y se administran sus conjuntos.
+            </span>
+          }
+        </span>
+      </div>
     </section>
   </app-tab>
 
@@ -139,14 +154,30 @@
     <section class="ajustes__bloque" data-testid="settings-tutoriales">
       <h2 class="ajustes__titulo">Tutoriales</h2>
       <p class="ajustes__detalle">
-        Recorridos guiados sobre la aplicación real. Puede repetirlos o dejarlos a medias y
-        retomarlos cuando quiera.
+        Aprenda a usar AloVida paso a paso, sobre las pantallas de verdad.
       </p>
-      <p class="ajustes__nota">
-        <a app-button variant="secondary" routerLink="/tutorials" data-testid="settings-abrir-tutoriales">
+
+      <div class="ajustes__fila">
+        <app-nav-icon class="ajustes__icono" name="teach" />
+
+        <span class="ajustes__texto">
+          <span class="ajustes__nombre">Recorridos guiados</span>
+          <span class="ajustes__detalle">
+            Puede repetirlos o dejarlos a medias y retomarlos cuando quiera.
+          </span>
+        </span>
+
+        <a
+          class="ajustes__accion"
+          app-button
+          variant="outline"
+          size="sm"
+          routerLink="/tutorials"
+          data-testid="settings-abrir-tutoriales"
+        >
           Abrir el centro de tutoriales
         </a>
-      </p>
+      </div>
     </section>
   </app-tab>
 
@@ -157,10 +188,29 @@
         <p class="ajustes__detalle">
           Valide su identidad, su matrícula o una organización a su cargo, y siga el trámite.
         </p>
-        <p class="ajustes__nota">
-          <a routerLink="/my-account/identity/verify">Verificar identidad</a> ·
-          <a routerLink="/my-account/identity/cases">Mis verificaciones</a>
-        </p>
+
+        <ul class="ajustes__lista">
+          <li class="ajustes__fila">
+            <app-nav-icon class="ajustes__icono" name="check-circle" />
+            <span class="ajustes__texto">
+              <span class="ajustes__nombre">Verificar identidad</span>
+              <span class="ajustes__detalle">Inicie un trámite nuevo con su documento o matrícula.</span>
+            </span>
+            <a class="ajustes__accion" app-button variant="outline" size="sm" routerLink="/my-account/identity/verify">
+              Verificar
+            </a>
+          </li>
+          <li class="ajustes__fila">
+            <app-nav-icon class="ajustes__icono" name="folder" />
+            <span class="ajustes__texto">
+              <span class="ajustes__nombre">Mis verificaciones</span>
+              <span class="ajustes__detalle">El estado de los trámites que ya inició.</span>
+            </span>
+            <a class="ajustes__accion" app-button variant="outline" size="sm" routerLink="/my-account/identity/cases">
+              Ver trámites
+            </a>
+          </li>
+        </ul>
       </section>
     </app-tab>
   }

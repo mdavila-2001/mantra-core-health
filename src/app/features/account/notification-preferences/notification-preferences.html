@@ -22,21 +22,19 @@
     <ul class="prefs__lista">
       @for (row of rows(); track row.category) {
         <li class="prefs__fila">
+          <app-nav-icon class="prefs__icono" [name]="row.icon" />
           <span class="prefs__texto">
             <span class="prefs__nombre">{{ row.title }}</span>
             <span class="prefs__detalle">{{ row.detail }}</span>
           </span>
-          <span class="prefs__derecha">
-            <app-switch
-              class="prefs__switch"
-              [attr.data-testid]="'pref-' + row.category"
-              [label]="row.title"
-              [checked]="row.optedIn"
-              [disabled]="saving()"
-              (checkedChange)="toggle(row.category, $event)"
-            />
-            <app-nav-icon class="prefs__icono" [name]="row.icon" />
-          </span>
+          <app-switch
+            class="prefs__switch"
+            [attr.data-testid]="'pref-' + row.category"
+            [label]="row.title"
+            [checked]="row.optedIn"
+            [disabled]="saving()"
+            (checkedChange)="toggle(row.category, $event)"
+          />
         </li>
       }
     </ul>
@@ -47,6 +45,7 @@
       <h3 class="prefs__titulo">En este navegador</h3>
 
       <div class="prefs__fila">
+        <app-nav-icon class="prefs__icono" name="monitor" />
         <span class="prefs__texto">
           <span class="prefs__nombre">Avisarme aunque la página esté cerrada</span>
           <!-- Se dice qué verá en pantalla: nada clínico, sólo que hay un aviso. -->
@@ -55,17 +54,14 @@
             aplicación.
           </span>
         </span>
-        <span class="prefs__derecha">
-          <app-switch
-            class="prefs__switch"
-            data-testid="pref-web-push"
-            label="Avisarme aunque la página esté cerrada"
-            [checked]="webPush.subscribed()"
-            [disabled]="webPush.busy()"
-            (checkedChange)="togglePush($event)"
-          />
-          <app-nav-icon class="prefs__icono" name="bell" />
-        </span>
+        <app-switch
+          class="prefs__switch"
+          data-testid="pref-web-push"
+          label="Avisarme aunque la página esté cerrada"
+          [checked]="webPush.subscribed()"
+          [disabled]="webPush.busy()"
+          (checkedChange)="togglePush($event)"
+        />
       </div>
 
       @if (pushNotice(); as notice) {
@@ -80,6 +76,7 @@
     <h3 class="prefs__titulo">Silencio nocturno</h3>
 
     <div class="prefs__fila">
+      <app-nav-icon class="prefs__icono" name="moon" />
       <span class="prefs__texto">
         <span class="prefs__nombre">No mostrarme avisos en este horario</span>
         <!-- Se dice lo que hace, no lo que suena mejor: aplaza. Prometer «no te
@@ -88,17 +85,14 @@
           Los avisos que lleguen en esa franja no aparecen hasta que termina. No se pierde ninguno.
         </span>
       </span>
-      <span class="prefs__derecha">
-        <app-switch
-          class="prefs__switch"
-          data-testid="pref-quiet-hours"
-          label="No mostrarme avisos en este horario"
-          [checked]="quietHoursEnabled()"
-          [disabled]="saving()"
-          (checkedChange)="toggleQuietHours($event)"
-        />
-        <app-nav-icon class="prefs__icono" name="bell" />
-      </span>
+      <app-switch
+        class="prefs__switch"
+        data-testid="pref-quiet-hours"
+        label="No mostrarme avisos en este horario"
+        [checked]="quietHoursEnabled()"
+        [disabled]="saving()"
+        (checkedChange)="toggleQuietHours($event)"
+      />
     </div>
 
     @if (quietHoursEnabled()) {

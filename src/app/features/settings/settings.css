@@ -33,6 +33,11 @@
   font-size: var(--fs-body-lg);
 }
 
+/* The intro paragraph gets air before the first row card. */
+.ajustes__bloque > p.ajustes__detalle {
+  margin: 0 0 var(--e3);
+}
+
 .ajustes__lista {
   display: flex;
   flex-direction: column;
@@ -42,60 +47,65 @@
   list-style: none;
 }
 
+/* One row for the whole screen, the Permisos one: icon on the left, what it is
+   in the middle (it grows and pushes) and the control at the end. Every tab
+   repeats it so Settings reads as one screen (user request, 2026-11-06). */
 .ajustes__fila {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--e3);
+  padding: var(--e3);
   border: 1px solid var(--border-default);
   border-radius: var(--radio-md, 0.75rem);
   background: var(--bg-surface);
 }
 
-/* Ícono decorativo a la derecha del renglón (AC-17-2, TAREA-17 §1). Nunca
-   aporta el nombre accesible: sigue siendo `aria-hidden` en `app-nav-icon`. */
+/* With a multi-line middle, the icon stays next to the title instead of floating mid-height. */
+.ajustes__fila--arriba {
+  align-items: flex-start;
+}
+
+/* Decorative icon: tells what the row is about at a glance. Never part of the
+   accessible name: `app-nav-icon` is `aria-hidden`. */
 .ajustes__icono {
   width: 1.25rem;
   height: 1.25rem;
-  margin-inline-end: var(--e3);
   color: var(--text-secondary);
   flex-shrink: 0;
-  align-self: center;
 }
 
-/* Apariencia: rótulo a la izquierda, interruptor sol/luna a la derecha. */
-.ajustes__fila--tema {
-  padding: var(--e3);
+.ajustes__fila--arriba .ajustes__icono {
+  margin-top: 0.1rem;
 }
 
-.ajustes__volver-al-sistema {
-  margin-top: var(--e2);
-}
-
-/* El permiso se enciende y se apaga: ícono a la izquierda, lo que hace en el
-   medio y el interruptor al final del renglón. */
-.ajustes__fila--permiso {
-  display: flex;
-  align-items: center;
-  /* Y no `space-between` como el renglón base: con tres piezas ese reparto
-     deja el texto flotando en el medio. Lo que empuja al interruptor contra
-     el borde es el texto, que crece. */
-  justify-content: flex-start;
-  gap: var(--e3);
-  padding: var(--e3);
-}
-
-.ajustes__fila--permiso .ajustes__icono {
-  margin-inline: 0;
-}
-
-.ajustes__fila--permiso .ajustes__texto {
+.ajustes__fila .ajustes__texto {
   flex: 1 1 auto;
   min-inline-size: 0;
 }
 
-.ajustes__interruptor {
+.ajustes__interruptor,
+.ajustes__accion {
   flex-shrink: 0;
+}
+
+/* On a phone a row's button drops under the text instead of squeezing it to one word per line. */
+@media (width < 36rem) {
+  .ajustes__fila:has(.ajustes__accion) {
+    flex-wrap: wrap;
+  }
+
+  .ajustes__fila .ajustes__texto {
+    flex-basis: 0;
+  }
+
+  .ajustes__fila .ajustes__accion {
+    max-inline-size: 100%;
+    white-space: normal;
+  }
+}
+
+.ajustes__volver-al-sistema {
+  margin-top: var(--e2);
 }
 
 .ajustes__control {
@@ -134,12 +144,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--e2);
-  margin: 0;
+  margin: var(--e1) 0 0;
   padding: 0;
   list-style: none;
 }
 
 .ajustes__nota {
+  display: block;
   margin: var(--e3) 0 0;
   color: var(--text-muted);
   font-size: var(--fs-body);
