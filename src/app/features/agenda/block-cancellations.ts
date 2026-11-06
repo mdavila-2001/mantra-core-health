@@ -2,17 +2,21 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, LOCALE_ID, inject } from '@angular/core';
 import { formatDate } from '@angular/common';
 import { Observable, from, of, throwError } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, concatMap, map, switchMap, toArray } from 'rxjs/operators';
 
 import { readApiError } from '../../core/http/api-error';
 import { SchedulingClient } from '../../core/data-access/scheduling/scheduling.client';
 import type {
   AffectedBooking,
+  AvailabilityExceptionCreated,
+  AvailabilityExceptionUpdated,
   RetiredTemplate,
   TemplateLiveBookings,
 } from '../../core/data-access/scheduling/scheduling.types';
 import type { TenantScope } from '../../core/data-access/scheduling/tenant-scope';
 import { DialogService } from '../../shared/components/molecules/dialog/dialog-service';
+import { intervalosDelPedido, type BlockInterval } from './block-intervals';
+import type { BloqueoPedido } from './my-agenda/block-form/block-form';
 
 /** El `failureCode` con el que la API dice «hay citas en ese rato: confirme». */
 export const BOOKINGS_REQUIRE_CONFIRMATION = 'BOOKINGS_REQUIRE_CONFIRMATION';
@@ -77,6 +81,64 @@ export class BlockCancellations {
         );
       }),
     );
+  }
+
+  /**
+   * Creates a block request as the exceptions it stands for (one per day for a
+   * time range, see `intervalosDelPedido`). One at a time, not in parallel: if
+   * several days have bookings, the person answers one dialog per day, in
+   * order. A day they decline to cancel stays unblocked and comes back `null`.
+   */
+  createBlock(
+    resourceId: string,
+    pedido: BloqueoPedido,
+    intervalos: readonly BlockInterval[] = intervalosDelPedido(pedido),
+  ): Observable<readonly (AvailabilityExceptionCreated | null)[]> {
+    const reason = pedido.motivo.trim();
+    return from(intervalos).pipe(
+      concatMap((intervalo) =>
+        this.withConfirmation((confirmed) =>
+          this.scheduling.createException(resourceId, {
+            exceptionType: pedido.exceptionType,
+            startAt: intervalo.startAt.toISOString(),
+            endAt: intervalo.endAt.toISOString(),
+            ...(reason === '' ? {} : { reason }),
+            ...(confirmed ? { cancelAffectedBookings: true } : {}),
+          }),
+        ),
+      ),
+      toArray(),
+    );
+  }
+
+  /**
+   * Fixes an existing block. A block is ONE exception: if the fixed time range
+   * now spans several days, this one moves to the first day and the remaining
+   * days are created as new exceptions, never one exception across the nights.
+   * `nuevos` counts the extra days actually created.
+   */
+  updateBlock(
+    id: string,
+    resourceId: string | null,
+    pedido: BloqueoPedido,
+  ): Observable<{ readonly res: AvailabilityExceptionUpdated; readonly nuevos: number }> {
+    const [primero, ...resto] = intervalosDelPedido(pedido);
+    return this.scheduling
+      .updateException(id, {
+        exceptionType: pedido.exceptionType,
+        reason: pedido.motivo,
+        startAt: primero!.startAt.toISOString(),
+        endAt: primero!.endAt.toISOString(),
+      })
+      .pipe(
+        switchMap((res) =>
+          resto.length === 0 || resourceId === null
+            ? of({ res, nuevos: 0 })
+            : this.createBlock(resourceId, pedido, resto).pipe(
+                map((r) => ({ res, nuevos: r.filter((x) => x !== null).length })),
+              ),
+        ),
+      );
   }
 
   /**
