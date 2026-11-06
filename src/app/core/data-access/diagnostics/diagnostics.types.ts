@@ -1,4 +1,5 @@
 import type { CollectionPointRef } from './sample-collection.types';
+import type { StudyDetailFields, StudyDetailRead } from './study-detail.types';
 import type { ServiceRequestPerformerInput } from './service-request-performer.types';
 
 /** The patient's own view of their results lives apart; re-exported so its importers stay as they were. */
@@ -38,7 +39,7 @@ export type { AnalysisCategory } from './analysis-category.types';
  * contrato: una orden vieja puede no tenerla. Quien la muestre trata la
  * ausencia como «sin clasificar», nunca la adivina por el código.
  */
-export interface DiagnosticOrder {
+export interface DiagnosticOrder extends StudyDetailRead {
   readonly id: string;
   /** F5b: el punto de toma sugerido, ya resuelto. */
   readonly suggestedCareSpace?: CollectionPointRef | null;
@@ -124,7 +125,7 @@ export interface PatientDiagnostics {
  * encuentro abierto, por la misma razón que la receta: un pedido suelto, sin la
  * consulta que lo motivó, es un dato que después nadie sabe explicar.
  */
-export interface NewDiagnosticOrder extends ServiceRequestPerformerInput {
+export interface NewDiagnosticOrder extends ServiceRequestPerformerInput, StudyDetailFields {
   readonly custodianTenantId: string;
   readonly patientProfileId: string;
   readonly codeConceptId: string;

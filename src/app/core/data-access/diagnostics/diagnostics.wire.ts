@@ -5,6 +5,7 @@
 
 import { normalizePatientSettlement } from '../insurance/patient-insurance-settlement.types';
 import { sinNulos, type ConNulos } from '../wire';
+import { withStudyDetail } from './study-detail.types';
 import type {
   DiagnosticOrder,
   DiagnosticOrderCreated,
@@ -72,7 +73,7 @@ export function toOrder({
   ...resto
 }: WireOrder): DiagnosticOrder {
   return {
-    ...resto,
+    ...withStudyDetail(resto),
     createdAt: new Date(createdAt),
     ...(previousDiagnosticReportId == null ? {} : { previousDiagnosticReportId }),
     ...(duplicateOverrideReason == null ? {} : { duplicateOverrideReason }),
@@ -230,7 +231,7 @@ export function toPractitionerResult({ issuedAt, releasedAt, ...resto }: WirePra
 }
 
 export function toPatientOrder({ createdAt, ...resto }: WirePatientOrder): PatientOrder {
-  return { ...resto, ...normalizePatientSettlement(resto), createdAt: new Date(createdAt) };
+  return { ...withStudyDetail(resto), ...normalizePatientSettlement(resto), createdAt: new Date(createdAt) };
 }
 
 export function toShare({ validFrom, validTo, ...resto }: WireShare): DiagnosticResultShare {

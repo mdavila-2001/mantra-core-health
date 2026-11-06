@@ -8,13 +8,14 @@ import type {
   DiagnosticReport,
   PatientDiagnostics,
 } from '../../../../core/data-access/diagnostics/diagnostics.types';
+import { studyDetailSummary } from '../../../../core/data-access/diagnostics/study-detail.summary';
 import type { DiagnosisOption } from '../medication-block/medication-block';
 import { duplicadoDe, type EstudioEnFicha } from './analysis-order-block.helpers';
 
 /** The history's orders, already translated (see `AnalysisOrderBlock.estudios`). */
 export function filasDelCircuito(
   circuito: PatientDiagnostics,
-  etiquetaDe: (conceptId: string | undefined) => string,
+  labelOf: (conceptId: string) => string | undefined,
   diagnosticos: readonly DiagnosisOption[],
 ): readonly EstudioEnFicha[] {
   const conResultado = new Set(
@@ -28,7 +29,7 @@ export function filasDelCircuito(
   // el informe previo del paciente casi siempre está en esta misma lectura.
   const informesPorId = new Map(circuito.reports.map((informe) => [informe.id, informe]));
 
-  return circuito.orders.map((orden) => aFila(orden, conResultado, informesPorId, etiquetaDe, diagnosticos));
+  return circuito.orders.map((orden) => aFila(orden, conResultado, informesPorId, labelOf, diagnosticos));
 }
 
 /** The reports hanging from no order of this history (see `AnalysisOrderBlock.informesSueltos`). */
@@ -56,10 +57,11 @@ function aFila(
   orden: DiagnosticOrder,
   conResultado: ReadonlySet<string>,
   informesPorId: ReadonlyMap<string, DiagnosticReport>,
-  etiquetaDe: (conceptId: string | undefined) => string,
+  labelOf: (conceptId: string) => string | undefined,
   diagnosticos: readonly DiagnosisOption[],
 ): EstudioEnFicha {
   const duplicado = duplicadoDe(orden);
+  const etiquetaDe = (id: string | undefined): string => (id === undefined ? '—' : (labelOf(id) ?? '—'));
 
   return {
     id: orden.id,
@@ -75,6 +77,7 @@ function aFila(
         : null,
     justificacion: orden.duplicateOverrideReason ?? null,
     collectionPoint: orden.suggestedCareSpace ? `${orden.suggestedCareSpace.code} · ${orden.suggestedCareSpace.name}` : null,
+    detalle: studyDetailSummary(orden, labelOf),
     ...(orden.encounterId === undefined ? {} : { encounterId: orden.encounterId }),
     ...diagnosticoDe(orden.reasonConditionId, diagnosticos),
   };

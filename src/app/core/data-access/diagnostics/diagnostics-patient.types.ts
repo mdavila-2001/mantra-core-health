@@ -2,6 +2,7 @@ import type { OrderAppointment } from '../diagnostic-units/center-schedule.types
 import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
 import type { AnalysisCategory } from './analysis-category.types';
 import type { ServiceRequestPerformerFields } from './service-request-performer.types';
+import type { StudyDetailRead } from './study-detail.types';
 
 /* ============================================================================
     Los resultados vistos por la persona a la que pertenecen.
@@ -68,7 +69,7 @@ export interface PatientDiagnosticResults {
  * `hasReleasedResult` lo decide el servidor y no se recalcula acá: que exista un
  * informe no quiere decir que haya un resultado que esta persona pueda leer.
  */
-export interface PatientOrder extends PatientSettlementFields, ServiceRequestPerformerFields {
+export interface PatientOrder extends PatientSettlementFields, ServiceRequestPerformerFields, StudyDetailRead {
   readonly id: string;
   readonly encounterId?: string;
   /**

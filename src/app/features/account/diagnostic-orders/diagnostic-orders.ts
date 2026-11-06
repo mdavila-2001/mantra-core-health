@@ -43,6 +43,7 @@ import { Pagination } from '../../../shared/components/molecules/pagination/pagi
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import { PatientInsuranceSettlement } from '../../../shared/components/molecules/patient-insurance-settlement/patient-insurance-settlement';
+import { studyDetailConceptIds, studyDetailSummary } from '../../../core/data-access/diagnostics/study-detail.summary';
 import { OrderPerformerSummary } from './order-performer-summary/order-performer-summary';
 import {
   ANALYSIS_CATEGORIES,
@@ -216,12 +217,7 @@ export class DiagnosticOrders {
     const ids = [
       ...new Set(
         items.flatMap((item) =>
-          [
-            item.codeConceptId,
-            item.categoryConceptId,
-            item.statusConceptId,
-            item.performerSelectionConceptId,
-          ].filter(
+          [item.codeConceptId, item.categoryConceptId, item.statusConceptId, item.performerSelectionConceptId, ...studyDetailConceptIds(item)].filter(
             (id): id is string => id !== undefined,
           ),
         ),
@@ -269,6 +265,7 @@ export class DiagnosticOrders {
           ? null
           : performerSelectionCodeOf(etiquetas.get(item.performerSelectionConceptId)?.code),
       suggestedSiteName: item.suggestedPracticeSiteName ?? null,
+      studyDetail: studyDetailSummary(item, (id) => etiquetas.get(id)?.display),
     };
   }
 

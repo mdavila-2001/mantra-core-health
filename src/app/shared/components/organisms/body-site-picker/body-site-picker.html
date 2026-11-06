@@ -1,0 +1,112 @@
+<div class="bsp" data-testid="body-site-picker">
+  @switch (status()) {
+    @case ('loading') {
+      <p class="bsp__estado" role="status" data-testid="bsp-loading">Cargando el modelo del cuerpo…</p>
+    }
+    @case ('error') {
+      <p class="bsp__estado bsp__estado--error" role="alert" data-testid="bsp-error">
+        No pudimos cargar el modelo del cuerpo. Puede continuar sin marcar la parte exacta o
+        <button type="button" class="bsp__reintentar" (click)="retry.emit()">reintentar</button>.
+      </p>
+    }
+    @default {
+      <div class="bsp__barra">
+        <app-segmented-control
+          [options]="sexOptions"
+          [value]="sex()"
+          ariaLabel="Cuerpo que se muestra"
+          size="md"
+          (valueChange)="chooseSex($event)"
+          data-testid="bsp-sex"
+        />
+        <fieldset class="bsp__capas">
+          <legend>Capas</legend>
+          @for (capa of layerOrder; track capa) {
+            <app-checkbox
+              [label]="layerLabels[capa]"
+              [checked]="layers().includes(capa)"
+              (checkedChange)="toggleLayer(capa, $event)"
+              [attr.data-testid]="'bsp-layer-' + capa"
+            />
+          }
+        </fieldset>
+      </div>
+
+      <div class="bsp__trabajo">
+        <section class="bsp__visor" aria-label="Modelo 3D del cuerpo">
+          <app-anatomy-viewer
+            [parts]="parts()"
+            [modelUrls]="modelUrls()"
+            [layers]="layers()"
+            [sex]="sex()"
+            [selected]="highlighted()"
+            [label]="viewerLabel()"
+            (picked)="onPicked($event)"
+          />
+          <p class="bsp__leyenda">
+            <span class="bsp__muestra" aria-hidden="true"></span> Parte elegida · Toque el cuerpo o búsquela por nombre
+          </p>
+        </section>
+
+        <section class="bsp__panel" aria-label="Elegir la parte por nombre">
+          <app-search-field
+            label="Buscar la parte del cuerpo"
+            placeholder="Por ejemplo «fémur», «mano» o «hígado»"
+            [debounceMs]="150"
+            [loading]="index() === null"
+            [disabled]="disabled()"
+            (searched)="search($event)"
+            data-testid="bsp-search"
+          />
+          @if (indexFailed()) {
+            <p class="bsp__estado bsp__estado--error" role="alert" data-testid="bsp-index-error">
+              No pudimos cargar los nombres de las partes. Puede tocar el cuerpo para marcarla.
+              <button type="button" class="bsp__reintentar" (click)="retry.emit()">Reintentar</button>
+            </p>
+          } @else if (index() === null) {
+            <p class="bsp__nota" role="status">Cargando los nombres de las partes…</p>
+          } @else if (query().trim().length < 2) {
+            <p class="bsp__nota">Escriba al menos dos letras. Se ofrecen las partes que tienen pieza en el modelo.</p>
+          } @else {
+            <ul class="bsp__resultados" aria-label="Partes del cuerpo encontradas" data-testid="bsp-results">
+              @for (entry of resultsShown(); track entry[0]) {
+                <li>
+                  <button
+                    type="button"
+                    class="bsp__opcion"
+                    [attr.aria-pressed]="isChosen(entry[0])"
+                    [disabled]="disabled()"
+                    (click)="chooseStructure(entry[0])"
+                  >
+                    {{ entryName(entry) }}
+                  </button>
+                </li>
+              } @empty {
+                <li class="bsp__vacio" data-testid="bsp-empty">
+                  No hay una parte con ese nombre en el modelo. Pruebe con otro nombre o en inglés.
+                </li>
+              }
+            </ul>
+            @if (results().length > resultsShown().length) {
+              <button type="button" class="bsp__mas" (click)="showMore()">
+                Ver más ({{ results().length - resultsShown().length }})
+              </button>
+            }
+          }
+
+          <p class="bsp__elegida" role="status" data-testid="bsp-selected">
+            @if (selectedName(); as nombre) {
+              <strong>{{ nombre }}</strong>
+              @if (selectedSide(); as lado) {
+                <span>, lado {{ lado }}</span>
+              }
+              <button type="button" class="bsp__limpiar" [disabled]="disabled()" (click)="clear()">Quitar</button>
+            } @else {
+              Ninguna parte marcada en el cuerpo.
+            }
+          </p>
+        </section>
+      </div>
+    }
+  }
+</div>

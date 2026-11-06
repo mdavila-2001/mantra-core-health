@@ -56,6 +56,7 @@ import {
 import { createPerformerOrderState } from './performer-selector/performer-order-state';
 import { PerformerSelector } from './performer-selector/performer-selector';
 import { CollectionPointSelect } from './collection-point-select/collection-point-select';
+import { StudyDetailSection } from './study-detail-section/study-detail-section';
 import { createStudyCategoryState } from './study-category';
 import type { EstudioEnFicha } from './analysis-order-block.helpers';
 import { filasDelCircuito, informesSueltosDe } from './analysis-order-block.filas';
@@ -150,6 +151,7 @@ const TOPE = 25;
     InformedConsentBadge,
     InformedConsentDialog,
     CollectionPointSelect,
+    StudyDetailSection,
   ],
   templateUrl: './analysis-order-block.html',
   styleUrl: './analysis-order-block.css',
@@ -267,6 +269,8 @@ export class AnalysisOrderBlock {
   /** Quién realiza el procedimiento: sólo en órdenes de procedimiento. */
   /** F5b: el punto de toma sugerido (sólo en sedes que tienen puntos). */
   private readonly collectionPoint = viewChild(CollectionPointSelect);
+  /** La muestra (laboratorio) o la parte del cuerpo (imagen) del estudio. */
+  private readonly detail = viewChild(StudyDetailSection);
 
   protected readonly performer = createPerformerOrderState({
     category: this.tipo.conceptId,
@@ -315,7 +319,7 @@ export class AnalysisOrderBlock {
    */
   protected readonly estudios = computed<readonly EstudioEnFicha[]>(() => {
     const state = this.circuito();
-    return state.status === 'ready' ? filasDelCircuito(state.data, (id) => this.etiquetaDe(id), this.diagnosticos()) : [];
+    return state.status === 'ready' ? filasDelCircuito(state.data, (id) => this.etiquetas().get(id)?.display, this.diagnosticos()) : [];
   });
 
   /**
@@ -361,7 +365,8 @@ export class AnalysisOrderBlock {
       this.tipo.fields() !== null &&
       !this.pidiendo() &&
       !this.checkingDuplicate() &&
-      this.performer.canSubmit(),
+      this.performer.canSubmit() &&
+      (this.detail()?.canSubmit() ?? true),
   );
 
   /** El fallo de la escritura, en palabras. */
@@ -525,6 +530,7 @@ export class AnalysisOrderBlock {
       ...(paraDiagnostico === null ? {} : { reasonConditionId: paraDiagnostico }),
       ...performerFields,
       ...(this.collectionPoint()?.fields() ?? {}),
+      ...(this.detail()?.fields() ?? {}),
       ...decision,
     };
 
@@ -585,7 +591,8 @@ export class AnalysisOrderBlock {
         }
       }
     }
-    this.registro.set(errorToViewState<null>(error));
+    // Un 422 de la muestra o de la parte del cuerpo se muestra en su campo, no como error general.
+    this.registro.set(this.detail()?.absorbError(error) === true ? ready(null) : errorToViewState<null>(error));
   }
 
   /** El diálogo de antiduplicación pidió reutilizar el informe previo. */
@@ -623,6 +630,7 @@ export class AnalysisOrderBlock {
     this.paraDiagnostico.set(null);
     this.performer.reset();
     this.collectionPoint()?.reset();
+    this.detail()?.reset();
   }
 
   private cargar(patientProfileId: string): void {

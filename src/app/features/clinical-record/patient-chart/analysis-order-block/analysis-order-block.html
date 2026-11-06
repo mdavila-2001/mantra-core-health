@@ -58,6 +58,9 @@
         />
       </app-form-field>
 
+      <!-- La muestra (laboratorio) o la parte del cuerpo (imagen): excluyentes, según el estudio. -->
+      <app-study-detail-section [family]="tipo.family()" />
+
       <app-form-field
         class="app-form-grid__ancho"
         label="Prioridad"
@@ -162,6 +165,9 @@
             </div>
             <div class="estudios__meta">
               <span class="estudios__estado">{{ estudio.estado }}</span>
+              @if (estudio.detalle) {
+                <span class="estudios__resultado" data-testid="study-detail">{{ estudio.detalle }}</span>
+              }
               @if (estudio.collectionPoint) {
                 <span class="estudios__resultado" data-testid="study-collection-point">Toma en {{ estudio.collectionPoint }}</span>
               }

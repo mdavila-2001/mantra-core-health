@@ -63,7 +63,9 @@ describe('WebPushService', () => {
     http.expectNone(() => true);
   });
 
-  it('si el servidor no tiene push, lo dice y no pide el permiso', async () => {
+  it('si el servidor no tiene push lo dice; el permiso se pidió antes, dentro del gesto', async () => {
+    // Order changed on purpose (06/11/2026): Firefox and Safari drop the click's user
+    // activation after a network round trip, so the prompt goes before the config.
     instalarNavegador('default');
     const result = service.enable();
     const config = await vi.waitFor(() =>
@@ -71,7 +73,8 @@ describe('WebPushService', () => {
     );
     config.flush({ enabled: false, publicKey: null });
     expect(await result).toBe('unavailable');
-    expect(requestPermission).not.toHaveBeenCalled();
+    expect(requestPermission).toHaveBeenCalledTimes(1);
+    http.expectNone((r) => r.url.endsWith('/subscription'));
   });
 
   it('activa: pide permiso, suscribe y manda la suscripción a la API', async () => {
@@ -93,15 +96,19 @@ describe('WebPushService', () => {
     expect(service.subscribed()).toBe(true);
   });
 
-  it('el permiso bloqueado devuelve «denied» sin tocar la API de suscripción', async () => {
+  it('el permiso bloqueado devuelve «denied» sin tocar la API', async () => {
     instalarNavegador('denied');
-    const result = service.enable();
-    const config = await vi.waitFor(() =>
-      http.expectOne((r) => r.url.endsWith('/notifications/web-push/config')),
-    );
-    config.flush({ enabled: true, publicKey: 'BAAA' });
-    expect(await result).toBe('denied');
-    http.expectNone((r) => r.url.endsWith('/subscription'));
+    expect(await service.enable()).toBe('denied');
+    http.expectNone(() => true);
+  });
+
+  it('un doble clic comparte una sola activación', async () => {
+    instalarNavegador('granted');
+    const first = service.enable();
+    const second = service.enable();
+    expect(second).toBe(first);
+    (await vi.waitFor(() => http.expectOne((r) => r.url.endsWith('/config')))).flush({ enabled: false, publicKey: null });
+    expect(await first).toBe('unavailable');
   });
 
   it('ofrece el permiso una sola vez', async () => {

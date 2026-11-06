@@ -159,6 +159,8 @@
     [pending]="bulkSaving()"
     [existingNames]="existingNames()"
     contextNote="Cada fila se crea como una sucursal activa de su organización."
+    [withCategory]="true"
+    [headOfficeName]="categories.headOfficeName()"
     (imported)="createBatch($event)"
     (closed)="bulkOpen.set(false)"
   />

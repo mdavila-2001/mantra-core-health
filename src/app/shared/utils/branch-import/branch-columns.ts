@@ -7,7 +7,8 @@ export type BranchField =
   | 'address'
   | 'code'
   | 'latitude'
-  | 'longitude';
+  | 'longitude'
+  | 'category';
 
 /** The raw text of one row, one cell per column, before any check. */
 export type BranchCells = Record<BranchField, string>;
@@ -100,6 +101,7 @@ export const BRANCH_IMPORT_SAMPLE_ROWS: readonly BranchCells[] = [
     longitude: '-63.1960',
     address: 'Av. San Martín 456',
     code: 'EQP',
+    category: 'casa matriz',
   },
   {
     name: 'Sucursal Plan 3000',
@@ -109,6 +111,7 @@ export const BRANCH_IMPORT_SAMPLE_ROWS: readonly BranchCells[] = [
     longitude: '-63.1210',
     address: '',
     code: '',
+    category: 'sucursal',
   },
 ];
 

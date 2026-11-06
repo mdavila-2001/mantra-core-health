@@ -8,20 +8,34 @@ import type {
   AnatomyStructure,
 } from '../../core/data-access/anatomy-atlas/anatomy-atlas.types';
 
+import {
+  displayName,
+  LAYER_LABELS,
+  LAYER_ORDER,
+  meshesOf,
+  normalizeSearch,
+  partVisibleFor,
+  searchIndex,
+  sideLabel,
+  structureIdsOf,
+} from '../../core/data-access/anatomy-atlas/anatomy-atlas.logic';
+
+export {
+  displayName,
+  LAYER_LABELS,
+  LAYER_ORDER,
+  meshesOf,
+  normalizeSearch,
+  partVisibleFor,
+  searchIndex,
+  sideLabel,
+  structureIdsOf,
+};
+
 /* ============================================================================
     Lógica pura del atlas 3D: qué mallas resaltar, cómo agrupar relaciones y
     cómo buscar. Sin Angular ni three.js, para probarla sin navegador.
     ========================================================================== */
-
-export const LAYER_LABELS: Readonly<Record<AnatomyLayer, string>> = {
-  skeleton: 'Huesos',
-  muscles: 'Músculos',
-  vessels: 'Vasos',
-  nervous: 'Sistema nervioso',
-  organs: 'Órganos',
-};
-
-export const LAYER_ORDER: readonly AnatomyLayer[] = ['skeleton', 'muscles', 'organs', 'vessels', 'nervous'];
 
 /** Las capas encendidas al entrar: los músculos taparían los órganos. */
 export const DEFAULT_LAYERS: readonly AnatomyLayer[] = ['skeleton', 'organs'];
@@ -33,30 +47,6 @@ export function ontologyUrl(id: string): string | null {
   const fma = /^FMA:(\d+)$/.exec(id);
   if (fma) return `https://purl.org/sig/ont/fma/fma${fma[1]}`;
   return null;
-}
-
-/** ¿La pieza se dibuja con este sexo? Las compartidas siempre; las de un cuerpo, sólo en ese. */
-export function partVisibleFor(part: AnatomyPart, sex: AnatomySex): boolean {
-  return part.sex === 'shared' || part.sex === sex;
-}
-
-/**
- * Las estructuras cuyas mallas representan a esta: ella misma y, si es
- * compuesta, las partes suyas que tienen malla (el pulmón, sus lóbulos).
- */
-export function structureIdsOf(structureId: string, composites: AnatomyComposites): string[] {
-  return [structureId, ...(composites[structureId] ?? [])];
-}
-
-/** Las mallas de una estructura (las dos caras de un hueso par; los lóbulos de un pulmón). */
-export function meshesOf(
-  parts: readonly AnatomyPart[],
-  structureId: string,
-  sex: AnatomySex,
-  composites: AnatomyComposites = {},
-): string[] {
-  const ids = new Set(structureIdsOf(structureId, composites));
-  return parts.filter((p) => ids.has(p.structureId) && partVisibleFor(p, sex)).map((p) => p.meshId);
 }
 
 /** Las estructuras que tienen algo que resaltar: las de malla propia y las compuestas. */
@@ -121,11 +111,6 @@ export interface RelationGroup {
   readonly items: readonly RelatedItem[];
 }
 
-/** El nombre que se muestra: el castellano si existe, el de la ontología si no. */
-export function displayName(labelEs: string | null, labelEn: string | null, id: string): string {
-  return labelEs ?? labelEn ?? id;
-}
-
 /** Agrupa salientes y entrantes por nombre de relación, en el orden en que aparecen. */
 export function groupRelations(
   structure: AnatomyStructure,
@@ -158,40 +143,6 @@ export function groupRelations(
     });
   }
   return [...grupos].map(([name, items]) => ({ name, items }));
-}
-
-/** Quita tildes y mayúsculas, para comparar lo que se escribe con los nombres. */
-export function normalizeSearch(texto: string): string {
-  return texto.normalize('NFD').replace(/\p{Mn}/gu, '').toLowerCase().trim();
-}
-
-/** Los nombres ya normalizados de cada entrada, calculados una vez por índice y no en cada tecla. */
-const NORMALIZED_NAMES = new WeakMap<readonly AnatomyIndexEntry[], readonly (readonly [string, string])[]>();
-
-function normalizedNames(entries: readonly AnatomyIndexEntry[]): readonly (readonly [string, string])[] {
-  let nombres = NORMALIZED_NAMES.get(entries);
-  if (nombres === undefined) {
-    nombres = entries.map(([, es, en]) => [normalizeSearch(es ?? ''), normalizeSearch(en)] as const);
-    NORMALIZED_NAMES.set(entries, nombres);
-  }
-  return nombres;
-}
-
-/** Las entradas del índice cuyo nombre (castellano o inglés) contiene el texto; primero las que tienen pieza. */
-export function searchIndex(entries: readonly AnatomyIndexEntry[], query: string, limit: number): AnatomyIndexEntry[] {
-  const q = normalizeSearch(query);
-  if (q.length < 2) return [];
-  const nombres = normalizedNames(entries);
-  const aciertos = entries.filter(
-    ([id], i) => nombres[i][0].includes(q) || nombres[i][1].includes(q) || id.toLowerCase() === q,
-  );
-  aciertos.sort((a, b) => b[3] - a[3]);
-  return aciertos.slice(0, limit);
-}
-
-/** El lado de una pieza par, dicho en castellano. */
-export function sideLabel(side: AnatomyPart['side']): string | null {
-  return side === 'right' ? 'lado derecho' : side === 'left' ? 'lado izquierdo' : null;
 }
 
 /** Una página (1-based) de `items`; la página se acota al rango válido. */

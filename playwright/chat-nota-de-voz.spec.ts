@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { contentSecurityPolicy } from '../src/server/security-headers';
 import { entrar } from './support/sesion';
 
 /**
@@ -8,6 +9,23 @@ import { entrar } from './support/sesion';
  * app — play button, the real waveform, time and speed — instead of the bare
  * browser `<audio controls>`.
  */
+
+/**
+ * `ng serve` sends no CSP; the SSR server in dev does. Every page here gets
+ * the real policy's media and connection directives, so a player that feeds
+ * `<audio>` a `data:` URL (blocked in dev) fails here too.
+ */
+test.beforeEach(async ({ page }) => {
+  const directivas = contentSecurityPolicy()
+    .split('; ')
+    .filter((d) => d.startsWith('media-src') || d.startsWith('connect-src'))
+    .join('; ');
+  await page.route('**/*', async (route) => {
+    if (route.request().resourceType() !== 'document') return route.continue();
+    const respuesta = await route.fetch();
+    await route.fulfill({ response: respuesta, headers: { ...respuesta.headers(), 'content-security-policy': directivas } });
+  });
+});
 
 /** Records what the store hands to the chat client, keeping the real call. */
 async function espiarEnvios(page: Page): Promise<void> {
@@ -62,14 +80,22 @@ test('una nota de voz sale sin bodyText y se ve como reproductor', async ({ page
 
   // The waveform comes from decoding the audio: undecoded bars are all the same
   // height. (The fake microphone beeps, so the decoded bars have two heights.)
-  const alturas = await nota.locator('.nota-voz__barra').evaluateAll((barras) => barras.map((b) => b.getBoundingClientRect().height));
-  expect(alturas).toHaveLength(36);
-  expect(new Set(alturas.map(Math.round)).size).toBeGreaterThan(1);
+  // The thread refreshes shortly after sending (for the ✓✓) and may remount the
+  // bubble: measure by condition, not once.
+  await expect(nota.locator('.nota-voz__barra')).toHaveCount(36);
+  await expect
+    .poll(async () => {
+      const alturas = await nota.locator('.nota-voz__barra').evaluateAll((barras) => barras.map((b) => Math.round(b.getBoundingClientRect().height)));
+      return new Set(alturas).size;
+    })
+    .toBeGreaterThan(1);
 
   await nota.getByTestId('nota-voz-velocidad').click();
   await expect(nota.getByTestId('nota-voz-velocidad')).toHaveText('1.5×');
   await nota.getByTestId('nota-voz-play').click();
   await expect(nota.getByTestId('nota-voz-play')).toHaveAttribute('aria-label', 'Pausar nota de voz');
+  // It really plays: the element is not blocked and time moves forward.
+  await expect.poll(() => nota.locator('audio').evaluate((a: HTMLAudioElement) => a.currentTime), { timeout: 5_000 }).toBeGreaterThan(0);
   await expect(nota.getByTestId('nota-voz-play')).toHaveAttribute('aria-label', 'Reproducir nota de voz', { timeout: 10_000 });
   await expect(nota.getByTestId('nota-voz-tiempo')).toHaveText(/^0:0[2-3]$/);
 

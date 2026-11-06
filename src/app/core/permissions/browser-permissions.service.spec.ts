@@ -1,6 +1,7 @@
 import { DOCUMENT, PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
+import { WEB_PUSH_NOTICES, WebPushService } from '../notifications/web-push.service';
 import { BrowserPermissionsService } from './browser-permissions.service';
 
 /**
@@ -168,5 +169,45 @@ describe('BrowserPermissionsService', () => {
 
     // `desconocido` y no `sin-decidir`: en el servidor nadie comprobó nada.
     expect(servicio.estado().avisos).toBe('desconocido');
+  });
+
+  describe('pedir los avisos suscribe al push: el permiso solo no hace llegar nada', () => {
+    function armarAvisos(permiso: string, outcome: string) {
+      const requestPermission = vi.fn().mockResolvedValue(permiso);
+      const enable = vi.fn().mockResolvedValue(outcome);
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: PLATFORM_ID, useValue: 'browser' },
+          { provide: DOCUMENT, useValue: { defaultView: { navigator: {}, Notification: { permission: 'default', requestPermission } } } },
+          { provide: WebPushService, useValue: { enable } },
+        ],
+      });
+      return { servicio: TestBed.inject(BrowserPermissionsService), requestPermission, enable };
+    }
+
+    it('pide el permiso primero (gesto fresco) y después suscribe', async () => {
+      const { servicio, requestPermission, enable } = armarAvisos('granted', 'enabled');
+      await servicio.pedir('avisos');
+      expect(requestPermission).toHaveBeenCalledTimes(1);
+      expect(requestPermission.mock.invocationCallOrder[0]).toBeLessThan(enable.mock.invocationCallOrder[0]!);
+      expect(servicio.avisoDePush()).toBe('');
+    });
+
+    it.each([
+      ['unavailable', WEB_PUSH_NOTICES.unavailable],
+      ['failed', WEB_PUSH_NOTICES.failed],
+      ['unsupported', WEB_PUSH_NOTICES.unsupported],
+    ])('si el push queda «%s», lo dice en vez de quedar encendido en silencio', async (outcome, aviso) => {
+      const { servicio } = armarAvisos('granted', outcome);
+      await servicio.pedir('avisos');
+      expect(servicio.avisoDePush()).toBe(aviso);
+    });
+
+    it('si la persona bloquea el cartel, no suscribe y dice por qué', async () => {
+      const { servicio, enable } = armarAvisos('denied', 'enabled');
+      await servicio.pedir('avisos');
+      expect(enable).not.toHaveBeenCalled();
+      expect(servicio.avisoDePush()).toBe(WEB_PUSH_NOTICES.denied);
+    });
   });
 });

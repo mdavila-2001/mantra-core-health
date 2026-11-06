@@ -10,11 +10,12 @@ import {
 } from '@angular/core';
 
 import { ArchivoInvalido, decodificarCsv } from '../../../utils/csv-import/csv-import';
+import { BRANCH_CATEGORY_LABELS } from '../../../../core/data-access/directory/branch-category';
 import {
-  BRANCH_IMPORT_COLUMNS,
   BRANCH_IMPORT_MAX_BYTES,
   BRANCH_IMPORT_MAX_ROWS,
   BRANCH_IMPORT_SAMPLE_ROWS,
+  branchImportColumns,
   reviewBranchCsv,
   validDrafts,
   type BranchDraft,
@@ -71,6 +72,10 @@ export class BranchBulkImport {
    * persistir y cerrar con {@link close} al terminar.
    */
   readonly closeOnConfirm = input(true);
+  /** Offer the optional `categoria` column (only where rows are created in the API). */
+  readonly withCategory = input(false);
+  /** The organization's current head office: no CSV row may become another. */
+  readonly headOfficeName = input<string | null>(null);
 
   readonly imported = output<readonly BranchDraft[]>();
   readonly closed = output<void>();
@@ -78,7 +83,8 @@ export class BranchBulkImport {
   private readonly csv = inject(CsvExportService);
   protected readonly dialog = viewChild.required(ContentDialog);
 
-  protected readonly columns = BRANCH_IMPORT_COLUMNS;
+  protected readonly columns = computed(() => branchImportColumns(this.withCategory()));
+  protected readonly categoryLabels = BRANCH_CATEGORY_LABELS;
   protected readonly maxBytes = BRANCH_IMPORT_MAX_BYTES;
   protected readonly maxRows = BRANCH_IMPORT_MAX_ROWS;
   protected readonly tope = computed(() => this.maxSucursales() ?? this.maxRows);
@@ -117,7 +123,7 @@ export class BranchBulkImport {
   });
 
   protected downloadTemplate(): void {
-    const columns: CsvColumn<SampleRow>[] = BRANCH_IMPORT_COLUMNS.map((column) => ({
+    const columns: CsvColumn<SampleRow>[] = this.columns().map((column) => ({
       header: column.header,
       value: (row) => row[column.field],
     }));
@@ -141,7 +147,12 @@ export class BranchBulkImport {
     this.reading.set(true);
     try {
       const { texto } = decodificarCsv(await file.arrayBuffer());
-      this.review.set(reviewBranchCsv(texto, this.existingNames()));
+      this.review.set(
+        reviewBranchCsv(texto, this.existingNames(), {
+          withCategory: this.withCategory(),
+          headOfficeName: this.headOfficeName(),
+        }),
+      );
     } catch (error) {
       this.fileError.set(
         error instanceof ArchivoInvalido ? error.message : 'No se pudo leer el archivo.',

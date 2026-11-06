@@ -2,6 +2,7 @@ import type {
   DiagnosticOrder,
   PatientDiagnostics,
 } from '../../../../core/data-access/diagnostics/diagnostics.types';
+import { studyDetailConceptIds } from '../../../../core/data-access/diagnostics/study-detail.summary';
 
 /**
  * Las prioridades en castellano, por código estable.
@@ -54,6 +55,8 @@ export interface EstudioEnFicha {
    * words. Absent if the order does not bring it.
    */
   readonly paraDiagnostico?: string;
+  /** La muestra o la parte del cuerpo, en una línea; `null` en las órdenes que no la traen. */
+  readonly detalle: string | null;
 }
 
 /**
@@ -78,7 +81,7 @@ export function duplicadoDe(orden: DiagnosticOrder): EstudioEnFicha['duplicado']
 export function conceptosDe(circuito: PatientDiagnostics): readonly string[] {
   const ids: string[] = [];
   for (const orden of circuito.orders) {
-    ids.push(orden.codeConceptId, orden.statusConceptId);
+    ids.push(orden.codeConceptId, orden.statusConceptId, ...studyDetailConceptIds(orden));
     if (orden.categoryConceptId !== undefined) {
       ids.push(orden.categoryConceptId);
     }

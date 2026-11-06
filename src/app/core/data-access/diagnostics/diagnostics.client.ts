@@ -7,6 +7,7 @@ import { sendIdempotent, SubmissionKeys } from '../idempotency';
 import { parseBlobError } from '../files/blob-error';
 import { nombreDeContentDisposition } from '../files/content-disposition';
 import type { DownloadedFile } from '../files/files.types';
+import { toWireOrder } from './study-detail.types';
 import type {
   DiagnosticOrderCreated,
   DiagnosticResultShare,
@@ -219,9 +220,8 @@ export class DiagnosticsClient {
    * @returns La orden creada, con su identificador y su estado inicial.
    */
   requestStudy(orden: NewDiagnosticOrder): Observable<DiagnosticOrderCreated> {
-    // Sin las claves ausentes: el backend valida con `forbidNonWhitelisted`
-    // y un opcional en `undefined` viaja como clave declarada.
-    const body = sinAusentes(orden);
+    // Sin claves ausentes (`forbidNonWhitelisted`) y con el detalle en la forma del cable.
+    const body = sinAusentes(toWireOrder(orden));
     return sendIdempotent(this.submissionKeys, 'service-request', body, (headers) =>
       this.http.post<WireOrderCreated>(this.url('/clinical/service-requests'), body, { headers }),
     ).pipe(map(toOrderCreated));

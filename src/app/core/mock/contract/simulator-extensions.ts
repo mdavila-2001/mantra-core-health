@@ -18,6 +18,7 @@ import { DIRECT_MESSAGE_CONTRACT_PENDING_KEYS } from '../../data-access/communit
 import { EQUIPMENT_LOCATION_CONTRACT_PENDING_KEYS } from '../../data-access/diagnostic-units/equipment-location.types';
 import { INVENTORY_LOCATION_CONTRACT_PENDING_KEYS } from '../../data-access/pharmacy/inventory-locations.types';
 import { SERVICE_REQUEST_COLLECTION_POINT_PENDING_KEYS } from '../../data-access/diagnostics/sample-collection.types';
+import { STUDY_DETAIL_CONTRACT_PENDING_KEYS } from '../../data-access/diagnostics/study-detail.types';
 import { TEMPLATE_CARE_SPACE_PENDING_KEYS } from '../../data-access/scheduling/scheduling.types';
 
 /* ============================================================================
@@ -58,6 +59,7 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   'POST /clinical/service-requests': [
     ...DIAGNOSTIC_ORDER_CONTRACT_PENDING_KEYS,
     ...SERVICE_REQUEST_COLLECTION_POINT_PENDING_KEYS,
+    ...STUDY_DETAIL_CONTRACT_PENDING_KEYS,
   ],
   'POST /clinical/conditions/:id/verification': DIAGNOSIS_VERIFICATION_CONTRACT_PENDING_KEYS,
   // Consentimiento informado DIRIGIDO (v4266): mismo caso que el de arriba.
@@ -69,7 +71,7 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // F5b/F5d: la web **no** las manda mientras `INFRA_INTEGRATION_FLAGS` esté
   // apagada (la API las rechaza con 400); la maqueta las acepta para poder
   // probar la pantalla con la bandera encendida.
-  // F5b: the order's suggested collection point goes with the clinical network, above.
+  // F5b and the study detail (v4.2.82): the order's keys go in the clinical network entry, above.
   // F5d: el consultorio de la plantilla de horario.
   'POST /scheduling/resources/:id/templates': TEMPLATE_CARE_SPACE_PENDING_KEYS,
   'POST /community/conversations/:conversationId/messages': DIRECT_MESSAGE_CONTRACT_PENDING_KEYS,

@@ -414,4 +414,14 @@ describe('OrganizationBranches', () => {
       expect(internal().saveError()).toContain('ya tiene una casa matriz');
     });
   });
+
+  it('el lote del CSV manda la categoría de cada fila', () => {
+    internal().createBatch([
+      draft({ name: 'Norte', category: 'branch' }),
+      draft({ name: 'Sur' }),
+    ]);
+
+    expect(created.map((b) => b.category)).toEqual(['branch', undefined]);
+  });
 });
+
