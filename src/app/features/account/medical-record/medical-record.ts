@@ -1,5 +1,5 @@
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
@@ -36,6 +36,8 @@ import { AccordionPanel } from '../../../shared/components/molecules/accordion/a
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FactList } from '../../../shared/components/molecules/fact-list/fact-list';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -68,6 +70,9 @@ import {
   type DetalleDeAtenciones,
   type EncounterInHistory,
 } from './history-view-model';
+import { recorridoDelPaciente, type Recorrido } from './mi-recorrido/episodios';
+import { MiRecorrido, type SeccionDeDestino } from './mi-recorrido/mi-recorrido';
+import { registrosDelPortal } from './mi-recorrido/registro-con-vinculos';
 
 /** Tope por bloque. El backend admite hasta 200; nadie lee doscientas filas. */
 const TOPE = 50;
@@ -87,6 +92,23 @@ const PARAM_DE_SECCION = 'seccion';
  * apuntando a lo mismo.
  */
 const SECCIONES = ['atenciones', 'recetas', 'alergias', 'resultados', 'diagnosticos', 'servicios'] as const;
+
+/* ---- Franja 5a · dos formas de leer la misma historia -------------------- */
+
+/** El parámetro que dice cómo se está leyendo la historia. */
+const PARAM_DE_VISTA = 'vista';
+
+type VistaDeLaHistoria = 'fecha' | 'recorrido';
+
+/**
+ * «Por fecha» es la vista de siempre y la que se ve al entrar sin nada en la
+ * URL; «Mi recorrido» la agrupa por problema de salud. Las dos leen los mismos
+ * datos: el recorrido no pide nada que la vista por fecha no pida ya.
+ */
+const VISTAS: readonly SegmentedOption<VistaDeLaHistoria>[] = [
+  { value: 'fecha', label: 'Por fecha' },
+  { value: 'recorrido', label: 'Mi recorrido' },
+];
 
 /** Una receta del archivo. */
 interface RecetaVisible {
@@ -167,10 +189,12 @@ interface FormularioVisible {
     DatePipe,
     EncounterTimeline,
     FactList,
+    MiRecorrido,
     NgTemplateOutlet,
     PageHeader,
     ReceivedServicesPanel,
     RouterLink,
+    SegmentedControl,
     Tab,
     Tabs,
     ViewStateHost,
@@ -246,6 +270,59 @@ export class MedicalRecord {
       replaceUrl: true,
     });
   }
+
+  /* ---- Franja 5a · la vista elegida ------------------------------------ */
+
+  protected readonly vistas = VISTAS;
+
+  /** Cómo se lee la historia. En la URL, por lo mismo que la pestaña. */
+  protected readonly vista = computed<VistaDeLaHistoria>(() =>
+    this.params()?.get(PARAM_DE_VISTA) === 'recorrido' ? 'recorrido' : 'fecha',
+  );
+
+  protected elegirVista(vista: VistaDeLaHistoria): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { [PARAM_DE_VISTA]: vista === 'fecha' ? null : vista },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  /** Desde la hoja de detalle del recorrido, a la pestaña que tiene ese registro. */
+  protected irASeccion(destino: SeccionDeDestino): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        [PARAM_DE_VISTA]: null,
+        [PARAM_DE_SECCION]: destino === 'atenciones' ? null : destino,
+      },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /** La receta pedida desde el recorrido, por la misma descarga oficial. */
+  protected descargarRecetaPorId(id: string): void {
+    const receta = this.recetas().find((fila) => fila.id === id);
+    if (receta !== undefined) this.descargarReceta(receta);
+  }
+
+  /**
+   * El recorrido, armado con lo que ya llegó: el resumen y —en cuanto estén—
+   * las órdenes y las citas del despliegue perezoso.
+   */
+  protected readonly recorrido = computed<Recorrido>(() => {
+    const datos = this.datos();
+    if (datos === null) return { episodios: [], descartados: [], otras: null };
+    const detalle = this.detalleCargado();
+    return recorridoDelPaciente(
+      registrosDelPortal(
+        { resumen: datos, ordenes: detalle.ordenes, citas: detalle.citas },
+        (id) => this.label(id),
+        (id) => this.codigo(id),
+      ),
+    );
+  });
 
   protected readonly historia = signal<ViewState<ClinicalSummary>>(loading());
 
@@ -535,6 +612,16 @@ export class MedicalRecord {
   }
 
   constructor() {
+    // El recorrido necesita las órdenes y las citas, que la vista por fecha
+    // pide recién al desplegar una atención. Abrir «Mi recorrido» cuenta como
+    // ese primer despliegue: la misma lectura, una sola vez.
+    effect(() => {
+      if (this.vista() !== 'recorrido') return;
+      untracked(() => {
+        if (this.detalle() === null && this.perfil !== null) this.cargarDetalle(this.perfil);
+      });
+    });
+
     if (this.perfil !== null) {
       this.cargar();
       this.cargarFormularios();
