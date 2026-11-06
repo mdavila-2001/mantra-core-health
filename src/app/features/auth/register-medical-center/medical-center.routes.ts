@@ -29,4 +29,10 @@ export const MEDICAL_CENTER_SCREENS: Readonly<Record<string, () => Promise<Type<
     import('../../organization/medical-center-setup/medical-center-setup').then(
       (m) => m.MedicalCenterSetup,
     ),
+  // Its branches (2026-11-06): the same screen as pharmacy, laboratory and
+  // imaging, with the map and each site's category.
+  'administration/medical-branches': () =>
+    import('../../organization/organization-branches/organization-branches').then(
+      (m) => m.OrganizationBranches,
+    ),
 };

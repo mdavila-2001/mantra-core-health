@@ -46,6 +46,23 @@
   margin: 0;
 }
 
+/* The time picker's clock icon reads as part of the control and signals the
+   value can be picked instead of typed. */
+.native-input[type='time'] {
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.native-input[type='time']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.native-input[type='time']:hover::-webkit-calendar-picker-indicator,
+.native-input[type='time']:focus::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+
 .native-input::placeholder {
   color: var(--text-muted);
 }

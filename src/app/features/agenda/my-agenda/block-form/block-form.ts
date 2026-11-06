@@ -1,8 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  LOCALE_ID,
   computed,
   effect,
+  inject,
   input,
   output,
   signal,
@@ -19,36 +21,15 @@ import { Select } from '@shared/components/atoms/select/select';
 import type { SelectOption } from '@shared/components/atoms/select/select.types';
 import { Card } from '@shared/components/molecules/card/card';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
+import { SegmentedControl } from '@shared/components/molecules/segmented-control/segmented-control';
 import { DatePicker } from '@shared/components/organisms/date-picker/date-picker';
 
-/** Lo que el formulario pide bloquear, ya en instantes. */
-/** Un bloqueo que ya existe y se está corrigiendo. */
-export interface BloqueoEnEdicion {
-  readonly id: string;
-  readonly desde: Date;
-  readonly hasta: Date;
-  readonly exceptionType: AvailabilityExceptionType;
-  readonly descripcion: string | null;
-}
+import * as F from './block-form.franja';
 
-export interface BloqueoPedido {
-  readonly desde: Date;
-  readonly hasta: Date;
-  /**
-   * El motivo del catálogo. Antes no viajaba y quien creaba la excepción
-   * ponía `ABSENCE` fijo para todo — vacaciones, feriados y trámites quedaban
-   * indistinguibles en la base.
-   */
-  readonly exceptionType: AvailabilityExceptionType;
-  /** El texto libre. Vacío salvo que el motivo elegido lo exija. */
-  readonly motivo: string;
-  /** Para poder contarlo en el aviso de después. */
-  readonly dias: number;
-  readonly franjaHoraria: boolean;
-}
+import type { BloqueoEnEdicion, BloqueoPedido } from './block-form.types';
 
-/** Horas válidas de una franja, `HH:MM`. */
-const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+export { aMedianoche, conHora } from './block-form.franja';
+export type { BloqueoEnEdicion, BloqueoPedido } from './block-form.types';
 
 /**
  * **Bloquear días u horarios** — D4 y D5 del plan de UX del 22/08/2026.
@@ -86,7 +67,7 @@ const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
  */
 @Component({
   selector: 'app-block-form',
-  imports: [AppButton, Card, DatePicker, FormField, Input, Select],
+  imports: [AppButton, Card, DatePicker, FormField, Input, SegmentedControl, Select],
   templateUrl: './block-form.html',
   styleUrl: './block-form.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -130,6 +111,15 @@ export class BlockForm {
   protected readonly horaHasta = signal('18:00');
 
   protected readonly motivo = signal('');
+
+  private readonly idioma = inject(LOCALE_ID);
+
+  protected readonly pasoDeHora = F.PASO_DE_HORA_SEGUNDOS;
+  protected readonly atajos = F.ATAJOS_DE_FRANJA;
+
+  protected readonly opcionesDeAlcance = F.OPCIONES_DE_ALCANCE;
+
+  protected readonly alcance = computed<F.Alcance>(() => (this.porFranja() ? 'franja' : 'dias'));
 
   /**
    * El motivo elegido. Arranca en `ABSENCE` porque es el que la pantalla
@@ -185,8 +175,8 @@ export class BlockForm {
           actual.hasta.getHours() !== 0;
         this.porFranja.set(franja);
         if (franja) {
-          this.horaDesde.set(comoHora(actual.desde));
-          this.horaHasta.set(comoHora(actual.hasta));
+          this.horaDesde.set(F.comoHora(actual.desde));
+          this.horaHasta.set(F.comoHora(actual.hasta));
         }
       });
     });
@@ -202,16 +192,7 @@ export class BlockForm {
    * «del 10 al 24» son quince días y no catorce, y equivocarse ahí es volver
    * de vacaciones con la agenda abierta o cerrada un día de más.
    */
-  protected readonly dias = computed(() => {
-    const desde = this.desde();
-    const hasta = this.hasta();
-    if (desde === null || hasta === null) {
-      return 0;
-    }
-    const unDia = 24 * 60 * 60 * 1000;
-    const diferencia = aMedianoche(hasta).getTime() - aMedianoche(desde).getTime();
-    return diferencia < 0 ? 0 : Math.round(diferencia / unDia) + 1;
-  });
+  protected readonly dias = computed(() => F.diasDelRango(this.desde(), this.hasta()));
 
   protected readonly error = computed<string | null>(() => {
     if (this.desde() === null || this.hasta() === null) {
@@ -221,7 +202,7 @@ export class BlockForm {
       return 'El último día no puede ser anterior al primero.';
     }
     if (this.porFranja()) {
-      if (!HORA.test(this.horaDesde()) || !HORA.test(this.horaHasta())) {
+      if (!F.HORA.test(this.horaDesde()) || !F.HORA.test(this.horaHasta())) {
         return 'Las horas se escriben como HH:MM, por ejemplo 14:00.';
       }
       if (this.horaHasta() <= this.horaDesde()) {
@@ -234,15 +215,60 @@ export class BlockForm {
     return null;
   });
 
+  // Per-field time errors. A missing time is flagged only after the first
+  // submit; an inverted range is flagged on «Hasta» right away, since by then
+  // it is a wrong value and not a draft.
+  protected readonly errorHoraDesde = computed(() =>
+    this.porFranja() ? F.errorDeHora(this.horaDesde(), null, this.intentado()) : null,
+  );
+
+  protected readonly errorHoraHasta = computed(() =>
+    this.porFranja() ? F.errorDeHora(this.horaHasta(), this.horaDesde(), this.intentado()) : null,
+  );
+
+  protected readonly duracionFranja = computed(() =>
+    F.duracionDeFranja(this.horaDesde(), this.horaHasta()),
+  );
+
+  protected readonly atajoActivo = computed(() => F.atajoActivo(this.horaDesde(), this.horaHasta()));
+
+  protected readonly resumen = computed(() =>
+    F.resumenDeBloqueo(
+      this.desde(),
+      this.hasta(),
+      this.porFranja() ? { desde: this.horaDesde(), hasta: this.horaHasta() } : null,
+      this.idioma,
+    ),
+  );
+
   /** El error, pero sólo después del primer intento. */
   protected readonly errorVisible = computed(() => (this.intentado() ? this.error() : null));
 
+  protected elegirAlcance(valor: F.Alcance): void {
+    this.porFranja.set(valor === 'franja');
+  }
+
+  protected aplicarAtajo(atajo: F.AtajoDeFranja): void {
+    this.horaDesde.set(atajo.desde);
+    this.horaHasta.set(atajo.hasta);
+  }
+
+  // A single-day block is the most common one: picking the first day fills
+  // the last one when it is empty or now earlier.
+  protected elegirDesde(valor: Date | null): void {
+    this.desde.set(valor);
+    const hasta = this.hasta();
+    if (valor !== null && (hasta === null || F.aMedianoche(hasta) < F.aMedianoche(valor))) {
+      this.hasta.set(valor);
+    }
+  }
+
   protected fijarHoraDesde(valor: string | number | null): void {
-    this.horaDesde.set(valor === null ? '' : String(valor));
+    this.horaDesde.set(F.comoTexto(valor));
   }
 
   protected fijarHoraHasta(valor: string | number | null): void {
-    this.horaHasta.set(valor === null ? '' : String(valor));
+    this.horaHasta.set(F.comoTexto(valor));
   }
 
   protected elegirTipo(valor: AvailabilityExceptionType | null): void {
@@ -252,7 +278,7 @@ export class BlockForm {
   }
 
   protected fijarMotivo(valor: string | number | null): void {
-    this.motivo.set(valor === null ? '' : String(valor));
+    this.motivo.set(F.comoTexto(valor));
   }
 
   /**
@@ -276,47 +302,19 @@ export class BlockForm {
       return;
     }
 
-    const desde = aMedianoche(this.desde()!);
-    const hasta = aMedianoche(this.hasta()!);
-
-    if (!this.porFranja()) {
-      const fin = new Date(hasta);
-      fin.setDate(fin.getDate() + 1);
-      this.bloquear.emit({
-        desde,
-        hasta: fin,
-        exceptionType: this.tipo(),
-        motivo: this.motivo().trim(),
-        dias: this.dias(),
-        franjaHoraria: false,
-      });
-      return;
-    }
-
+    const desde = F.aMedianoche(this.desde()!);
+    const hasta = F.aMedianoche(this.hasta()!);
+    const franja = this.porFranja();
+    const finDelDia = new Date(hasta);
+    finDelDia.setDate(finDelDia.getDate() + 1);
     this.bloquear.emit({
-      desde: conHora(desde, this.horaDesde()),
-      hasta: conHora(hasta, this.horaHasta()),
+      desde: franja ? F.conHora(desde, this.horaDesde()) : desde,
+      hasta: franja ? F.conHora(hasta, this.horaHasta()) : finDelDia,
       exceptionType: this.tipo(),
       motivo: this.motivo().trim(),
       dias: this.dias(),
-      franjaHoraria: true,
+      franjaHoraria: franja,
     });
   }
 }
 
-/** La medianoche local de esa fecha. */
-export function aMedianoche(fecha: Date): Date {
-  return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
-}
-
-/** Esa fecha con la hora `HH:MM` puesta, en hora local. */
-export function conHora(fecha: Date, hora: string): Date {
-  const [h, m] = hora.split(':').map(Number);
-  return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), h ?? 0, m ?? 0);
-}
-
-
-/** `HH:MM` de una fecha, para precargar la franja al editar. */
-function comoHora(valor: Date): string {
-  return `${String(valor.getHours()).padStart(2, '0')}:${String(valor.getMinutes()).padStart(2, '0')}`;
-}

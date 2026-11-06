@@ -102,7 +102,7 @@ export const SECCIONES_DE_LABORATORIO: readonly AppSection[] = [
     icon: 'pin',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Edite sus sucursales o suba varias de una vez con un CSV.',
+    summary: 'Sus sedes en el mapa, con su categoría; edítelas o suba varias con un CSV.',
     module: 'M04 directory',
   },
 ];

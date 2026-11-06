@@ -170,7 +170,7 @@ describe('PharmacyCatalogHub', () => {
 
     it.each([
       ['categories', 'categories', 'app-pharmacy-categories'],
-      ['prices', 'prices', 'app-pharmacy-prices'],
+      ['prices', 'products', 'app-pharmacy-prices'],
       ['inventory', 'products', 'app-pharmacy-inventory'],
     ])('desde `?tab=%s` abre el modal con «%s» y deja la pestaña debajo', async (tab, expected, screen) => {
       await open(`${ROUTE}?tab=${tab}`);

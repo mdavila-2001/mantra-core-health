@@ -38,7 +38,7 @@ import { ViewStateHost } from '../../../shared/components/organisms/view-state-h
 import { CsvExportService, type CsvColumn } from '../../../shared/utils/csv-export/csv-export';
 
 import { sortRows } from '../catalog/catalog-sort';
-import { ENTITY_COLUMNS } from '../import/entity-import/entity-csv';
+import { PRICE_HEADERS } from '../import/product-templates';
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
 import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import { PRODUCT_SORT_ACCESSORS, productName, productStatus } from '../products/product-view';
@@ -212,14 +212,14 @@ export class PharmacyPrices {
 
   /**
    * Descarga los precios publicados de lo que la búsqueda deja a la vista, con
-   * los encabezados de la importación de precios: se corrige en una planilla y
-   * se vuelve a subir con «Importar CSV».
+   * los encabezados de la plantilla de precios: se corrige en una planilla y
+   * se vuelve a subir con «Importar CSV» → «Productos y precios».
    */
   protected exportCsv(): void {
-    const [code, price] = ENTITY_COLUMNS.prices;
+    const [code, price] = PRICE_HEADERS;
     const columns: CsvColumn<PharmacyProduct>[] = [
-      { header: code!.header, value: (product) => product.productCode },
-      { header: price!.header, value: (product) => product.unitPrice ?? '' },
+      { header: code, value: (product) => product.productCode },
+      { header: price, value: (product) => product.unitPrice ?? '' },
     ];
     this.csv.download(dataOf(this.visible()) ?? [], columns, 'precios-de-la-farmacia.csv');
   }

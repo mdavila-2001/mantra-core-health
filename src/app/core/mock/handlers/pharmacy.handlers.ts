@@ -14,7 +14,7 @@ import {
 } from '../fixtures/pharmacy-orders';
 import { horarioDeFarmacias } from './pharmacy-opening-hours.handlers';
 import { conflict, forbidden, notFound, precondition, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
-import { sucursalesDelTenant } from './directory.handlers';
+import { activeTenantBranches } from './directory-branches.mock';
 import { TENANT_TYPES } from '../mock-session';
 import { haversineKm, withStockUpdatedAt } from './pharmacy-availability.mock';
 import { ahora, Coleccion, contiene, contieneSinTildes, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';
@@ -613,7 +613,7 @@ const HORARIO = horarioDeFarmacias([...FARMACIAS, ...SEDES_ADICIONALES.map((s) =
  */
 function sedesCargadas(pharmacyId: string, propias: readonly string[]) {
   const conocidas = new Set([...propias, ...(pharmacyId === FARMACIAS[0]!.id ? SEDES_ADICIONALES.map((s) => s.name) : [])]);
-  return sucursalesDelTenant(pharmacyId)
+  return activeTenantBranches(pharmacyId)
     .filter((s) => !conocidas.has(s.name))
     .map((s) => ({
       id: s.id,

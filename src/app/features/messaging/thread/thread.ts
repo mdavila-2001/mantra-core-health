@@ -64,6 +64,7 @@ import {
   VERBO_DE_CONTEXTO,
 } from './thread-context';
 import { ImageViewer, type ImagenDelVisor } from './image-viewer/image-viewer';
+import { VoiceNote } from './voice-note/voice-note';
 
 /**
  * Una línea del hilo: un separador —de día o de «no leídos»— o un mensaje con
@@ -308,6 +309,7 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
     RouterLink,
     EmojiPicker,
     Spinner,
+    VoiceNote,
   ],
   templateUrl: './thread.html',
   styleUrls: ['./thread.css', './thread-layers.css', './thread-media.css'],

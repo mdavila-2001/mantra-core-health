@@ -1928,7 +1928,8 @@ export class ChatStore {
     this.community
       .sendMessage(pendiente.conversationId, {
         senderProfileId: propio,
-        bodyText: pendiente.bodyText,
+        // Uncaptioned attachment: no `bodyText` at all, `''` is not a text.
+        ...(pendiente.bodyText.trim() ? { bodyText: pendiente.bodyText } : {}),
         ...(pendiente.replyToMessageId
           ? { replyToMessageId: pendiente.replyToMessageId }
           : {}),
@@ -2078,7 +2079,8 @@ export class ChatStore {
         },
       };
       this.archivosSinSubir.set(pendiente.claveTemporal, archivo);
-      if (esImagen && !yaLeida) {
+      // Audio too: a voice note is playable while it goes out, or if it fails.
+      if ((esImagen || archivo.type.startsWith('audio/')) && !yaLeida) {
         this.ponerVistaPrevia(pendiente.claveTemporal, archivo);
       }
       return { pendiente, archivo };
