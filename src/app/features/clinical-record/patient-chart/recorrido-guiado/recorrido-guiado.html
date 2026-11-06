@@ -55,6 +55,10 @@
         }
       </div>
 
+      <div class="guiado__avance" role="progressbar" aria-label="Avance del recorrido" aria-valuemin="1" [attr.aria-valuemax]="total()" [attr.aria-valuenow]="indice() + 1" [attr.aria-valuetext]="'Paso ' + (indice() + 1) + ' de ' + total()" data-testid="guiado-avance">
+        <span [style.inline-size.%]="((indice() + 1) / total()) * 100"></span>
+      </div>
+
       <div class="guiado__controles">
         <button
           app-button

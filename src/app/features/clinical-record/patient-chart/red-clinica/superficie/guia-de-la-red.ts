@@ -50,7 +50,7 @@ export interface ProfesionalQueMira {
  *   read brings another practitioner's name.
  * - `servicioDeAtencion` is not passed: the encounter brings neither service
  *   nor specialty, and taking it from the same-day appointment would assert
- *   what the network only infers. The tour says «Tuvo una atención (…)».
+ *   what the network only infers. The tour says «Tuvo una atención ambulatoria».
  */
 export function guiaDelExpediente(
   fuente: FuenteDeLaGuia,

@@ -35,7 +35,9 @@ export function sucesosDeDerivaciones(lista: readonly Referral[], idx: Indices):
         frase: () => {
           if (destino === undefined) return frase('Se emitió una derivación; no se registró el destino.', [d.id]);
           const servicio = legible(d.targetServiceName) ?? libre(d.requestedServiceText);
-          const motivo = libre(d.diagnosisText) ?? libre(d.reasonText);
+          const dicho = libre(d.diagnosisText) ?? libre(d.reasonText);
+          // «para evaluación de cefalea por cefalea»: the reason is not repeated when the service already names it.
+          const motivo = dicho !== undefined && servicio?.toLocaleLowerCase('es').includes(dicho.toLocaleLowerCase('es')) ? undefined : dicho;
           return frase(
             `Se derivó a ${destino}${servicio === undefined ? '' : ` para ${minusculaInicial(servicio)}`}${
               motivo === undefined ? '' : ` por ${minusculaInicial(motivo)}`

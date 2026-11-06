@@ -163,6 +163,20 @@
   transform: scaleY(2);
 }
 
+.guiado__avance {
+  display: none;
+  block-size: 4px;
+  border-radius: var(--r-pill);
+  background: var(--border-default);
+  overflow: hidden;
+}
+
+.guiado__avance > span {
+  display: block;
+  block-size: 100%;
+  background: var(--brand-primary);
+}
+
 .guiado__segmento:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
@@ -229,17 +243,10 @@
     gap: var(--sp-2);
   }
 
-  /* With many steps (pid-paciente's story has 34) the 8 px segments plus
-     their gap did not fit in 390 px and the page scrolled sideways: when
-     narrow they shrink with no minimum and the gap drops to 2 px. Jumping to
-     a step stays at hand with «Anterior»/«Siguiente» and the arrows. */
-  .guiado__progreso {
-    gap: 2px;
-  }
-
-  .guiado__segmento {
-    min-inline-size: 0;
-  }
+  /* Narrow, dozens of segments (pid-paciente has 34) were targets of a few
+     px: one continuous bar instead; «Anterior»/«Siguiente» move. */
+  .guiado__progreso { display: none; }
+  .guiado__avance { display: block; }
 
   /* Integrated, the surface already provides the room: the bar does not leave it. */
   :host(.recorrido-guiado--integrada) .guiado__barra {

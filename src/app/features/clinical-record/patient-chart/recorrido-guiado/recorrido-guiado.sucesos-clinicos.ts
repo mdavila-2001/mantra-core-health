@@ -57,6 +57,12 @@ export function sucesosDeInternaciones(lista: readonly CareEpisode[], n: Nombres
   });
 }
 
+/** «Ambulatorio» → «ambulatoria»: the catalogue's noun, agreed with «atención». */
+function claseEnLaFrase(clase: string): string {
+  const conocidas: Readonly<Record<string, string>> = { ambulatorio: 'ambulatoria', urgencia: 'de urgencia', 'internación': 'en internación', teleconsulta: 'por teleconsulta' };
+  return conocidas[clase.toLocaleLowerCase('es')] ?? `de tipo ${minusculaInicial(clase)}`;
+}
+
 export function sucesosDeAtenciones(lista: readonly Encounter[], idx: Indices, n: Nombres): Suceso[] {
   return lista.map((a) => {
     const servicio = n.servicio(a);
@@ -73,10 +79,11 @@ export function sucesosDeAtenciones(lista: readonly Encounter[], idx: Indices, n
       frase: () => {
         let texto =
           servicio === undefined
-            ? `Tuvo una atención${clase === undefined ? '' : ` (${minusculaInicial(clase)})`}`
+            ? `Tuvo una atención${clase === undefined ? '' : ` ${claseEnLaFrase(clase)}`}`
             : `Consultó en ${servicio}`;
         if (profesional !== undefined) texto += ` con ${profesional}`;
-        if (motivo !== undefined) texto += ` por ${minusculaInicial(motivo)}`;
+        // A reason that names the visit («Reconsulta: …») is not said «por reconsulta».
+        if (motivo !== undefined) texto += /^(re|inter)consulta\b/i.test(motivo) ? ` (${minusculaInicial(motivo)})` : ` por ${minusculaInicial(motivo)}`;
         if (internacion !== undefined) texto += ', durante la internación';
         texto += motivo === undefined ? '. No se registró el motivo.' : '.';
         const fuentes = internacion === undefined ? [a.id] : [a.id, internacion.id];

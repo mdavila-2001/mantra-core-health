@@ -525,7 +525,7 @@ describe('armarRecorridoGuiado — cadenas de reemplazo de diagnósticos', () =>
 describe('armarRecorridoGuiado — ausencia de datos', () => {
   it('sin motivo ni servicio: frase honesta', () => {
     const pasos = armar({ atenciones: [atencion(u(200), dia(7, 1), undefined, { classConceptId: 'cx-ambulatorio' })] });
-    expect(pasos[0].narracion).toBe('El 1 jul 2026 tuvo una atención (ambulatorio). No se registró el motivo.');
+    expect(pasos[0].narracion).toBe('El 1 jul 2026 tuvo una atención ambulatoria. No se registró el motivo.');
     expect(pasos[0].titulo).toBe('Atención');
   });
 
