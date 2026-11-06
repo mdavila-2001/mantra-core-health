@@ -14,7 +14,7 @@ import { expect, test, type Page } from '@playwright/test';
  * test `v4291-branches-category.int-spec.ts`.
  *
  * Run against `ng serve --configuration development,demo` (E2E_BASE_URL).
- * Never waits for `networkidle` (HMR never settles). Screenshots go to
+ * Waits only on concrete elements (HMR never settles). Screenshots go to
  * `evidencias/sucursales-mapa-categorias-2026-11-06/`.
  */
 const OUT = 'evidencias/sucursales-mapa-categorias-2026-11-06';
