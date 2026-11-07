@@ -50,6 +50,14 @@ export class ScheduleDayRow {
   readonly weekFlexible = input(false);
   /** Cuántos horarios entran ese día; los calcula la pantalla, con el almuerzo. */
   readonly slots = input(0);
+  /**
+   * «Atiendo», «Telemedicina» and «Horario flexible» belong to the practitioner agenda.
+   * A diagnostic center's week reuses this row without them: its slots are
+   * always fixed appointments at the center.
+   */
+  readonly practitionerColumns = input(true);
+  /** Data-testid prefix, so several weeks can share one screen. */
+  readonly testPrefix = input('agenda-create');
 
   readonly changed = output<ScheduleDayChange>();
 
@@ -60,7 +68,15 @@ export class ScheduleDayRow {
   protected readonly timeStep = TIME_STEP_SECONDS;
 
   /** Si este día se atiende sin turnos fijos, por la semana o por su propio interruptor. */
-  protected readonly flexible = computed(() => this.weekFlexible() || this.value().flexible);
+  protected readonly flexible = computed(
+    () => this.practitionerColumns() && (this.weekFlexible() || this.value().flexible),
+  );
+
+  /** Columns an inactive day spans, so «No atiende» fills the row. */
+  protected readonly offSpan = computed(() => {
+    if (!this.practitionerColumns()) return 5;
+    return this.weekFlexible() ? 4 : 8;
+  });
 
   /** Una franja sólo de servicios no tiene turnos fijos que contar. */
   protected readonly servicesOnly = computed(() => this.value().modo === 'SERVICES');

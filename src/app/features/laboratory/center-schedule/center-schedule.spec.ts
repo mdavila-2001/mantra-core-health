@@ -74,7 +74,8 @@ describe('CenterSchedulePage', () => {
     const saveSchedule = vi.fn();
     const { el, clic, opcion } = await montar({ getMySchedule: () => of(VISTA), saveSchedule });
     await clic(opcion('centro-propio-ECO', 'Sí'));
-    for (const dia of [1, 2, 3, 4, 5]) {
+    // Monday to Friday: the practitioner's day row is indexed from 0 (Monday).
+    for (const dia of [0, 1, 2, 3, 4]) {
       await clic(opcion(`centro-ECO-dia-${dia}`, 'No'));
     }
     await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-publicar"]')!);

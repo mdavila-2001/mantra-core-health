@@ -14,6 +14,10 @@ export interface ScheduleWindow {
   readonly dayOfWeek: number;
   readonly startTime: string;
   readonly endTime: string;
+  /** This window's appointment length; absent, the block's `slotMinutes`. */
+  readonly slotMinutes?: number;
+  /** Rest after each appointment, as in the practitioner agenda; absent, none. */
+  readonly gapMinutes?: number;
 }
 
 /** Un horario: sus franjas y cuánto dura cada turno. */

@@ -100,9 +100,14 @@ export function diaIso(fecha: Date): number {
   return d === 0 ? 7 : d;
 }
 
+/** Appointment length and rest of one window; the block's length by default. */
+export function duracionDeFranja(block: ScheduleBlock, franja: ScheduleWindow): { readonly cita: number; readonly descanso: number } {
+  return { cita: franja.slotMinutes ?? block.slotMinutes, descanso: franja.gapMinutes ?? 0 };
+}
+
 /**
- * Los turnos de un día: por cada franja de ese día, inicios cada
- * `slotMinutes` mientras el turno entero entre antes del cierre.
+ * Los turnos de un día: por cada franja de ese día, una cita y su descanso,
+ * mientras la cita entera entre antes del cierre (la misma regla que la API).
  */
 export function turnosDelDia(block: ScheduleBlock, fecha: Date): readonly { readonly inicio: Date; readonly fin: Date }[] {
   const dia = diaIso(fecha);
@@ -111,10 +116,11 @@ export function turnosDelDia(block: ScheduleBlock, fecha: Date): readonly { read
     if (franja.dayOfWeek !== dia) continue;
     const desde = enMinutos(franja.startTime);
     const hasta = enMinutos(franja.endTime);
-    if (desde === null || hasta === null || block.slotMinutes <= 0) continue;
-    for (let m = desde; m + block.slotMinutes <= hasta; m += block.slotMinutes) {
+    const { cita, descanso } = duracionDeFranja(block, franja);
+    if (desde === null || hasta === null || cita <= 0) continue;
+    for (let m = desde; m + cita <= hasta; m += cita + descanso) {
       const inicio = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), 0, m);
-      salida.push({ inicio, fin: new Date(inicio.getTime() + block.slotMinutes * 60_000) });
+      salida.push({ inicio, fin: new Date(inicio.getTime() + cita * 60_000) });
     }
   }
   return salida.sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
@@ -142,8 +148,8 @@ export function validarHorario(schedule: CenterSchedule, nombreDe: (donde: strin
         problemas.push({ donde, mensaje: `${nombre}, ${dia}: complete la hora de inicio y de fin.` });
       } else if (hasta <= desde) {
         problemas.push({ donde, mensaje: `${nombre}, ${dia}: la hora de fin tiene que ser posterior a la de inicio.` });
-      } else if (hasta - desde < block.slotMinutes) {
-        problemas.push({ donde, mensaje: `${nombre}, ${dia}: no entra ni una cita de ${block.slotMinutes} min.` });
+      } else if (hasta - desde < duracionDeFranja(block, franja).cita) {
+        problemas.push({ donde, mensaje: `${nombre}, ${dia}: no entra ni una cita de ${duracionDeFranja(block, franja).cita} min.` });
       }
     }
   };
@@ -160,13 +166,19 @@ export function validarHorario(schedule: CenterSchedule, nombreDe: (donde: strin
  */
 export function describirHorario(block: ScheduleBlock): string {
   if (block.windows.length === 0) return 'Sin días de atención';
+  const ordenadas = [...block.windows].sort((a, b) => a.dayOfWeek - b.dayOfWeek);
+  const tiempos = ordenadas.map((w) => duracionDeFranja(block, w));
+  // One length and no rest: said once at the end, as before.
+  const uniforme = tiempos.every((t) => t.cita === tiempos[0]!.cita && t.descanso === 0);
   const porFranja = new Map<string, number[]>();
-  for (const w of [...block.windows].sort((a, b) => a.dayOfWeek - b.dayOfWeek)) {
-    const clave = `${w.startTime}–${w.endTime}`;
+  ordenadas.forEach((w, i) => {
+    const { cita, descanso } = tiempos[i]!;
+    const detalle = uniforme ? '' : ` (citas de ${cita} min${descanso > 0 ? ` y ${descanso} de descanso` : ''})`;
+    const clave = `${w.startTime}–${w.endTime}${detalle}`;
     porFranja.set(clave, [...(porFranja.get(clave) ?? []), w.dayOfWeek]);
-  }
+  });
   const partes = [...porFranja.entries()].map(([franja, dias]) => `${agruparDias(dias)} ${franja}`);
-  return `${partes.join(' · ')} · citas de ${block.slotMinutes} min`;
+  return uniforme ? `${partes.join(' · ')} · citas de ${tiempos[0]!.cita} min` : partes.join(' · ');
 }
 
 function agruparDias(dias: readonly number[]): string {

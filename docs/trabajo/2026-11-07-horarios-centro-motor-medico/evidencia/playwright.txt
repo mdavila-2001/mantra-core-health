@@ -1,0 +1,5 @@
+/tmp/claude-0/-home-user/7c1e2b33-90b2-507d-941c-f1a7f85e6e7d/scratchpad/pw.log:  ✓  1 [chromium] › playwright/centro-horario-motor-medico.spec.ts:45:5 › the center sets Tuesday to 20 min with 10 min of rest in the practitioner table, and it stays after a reload (9.1s)
+/tmp/claude-0/-home-user/7c1e2b33-90b2-507d-941c-f1a7f85e6e7d/scratchpad/pw.log:  1 passed (9.7s)
+/tmp/claude-0/-home-user/7c1e2b33-90b2-507d-941c-f1a7f85e6e7d/scratchpad/pw2.log:  ✓  1 [chromium] › playwright/center-equipment-types.spec.ts:39:5 › an imaging center registers an MRI scanner and it stays after a reload (8.6s)
+/tmp/claude-0/-home-user/7c1e2b33-90b2-507d-941c-f1a7f85e6e7d/scratchpad/pw2.log:  ✓  2 [chromium] › playwright/center-equipment-types.spec.ts:73:5 › a center picks a mammography unit from the international catalog and it stays after a reload (8.4s)
+/tmp/claude-0/-home-user/7c1e2b33-90b2-507d-941c-f1a7f85e6e7d/scratchpad/pw2.log:  2 passed (17.8s)
