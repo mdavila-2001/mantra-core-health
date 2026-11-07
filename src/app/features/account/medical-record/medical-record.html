@@ -148,7 +148,7 @@
                 Falta parte del detalle: las notas y los estudios de sus atenciones. Lo demás se
                 muestra igual.
               </p>
-              <app-view-state-host [state]="falta" (retry)="recargarDetalle()" />
+              <app-recorrido-falta [estado]="falta" que="las notas y los estudios de sus atenciones" (reintentar)="recargarDetalle()" />
             </div>
           }
 
@@ -160,7 +160,7 @@
                 Faltan las reconsultas: sus atenciones se muestran igual, pero sin indicar cuáles
                 tuvieron reconsulta.
               </p>
-              <app-view-state-host [state]="falta" (retry)="recargarDetalle()" />
+              <app-recorrido-falta [estado]="falta" que="sus controles agendados" (reintentar)="recargarDetalle()" />
             </div>
           }
 
@@ -275,7 +275,7 @@
                   @if (receta.indicacion !== '') {
                     <span class="historia__secundario">{{ receta.indicacion }}</span>
                   }
-                  <span class="historia__secundario">{{ receta.cuando | date: 'd MMM y' }}</span>
+                  <span class="historia__secundario">{{ receta.cuando | date: 'd MMM y' : zona }}</span>
                 </div>
 
                 <div class="historia__acciones">

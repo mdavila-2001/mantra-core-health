@@ -10,7 +10,7 @@ import {
   diagnosisStateOf,
   type ResolverCodigo,
 } from '../../../../shared/clinical/diagnosis-state';
-import { antiguedad, diasEntre, fecha, prioridadPorPlazo } from './red-clinica-alertas.plazos';
+import { antiguedad, diasEntre, fechaClinica, prioridadPorPlazo } from './red-clinica-alertas.plazos';
 import { UMBRALES_POR_OMISION, type AlertaDeApoyo, type EntradaDeAlertas } from './red-clinica-alertas.types';
 
 const sinCodigo: ResolverCodigo = () => undefined;
@@ -55,7 +55,7 @@ export function presuntivosSinResolver(entrada: EntradaDeAlertas): readonly Aler
         tipo: 'presuntivo-sin-resolver' as const,
         prioridad: prioridadPorPlazo(dias, umbral),
         titulo: `Presuntivo sin resolver: ${nombre}`,
-        detalle: `Registrado ${antiguedad(dias)} (${fecha(c.createdAt)}), sigue sin confirmarse ni descartarse.${conEstudios}`,
+        detalle: `Registrado ${antiguedad(dias)} (${fechaClinica(c.createdAt)}), sigue sin confirmarse ni descartarse.${conEstudios}`,
         nodoId: nodo,
         nodoIds: [nodo, ...estudios.map((o) => idDeNodo('estudio', o.id))],
         dias,
@@ -97,7 +97,7 @@ export function estudiosSinResultado(entrada: EntradaDeAlertas): readonly Alerta
         prioridad: prioridadPorPlazo(dias, umbral),
         titulo: `Estudio sin resultado liberado: ${nombre}`,
         detalle:
-          `Pedido ${antiguedad(dias)} (${fecha(o.createdAt)}).` +
+          `Pedido ${antiguedad(dias)} (${fechaClinica(o.createdAt)}).` +
           (borrador ? ' Hay un informe en redacción, todavía no validado.' : ' Aún no hay informe.'),
         nodoId: nodo,
         nodoIds: motivo === undefined ? [nodo] : [nodo, idDeNodo('diagnostico', motivo)],
@@ -126,7 +126,7 @@ export function derivacionesAbiertas(entrada: EntradaDeAlertas): readonly Alerta
         tipo: 'derivacion-sin-respuesta',
         prioridad: prioridadPorPlazo(dias, umbrales.derivacionDias),
         titulo: `Derivación sin respuesta de ${destino}`,
-        detalle: `Enviada ${antiguedad(dias)} (${fecha(r.createdAt)}); el destino no la aceptó ni la rechazó.`,
+        detalle: `Enviada ${antiguedad(dias)} (${fechaClinica(r.createdAt)}); el destino no la aceptó ni la rechazó.`,
         nodoId: nodo,
         nodoIds: [nodo],
         dias,
@@ -152,8 +152,8 @@ export function derivacionesAbiertas(entrada: EntradaDeAlertas): readonly Alerta
       titulo: `Derivación sin contrarreferencia de ${destino}`,
       detalle:
         (llegada !== undefined
-          ? `El paciente llegó ${antiguedad(dias)} (${fecha(llegada)})`
-          : `Aceptada ${antiguedad(dias)} (${fecha(desde)})`) +
+          ? `El paciente llegó ${antiguedad(dias)} (${fechaClinica(llegada)})`
+          : `Aceptada ${antiguedad(dias)} (${fechaClinica(desde)})`) +
         '; el destino todavía no devolvió su informe.',
       nodoId: nodo,
       nodoIds: ids,

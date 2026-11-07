@@ -11,6 +11,8 @@
  */
 export type PrioridadDeAlerta = 'alta' | 'media' | 'baja';
 
+import { DEFAULT_TIME_ZONE } from '../../../inpatient/inpatient-presentation';
+
 const DIA_MS = 24 * 60 * 60 * 1000;
 
 /** Whole days between two instants (never negative). */
@@ -44,6 +46,14 @@ export function prioridadPorPlazo(dias: number, plazo: number): PrioridadDeAlert
   return 'baja';
 }
 
+const CORTA: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+
+/** Short date of a calendar day the person picked (a filter's bounds): no zone shift. */
 export function fecha(d: Date): string {
-  return d.toLocaleDateString('es-BO', { day: 'numeric', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('es-BO', CORTA);
+}
+
+/** Short date of an instant in the clinical day's zone, so an alert names the same day as its column. */
+export function fechaClinica(d: Date): string {
+  return d.toLocaleDateString('es-BO', { ...CORTA, timeZone: DEFAULT_TIME_ZONE });
 }

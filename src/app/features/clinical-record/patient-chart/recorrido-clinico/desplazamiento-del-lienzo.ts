@@ -19,13 +19,46 @@ export function reducirMovimiento(): boolean {
  */
 const AIRE_DEL_EJE = 16;
 
+interface Ventana {
+  readonly desde: number;
+  readonly hasta: number;
+}
+
+/**
+ * Runs `fn` at most once per frame: scroll fires dozens of times a second and
+ * each measurement recomputed the whole plane and forced a layout. Without
+ * `requestAnimationFrame` (tests, SSR) it runs right away.
+ */
+function porCuadro(fn: () => void): { readonly pedir: () => void; readonly cancelar: () => void } {
+  if (typeof requestAnimationFrame !== 'function') {
+    return { pedir: fn, cancelar: () => undefined };
+  }
+  let pendiente: number | null = null;
+  return {
+    pedir: () => {
+      pendiente ??= requestAnimationFrame(() => {
+        pendiente = null;
+        fn();
+      });
+    },
+    cancelar: () => {
+      if (pendiente !== null) cancelAnimationFrame(pendiente);
+      pendiente = null;
+    },
+  };
+}
+
 export class DesplazamientoDelLienzo {
   /**
    * The stretch of the plane in view, in canvas pixels. With it each thread
    * says what it has left or right of the view: the canvas opens at the end,
    * and an episode from a year ago looked empty.
    */
-  readonly ventana = signal<{ readonly desde: number; readonly hasta: number }>({ desde: 0, hasta: Number.POSITIVE_INFINITY });
+  readonly ventana = signal<Ventana>(
+    { desde: 0, hasta: Number.POSITIVE_INFINITY },
+    // By value: a scroll event that leaves the view where it was must not recompute the plane.
+    { equal: (a, b) => a.desde === b.desde && a.hasta === b.hasta },
+  );
 
   /**
    * Whether the canvas is still stuck to the end. Whoever scrolls releases it,
@@ -55,6 +88,7 @@ export class DesplazamientoDelLienzo {
       propio = lienzo.scrollLeft;
     };
     const medir = (): void => this.ventana.set({ desde: lienzo.scrollLeft, hasta: lienzo.scrollLeft + lienzo.clientWidth });
+    const medirEnElCuadro = porCuadro(medir);
     const seguir = this.seguirAlEje(lienzo);
     const observador = new ResizeObserver(() => {
       if (this.pegadoAlFinal) {
@@ -68,7 +102,7 @@ export class DesplazamientoDelLienzo {
       observador.observe(lienzo.firstElementChild);
     }
     const alDesplazar = (): void => {
-      medir();
+      medirEnElCuadro.pedir();
       if (Math.abs(lienzo.scrollLeft - propio) <= 1) {
         return;
       }
@@ -82,6 +116,7 @@ export class DesplazamientoDelLienzo {
     this.soltarLienzo = () => {
       observador.disconnect();
       lienzo.removeEventListener('scroll', alDesplazar);
+      medirEnElCuadro.cancelar();
       seguir.soltar();
     };
   }
@@ -107,15 +142,21 @@ export class DesplazamientoDelLienzo {
       marco.style.setProperty('--red-eje-y', `${y}px`);
       marco.toggleAttribute('data-eje-pegado', y > 0);
     };
-    // Capture: the page may scroll on the document or on a shell container.
-    document.addEventListener('scroll', medir, { capture: true, passive: true });
-    window.addEventListener('resize', medir, { passive: true });
+    const enElCuadro = porCuadro(medir);
+    // Capture: the page may scroll on the document or on a shell container. The canvas' own
+    // sideways scroll does not move the axis vertically, so it is not measured.
+    const alDesplazarLaPagina = (e: Event): void => {
+      if (e.target !== lienzo) enElCuadro.pedir();
+    };
+    document.addEventListener('scroll', alDesplazarLaPagina, { capture: true, passive: true });
+    window.addEventListener('resize', enElCuadro.pedir, { passive: true });
     medir();
     return {
       medir,
       soltar: () => {
-        document.removeEventListener('scroll', medir, { capture: true });
-        window.removeEventListener('resize', medir);
+        document.removeEventListener('scroll', alDesplazarLaPagina, { capture: true });
+        window.removeEventListener('resize', enElCuadro.pedir);
+        enElCuadro.cancelar();
       },
     };
   }
