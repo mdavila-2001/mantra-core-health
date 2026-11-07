@@ -213,8 +213,12 @@ export class MiRecorrido {
     }
   }
 
-  /** A thread's folded label: the problem, its status and since when. */
-  /** The span, not only the start: the threads are ordered by their latest record, and «desde» alone made that order look random. */
+  /**
+   * A thread's folded label: the problem, its status and its span. The span,
+   * not only the start: the threads are ordered by its end, and «desde» alone
+   * made that order look random. Both come from the first read (`lapsoDe`),
+   * so they do not jump when the studies arrive.
+   */
   protected encabezadoDe(episodio: Episodio): string {
     const desde = fechaCorta(episodio.desde ?? undefined);
     const hasta = fechaCorta(episodio.hasta ?? undefined);
