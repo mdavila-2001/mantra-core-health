@@ -27,7 +27,8 @@ export function antiguedad(dias: number): string {
   if (dias === 1) return 'hace 1 día';
   if (dias < 60) return `hace ${dias} días`;
   const meses = Math.floor(dias / 30);
-  return `hace ${meses} meses (${dias} días)`;
+  // No-break space: the count and its unit never split across lines.
+  return `hace ${meses} meses (${dias}\u00a0días)`;
 }
 
 export function prioridadPorPlazo(dias: number, plazo: number): PrioridadDeAlerta {

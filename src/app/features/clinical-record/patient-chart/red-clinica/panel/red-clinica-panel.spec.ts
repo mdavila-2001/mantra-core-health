@@ -150,7 +150,7 @@ describe('RedClinicaPanel', () => {
 
     it('sin resultado liberado lo dice, con la antigüedad del pedido', async () => {
       await abrir('e3');
-      expect(el().querySelector('[data-testid="red-panel-sin-resultado"]')?.textContent).toContain('pedido hace 2 meses (65 días)');
+      expect(el().querySelector('[data-testid="red-panel-sin-resultado"]')?.textContent).toContain('pedido hace 2 meses (65\u00a0días)');
       expect(el().querySelector('[data-testid="red-panel-valor"]')).toBeNull();
     });
 

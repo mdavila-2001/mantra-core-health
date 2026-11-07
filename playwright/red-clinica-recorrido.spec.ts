@@ -156,13 +156,14 @@ test.describe('Red clínica · recorrido y panel lateral', () => {
     await expect(error).toBeVisible();
     await expect(error).toContainText('No se pudieron leer los valores del informe');
     await expect(error).toContainText('Código de soporte');
-    // What was already known stays in view while the read fails.
-    await expect(panel.getByTestId('red-panel-liberado')).toBeVisible();
+    // «Resultado liberado» belongs to a successful read: under an error it would contradict it.
+    await expect(panel.getByTestId('red-panel-liberado')).toHaveCount(0);
 
     await page.evaluate(() => sessionStorage.removeItem('mock:fallos'));
     await error.getByRole('button', { name: 'Reintentar' }).click();
     await expect(panel.getByTestId('red-panel-informe-error')).toHaveCount(0);
     await expect(panel.getByTestId('red-panel-valor')).toHaveCount(2);
+    await expect(panel.getByTestId('red-panel-liberado')).toBeVisible();
   });
 
   for (const [ancho, alto] of [
