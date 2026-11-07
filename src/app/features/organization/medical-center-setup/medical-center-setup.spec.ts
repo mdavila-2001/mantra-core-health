@@ -7,6 +7,7 @@ import { NEVER, of, throwError, type Observable } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionStore } from '../../../core/auth/session.store';
+import type { BranchListItem } from '../../../core/data-access/directory/directory.types';
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
 import { ReverseGeocodingClient } from '../../../core/data-access/geo/reverse-geocoding.client';
 import { BoMunicipalitiesCatalog } from '../../../core/data-access/terminology/bo-municipalities.service';
@@ -56,6 +57,7 @@ describe('MedicalCenterSetup', () => {
   const activeTenant = signal<string | null>(TENANT);
   /** Lo que responde `GET /tenants/me`: la organización activa, verificada o no. */
   let misOrganizaciones: () => Observable<readonly { id: string; isVerified: boolean }[]>;
+  let branches: readonly BranchListItem[];
 
   const interno = (): Internal => fixture.componentInstance as unknown as Internal;
 
@@ -72,7 +74,8 @@ describe('MedicalCenterSetup', () => {
   beforeEach(async () => {
     activeTenant.set(TENANT);
     createPractice = vi.fn(() => of({ practiceId: 'pr-1', practiceSiteId: 'site-1' }));
-    misOrganizaciones = () => of([{ id: TENANT, isVerified: true }]);
+    misOrganizaciones = () => of([{ id: TENANT, isVerified: true, legalName: 'Centro Médico Norte S.R.L.', tradeName: 'Centro Médico Norte' }]);
+    branches = [];
 
     await TestBed.configureTestingModule({
       imports: [MedicalCenterSetup],
@@ -91,7 +94,7 @@ describe('MedicalCenterSetup', () => {
         { provide: PracticeOnboardingClient, useValue: { createPractice } },
         {
           provide: DirectoryClient,
-          useValue: { listMyOrganizations: () => misOrganizaciones() },
+          useValue: { listMyOrganizations: () => misOrganizaciones(), listBranches: () => of({ items: branches, count: branches.length }) },
         },
         { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
         ...PROVEEDORES_DE_UBICACION,
@@ -100,6 +103,60 @@ describe('MedicalCenterSetup', () => {
 
     fixture = TestBed.createComponent(MedicalCenterSetup);
     await fixture.whenStable();
+  });
+
+  describe('con la sede que declaró el registro', () => {
+    const CASA: BranchListItem = {
+      id: 'b-1',
+      code: 'CASA-CENTRAL',
+      name: 'Casa central',
+      statusConceptId: 'st',
+      description: 'Calle José María Aguirre Achá, Los Pinos',
+      latitude: -16.5,
+      longitude: -68.15,
+      category: 'head_office',
+      createdAt: new Date('2026-01-01'),
+    };
+
+    async function mountWith(list: readonly BranchListItem[]): Promise<HTMLElement> {
+      branches = list;
+      fixture = TestBed.createComponent(MedicalCenterSetup);
+      await fixture.whenStable();
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    }
+    const byId = (host: HTMLElement, id: string): HTMLElement | null => host.querySelector(`[data-testid="${id}"]`);
+
+    it('no pide de nuevo el nombre, la sede ni el punto: una confirmación y listo', async () => {
+      const host = await mountWith([CASA]);
+
+      expect(byId(host, 'medical-center-setup-registered-name')?.textContent).toContain('Centro Médico Norte');
+      expect(byId(host, 'medical-center-setup-registered-site')?.textContent).toContain('Casa central');
+      expect(byId(host, 'medical-center-setup-form')).toBeNull();
+
+      byId(host, 'medical-center-setup-registered-create')!.click();
+      expect(createPractice).toHaveBeenCalledWith(TENANT, {
+        name: 'Centro Médico Norte',
+        site: { name: 'Casa central', addressText: 'Calle José María Aguirre Achá, Los Pinos', latitude: -16.5, longitude: -68.15 },
+      });
+    });
+
+    it('«Usar otros datos» vuelve al formulario', async () => {
+      const host = await mountWith([CASA]);
+
+      byId(host, 'medical-center-setup-registered-other')!.click();
+      fixture.detectChanges();
+
+      expect(byId(host, 'medical-center-setup-registered')).toBeNull();
+      expect(byId(host, 'medical-center-setup-form')).not.toBeNull();
+    });
+
+    it('una sede sin punto o sin dirección no salta el formulario', async () => {
+      const host = await mountWith([{ ...CASA, latitude: undefined, longitude: undefined }]);
+
+      expect(byId(host, 'medical-center-setup-registered')).toBeNull();
+      expect(byId(host, 'medical-center-setup-form')).not.toBeNull();
+    });
   });
 
   it('envía el cuerpo exacto a la organización activa', () => {
@@ -283,7 +340,7 @@ describe('MedicalCenterSetup · organización todavía no verificada (S3)', () =
           },
         },
         { provide: PracticeOnboardingClient, useValue: { createPractice: vi.fn() } },
-        { provide: DirectoryClient, useValue: { listMyOrganizations: respuesta } },
+        { provide: DirectoryClient, useValue: { listMyOrganizations: respuesta, listBranches: () => of({ items: [], count: 0 }) } },
         { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
         ...PROVEEDORES_DE_UBICACION,
       ],

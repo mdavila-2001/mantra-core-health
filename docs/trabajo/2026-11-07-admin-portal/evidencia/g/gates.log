@@ -1,0 +1,621 @@
+=== check-max-lines
+  aviso: src/app/features/lab-reception/lab-reception.ts ya no supera 300 líneas; quitá su excepción con --actualizar
+  aviso: src/app/features/clinical-record/patient-chart/recorrido-clinico/recorrido-clinico.model.ts ya no supera 300 líneas; quitá su excepción con --actualizar
+  aviso: src/app/core/data-access/diagnostics/diagnostics.types.ts ya no supera 300 líneas; quitá su excepción con --actualizar
+  aviso: src/app/features/lab-reception/lab-reception.html ya no supera 300 líneas; quitá su excepción con --actualizar
+  aviso: src/app/core/data-access/referrals/referrals.types.ts ya no supera 300 líneas; quitá su excepción con --actualizar
+  aviso: src/app/features/clinical-record/patient-chart/diagnosis-block/diagnosis-block.ts ya no supera 300 líneas; quitá su excepción con --actualizar
+  aviso: src/app/features/support-access/my-support/my-support.html ya no supera 300 líneas; quitá su excepción con --actualizar
+  aviso: src/app/features/account/medical-record/medical-record.css ya no supera 300 líneas; quitá su excepción con --actualizar
+
+✗ check-max-lines — techo 300 líneas (hoy 2026-11-07)
+
+  4 archivo(s) por encima de 300 sin excepción:
+    src/app/core/mock/handlers/study-detail.handlers.ts: 426 líneas
+    src/app/features/clinical-record/patient-chart/analysis-order-block/study-order-kind.ts: 410 líneas
+    src/app/features/clinical-record/patient-chart/analysis-order-block/analysis-order-block.html: 396 líneas
+    src/app/shared/components/atoms/input/input.ts: 301 líneas
+  35 excepción(es) que crecieron por encima de su tamaño congelado:
+    src/app/features/agenda/agenda.ts: 3088 líneas (congelado en 2294)
+    src/app/features/account/appointments/appointments.ts: 2317 líneas (congelado en 2302)
+    src/app/core/mock/handlers/scheduling.handlers.ts: 1834 líneas (congelado en 1811)
+    src/app/shared/components/organisms/date-picker/date-picker.ts: 1693 líneas (congelado en 1681)
+    src/app/features/form-builder/form-builder.ts: 1594 líneas (congelado en 1593)
+    src/app/core/data-access/scheduling/scheduling.client.ts: 1459 líneas (congelado en 1401)
+    src/app/core/data-access/scheduling/scheduling.types.ts: 1429 líneas (congelado en 1408)
+    src/app/features/auth/register-practitioner/register-practitioner.html: 1165 líneas (congelado en 1147)
+    src/app/features/agenda/booking-new/booking-new.ts: 786 líneas (congelado en 751)
+    src/app/features/admin/bulk-imports/bulk-imports.ts: 752 líneas (congelado en 751)
+    src/app/features/clinical-record/patient-chart/analysis-order-block/analysis-order-block.ts: 703 líneas (congelado en 693)
+    src/app/features/admin/organizations/organization-new/organization-new.ts: 628 líneas (congelado en 623)
+    src/app/features/insurance/insurance-campaigns/insurance-campaigns.ts: 624 líneas (congelado en 623)
+    src/app/features/glossary/glossary-term.ts: 601 líneas (congelado en 600)
+    src/app/features/support-access/combined-agenda/combined-agenda.ts: 590 líneas (congelado en 589)
+    src/app/features/public-directories/pharmacy-detail/pharmacy-detail.html: 576 líneas (congelado en 571)
+    src/app/core/mock/handlers/practice.handlers.ts: 575 líneas (congelado en 555)
+    src/app/features/laboratory/results/laboratory-results.ts: 566 líneas (congelado en 561)
+    src/app/features/access-governance/campaigns/campaign-wizard/campaign-wizard.ts: 562 líneas (congelado en 561)
+    src/app/core/mock/handlers/governance.handlers.ts: 523 líneas (congelado en 514)
+    src/app/features/laboratory/results/laboratory-results.css: 497 líneas (congelado en 488)
+    src/app/features/form-builder/form-builder.css: 483 líneas (congelado en 479)
+    src/app/core/data-access/public-directory/public-directory.types.ts: 469 líneas (congelado en 464)
+    src/app/core/data-access/support-access/support-access.wire.ts: 451 líneas (congelado en 392)
+    src/app/features/auth/register-practitioner/register-practitioner.css: 425 líneas (congelado en 419)
+    src/app/features/admin/organizations/child-organization-new/child-organization-new.ts: 406 líneas (congelado en 401)
+    src/app/features/admin/practitioner-assisted-registration/practitioner-assisted-registration.ts: 395 líneas (congelado en 390)
+    src/app/core/messaging/chat-socket.service.ts: 389 líneas (congelado en 382)
+    src/app/features/shell-layout/shell-layout.css: 387 líneas (congelado en 365)
+    src/app/features/directory/practitioner-detail/practitioner-detail.ts: 372 líneas (congelado en 334)
+    src/app/features/laboratory/results/laboratory-results.html: 370 líneas (congelado en 359)
+    src/app/features/admin/organizations/membership-new/membership-new.ts: 366 líneas (congelado en 361)
+    src/app/features/admin/organizations/branch-new/branch-new.ts: 307 líneas (congelado en 303)
+    src/app/features/messaging/thread/composer/composer.html: 307 líneas (congelado en 306)
+    src/app/shared/components/organisms/date-picker/date-picker.html: 306 líneas (congelado en 304)
+
+  Partilo: plantilla en .html, estilos en .css, lógica en servicios/ayudas. No subas el techo.
+
+exit=1
+=== check-mock-vs-client
+
+✗ check-mock-vs-client
+
+  20 operación(es) sin manejador y SIN registrar en CONOCIDAS:
+
+    POST /accounting/fiscal-years  (FiscalYearOpeningClient, src/app/core/data-access/billing-setup/fiscal-year-opening.client.ts)
+    GET /admin/observability/coverage  (ObservabilityClient, src/app/core/data-access/observability/observability.client.ts)
+    GET /admin/observability/endpoints  (ObservabilityClient, src/app/core/data-access/observability/observability.client.ts)
+    GET /admin/observability/errors/events  (ObservabilityClient, src/app/core/data-access/observability/observability.client.ts)
+    GET /admin/observability/errors/groups  (ObservabilityClient, src/app/core/data-access/observability/observability.client.ts)
+    GET /admin/observability/errors/groups/:id  (ObservabilityClient, src/app/core/data-access/observability/observability.client.ts)
+    PATCH /admin/observability/errors/groups/:id  (ObservabilityClient, src/app/core/data-access/observability/observability.client.ts)
+    GET /admin/observability/modules  (ObservabilityClient, src/app/core/data-access/observability/observability.client.ts)
+    GET /admin/observability/requests/:requestId  (ObservabilityClient, src/app/core/data-access/observability/observability.client.ts)
+    GET /admin/observability/sql/slow  (ObservabilityClient, src/app/core/data-access/observability/observability.client.ts)
+    GET /admin/observability/sql/statements  (ObservabilityClient, src/app/core/data-access/observability/observability.client.ts)
+    GET /admin/observability/sql/statements/:hash  (ObservabilityClient, src/app/core/data-access/observability/observability.client.ts)
+    GET /admin/observability/summary  (ObservabilityClient, src/app/core/data-access/observability/observability.client.ts)
+    GET /admin/observability/timeseries  (ObservabilityClient, src/app/core/data-access/observability/observability.client.ts)
+    POST /pharmacies/:pharmacyId/:target/bulk  (PharmacyBulkClient, src/app/core/data-access/pharmacy/pharmacy-bulk.client.ts)
+    PUT /pharmacies/:pharmacyId/sites/:siteId  (PharmacySiteStockClient, src/app/core/data-access/pharmacy/pharmacy-site-stock.client.ts)
+    GET /pharmacy-inventory/sites/:siteId/stock  (PharmacySiteStockClient, src/app/core/data-access/pharmacy/pharmacy-site-stock.client.ts)
+    GET /scheduling/bookable-resources  (BookableResourcesClient, src/app/core/data-access/scheduling/bookable-resources.client.ts)
+    POST /terminology/concepts/:conceptId/$deprecate  (ConceptAdminClient, src/app/core/data-access/terminology/concept-admin.client.ts)
+    POST /terminology/concepts/:conceptId/properties  (ConceptAdminClient, src/app/core/data-access/terminology/concept-admin.client.ts)
+
+  Con el mock honesto (H2.S1.M1) esto responde 501: la pantalla que lo llame
+  va a mostrar el estado de error. Si es una brecha conocida, agregala a
+  CONOCIDAS con su prompt; si no, escribile el manejador.
+
+exit=1
+=== check-admin-portal-contract
+
+✗ check-admin-portal-contract
+
+  33 llamada(s) que el contrato OpenAPI no declara:
+    GET /admin/catalogs/services/scopes   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
+    GET /admin/catalogs/services   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
+    GET /admin/catalogs/services/{id}   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
+    POST /admin/catalogs/services   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
+    PATCH /admin/catalogs/services/{id}   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
+    POST /admin/catalogs/services/{id}/deactivate   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
+    POST /admin/catalogs/services/{id}/reactivate   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
+    GET /admin/catalogs/glossary   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
+    GET /admin/catalogs/glossary/{conceptId}   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
+    POST /admin/catalogs/glossary   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
+    PATCH /admin/catalogs/glossary/{conceptId}   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
+    POST /admin/catalogs/glossary/{conceptId}/deactivate   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
+    POST /admin/catalogs/glossary/{conceptId}/reactivate   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
+    GET /admin/governance/data-quality/issues   (src/app/core/data-access/admin-portal/data-quality.client.ts)
+    GET /admin/governance/data-quality/issues/{id}   (src/app/core/data-access/admin-portal/data-quality.client.ts)
+    POST /admin/governance/data-quality/issues/{id}/resolution   (src/app/core/data-access/admin-portal/data-quality.client.ts)
+    GET /admin/governance/data-quality/rules   (src/app/core/data-access/admin-portal/data-quality.client.ts)
+    GET /admin/governance/data-quality/rules/{id}   (src/app/core/data-access/admin-portal/data-quality.client.ts)
+    GET /admin/governance/policies   (src/app/core/data-access/admin-portal/governance-policies.client.ts)
+    GET /admin/governance/policies/{type}/{id}   (src/app/core/data-access/admin-portal/governance-policies.client.ts)
+    GET /admin/governance/change-log   (src/app/core/data-access/admin-portal/governance-policies.client.ts)
+    GET /admin/catalog/pii/summary   (src/app/core/data-access/admin-portal/governance-policies.client.ts)
+    GET /admin/catalog/pii/columns   (src/app/core/data-access/admin-portal/governance-policies.client.ts)
+    GET /admin/catalog/pii/reconciliation   (src/app/core/data-access/admin-portal/governance-policies.client.ts)
+    GET /admin/governance/mutability   (src/app/core/data-access/admin-portal/mutability.client.ts)
+    GET /admin/governance/mutability/summary   (src/app/core/data-access/admin-portal/mutability.client.ts)
+    GET /admin/governance/mutability/{schema}/{table}   (src/app/core/data-access/admin-portal/mutability.client.ts)
+    GET /privacy/dsar   (src/app/core/data-access/admin-portal/privacy-requests.client.ts)
+    GET /privacy/dsar/{id}   (src/app/core/data-access/admin-portal/privacy-requests.client.ts)
+    GET /admin/ops/runtime-pieces   (src/app/core/data-access/admin-portal/runtime-pieces.client.ts)
+    GET /admin/ops/runtime-pieces/{id}   (src/app/core/data-access/admin-portal/runtime-pieces.client.ts)
+    POST /admin/ops/runtime-pieces/discover   (src/app/core/data-access/admin-portal/runtime-pieces.client.ts)
+    GET /authz/directory-users   (src/app/core/data-access/authz-admin/authz-admin.client.ts)
+
+  Contrato: openapi/openapi.json de mantra-core-health-api (dev + claude/personal-apoyo-gobierno-accesos). Si la API cambió, refrescalo con yarn contract:refresh.
+
+exit=1
+=== check-api-contract-drift
+
+✗ check-api-contract-drift
+
+  196 operación(es) que el código llama y la documentación no declara:
+    DELETE /care-spaces/:id/unit-assignments/:assignmentId
+    DELETE /iam/onboarding-drafts/:formType/:draftId
+    DELETE /medical-groups/:groupId/members/:memberId
+    DELETE /medical-groups/:id
+    GET /admin/analytics/devices
+    GET /admin/analytics/money
+    GET /admin/bulk-imports
+    GET /admin/bulk-imports/:id
+    GET /admin/bulk-imports/:id/report
+    GET /admin/bulk-imports/templates
+    GET /admin/bulk-imports/templates/:kind
+    GET /admin/catalog/fit
+    GET /admin/catalog/pii/columns
+    GET /admin/catalog/pii/reconciliation
+    GET /admin/catalog/pii/summary
+    GET /admin/catalogs/glossary
+    GET /admin/catalogs/glossary/:conceptId
+    GET /admin/catalogs/services
+    GET /admin/catalogs/services/:id
+    GET /admin/catalogs/services/scopes
+    GET /admin/governance/change-log
+    GET /admin/governance/data-quality/issues
+    GET /admin/governance/data-quality/issues/:id
+    GET /admin/governance/data-quality/rules
+    GET /admin/governance/data-quality/rules/:id
+    GET /admin/governance/mutability
+    GET /admin/governance/mutability/:schema/:table
+    GET /admin/governance/mutability/summary
+    GET /admin/governance/policies
+    GET /admin/governance/policies/:type/:id
+    GET /admin/observability/coverage
+    GET /admin/observability/endpoints
+    GET /admin/observability/errors/events
+    GET /admin/observability/errors/groups
+    GET /admin/observability/errors/groups/:id
+    GET /admin/observability/modules
+    GET /admin/observability/requests/:requestId
+    GET /admin/observability/sql/slow
+    GET /admin/observability/sql/statements
+    GET /admin/observability/sql/statements/:hash
+    GET /admin/observability/summary
+    GET /admin/observability/timeseries
+    GET /admin/ops/instances/liveness
+    GET /admin/ops/runtime-pieces
+    GET /admin/ops/runtime-pieces/:id
+    GET /admin/ops/tools
+    GET /admin/ui-visibility/elements
+    GET /admin/ui-visibility/preview
+    GET /admin/ui-visibility/rules
+    GET /authz/access-reviews
+    GET /authz/access-reviews/due
+    GET /authz/catalog/modules
+    GET /authz/directory-users
+    GET /authz/permissions/:permissionId/holders
+    GET /authz/resource-scope-grants
+    GET /authz/roles/:roleId/field-permissions
+    GET /authz/users/:userId/access-map
+    GET /billing/simulated/patient/charges
+    GET /billing/simulated/payment-reports
+    GET /care-spaces/:careSpaceId/blocks
+    GET /care-spaces/:careSpaceId/operational-state
+    GET /care-spaces/:careSpaceId/status-events
+    GET /care-spaces/:id
+    GET /care-spaces/:id/history
+    GET /care-spaces/:id/retire-check
+    GET /clinical-units/:id
+    GET /clinical/encounters/:encounterId/stay
+    GET /clinical/patients/:patientProfileId/inpatient-stay
+    GET /clinical/prescription-shares
+    GET /clinical/prescription-shares/by-token/:token
+    GET /clinical/study-catalog/:conceptId
+    GET /community/profiles/organization-showcases/me
+    GET /consent/treatment-informed-consents
+    GET /consent/treatment-informed-consents/:id
+    GET /diagnostics/lab/catalog
+    GET /diagnostics/lab/orders
+    GET /iam/auth/identifier-exists
+    GET /iam/me/devices
+    GET /iam/onboarding-drafts/:formType/:draftId
+    GET /iam/users/:userId/lifecycle
+    GET /me/ui-visibility
+    GET /pharmacy-inventory/availability/medications
+    GET /pharmacy/prescription-shares/:token
+    GET /practice/infrastructure-catalog
+    GET /privacy/dsar
+    GET /privacy/dsar/:id
+    GET /public/prescription-shares/:token
+    GET /public/prescriptions/:prescriptionId/verify
+    GET /scheduling/bookable-organizations
+    GET /scheduling/bookable-resources
+    GET /scheduling/my-resources
+    GET /sites/:siteId/attending-practitioners
+    GET /sites/:siteId/bed-board
+    GET /sites/:siteId/capacity
+    GET /sites/:siteId/census
+    GET /sites/:siteId/cleaning-orders
+    GET /sites/:siteId/clinical-units
+    GET /sites/:siteId/inpatient-indicators
+    GET /sites/:siteId/licenses
+    GET /sites/:siteId/structure
+    GET /telemetry/tracking-consents/me
+    PATCH /admin/catalogs/glossary/:conceptId
+    PATCH /admin/catalogs/services/:id
+    PATCH /admin/observability/errors/groups/:id
+    PATCH /admin/ui-visibility/rules/:id
+    PATCH /care-spaces/:id
+    PATCH /clinical-units/:id
+    PATCH /clinical/placement-incidents/:id
+    PATCH /consent/treatment-informed-consents/:id/post-emergency-information
+    PATCH /consent/treatment-informed-consents/:id/withdraw
+    PATCH /diagnostic-unit-sites/:siteId
+    PATCH /medical-groups/:groupId/members/:memberId
+    PATCH /medical-groups/:id
+    PATCH /privacy/dsar/:id
+    PATCH /scheduling/resources/:resourceId
+    PATCH /site-licenses/:id
+    PATCH /sites/:siteId/regulatory
+    PATCH /tenants/:tenantId/representatives/LEGAL_REPRESENTATIVE/name
+    POST /accounting/fiscal-years
+    POST /admin/bulk-imports
+    POST /admin/bulk-imports/:id/confirm
+    POST /admin/catalog/fit/run
+    POST /admin/catalogs/glossary
+    POST /admin/catalogs/glossary/:conceptId/deactivate
+    POST /admin/catalogs/glossary/:conceptId/reactivate
+    POST /admin/catalogs/services
+    POST /admin/catalogs/services/:id/deactivate
+    POST /admin/catalogs/services/:id/reactivate
+    POST /admin/governance/data-quality/issues/:id/resolution
+    POST /admin/ops/runtime-pieces/discover
+    POST /admin/ui-visibility/elements
+    POST /admin/ui-visibility/elements/sync
+    POST /admin/ui-visibility/rules
+    POST /admin/ui-visibility/rules/:id/end
+    POST /admissions/:id/documents/:fileId/download-url
+    POST /authz/resource-scope-grants
+    POST /authz/simulations
+    POST /authz/users/:userId/access-reviews
+    POST /billing/simulated/patient/charges/:chargeId/report
+    POST /billing/simulated/payment-reports/:chargeId/confirm
+    POST /care-space-blocks/:blockId/cancel
+    POST /care-space-blocks/:blockId/end
+    POST /care-spaces/:careSpaceId/availability
+    POST /care-spaces/:careSpaceId/hygiene
+    POST /care-spaces/:careSpaceId/isolation
+    POST /care-spaces/:id/lifecycle
+    POST /care-spaces/:id/move
+    POST /care-spaces/:id/unit-assignments
+    POST /census-days/:censusDayId/adjustments
+    POST /cleaning-orders/:id/:action
+    POST /clinical-units/:id/lifecycle
+    POST /clinical/admissions
+    POST /clinical/bed-compatibility
+    POST /clinical/bed-swaps
+    POST /clinical/encounter-locations/:encounterLocationId/cancel
+    POST /clinical/encounters/:encounterId/bed-assignment
+    POST /clinical/encounters/:encounterId/bed-compatibility
+    POST /clinical/encounters/:encounterId/discharge
+    POST /clinical/encounters/:encounterId/transfer
+    POST /clinical/prescription-shares
+    POST /clinical/prescription-shares/:shareId/revoke
+    POST /community/topics
+    POST /consent/treatment-informed-consents
+    POST /consent/treatment-informed-consents/:consentId/evidence
+    POST /diagnostic-results/me/orders/:orderId/referral/:decision
+    POST /diagnostics/lab/catalog/import
+    POST /diagnostics/lab/orders
+    POST /diagnostics/lab/orders/:orderId/transitions
+    POST /diagnostics/lab/orders/from-qr
+    POST /diagnostics/lab/patients/lookup
+    POST /diagnostics/lab/result-files/search
+    POST /diagnostics/orders/:orderId/referral
+    POST /iam/users/:userId/:action
+    POST /me/practitioner/support-staff
+    POST /medical-groups/:groupId/members
+    POST /org/support-staff
+    POST /pharmacies/:pharmacyId/:target/bulk
+    POST /profiles/practitioners/me/admission/withdraw
+    POST /sites/:siteId/care-spaces
+    POST /sites/:siteId/care-spaces/bulk
+    POST /sites/:siteId/care-spaces/import
+    POST /sites/:siteId/census/:date/close
+    POST /sites/:siteId/cleaning-orders
+    POST /sites/:siteId/declared-capacities
+    POST /sites/:siteId/licenses
+    POST /telemetry/onboarding-events
+    POST /telemetry/tracking-consents
+    POST /telemetry/tracking-consents/:consentId/withdraw
+    POST /tenants/:tenantId/branches/location-preview
+    POST /terminology/concepts/:conceptId/$deprecate
+    POST /terminology/concepts/:conceptId/properties
+    PUT /authz/roles/:roleId/field-permissions
+    PUT /authz/roles/:roleId/permissions
+    PUT /diagnostics/lab/orders/:orderId
+    PUT /iam/onboarding-drafts/:formType/:draftId
+    PUT /pharmacies/:pharmacyId/sites/:siteId
+
+  14 operación(es) declarada(s) que el código no llama:
+    DELETE /pharmacies/:pharmacyId/integration-connections/:connectionId/external-system
+    GET /admissions/:id/documents/:fileId
+    GET /pharmacies/:pharmacyId/integration-connections
+    GET /pharmacies/:pharmacyId/integration-connections/:connectionId/external-products
+    GET /pharmacies/:pharmacyId/integration-connections/:connectionId/product-mappings
+    GET /pharmacies/:pharmacyId/integration-connections/:connectionId/sync-batches
+    POST /insurance/received-claims/:claimId/invoice
+    POST /insurance/received-claims/:claimId/invoice/annulment
+    POST /pharmacies/:pharmacyId/:entity/bulk
+    POST /pharmacies/:pharmacyId/integration-connections
+    POST /pharmacies/:pharmacyId/integration-connections/:connectionId/external-system/test
+    POST /pharmacies/:pharmacyId/integration-connections/:connectionId/product-mappings
+    POST /pharmacies/:pharmacyId/integration-connections/:connectionId/sync
+    PUT /pharmacies/:pharmacyId/integration-connections/:connectionId/external-system
+
+  Actualizá docs/integrations/backend-api.md.
+
+exit=1
+=== check-api-prefixes
+✓ check-api-prefixes
+  119 prefijos, iguales en las 3 fuentes
+  /access-requests  /accounting  /admin/analytics  /admin/catalog  /admin/catalogs  /admin/content-packs  /admin/governance  /admin/observability  /admin/ops  /admin/portal  /admin/qa  /admin/tenants  /admissions  /affiliation-invitations  /approvals  /audit  /auth-providers  /authz  /billing/bed-day  /billing/charge-captures  /billing/encounters  /billing/invoices  /billing/payments-received  /billing/service-catalog  /billing/simulated  /billing/space-tariffs  /care-space-blocks  /care-spaces  /cds  /census-days  /charts  /cleaning-orders  /clinical  /clinical-units  /common  /community  /consent  /delegated-access  /delegated-permission-sets  /dental-procedures  /diagnostic-equipment  /diagnostic-results  /diagnostic-study-offerings  /diagnostic-units  /diagnostics/accessions  /diagnostics/containers  /diagnostics/lab  /diagnostics/patients  /diagnostics/reports  /diagnostics/service-requests  /diagnostics/specimens  /diagnostics/work-orders  /forms  /geo  /health-context  /iam  /identity  /insurance-brokers  /insurance-campaigns  /insurance-carrier-catalog  /insurance-carriers  /insurance-claims  /insurance-marketplace  /insurance-plans  /insurance-products  /insurance/analytics  /insurance/my-claims  /insurance/patients  /insurance/portability  /insurance/practitioner-requests  /insurance/received-claims  /loyalty  /marketing  /me  /medical-centers  /medical-groups  /notifications  /or-blocks  /org  /otel  /patient-coverages  /patient-spending  /patients/me  /patients/me/reviews  /pharma-labs  /pharmacies  /pharmacy  /pharmacy-inventory  /practice/infrastructure-access  /practice/infrastructure-catalog  /practices  /practitioner-delegates  /practitioners  /prescription-favorites  /price-schedules  /privacy  /procedure-cases  /profiles  /promotions/me  /public  /quotations  /referrals  /reporting  /role-assignments  /scheduling  /site-licenses  /sites  /socket.io  /study-prices  /support-engagement-requests  /surveys  /system-context  /telemetry  /tenants  /terminology  /visit-agenda  /visit-records  /visit-requests  /visit-surveys
+exit=0
+=== check-client-prefixes
+
+✗ check-client-prefixes — 20 operación(es) sin rutear
+
+  BulkImportsClient (8)
+      GET /admin/bulk-imports
+      GET /admin/bulk-imports/:id
+      GET /admin/bulk-imports/:id/report
+      GET /admin/bulk-imports/:id/report
+      GET /admin/bulk-imports/templates
+      GET /admin/bulk-imports/templates/:kind
+      POST /admin/bulk-imports
+      POST /admin/bulk-imports/:id/confirm
+  DiagnosticUnitsAdminClient (1)
+      PATCH /diagnostic-unit-sites/:siteId
+  OrderReferralClient (1)
+      POST /diagnostics/orders/:orderId/referral
+  UiVisibilityAdminClient (9)
+      GET /admin/ui-visibility/elements
+      GET /admin/ui-visibility/preview
+      GET /admin/ui-visibility/preview
+      GET /admin/ui-visibility/rules
+      PATCH /admin/ui-visibility/rules/:id
+      POST /admin/ui-visibility/elements
+      POST /admin/ui-visibility/elements/sync
+      POST /admin/ui-visibility/rules
+      POST /admin/ui-visibility/rules/:id/end
+  UiVisibilityClient (1)
+      POST /admin/ui-visibility/elements/sync
+
+  El servidor de desarrollo responde estas rutas con el index.html de
+  Angular y un 200: el cliente recibe HTML donde espera JSON. Agregá el
+  prefijo a las TRES declaraciones (proxy.conf.json, proxy.conf.docker.json
+  y deploy/nginx.conf) y comprobá que no se coma una ruta del router.
+
+exit=1
+=== check-english-identifiers
+fatal: Needed a single revision
+check-english-identifiers: no hay una base de diff resoluble (ni CHECK_ENGLISH_BASE ni origin/test). Sin diff, no se reporta nada del árbol existente.
+exit=0
+=== check-css-tokens
+
+✗ check-css-tokens — 1 token(s) sin declarar, 1 uso(s) sin valor de reserva
+
+  --space-4  (1 uso(s))
+      src/app/features/laboratory/prices/price-table/lab-price-table.css
+
+  Un token que no existe no rompe la compilación: la declaración se descarta y
+  la propiedad cae a su valor inicial. La pantalla se ve mal y las pruebas
+  pasan.
+
+  Dos salidas, y las dos son válidas:
+    · usar el token real  — mirá los declarados en 'src/styles.css' y
+      'src/styles/alovida.css', que son espacios de nombres distintos;
+    · dar valor de reserva — 'var(--x, 12px)', para lo que se fija en tiempo
+      de ejecución o pertenece a un tema opcional.
+
+exit=1
+=== check-colores-sueltos
+
+✗ check-colores-sueltos — 28 archivo(s) con más colores literales que su techo
+
+  src/app/features/component-stock/component-stock.css: 34 (techo 31)
+      15: --tinta: #0f172a;
+      16: --tinta-suave: #64748b;
+      17: --borde: #e2e8f0;
+  src/app/features/admin/web-analytics/web-analytics.css: 23 (techo 0)
+      243: color: #dc2626;
+      244: background: #fef2f2;
+      245: border: 1px solid #fecaca;
+  src/app/features/symptom-check/symptom-check.css: 23 (techo 0)
+      288: color: #fff;
+      560: background: rgba(79, 179, 169, 0.1);
+      565: background: var(--petroleo-relleno, #0B557E);
+  src/app/shared/components/organisms/auth-stage/auth-stage.css: 10 (techo 0)
+      42: color-mix(in srgb, var(--c-petrol-900) 55%, #000000)
+      54: linear-gradient(rgb(255 255 255 / 0.075) 1px, transparent 1px),
+      55: linear-gradient(90deg, rgb(255 255 255 / 0.075) 1px, transparent 1px),
+  src/app/shared/components/organisms/map/map.css: 9 (techo 0)
+      149: color: var(--tono-fg, #ffffff);
+      150: border: 1.5px solid var(--tono-bd, #ffffff);
+      151: box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  src/app/shared/components/organisms/auth-split/auth-split.css: 7 (techo 5)
+      390: color: #ffffff;
+      457: mask-image: linear-gradient(#000 58%, transparent 82%);
+      479: stroke: #ffffff;
+  src/app/features/dashboard/patient-home/first-steps/first-steps-card.css: 6 (techo 0)
+      189: color: #fff;
+      195: color: #fff;
+      251: .primeros-pasos__estrella { fill: #fff; }
+  src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.css: 4 (techo 0)
+      262: --sello-verificado: #1877f2;
+      273: fill: #fff;
+      278: --sello-verificado: #3b8ff5;
+  src/app/features/clinical-record/patient-chart/payments-block/patient-charges/patient-charges.css: 3 (techo 0)
+      117: border: 1px solid var(--app-color-border, #d6e0e5);
+      118: border-inline-start: 4px solid #c77b13;
+      120: background: #fffaf1;
+  src/app/features/account/appointments/session-payment/session-payment.css: 2 (techo 0)
+      27: background: #fff;
+      28: border: 1px solid #e1e8ec;
+  src/app/features/admin/portal/portal-shell.css: 1 (techo 0)
+      238: background: rgb(10 28 39 / 55%);
+  src/app/features/agenda/my-agenda/week-view/week-view.css: 1 (techo 0)
+      225: box-shadow: var(--shadow-md, 0 4px 16px rgb(0 0 0 / 0.16));
+  src/app/features/clinical-record/patient-chart/patient-chart.css: 1 (techo 0)
+      300: mask-image: linear-gradient(to right, #000 calc(100% - var(--sp-8)), transparent);
+  src/app/features/component-stock/scenarios/view-state-host.scenarios.ts: 1 (techo 0)
+      92: border: 1px dashed var(--border-default, #ccc);
+  src/app/features/emergency/panic-button/panic-button.css: 1 (techo 0)
+      40: background: rgb(0 0 0 / 0.5);
+  src/app/features/form-builder/create-form-modal/create-form-modal.css: 1 (techo 0)
+      14: border-top: 1px solid var(--border-subtle, #e2e8f0);
+  src/app/features/laboratory/results/laboratory-results.css: 1 (techo 0)
+      434: background: #000;
+  src/app/features/messaging/thread/composer/sticker-picker/sticker-picker.css: 1 (techo 0)
+      149: color: #fff;
+  src/app/features/messaging/thread/thread-layers.css: 1 (techo 0)
+      207: color: #fff;
+  src/app/features/shell-layout/shell-layout.css: 1 (techo 0)
+      147: box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+  src/app/shared/components/molecules/grid-group/grid-group.css: 1 (techo 0)
+      140: border-color: #ffffff;
+  src/app/shared/components/molecules/phone-input/country-flag.ts: 1 (techo 0)
+      125: <rect x="0.25" y="0.25" width="23.5" height="15.5" rx="2.25" fill="none" stroke="rgb(0 0 0 / 18%)" s
+  src/app/shared/components/molecules/practice-logo/practice-logo.css: 1 (techo 0)
+      29: background: #fff;
+  src/app/shared/components/molecules/result-card/result-card.css: 1 (techo 0)
+      611: background: linear-gradient(transparent, rgb(0 0 0 / 0.18));
+  src/app/shared/components/molecules/signature-or-seal/signature-or-seal.css: 1 (techo 0)
+      37: background: #fff;
+  src/app/shared/components/organisms/auth-stage/auth-stage.html: 1 (techo 0)
+      49: <stop offset="0.34" style="stop-color: #ffffff" />
+  src/app/shared/components/organisms/directory-page/directory-page.css: 1 (techo 0)
+      291: color: var(--text-on-brand, #fff);
+  src/app/shared/components/organisms/drawer-panel/drawer-panel.css: 1 (techo 0)
+      19: background: rgb(10 28 39 / 55%);
+
+  Usá un token (`var(--st-error-fg)`, `var(--brand-primary)`…); ver docs/design-system/tokens.md.
+  Si falta el token, se agrega en styles.css con su par de contraste en check-contrast.mjs.
+
+exit=1
+=== check-tokens
+✓ check-tokens
+  263 tokens, iguales en styles.css y en el catálogo tipado
+exit=0
+=== check-architecture
+
+✗ check-architecture
+
+  6 dependencia(s) circular(es):
+      src/app/core/data-access/iam/iam.types.ts
+      → src/app/core/data-access/iam/organization-branches.types.ts
+      src/app/core/messaging/chat.store.ts
+      → src/app/core/messaging/forwarding.ts
+      src/app/core/data-access/lab-portal/lab-portal.types.ts
+      → src/app/core/data-access/lab-portal/lab-order-origin.types.ts
+      src/app/core/data-access/lab-portal/lab-import.types.ts
+      → src/app/core/data-access/lab-portal/lab-portal.types.ts
+      src/app/core/mock/handlers/profiles.handlers.ts
+      → src/app/core/mock/handlers/profiles-dependents.mock.ts
+      src/app/features/messaging/thread/message-selection.ts
+      → src/app/features/messaging/thread/thread.ts
+  2 import(s) contra la dirección de las capas:
+      src/app/core/data-access/terminology/specialty-images.service.ts
+      → src/app/shared/specialties/specialty-images.ts
+      src/app/core/mock/handlers/directory.branch-location.ts
+      → src/app/shared/utils/branch-import/branch-coordinates.ts
+  4 archivo(s) hacen peticiones fuera de core/data-access/:
+      src/app/core/build/build-version-watcher.ts
+      src/app/features/messaging/thread/image-viewer/image-to-order.ts
+      src/app/features/messaging/thread/voice-note/audio-source.ts
+      src/app/shared/components/organisms/body-map/body-map.images.ts
+
+exit=1
+=== check-usted
+check-usted: 76 texto(s) visibles le hablan al usuario de vos o de tú.
+
+  src/app/core/data-access/infrastructure/infrastructure.rules.ts:222  «Escribí»  …Escribí un patrón, por ejemplo 301-{A…
+  src/app/core/data-access/infrastructure/infrastructure.rules.ts:228  «Usá»  …Usá un solo rango por patrón.…
+  src/app/core/data-access/infrastructure/infrastructure.rules.ts:275  «Escribí»  …Escribí un nombre base, por ejemplo «…
+  src/app/core/mock/fixtures/community.ts:397  «tenés»  …al menos una vez al año, y si tenés antecedentes familiares, cada…
+  src/app/core/mock/fixtures/community.ts:397  «Controlá»  …Controlá tu presión…
+  src/app/core/mock/fixtures/community.ts:397  «tu»  …Controlá tu presión…
+  src/app/core/mock/fixtures/community.ts:405  «tu»  …al consultorio. Reservá desde tu cuenta. #teleconsulta…
+  src/app/core/mock/fixtures/community.ts:411  «preferís»  …¿Qué preferís para tu control cardiológico?…
+  src/app/core/mock/fixtures/community.ts:411  «tu»  …¿Qué preferís para tu control cardiológico?…
+  src/app/core/mock/fixtures/community.ts:631  «Te»  …Sí, lo aplicamos desde marzo. Te escribo por privado con los d…
+  src/app/core/mock/fixtures/community.ts:743  «usá»  …ectar el riñón. Para el dolor usá paracetamol.…
+  src/app/core/mock/fixtures/community.ts:748  «preferís»  …los miro antes del jueves. Si preferís, subilos a tu historia clínic…
+  src/app/core/mock/fixtures/community.ts:748  «tu»  …ueves. Si preferís, subilos a tu historia clínica desde https:…
+  src/app/core/mock/fixtures/community.ts:754  «te»  …Vale, te derivo a la mamá de un pacien…
+  src/app/core/mock/fixtures/community.ts:754  «Tenés»  …ciente de 14 años con soplo. ¿Tenés turno esta semana?…
+  src/app/core/mock/fixtures/community.ts:755  «decile»  …Sí, decile que reserve el jueves a la ta…
+  src/app/core/mock/fixtures/community.ts:775  «Vos»  …asístoles aisladas nada más. ¿Vos, Vale?…
+  src/app/core/mock/fixtures/community.ts:783  «preferís»  …¿Qué preferís para tu control cardiológico?…
+  src/app/core/mock/fixtures/community.ts:783  «tu»  …¿Qué preferís para tu control cardiológico?…
+  src/app/core/mock/fixtures/standard-sheets.generated.ts:37211  «uní»  …Aumento de volumen uní o bi-palpebral del ojo afecta…
+  src/app/core/mock/handlers/infrastructure.handlers.ts:194  «Recargá»  …espacio mientras lo editabas. Recargá para ver la versión actual.…
+  src/app/core/mock/handlers/infrastructure.handlers.ts:887  «activá»  …Primero activá ${padre.name}: un espacio no …
+  src/app/core/mock/mock-banner.ts:28  «ves»  …ong> sin backend. Todo lo que ves sale de datos de prueba en me…
+  src/app/features/accounting/cockpit/cockpit.html:32  «Elegí»  …Elegida" placeholder="Elegí una práctica" /> </…
+  src/app/features/admin/medical-organization/espacio/mover-dialog.ts:37  «Elegí»  …spacio" [description]="'Elegí dónde va a colgar ' + espacio…
+  src/app/features/admin/medical-organization/espacio/mover-dialog.ts:51  «Elegí»  …ns]="opciones()" placeholder="Elegí un lugar" data-testid="mover-…
+  src/app/features/admin/medical-organization/espacio/space-bulk.html:17  «Elegí»  …ions]="padres()" placeholder="Elegí el padre" data-testid="masiva…
+  src/app/features/admin/medical-organization/espacio/space-bulk.html:20  «Elegí»  …ions]="formas()" placeholder="Elegí la forma" data-testid="masiva…
+  src/app/features/admin/medical-organization/espacio/space-bulk.html:23  «Elegí»  …s]="funciones()" placeholder="Elegí la función" data-testid="masi…
+  src/app/features/admin/medical-organization/espacio/space-bulk.html:66  «Escribí»  … <p class="masiva__total">Escribí el patrón de código para ver …
+  src/app/features/admin/medical-organization/espacio/space-detail.html:46  «Cargá»  … de climatización registrada. Cargá la fecha de validación en «At…
+  src/app/features/admin/medical-organization/espacio/space-detail.html:199  «volvé»  … vigentes. Resolvé cada una y volvé a intentarlo.'" close…
+  src/app/features/admin/medical-organization/espacio/space-form.ts:215  «Elegí»  …Elegí primero la forma.…
+  src/app/features/admin/medical-organization/espacio/space-import.html:3  «Pegá»  …pacios desde CSV" subtitle="Pegá o elegí la planilla. Se valid…
+  src/app/features/admin/medical-organization/espacio/space-import.html:3  «elegí»  …desde CSV" subtitle="Pegá o elegí la planilla. Se valida primer…
+  src/app/features/admin/medical-organization/espacio/space-import.html:88  «Corregí»  …tar-hay-errores"> Corregí la planilla y volvé a validar…
+  src/app/features/admin/medical-organization/espacio/space-import.html:88  «volvé»  … Corregí la planilla y volvé a validar: la importación es …
+  src/app/features/admin/medical-organization/espacio/vincular-unidad-dialog.ts:41  «Elegí»  …ns]="unidades()" placeholder="Elegí una unidad" /> </app-…
+  src/app/features/admin/medical-organization/establecimiento/habilitacion-dialog.ts:43  «Indicá»  …equired]="true" errorMessage="Indicá quién la emitió."> …
+  src/app/features/admin/medical-organization/infraestructura/infraestructura-tab.html:44  «Estás»  …d="infra-solo-lectura"> Estás viendo la estructura en modo …
+  src/app/features/admin/medical-organization/infraestructura/infraestructura-tab.html:94  «Elegí»  …panel-vacio"> Elegí un espacio del árbol para ver…
+  src/app/features/admin/medical-organization/infraestructura/infraestructura-tab.html:133  «Elegí»  …<p class="infra__panel-vacio">Elegí una unidad para ver qué espac…
+  src/app/features/admin/medical-organization/infraestructura/infraestructura-tab.ts:138  «Empezá»  …avía no tiene ningún espacio. Empezá por el edificio o, si es un c…
+  src/app/features/admin/organizations/organization-detail/branch-assignment-dialog/branch-assignment-dialog.html:44  «Elegí»  …rorMessage]="faltaElegir() ? 'Elegí la sede que le vas a asignar.…
+  src/app/features/admin/organizations/organization-detail/branch-assignment-dialog/branch-assignment-dialog.html:44  «vas»  …gir() ? 'Elegí la sede que le vas a asignar.' : ''" > …
+  src/app/features/admin/organizations/organization-detail/branch-assignment-dialog/branch-assignment-dialog.ts:91  «Cerrá»  … puede que ya no forme parte. Cerrá y recargá la ficha.…
+  src/app/features/admin/organizations/organization-detail/branch-assignment-dialog/branch-assignment-dialog.ts:91  «recargá»  …ue ya no forme parte. Cerrá y recargá la ficha.…
+  src/app/features/admin/portal/mutability/mutability-page.html:385  «Elegí»  …mut__help"> Elegí una tabla en «Tablas» o «Cont…
+  src/app/features/geo/ping-ingest/ping-ingest.html:44  «Ingresá»  …nvalid ? 'Ingresá la latitud en grados decimale…
+  src/app/features/geo/ping-ingest/ping-ingest.html:57  «Ingresá»  …nvalid ? 'Ingresá la longitud en grados decimal…
+  src/app/features/geo/ping-ingest/ping-ingest.html:69  «Ingresá»  …nvalid ? 'Ingresá un número, como 12.5.' …
+  src/app/features/geo/trip-close/trip-close.html:78  «Ingresá»  …tanceM.invalid ? 'Ingresá un número entero de metros, s…
+  src/app/features/geo/trip-close/trip-close.html:90  «Ingresá»  …ationS.invalid ? 'Ingresá un número entero de segundos,…
+  src/app/features/geo/trip-form/trip-form.html:25  «Guardá»  … <p class="m13__texto"> Guardá el identificador del viaje: e…
+  src/app/features/groups/group-form/group-form.html:65  «necesitás»  …rupo <strong>público</strong> necesitás tu perfil público completo: n…
+  src/app/features/groups/group-form/group-form.html:65  «tu»  …ng>público</strong> necesitás tu perfil público completo: nomb…
+  src/app/features/groups/groups.html:40  «necesitás»  …rupo <strong>público</strong> necesitás tu perfil público completo: n…
+  src/app/features/groups/groups.html:40  «tu»  …ng>público</strong> necesitás tu perfil público completo: nomb…
+  src/app/features/symptom-check/text.ts:127  «te»  …te…
+  src/app/features/symptom-check/text.ts:128  «tu»  …tu…
+  src/app/features/symptom-check/text.ts:129  «tus»  …tus…
+  src/app/features/symptom-check/text.ts:153  «tienes»  …tienes…
+  src/app/features/symptom-check/text.ts:352  «te»  …te…
+  src/app/features/tutorials/tutorials-center.html:3  «Podés»  …dos sobre la aplicación real. Podés dejarlos y retomarlos cuando …
+  src/app/features/tutorials/tutorials-center.html:35  «Tu»  …h2 class="tutoriales__titulo">Tu avance</h2> <p class=…
+  src/app/features/tutorials/tutorials-center.html:37  «tu»  …} tutoriales disponibles para tu rol. </p> </div…
+  src/app/features/tutorials/tutorials-center.html:97  «querés»  …ial" placeholder="Qué querés aprender" (searched)=…
+  src/app/features/tutorials/tutorials-center.html:176  «buscaste»  … tutorial coincide con lo que buscaste.</p> <button app-butt…
+  src/app/shared/components/organisms/registro-ayuda/registro-ayuda.html:14  «te»  …lite" aria-label="Por qué te pedimos estos datos y cómo lo…
+  src/app/shared/components/organisms/registro-ayuda/registro-ayuda.ts:71  «Tus»  …Tus datos están a salvo…
+  src/app/shared/components/organisms/registro-ayuda/registro-ayuda.ts:73  «escribís»  …Todo lo que escribís viaja cifrado hasta nuestros …
+  src/app/shared/components/organisms/registro-ayuda/registro-ayuda.ts:74  «Tu»  …Tu información clínica la ve el …
+  src/app/shared/components/organisms/registro-ayuda/registro-ayuda.ts:74  «te»  …nica la ve el profesional que te atiende, nadie más.…
+  src/app/shared/components/organisms/registro-ayuda/registro-ayuda.ts:75  «tus»  …No vendemos tus datos ni los usamos para publ…
+  src/app/shared/components/organisms/registro-ayuda/registro-ayuda.ts:76  «Podés»  …Podés corregirlos cuando quieras de…
+  src/app/shared/components/organisms/registro-ayuda/registro-ayuda.ts:76  «tu»  …regirlos cuando quieras desde tu perfil.…
+
+Páselos a usted («Elija», «Le avisamos», «su»). Guía: docs/design-system/voice-and-tone.md
+exit=1
+=== check-doc-links
+
+✗ check-doc-links — 1 enlace(s) roto(s) de 1274
+
+  docs/progress/evidence/lane-31/REPORT.md → destino inexistente: ../../../../trabajo/2026-10-13-corr-31-borrar-consulta-medica/PLAN.md
+
+exit=1
