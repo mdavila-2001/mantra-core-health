@@ -1,0 +1,14 @@
+/* Status told with words; color only accompanies it. */
+.derivacion {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.derivacion[data-status='PENDING'] {
+  color: var(--text-primary);
+  font-weight: 600;
+}

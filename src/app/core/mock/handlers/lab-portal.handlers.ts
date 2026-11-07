@@ -450,7 +450,7 @@ export function destinoDeOrden(orderId: string) {
     studyName: displayOf(orden.codeConceptId),
     patientName: paciente?.displayName ?? 'Paciente',
     patientUserId: paciente?.userId ?? null,
-    requesterName: medico?.displayName ?? 'Médico solicitante',
+    requesterName: orden.externalRequesterName ?? medico?.displayName ?? 'Médico solicitante',
     requesterUserId: medico?.userId ?? null,
   };
 }

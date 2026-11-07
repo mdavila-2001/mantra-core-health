@@ -41,7 +41,10 @@ import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Pagination } from '../../../shared/components/molecules/pagination/pagination';
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
-import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
+import { rowActionsOf } from './diagnostic-orders.actions';
+import { ReferralResponse } from './referral-response';
+import { OrderQrDialog } from './order-qr-dialog/order-qr-dialog';
+import { OrderReferralLine } from './order-referral-line/order-referral-line';
 import { PatientInsuranceSettlement } from '../../../shared/components/molecules/patient-insurance-settlement/patient-insurance-settlement';
 import { OrderPerformerSummary } from './order-performer-summary/order-performer-summary';
 import {
@@ -83,6 +86,8 @@ const PERIODOS: readonly { readonly value: string; readonly label: string; reado
 @Component({
   selector: 'app-diagnostic-orders',
   imports: [
+    OrderQrDialog,
+    OrderReferralLine,
     Alert,
     AppButton,
     Badge,
@@ -102,6 +107,7 @@ const PERIODOS: readonly { readonly value: string; readonly label: string; reado
     Tabs,
     ViewStateHost,
   ],
+  providers: [ReferralResponse],
   templateUrl: './diagnostic-orders.html',
   styleUrl: './diagnostic-orders.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -113,6 +119,7 @@ export class DiagnosticOrders {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly centros = inject(CenterScheduleClient);
+  private readonly referral = inject(ReferralResponse);
 
   /** Sin perfil de paciente no hay órdenes que leer: la API respondería 412. */
   protected readonly sinPerfilDePaciente = this.auth.patientProfileId() === null;
@@ -269,6 +276,7 @@ export class DiagnosticOrders {
           ? null
           : performerSelectionCodeOf(etiquetas.get(item.performerSelectionConceptId)?.code),
       suggestedSiteName: item.suggestedPracticeSiteName ?? null,
+      referral: item.referral ?? null,
     };
   }
 
@@ -453,33 +461,7 @@ export class DiagnosticOrders {
 
   /* ---- acciones de fila (C9 §4) ------------------------------------------------ */
 
-  protected accionesDe(fila: PatientOrderRow): readonly RowAction[] {
-    const acciones: RowAction[] = [];
-    if (fila.hasResult) {
-      acciones.push({ code: 'ver-resultado', label: 'Ver resultado', icon: 'eye' });
-    }
-    if (fila.preparation !== null) {
-      acciones.push({ code: 'ver-preparacion', label: 'Ver preparación', icon: 'clipboard' });
-    }
-    if (fila.insuranceSettlement) {
-      acciones.push({ code: 'ver-liquidacion', label: 'Ver liquidación', icon: 'billing' });
-    }
-    // Cotizar y reservar llevan al circuito de laboratorio e imagen: un procedimiento no entra ahí.
-    if (fila.type === 'PROCEDURE') return acciones;
-    // Conservada del refactor UX previo (2026-09-13): no la retira el pedido
-    // de esta noche, y quitarla sería perder una capacidad ya entregada sin
-    // que nadie lo haya pedido (ver ambigüedad registrada en PLAN.md).
-    acciones.push({
-      code: 'cotizar',
-      label: 'Comparar precio y distancia',
-      icon: 'billing',
-    });
-    acciones.push({ code: 'reservar', label: 'Reservar hora en un laboratorio', icon: 'calendar' });
-    if (fila.appointment !== null) {
-      acciones.push({ code: 'ver-turno', label: 'Ver cita', icon: 'calendar' });
-    }
-    return acciones;
-  }
+  protected readonly accionesDe = rowActionsOf;
 
   /** La orden cuya preparación está abierta en el diálogo, o `null`. */
   protected readonly preparacionAbierta = signal<PatientOrderRow | null>(null);
@@ -487,6 +469,7 @@ export class DiagnosticOrders {
   protected readonly liquidacionAbierta = signal<PatientOrderRow | null>(null);
   /** La orden cuyo turno está abierto en el diálogo, o `null`. */
   protected readonly turnoAbierto = signal<PatientOrderRow | null>(null);
+  protected readonly qrAbierto = signal<PatientOrderRow | null>(null);
   protected readonly cancelando = signal(false);
   protected readonly cancelacionFallida = signal(false);
 
@@ -526,6 +509,13 @@ export class DiagnosticOrders {
    */
   protected ejecutarAccion(codigo: string, fila: PatientOrderRow): void {
     switch (codigo) {
+      case 'mostrar-qr':
+        this.qrAbierto.set(fila);
+        return;
+      case 'aceptar-derivacion':
+      case 'rechazar-derivacion':
+        this.referral.respond(fila.id, codigo === 'aceptar-derivacion' ? 'accept' : 'reject', () => this.cargar());
+        return;
       case 'ver-preparacion':
         this.preparacionAbierta.set(fila);
         return;

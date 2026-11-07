@@ -21,7 +21,6 @@ import {
   previousStudyFromErrorDetails,
 } from '../../../../core/data-access/diagnostics/diagnostics.client';
 import type {
-  DiagnosticOrder,
   DiagnosticReport,
   DuplicateStudyCheckResult,
   NewDiagnosticOrder,
@@ -45,13 +44,14 @@ import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { consentTargetState } from '../informed-consent/consent-target';
 import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
 import { InformedConsentDialog } from '../informed-consent/informed-consent-dialog';
+import { StudyReferral } from './study-referral/study-referral';
 import { DuplicateStudyWarningDialog } from './duplicate-study-warning-dialog/duplicate-study-warning-dialog';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import {
   DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS,
   PRIORITY_LABELS,
   conceptosDe,
-  duplicadoDe,
+  toStudyRow,
   mensajeDeAlta,
 } from './analysis-order-block.helpers';
 import { createPerformerOrderState } from './performer-selector/performer-order-state';
@@ -136,6 +136,7 @@ const TOPE = 25;
 @Component({
   selector: 'app-analysis-order-block',
   imports: [
+    StudyReferral,
     FormResponsePicker,
     Alert,
     AppButton,
@@ -313,7 +314,9 @@ export class AnalysisOrderBlock {
     // el informe previo del paciente casi siempre está en esta misma lectura.
     const informesPorId = new Map(state.data.reports.map((informe) => [informe.id, informe]));
 
-    return state.data.orders.map((orden) => this.aFila(orden, conResultado, informesPorId));
+    return state.data.orders.map((orden) =>
+      toStudyRow(orden, conResultado, informesPorId, this.etiquetas()),
+    );
   });
 
   /**
@@ -629,32 +632,6 @@ export class AnalysisOrderBlock {
    */
   private estaLiberado(informe: DiagnosticReport): boolean {
     return informe.currentReleasedVersionId !== undefined;
-  }
-
-  /** Una orden traducida a la fila que la ficha muestra. */
-  private aFila(
-    orden: DiagnosticOrder,
-    conResultado: ReadonlySet<string>,
-    informesPorId: ReadonlyMap<string, DiagnosticReport>,
-  ): EstudioEnFicha {
-    const duplicado = duplicadoDe(orden);
-
-    return {
-      id: orden.id,
-      estudio: this.etiquetaDe(orden.codeConceptId),
-      categoria: this.etiquetaDe(orden.categoryConceptId),
-      estado: this.etiquetaDe(orden.statusConceptId),
-      pedidoEl: orden.createdAt,
-      conResultado: conResultado.has(orden.id),
-      duplicado,
-      informePrevioDel:
-        duplicado === 'reused' && orden.previousDiagnosticReportId !== undefined
-          ? (informesPorId.get(orden.previousDiagnosticReportId)?.createdAt ?? null)
-          : null,
-      justificacion: orden.duplicateOverrideReason ?? null,
-      collectionPoint: orden.suggestedCareSpace ? `${orden.suggestedCareSpace.code} · ${orden.suggestedCareSpace.name}` : null,
-      ...(orden.encounterId === undefined ? {} : { encounterId: orden.encounterId }),
-    };
   }
 
   private cargar(patientProfileId: string): void {

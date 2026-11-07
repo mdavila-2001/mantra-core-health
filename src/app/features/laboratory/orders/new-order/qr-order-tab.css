@@ -1,0 +1,99 @@
+.qr {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-block: var(--sp-4);
+}
+
+.qr__title {
+  margin: 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.qr__help {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* Three options to hand over the QR, as pressable cards. */
+.qr__options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-card);
+  background: var(--bg-surface-alt);
+}
+
+@media (min-width: 720px) {
+  .qr__options {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.qr__options--drop {
+  border-color: var(--brand-primary);
+  background: var(--bg-active);
+}
+
+.qr__video {
+  inline-size: 100%;
+  max-block-size: 24rem;
+  border-radius: var(--r-ctrl);
+  background: var(--bg-surface-alt);
+  object-fit: cover;
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-ctrl);
+  background: var(--bg-surface, transparent);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.option:hover:not(:disabled) {
+  border-color: var(--brand-primary);
+  background: var(--bg-hover);
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.option:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.option__icon {
+  display: inline-flex;
+  margin-block-end: var(--sp-2);
+  color: var(--brand-primary);
+}
+
+.option__title {
+  font-weight: 600;
+}
+
+.option__help {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .option {
+    transition: none;
+  }
+}

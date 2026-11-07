@@ -1,0 +1,21 @@
+<app-card padding="lg" data-testid="lab-new-order-card">
+  <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)" data-testid="lab-new-order-tabs">
+    <app-tab label="Con el QR del paciente">
+      @if (tab() === 0) {
+        <app-qr-order-tab (created)="created.emit($event)" />
+      }
+    </app-tab>
+    <app-tab label="Orden propia">
+      @if (tab() === 1) {
+        <app-own-order-tab (created)="created.emit($event)" />
+      }
+    </app-tab>
+  </app-tabs>
+
+  <app-alert tone="info" data-testid="lab-new-order-derivadas">
+    Las órdenes que un médico le deriva aparecen solas en «Borrador» cuando el paciente las acepta.
+  </app-alert>
+  <button app-button type="button" variant="ghost" (clicked)="cancelled.emit()" data-testid="lab-new-order-cancel">
+    Volver a las órdenes
+  </button>
+</app-card>

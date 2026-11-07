@@ -37,6 +37,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 
 import { formatBytes } from '../file-size';
 import { downloadOrderFiles } from './order-download';
+import { OrderOrigin } from './order-origin';
 import { filesFromInput } from '../results/picked-files';
 import { ResultUploadQueue, type UploadItem } from '../results/result-upload-queue';
 import { ACCEPT_ATTRIBUTE } from '../results/upload-rules';
@@ -88,6 +89,7 @@ import {
 @Component({
   selector: 'app-laboratory-orders',
   imports: [
+    OrderOrigin,
     Alert,
     Badge,
     Card,

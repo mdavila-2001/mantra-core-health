@@ -1,8 +1,10 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { EMPTY, expand, reduce, type Observable } from 'rxjs';
+import { EMPTY, expand, map, reduce, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { simulatorOnly } from '../simulator-only';
+import type { LabOrderFromQr, LabPatientMatch, NewLabOrder } from './lab-order-intake.types';
 import type {
   LabCategory,
   LabCategoryPage,
@@ -141,6 +143,25 @@ export class LabPortalClient {
         count: all.count,
         nextCursor: page.nextCursor,
       })),
+    );
+  }
+
+  /** Finds the patient by national id (in the body: it is PHI). 404 when nobody holds it. */
+  lookupPatient(nationalId: string): Observable<LabPatientMatch> {
+    return this.http.post<LabPatientMatch>(this.url('/diagnostics/lab/patients/lookup'), { nationalId });
+  }
+
+  /** The center registers an order that arrives on paper or at the counter. */
+  createOrder(order: NewLabOrder): Observable<LabOrder> {
+    return this.http.post<LabOrder>(this.url('/diagnostics/lab/orders'), order);
+  }
+
+  /** Simulator-only: creates the order from the QR the patient sent. Idempotent per code. */
+  createOrderFromQr(code: string): Observable<LabOrderFromQr> {
+    return simulatorOnly('Crear una orden con el QR del paciente', this.url('/diagnostics/lab/orders'), () =>
+      this.http
+        .post<LabOrder>(this.url('/diagnostics/lab/orders/from-qr'), { code }, { observe: 'response' })
+        .pipe(map((res) => ({ order: res.body as LabOrder, created: res.status === 201 }))),
     );
   }
 

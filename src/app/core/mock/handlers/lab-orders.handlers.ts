@@ -8,7 +8,7 @@ import {
   type MockRequest,
   type MockRouter,
 } from '../mock-router';
-import { ORDER_CATEGORY } from '../fixtures/concepts';
+import { ORDER_CATEGORY, STATUS } from '../fixtures/concepts';
 import { TENANT_LABORATORIO } from '../mock-session';
 import { Coleccion, cuerpo } from '../mock-store';
 import { labInboxOrders } from './diagnostics.handlers';
@@ -104,7 +104,7 @@ function archivosDe(orderId: string, archivos: DependenciasDeOrdenes['archivos']
 }
 
 /** El estado visible de una orden: una procesada con resultado disponible está subida. */
-function ordenDeRespuesta(orderId: string, deps: DependenciasDeOrdenes): LabOrder | undefined {
+export function ordenDeRespuesta(orderId: string, deps: DependenciasDeOrdenes): LabOrder | undefined {
   const orden = labInboxOrders.get(orderId);
   const destino = deps.destinoDeOrden(orderId);
   if (orden === undefined || destino === undefined) return undefined;
@@ -125,10 +125,16 @@ function ordenDeRespuesta(orderId: string, deps: DependenciasDeOrdenes): LabOrde
     requesterName: destino.requesterName,
     requestedAt: orden.requestedAt,
     status: status === 'PROCESSED' && files.length > 0 ? 'UPLOADED' : status,
+    origin: orden.origin ?? 'CLINIC',
     reason: guardado?.reason ?? null,
     canReject: status === 'RECEIVED' && conMuestra,
     files,
   };
+}
+
+/** A clinic order can still be addressed to a center only while it is pending or active. */
+export function esOrdenAbierta(statusConceptId: string): boolean {
+  return statusConceptId === STATUS['ST-PENDING'] || statusConceptId === STATUS['ST-ACTIVE'];
 }
 
 /**

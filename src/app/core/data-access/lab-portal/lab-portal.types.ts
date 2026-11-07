@@ -1,3 +1,5 @@
+import type { LabOrderOrigin } from './lab-order-intake.types';
+
 /* ============================================================================
     El portal de la cuenta de laboratorio (30/09/2026).
 
@@ -264,6 +266,8 @@ export interface LabOrder {
   readonly requesterName: string;
   readonly requestedAt: string;
   readonly status: LabOrderStatus;
+  /** Which of the three ways it arrived; `CLINIC` (or absent) = it already came addressed to the center. */
+  readonly origin?: LabOrderOrigin;
   /** El motivo de una orden cancelada o rechazada, si se dio. */
   readonly reason: string | null;
   /** The API admits REJECT now: received, with an open specimen (imaging never). */

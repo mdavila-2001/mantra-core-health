@@ -1,4 +1,5 @@
 import type { OrderAppointment } from '../diagnostic-units/center-schedule.types';
+import type { OrderReferral } from './order-referral.types';
 import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
 import type { CollectionPointRef } from './sample-collection.types';
 import type {
@@ -76,6 +77,8 @@ export interface DiagnosticOrder {
    * (v4.2.47). Ausente en cualquier otro caso.
    */
   readonly previousServiceRequestId?: string;
+  /** Doctor's referral to a center (simulator-only). */
+  readonly referral?: OrderReferral;
 }
 
 /**
@@ -181,48 +184,7 @@ export interface DiagnosticOrderCreated {
   readonly createdAt: Date;
 }
 
-/* ============================================================================
-    Antiduplicación de estudios (v4.2.17, subtarea 3.2, T-26). El chequeo
-    previo al alta: «¿el paciente ya se hizo este estudio hace poco?».
-    ========================================================================== */
-
-/** Lo que hace falta para pre-validar duplicidad antes de pedir un estudio. */
-export interface DuplicateStudyCheck {
-  readonly patientProfileId: string;
-  readonly codeConceptId?: string;
-  readonly diagnosticStudyOfferingId?: string;
-  readonly encounterId: string;
-  readonly windowDays?: number;
-}
-
-/** El estudio previo que satisface (o casi satisface) el pedido nuevo. */
-export interface PreviousStudy {
-  /** Ausente cuando lo que consta es una orden activa que todavía no tiene informe. */
-  readonly reportId?: string;
-  readonly serviceRequestId?: string;
-  readonly studyName: string;
-  readonly providerName: string;
-  readonly performedAt: Date;
-  readonly daysAgo: number;
-  readonly resultsAvailable: boolean;
-  /** `undefined` salvo que el informe sea de la misma organización de quien pide. */
-  readonly conclusionText?: string;
-  /** Sin endpoint de descarga para el profesional hoy: siempre ausente. */
-  readonly reportDownloadUrl?: string;
-  readonly sameOrganization: boolean;
-}
-
-/** Respuesta del chequeo de duplicidad. */
-export interface DuplicateStudyCheckResult {
-  readonly isDuplicate: boolean;
-  readonly previousStudy?: PreviousStudy;
-  /** Texto en castellano listo para mostrar, si hubo duplicado. */
-  readonly warningMessage?: string;
-  readonly requiresJustification: boolean;
-  /** Si hay un informe del mismo estudio todavía sin liberar dentro de la ventana. */
-  readonly pendingReport: boolean;
-  readonly windowDays: number;
-}
+export type { DuplicateStudyCheck, DuplicateStudyCheckResult, PreviousStudy } from './duplicate-study.types';
 
 /**
  * Un estudio de imagen del paciente.
@@ -360,6 +322,8 @@ export interface PatientOrder extends PatientSettlementFields, ServiceRequestPer
    * backend (P-CENTRO-HORARIOS).
    */
   readonly appointment?: OrderAppointment | null;
+  /** Doctor's referral to a center (simulator-only); absent = not referred. */
+  readonly referral?: OrderReferral;
 }
 
 /** Página de órdenes propias. */

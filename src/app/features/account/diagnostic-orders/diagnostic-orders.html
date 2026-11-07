@@ -100,6 +100,7 @@
 <ng-template #celdaEstudio let-fila>
   <span class="ordenes__estudio">{{ fila.studyLabel }}</span>
   <app-order-performer-summary [mode]="fila.performerMode" [siteName]="fila.suggestedSiteName" />
+  <app-order-referral-line [referral]="fila.referral" />
 </ng-template>
 
 <ng-template #celdaTipo let-fila>
@@ -134,6 +135,10 @@
 </ng-template>
 
 <!-- ─── Diálogos de las acciones ───────────────────────────────────────────── -->
+
+@if (qrAbierto(); as fila) {
+  <app-order-qr-dialog [orderId]="fila.id" [studyLabel]="fila.studyLabel" (closed)="qrAbierto.set(null)" />
+}
 
 @if (preparacionAbierta(); as fila) {
   <app-content-dialog

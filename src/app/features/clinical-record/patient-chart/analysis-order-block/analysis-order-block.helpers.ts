@@ -1,7 +1,9 @@
 import type {
   DiagnosticOrder,
+  DiagnosticReport,
   PatientDiagnostics,
 } from '../../../../core/data-access/diagnostics/diagnostics.types';
+import type { OrderReferral } from '../../../../core/data-access/diagnostics/order-referral.types';
 
 /**
  * Las prioridades en castellano, por código estable.
@@ -49,6 +51,12 @@ export interface EstudioEnFicha {
   readonly collectionPoint: string | null;
   /** La consulta en la que se pidió, si la orden la trae. Ata su consentimiento informado. */
   readonly encounterId?: string;
+  /** Only laboratory and imaging orders can be referred to a center. */
+  readonly category?: DiagnosticOrder['category'];
+  /** Code of the order status (not its label): what tells whether it is still open. */
+  readonly statusCode: string;
+  /** The referral to a center and what the patient decided; `null` = never referred. */
+  readonly referral: OrderReferral | null;
 }
 
 /**
@@ -103,4 +111,36 @@ export function mensajeDeAlta(decision: {
     return ['Queda pedido con su justificación; la aseguradora la va a ver.', 'Estudio solicitado'];
   }
   return ['Queda pedido y va a verlo acá abajo con su resultado.', 'Estudio solicitado'];
+}
+
+const NO_DATA = '—';
+
+/** An order translated to the row the chart shows. */
+export function toStudyRow(
+  orden: DiagnosticOrder,
+  conResultado: ReadonlySet<string>,
+  informesPorId: ReadonlyMap<string, DiagnosticReport>,
+  labels: ReadonlyMap<string, { readonly display?: string; readonly code?: string }>,
+): EstudioEnFicha {
+  const duplicado = duplicadoDe(orden);
+  const label = (id: string | undefined): string => (id === undefined ? NO_DATA : (labels.get(id)?.display ?? NO_DATA));
+  return {
+    id: orden.id,
+    estudio: label(orden.codeConceptId),
+    categoria: label(orden.categoryConceptId),
+    estado: label(orden.statusConceptId),
+    pedidoEl: orden.createdAt,
+    conResultado: conResultado.has(orden.id),
+    duplicado,
+    informePrevioDel:
+      duplicado === 'reused' && orden.previousDiagnosticReportId !== undefined
+        ? (informesPorId.get(orden.previousDiagnosticReportId)?.createdAt ?? null)
+        : null,
+    justificacion: orden.duplicateOverrideReason ?? null,
+    collectionPoint: orden.suggestedCareSpace ? `${orden.suggestedCareSpace.code} · ${orden.suggestedCareSpace.name}` : null,
+    ...(orden.encounterId === undefined ? {} : { encounterId: orden.encounterId }),
+    category: orden.category,
+    statusCode: labels.get(orden.statusConceptId)?.code ?? '',
+    referral: orden.referral ?? null,
+  };
 }
