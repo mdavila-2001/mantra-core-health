@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import type { Observable } from 'rxjs';
+import { tap, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { PracticeSetupStore } from './practice-setup.store';
 import type {
   CreatedOrganizationPractice,
   NewOrganizationPractice,
@@ -23,6 +24,7 @@ import type {
 export class PracticeOnboardingClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+  private readonly setup = inject(PracticeSetupStore);
 
   /**
    * `POST /tenants/:tenantId/practices` — abre la práctica y su primera sede.
@@ -39,19 +41,21 @@ export class PracticeOnboardingClient {
     tenantId: string,
     practice: NewOrganizationPractice,
   ): Observable<CreatedOrganizationPractice> {
-    return this.http.post<CreatedOrganizationPractice>(
-      this.url(`/tenants/${encodeURIComponent(tenantId)}/practices`),
-      {
-        name: practice.name,
-        site: {
-          name: practice.site.name,
-          addressText: practice.site.addressText,
-          latitude: practice.site.latitude,
-          longitude: practice.site.longitude,
-          ...(practice.site.cityText === undefined ? {} : { cityText: practice.site.cityText }),
+    return this.http
+      .post<CreatedOrganizationPractice>(
+        this.url(`/tenants/${encodeURIComponent(tenantId)}/practices`),
+        {
+          name: practice.name,
+          site: {
+            name: practice.site.name,
+            addressText: practice.site.addressText,
+            latitude: practice.site.latitude,
+            longitude: practice.site.longitude,
+            ...(practice.site.cityText === undefined ? {} : { cityText: practice.site.cityText }),
+          },
         },
-      },
-    );
+      )
+      .pipe(tap(() => this.setup.markDone()));
   }
 
   private url(path: string): string {

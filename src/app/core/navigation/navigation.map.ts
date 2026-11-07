@@ -1210,25 +1210,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
   ...MEDICAL_ORGANIZATION_BRANCH_SECTIONS,
   {
-    // CM-11 · la organización médica (los cinco tipos del alta) abre su práctica
-    // y su primera sede. Cuelga de `administration/`: una raíz propia se iría al
-    // proxy. La API decide quién puede (membresía OWNER/ADMIN de esa organización
-    // verificada); acá sólo se ofrece la puerta a quien tiene ese tipo de cuenta.
-    path: 'administration/medical-center-setup',
-    onlyForTenantTypes: MEDICAL_ORGANIZATION_TYPES,
-    roles: [ANY_ROLE],
-    fueraDelMenuPara: ['PRACTITIONER'],
-    hiddenFor: ['PATIENT'],
-    label: 'Configurar práctica',
-    // Moved out of «Administración» into «Atención» on 2026-11-05 (owner request).
-    group: 'Atención',
-    icon: 'hospital',
-    requiresTenant: true,
-    availability: 'disponible',
-    summary: 'Abra la práctica de su organización y su primera sede, con dirección y punto en el mapa.',
-    module: 'M14 practice',
-  },
-  {
     // Carril 16. Distinta de «Directorio de laboratorios», que es la vitrina
     // del paciente: aquélla sólo muestra unidades publicadas y verificadas,
     // ofertas activas y precios públicos. Ésta lee el mismo dominio **sin** esos
