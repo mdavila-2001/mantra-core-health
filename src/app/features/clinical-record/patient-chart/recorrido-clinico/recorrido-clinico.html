@@ -3,27 +3,25 @@
 <div class="red" data-testid="expediente-recorrido" data-pdf-ignore>
   <div class="red__barra">
     <div class="red__acciones">
-      <button app-button variant="secondary" size="sm" type="button" data-testid="red-desplegar-todo" [disabled]="todoDesplegado()" (clicked)="desplegarTodo()">
+      <button app-button variant="ghost" size="sm" type="button" data-testid="red-desplegar-todo" [disabled]="todoDesplegado()" (clicked)="desplegarTodo()">
         Expandir todo
       </button>
       <button app-button variant="ghost" size="sm" type="button" data-testid="red-plegar-todo" [disabled]="nadaDesplegado()" (clicked)="plegarTodo()">
         Contraer todo
       </button>
     </div>
+    <!-- The legend names each line and milestone on screen (else they are a code); it wraps below the actions when tight. -->
+    @if (!angosto()) {
+      <ul
+        app-red-leyenda
+        class="red__leyenda"
+        aria-label="Qué significa cada marca"
+        data-testid="red-leyenda"
+        [aristas]="plano().aristas"
+        [conHitos]="!todoDesplegado()" [hilos]="plano().hilos"
+      ></ul>
+    }
   </div>
-
-  <!-- The legend names each kind of line on screen, and the collapsed strip's
-       milestones. Without it, the lines are a code. -->
-  @if (!angosto()) {
-    <ul
-      app-red-leyenda
-      class="red__leyenda"
-      aria-label="Qué significa cada marca"
-      data-testid="red-leyenda"
-      [aristas]="plano().aristas"
-      [conHitos]="!todoDesplegado()"
-    ></ul>
-  }
 
   @if (angosto()) {
     <!-- On the phone: one episode per block and, inside, the most recent on
@@ -108,17 +106,20 @@
                 @if (columna.ancha && columna.intervalo !== '' && !mismoDia && columna.hueco >= 56) {
                   <span class="red__intervalo" [style.inset-inline-start.px]="-columna.hueco / 2">+ {{ columna.intervalo }}</span>
                 }
-                <!-- The first column in view always names its year: «mismo día» with
-                     the day it repeats out of view says nothing. -->
+                <!-- The first column in view always names its year: «mismo día» with the day it
+                     repeats out of view says nothing. A narrow one names it only there and when it
+                     changes («2026» eleven times was noise); else a no-break space keeps the line. -->
                 @let previa = $index > 0 ? cols[$index - 1] : null;
-                @let repite = mismoDia && previa !== null && previa.x + previa.ancho / 2 >= fuera().desde;
+                @let previaALaVista = previa !== null && previa.x + previa.ancho / 2 >= fuera().desde;
+                @let repite = mismoDia && previaALaVista;
+                @let anio = columna.fecha | date: 'y';
                 @if (columna.ancha) {
                   <!-- A second column on the same day names the day and says it repeats. -->
                   <p class="red__fecha">{{ columna.fecha ? (columna.fecha | date: (repite ? 'd MMM' : 'd MMM y')) : 'Sin fecha' }}</p>
                   <p class="red__contexto">{{ repite ? 'Mismo día · ' : '' }}{{ contextoDe(columna) }}</p>
                 } @else {
                   <p class="red__fecha red__fecha--corta">{{ columna.fecha ? (columna.fecha | date: 'd MMM') : '—' }}</p>
-                  <p class="red__contexto">{{ repite ? 'mismo día' : columna.fecha ? (columna.fecha | date: 'y') : 'Sin fecha' }}</p>
+                  <p class="red__contexto">{{ repite ? 'mismo día' : !columna.fecha ? 'Sin fecha' : !previaALaVista || (previa?.fecha | date: 'y') !== anio ? anio : '\u00a0' }}</p>
                 }
                 <span class="red__marca-eje" [class.red__marca-eje--atencion]="columna.contexto === 'atencion'"></span>
               </li>
@@ -146,14 +147,13 @@
                   [hilo]="hilo"
                   (alternar)="alternarEpisodio($event)"
                 ></div>
+                <!-- Out-of-view count: on a collapsed strip (milestones) and on an expanded one with nothing in view (records). -->
+                @if (!hilo.desplegado || hilo.fueraDeLaVentana) {
+                  @let f = fuera().hilos.get(hilo.episodio.id); @let que = hilo.desplegado ? ' registro' : ' marca';
+                  @if (f && f.antes > 0) { <button type="button" class="red__fuera" data-testid="red-fuera" [style.top.px]="hilo.yPista - hilo.y" [style.left.px]="fuera().desde + 8" (click)="verHitos(hilo)" [attr.aria-label]="'Ver ' + f.antes + que + (f.antes === 1 ? '' : 's') + ' de ' + hilo.episodio.nombre + (f.antes === 1 ? ' anterior' : ' anteriores') + ' a lo visible'">← {{ f.antes }} antes</button> }
+                  @if (f && f.despues > 0) { <button type="button" class="red__fuera red__fuera--despues" data-testid="red-fuera" [style.top.px]="hilo.yPista - hilo.y" [style.left.px]="fuera().hasta - 8" (click)="verHitos(hilo)" [attr.aria-label]="'Ver ' + f.despues + que + (f.despues === 1 ? '' : 's') + ' de ' + hilo.episodio.nombre + (f.despues === 1 ? ' posterior' : ' posteriores') + ' a lo visible'">{{ f.despues }} después →</button> }
+                }
                 @if (!hilo.desplegado) {
-                  @let f = fuera().hilos.get(hilo.episodio.id);
-                  @if (f && f.antes > 0) {
-                    <button type="button" class="red__fuera" data-testid="red-fuera" [style.top.px]="hilo.yPista - hilo.y" [style.left.px]="fuera().desde + 8" (click)="verHitos(hilo)" [attr.aria-label]="'Ver ' + f.antes + (f.antes === 1 ? ' marca de ' : ' marcas de ') + hilo.episodio.nombre + (f.antes === 1 ? ' anterior' : ' anteriores') + ' a lo visible'">← {{ f.antes }} antes</button>
-                  }
-                  @if (f && f.despues > 0) {
-                    <button type="button" class="red__fuera red__fuera--despues" data-testid="red-fuera" [style.top.px]="hilo.yPista - hilo.y" [style.left.px]="fuera().hasta - 8" (click)="verHitos(hilo)" [attr.aria-label]="'Ver ' + f.despues + (f.despues === 1 ? ' marca de ' : ' marcas de ') + hilo.episodio.nombre + (f.despues === 1 ? ' posterior' : ' posteriores') + ' a lo visible'">{{ f.despues }} después →</button>
-                  }
                   @if (hilo.hitos.length > 1) {
                     <span
                       class="red__pista"
