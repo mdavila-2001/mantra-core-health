@@ -4,9 +4,9 @@ import { construirRed, estadoDeLaDerivacion } from './red-clinica.adaptador';
 import { type FilaPresentada, type FuenteDeLaRed, type Rotulador } from './red-clinica.fuente';
 
 /**
- * Lo que más importa de la red no es cómo se ve sino que no mienta: cada
- * línea tiene que estar respaldada por un campo del contrato (o marcada como
- * inferida), y un vínculo que no se puede comprobar no se dibuja.
+ * What matters most in the network is not how it looks but that it does not
+ * lie: every line must be backed by a contract field (or marked as inferred),
+ * and a link that cannot be checked is not drawn.
  */
 const vacia: FuenteDeLaRed = {
   encounters: [],
@@ -30,6 +30,10 @@ const ETIQUETAS: Readonly<Record<string, { display?: string; code?: string }>> =
   'st-atendida': { display: 'Atendida', code: 'BK-COMPLETED' },
   'cod-mapa': { display: 'MAPA 24 h' },
   'st-orden': { display: 'Activa' },
+  'st-sr-activa': { display: 'Activa', code: 'SR_ACTIVE' },
+  'st-sr-completa': { display: 'Completada', code: 'SR_COMPLETED' },
+  'st-sr-revocada': { display: 'Revocada', code: 'SR_REVOKED' },
+  'st-pendiente': { display: 'Pendiente', code: 'ST-PENDING' },
 };
 const rotular: Rotulador = (id) => (id === undefined ? {} : (ETIQUETAS[id] ?? {}));
 
@@ -50,9 +54,9 @@ describe('construirRed · lo que ya conectaba el recorrido', () => {
       conditions: [{ id: 'dx', encounterId: 'c1' }],
       medicationRequests: [
         { id: 'rx', encounterId: 'c1', indicationConditionId: 'dx' },
-        // Indicada para un diagnóstico que quedó fuera del tope de la lectura.
+        // Indicated for a diagnosis left out by the read's cap.
         { id: 'rx-recortada', indicationConditionId: 'dx-fuera' },
-        // Motivo escrito a mano: no apunta a ningún diagnóstico registrado.
+        // A hand-written reason: it points to no recorded diagnosis.
         { id: 'rx-texto' },
       ],
       observations: [{ id: 'ob', encounterId: 'c-fuera' }],
@@ -172,6 +176,22 @@ describe('construirRed · los vínculos nuevos del contrato', () => {
   it('nombra estudios y resultados con la terminología, y lo que no tiene nombre dice qué es', () => {
     expect(registros.find((r) => r.id === 'o-con')?.titulo).toBe('MAPA 24 h');
     expect(registros.find((r) => r.id === 'proc')?.titulo).toBe('Procedimiento');
+  });
+
+  it('el tono de cada orden de estudio sale de su código de estado, no de un «info» fijo', () => {
+    const orden = (id: string, statusConceptId: string) => ({ id, codeConceptId: 'cod-mapa', statusConceptId, createdAt: new Date(2026, 0, 10) });
+    const { registros: r } = construirRed([], {
+      ...vacia,
+      estudios: {
+        orders: [orden('a', 'st-sr-activa'), orden('c', 'st-sr-completa'), orden('v', 'st-sr-revocada'), orden('p', 'st-pendiente'), orden('x', 'st-orden')],
+        reports: [],
+      },
+    }, rotular);
+    const tono = (id: string) => r.find((x) => x.id === id)?.tonoDelEstado;
+    expect([tono('a'), tono('c'), tono('v'), tono('p')]).toEqual(['warning', 'success', 'error', 'warning']);
+    expect(r.find((x) => x.id === 'p')?.estado).toBe('Pendiente');
+    // A code the network does not know stays neutral: it does not pretend to be done.
+    expect(tono('x')).toBe('info');
   });
 
   it('sin los campos nuevos (contrato anterior) no dibuja esos vínculos ni se rompe', () => {

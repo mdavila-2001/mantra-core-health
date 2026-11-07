@@ -32,7 +32,6 @@ import { antiguedad, antiguedadExacta, diasEntre } from '../red-clinica-alertas.
 import { resultadoDelInforme } from '../red-clinica-informe';
 import { accionDelPedido, ORIGEN, SIGUIENTES, vinculosDe } from './red-clinica-panel.vinculos';
 import { DescargaDelInforme } from './descarga-del-informe';
-import { tonoDelEstado } from './tono-del-estado';
 import { RedPanelEstudio } from './estudio/red-panel-estudio';
 import { RedPanelRazonamiento } from './razonamiento/red-panel-razonamiento';
 import { RedPanelDerivacion } from './derivacion/red-panel-derivacion';
@@ -46,6 +45,7 @@ import {
   type ValorDeResultado,
 } from '../red-clinica.types';
 import { type AristaDeRed } from '../red-clinica-vinculos.types';
+import { FECHAS_DEL_DIA_CLINICO } from '../../recorrido-clinico/recorrido-clinico.zona';
 
 export { vinculosDe, type VinculoDelPanel } from './red-clinica-panel.vinculos';
 
@@ -82,6 +82,8 @@ export type PresentacionDelPanel = 'auto' | 'lateral' | 'hoja';
   imports: [AppButton, Badge, DatePipe, NavIcon, NgTemplateOutlet, RedPanelDerivacion, RedPanelEstudio, RedPanelRazonamiento],
   templateUrl: './red-clinica-panel.html',
   styleUrls: ['./red-clinica-panel.css', './red-clinica-panel.secciones.css', './red-clinica-panel.vinculos.css'],
+  // Mounted outside the network too: its dates (and its sections') print in the clinical day's zone.
+  providers: [FECHAS_DEL_DIA_CLINICO],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RedClinicaPanel {
@@ -160,9 +162,6 @@ export class RedClinicaPanel {
   private readonly dias = computed(() => { const c = this.nodo()?.cuando; return c ? diasEntre(c, this.ahora()) : null; });
   protected readonly hace = computed(() => { const d = this.dias(); return d === null ? '' : antiguedad(d); });
   protected readonly haceExacto = computed(() => { const d = this.dias(); return d === null ? null : antiguedadExacta(d); });
-
-  /** The status badge's tone: a study's says whether its result is out. */
-  protected readonly tonoDelEstado = computed(() => tonoDelEstado(this.nodo()));
 
   /** Who had the focus on opening: where it returns on closing. */
   private retorno: HTMLElement | null = null;

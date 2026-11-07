@@ -60,7 +60,7 @@
         <div class="panel__hecho">
           <dt>Estado</dt>
           <dd>
-            <app-badge [variant]="tonoDelEstado()" size="sm">{{ n.estado.etiqueta }}</app-badge>
+            <app-badge [variant]="n.estado.tono ?? 'info'" size="sm">{{ n.estado.etiqueta }}</app-badge>
           </dd>
         </div>
       }

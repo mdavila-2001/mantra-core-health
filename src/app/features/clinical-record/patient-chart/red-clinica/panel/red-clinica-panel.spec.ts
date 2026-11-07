@@ -35,7 +35,7 @@ class Anfitrion {
   readonly ahora = AHORA_DEMO;
   readonly nodo = signal<NodoDeRed | null>(null);
   readonly presentacion = signal<PresentacionDelPanel>('lateral');
-  /** Sin paciente (como en el banco), el panel muestra lo que trae el nodo y no lee nada. */
+  /** Without a patient (as in the stock bench), the panel shows what the node brings and reads nothing. */
   readonly paciente = signal<string | null>(null);
   readonly elegidos: string[] = [];
   cierres = 0;
@@ -164,6 +164,20 @@ describe('RedClinicaPanel', () => {
       expect(texto()).toContain('Patrón hipertensivo');
     });
 
+    it('el resultado va antes que el pedido, y la lectura y la referencia van en su celda de siempre', async () => {
+      await abrir('e1');
+      const titulos = Array.from(el().querySelectorAll('.panel__seccion-titulo')).map((h) => h.textContent?.trim());
+      expect(titulos.indexOf('Resultado')).toBeGreaterThanOrEqual(0);
+      expect(titulos.indexOf('Resultado')).toBeLessThan(titulos.indexOf('Pedido'));
+      const filas = Array.from(el().querySelectorAll<HTMLTableRowElement>('[data-testid="red-panel-valor"]'));
+      for (const f of filas) {
+        expect(f.cells[2].classList).toContain('panel__referencia');
+        // The reading chip, when present, lives in the value cell, after the value.
+        const chip = f.querySelector('.panel__lectura');
+        if (chip) expect(chip.parentElement).toBe(f.cells[1]);
+      }
+    });
+
     it('sin resultado liberado lo dice, con la antigüedad del pedido sin repetir los días', async () => {
       await abrir('e3');
       const s3 = el().querySelector<HTMLElement>('[data-testid="red-panel-sin-resultado"]')!;
@@ -200,22 +214,26 @@ describe('RedClinicaPanel', () => {
       expect(s3.querySelector('[title]')).toBeNull();
     });
 
-    it('«Pendiente» con el «info» genérico de las órdenes sale en el tono de aviso, no en el de «Completado»', async () => {
+    it('el estado sale en el tono que trae el nodo: «Pendiente» en aviso, «Completado» en éxito', async () => {
+      // The tone comes from the order's status code (`construirRed`); the panel does not guess it.
       const e3 = NODOS_DEMO.find((n) => n.id === 'e3')!;
-      host.nodo.set({ ...e3, estado: { etiqueta: 'Pendiente', tono: 'info' } });
+      host.nodo.set({ ...e3, estado: { etiqueta: 'Pendiente', tono: 'warning' } });
       fixture.detectChanges();
       await fixture.whenStable();
       const pendiente = panel()!.querySelector('.panel__hechos app-badge')!;
       expect(pendiente.className).toContain('warning');
-      expect(pendiente.className).not.toContain('info');
-      host.nodo.set(NODOS_DEMO.find((n) => n.id === 'e1')!);
-      host.nodo.set({ ...host.nodo()!, estado: { etiqueta: 'Completado', tono: 'info' } });
+      expect(pendiente.className).not.toContain('success');
+      host.nodo.set({ ...NODOS_DEMO.find((n) => n.id === 'e1')!, estado: { etiqueta: 'Completado', tono: 'success' } });
       fixture.detectChanges();
       await fixture.whenStable();
       expect(panel()!.querySelector('.panel__hechos app-badge')!.className).toContain('success');
+      host.nodo.set({ ...e3, estado: { etiqueta: 'Borrador' } });
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(panel()!.querySelector('.panel__hechos app-badge')!.className).toContain('info');
     });
 
-    /** Con paciente, abrir el MAPA lee su informe; se responde con lo mismo que trae el nodo. */
+    /** With a patient, opening the MAPA reads its report; it is answered with what the node brings. */
     async function abrirMapaConInforme(): Promise<void> {
       host.paciente.set('pac-1');
       await abrir('e1');
@@ -441,9 +459,9 @@ describe('RedClinicaPanel', () => {
 });
 
 /**
- * Lo que la integración con el expediente real necesita del panel: nodos con
- * menos datos que la demostración (sin nombre del profesional, sin fecha de
- * liberación) y un padre que decide a dónde vuelve el foco.
+ * What the integration with the real chart needs from the panel: nodes with
+ * less data than the demo (no practitioner name, no release date) and a
+ * parent that decides where the focus returns.
  */
 @Component({
   imports: [RedClinicaPanel],
