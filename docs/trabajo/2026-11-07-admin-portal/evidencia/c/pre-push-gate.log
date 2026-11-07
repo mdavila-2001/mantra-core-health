@@ -1,0 +1,11 @@
+Gate run on commit 5b6a318a59f0ddffe44d79282379f1eba9ae8266 (HEAD of that run; later commits only add this log).
+Earlier runs failed for environment/spec reasons: serve timeout (heap), missing Playwright browser build (symlink added outside repo), spec read network instead of window.__mockRequests (fixed).
+
+▶ generate-env: node scripts/generate-env.mjs
+▶ typecheck: yarn typecheck
+▶ lint: npx eslint playwright/catalog-bulk.spec.ts src/app/core/data-access/admin-portal/catalog-bulk.client.spec.ts src/app/core/data-access/admin-portal/catalog-bulk.client.ts src/app/core/data-ac
+▶ build: yarn build
+▶ playwright: yarn pw playwright/catalog-bulk.spec.ts
+  1 passed (15.5s)
+PRE-PUSH GATE: PASS (5 steps) → .claude/gate/proof.json
+exit=0

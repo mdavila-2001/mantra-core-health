@@ -1,0 +1,8 @@
+/* Catalog bulk load: one centered, full-width card (composition-rules §5). */
+.carga { display: flex; flex-direction: column; gap: var(--e4); inline-size: 100%; margin-inline: auto; }
+.carga__paso { display: flex; flex-direction: column; gap: var(--e3); padding-block: var(--e3); border-block-end: 1px solid var(--border-subtle); }
+.carga__titulo { margin: 0; font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 600; color: var(--text-primary); }
+.carga__ayuda { margin: 0; font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--text-secondary); }
+.carga__rejilla { display: grid; gap: var(--e3); grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.carga__acciones { display: flex; flex-wrap: wrap; gap: var(--e3); }
+.carga__metricas { display: grid; gap: var(--e3); grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }

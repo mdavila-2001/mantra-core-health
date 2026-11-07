@@ -3,6 +3,7 @@ import { registrarEditorDeCatalogos } from './catalog-editor.handlers';
 import { registrarVisibilidad } from './ui-visibility.handlers';
 import { registrarMutabilidad } from './mutability.handlers';
 import { registrarPiezasVivas } from './runtime-pieces.handlers';
+import { registrarCargaMasivaDeCatalogo } from './catalog-bulk.handlers';
 import { registrarPoliticasGobierno } from './governance-policies.handlers';
 import { MockRouter } from '../mock-router';
 import { activarAceptacionDeDemostracion, registrarAgenda } from './scheduling.handlers';
@@ -244,6 +245,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarCargasMasivas(router);
   registrarPoliticasGobierno(router);
   registrarPiezasVivas(router);
+  registrarCargaMasivaDeCatalogo(router);
   registrarMutabilidad(router);
   registrarVisibilidad(router);
   registrarCalidadYPrivacidad(router);

@@ -1,0 +1,3 @@
+simulation counts: ["CREADAS (PREVISTAS)\n2","ACTUALIZADAS (PREVISTAS)\n0","SIN CAMBIO\n0","RECHAZADAS\n1"]
+snapshot rows after load: Catálogo recargado de la API CLAVE DATO GUARDADO Analgésicos Carga 0 productos Bebé y maternidad 0 productos Bienestar 0 productos Cuidado personal 0 productos Dermocosmética 0 productos Dispositivos 0 productos Medicamentos 17 productos Vitaminas Carga 0 productos
+after reload counts: ["CREADAS (PREVISTAS)\n0","ACTUALIZADAS (PREVISTAS)\n0","SIN CAMBIO\n2","RECHAZADAS\n1"]
