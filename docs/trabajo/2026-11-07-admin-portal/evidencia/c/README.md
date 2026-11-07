@@ -24,8 +24,8 @@ Pantalla nueva `src/app/features/admin/catalog-bulk/` + cliente
 | Persistencia de sucursales | no se ejecutó: no hay endpoint de lectura | — |
 | Contra la API real / Postgres | no se ejecutó | — |
 | Revisión visual independiente, móvil, tema oscuro | no se ejecutó | — |
-| `pre-push-gate.mjs` | ver `pre-push-gate.log` | `pre-push-gate.log` |
-| Spec `playwright/catalog-bulk.spec.ts` (simulador, no PostgreSQL) | ver `pre-push-gate.log` | `pre-push-gate.log` |
+| `pre-push-gate.mjs` | PASS (5 pasos, 1 spec) | `pre-push-gate.log` |
+| Spec `playwright/catalog-bulk.spec.ts` contra el simulador (no PostgreSQL) | VERIFIED_FUNCTIONAL_ONLY | `pre-push-gate.log` |
 
 ## Simulado
 
