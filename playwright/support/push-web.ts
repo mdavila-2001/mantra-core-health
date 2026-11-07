@@ -64,10 +64,11 @@ export const pushCalls = (api: MockApi) => api.calls.filter((c) => c.path.includ
  * Fake push manager and notification permission, kept in `localStorage` so they
  * survive reloads. `permission` is what `Notification.permission` reads, and
  * `answer` what the prompt returns. Without `push`, the browser has no PushManager.
+ * `serviceOff` rejects `subscribe` as Brave does with its push service off (the default).
  */
 export async function fakeBrowserPush(
   context: BrowserContext,
-  opts: { permission: NotificationPermission; answer?: NotificationPermission; push?: boolean },
+  opts: { permission: NotificationPermission; answer?: NotificationPermission; push?: boolean; serviceOff?: boolean },
 ): Promise<void> {
   await context.addInitScript((o) => {
     if (o.push === false) {
@@ -87,6 +88,7 @@ export async function fakeBrowserPush(
       unsubscribe: async () => (localStorage.removeItem('e2e.sub'), true),
     });
     PushManager.prototype.subscribe = async () => {
+      if (o.serviceOff) throw new DOMException('Registration failed - push service error', 'AbortError');
       const n = Number(localStorage.getItem('e2e.n') ?? '0') + 1;
       localStorage.setItem('e2e.n', String(n));
       localStorage.setItem('e2e.sub', `https://fcm.googleapis.com/fcm/send/e2e-${n}`);
