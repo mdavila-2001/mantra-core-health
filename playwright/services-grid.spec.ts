@@ -13,7 +13,7 @@ test.describe('Services grid (admin, simulator)', () => {
     await page.getByTestId('login-password').fill('S3cret-passw0rd');
     await page.getByTestId('login-submit').click();
     await page.waitForURL((url) => !url.pathname.startsWith('/auth'), { timeout: 30_000 });
-    await expect(page.getByTestId('header-cuenta')).toBeVisible({ timeout: 30_000 });
+    // The admin lands on the portal picker; the grid is opened by URL.
     await page.goto('/administration/services-grid');
     await expect(page.getByTestId('services-grid-tabs')).toBeVisible({ timeout: 30_000 });
   });
