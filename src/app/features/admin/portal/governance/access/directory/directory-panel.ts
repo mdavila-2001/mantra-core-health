@@ -14,15 +14,11 @@ import { tap } from 'rxjs';
 
 import { AuthzAdminClient } from '../../../../../../core/data-access/authz-admin/authz-admin.client';
 import {
-  DIRECTORY_USER_STATUSES,
   DIRECTORY_USER_TYPES,
-  type DirectoryTypeCounts,
   type DirectoryUser,
-  type DirectoryUserStatus,
   type DirectoryUserType,
 } from '../../../../../../core/data-access/authz-admin/authz-admin-directory.types';
 import { empty } from '../../../../../../core/view-state/view-state';
-import { AppButton } from '../../../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../../../../shared/components/atoms/link/link';
 import { Alert } from '../../../../../../shared/components/molecules/alert/alert';
@@ -38,7 +34,7 @@ import { queryFilters, queryParamsSignal } from '../../../support/route-query';
 import { dateTime } from '../../governance-labels';
 import {
   permissionsLine,
-  statusLabel,
+  statusText,
   typePlural,
   typeSingular,
   visibleEmail,
@@ -46,7 +42,7 @@ import {
 
 const PAGE_SIZE = 50;
 const SCREEN = portalUrl('governance/users');
-const URL_KEYS = ['q', 'type', 'status'] as const;
+const URL_KEYS = ['type'] as const;
 
 /**
  * Todas las cuentas de la aplicación, agrupables por tipo, con estado, roles y
@@ -55,7 +51,7 @@ const URL_KEYS = ['q', 'type', 'status'] as const;
  */
 @Component({
   selector: 'app-portal-directory-panel',
-  imports: [RouterLink, AppButton, Badge, Link, Alert, DataTable, FilterBar],
+  imports: [RouterLink, Badge, Link, Alert, DataTable, FilterBar],
   templateUrl: './directory-panel.html',
   styleUrl: './directory-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,60 +60,41 @@ export class DirectoryPanel {
   private readonly authz = inject(AuthzAdminClient);
   private readonly values = queryFilters(queryParamsSignal(inject(ActivatedRoute)), URL_KEYS);
   private readonly filters = computed(() => this.values(), {
-    equal: (a, b) => a.q === b.q && a.type === b.type && a.status === b.status,
+    equal: (a, b) => a.type === b.type,
   });
 
-  protected readonly counts = signal<DirectoryTypeCounts | null>(null);
-  protected readonly unavailable = signal<readonly DirectoryUserType[]>([]);
+  protected readonly scope = signal<'PLATFORM' | 'TENANT' | null>(null);
   protected readonly source = signal<'SIMULATED' | null>(null);
-  protected readonly unavailableText = computed(() =>
-    this.unavailable().map((t) => typePlural(t).toLowerCase()).join(', '),
-  );
 
-  protected readonly filterDefs = computed<readonly FilterDef[]>(() => {
-    const counts = this.counts();
-    return [
-      {
-        key: 'type',
-        label: 'Tipo',
-        asChips: true,
-        options: DIRECTORY_USER_TYPES.map((t) => ({
-          value: t,
-          label: counts ? `${typePlural(t)} · ${counts[t]}` : typePlural(t),
-        })),
-      },
-      {
-        key: 'status',
-        label: 'Estado',
-        placeholder: 'Cualquier estado',
-        options: DIRECTORY_USER_STATUSES.map((s) => ({ value: s, label: statusLabel(s).label })),
-      },
-    ];
-  });
+  // No free-text search: the API has none on purpose (a name in the URL would reach access logs).
+  protected readonly filterDefs: readonly FilterDef[] = [
+    {
+      key: 'type',
+      label: 'Tipo',
+      asChips: true,
+      options: DIRECTORY_USER_TYPES.map((t) => ({ value: t, label: typePlural(t) })),
+    },
+  ];
 
   protected readonly list = pagedList<DirectoryUser>(
     (cursor) => {
-      const { q, type, status } = this.filters();
+      const { type } = this.filters();
       return this.authz
         .directoryUsers({
           limit: PAGE_SIZE,
-          ...(q.trim() ? { q: q.trim() } : {}),
           ...(isType(type) ? { type } : {}),
-          ...(isStatus(status) ? { status } : {}),
           ...(cursor ? { cursor } : {}),
         })
         .pipe(
           tap((page) => {
-            this.counts.set(page.typeCounts);
-            this.unavailable.set(page.unavailableTypes);
+            this.scope.set(page.scope);
             this.source.set(page.source);
           }),
         );
     },
     () => {
-      const f = this.filters();
-      return f.q !== '' || f.type !== '' || f.status !== ''
-        ? empty({ label: 'Quitar los filtros', route: SCREEN }, 'Ninguna cuenta coincide con la búsqueda, el tipo o el estado elegidos.')
+      return this.filters().type !== ''
+        ? empty({ label: 'Quitar el filtro', route: SCREEN }, 'Ninguna cuenta del tipo elegido en su alcance.')
         : empty(
             { label: 'Ver los usuarios internos', route: SCREEN, queryParams: { view: 'users' } },
             'Todavía no hay cuentas que mostrar.',
@@ -147,7 +124,7 @@ export class DirectoryPanel {
   protected readonly email = visibleEmail;
   protected readonly perms = permissionsLine;
   protected readonly singular = typeSingular;
-  protected readonly status = statusLabel;
+  protected readonly status = statusText;
 
   constructor() {
     effect(() => {
@@ -158,5 +135,3 @@ export class DirectoryPanel {
 }
 
 const isType = (value: string): value is DirectoryUserType => DIRECTORY_USER_TYPES.some((t) => t === value);
-const isStatus = (value: string): value is Exclude<DirectoryUserStatus, 'OTHER'> =>
-  DIRECTORY_USER_STATUSES.some((s) => s === value);

@@ -2099,6 +2099,7 @@ Las que el código llama y el catálogo de arriba aún no listaba; las leyó `sc
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
 | `GET` | `/authz/internal-users` | `AuthzAdminClient` | No |
+| `GET` | `/authz/users/directory` | `AuthzAdminClient` | No |
 | `GET` | `/authz/permissions` | `AuthzAdminClient` | No |
 | `GET` | `/authz/roles/:roleId/permissions` | `AuthzAdminClient` | No |
 | `GET` | `/authz/roles` | `AuthzAdminClient` | No |

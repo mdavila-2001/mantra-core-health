@@ -15,7 +15,7 @@
     src/app/features/clinical-record/patient-chart/analysis-order-block/study-order-kind.ts: 410 líneas
     src/app/features/clinical-record/patient-chart/analysis-order-block/analysis-order-block.html: 396 líneas
     src/app/shared/components/atoms/input/input.ts: 301 líneas
-  35 excepción(es) que crecieron por encima de su tamaño congelado:
+  34 excepción(es) que crecieron por encima de su tamaño congelado:
     src/app/features/agenda/agenda.ts: 3088 líneas (congelado en 2294)
     src/app/features/account/appointments/appointments.ts: 2317 líneas (congelado en 2302)
     src/app/core/mock/handlers/scheduling.handlers.ts: 1834 líneas (congelado en 1811)
@@ -35,7 +35,6 @@
     src/app/core/mock/handlers/practice.handlers.ts: 575 líneas (congelado en 555)
     src/app/features/laboratory/results/laboratory-results.ts: 566 líneas (congelado en 561)
     src/app/features/access-governance/campaigns/campaign-wizard/campaign-wizard.ts: 562 líneas (congelado en 561)
-    src/app/core/mock/handlers/governance.handlers.ts: 523 líneas (congelado en 514)
     src/app/features/laboratory/results/laboratory-results.css: 497 líneas (congelado en 488)
     src/app/features/form-builder/form-builder.css: 483 líneas (congelado en 479)
     src/app/core/data-access/public-directory/public-directory.types.ts: 469 líneas (congelado en 464)
@@ -91,7 +90,7 @@ exit=1
 
 ✗ check-admin-portal-contract
 
-  33 llamada(s) que el contrato OpenAPI no declara:
+  35 llamada(s) que el contrato OpenAPI no declara:
     GET /admin/catalogs/services/scopes   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
     GET /admin/catalogs/services   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
     GET /admin/catalogs/services/{id}   (src/app/core/data-access/admin-portal/catalog-editor.client.ts)
@@ -124,7 +123,9 @@ exit=1
     GET /admin/ops/runtime-pieces   (src/app/core/data-access/admin-portal/runtime-pieces.client.ts)
     GET /admin/ops/runtime-pieces/{id}   (src/app/core/data-access/admin-portal/runtime-pieces.client.ts)
     POST /admin/ops/runtime-pieces/discover   (src/app/core/data-access/admin-portal/runtime-pieces.client.ts)
-    GET /authz/directory-users   (src/app/core/data-access/authz-admin/authz-admin.client.ts)
+    GET /admin/catalogs/services   (src/app/core/data-access/admin-portal/services-grid.client.ts)
+    GET /admin/catalogs/services/scopes   (src/app/core/data-access/admin-portal/services-grid.client.ts)
+    GET /diagnostics/lab/services   (src/app/core/data-access/admin-portal/services-grid.client.ts)
 
   Contrato: openapi/openapi.json de mantra-core-health-api (dev + claude/personal-apoyo-gobierno-accesos). Si la API cambió, refrescalo con yarn contract:refresh.
 
@@ -133,7 +134,7 @@ exit=1
 
 ✗ check-api-contract-drift
 
-  196 operación(es) que el código llama y la documentación no declara:
+  195 operación(es) que el código llama y la documentación no declara:
     DELETE /care-spaces/:id/unit-assignments/:assignmentId
     DELETE /iam/onboarding-drafts/:formType/:draftId
     DELETE /medical-groups/:groupId/members/:memberId
@@ -186,7 +187,6 @@ exit=1
     GET /authz/access-reviews
     GET /authz/access-reviews/due
     GET /authz/catalog/modules
-    GET /authz/directory-users
     GET /authz/permissions/:permissionId/holders
     GET /authz/resource-scope-grants
     GET /authz/roles/:roleId/field-permissions
@@ -512,8 +512,8 @@ exit=0
       → src/app/core/messaging/forwarding.ts
       src/app/core/data-access/lab-portal/lab-portal.types.ts
       → src/app/core/data-access/lab-portal/lab-order-origin.types.ts
-      src/app/core/data-access/lab-portal/lab-import.types.ts
-      → src/app/core/data-access/lab-portal/lab-portal.types.ts
+      src/app/core/data-access/lab-portal/lab-portal.types.ts
+      → src/app/core/data-access/lab-portal/lab-import.types.ts
       src/app/core/mock/handlers/profiles.handlers.ts
       → src/app/core/mock/handlers/profiles-dependents.mock.ts
       src/app/features/messaging/thread/message-selection.ts
@@ -531,7 +531,7 @@ exit=0
 
 exit=1
 === check-usted
-check-usted: 76 texto(s) visibles le hablan al usuario de vos o de tú.
+check-usted: 78 texto(s) visibles le hablan al usuario de vos o de tú.
 
   src/app/core/data-access/infrastructure/infrastructure.rules.ts:222  «Escribí»  …Escribí un patrón, por ejemplo 301-{A…
   src/app/core/data-access/infrastructure/infrastructure.rules.ts:228  «Usá»  …Usá un solo rango por patrón.…
@@ -552,6 +552,8 @@ check-usted: 76 texto(s) visibles le hablan al usuario de vos o de tú.
   src/app/core/mock/fixtures/community.ts:775  «Vos»  …asístoles aisladas nada más. ¿Vos, Vale?…
   src/app/core/mock/fixtures/community.ts:783  «preferís»  …¿Qué preferís para tu control cardiológico?…
   src/app/core/mock/fixtures/community.ts:783  «tu»  …¿Qué preferís para tu control cardiológico?…
+  src/app/core/mock/fixtures/fee-schedules.generated.ts:73  «te»  …Mama, cavidad oral, hepatica, te). Musculoesquelético, etc…
+  src/app/core/mock/fixtures/fee-schedules.generated.ts:73  «te»  …del ductus arterioso persiste te en neonatos prematuros…
   src/app/core/mock/fixtures/standard-sheets.generated.ts:37211  «uní»  …Aumento de volumen uní o bi-palpebral del ojo afecta…
   src/app/core/mock/handlers/infrastructure.handlers.ts:194  «Recargá»  …espacio mientras lo editabas. Recargá para ver la versión actual.…
   src/app/core/mock/handlers/infrastructure.handlers.ts:887  «activá»  …Primero activá ${padre.name}: un espacio no …
