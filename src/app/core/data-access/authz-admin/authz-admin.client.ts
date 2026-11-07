@@ -86,13 +86,13 @@ export class AuthzAdminClient {
   }
 
   /**
-   * PROVISIONAL (sesión G): todos los usuarios de la app, de cualquier tipo. La
-   * ruta la define el front hasta que la API de la sesión E publique la suya;
-   * el mapeo deja pasar sólo los campos del contrato (sin claves de más).
+   * Todos los usuarios de la app, de cualquier tipo (API PR #1409). Sin texto
+   * libre a propósito. El mapeo deja pasar sólo los campos del contrato (sin
+   * claves de más). Sin verificar contra una API corriendo.
    */
   directoryUsers(query: DirectoryUsersQuery = {}): Observable<DirectoryUsersPage> {
     return this.http
-      .get<DirectoryUsersBody>(this.url('/authz/directory-users'), { params: queryParams({ ...query }) })
+      .get<DirectoryUsersBody>(this.url('/authz/users/directory'), { params: queryParams({ ...query }) })
       .pipe(map(toDirectoryUsersPage));
   }
 

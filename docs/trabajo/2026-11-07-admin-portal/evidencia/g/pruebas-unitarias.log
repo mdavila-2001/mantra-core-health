@@ -2,664 +2,187 @@ Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
 ❯ Building...
 ✔ Building...
 Initial chunk files                                                                 | Names                                                                            |  Raw size
-chunk-LSTN6NSO.js                                                                   | -                                                                                |   2.64 MB | 
-chunk-73H7DI5U.js                                                                   | -                                                                                |   1.95 MB | 
-spec-app-core-mock-fixtures-anatomy.js                                              | spec-app-core-mock-fixtures-anatomy                                              |   1.13 MB | 
-chunk-II5S5KXN.js                                                                   | -                                                                                |   1.00 MB | 
-chunk-WVRBGXC5.js                                                                   | -                                                                                | 637.56 kB | 
-chunk-PSKYGFYD.js                                                                   | -                                                                                | 591.15 kB | 
-chunk-LB2WVP4M.js                                                                   | -                                                                                | 424.79 kB | 
-chunk-CAVEIVAS.js                                                                   | -                                                                                | 412.55 kB | 
-chunk-4KL3SCTT.js                                                                   | -                                                                                | 325.25 kB | 
-chunk-52RCF3EV.js                                                                   | -                                                                                | 257.85 kB | 
-chunk-TB4KDM54.js                                                                   | -                                                                                | 246.57 kB | 
-chunk-DFMGJEOR.js                                                                   | -                                                                                | 228.58 kB | 
+chunk-SNQK7P5N.js                                                                   | -                                                                                | 269.99 kB | 
 styles.css                                                                          | styles                                                                           | 189.63 kB | 
-chunk-OA7W7IZF.js                                                                   | -                                                                                | 186.91 kB | 
-chunk-XKULQRGV.js                                                                   | -                                                                                | 149.45 kB | 
-spec-app-features-admin-portal-governance-access-access-page.js                     | spec-app-features-admin-portal-governance-access-access-page                     | 140.19 kB | 
-chunk-5APYJ47N.js                                                                   | -                                                                                | 123.47 kB | 
-chunk-MPSFMCSX.js                                                                   | -                                                                                | 119.26 kB | 
-chunk-VL5JMZWN.js                                                                   | -                                                                                | 102.14 kB | 
-chunk-HRGJQJCJ.js                                                                   | -                                                                                |  99.86 kB | 
-chunk-DRGUAOZB.js                                                                   | -                                                                                |  85.38 kB | 
-spec-app-features-admin-portal-governance-policies-policy-detail-page.js            | spec-app-features-admin-portal-governance-policies-policy-detail-page            |  83.39 kB | 
-chunk-MI4FHEEN.js                                                                   | -                                                                                |  82.00 kB | 
-chunk-SVKTHFYA.js                                                                   | -                                                                                |  78.63 kB | 
-chunk-IH3ANB4J.js                                                                   | -                                                                                |  74.96 kB | 
-chunk-TCMLZJKX.js                                                                   | -                                                                                |  74.69 kB | 
-chunk-3PSSNE7G.js                                                                   | -                                                                                |  67.90 kB | 
-spec-app-features-admin-portal-governance-pii-pii-page.js                           | spec-app-features-admin-portal-governance-pii-pii-page                           |  63.16 kB | 
-chunk-7LA7CTTW.js                                                                   | -                                                                                |  61.10 kB | 
-chunk-FPA4G4JI.js                                                                   | -                                                                                |  57.59 kB | 
-chunk-LEMWKVTJ.js                                                                   | -                                                                                |  57.43 kB | 
-chunk-BLPDT6DQ.js                                                                   | -                                                                                |  54.27 kB | 
-chunk-ZYTQGP5D.js                                                                   | -                                                                                |  52.45 kB | 
-chunk-CMWNTZGJ.js                                                                   | -                                                                                |  52.35 kB | 
-chunk-LABX7DRN.js                                                                   | -                                                                                |  51.88 kB | 
-chunk-ZTQ3GSIA.js                                                                   | -                                                                                |  51.51 kB | 
-chunk-N74DK6S4.js                                                                   | -                                                                                |  50.16 kB | 
-chunk-OLGTICZF.js                                                                   | -                                                                                |  48.41 kB | 
-chunk-FRXSORCX.js                                                                   | -                                                                                |  47.90 kB | 
-chunk-JZHBXFLV.js                                                                   | -                                                                                |  46.06 kB | 
-chunk-MSRAKHVN.js                                                                   | -                                                                                |  45.73 kB | 
-spec-app-core-mock-contract-infra-f2f3-contract.js                                  | spec-app-core-mock-contract-infra-f2f3-contract                                  |  45.71 kB | 
-chunk-LSQCO2F3.js                                                                   | -                                                                                |  45.24 kB | 
-chunk-KWCEHQZM.js                                                                   | -                                                                                |  43.41 kB | 
-chunk-DQ3NE4QM.js                                                                   | -                                                                                |  42.49 kB | 
-chunk-RD7BYUFH.js                                                                   | -                                                                                |  42.48 kB | 
-chunk-QRS3SDEB.js                                                                   | -                                                                                |  42.42 kB | 
-chunk-KAE6YZWK.js                                                                   | -                                                                                |  41.85 kB | 
-spec-app-core-mock-handlers-admissions.handlers.js                                  | spec-app-core-mock-handlers-admissions.handlers                                  |  41.81 kB | 
-spec-app-core-mock-handlers-support-access.chat.handlers.js                         | spec-app-core-mock-handlers-support-access.chat.handlers                         |  41.37 kB | 
-chunk-P4DCZ7BU.js                                                                   | -                                                                                |  40.92 kB | 
-chunk-BNKA3EWP.js                                                                   | -                                                                                |  40.57 kB | 
-chunk-22GKS43F.js                                                                   | -                                                                                |  40.16 kB | 
-chunk-TAOPV7AZ.js                                                                   | -                                                                                |  39.78 kB | 
-chunk-KREIAP3U.js                                                                   | -                                                                                |  37.84 kB | 
-spec-app-features-admin-portal-governance-audit-audit-page.js                       | spec-app-features-admin-portal-governance-audit-audit-page                       |  37.60 kB | 
-spec-app-core-mock-handlers-pharmacy.handlers.js                                    | spec-app-core-mock-handlers-pharmacy.handlers                                    |  36.41 kB | 
-spec-app-features-admin-portal-governance-permission-drift-permission-drift-page.js | spec-app-features-admin-portal-governance-permission-drift-permission-drift-page |  36.33 kB | 
-spec-app-core-mock-handlers-support-access.governance.handlers.js                   | spec-app-core-mock-handlers-support-access.governance.handlers                   |  36.31 kB | 
-chunk-EJDBYG7T.js                                                                   | -                                                                                |  36.30 kB | 
-chunk-3DHCUFXA.js                                                                   | -                                                                                |  34.92 kB | 
-chunk-ZJZRWJIN.js                                                                   | -                                                                                |  34.21 kB | 
-spec-app-core-mock-handlers-support-access.agenda-actions.js                        | spec-app-core-mock-handlers-support-access.agenda-actions                        |  33.64 kB | 
-chunk-Q4CC25DX.js                                                                   | -                                                                                |  31.41 kB | 
-spec-app-core-mock-handlers-billing-simulated.handlers.js                           | spec-app-core-mock-handlers-billing-simulated.handlers                           |  30.06 kB | 
-spec-app-core-mock-handlers-support-access.handlers.js                              | spec-app-core-mock-handlers-support-access.handlers                              |  30.02 kB | 
-chunk-RDXYCJW7.js                                                                   | -                                                                                |  29.32 kB | 
-chunk-V7RIO6UI.js                                                                   | -                                                                                |  28.86 kB | 
-chunk-I3ZDAG7X.js                                                                   | -                                                                                |  28.11 kB | 
-spec-app-core-mock-handlers-lab-portal.handlers.js                                  | spec-app-core-mock-handlers-lab-portal.handlers                                  |  27.51 kB | 
-chunk-O7REBLB7.js                                                                   | -                                                                                |  27.16 kB | 
-spec-app-core-mock-handlers-support-access.admin.handlers.js                        | spec-app-core-mock-handlers-support-access.admin.handlers                        |  26.21 kB | 
-chunk-TTD4BY4Y.js                                                                   | -                                                                                |  25.45 kB | 
-spec-app-core-mock-handlers-referrals.handlers.js                                   | spec-app-core-mock-handlers-referrals.handlers                                   |  25.21 kB | 
-chunk-5DLZ4ROY.js                                                                   | -                                                                                |  24.93 kB | 
-spec-app-core-mock-handlers-bulk-imports.handlers.js                                | spec-app-core-mock-handlers-bulk-imports.handlers                                |  23.84 kB | 
-chunk-OLGCODH4.js                                                                   | -                                                                                |  23.07 kB | 
-spec-app-core-mock-handlers-terminology.handlers.js                                 | spec-app-core-mock-handlers-terminology.handlers                                 |  22.72 kB | 
-chunk-RMUNJMFI.js                                                                   | -                                                                                |  22.47 kB | 
-spec-app-core-mock-handlers-ui-visibility.handlers.js                               | spec-app-core-mock-handlers-ui-visibility.handlers                               |  22.23 kB | 
-spec-app-core-mock-handlers-clinical.handlers.js                                    | spec-app-core-mock-handlers-clinical.handlers                                    |  21.94 kB | 
-chunk-G24QP43D.js                                                                   | -                                                                                |  21.93 kB | 
-spec-app-core-mock-handlers-reporting-resumen.dataset.js                            | spec-app-core-mock-handlers-reporting-resumen.dataset                            |  21.72 kB | 
-chunk-DWRWSXZ6.js                                                                   | -                                                                                |  21.44 kB | 
-spec-app-core-mock-handlers-surveys-insights.handlers.js                            | spec-app-core-mock-handlers-surveys-insights.handlers                            |  20.82 kB | 
-chunk-2ON4T6AK.js                                                                   | -                                                                                |  20.82 kB | 
-spec-app-core-mock-handlers-scheduling.handlers.js                                  | spec-app-core-mock-handlers-scheduling.handlers                                  |  20.49 kB | 
-spec-app-core-mock-mock-backend.js                                                  | spec-app-core-mock-mock-backend                                                  |  19.77 kB | 
-chunk-KHD3W7TW.js                                                                   | -                                                                                |  19.74 kB | 
-chunk-3GZ44HEF.js                                                                   | -                                                                                |  19.35 kB | 
-chunk-ZEEOMS47.js                                                                   | -                                                                                |  19.30 kB | 
-spec-app-core-mock-handlers-insurance.handlers.js                                   | spec-app-core-mock-handlers-insurance.handlers                                   |  19.20 kB | 
-spec-app-core-mock-handlers-reporting-comisiones.dataset.js                         | spec-app-core-mock-handlers-reporting-comisiones.dataset                         |  19.15 kB | 
-chunk-WDMV2W3H.js                                                                   | -                                                                                |  19.11 kB | 
-spec-app-features-admin-portal-governance-policies-policies-page.js                 | spec-app-features-admin-portal-governance-policies-policies-page                 |  19.09 kB | 
-spec-app-core-mock-handlers-permissions-admin.handlers.js                           | spec-app-core-mock-handlers-permissions-admin.handlers                           |  18.55 kB | 
-spec-app-core-mock-handlers-infra-f5-integration.handlers.js                        | spec-app-core-mock-handlers-infra-f5-integration.handlers                        |  18.26 kB | 
-spec-app-core-mock-handlers-pharmacy-prescription-shares.handlers.js                | spec-app-core-mock-handlers-pharmacy-prescription-shares.handlers                |  18.02 kB | 
-chunk-7VCPHHVV.js                                                                   | -                                                                                |  17.92 kB | 
-chunk-BFEMLXI3.js                                                                   | -                                                                                |  17.68 kB | 
-spec-app-core-mock-handlers-pharmacy-chat.handlers.js                               | spec-app-core-mock-handlers-pharmacy-chat.handlers                               |  17.66 kB | 
-spec-app-core-mock-handlers-medical-groups.handlers.js                              | spec-app-core-mock-handlers-medical-groups.handlers                              |  17.61 kB | 
-chunk-QAXSPWCG.js                                                                   | -                                                                                |  17.54 kB | 
-spec-app-core-mock-handlers-adt.handlers.js                                         | spec-app-core-mock-handlers-adt.handlers                                         |  17.40 kB | 
-spec-app-core-mock-handlers-support-access.challenges.js                            | spec-app-core-mock-handlers-support-access.challenges                            |  17.29 kB | 
-spec-app-core-mock-handlers-iam-security.handlers.js                                | spec-app-core-mock-handlers-iam-security.handlers                                |  17.18 kB | 
-chunk-OJZXLFJE.js                                                                   | -                                                                                |  16.93 kB | 
-spec-app-core-mock-handlers-auth.handlers.medical.js                                | spec-app-core-mock-handlers-auth.handlers.medical                                |  16.66 kB | 
-chunk-H2NB34YF.js                                                                   | -                                                                                |  16.42 kB | 
-spec-app-core-mock-handlers-reporting-calidad.dataset.js                            | spec-app-core-mock-handlers-reporting-calidad.dataset                            |  16.41 kB | 
-spec-app-core-mock-handlers-infrastructure-ops.handlers.js                          | spec-app-core-mock-handlers-infrastructure-ops.handlers                          |  16.33 kB | 
-spec-app-core-mock-handlers-finance.handlers.coverage.js                            | spec-app-core-mock-handlers-finance.handlers.coverage                            |  16.05 kB | 
-spec-app-core-mock-handlers-support-access.session.handlers.js                      | spec-app-core-mock-handlers-support-access.session.handlers                      |  15.98 kB | 
-spec-app-core-mock-handlers-diagnostics.handlers.js                                 | spec-app-core-mock-handlers-diagnostics.handlers                                 |  15.70 kB | 
-chunk-45JE42BI.js                                                                   | -                                                                                |  15.41 kB | 
-chunk-C44O7G4V.js                                                                   | -                                                                                |  15.33 kB | 
-spec-app-core-mock-handlers-operating-rooms.handlers.js                             | spec-app-core-mock-handlers-operating-rooms.handlers                             |  15.18 kB | 
-spec-app-core-mock-handlers-reporting-suscripciones.dataset.js                      | spec-app-core-mock-handlers-reporting-suscripciones.dataset                      |  14.79 kB | 
-chunk-YG6HRU4L.js                                                                   | -                                                                                |  14.75 kB | 
-spec-app-core-mock-handlers-service-offerings.handlers.js                           | spec-app-core-mock-handlers-service-offerings.handlers                           |  14.70 kB | 
-chunk-QV4JQ7RD.js                                                                   | -                                                                                |  14.60 kB | 
-chunk-ZUW4ECQM.js                                                                   | -                                                                                |  14.51 kB | 
-spec-app-core-mock-handlers-study-detail.handlers.js                                | spec-app-core-mock-handlers-study-detail.handlers                                |  14.43 kB | 
-chunk-2KN7EK2L.js                                                                   | -                                                                                |  14.39 kB | 
-chunk-B7QQT6KW.js                                                                   | -                                                                                |  14.35 kB | 
-spec-app-core-mock-handlers-reporting-publicidad.dataset.js                         | spec-app-core-mock-handlers-reporting-publicidad.dataset                         |  14.35 kB | 
-chunk-CQUUKRVU.js                                                                   | -                                                                                |  14.29 kB | 
-spec-app-core-mock-handlers-insurance.claim-quote.handlers.js                       | spec-app-core-mock-handlers-insurance.claim-quote.handlers                       |  14.03 kB | 
-chunk-GB2BBI5K.js                                                                   | -                                                                                |  13.81 kB | 
-spec-app-core-mock-handlers-insurance-campaigns.handlers.js                         | spec-app-core-mock-handlers-insurance-campaigns.handlers                         |  13.76 kB | 
-spec-app-core-mock-handlers-surveys-forms.handlers.js                               | spec-app-core-mock-handlers-surveys-forms.handlers                               |  13.73 kB | 
-spec-app-core-mock-siat-sim-siat-simulated.adapter.js                               | spec-app-core-mock-siat-sim-siat-simulated.adapter                               |  13.72 kB | 
-spec-app-core-mock-handlers-prescription-shares.handlers.js                         | spec-app-core-mock-handlers-prescription-shares.handlers                         |  13.65 kB | 
-chunk-WH2VECZE.js                                                                   | -                                                                                |  13.37 kB | 
-spec-app-core-mock-handlers-reporting-adquisicion.dataset.js                        | spec-app-core-mock-handlers-reporting-adquisicion.dataset                        |  13.35 kB | 
-spec-app-core-mock-glossary-shards.js                                               | spec-app-core-mock-glossary-shards                                               |  13.29 kB | 
-spec-app-core-mock-handlers-clinical-links.handlers.js                              | spec-app-core-mock-handlers-clinical-links.handlers                              |  13.27 kB | 
-chunk-ENP5XBWM.js                                                                   | -                                                                                |  13.23 kB | 
-chunk-CMTLW5XP.js                                                                   | -                                                                                |  12.61 kB | 
-chunk-HSRQB6MM.js                                                                   | -                                                                                |  12.54 kB | 
-spec-app-core-mock-handlers-reporting-cobros.dataset.js                             | spec-app-core-mock-handlers-reporting-cobros.dataset                             |  12.40 kB | 
-chunk-4DBDABH6.js                                                                   | -                                                                                |  12.27 kB | 
-spec-app-core-mock-handlers-catalog-editor.handlers.js                              | spec-app-core-mock-handlers-catalog-editor.handlers                              |  12.26 kB | 
-spec-app-core-mock-handlers-insurer-patients.handlers.js                            | spec-app-core-mock-handlers-insurer-patients.handlers                            |  12.24 kB | 
-spec-app-core-mock-handlers-payment-receipts.handlers.js                            | spec-app-core-mock-handlers-payment-receipts.handlers                            |  12.22 kB | 
-chunk-VNIV3O3B.js                                                                   | -                                                                                |  12.18 kB | 
-spec-app-core-mock-handlers-auth.handlers.laboratory.js                             | spec-app-core-mock-handlers-auth.handlers.laboratory                             |  12.12 kB | 
-chunk-VNSASJ44.js                                                                   | -                                                                                |  11.95 kB | 
-chunk-6JKBCVFA.js                                                                   | -                                                                                |  11.63 kB | 
-chunk-TGIMYBVS.js                                                                   | -                                                                                |  11.45 kB | 
-spec-app-core-mock-handlers-infrastructure.handlers.js                              | spec-app-core-mock-handlers-infrastructure.handlers                              |  11.29 kB | 
-spec-app-core-mock-handlers-support-access.doctor-invitations.handlers.js           | spec-app-core-mock-handlers-support-access.doctor-invitations.handlers           |  11.15 kB | 
-chunk-B6CZJU5T.js                                                                   | -                                                                                |  11.14 kB | 
-spec-app-core-mock-handlers-referral-transfer.handlers.js                           | spec-app-core-mock-handlers-referral-transfer.handlers                           |  11.03 kB | 
-chunk-M3LVJQUF.js                                                                   | -                                                                                |  11.00 kB | 
-spec-app-core-mock-handlers-auth.handlers.pharmacy.js                               | spec-app-core-mock-handlers-auth.handlers.pharmacy                               |  10.94 kB | 
-spec-app-core-mock-handlers-support-access.agenda-blocks.js                         | spec-app-core-mock-handlers-support-access.agenda-blocks                         |  10.90 kB | 
-chunk-AS43Y4GT.js                                                                   | -                                                                                |  10.70 kB | 
-spec-app-core-mock-billing-sim-simulated-invoicing.js                               | spec-app-core-mock-billing-sim-simulated-invoicing                               |  10.61 kB | 
-chunk-NUZBXZTG.js                                                                   | -                                                                                |  10.43 kB | 
-chunk-HICDJ5K7.js                                                                   | -                                                                                |  10.37 kB | 
-spec-app-core-mock-handlers-received-services.handlers.js                           | spec-app-core-mock-handlers-received-services.handlers                           |  10.36 kB | 
-chunk-E7RHWXPP.js                                                                   | -                                                                                |  10.27 kB | 
-spec-app-core-mock-handlers-lab-referral.handlers.js                                | spec-app-core-mock-handlers-lab-referral.handlers                                |   9.81 kB | 
-spec-app-core-mock-handlers-centros.handlers.js                                     | spec-app-core-mock-handlers-centros.handlers                                     |   9.81 kB | 
-chunk-T4CNJ3UW.js                                                                   | -                                                                                |   9.81 kB | 
-spec-app-core-mock-handlers-role-assignments.handlers.js                            | spec-app-core-mock-handlers-role-assignments.handlers                            |   9.81 kB | 
-spec-app-core-mock-handlers-patient-spending.handlers.js                            | spec-app-core-mock-handlers-patient-spending.handlers                            |   9.78 kB | 
-spec-app-core-mock-handlers-directory-invitations.handlers.js                       | spec-app-core-mock-handlers-directory-invitations.handlers                       |   9.71 kB | 
-spec-app-core-mock-handlers-insights-workspace.handlers.js                          | spec-app-core-mock-handlers-insights-workspace.handlers                          |   9.59 kB | 
-spec-app-core-mock-handlers-community.handlers.coverage.js                          | spec-app-core-mock-handlers-community.handlers.coverage                          |   9.48 kB | 
-chunk-3OF3HJEF.js                                                                   | -                                                                                |   9.48 kB | 
-spec-app-core-mock-aviso-ficha-medica.js                                            | spec-app-core-mock-aviso-ficha-medica                                            |   9.42 kB | 
-spec-app-core-mock-handlers-insurer-received-claims.objection.js                    | spec-app-core-mock-handlers-insurer-received-claims.objection                    |   9.35 kB | 
-spec-app-core-mock-handlers-access-requests.handlers.js                             | spec-app-core-mock-handlers-access-requests.handlers                             |   9.31 kB | 
-spec-app-core-mock-handlers-diagnostic-coverage.handlers.js                         | spec-app-core-mock-handlers-diagnostic-coverage.handlers                         |   9.30 kB | 
-spec-app-core-mock-handlers-lab-inbox.handlers.js                                   | spec-app-core-mock-handlers-lab-inbox.handlers                                   |   9.27 kB | 
-spec-app-core-mock-handlers-governance-policies.handlers.js                         | spec-app-core-mock-handlers-governance-policies.handlers                         |   9.25 kB | 
-chunk-QGSXNL7I.js                                                                   | -                                                                                |   9.23 kB | 
-chunk-NFGAYFW4.js                                                                   | -                                                                                |   9.21 kB | 
-spec-app-core-mock-handlers-lab-catalog.handlers.js                                 | spec-app-core-mock-handlers-lab-catalog.handlers                                 |   9.19 kB | 
-spec-app-core-mock-handlers-pharma-lab.handlers.js                                  | spec-app-core-mock-handlers-pharma-lab.handlers                                  |   9.17 kB | 
-spec-app-core-mock-handlers-insurer-received-claims.handlers.js                     | spec-app-core-mock-handlers-insurer-received-claims.handlers                     |   9.13 kB | 
-spec-app-core-mock-fixtures-markdown-catalogs-visibility.js                         | spec-app-core-mock-fixtures-markdown-catalogs-visibility                         |   9.10 kB | 
-chunk-XMCXEDQX.js                                                                   | -                                                                                |   9.06 kB | 
-spec-app-core-mock-handlers-scheduling-template-retire.handlers.js                  | spec-app-core-mock-handlers-scheduling-template-retire.handlers                  |   8.94 kB | 
-spec-app-core-mock-handlers-telemetry-consent.handlers.js                           | spec-app-core-mock-handlers-telemetry-consent.handlers                           |   8.88 kB | 
-spec-app-core-mock-handlers-signature-and-seal.handlers.js                          | spec-app-core-mock-handlers-signature-and-seal.handlers                          |   8.79 kB | 
-spec-app-core-mock-handlers-medical-centers.handlers.js                             | spec-app-core-mock-handlers-medical-centers.handlers                             |   8.71 kB | 
-spec-app-core-mock-siat-sim-invoice-xml.js                                          | spec-app-core-mock-siat-sim-invoice-xml                                          |   8.63 kB | 
-spec-app-core-mock-catalogo-publico.js                                              | spec-app-core-mock-catalogo-publico                                              |   8.61 kB | 
-spec-app-core-mock-handlers-brechas-h1.handlers.js                                  | spec-app-core-mock-handlers-brechas-h1.handlers                                  |   8.55 kB | 
-spec-app-core-mock-handlers-profiles-propios.handlers.js                            | spec-app-core-mock-handlers-profiles-propios.handlers                            |   8.23 kB | 
-chunk-HENYWODL.js                                                                   | -                                                                                |   8.21 kB | 
-spec-app-core-mock-handlers-diagnostics-lab.handlers.js                             | spec-app-core-mock-handlers-diagnostics-lab.handlers                             |   8.17 kB | 
-spec-app-core-mock-handlers-lab-order-intake.handlers.js                            | spec-app-core-mock-handlers-lab-order-intake.handlers                            |   8.16 kB | 
-spec-app-core-mock-handlers-diagnosis-verification.handlers.js                      | spec-app-core-mock-handlers-diagnosis-verification.handlers                      |   8.11 kB | 
-chunk-5E2S2BKJ.js                                                                   | -                                                                                |   8.03 kB | 
-spec-app-core-mock-handlers-healthcare-services.handlers.js                         | spec-app-core-mock-handlers-healthcare-services.handlers                         |   7.97 kB | 
-spec-app-core-mock-fixtures-insurer-network.js                                      | spec-app-core-mock-fixtures-insurer-network                                      |   7.93 kB | 
-spec-app-core-mock-handlers-catalog-fit.handlers.js                                 | spec-app-core-mock-handlers-catalog-fit.handlers                                 |   7.91 kB | 
-spec-app-core-mock-handlers-community-reviewable-care.handlers.js                   | spec-app-core-mock-handlers-community-reviewable-care.handlers                   |   7.87 kB | 
-spec-app-core-mock-handlers-insurance-portability.handlers.js                       | spec-app-core-mock-handlers-insurance-portability.handlers                       |   7.78 kB | 
-spec-app-core-mock-handlers-runtime-pieces.handlers.js                              | spec-app-core-mock-handlers-runtime-pieces.handlers                              |   7.75 kB | 
-spec-app-core-mock-fixtures-patient-network.data.js                                 | spec-app-core-mock-fixtures-patient-network.data                                 |   7.72 kB | 
-spec-app-core-mock-fixtures-glossary.js                                             | spec-app-core-mock-fixtures-glossary                                             |   7.69 kB | 
-spec-app-core-mock-aviso-de-demora.js                                               | spec-app-core-mock-aviso-de-demora                                               |   7.62 kB | 
-spec-app-core-mock-handlers-admin-portal.handlers.js                                | spec-app-core-mock-handlers-admin-portal.handlers                                |   7.59 kB | 
-spec-app-core-mock-handlers-scheduling-walk-in.handlers.js                          | spec-app-core-mock-handlers-scheduling-walk-in.handlers                          |   7.49 kB | 
-chunk-T35VW5VJ.js                                                                   | -                                                                                |   7.47 kB | 
-spec-app-core-mock-handlers-pharmacy.pedido-entrante.js                             | spec-app-core-mock-handlers-pharmacy.pedido-entrante                             |   7.31 kB | 
-chunk-BB7CECPD.js                                                                   | -                                                                                |   7.25 kB | 
-spec-app-core-mock-handlers-lab-order-qr.handlers.js                                | spec-app-core-mock-handlers-lab-order-qr.handlers                                |   7.17 kB | 
-chunk-XHJNOGW6.js                                                                   | -                                                                                |   7.16 kB | 
-chunk-D5LC2VRB.js                                                                   | -                                                                                |   7.16 kB | 
-spec-app-core-mock-handlers-support-access.provisioning.handlers.js                 | spec-app-core-mock-handlers-support-access.provisioning.handlers                 |   7.10 kB | 
-chunk-KDA2IVLS.js                                                                   | -                                                                                |   6.91 kB | 
-chunk-QPUKZP5M.js                                                                   | -                                                                                |   6.91 kB | 
-spec-app-core-mock-handlers-practitioner-insurer-requests.handlers.js               | spec-app-core-mock-handlers-practitioner-insurer-requests.handlers               |   6.90 kB | 
-chunk-IM4TEQGB.js                                                                   | -                                                                                |   6.84 kB | 
-spec-app-core-mock-fixtures-bolivia-central-axis.js                                 | spec-app-core-mock-fixtures-bolivia-central-axis                                 |   6.72 kB | 
-chunk-2HT7ONDG.js                                                                   | -                                                                                |   6.61 kB | 
-spec-app-core-mock-handlers-community-gaps.handlers.js                              | spec-app-core-mock-handlers-community-gaps.handlers                              |   6.59 kB | 
-spec-app-core-mock-handlers-flexible-hours.handlers.js                              | spec-app-core-mock-handlers-flexible-hours.handlers                              |   6.58 kB | 
-spec-app-core-mock-handlers-loyalty.handlers.js                                     | spec-app-core-mock-handlers-loyalty.handlers                                     |   6.58 kB | 
-spec-app-core-mock-fixtures-standard-sheets.js                                      | spec-app-core-mock-fixtures-standard-sheets                                      |   6.55 kB | 
-spec-app-core-mock-handlers-service-request-category.mock.js                        | spec-app-core-mock-handlers-service-request-category.mock                        |   6.51 kB | 
-spec-app-features-admin-portal-governance-access-directory-directory-panel.js       | spec-app-features-admin-portal-governance-access-directory-directory-panel       |   6.42 kB | 
-spec-app-core-mock-handlers-simple-accounting.handlers.js                           | spec-app-core-mock-handlers-simple-accounting.handlers                           |   6.41 kB | 
-chunk-SRL2PCQP.js                                                                   | -                                                                                |   6.38 kB | 
-spec-app-core-mock-handlers-promotions.handlers.js                                  | spec-app-core-mock-handlers-promotions.handlers                                  |   6.38 kB | 
-spec-app-core-mock-faker-faker.js                                                   | spec-app-core-mock-faker-faker                                                   |   6.31 kB | 
-spec-app-core-mock-handlers-dependent-requests.handlers.js                          | spec-app-core-mock-handlers-dependent-requests.handlers                          |   6.25 kB | 
-spec-app-core-mock-handlers-pharmacy-medication-availability.handlers.js            | spec-app-core-mock-handlers-pharmacy-medication-availability.handlers            |   6.09 kB | 
-chunk-WW5UQTNZ.js                                                                   | -                                                                                |   6.03 kB | 
-spec-app-core-mock-handlers-insurance.claim-references.handlers.js                  | spec-app-core-mock-handlers-insurance.claim-references.handlers                  |   6.01 kB | 
-spec-app-core-mock-handlers-registration-logo.handlers.js                           | spec-app-core-mock-handlers-registration-logo.handlers                           |   6.00 kB | 
-chunk-H4HRLMVB.js                                                                   | -                                                                                |   5.96 kB | 
-spec-app-core-mock-handlers-insurance-adjudication.handlers.js                      | spec-app-core-mock-handlers-insurance-adjudication.handlers                      |   5.95 kB | 
-spec-app-core-mock-handlers-authz-modules-catalog.handlers.js                       | spec-app-core-mock-handlers-authz-modules-catalog.handlers                       |   5.82 kB | 
-spec-app-core-mock-fixtures-institutions.js                                         | spec-app-core-mock-fixtures-institutions                                         |   5.71 kB | 
-chunk-XXXEWQUE.js                                                                   | -                                                                                |   5.70 kB | 
-spec-app-core-mock-handlers-governance.handlers.js                                  | spec-app-core-mock-handlers-governance.handlers                                  |   5.63 kB | 
-chunk-PKIJXAJG.js                                                                   | -                                                                                |   5.54 kB | 
-spec-app-core-mock-handlers-dependent-candidates.handlers.js                        | spec-app-core-mock-handlers-dependent-candidates.handlers                        |   5.52 kB | 
-spec-app-core-mock-handlers-governance-data.handlers.js                             | spec-app-core-mock-handlers-governance-data.handlers                             |   5.47 kB | 
-spec-app-core-mock-handlers-surveys-service-assignments.handlers.js                 | spec-app-core-mock-handlers-surveys-service-assignments.handlers                 |   5.45 kB | 
-spec-app-core-mock-handlers-insurer-received-claims.my-claims.js                    | spec-app-core-mock-handlers-insurer-received-claims.my-claims                    |   5.45 kB | 
-chunk-QV3I2LAT.js                                                                   | -                                                                                |   5.39 kB | 
-spec-app-core-mock-glossary-capa-de-equipos.js                                      | spec-app-core-mock-glossary-capa-de-equipos                                      |   5.39 kB | 
-spec-app-core-data-access-authz-admin-authz-admin.client.js                         | spec-app-core-data-access-authz-admin-authz-admin.client                         |   5.31 kB | 
-chunk-HZXEPMDQ.js                                                                   | -                                                                                |   5.27 kB | 
-spec-app-core-mock-service-availability.js                                          | spec-app-core-mock-service-availability                                          |   5.22 kB | 
-spec-app-core-mock-handlers-booking-approval.handlers.js                            | spec-app-core-mock-handlers-booking-approval.handlers                            |   5.20 kB | 
-spec-app-core-mock-handlers-insights.handlers.js                                    | spec-app-core-mock-handlers-insights.handlers                                    |   5.16 kB | 
-spec-app-core-mock-handlers-billing-simulated.my-invoices.js                        | spec-app-core-mock-handlers-billing-simulated.my-invoices                        |   5.15 kB | 
-chunk-NMJI4AXM.js                                                                   | -                                                                                |   5.12 kB | 
-spec-app-core-mock-rules-bed-compatibility.js                                       | spec-app-core-mock-rules-bed-compatibility                                       |   5.02 kB | 
-spec-app-core-mock-contract-contract-validator.js                                   | spec-app-core-mock-contract-contract-validator                                   |   5.01 kB | 
-spec-app-core-mock-handlers-lab-queue-and-catalogs.handlers.js                      | spec-app-core-mock-handlers-lab-queue-and-catalogs.handlers                      |   4.98 kB | 
-spec-app-core-mock-official-directory.js                                            | spec-app-core-mock-official-directory                                            |   4.95 kB | 
-spec-app-core-mock-handlers-mutability.handlers.js                                  | spec-app-core-mock-handlers-mutability.handlers                                  |   4.94 kB | 
-spec-app-core-mock-released-slot.js                                                 | spec-app-core-mock-released-slot                                                 |   4.92 kB | 
-spec-app-core-mock-handlers-conversation-attachments.handlers.js                    | spec-app-core-mock-handlers-conversation-attachments.handlers                    |   4.87 kB | 
-spec-app-features-admin-portal-governance-access-assign-role-dialog.js              | spec-app-features-admin-portal-governance-access-assign-role-dialog              |   4.73 kB | 
-spec-app-core-mock-fixtures-anatomy-atlas.js                                        | spec-app-core-mock-fixtures-anatomy-atlas                                        |   4.64 kB | 
-spec-app-core-mock-handlers-flows.handlers.js                                       | spec-app-core-mock-handlers-flows.handlers                                       |   4.62 kB | 
-spec-app-core-mock-handlers-profile-photos.handlers.js                              | spec-app-core-mock-handlers-profile-photos.handlers                              |   4.60 kB | 
-spec-app-core-mock-handlers-lab-orden-entrante.js                                   | spec-app-core-mock-handlers-lab-orden-entrante                                   |   4.52 kB | 
-chunk-5NJMEYDP.js                                                                   | -                                                                                |   4.47 kB | 
-chunk-KGL2BCNS.js                                                                   | -                                                                                |   4.40 kB | 
-chunk-E5BOMMP2.js                                                                   | -                                                                                |   4.27 kB | 
-spec-app-core-mock-handlers-support-access.governance.tokens.js                     | spec-app-core-mock-handlers-support-access.governance.tokens                     |   4.25 kB | 
-spec-app-core-mock-handlers-ops-traffic.handlers.js                                 | spec-app-core-mock-handlers-ops-traffic.handlers                                 |   4.17 kB | 
-spec-app-features-admin-portal-governance-access-access.model.js                    | spec-app-features-admin-portal-governance-access-access.model                    |   4.16 kB | 
+chunk-VKDP4I7F.js                                                                   | -                                                                                | 186.87 kB | 
+spec-app-features-admin-portal-governance-access-access-page.js                     | spec-app-features-admin-portal-governance-access-access-page                     | 139.91 kB | 
+chunk-3LX4LY66.js                                                                   | -                                                                                | 116.79 kB | 
+chunk-RYHXWHFZ.js                                                                   | -                                                                                | 103.03 kB | 
+chunk-J727EGU3.js                                                                   | -                                                                                | 102.34 kB | 
+spec-app-features-admin-portal-governance-policies-policy-detail-page.js            | spec-app-features-admin-portal-governance-policies-policy-detail-page            |  83.15 kB | 
+chunk-AQG7OV4A.js                                                                   | -                                                                                |  82.00 kB | 
+spec-app-features-admin-portal-governance-pii-pii-page.js                           | spec-app-features-admin-portal-governance-pii-pii-page                           |  62.91 kB | 
+chunk-IFFGVKZF.js                                                                   | -                                                                                |  55.36 kB | 
+chunk-TUIJYCL3.js                                                                   | -                                                                                |  51.51 kB | 
+chunk-KEZHE5JJ.js                                                                   | -                                                                                |  42.49 kB | 
+chunk-5DW2G5LF.js                                                                   | -                                                                                |  42.48 kB | 
+spec-app-features-admin-portal-governance-audit-audit-page.js                       | spec-app-features-admin-portal-governance-audit-audit-page                       |  37.35 kB | 
+spec-app-features-admin-portal-governance-permission-drift-permission-drift-page.js | spec-app-features-admin-portal-governance-permission-drift-permission-drift-page |  36.08 kB | 
+spec-app-core-mock-handlers-governance-policies.handlers.js                         | spec-app-core-mock-handlers-governance-policies.handlers                         |  28.12 kB | 
+chunk-HZUBBGHZ.js                                                                   | -                                                                                |  27.18 kB | 
+chunk-G7GGQFIE.js                                                                   | -                                                                                |  22.26 kB | 
+chunk-AHRZEAN4.js                                                                   | -                                                                                |  20.82 kB | 
+spec-app-features-admin-portal-governance-policies-policies-page.js                 | spec-app-features-admin-portal-governance-policies-policies-page                 |  18.85 kB | 
+spec-app-core-mock-handlers-governance-data.handlers.js                             | spec-app-core-mock-handlers-governance-data.handlers                             |  17.42 kB | 
+setup-test-setup.js                                                                 | setup-test-setup                                                                 |  13.20 kB | 
+chunk-AOCHJXPJ.js                                                                   | -                                                                                |  11.63 kB | 
+chunk-HCM7KD3G.js                                                                   | -                                                                                |   9.81 kB | 
+chunk-QSUTXMVP.js                                                                   | -                                                                                |   7.47 kB | 
+chunk-LSKTIBYX.js                                                                   | -                                                                                |   6.66 kB | 
+spec-app-features-admin-portal-governance-access-directory-directory-panel.js       | spec-app-features-admin-portal-governance-access-directory-directory-panel       |   6.27 kB | 
+spec-app-core-mock-handlers-governance.handlers.js                                  | spec-app-core-mock-handlers-governance.handlers                                  |   5.56 kB | 
+chunk-WAVE6A2F.js                                                                   | -                                                                                |   5.39 kB | 
+spec-app-core-data-access-authz-admin-authz-admin.client.js                         | spec-app-core-data-access-authz-admin-authz-admin.client                         |   5.25 kB | 
+chunk-JBWBLPNK.js                                                                   | -                                                                                |   5.19 kB | 
+spec-app-features-admin-portal-governance-access-assign-role-dialog.js              | spec-app-features-admin-portal-governance-access-assign-role-dialog              |   4.55 kB | 
+spec-app-core-data-access-authz-admin-authz-admin-directory.mapper.js               | spec-app-core-data-access-authz-admin-authz-admin-directory.mapper               |   4.17 kB | 
+chunk-GVSKS5M2.js                                                                   | -                                                                                |   4.15 kB | 
 spec-app-features-admin-portal-governance-policies-policies.model.js                | spec-app-features-admin-portal-governance-policies-policies.model                |   4.14 kB | 
-chunk-JR26ZLGC.js                                                                   | -                                                                                |   4.03 kB | 
-spec-app-core-mock-handlers-search-by-body.handlers.js                              | spec-app-core-mock-handlers-search-by-body.handlers                              |   3.99 kB | 
-spec-app-core-mock-faker-props.js                                                   | spec-app-core-mock-faker-props                                                   |   3.99 kB | 
-spec-app-core-mock-handlers-own-admission-submit.handlers.js                        | spec-app-core-mock-handlers-own-admission-submit.handlers                        |   3.92 kB | 
-spec-app-core-mock-handlers-analytics-money.handlers.js                             | spec-app-core-mock-handlers-analytics-money.handlers                             |   3.87 kB | 
-spec-app-core-mock-handlers-insurance-analytics.handlers.js                         | spec-app-core-mock-handlers-insurance-analytics.handlers                         |   3.87 kB | 
-chunk-NKO3QAFC.js                                                                   | -                                                                                |   3.87 kB | 
-spec-app-core-mock-handlers-service-request-performer.mock.js                       | spec-app-core-mock-handlers-service-request-performer.mock                       |   3.84 kB | 
-spec-app-core-data-access-authz-admin-authz-admin-directory.mapper.js               | spec-app-core-data-access-authz-admin-authz-admin-directory.mapper               |   3.80 kB | 
-spec-app-core-mock-handlers-assisted-practitioner.handlers.js                       | spec-app-core-mock-handlers-assisted-practitioner.handlers                       |   3.80 kB | 
-spec-app-core-mock-simulated-failures.js                                            | spec-app-core-mock-simulated-failures                                            |   3.80 kB | 
-spec-app-core-mock-fixtures-liname.js                                               | spec-app-core-mock-fixtures-liname                                               |   3.78 kB | 
-spec-app-core-mock-handlers-directory-logo.handlers.js                              | spec-app-core-mock-handlers-directory-logo.handlers                              |   3.61 kB | 
-spec-app-core-mock-handlers-analytics-devices.handlers.js                           | spec-app-core-mock-handlers-analytics-devices.handlers                           |   3.59 kB | 
-chunk-PJ75EB35.js                                                                   | -                                                                                |   3.59 kB | 
-spec-app-core-mock-rules-inpatient-indicators.js                                    | spec-app-core-mock-rules-inpatient-indicators                                    |   3.58 kB | 
+spec-app-features-admin-portal-governance-access-access.model.js                    | spec-app-features-admin-portal-governance-access-access.model                    |   4.07 kB | 
 chunk-TPVPXJPT.js                                                                   | -                                                                                |   3.47 kB | 
-spec-app-core-mock-handlers-community-article-media.handlers.js                     | spec-app-core-mock-handlers-community-article-media.handlers                     |   3.47 kB | 
-chunk-PQCK2DV2.js                                                                   | -                                                                                |   3.46 kB | 
-chunk-CUWE6WXT.js                                                                   | -                                                                                |   3.39 kB | 
-chunk-CPPYCZQI.js                                                                   | -                                                                                |   3.35 kB | 
-spec-app-core-mock-mock-backend-latencia.js                                         | spec-app-core-mock-mock-backend-latencia                                         |   3.33 kB | 
-chunk-X4OZG6CG.js                                                                   | -                                                                                |   3.25 kB | 
-spec-app-core-mock-handlers-medical-center-onboarding.handlers.js                   | spec-app-core-mock-handlers-medical-center-onboarding.handlers                   |   3.25 kB | 
-spec-app-core-mock-siat-sim-packaging.js                                            | spec-app-core-mock-siat-sim-packaging                                            |   3.23 kB | 
-spec-app-core-mock-handlers-center-bookings.handlers.js                             | spec-app-core-mock-handlers-center-bookings.handlers                             |   3.22 kB | 
-chunk-OCHAAPAL.js                                                                   | -                                                                                |   3.22 kB | 
-chunk-F62SMY62.js                                                                   | -                                                                                |   3.21 kB | 
-chunk-Y2NCLKZC.js                                                                   | -                                                                                |   3.13 kB | 
-chunk-KJVP6KRL.js                                                                   | -                                                                                |   3.11 kB | 
-spec-app-core-mock-rules-bed-status-v2.js                                           | spec-app-core-mock-rules-bed-status-v2                                           |   3.11 kB | 
-spec-app-core-mock-mock-backend.interceptor.disabled.js                             | spec-app-core-mock-mock-backend.interceptor.disabled                             |   3.10 kB | 
-spec-app-core-mock-handlers-diagnostic-registration.handlers.js                     | spec-app-core-mock-handlers-diagnostic-registration.handlers                     |   3.04 kB | 
-chunk-A5TKSQHV.js                                                                   | -                                                                                |   2.98 kB | 
-spec-app-core-mock-mock-token-guard.js                                              | spec-app-core-mock-mock-token-guard                                              |   2.96 kB | 
-spec-app-core-mock-handlers-portal-inventory.handlers.js                            | spec-app-core-mock-handlers-portal-inventory.handlers                            |   2.94 kB | 
-chunk-L7KUWB4T.js                                                                   | -                                                                                |   2.94 kB | 
-spec-app-core-mock-handlers-reporting-reporting-kpi-unidades.js                     | spec-app-core-mock-handlers-reporting-reporting-kpi-unidades                     |   2.94 kB | 
-chunk-JNCP3XOT.js                                                                   | -                                                                                |   2.92 kB | 
+spec-app-core-mock-handlers-governance-directory.handlers.js                        | spec-app-core-mock-handlers-governance-directory.handlers                        |   3.26 kB | 
+chunk-OO7ACWYB.js                                                                   | -                                                                                |   3.21 kB | 
 spec-app-features-admin-portal-governance-audit-audit.model.js                      | spec-app-features-admin-portal-governance-audit-audit.model                      |   2.91 kB | 
-spec-app-core-mock-handlers-ops-tools.handlers.js                                   | spec-app-core-mock-handlers-ops-tools.handlers                                   |   2.86 kB | 
-chunk-QLHS77ZJ.js                                                                   | -                                                                                |   2.79 kB | 
-chunk-BQNDBQD2.js                                                                   | -                                                                                |   2.79 kB | 
-spec-app-core-mock-handlers-practice.handlers.js                                    | spec-app-core-mock-handlers-practice.handlers                                    |   2.75 kB | 
-spec-app-core-mock-mock-backend-isolation.js                                        | spec-app-core-mock-mock-backend-isolation                                        |   2.70 kB | 
-chunk-SGTKAI4A.js                                                                   | -                                                                                |   2.68 kB | 
-chunk-VN7KJM42.js                                                                   | -                                                                                |   2.68 kB | 
-chunk-CQFE2MGM.js                                                                   | -                                                                                |   2.64 kB | 
-spec-app-core-mock-handlers-reporting-reporting-usted.js                            | spec-app-core-mock-handlers-reporting-reporting-usted                            |   2.64 kB | 
-chunk-BTFEM462.js                                                                   | -                                                                                |   2.62 kB | 
-spec-app-core-mock-handlers-ops-liveness.handlers.js                                | spec-app-core-mock-handlers-ops-liveness.handlers                                |   2.60 kB | 
-spec-app-core-mock-handlers-governance-directory.handlers.js                        | spec-app-core-mock-handlers-governance-directory.handlers                        |   2.57 kB | 
-chunk-SYUZ3DJ2.js                                                                   | -                                                                                |   2.56 kB | 
-chunk-PTXLCXTT.js                                                                   | -                                                                                |   2.53 kB | 
-spec-app-core-mock-siat-sim-cuf.js                                                  | spec-app-core-mock-siat-sim-cuf                                                  |   2.52 kB | 
-chunk-D4ENXWIF.js                                                                   | -                                                                                |   2.50 kB | 
-setup-test-setup.js                                                                 | setup-test-setup                                                                 |   2.49 kB | 
-spec-app-core-mock-persistencia-por-build.js                                        | spec-app-core-mock-persistencia-por-build                                        |   2.43 kB | 
-spec-app-core-mock-handlers-support-staff.handlers.js                               | spec-app-core-mock-handlers-support-staff.handlers                               |   2.42 kB | 
-chunk-DXSWNMWE.js                                                                   | -                                                                                |   2.38 kB | 
-spec-app-core-mock-mock-backend-query.js                                            | spec-app-core-mock-mock-backend-query                                            |   2.34 kB | 
-spec-app-core-mock-glossary-wikipedia-articles.js                                   | spec-app-core-mock-glossary-wikipedia-articles                                   |   2.34 kB | 
-spec-app-core-mock-handlers-surveys-catalog.handlers.js                             | spec-app-core-mock-handlers-surveys-catalog.handlers                             |   2.23 kB | 
-spec-app-core-mock-handlers-files.handlers.js                                       | spec-app-core-mock-handlers-files.handlers                                       |   2.16 kB | 
-spec-app-core-mock-latencia-observada.js                                            | spec-app-core-mock-latencia-observada                                            |   2.12 kB | 
-spec-app-core-mock-fixtures-reference-prices.js                                     | spec-app-core-mock-fixtures-reference-prices                                     |   2.12 kB | 
-spec-app-core-mock-handlers-reporting-reporting-filtros.js                          | spec-app-core-mock-handlers-reporting-reporting-filtros                          |   2.10 kB | 
-chunk-C5KMB766.js                                                                   | -                                                                                |   2.07 kB | 
-spec-app-core-mock-simulator.enabled.js                                             | spec-app-core-mock-simulator.enabled                                             |   2.06 kB | 
-spec-app-core-mock-fixtures-agendas-cobertura.js                                    | spec-app-core-mock-fixtures-agendas-cobertura                                    |   2.00 kB | 
-spec-app-core-mock-handlers-mock-reset.js                                           | spec-app-core-mock-handlers-mock-reset                                           |   1.98 kB | 
-spec-app-core-mock-fixtures-agenda-casos-limite.js                                  | spec-app-core-mock-fixtures-agenda-casos-limite                                  |   1.93 kB | 
-spec-app-core-mock-handlers-performer-selection.fixture.js                          | spec-app-core-mock-handlers-performer-selection.fixture                          |   1.93 kB | 
-spec-app-core-mock-fixtures-agenda-ids-estables.js                                  | spec-app-core-mock-fixtures-agenda-ids-estables                                  |   1.91 kB | 
-chunk-S3C3YOJ2.js                                                                   | -                                                                                |   1.89 kB | 
-chunk-PS6XCJHN.js                                                                   | -                                                                                |   1.88 kB | 
-chunk-LVQRVPVS.js                                                                   | -                                                                                |   1.81 kB | 
-chunk-ML556D6L.js                                                                   | -                                                                                |   1.78 kB | 
-chunk-ZQWKQAN6.js                                                                   | -                                                                                |   1.75 kB | 
-chunk-6OY3FPG4.js                                                                   | -                                                                                |   1.74 kB | 
-chunk-54OCWVFV.js                                                                   | -                                                                                |   1.52 kB | 
-chunk-GTQNYZVB.js                                                                   | -                                                                                |   1.26 kB | 
+chunk-FAYTTAN4.js                                                                   | -                                                                                |   2.80 kB | 
+chunk-VWVBGKWQ.js                                                                   | -                                                                                |   2.60 kB | 
 init-testbed.js                                                                     | init-testbed                                                                     |   1.21 kB | 
 chunk-ODZAOAJ4.js                                                                   | -                                                                                |   1.18 kB | 
-spec-app-core-mock-sha256.js                                                        | spec-app-core-mock-sha256                                                        |   1.12 kB | 
-chunk-O2UCKXUJ.js                                                                   | -                                                                                |   1.11 kB | 
-chunk-KBCGFX7N.js                                                                   | -                                                                                |   1.09 kB | 
-spec-app-core-mock-fixtures-reconsulta-idempotente.js                               | spec-app-core-mock-fixtures-reconsulta-idempotente                               |   1.07 kB | 
 vitest-mock-patch.js                                                                | vitest-mock-patch                                                                | 974 bytes | 
-chunk-KJFZDKMZ.js                                                                   | -                                                                                | 817 bytes | 
 chunk-6RTKCTCP.js                                                                   | -                                                                                | 742 bytes | 
-chunk-27JC3JWD.js                                                                   | -                                                                                | 710 bytes | 
-chunk-ITBEMTIJ.js                                                                   | -                                                                                | 697 bytes | 
-chunk-CQ6OYRBO.js                                                                   | -                                                                                | 672 bytes | 
 chunk-I5LJW6L5.js                                                                   | -                                                                                | 624 bytes | 
 chunk-AORC4TK2.js                                                                   | -                                                                                | 440 bytes | 
-chunk-I7ABCH7N.js                                                                   | -                                                                                | 382 bytes | 
-chunk-JMZKZ5KN.js                                                                   | -                                                                                | 318 bytes | 
-chunk-JSDIWI2C.js                                                                   | -                                                                                | 308 bytes | 
-chunk-TKNHSXWJ.js                                                                   | -                                                                                |  43 bytes | 
+chunk-J3DQ63RI.js                                                                   | -                                                                                | 250 bytes | 
 
-                                                                                    | Initial total                                                                    |  15.84 MB
+                                                                                    | Initial total                                                                    |   1.86 MB
 
 Lazy chunk files                                                                    | Names                                                                            |  Raw size
-chunk-ZDQVR7EO.js                                                                   | clinical-pdf                                                                     | 100.65 kB | 
 paciente.css                                                                        | paciente                                                                         |  21.31 kB | 
-chunk-4MCQ52CM.js                                                                   | from-summary                                                                     |   7.60 kB | 
-chunk-YH3OYHWK.js                                                                   | index                                                                            |   4.25 kB | 
-chunk-OWCNXJDM.js                                                                   | insurance-handlers                                                               |   1.64 kB | 
-chunk-E7A7WKPJ.js                                                                   | agenda                                                                           |   1.31 kB | 
-chunk-73RC2GI4.js                                                                   | mock-session                                                                     |   1.19 kB | 
-chunk-UK2SHPM7.js                                                                   | community-handlers                                                               |   1.19 kB | 
-chunk-7DD37ARY.js                                                                   | community                                                                        |   1.19 kB | 
-chunk-NWJQUYL4.js                                                                   | surveys-forms-handlers                                                           |   1.14 kB | 
-chunk-3Z47HBCB.js                                                                   | clinical-handlers                                                                |   1.11 kB | 
-chunk-NCJJRLUO.js                                                                   | payment-receipts-handlers                                                        |   1.03 kB | 
-chunk-6K7364WR.js                                                                   | profiles-handlers                                                                |   1.01 kB | 
-chunk-FGSQ4XDH.js                                                                   | auth-handlers                                                                    | 952 bytes | 
-chunk-H2DEJT7Z.js                                                                   | insurance-portability-handlers                                                   | 936 bytes | 
-...and 8 more lazy chunks files. Use "--verbose" to show all the files.
 
-Application bundle generation complete. [156.717 seconds] - 2026-11-07T06:27:12.222Z
+Application bundle generation complete. [173.959 seconds] - 2026-11-07T14:02:41.755Z
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of Anomalies[0m [1m[35m[plugin angular-compiler][0m
+▲ [WARNING] NG8113: RouterLink is not used within the template of Anomalies [plugin angular-compiler]
 
     src/app/features/access-governance/anomalies/anomalies.ts:117:4:
-[37m      117 │     [32mRouterLink[37m,
-          ╵     [32m~~~~~~~~~~[0m
+      117 │     RouterLink,
+          ╵     ~~~~~~~~~~
 
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
 
     src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
-[37m      93 │     [32mAlert[37m,
-         ╵     [32m~~~~~[0m
+      93 │     Alert,
+         ╵     ~~~~~
 
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
 
     src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
-[37m      105 │     [32mRouterLink[37m,
-          ╵     [32m~~~~~~~~~~[0m
+      105 │     RouterLink,
+          ╵     ~~~~~~~~~~
 
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: SegmentedControl is not used within the template of Cockpit[0m [1m[35m[plugin angular-compiler][0m
+▲ [WARNING] NG8113: SegmentedControl is not used within the template of Cockpit [plugin angular-compiler]
 
     src/app/features/accounting/cockpit/cockpit.ts:104:4:
-[37m      104 │     [32mSegmentedControl[37m,
-          ╵     [32m~~~~~~~~~~~~~~~~[0m
+      104 │     SegmentedControl,
+          ╵     ~~~~~~~~~~~~~~~~
 
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: EmptyState is not used within the template of Cockpit[0m [1m[35m[plugin angular-compiler][0m
+▲ [WARNING] NG8113: EmptyState is not used within the template of Cockpit [plugin angular-compiler]
 
     src/app/features/accounting/cockpit/cockpit.ts:110:4:
-[37m      110 │     [32mEmptyState[37m,
-          ╵     [32m~~~~~~~~~~[0m
+      110 │     EmptyState,
+          ╵     ~~~~~~~~~~
 
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of Summary[0m [1m[35m[plugin angular-compiler][0m
+▲ [WARNING] NG8113: Alert is not used within the template of Summary [plugin angular-compiler]
 
     src/app/features/accounting/summary/summary.ts:229:4:
-[37m      229 │     [32mAlert[37m,
-          ╵     [32m~~~~~[0m
+      229 │     Alert,
+          ╵     ~~~~~
 
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: LoadingState is not used within the template of Moderation[0m [1m[35m[plugin angular-compiler][0m
+▲ [WARNING] NG8113: LoadingState is not used within the template of Moderation [plugin angular-compiler]
 
     src/app/features/admin/moderation/moderation.ts:111:4:
-[37m      111 │     [32mLoadingState[37m,
-          ╵     [32m~~~~~~~~~~~~[0m
+      111 │     LoadingState,
+          ╵     ~~~~~~~~~~~~
 
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: NG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102[0m [1m[35m[plugin angular-compiler][0m
+▲ [WARNING] NG8102: NG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102 [plugin angular-compiler]
 
     src/app/features/admin/portal/governance/filter-form.ts:50:25:
-[37m      50 │                 [value]="[32mdraft()[field.key] ?? ''[37m"
-         ╵                          [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
+      50 │                 [value]="draft()[field.key] ?? ''"
+         ╵                          ~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: NG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102[0m [1m[35m[plugin angular-compiler][0m
+▲ [WARNING] NG8102: NG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102 [plugin angular-compiler]
 
     src/app/features/admin/portal/governance/filter-form.ts:58:25:
-[37m      58 │                 [value]="[32mdraft()[field.key] ?? ''[37m"
-         ╵                          [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
+      58 │                 [value]="draft()[field.key] ?? ''"
+         ╵                          ~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: DatePipe is not used within the template of PortalHub[0m [1m[35m[plugin angular-compiler][0m
+▲ [WARNING] NG8113: DatePipe is not used within the template of PortalHub [plugin angular-compiler]
 
     src/app/features/admin/portal/hub/portal-hub.ts:19:12:
-[37m      19 │   imports: [[32mDatePipe[37m, RouterLink, MetricCard, PageHeader, ViewStat...
-         ╵             [32m~~~~~~~~[0m
+      19 │   imports: [DatePipe, RouterLink, MetricCard, PageHeader, ViewStat...
+         ╵             ~~~~~~~~
 
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of SpaceTariffs[0m [1m[35m[plugin angular-compiler][0m
+▲ [WARNING] NG8113: Alert is not used within the template of SpaceTariffs [plugin angular-compiler]
 
     src/app/features/admin/services-catalog/space-tariffs/space-tariffs.ts:61:12:
-[37m      61 │   imports: [[32mAlert[37m, AppButton, AppButtonLink, Badge, DataTable, For...
-         ╵             [32m~~~~~[0m
+      61 │   imports: [Alert, AppButton, AppButtonLink, Badge, DataTable, For...
+         ╵             ~~~~~
 
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Input is not used within the template of MapLocationPicker[0m [1m[35m[plugin angular-compiler][0m
+▲ [WARNING] NG8113: Input is not used within the template of MapLocationPicker [plugin angular-compiler]
 
     src/app/features/auth/shared-registration/map-location-picker/map-location-picker.ts:238:4:
-[37m      238 │     [32mInput[37m,
-          ╵     [32m~~~~~[0m
+      238 │     Input,
+          ╵     ~~~~~
 
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8011: Node matches the "[alert-actions]" slot of the "Alert" component, but will not be projected into the specific slot because the surrounding @if has more than one node at its root. To project the node in the right slot, you can:
+▲ [WARNING] NG8011: Node matches the "[alert-actions]" slot of the "Alert" component, but will not be projected into the specific slot because the surrounding @if has more than one node at its root. To project the node in the right slot, you can:
 
 1. Wrap the content of the @if block in an <ng-container/> that matches the "[alert-actions]" selector.
 2. Split the content of the @if block across multiple @if blocks such that each one only has a single projectable node at its root.
 3. Remove all content from the @if block, except for the node being projected.
 
-This check can be disabled using the `extendedDiagnostics.checks.controlFlowPreventingContentProjection = "suppress" compiler option.`[0m [1m[35m[plugin angular-compiler][0m
+This check can be disabled using the `extendedDiagnostics.checks.controlFlowPreventingContentProjection = "suppress" compiler option.` [plugin angular-compiler]
 
     src/app/features/clinical-record/patient-chart/referral-block/referral-block.html:19:8:
-[37m      19 │         [32m<div alert-actions>[37m
-         ╵         [32m~~~~~~~~~~~~~~~~~~~[0m
+      19 │         <div alert-actions>
+         ╵         ~~~~~~~~~~~~~~~~~~~
 
   Warning occurs in the template of component ReferralBlock.
 
     src/app/features/clinical-record/patient-chart/referral-block/referral-block.ts:175:15:
-[37m      175 │   templateUrl: [32m'./referral-block.html'[37m,
-          ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+      175 │   templateUrl: './referral-block.html',
+          ╵                ~~~~~~~~~~~~~~~~~~~~~~~
 
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: NavIcon is not used within the template of LabPendingResults[0m [1m[35m[plugin angular-compiler][0m
+▲ [WARNING] NG8113: NavIcon is not used within the template of LabPendingResults [plugin angular-compiler]
 
     src/app/features/laboratory/summary/blocks/lab-pending-results.ts:19:50:
-[37m      19 │ ...ink, Badge, Card, DatePipe, [32mNavIcon[37m, RouterLink, SectionHeading...
-         ╵                                [32m~~~~~~~[0m
+      19 │ ...ink, Badge, Card, DatePipe, NavIcon, RouterLink, SectionHeading...
+         ╵                                ~~~~~~~
 
 
-[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
 
     src/app/features/symptom-check/symptom-check.ts:123:4:
-[37m      123 │     [32mCard[37m,
-          ╵     [32m~~~~[0m
+      123 │     Card,
+          ╵     ~~~~
 
 
 
-[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/user/mantra-core-health[39m
-
- [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/core/mock/handlers/diagnostic-coverage.handlers.spec.ts [2m([22m[2m13 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 48[2mms[22m[39m
-[31m       [31m×[31m aceptado: con su único estudio de imagen pendiente, todos los centros que lo ofrecen quedan completos[39m[32m 17[2mms[22m[39m
- [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/core/mock/handlers/telemetry-consent.handlers.spec.ts [2m([22m[2m7 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 13[2mms[22m[39m
-[31m     [31m×[31m granting twice does not add a second record; granting after a withdrawal does[39m[32m 8[2mms[22m[39m
- [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts [2m([22m[2m88 tests[22m[2m | [22m[31m32 failed[39m[2m)[22m[33m 24544[2mms[22m[39m
-[31m     [31m×[31m sin sesión: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 214[2mms[22m[39m
-[31m     [31m×[31m medica: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 204[2mms[22m[39m
-[31m     [31m×[31m paciente: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 164[2mms[22m[39m
-[31m     [31m×[31m admin: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 158[2mms[22m[39m
-[31m     [31m×[31m superadmin: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 163[2mms[22m[39m
-[31m     [31m×[31m aprobador: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 179[2mms[22m[39m
-[31m     [31m×[31m medico_nuevo: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 170[2mms[22m[39m
-[31m     [31m×[31m visitador: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 188[2mms[22m[39m
-[31m     [31m×[31m marketing: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 187[2mms[22m[39m
-[31m     [31m×[31m aseguradora: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 147[2mms[22m[39m
-[31m     [31m×[31m aseguradora_staff: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 152[2mms[22m[39m
-[31m     [31m×[31m farmacia: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 147[2mms[22m[39m
-[31m     [31m×[31m quirofano: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 201[2mms[22m[39m
-[31m     [31m×[31m facturacion: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 206[2mms[22m[39m
-[31m     [31m×[31m hospital_piloto: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 184[2mms[22m[39m
-[31m     [31m×[31m ana: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 154[2mms[22m[39m
-[31m     [31m×[31m lucia: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 154[2mms[22m[39m
-[31m     [31m×[31m marcos: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 153[2mms[22m[39m
-[31m     [31m×[31m silvia: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 152[2mms[22m[39m
-[31m     [31m×[31m sofia: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 136[2mms[22m[39m
-[31m     [31m×[31m mario: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 153[2mms[22m[39m
-[31m     [31m×[31m mariela: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 154[2mms[22m[39m
-[31m     [31m×[31m rosa: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 151[2mms[22m[39m
-[31m     [31m×[31m elena: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 180[2mms[22m[39m
-[31m     [31m×[31m perez: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 164[2mms[22m[39m
-[31m     [31m×[31m suarez: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 132[2mms[22m[39m
-[31m     [31m×[31m enfermeria: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 163[2mms[22m[39m
-[31m     [31m×[31m supervision: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 161[2mms[22m[39m
-[31m     [31m×[31m admision: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 202[2mms[22m[39m
-[31m     [31m×[31m limpieza: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 219[2mms[22m[39m
-[31m     [31m×[31m supervisora-limpieza: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 148[2mms[22m[39m
-[31m     [31m×[31m mantenimiento: ninguna escritura lanza con cuerpo vacío (678 rutas)[39m[32m 279[2mms[22m[39m
-
-[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 34 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
-
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22msin sesión: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mmedica: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mpaciente: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22madmin: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22msuperadmin: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22maprobador: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mmedico_nuevo: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mvisitador: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mmarketing: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22maseguradora: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22maseguradora_staff: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mfarmacia: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mquirofano: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mfacturacion: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mhospital_piloto: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mana: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mlucia: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mmarcos: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22msilvia: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22msofia: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mmario: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mmariela: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mrosa: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22melena: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mperez: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22msuarez: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22menfermeria: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22msupervision: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22madmision: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mlimpieza: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22msupervisora-limpieza: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend.spec.ts[2m > [22mbackend simulado[2m > [22mmantenimiento: ninguna escritura lanza con cuerpo vacío (678 rutas)
-[31m[1mAssertionError[22m: expected [ Array(1) ] to deeply equal [][39m
-
-- Expected
-+ Received
-
-- []
-+ [
-+   "lanzó POST /diagnostics/lab/services/import: alive is not a function or its return value is not iterable",
-+ ]
-
-[36m [2m❯[22m src/app/core/mock/mock-backend.spec.ts:[2m261:22[22m[39m
-    [90m259|[39m         }
-    [90m260|[39m       }
-    [90m261|[39m       [34mexpect[39m(fallos)[33m.[39m[34mtoEqual[39m([])[33m;[39m
-    [90m   |[39m                      [31m^[39m
-    [90m262|[39m     })[33m;[39m
-    [90m263|[39m   }
-
-[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/34]⎯[22m[39m
-
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/handlers/diagnostic-coverage.handlers.spec.ts[2m > [22mGET /diagnostic-units/search con studyConceptIds[2m > [22mcon las órdenes de imagenología del paciente simulado[2m > [22maceptado: con su único estudio de imagen pendiente, todos los centros que lo ofrecen quedan completos
-[31m[1mAssertionError[22m: expected [ …(2) ] to deeply equal [ Array(1) ][39m
-
-- Expected
-+ Received
-
-  [
-    "8ced0d0f-745c-4af3-a511-0fc447113732",
-+   "8ced0d0f-745c-4af3-a511-0fc447113732",
-  ]
-
-[36m [2m❯[22m src/app/core/mock/handlers/diagnostic-coverage.handlers.spec.ts:[2m259:24[22m[39m
-    [90m257|[39m     it('aceptado: con su único estudio de imagen pendiente, todos los …
-    [90m258|[39m       [35mconst[39m concepts [33m=[39m [34mpendingImagingConcepts[39m()[33m;[39m
-    [90m259|[39m       [34mexpect[39m(concepts)[33m.[39m[34mtoEqual[39m([[33mECO[39m])[33m;[39m
-    [90m   |[39m                        [31m^[39m
-    [90m260|[39m
-    [90m261|[39m       [35mconst[39m { items } [33m=[39m [34msearch[39m({
-
-[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/34]⎯[22m[39m
-
-[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/handlers/telemetry-consent.handlers.spec.ts[2m > [22mtracking consent in the mock[2m > [22mgranting twice does not add a second record; granting after a withdrawal does
-[31m[1mAssertionError[22m: expected { status: 'WITHDRAWN', …(1) } to match object { status: 'GRANTED', …(1) }
-(1 matching property omitted from actual)[39m
-
-- Expected
-+ Received
-
-  {
--   "consentId": "e7786daa-75cc-4274-ad62-3a0aba14875e",
--   "status": "GRANTED",
-+   "status": "WITHDRAWN",
-  }
-
-[36m [2m❯[22m src/app/core/mock/handlers/telemetry-consent.handlers.spec.ts:[2m76:25[22m[39m
-    [90m 74|[39m     [34mexpect[39m(second[33m.[39mid)[33m.[39mnot[33m.[39m[34mtoBe[39m(first[33m.[39mid)[33m;[39m
-    [90m 75|[39m     [34mexpect[39m(trackingConsents[33m.[39mtamano)[33m.[39m[34mtoBe[39m([34m2[39m)[33m;[39m
-    [90m 76|[39m     expect(mine().body).toMatchObject({ status: 'GRANTED', consentId: …
-    [90m   |[39m                         [31m^[39m
-    [90m 77|[39m   })[33m;[39m
-    [90m 78|[39m
-
-[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/34]⎯[22m[39m
+ RUN  v4.1.10 /home/user/mantra-core-health
 
 
-[2m Test Files [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m200 passed[39m[22m[90m (203)[39m
-[2m      Tests [22m [1m[31m34 failed[39m[22m[2m | [22m[1m[32m2584 passed[39m[22m[90m (2618)[39m
-[2m   Start at [22m 06:27:12
-[2m   Duration [22m 33.38s[2m (transform 15.07s, setup 2.50s, import 34.70s, tests 85.50s, environment 112.34s)[22m
+ Test Files  17 passed (17)
+      Tests  126 passed (126)
+   Start at  14:02:42
+   Duration  5.05s (transform 2.39s, setup 1.98s, import 4.07s, tests 9.63s, environment 11.75s)
 

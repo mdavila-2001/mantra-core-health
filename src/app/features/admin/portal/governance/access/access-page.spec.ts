@@ -80,14 +80,14 @@ describe('AccessPage', () => {
 
   it('la pestaña por omisión es el directorio de todas las cuentas y no pide a los internos', async () => {
     await open(SCREEN);
-    http.expectOne((r) => r.url === '/authz/directory-users').flush({ items: [], nextCursor: null, limit: 50 });
+    http.expectOne((r) => r.url === '/authz/users/directory').flush({ items: [], nextCursor: null, limit: 50 });
     http.expectNone((r) => r.url === '/authz/internal-users');
     expect(text()).toContain('Todos los usuarios');
   });
 
   it('desde el directorio, una persona interna abierta por su dirección se nombra con su ficha', async () => {
     await open(`${SCREEN}?user=${STRANGER}`);
-    http.expectOne((r) => r.url === '/authz/directory-users').flush({ items: [], nextCursor: null, limit: 50 });
+    http.expectOne((r) => r.url === '/authz/users/directory').flush({ items: [], nextCursor: null, limit: 50 });
     http.expectOne(`/authz/users/${STRANGER}/role-assignments`).flush({ userId: STRANGER, items: [] });
     http.expectOne(`/iam/users/${STRANGER}`).flush({ id: STRANGER, displayName: 'Persona nueva' });
     http.expectNone((r) => r.url === '/authz/internal-users');

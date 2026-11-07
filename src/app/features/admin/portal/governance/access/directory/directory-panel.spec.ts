@@ -8,16 +8,16 @@ import { DirectoryPanel } from './directory-panel';
 import { permissionsLine, visibleEmail } from './directory.model';
 
 const SCREEN = '/superadmin/portal/governance/users';
-const counts = { PATIENT: 2, DOCTOR: 1, PHARMACY: 0, LABORATORY: 0, INTERNAL: 0 };
 const row = (over: Record<string, unknown> = {}) => ({
   id: 'u1',
   type: 'PATIENT',
   displayName: 'Ana Rojas (simulado)',
-  maskedEmail: 'a***@ejemplo.test',
-  status: 'SUSPENDED',
+  maskedEmail: 'a***@e***.test',
+  statusConceptId: '00000000-0000-4000-8000-00000000c0f2',
+  mfaStatusConceptId: null,
   lastLoginAt: null,
-  roles: [{ code: 'PATIENT', name: 'Paciente' }],
-  permissions: { allowed: 6, denied: 1, dangerous: 2, resources: ['own_record'] },
+  roles: [{ assignmentId: 'as1', roleCode: 'PATIENT', roleName: 'Paciente', tenantId: null, validTo: null }],
+  permissions: { allowed: 6, denied: 1, dangerous: 2, directGrants: 1 },
   ...over,
 });
 
@@ -37,36 +37,37 @@ describe('DirectoryPanel', () => {
     harness = await RouterTestingHarness.create();
     await harness.navigateByUrl(`${SCREEN}${query}`, DirectoryPanel);
   }
-  const request = () => http.expectOne((r) => r.url === '/authz/directory-users');
+  const request = () => http.expectOne((r) => r.url === '/authz/users/directory');
   const el = () => harness.routeNativeElement as HTMLElement;
 
   afterEach(() => http.verify());
 
-  it('lists every kind of account with type, status, roles and a permissions summary, e-mail masked', async () => {
+  it('lists every kind of account with type, state, roles and a permissions summary, e-mail masked', async () => {
     await open();
-    request().flush({ items: [row()], nextCursor: null, limit: 50, typeCounts: counts, source: 'SIMULATED' });
+    request().flush({ items: [row()], nextCursor: null, limit: 50, scope: 'PLATFORM', source: 'SIMULATED' });
     harness.detectChanges();
     const table = el().querySelector('[data-testid="portal-directory-table"]')!.textContent!;
     expect(table).toContain('Ana Rojas (simulado)');
-    expect(table).toContain('a***@ejemplo.test');
+    expect(table).toContain('a***@e***.test');
     expect(table).toContain('Paciente');
-    expect(table).toContain('Suspendido');
+    expect(table).toContain('Concepto …c0f2');
     expect(table).toContain('PATIENT');
-    expect(table).toContain('6 permitidos · 1 denegados · 2 sensibles');
+    expect(table).toContain('6 permitidos · 1 denegados · 2 sensibles · 1 directos');
     expect(table).toContain('Nunca ingresó');
     expect(el().querySelector('[data-testid="directory-simulated"]')).not.toBeNull();
+    expect(el().textContent).toContain('Abarca toda la plataforma');
   });
 
-  it('reads type and status from the URL and offers one chip per type with its count', async () => {
-    await open('?type=DOCTOR&status=ACTIVE&q=%20ana%20');
+  it('reads the type from the URL, offers one chip per type and has no free-text search', async () => {
+    await open('?type=PRACTITIONER&q=ana');
     const req = request();
-    expect(req.request.params.get('type')).toBe('DOCTOR');
-    expect(req.request.params.get('status')).toBe('ACTIVE');
-    expect(req.request.params.get('q')).toBe('ana');
-    req.flush({ items: [row({ type: 'DOCTOR' })], nextCursor: null, limit: 50, typeCounts: counts });
+    expect(req.request.params.get('type')).toBe('PRACTITIONER');
+    expect(req.request.params.has('q')).toBe(false);
+    req.flush({ items: [row({ type: 'PRACTITIONER' })], nextCursor: null, limit: 50, scope: 'TENANT' });
     harness.detectChanges();
-    expect(el().textContent).toContain('Pacientes · 2');
-    expect(el().textContent).toContain('Médicos · 1');
+    expect(el().textContent).toContain('Profesionales');
+    expect(el().textContent).toContain('Se limita a su organización');
+    expect(el().querySelector('input[type="search"]')).toBeNull();
     expect(el().querySelector('[data-testid="directory-simulated"]')).toBeNull();
   });
 
@@ -75,21 +76,22 @@ describe('DirectoryPanel', () => {
     expect(request().request.params.has('type')).toBe(false);
   });
 
-  it('says the list is partial when a source could not be read, and keeps showing the rest', async () => {
-    await open();
-    request().flush({ items: [row()], nextCursor: null, limit: 50, typeCounts: counts, unavailableTypes: ['LABORATORY'] });
+  it('empty with a type offers to drop the filter', async () => {
+    await open('?type=PHARMACY');
+    request().flush({ items: [], nextCursor: null, limit: 50, scope: 'TENANT' });
     harness.detectChanges();
-    const partial = el().querySelector('[data-testid="directory-partial"]')!;
-    expect(partial.textContent).toContain('laboratorios');
-    expect(el().textContent).toContain('Ana Rojas');
+    expect(el().textContent).toContain('Quitar el filtro');
   });
 
-  it('empty with filters offers to drop them; empty without filters offers the internal users', async () => {
-    await open('?status=BLOCKED');
-    request().flush({ items: [], nextCursor: null, limit: 50, typeCounts: counts });
+  it('a 403 TENANT_REQUIRED is shown as forbidden, not as an empty list', async () => {
+    await open();
+    request().flush(
+      { statusCode: 403, message: 'La consulta se limita a una organización', reason: 'TENANT_REQUIRED' },
+      { status: 403, statusText: 'Forbidden' },
+    );
     harness.detectChanges();
-    expect(el().textContent).toContain('Quitar los filtros');
-    expect(el().textContent).toContain('Ninguna cuenta coincide');
+    expect(el().querySelector('[data-testid="portal-directory-table"]')!.textContent).not.toContain('Ana Rojas');
+    expect(el().textContent).not.toContain('Ninguna cuenta');
   });
 
   it('a server error shows the unexpected-error state with its request id and retries', async () => {
@@ -103,7 +105,7 @@ describe('DirectoryPanel', () => {
     const retry = Array.from(el().querySelectorAll('button')).find((b) => /reintentar/i.test(b.textContent ?? ''));
     expect(retry).toBeDefined();
     retry!.click();
-    request().flush({ items: [row()], nextCursor: null, limit: 50, typeCounts: counts });
+    request().flush({ items: [row()], nextCursor: null, limit: 50 });
     harness.detectChanges();
     expect(el().textContent).toContain('Ana Rojas');
   });
@@ -114,7 +116,6 @@ describe('DirectoryPanel', () => {
       items: [row(), row({ id: 'u2', type: 'INTERNAL', displayName: 'Lucía' })],
       nextCursor: null,
       limit: 50,
-      typeCounts: counts,
     });
     harness.detectChanges();
     const links = Array.from(el().querySelectorAll('a')).map((a) => a.textContent?.trim());
@@ -124,8 +125,8 @@ describe('DirectoryPanel', () => {
 
   it('never shows an e-mail that arrives unmasked', () => {
     expect(visibleEmail('ana@gmail.com')).toBe('Correo no disponible');
-    expect(visibleEmail('a***@gmail.com')).toBe('a***@gmail.com');
-    expect(visibleEmail(null)).toBe('Sin correo registrado');
-    expect(permissionsLine({ allowed: 0, denied: 0, dangerous: 0, resources: [] })).toBe('Sin permisos');
+    expect(visibleEmail('a***@g***.com')).toBe('a***@g***.com');
+    expect(visibleEmail(null)).toContain('Sin correo');
+    expect(permissionsLine({ allowed: 0, denied: 0, dangerous: 0, directGrants: 0 })).toBe('Sin permisos');
   });
 });
