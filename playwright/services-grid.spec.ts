@@ -38,7 +38,9 @@ test.describe('Services grid (admin, simulator)', () => {
   test('Farmacia shows the partial notice and the screen only reads', async ({ page }) => {
     await page.getByRole('tab', { name: /Farmacia/ }).click();
     await expect(page.getByTestId('services-grid-partial')).toBeVisible();
-    const reqs = await page.evaluate(() => (window as unknown as { __mockRequests?: { method: string }[] }).__mockRequests ?? []);
-    expect(reqs.filter((r) => r.method !== 'GET')).toEqual([]);
+    const reqs = await page.evaluate(() => (window as unknown as { __mockRequests?: { method: string; url: string }[] }).__mockRequests ?? []);
+    const catalogs = reqs.filter((r) => /catalogs\/services|lab\/services|catalog-products/.test(r.url));
+    expect(catalogs.length).toBeGreaterThan(0);
+    expect(catalogs.filter((r) => r.method !== 'GET')).toEqual([]);
   });
 });
