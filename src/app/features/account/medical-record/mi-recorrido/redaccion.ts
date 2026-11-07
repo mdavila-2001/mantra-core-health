@@ -3,10 +3,22 @@
     detail sheet, initial case and chronological order.
     ========================================================================== */
 
+import { DEFAULT_TIME_ZONE } from '../../../inpatient/inpatient-presentation';
 import type { RegistroConVinculos } from './registro-con-vinculos.types';
 
+/*
+ * Every date of the tour is printed in the clinical day's zone, not the
+ * browser's: with the browser in UTC, a consultation at 23:30 in La Paz would
+ * read as the next day.
+ */
+
 /** «3 de febrero de 2026». */
-export const DIA_LARGO = new Intl.DateTimeFormat('es-BO', { day: 'numeric', month: 'long', year: 'numeric' });
+export const DIA_LARGO = new Intl.DateTimeFormat('es-BO', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: DEFAULT_TIME_ZONE,
+});
 
 /** «El 3 de febrero de 2026 se confirmó…», or «Se confirmó…» without a date. */
 export function conFecha(cuando: Date | null, resto: string): string {
@@ -46,6 +58,7 @@ const DIA_CORTO = new Intl.DateTimeFormat('es-BO', {
   day: 'numeric',
   month: 'short',
   year: 'numeric',
+  timeZone: DEFAULT_TIME_ZONE,
 });
 
 /** «3 feb 2026», or `null` so the sheet does not draw the row. */
