@@ -1,5 +1,6 @@
 import { MEDICAL_ORGANIZATION_TYPES } from '../data-access/directory/directory.types';
 import { ANY_ROLE } from './navigation.types';
+import { MEDICAL_ORGANIZATION_DOCTOR_SECTIONS } from './navigation.medical-doctors';
 import type { AppSection } from './navigation.types';
 
 /** The «Configurar práctica» route: the menu hides it once the organization has its practice. */
@@ -12,6 +13,7 @@ export const MEDICAL_SETUP_PATH = 'administration/medical-center-setup';
  * map spreads them in the same place, so the menu order is unchanged.
  */
 export const MEDICAL_ORGANIZATION_BRANCH_SECTIONS: readonly AppSection[] = [
+  ...MEDICAL_ORGANIZATION_DOCTOR_SECTIONS,
   {
     // Medical organization branches (2026-11-06): the same screen as pharmacy,
     // laboratory and imaging (map with each site's point and its category).

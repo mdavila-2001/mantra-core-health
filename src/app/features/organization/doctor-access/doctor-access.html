@@ -1,0 +1,80 @@
+<app-page-header
+  title="Accesos de médicos"
+  subtitle="Los médicos que ya trabajan en su organización. Suspenda un acceso mientras lo revisa, o termínelo. Las solicitudes nuevas se aprueban en «Médicos del centro»."
+/>
+
+<app-card class="access" padding="lg" data-testid="access-card">
+  <div class="access__panel">
+    @if (practices().length > 1) {
+      <app-form-field label="Práctica">
+        <app-select
+          [options]="practiceOptions()"
+          [value]="practiceId()"
+          (valueChange)="selectPractice($event)"
+          [searchable]="false"
+          ariaLabel="Práctica"
+          data-testid="access-practice"
+        />
+      </app-form-field>
+    }
+
+    <app-data-table
+      caption="Médicos con acceso a la práctica"
+      [state]="rows()"
+      [columns]="columns()"
+      [trackBy]="rowId"
+      [rowLabel]="rowLabel"
+      (retry)="reload()"
+      (refresh)="reload()"
+      data-testid="access-table"
+    />
+  </div>
+</app-card>
+
+<ng-template #doctorCell let-row>
+  <span class="access__main" [attr.data-testid]="'access-name-' + row.id">{{ row.practitionerName }}</span>
+  <span class="access__service">{{ serviceText(row) }}</span>
+  <span class="access__state">
+    <app-badge [variant]="statusTone(row)" [attr.data-testid]="'access-status-' + row.id">{{ statusText(row) }}</app-badge>
+  </span>
+  @if (confirmingId() === row.id) {
+    <span class="access__actions" role="group" [attr.aria-label]="'Confirmar el fin del acceso de ' + row.practitionerName">
+      <span class="access__ask">¿Terminar el acceso de {{ row.practitionerName }}? No se puede deshacer.</span>
+      <button app-button type="button" size="sm" [disabled]="busyRowId() !== null" [attr.data-testid]="'access-end-confirm-' + row.id" (clicked)="end(row)">
+        Sí, terminar
+      </button>
+      <button app-button type="button" variant="outline" size="sm" [attr.data-testid]="'access-end-cancel-' + row.id" (clicked)="confirmingId.set(null)">
+        Cancelar
+      </button>
+    </span>
+  } @else {
+    <span class="access__actions">
+      @if (canSuspend(row)) {
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          size="sm"
+          [disabled]="busyRowId() !== null"
+          [attr.aria-label]="'Suspender el acceso de ' + row.practitionerName + ' a ' + serviceText(row)"
+          [attr.data-testid]="'access-suspend-' + row.id"
+          (clicked)="suspend(row)"
+        >
+          Suspender
+        </button>
+      }
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        [disabled]="busyRowId() !== null"
+        [attr.aria-label]="'Terminar el acceso de ' + row.practitionerName + ' a ' + serviceText(row)"
+        [attr.data-testid]="'access-end-' + row.id"
+        (clicked)="confirmingId.set(row.id)"
+      >
+        Terminar acceso
+      </button>
+    </span>
+  }
+</ng-template>

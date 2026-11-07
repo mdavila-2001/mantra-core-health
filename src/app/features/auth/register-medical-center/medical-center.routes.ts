@@ -35,4 +35,11 @@ export const MEDICAL_CENTER_SCREENS: Readonly<Record<string, () => Promise<Type<
     import('../../organization/organization-branches/organization-branches').then(
       (m) => m.OrganizationBranches,
     ),
+  // The doctors of the organization (2026-11-07): who asks to join and who already works there.
+  'administration/my-organization/affiliations': () =>
+    import('../../organization/practitioner-affiliations/practitioner-affiliations').then(
+      (m) => m.PractitionerAffiliations,
+    ),
+  'administration/doctor-access': () =>
+    import('../../organization/doctor-access/doctor-access').then((m) => m.DoctorAccess),
 };

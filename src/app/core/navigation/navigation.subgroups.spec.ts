@@ -68,6 +68,10 @@ describe('NAV_SUBGROUPS', () => {
     // «Sucursales» de la organización médica (06/11/2026): suelta en «Atención»,
     // junto a «Configurar práctica», como en el menú plano de farmacia y laboratorio.
     'administration/medical-branches',
+    // The doctors of a medical organization (2026-11-07): two loose doors in «Atención», next
+    // to «Sucursales»: who asks to join, and the access of those who already work there.
+    'administration/my-organization/affiliations',
+    'administration/doctor-access',
   ];
 
   it('reparte el registro entero: ninguna sección se queda sin bloque por descuido', () => {

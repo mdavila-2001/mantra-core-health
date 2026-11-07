@@ -132,6 +132,18 @@ describe('RoleAssignmentsClient', () => {
     reject.flush({ ...ROW, statusCode: 'ROLE_ASG_REJECTED' });
   });
 
+  it('el centro suspende y termina el acceso por /role-assignments', () => {
+    client.suspend('ra-1').subscribe();
+    const suspend = http.expectOne('/role-assignments/ra-1/suspend');
+    expect(suspend.request.method).toBe('POST');
+    suspend.flush({ ...ROW, statusCode: 'ROLE_ASG_SUSPENDED' });
+
+    client.end('ra-1').subscribe();
+    const end = http.expectOne('/role-assignments/ra-1/end');
+    expect(end.request.method).toBe('POST');
+    end.flush({ ...ROW, statusCode: 'ROLE_ASG_ENDED' });
+  });
+
   it('nunca llama a la ruta que activa sin aceptación', () => {
     client.invite('pr-1', { practitionerProfileId: 'pp-1', practiceSiteId: 's', healthcareServiceIds: ['h'] }).subscribe();
     const req = http.expectOne(() => true);
