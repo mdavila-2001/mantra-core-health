@@ -115,13 +115,23 @@ export class RoleAssignmentsClient {
     return this.ofPractice(roleId, 'reject');
   }
 
+  /** `POST /role-assignments/:roleId/suspend` — el centro suspende el acceso de un médico activo; la fila queda `SUSPENDED`. */
+  suspend(roleId: string): Observable<RoleAssignmentRow> {
+    return this.ofPractice(roleId, 'suspend');
+  }
+
+  /** `POST /role-assignments/:roleId/end` — el centro termina el acceso (activo o suspendido); la fila queda `ENDED`. */
+  end(roleId: string): Observable<RoleAssignmentRow> {
+    return this.ofPractice(roleId, 'end');
+  }
+
   private mine(roleId: string, action: 'accept' | 'decline' | 'withdraw' | 'leave-queue'): Observable<RoleAssignmentRow> {
     return this.http
       .post<WireRow>(this.url(`/practitioners/me/role-assignments/${encodeURIComponent(roleId)}/${action}`), {})
       .pipe(map(toRow));
   }
 
-  private ofPractice(roleId: string, action: 'approve' | 'reject'): Observable<RoleAssignmentRow> {
+  private ofPractice(roleId: string, action: 'approve' | 'reject' | 'suspend' | 'end'): Observable<RoleAssignmentRow> {
     return this.http
       .post<WireRow>(this.url(`/role-assignments/${encodeURIComponent(roleId)}/${action}`), {})
       .pipe(map(toRow));

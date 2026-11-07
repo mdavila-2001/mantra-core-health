@@ -446,6 +446,8 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       // Gobierno de accesos (fase 5): el tablero del administrador y la administración delegada del jefe de servicio.
       'administration/access-governance',
       'administration/team-management',
+      'administration/my-organization/affiliations',
+      'administration/doctor-access',
       'administration/medical-branches',
       'administration/medical-center-setup',
       'administration/pharmacy',
@@ -470,7 +472,8 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
           : ['HOSPITAL', 'CLINIC', 'PROVIDER', 'MEDICAL_OFFICE']
         : section.path.includes('pharmacy')
         ? ['PHARMACY']
-        : section.path.includes('medical-center') || section.path === 'administration/medical-branches'
+        : section.path.includes('medical-center') ||
+            ['administration/medical-branches', 'administration/my-organization/affiliations', 'administration/doctor-access'].includes(section.path)
           ? ['HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER']
           : ['DIAGNOSTIC_CENTER'];
       expect(section.onlyForTenantTypes, section.path).toEqual(tipos);

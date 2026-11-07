@@ -85,5 +85,10 @@ export function registerRoleAssignments(router: MockRouter): void {
     terminar(request, 'PENDING', 'ROLE_ASG_PENDING'),
   );
   router.post('/role-assignments/:roleId/approve', ({ params }) => transition(params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_ACTIVE'));
+  router.post('/role-assignments/:roleId/suspend', ({ params }) => transition(params['roleId']!, 'ROLE_ASG_ACTIVE', 'ROLE_ASG_SUSPENDED'));
+  router.post('/role-assignments/:roleId/end', ({ params }) => {
+    const id = params['roleId']!;
+    return transition(id, affiliations.get(id)?.statusCode === 'ROLE_ASG_SUSPENDED' ? 'ROLE_ASG_SUSPENDED' : 'ROLE_ASG_ACTIVE', 'ROLE_ASG_ENDED');
+  });
   router.post('/role-assignments/:roleId/reject', ({ params }) => transition(params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_REJECTED'));
 }
