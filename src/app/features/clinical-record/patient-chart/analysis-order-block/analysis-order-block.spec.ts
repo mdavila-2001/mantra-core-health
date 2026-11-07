@@ -53,8 +53,18 @@ const CATALOGO = {
     { conceptId: 'code-rx', code: 'IMG_RX_TORAX', display: 'Rx tórax', ordinal: 2 },
     { conceptId: 'code-ecg', code: 'CAR_ECG', display: 'ECG', ordinal: 3 },
     { conceptId: 'code-raro', code: 'ESTUDIO_NUEVO', display: 'Nuevo', ordinal: 4 },
-    { conceptId: 'proc-colonoscopia', code: 'PRO_COLONOSCOPIA', display: 'Colonoscopía', ordinal: 5 },
-    { conceptId: 'proc-endoscopia', code: 'PRO_ENDOSCOPIA_ALTA', display: 'Endoscopía', ordinal: 6 },
+    {
+      conceptId: 'proc-colonoscopia',
+      code: 'PRO_COLONOSCOPIA',
+      display: 'Colonoscopía',
+      ordinal: 5,
+    },
+    {
+      conceptId: 'proc-endoscopia',
+      code: 'PRO_ENDOSCOPIA_ALTA',
+      display: 'Endoscopía',
+      ordinal: 6,
+    },
   ],
 };
 
@@ -145,6 +155,15 @@ describe('AnalysisOrderBlock', () => {
     fixture.componentRef.setInput('patientProfileId', 'p-1');
     fixture.componentRef.setInput('encounterId', 'enc-1');
   });
+
+  /**
+   * Elige el estudio como lo hace la pantalla: antes se elige el tipo de orden. Se usa «otro estudio» porque
+   * no limita el catálogo; los recorridos de laboratorio e imagen están en `analysis-order-block.tipo.spec.ts`.
+   */
+  function elegirEstudio(conceptId: string): void {
+    componente['orden'].kind.set('OTHER');
+    componente['estudio'].set(conceptId);
+  }
 
   /**
    * Responde **todos** los catálogos pendientes, no sólo el del estudio.
@@ -331,8 +350,11 @@ describe('AnalysisOrderBlock', () => {
     expect(fixture.nativeElement.querySelector('form')).toBeNull();
   });
 
-  /** El tipo no se elige: sale del estudio, y sin estudio no hay pedido. */
-  it('no ofrece un selector de tipo: lo deduce del estudio', () => {
+  /**
+   * El tipo de orden se elige primero y sin él no se ofrece ningún estudio; el tipo de la categoría, en cambio,
+   * sigue saliendo del estudio (un segundo selector dejaba pedir un hemograma como imagen).
+   */
+  it('el tipo de orden se elige primero y sin él no se ofrece ningún estudio; la categoría sale del estudio', () => {
     fixture.detectChanges();
     responderCatalogos();
     responderCircuito();
@@ -341,16 +363,17 @@ describe('AnalysisOrderBlock', () => {
     const etiquetas = [...fixture.nativeElement.querySelectorAll('label')].map((l: Element) =>
       l.textContent?.trim(),
     );
-    expect(etiquetas.some((t: string | undefined) => t?.startsWith('Tipo'))).toBe(false);
+    expect(etiquetas.some((t: string | undefined) => t?.startsWith('Tipo de orden'))).toBe(true);
+    expect(etiquetas.some((t: string | undefined) => t?.startsWith('Estudio'))).toBe(false);
     expect(componente['puedePedir']()).toBe(false);
 
-    componente['estudio'].set('code-hemograma');
+    elegirEstudio('code-hemograma');
     expect(componente['tipo'].label()).toBe('Laboratorio');
     expect(componente['puedePedir']()).toBe(true);
 
-    componente['estudio'].set('code-rx');
+    elegirEstudio('code-rx');
     expect(componente['tipo'].label()).toBe('Imagenología');
-    componente['estudio'].set('code-raro');
+    elegirEstudio('code-raro');
     expect(componente['tipo'].label()).toBe('Otro estudio');
   });
 
@@ -367,7 +390,7 @@ describe('AnalysisOrderBlock', () => {
     responderCatalogos();
     responderCircuito();
 
-    componente['estudio'].set(estudio);
+    elegirEstudio(estudio);
     componente['pedir']();
     responderChequeo(false);
 
@@ -381,13 +404,18 @@ describe('AnalysisOrderBlock', () => {
     for (const req of http.match((r) => r.url === '/system-context/dynamic-enums')) {
       req.flush(
         req.request.params.get('target') === TARGET_CATEGORIA
-          ? { ...CATALOGO, options: [{ conceptId: 'cat-cardio', code: 'SR_CARDIO', display: 'Cardio', ordinal: 1 }] }
+          ? {
+              ...CATALOGO,
+              options: [
+                { conceptId: 'cat-cardio', code: 'SR_CARDIO', display: 'Cardio', ordinal: 1 },
+              ],
+            }
           : CATALOGO,
       );
     }
     responderCircuito();
 
-    componente['estudio'].set('code-ecg');
+    elegirEstudio('code-ecg');
     expect(componente['tipo'].label()).toBe('Estudio cardiológico');
     componente['pedir']();
     responderChequeo(false);
@@ -404,7 +432,7 @@ describe('AnalysisOrderBlock', () => {
     responderCatalogos();
     responderCircuito();
 
-    componente['estudio'].set('code-hemograma');
+    elegirEstudio('code-hemograma');
     componente['pedir']();
 
     // Primero pregunta si es un duplicado; sin uno, el alta sigue directo.
@@ -440,7 +468,7 @@ describe('AnalysisOrderBlock', () => {
     responderCatalogos();
     responderCircuito();
 
-    componente['estudio'].set('code-hemograma');
+    elegirEstudio('code-hemograma');
     componente['notaDelFormularioLibre'].set('nota-libre-1');
     componente['pedir']();
     responderChequeo(false);
@@ -523,7 +551,7 @@ describe('AnalysisOrderBlock', () => {
       fixture.detectChanges();
       responderCatalogos();
       responderCircuito();
-      componente['estudio'].set('code-hemograma');
+      elegirEstudio('code-hemograma');
     });
 
     it('con duplicado abre el diálogo y no manda el alta', () => {
@@ -617,13 +645,15 @@ describe('AnalysisOrderBlock', () => {
     it('el histórico muestra la justificación guardada de una orden repetida sobre otra orden', () => {
       componente['pedir']();
       responderChequeo(false);
-      http.expectOne((r) => r.url === '/clinical/service-requests').flush({
-        id: 'sr-5',
-        patientProfileId: 'p-1',
-        status: 'st-activa',
-        intent: 'st-orden',
-        createdAt: '2026-08-14T10:00:00.000Z',
-      });
+      http
+        .expectOne((r) => r.url === '/clinical/service-requests')
+        .flush({
+          id: 'sr-5',
+          patientProfileId: 'p-1',
+          status: 'st-activa',
+          intent: 'st-orden',
+          createdAt: '2026-08-14T10:00:00.000Z',
+        });
       responderCircuito({
         ...CIRCUITO_VACIO,
         orders: [
@@ -648,7 +678,8 @@ describe('AnalysisOrderBlock', () => {
       componente.cambio.subscribe(changed);
       componente['pedir']();
       responderChequeo(false);
-      http.expectOne((r) => r.url === '/clinical/service-requests')
+      http
+        .expectOne((r) => r.url === '/clinical/service-requests')
         .flush({ message: 'Fallo sintético' }, { status: 500, statusText: 'Server Error' });
       fixture.detectChanges();
       expect(componente['errorDelPedido']()).not.toBeNull();
@@ -702,7 +733,7 @@ describe('AnalysisOrderBlock', () => {
 
     expect(componente['errorDelHistorico']()).not.toBeNull();
 
-    componente['estudio'].set('code-hemograma');
+    elegirEstudio('code-hemograma');
     expect(componente['puedePedir']()).toBe(true);
   });
   /**
@@ -741,27 +772,55 @@ describe('AnalysisOrderBlock', () => {
       http
         .expectOne((r) => r.url === '/terminology/value-sets')
         .flush({
-          items: [{ id: 'vs-perf', internalCode: 'service-request-performer-selection', name: 'x', description: '', defaultVersionId: 'v', memberCount: 3 }],
+          items: [
+            {
+              id: 'vs-perf',
+              internalCode: 'service-request-performer-selection',
+              name: 'x',
+              description: '',
+              defaultVersionId: 'v',
+              memberCount: 3,
+            },
+          ],
           count: 1,
           limit: 50,
           nextCursor: null,
         });
-      http.expectOne((r) => r.url === '/terminology/value-sets/vs-perf/$expand').flush({
-        valueSetId: 'vs-perf',
-        valueSetVersionId: 'v',
-        version: '1',
-        count: 3,
-        limit: 200,
-        nextCursor: null,
-        items: [
-          { conceptId: 'c-self', code: 'SR_PERF_SELF', display: 'a', codeSystemVersionId: 'x' },
-          { conceptId: 'c-org', code: 'SR_PERF_ORGANIZATION', display: 'b', codeSystemVersionId: 'x' },
-          { conceptId: 'c-pat', code: 'SR_PERF_PATIENT_CHOICE', display: 'c', codeSystemVersionId: 'x' },
-        ],
-      });
-      http.expectOne('/practitioners/me/role-assignments').flush([
-        { id: 'r-1', practiceSiteId: 's-1', serviceConceptId: PROCEDIMIENTO, statusCode: 'ROLE_ASG_ACTIVE' },
-      ]);
+      http
+        .expectOne((r) => r.url === '/terminology/value-sets/vs-perf/$expand')
+        .flush({
+          valueSetId: 'vs-perf',
+          valueSetVersionId: 'v',
+          version: '1',
+          count: 3,
+          limit: 200,
+          nextCursor: null,
+          items: [
+            { conceptId: 'c-self', code: 'SR_PERF_SELF', display: 'a', codeSystemVersionId: 'x' },
+            {
+              conceptId: 'c-org',
+              code: 'SR_PERF_ORGANIZATION',
+              display: 'b',
+              codeSystemVersionId: 'x',
+            },
+            {
+              conceptId: 'c-pat',
+              code: 'SR_PERF_PATIENT_CHOICE',
+              display: 'c',
+              codeSystemVersionId: 'x',
+            },
+          ],
+        });
+      http
+        .expectOne('/practitioners/me/role-assignments')
+        .flush([
+          {
+            id: 'r-1',
+            practiceSiteId: 's-1',
+            serviceConceptId: PROCEDIMIENTO,
+            statusCode: 'ROLE_ASG_ACTIVE',
+          },
+        ]);
       const busqueda = http.expectOne((r) => r.url === '/medical-centers/search');
       expect(busqueda.request.params.get('procedureConceptIds')).toBe(PROCEDIMIENTO);
       busqueda.flush({ items: [SEDE_AJENA, SEDE_PROPIA], total: 2, limit: 20, offset: 0 });
@@ -773,12 +832,15 @@ describe('AnalysisOrderBlock', () => {
       responderCategorias(codigoProcedimiento);
       responderCircuito();
       fixture.detectChanges();
-      componente['estudio'].set(categoria === 'cat-proc' ? PROCEDIMIENTO : 'code-hemograma');
+      elegirEstudio(categoria === 'cat-proc' ? PROCEDIMIENTO : 'code-hemograma');
       fixture.detectChanges();
     }
 
     /** Pide, deja pasar el chequeo y devuelve el cuerpo del alta. */
-    function pedirYLeerCuerpo(): { body: Record<string, unknown>; alta: ReturnType<HttpTestingController['expectOne']> } {
+    function pedirYLeerCuerpo(): {
+      body: Record<string, unknown>;
+      alta: ReturnType<HttpTestingController['expectOne']>;
+    } {
       componente['pedir']();
       responderChequeo(false);
       const alta = http.expectOne((r) => r.url === '/clinical/service-requests');
@@ -847,7 +909,12 @@ describe('AnalysisOrderBlock', () => {
       elegirMuestra('sp-orina');
 
       const { body } = pedirYLeerCuerpo();
-      for (const clave of ['performerSelectionConceptId', 'performerPractitionerProfileId', 'suggestedPracticeSiteId', 'performerTenantId']) {
+      for (const clave of [
+        'performerSelectionConceptId',
+        'performerPractitionerProfileId',
+        'suggestedPracticeSiteId',
+        'performerTenantId',
+      ]) {
         expect(clave in body, clave).toBe(false);
       }
     });
@@ -869,7 +936,7 @@ describe('AnalysisOrderBlock', () => {
       responderCategorias('SR_PROCEDURE');
       responderCircuito();
       fixture.detectChanges();
-      componente['estudio'].set('code-rx');
+      elegirEstudio('code-rx');
       fixture.detectChanges();
       for (const atlas of http.match((r) => r.url.startsWith('/anatomy-atlas-3d'))) {
         atlas.flush(atlas.request.url.endsWith('index.json') ? { shards: 1, entries: [] } : []);
@@ -894,7 +961,10 @@ describe('AnalysisOrderBlock', () => {
       it('dice por qué «Pedir estudio» está gris, junto al campo que falta, y lo retira al completarlo', () => {
         abrir('cat-lab');
         fixture.detectChanges();
-        const falta = () => fixture.nativeElement.querySelector('[data-testid="order-detail-missing"]') as HTMLElement | null;
+        const falta = () =>
+          fixture.nativeElement.querySelector(
+            '[data-testid="order-detail-missing"]',
+          ) as HTMLElement | null;
         expect(falta()?.textContent).toContain('Elija la muestra');
         elegirMuestra('sp-orina');
         expect(falta()).toBeNull();
@@ -908,7 +978,12 @@ describe('AnalysisOrderBlock', () => {
         d['bodySite'].set('reg-mano');
         d['modality'].set('mod-rx');
         d['laterality'].set('lat-izq');
-        d['selection'].set({ meshId: 'BP1234', structureId: 'UBERON:0002398', layer: 'skeleton', side: 'left' });
+        d['selection'].set({
+          meshId: 'BP1234',
+          structureId: 'UBERON:0002398',
+          layer: 'skeleton',
+          side: 'left',
+        });
         d['boneType'].set('hueso-largo');
         fixture.detectChanges();
         expect(componente['puedePedir']()).toBe(true);
@@ -928,11 +1003,19 @@ describe('AnalysisOrderBlock', () => {
 
       /** Responde el catálogo de regiones (y el de lados) con códigos del catálogo real, para ejercitar el cruce. */
       function responderRegiones(): void {
-        const opciones = (codigos: readonly string[]) => codigos.map((code, i) => ({ conceptId: `id-${code}`, code, display: code, ordinal: i + 1 }));
+        const opciones = (codigos: readonly string[]) =>
+          codigos.map((code, i) => ({
+            conceptId: `id-${code}`,
+            code,
+            display: code,
+            ordinal: i + 1,
+          }));
         for (const req of http.match((r) => r.url === '/system-context/dynamic-enums')) {
           const target = req.request.params.get('target') ?? '';
-          if (target === STUDY_DETAIL_TARGETS.bodySite) req.flush({ ...CATALOGO, options: opciones(['IMG_REGION_FEMUR', 'IMG_REGION_SACRO']) });
-          else if (target === STUDY_DETAIL_TARGETS.laterality) req.flush({ ...CATALOGO, options: opciones(['COND_LAT_LEFT', 'COND_LAT_RIGHT']) });
+          if (target === STUDY_DETAIL_TARGETS.bodySite)
+            req.flush({ ...CATALOGO, options: opciones(['IMG_REGION_FEMUR', 'IMG_REGION_SACRO']) });
+          else if (target === STUDY_DETAIL_TARGETS.laterality)
+            req.flush({ ...CATALOGO, options: opciones(['COND_LAT_LEFT', 'COND_LAT_RIGHT']) });
           else req.flush(CATALOGO);
         }
       }
@@ -941,7 +1024,8 @@ describe('AnalysisOrderBlock', () => {
         for (let i = 0; i < 100 && !condicion(); i++) await new Promise((r) => setTimeout(r, 10));
       }
 
-      const MALLA_DE = (region: string): string => Object.entries(MESH_TO_REGION).find(([, r]) => r === region)![0];
+      const MALLA_DE = (region: string): string =>
+        Object.entries(MESH_TO_REGION).find(([, r]) => r === region)![0];
 
       it('la parte marcada en el 3D propone la región del catálogo y el lado; lo cambiado a mano se respeta hasta la próxima pieza', async () => {
         abrirImagen();
@@ -949,7 +1033,12 @@ describe('AnalysisOrderBlock', () => {
         const d = detalle();
         await esperar(() => d['selection'] !== undefined);
         // correcto: una pieza del fémur izquierdo → región «Fémur» (admite lado) y lado izquierdo
-        d['selection'].set({ meshId: MALLA_DE('FEMUR'), structureId: 'UBERON:0000981', layer: 'skeleton', side: 'left' });
+        d['selection'].set({
+          meshId: MALLA_DE('FEMUR'),
+          structureId: 'UBERON:0000981',
+          layer: 'skeleton',
+          side: 'left',
+        });
         await esperar(() => d['bodySite']() === 'id-IMG_REGION_FEMUR');
         expect(d['bodySite']()).toBe('id-IMG_REGION_FEMUR');
         expect(d['laterality']()).toBe('id-COND_LAT_LEFT');
@@ -959,7 +1048,12 @@ describe('AnalysisOrderBlock', () => {
         fixture.detectChanges();
         expect(d['laterality']()).toBe('id-COND_LAT_RIGHT');
         // límite: una región única (sacro) no admite lado: no se propone ninguno
-        d['selection'].set({ meshId: MALLA_DE('SACRO'), structureId: 'UBERON:9', layer: 'skeleton', side: 'right' });
+        d['selection'].set({
+          meshId: MALLA_DE('SACRO'),
+          structureId: 'UBERON:9',
+          layer: 'skeleton',
+          side: 'right',
+        });
         await esperar(() => d['bodySite']() === 'id-IMG_REGION_SACRO');
         expect(d['bodySite']()).toBe('id-IMG_REGION_SACRO');
         expect(d['laterality']()).toBeNull();
@@ -970,10 +1064,21 @@ describe('AnalysisOrderBlock', () => {
         responderRegiones();
         const d = detalle();
         d['bodySite'].set('id-IMG_REGION_SACRO');
-        d['selection'].set({ meshId: 'MALLA_SIN_REGION', structureId: 'UBERON:0', layer: 'organs', side: null });
-        await esperar(() => fixture.nativeElement.querySelector('[data-testid="order-region-note"]') !== null || (fixture.detectChanges(), false));
+        d['selection'].set({
+          meshId: 'MALLA_SIN_REGION',
+          structureId: 'UBERON:0',
+          layer: 'organs',
+          side: null,
+        });
+        await esperar(
+          () =>
+            fixture.nativeElement.querySelector('[data-testid="order-region-note"]') !== null ||
+            (fixture.detectChanges(), false),
+        );
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[data-testid="order-region-note"]')?.textContent).toContain('no tiene una región equivalente');
+        expect(
+          fixture.nativeElement.querySelector('[data-testid="order-region-note"]')?.textContent,
+        ).toContain('no tiene una región equivalente');
         expect(d['bodySite']()).toBe('id-IMG_REGION_SACRO');
       });
 
@@ -982,7 +1087,12 @@ describe('AnalysisOrderBlock', () => {
         const d = detalle();
         d['bodySite'].set('reg-abdomen');
         d['boneType'].set('hueso-largo');
-        d['selection'].set({ meshId: 'LIVER', structureId: 'UBERON:0002107', layer: 'organs', side: null });
+        d['selection'].set({
+          meshId: 'LIVER',
+          structureId: 'UBERON:0002107',
+          layer: 'organs',
+          side: null,
+        });
         fixture.detectChanges();
 
         expect(d['fields']()['boneTypeConceptId']).toBeUndefined();
@@ -992,9 +1102,10 @@ describe('AnalysisOrderBlock', () => {
       it('laboratorio e imagen son excluyentes: cambiar de estudio no arrastra lo del otro', () => {
         abrir('cat-lab');
         elegirMuestra('sp-orina');
-        componente['estudio'].set('code-rx');
+        elegirEstudio('code-rx');
         fixture.detectChanges();
-        for (const atlas of http.match((r) => r.url.startsWith('/anatomy-atlas-3d'))) atlas.flush([]);
+        for (const atlas of http.match((r) => r.url.startsWith('/anatomy-atlas-3d')))
+          atlas.flush([]);
 
         expect(detalle()['fields']()).toEqual({});
         expect(componente['puedePedir']()).toBe(false);
@@ -1026,7 +1137,9 @@ describe('AnalysisOrderBlock', () => {
         );
         fixture.detectChanges();
 
-        const campo = fixture.nativeElement.querySelector('[data-testid="order-specimen"]')?.closest('app-form-field');
+        const campo = fixture.nativeElement
+          .querySelector('[data-testid="order-specimen"]')
+          ?.closest('app-form-field');
         expect(campo?.textContent).toContain('no está en el catálogo');
         expect(fixture.nativeElement.querySelector('[data-testid="estudios-error"]')).toBeNull();
         expect(componente['estudio']()).toBe('code-hemograma');
@@ -1040,7 +1153,15 @@ describe('AnalysisOrderBlock', () => {
         elegirMuestra('sp-orina');
         const { alta } = pedirYLeerCuerpo();
         alta.flush(
-          { statusCode: 422, code: 'PRECONDITION_FAILED', message: 'x', reason: 'OTRA', details: { reason: 'OTRA' }, timestamp: 't', path: 'p' },
+          {
+            statusCode: 422,
+            code: 'PRECONDITION_FAILED',
+            message: 'x',
+            reason: 'OTRA',
+            details: { reason: 'OTRA' },
+            timestamp: 't',
+            path: 'p',
+          },
           { status: 422, statusText: 'Unprocessable Entity' },
         );
         fixture.detectChanges();
@@ -1054,8 +1175,23 @@ describe('AnalysisOrderBlock', () => {
         responderCircuito({
           ...CIRCUITO_VACIO,
           orders: [
-            { ...ORDEN, id: 'sr-lab', specimenTypeConceptId: 'sp-orina', specimenTypeDisplay: 'Orina' },
-            { ...ORDEN, id: 'sr-img', imaging: { bodySiteConceptId: 'r', bodySiteDisplay: 'Mano', lateralityConceptId: 'l', lateralityDisplay: 'Izquierda', bodyStructureUberon: 'UBERON:1' } },
+            {
+              ...ORDEN,
+              id: 'sr-lab',
+              specimenTypeConceptId: 'sp-orina',
+              specimenTypeDisplay: 'Orina',
+            },
+            {
+              ...ORDEN,
+              id: 'sr-img',
+              imaging: {
+                bodySiteConceptId: 'r',
+                bodySiteDisplay: 'Mano',
+                lateralityConceptId: 'l',
+                lateralityDisplay: 'Izquierda',
+                bodyStructureUberon: 'UBERON:1',
+              },
+            },
             { ...ORDEN, id: 'sr-vieja' },
           ],
         });
@@ -1066,7 +1202,9 @@ describe('AnalysisOrderBlock', () => {
           'Región: Mano · Izquierda · marcada en el cuerpo 3D',
           null,
         ]);
-        expect(fixture.nativeElement.querySelectorAll('[data-testid="study-detail"]').length).toBe(2);
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="study-detail"]').length).toBe(
+          2,
+        );
       });
     });
 
@@ -1083,7 +1221,9 @@ describe('AnalysisOrderBlock', () => {
 
     it('si las sedes no se pueden leer lo dice y no inventa sedes; sigue pudiendo pedir sin recomendar', () => {
       abrir('cat-proc');
-      http.expectOne((r) => r.url === '/terminology/value-sets').flush({ items: [], count: 0, limit: 50, nextCursor: null });
+      http
+        .expectOne((r) => r.url === '/terminology/value-sets')
+        .flush({ items: [], count: 0, limit: 50, nextCursor: null });
       http.match(() => true);
       fixture.detectChanges();
 
@@ -1124,7 +1264,7 @@ describe('AnalysisOrderBlock', () => {
       componente['performer'].choice.set({ mode: 'ORGANIZATION', siteId: 's-2' });
       fixture.detectChanges();
 
-      componente['estudio'].set('proc-endoscopia');
+      elegirEstudio('proc-endoscopia');
       fixture.detectChanges();
 
       expect(componente['performer'].choice()).toEqual({ mode: 'PATIENT_CHOICE', siteId: null });
@@ -1139,7 +1279,13 @@ describe('AnalysisOrderBlock', () => {
       componente['performer'].choice.set({ mode: 'SELF', siteId: 's-1' });
 
       const { alta } = pedirYLeerCuerpo();
-      alta.flush({ id: 'sr-1', patientProfileId: 'p-1', status: 's', intent: 'i', createdAt: '2026-08-14T10:00:00.000Z' });
+      alta.flush({
+        id: 'sr-1',
+        patientProfileId: 'p-1',
+        status: 's',
+        intent: 'i',
+        createdAt: '2026-08-14T10:00:00.000Z',
+      });
       responderCircuito();
 
       expect(componente['performer'].choice()).toEqual({ mode: 'PATIENT_CHOICE', siteId: null });
@@ -1151,7 +1297,13 @@ describe('AnalysisOrderBlock', () => {
     const DIAGNOSTICOS = [
       { id: 'c-hipo', etiqueta: 'Hipotiroidismo', confirmado: true, confirmadoEl: null },
       { id: 'c-ans', etiqueta: 'Ansiedad', confirmado: false, confirmadoEl: null },
-      { id: 'c-anemia', etiqueta: 'Anemia', confirmado: false, confirmadoEl: null, descartado: true },
+      {
+        id: 'c-anemia',
+        etiqueta: 'Anemia',
+        confirmado: false,
+        confirmadoEl: null,
+        descartado: true,
+      },
     ];
 
     function preparar(): void {
@@ -1168,7 +1320,9 @@ describe('AnalysisOrderBlock', () => {
         { value: 'c-hipo', label: 'Hipotiroidismo · Confirmado' },
         { value: 'c-ans', label: 'Ansiedad · En estudio' },
       ]);
-      expect(fixture.nativeElement.querySelector('[data-testid="estudios-para-diagnostico"]')).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="estudios-para-diagnostico"]'),
+      ).not.toBeNull();
     });
 
     it('sin diagnósticos no dibuja el selector', () => {
@@ -1176,28 +1330,43 @@ describe('AnalysisOrderBlock', () => {
       responderCatalogos();
       responderCircuito();
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('[data-testid="estudios-para-diagnostico"]')).toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="estudios-para-diagnostico"]'),
+      ).toBeNull();
     });
 
     it('el elegido viaja como reasonConditionId; sin elegir, la clave no viaja', () => {
       preparar();
-      componente['estudio'].set('code-hemograma');
+      elegirEstudio('code-hemograma');
       componente['paraDiagnostico'].set('c-ans');
       componente['pedir']();
       responderChequeo(false);
       const alta = http.expectOne((r) => r.url === '/clinical/service-requests');
       expect(alta.request.body.reasonConditionId).toBe('c-ans');
-      alta.flush({ id: 'sr-9', patientProfileId: 'p-1', status: 's', intent: 'i', reasonConditionId: 'c-ans', createdAt: '2026-08-14T10:00:00.000Z' });
+      alta.flush({
+        id: 'sr-9',
+        patientProfileId: 'p-1',
+        status: 's',
+        intent: 'i',
+        reasonConditionId: 'c-ans',
+        createdAt: '2026-08-14T10:00:00.000Z',
+      });
       responderCircuito();
       // Tras pedir, el siguiente arranca sin vínculo.
       expect(componente['paraDiagnostico']()).toBeNull();
 
-      componente['estudio'].set('code-hemograma');
+      elegirEstudio('code-hemograma');
       componente['pedir']();
       responderChequeo(false);
       const otra = http.expectOne((r) => r.url === '/clinical/service-requests');
       expect('reasonConditionId' in otra.request.body).toBe(false);
-      otra.flush({ id: 'sr-10', patientProfileId: 'p-1', status: 's', intent: 'i', createdAt: '2026-08-14T10:00:00.000Z' });
+      otra.flush({
+        id: 'sr-10',
+        patientProfileId: 'p-1',
+        status: 's',
+        intent: 'i',
+        createdAt: '2026-08-14T10:00:00.000Z',
+      });
       responderCircuito();
     });
 
@@ -1205,30 +1374,49 @@ describe('AnalysisOrderBlock', () => {
       fixture.componentRef.setInput('diagnosticos', DIAGNOSTICOS);
       fixture.detectChanges();
       responderCatalogos();
-      responderCircuito({ ...CIRCUITO_VACIO, orders: [{ ...ORDEN, reasonConditionId: 'c-hipo' }, { ...ORDEN, id: 'sr-2', reasonConditionId: 'c-fuera' }] });
+      responderCircuito({
+        ...CIRCUITO_VACIO,
+        orders: [
+          { ...ORDEN, reasonConditionId: 'c-hipo' },
+          { ...ORDEN, id: 'sr-2', reasonConditionId: 'c-fuera' },
+        ],
+      });
       fixture.detectChanges();
-      expect(componente['estudios']().map((e) => e.paraDiagnostico)).toEqual(['Hipotiroidismo', 'Diagnóstico de la historia']);
-      expect(fixture.nativeElement.querySelector('[data-testid="estudios-fila-diagnostico"]')?.textContent).toContain('Para: Hipotiroidismo');
+      expect(componente['estudios']().map((e) => e.paraDiagnostico)).toEqual([
+        'Hipotiroidismo',
+        'Diagnóstico de la historia',
+      ]);
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="estudios-fila-diagnostico"]')
+          ?.textContent,
+      ).toContain('Para: Hipotiroidismo');
     });
 
     it('el 422 SERVICE_REQUEST_REASON_CONDITION_INVALID va al selector, no arriba', () => {
       preparar();
-      componente['estudio'].set('code-hemograma');
+      elegirEstudio('code-hemograma');
       componente['paraDiagnostico'].set('c-ans');
       componente['pedir']();
       responderChequeo(false);
-      http.expectOne((r) => r.url === '/clinical/service-requests').flush(
-        {
-          statusCode: 422,
-          code: 'PRECONDITION_FAILED',
-          message: 'El diagnóstico indicado no existe o no es de esta persona',
-          reason: 'SERVICE_REQUEST_REASON_CONDITION_INVALID',
-          details: { field: 'reasonConditionId', reason: 'SERVICE_REQUEST_REASON_CONDITION_INVALID' },
-        },
-        { status: 422, statusText: 'Unprocessable Entity' },
-      );
+      http
+        .expectOne((r) => r.url === '/clinical/service-requests')
+        .flush(
+          {
+            statusCode: 422,
+            code: 'PRECONDITION_FAILED',
+            message: 'El diagnóstico indicado no existe o no es de esta persona',
+            reason: 'SERVICE_REQUEST_REASON_CONDITION_INVALID',
+            details: {
+              field: 'reasonConditionId',
+              reason: 'SERVICE_REQUEST_REASON_CONDITION_INVALID',
+            },
+          },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
       fixture.detectChanges();
-      expect(componente['errorDelDiagnostico']()).toBe('El diagnóstico indicado no existe o no es de esta persona');
+      expect(componente['errorDelDiagnostico']()).toBe(
+        'El diagnóstico indicado no existe o no es de esta persona',
+      );
       expect(componente['errorDelPedido']()).toBeNull();
     });
   });

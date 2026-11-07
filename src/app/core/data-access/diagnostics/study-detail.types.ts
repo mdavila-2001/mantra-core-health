@@ -32,6 +32,7 @@ export const STUDY_DETAIL_TARGETS = {
   bodySite: 'clinical.service_requests.body_site_concept_id',
   laterality: 'clinical.service_requests.laterality_concept_id',
   boneType: 'clinical.service_requests.bone_type_concept_id',
+  contrast: 'clinical.service_requests.contrast_concept_id',
 } as const;
 
 /** Los códigos de la lateralidad (`condition-laterality`) que corresponden a un lado del atlas. */
@@ -56,6 +57,8 @@ export interface StudyDetailFields {
   readonly modalityConceptId?: string;
   /** Imagen: el tipo de hueso (`imaging-bone-type`), elegido por el médico. */
   readonly boneTypeConceptId?: string;
+  /** Imagen: con o sin contraste (`imaging-contrast`); la API lo exige junto con la modalidad. */
+  readonly contrastConceptId?: string;
 }
 
 /** Lo mismo, tal como vuelve de la API: con el nombre legible de cada concepto cuando lo trae. */
@@ -65,13 +68,14 @@ export interface StudyDetailRead extends StudyDetailFields {
   readonly lateralityDisplay?: string;
   readonly modalityDisplay?: string;
   readonly boneTypeDisplay?: string;
-  /** El contraste sólo se lee (la orden de la ficha no lo pide todavía): `imaging.contrastConceptId` en el alta. */
-  readonly contrastConceptId?: string;
   readonly contrastDisplay?: string;
 }
 
 /** Las claves que el simulador acepta en el alta aunque el contrato generado todavía no las declare. */
-export const STUDY_DETAIL_CONTRACT_PENDING_KEYS: readonly string[] = ['specimenTypeConceptId', 'imaging'];
+export const STUDY_DETAIL_CONTRACT_PENDING_KEYS: readonly string[] = [
+  'specimenTypeConceptId',
+  'imaging',
+];
 
 const IMAGING_KEYS = [
   'modalityConceptId',
@@ -80,6 +84,7 @@ const IMAGING_KEYS = [
   'bodyStructureUberon',
   'bodyMeshId',
   'boneTypeConceptId',
+  'contrastConceptId',
 ] as const satisfies readonly (keyof StudyDetailFields)[];
 
 const DISPLAY_KEYS = [
@@ -88,7 +93,6 @@ const DISPLAY_KEYS = [
   'lateralityDisplay',
   'modalityDisplay',
   'boneTypeDisplay',
-  'contrastConceptId',
   'contrastDisplay',
 ] as const satisfies readonly (keyof StudyDetailRead)[];
 
@@ -117,7 +121,10 @@ export function toWireOrder<T extends StudyDetailFields>(
   if (rest['specimenTypeConceptId'] === undefined || rest['specimenTypeConceptId'] === '') {
     delete rest['specimenTypeConceptId'];
   }
-  return (Object.keys(imaging).length === 0 ? rest : { ...rest, imaging }) as Omit<T, (typeof IMAGING_KEYS)[number]> & {
+  return (Object.keys(imaging).length === 0 ? rest : { ...rest, imaging }) as Omit<
+    T,
+    (typeof IMAGING_KEYS)[number]
+  > & {
     readonly imaging?: ImagingWire;
   };
 }
