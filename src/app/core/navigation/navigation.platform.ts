@@ -83,6 +83,7 @@ export const SECCIONES_DE_PLATAFORMA: readonly AppSection[] = [
     module: 'M11 system_ops · M46 platform_ops',
   },
   /* -- Superadministración (17/10/2026) ----------------------------------- */
+  /* Domain: Salud y uso de la plataforma. */
   {
     // La portada del dominio: la salud del sistema (31/10/2026). Lee
     // `GET /admin/observability/*` (módulo 70), y por eso los roles son los de esa lectura
@@ -116,6 +117,46 @@ export const SECCIONES_DE_PLATAFORMA: readonly AppSection[] = [
     module: 'M58 time_series · M28 telemetry',
   },
   {
+    // Instancias (API, workers, bases, servicios) con su sonda de vida y
+    // herramientas externas con su estado, como en el portal de Atlas
+    // (31/10/2026). Lee `GET /admin/ops/instances/liveness` y `GET /admin/ops/tools`
+    // (`ops_console`), así que los roles son `OPS_READ_ROLES`, los mismos que
+    // Observabilidad y Operación. La autoridad sigue siendo la API.
+    path: 'superadmin/instances',
+    label: 'Instancias y herramientas',
+    group: 'Superadministración',
+    icon: 'monitor',
+    roles: ['PLATFORM_ADMIN', 'SRE', 'SECURITY_ADMIN', 'RELEASE_MANAGER', 'GOVERNANCE_ADMIN'],
+    availability: 'disponible',
+    summary: 'Qué procesos y herramientas tiene la plataforma, y si cada uno tiene vida ahora.',
+    module: 'M46 platform_ops · ops_console',
+  },
+  {
+    // Antes `administration/operations`: consola de operación y preparación
+    // para producción (`/admin/ops`).
+    path: 'superadmin/operations',
+    label: 'Operación',
+    group: 'Superadministración',
+    icon: 'monitor',
+    roles: ['PLATFORM_ADMIN', 'SRE', 'SECURITY_ADMIN', 'RELEASE_MANAGER', 'GOVERNANCE_ADMIN'],
+    availability: 'disponible',
+    summary: 'Preparación para producción con evidencia, incidentes, SLO y backups.',
+    module: 'M11 system_ops · M46 platform_ops',
+  },
+  {
+    // Antes `administration/web-analytics`: analítica de producto y RUM sobre
+    // `telemetry` (`/admin/analytics`).
+    path: 'superadmin/web-analytics',
+    label: 'Analítica web',
+    group: 'Superadministración',
+    icon: 'globe',
+    roles: ['PLATFORM_ADMIN', 'SECURITY_ADMIN', 'DATA_PLATFORM_ADMIN', 'MARKETING_MANAGER', 'DPO'],
+    availability: 'disponible',
+    summary: 'Tráfico, embudos, Core Web Vitals y salud del pipeline de eventos.',
+    module: 'M28 telemetry',
+  },
+  /* Domain: Datos y gobierno. */
+  {
     // Antes `administration/data-catalog` (API módulo 67). Roles = los de
     // `GET /admin/catalog/*`.
     path: 'superadmin/data-catalog',
@@ -140,6 +181,34 @@ export const SECCIONES_DE_PLATAFORMA: readonly AppSection[] = [
     module: 'M67 data_catalog',
   },
   {
+    // Editor de catálogos globales (H3): Servicios, Glosarios y Reporte contable.
+    // La API exige `SECURITY_ADMIN` (SUPERADMIN por comodín); la autoridad es ella.
+    path: 'superadmin/catalog-editor',
+    label: 'Catálogos globales',
+    group: 'Superadministración',
+    icon: 'book',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Servicios, glosarios y reporte contable por tipo de usuario, con auditoría y versión.',
+    module: 'billing · terminology',
+  },
+  {
+    // Cargas masivas (`/admin/bulk-imports`, módulo `bulk_import`): altas de
+    // usuarios y carga especial de historias clínicas, con plantilla CSV y JSON
+    // por tipo. La API exige el rol de gestión (`SECURITY_ADMIN`/`PLATFORM_ADMIN`)
+    // y, además, el permiso fino del tipo (`bulk_import.users` / `.clinical`):
+    // sin él responde 403 y la pantalla lo dice. La autoridad es la API.
+    path: 'superadmin/bulk-imports',
+    label: 'Cargas masivas',
+    group: 'Superadministración',
+    icon: 'package',
+    roles: ['SECURITY_ADMIN', 'PLATFORM_ADMIN'],
+    availability: 'disponible',
+    summary: 'Altas masivas de usuarios y carga especial de historias clínicas, con plantilla CSV y JSON, vista previa, confirmación e informe.',
+    module: 'bulk_import',
+  },
+  /* Domain: Calidad y pruebas. */
+  {
     // El árbol de decisión de cada recorrido del usuario, con sus endpoints y
     // sus casos válidos, límite e inválidos. Roles = los de `GET /admin/qa/*`
     // (`QA_LAB_READ_ROLES`): los flujos viven en el QA Lab.
@@ -163,71 +232,5 @@ export const SECCIONES_DE_PLATAFORMA: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Suites, planes de ejecución con aprobación y resultados con evidencia.',
     module: 'M36 qa_lab · M68 qa_execution',
-  },
-  {
-    // Antes `administration/web-analytics`: analítica de producto y RUM sobre
-    // `telemetry` (`/admin/analytics`).
-    path: 'superadmin/web-analytics',
-    label: 'Analítica web',
-    group: 'Superadministración',
-    icon: 'globe',
-    roles: ['PLATFORM_ADMIN', 'SECURITY_ADMIN', 'DATA_PLATFORM_ADMIN', 'MARKETING_MANAGER', 'DPO'],
-    availability: 'disponible',
-    summary: 'Tráfico, embudos, Core Web Vitals y salud del pipeline de eventos.',
-    module: 'M28 telemetry',
-  },
-  {
-    // Antes `administration/operations`: consola de operación y preparación
-    // para producción (`/admin/ops`).
-    path: 'superadmin/operations',
-    label: 'Operación',
-    group: 'Superadministración',
-    icon: 'monitor',
-    roles: ['PLATFORM_ADMIN', 'SRE', 'SECURITY_ADMIN', 'RELEASE_MANAGER', 'GOVERNANCE_ADMIN'],
-    availability: 'disponible',
-    summary: 'Preparación para producción con evidencia, incidentes, SLO y backups.',
-    module: 'M11 system_ops · M46 platform_ops',
-  },
-  {
-    // Instancias (API, workers, bases, servicios) con su sonda de vida y
-    // herramientas externas con su estado, como en el portal de Atlas
-    // (31/10/2026). Lee `GET /admin/ops/instances/liveness` y `GET /admin/ops/tools`
-    // (`ops_console`), así que los roles son `OPS_READ_ROLES`, los mismos que
-    // Observabilidad y Operación. La autoridad sigue siendo la API.
-    path: 'superadmin/instances',
-    label: 'Instancias y herramientas',
-    group: 'Superadministración',
-    icon: 'monitor',
-    roles: ['PLATFORM_ADMIN', 'SRE', 'SECURITY_ADMIN', 'RELEASE_MANAGER', 'GOVERNANCE_ADMIN'],
-    availability: 'disponible',
-    summary: 'Qué procesos y herramientas tiene la plataforma, y si cada uno tiene vida ahora.',
-    module: 'M46 platform_ops · ops_console',
-  },
-  {
-    // Cargas masivas (`/admin/bulk-imports`, módulo `bulk_import`): altas de
-    // usuarios y carga especial de historias clínicas, con plantilla CSV y JSON
-    // por tipo. La API exige el rol de gestión (`SECURITY_ADMIN`/`PLATFORM_ADMIN`)
-    // y, además, el permiso fino del tipo (`bulk_import.users` / `.clinical`):
-    // sin él responde 403 y la pantalla lo dice. La autoridad es la API.
-    path: 'superadmin/bulk-imports',
-    label: 'Cargas masivas',
-    group: 'Superadministración',
-    icon: 'package',
-    roles: ['SECURITY_ADMIN', 'PLATFORM_ADMIN'],
-    availability: 'disponible',
-    summary: 'Altas masivas de usuarios y carga especial de historias clínicas, con plantilla CSV y JSON, vista previa, confirmación e informe.',
-    module: 'bulk_import',
-  },
-  {
-    // Editor de catálogos globales (H3): Servicios, Glosarios y Reporte contable.
-    // La API exige `SECURITY_ADMIN` (SUPERADMIN por comodín); la autoridad es ella.
-    path: 'superadmin/catalog-editor',
-    label: 'Catálogos globales',
-    group: 'Superadministración',
-    icon: 'book',
-    roles: ['SECURITY_ADMIN'],
-    availability: 'disponible',
-    summary: 'Servicios, glosarios y reporte contable por tipo de usuario, con auditoría y versión.',
-    module: 'billing · terminology',
   },
 ];

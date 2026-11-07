@@ -1,3 +1,4 @@
+import { isVisibleTo } from './navigation.types';
 import type { AppSection } from './navigation.types';
 
 /* ============================================================================
@@ -119,4 +120,43 @@ export function esPerfilDeGestion(roles: readonly string[]): boolean {
 /** Si la sección ocupa un renglón en el menú del perfil de gestión. */
 export function seccionDeGestion(section: AppSection): boolean {
   return section.group === 'Superadministración' || RUTAS_DE_GESTION.has(section.path);
+}
+
+/** Whether the session holds at least one platform-management role. */
+export function tieneRolDeGestion(roles: readonly string[]): boolean {
+  return roles.some((rol) => ROLES_DE_GESTION.includes(rol));
+}
+
+/**
+ * Whether a section takes a row in the menu of a session that holds a
+ * management role. Presentation only: the route guard and the API decide access.
+ *
+ * Criterion (the most conservative one): management sections always stay, and
+ * for a *mixed* session (management role plus patient/clinical roles) a section
+ * also stays when the roles of personal use grant it by themselves. The
+ * management roles are left out of that second check on purpose: `SUPERADMIN` is
+ * a wildcard, so counting it would hand a mixed session the whole clinical menu,
+ * which is the bug being fixed. Nobody loses what their own role gives them; the
+ * administrator only stops inheriting what the wildcard drags in. A session whose
+ * roles are all management/administrative/neutral keeps the strict management menu.
+ */
+export function seccionEnMenuDeGestion(
+  section: AppSection,
+  roles: readonly string[],
+  tenants: readonly string[] = [],
+  activeTenantType: string | null = null,
+  accountKind: 'ORGANIZATION' | 'PERSON' | null = null,
+): boolean {
+  if (seccionDeGestion(section)) {
+    return true;
+  }
+  const rolesDeUso = roles.filter(
+    (rol) =>
+      !ROLES_DE_GESTION.includes(rol) &&
+      !ROLES_ADMINISTRATIVOS.includes(rol) &&
+      !ROLES_NEUTROS.includes(rol),
+  );
+  return (
+    rolesDeUso.length > 0 && isVisibleTo(section, rolesDeUso, tenants, activeTenantType, accountKind)
+  );
 }
