@@ -1,4 +1,4 @@
-import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
+import type { CitaDelPaciente } from '../patient-chart.types';
 
 /**
  * La atención a la que se ata un consentimiento abierto desde un ítem.

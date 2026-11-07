@@ -201,6 +201,14 @@ export function hasData<T>(state: ViewState<T>): state is ViewStateWithData<T> {
   return state.status === 'ready' || state.status === 'stale';
 }
 
+/**
+ * The state when it is a failure (neither in flight nor carrying data), `null`
+ * otherwise. `null` in is `null` out: a read nobody asked for has not failed.
+ */
+export function failureOf<T>(state: ViewState<T> | null): ViewState<T> | null {
+  return state === null || isLoading(state) || hasData(state) ? null : state;
+}
+
 /** Los datos si los hay, `null` si el estado no transporta ninguno. */
 export function dataOf<T>(state: ViewState<T>): T | null {
   return hasData(state) ? state.data : null;

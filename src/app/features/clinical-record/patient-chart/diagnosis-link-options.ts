@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { readApiError } from '../../../core/http/api-error';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
-import type { DiagnosisOption } from './medication-block/medication-block';
+import type { DiagnosisOption } from './patient-chart.types';
 
 /**
  * The person's diagnoses as options of a clinical network link (patch

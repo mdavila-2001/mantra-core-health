@@ -41,7 +41,7 @@ import { ContentDialog } from '../../../../shared/components/organisms/content-d
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { writeFailureMessage } from '../../write-message';
 import { linkFailureMessage, replacementOptions } from '../diagnosis-link-options';
-import type { DiagnosisOption } from '../medication-block/medication-block';
+import type { DiagnosisOption } from '../patient-chart.types';
 import { opcionesDeEvidencia } from './diagnosis-verify-dialog.evidencia';
 
 /** The 422s of `replacedByConditionId` (API v4291): they go to the selector, not on top. */

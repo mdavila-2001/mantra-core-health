@@ -1,0 +1,29 @@
+     antes-1024-claro: hitos dibujados confirmado,derivacion,historico,internacion,momento,presuntivo,procedimiento · muestras confirmado,descartado,momento,presuntivo
+FALLA antes-1024-claro: cada tipo de hito dibujado tiene su muestra en la leyenda
+FALLA antes-1024-claro: la muestra «Atención o cita» tiene el radio del hito del lienzo (0px vs 999px)
+     antes-1024-claro: nodo diagnóstico en reposo {"sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px","marcaBg":"rgb(244, 229, 225)","marcaFg":"rgb(111, 56, 44)","franja":"rgb(223, 180, 170)","translate":"none"}
+FALLA antes-1024-claro: el ícono del diagnóstico usa la receta de marca (rgb(244, 229, 225)), no el rojo de error (rgb(244, 229, 225))
+FALLA antes-1024-claro: ningún nodo en reposo lleva sombra (20 con sombra)
+FALLA antes-1024-claro: en hover el nodo gana sombra y no se mueve (0px -1px)
+     antes-1024-oscuro: hitos dibujados confirmado,derivacion,historico,internacion,momento,presuntivo,procedimiento · muestras confirmado,descartado,momento,presuntivo
+FALLA antes-1024-oscuro: cada tipo de hito dibujado tiene su muestra en la leyenda
+FALLA antes-1024-oscuro: la muestra «Atención o cita» tiene el radio del hito del lienzo (0px vs 999px)
+     antes-1024-oscuro: nodo diagnóstico en reposo {"sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px","marcaBg":"rgb(76, 42, 35)","marcaFg":"rgb(223, 180, 170)","franja":"rgb(146, 69, 52)","translate":"none"}
+FALLA antes-1024-oscuro: el ícono del diagnóstico usa la receta de marca (rgb(76, 42, 35)), no el rojo de error (rgb(76, 42, 35))
+FALLA antes-1024-oscuro: ningún nodo en reposo lleva sombra (20 con sombra)
+FALLA antes-1024-oscuro: en hover el nodo gana sombra y no se mueve (0px -1px)
+     antes-1440-claro: hitos dibujados confirmado,derivacion,historico,internacion,momento,presuntivo,procedimiento · muestras confirmado,descartado,momento,presuntivo
+FALLA antes-1440-claro: cada tipo de hito dibujado tiene su muestra en la leyenda
+FALLA antes-1440-claro: la muestra «Atención o cita» tiene el radio del hito del lienzo (0px vs 999px)
+     antes-1440-claro: nodo diagnóstico en reposo {"sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px","marcaBg":"rgb(244, 229, 225)","marcaFg":"rgb(111, 56, 44)","franja":"rgb(223, 180, 170)","translate":"none"}
+FALLA antes-1440-claro: el ícono del diagnóstico usa la receta de marca (rgb(244, 229, 225)), no el rojo de error (rgb(244, 229, 225))
+FALLA antes-1440-claro: ningún nodo en reposo lleva sombra (20 con sombra)
+FALLA antes-1440-claro: en hover el nodo gana sombra y no se mueve (0px -1px)
+     antes-1440-oscuro: hitos dibujados confirmado,derivacion,historico,internacion,momento,presuntivo,procedimiento · muestras confirmado,descartado,momento,presuntivo
+FALLA antes-1440-oscuro: cada tipo de hito dibujado tiene su muestra en la leyenda
+FALLA antes-1440-oscuro: la muestra «Atención o cita» tiene el radio del hito del lienzo (0px vs 999px)
+     antes-1440-oscuro: nodo diagnóstico en reposo {"sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px","marcaBg":"rgb(76, 42, 35)","marcaFg":"rgb(223, 180, 170)","franja":"rgb(146, 69, 52)","translate":"none"}
+FALLA antes-1440-oscuro: el ícono del diagnóstico usa la receta de marca (rgb(76, 42, 35)), no el rojo de error (rgb(76, 42, 35))
+FALLA antes-1440-oscuro: ningún nodo en reposo lleva sombra (20 con sombra)
+FALLA antes-1440-oscuro: en hover el nodo gana sombra y no se mueve (0px -1px)
+20 fallas

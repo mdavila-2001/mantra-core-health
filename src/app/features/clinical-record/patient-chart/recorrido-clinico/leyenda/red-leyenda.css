@@ -1,6 +1,7 @@
 /* ============================================================================
     The legend's items. The samples reuse the strip and line marks from
-    `red-clinica-trazos.css`, listed after this sheet as in the network's.
+    `red-clinica-trazos.css`, listed after this sheet as in the network's, and
+    the ruled-out strike from `red-clinica-tonos.css`.
     ========================================================================== */
 
 .red__leyenda-item {

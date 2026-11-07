@@ -1,0 +1,62 @@
+despues-390-claro: {"hechos":8,"cajasConBordeLateral":0,"radioMax":8,"gapLista":"normal","rielX":65,"caminoX":65,"guiarIzq":0,"barraJustify":"flex-start","marcas":[],"desborde":false}
+ok   despues-390-claro: 8 hechos sin caja propia (bordes laterales/superior = 0 en 8)
+ok   despues-390-claro: radio de los hechos ≤ --r-sm (8px)
+ok   despues-390-claro: los hechos se agrupan sin hueco entre cajas (gap normal)
+ok   despues-390-claro: «Lo que se descartó en el camino» arranca en el riel de consultas (x 65.0 vs 65.0)
+ok   despues-390-claro: «Ver paso a paso» al inicio de la fila (a 0px del borde izquierdo; justify flex-start)
+ok   despues-390-claro: marcas sin jerga []
+ok   despues-390-claro: sin desplazamiento horizontal
+ok   despues-390-claro: foco por teclado visible en el hecho (activo true, :focus-visible true, box-shadow «rgb(51, 112, 108) 0px 0px 0px 3px», outline none)
+ok   despues-390-claro: sin errores de página []
+despues-1024-claro: {"hechos":8,"cajasConBordeLateral":0,"radioMax":8,"gapLista":"normal","rielX":309,"caminoX":309,"guiarIzq":0,"barraJustify":"flex-start","marcas":[],"desborde":false}
+ok   despues-1024-claro: 8 hechos sin caja propia (bordes laterales/superior = 0 en 8)
+ok   despues-1024-claro: radio de los hechos ≤ --r-sm (8px)
+ok   despues-1024-claro: los hechos se agrupan sin hueco entre cajas (gap normal)
+ok   despues-1024-claro: «Lo que se descartó en el camino» arranca en el riel de consultas (x 309.0 vs 309.0)
+ok   despues-1024-claro: «Ver paso a paso» al inicio de la fila (a 0px del borde izquierdo; justify flex-start)
+ok   despues-1024-claro: marcas sin jerga []
+ok   despues-1024-claro: sin desplazamiento horizontal
+ok   despues-1024-claro: foco por teclado visible en el hecho (activo true, :focus-visible true, box-shadow «rgb(51, 112, 108) 0px 0px 0px 3px», outline none)
+ok   despues-1024-claro: sin errores de página []
+despues-1440-claro: {"hechos":8,"cajasConBordeLateral":0,"radioMax":8,"gapLista":"normal","rielX":333,"caminoX":333,"guiarIzq":0,"barraJustify":"flex-start","marcas":[],"desborde":false}
+ok   despues-1440-claro: 8 hechos sin caja propia (bordes laterales/superior = 0 en 8)
+ok   despues-1440-claro: radio de los hechos ≤ --r-sm (8px)
+ok   despues-1440-claro: los hechos se agrupan sin hueco entre cajas (gap normal)
+ok   despues-1440-claro: «Lo que se descartó en el camino» arranca en el riel de consultas (x 333.0 vs 333.0)
+ok   despues-1440-claro: «Ver paso a paso» al inicio de la fila (a 0px del borde izquierdo; justify flex-start)
+ok   despues-1440-claro: marcas sin jerga []
+ok   despues-1440-claro: sin desplazamiento horizontal
+ok   despues-1440-claro: foco por teclado visible en el hecho (activo true, :focus-visible true, box-shadow «rgb(51, 112, 108) 0px 0px 0px 3px», outline none)
+ok   despues-1440-claro: sin errores de página []
+despues-390-oscuro: {"hechos":8,"cajasConBordeLateral":0,"radioMax":8,"gapLista":"normal","rielX":65,"caminoX":65,"guiarIzq":0,"barraJustify":"flex-start","marcas":[],"desborde":false}
+ok   despues-390-oscuro: 8 hechos sin caja propia (bordes laterales/superior = 0 en 8)
+ok   despues-390-oscuro: radio de los hechos ≤ --r-sm (8px)
+ok   despues-390-oscuro: los hechos se agrupan sin hueco entre cajas (gap normal)
+ok   despues-390-oscuro: «Lo que se descartó en el camino» arranca en el riel de consultas (x 65.0 vs 65.0)
+ok   despues-390-oscuro: «Ver paso a paso» al inicio de la fila (a 0px del borde izquierdo; justify flex-start)
+ok   despues-390-oscuro: marcas sin jerga []
+ok   despues-390-oscuro: sin desplazamiento horizontal
+ok   despues-390-oscuro: foco por teclado visible en el hecho (activo true, :focus-visible true, box-shadow «rgb(159, 216, 208) 0px 0px 0px 3px», outline none)
+ok   despues-390-oscuro: sin errores de página []
+despues-1024-oscuro: {"hechos":8,"cajasConBordeLateral":0,"radioMax":8,"gapLista":"normal","rielX":309,"caminoX":309,"guiarIzq":0,"barraJustify":"flex-start","marcas":[],"desborde":false}
+ok   despues-1024-oscuro: 8 hechos sin caja propia (bordes laterales/superior = 0 en 8)
+ok   despues-1024-oscuro: radio de los hechos ≤ --r-sm (8px)
+ok   despues-1024-oscuro: los hechos se agrupan sin hueco entre cajas (gap normal)
+ok   despues-1024-oscuro: «Lo que se descartó en el camino» arranca en el riel de consultas (x 309.0 vs 309.0)
+ok   despues-1024-oscuro: «Ver paso a paso» al inicio de la fila (a 0px del borde izquierdo; justify flex-start)
+ok   despues-1024-oscuro: marcas sin jerga []
+ok   despues-1024-oscuro: sin desplazamiento horizontal
+ok   despues-1024-oscuro: foco por teclado visible en el hecho (activo true, :focus-visible true, box-shadow «rgb(159, 216, 208) 0px 0px 0px 3px», outline none)
+ok   despues-1024-oscuro: sin errores de página []
+despues-1440-oscuro: {"hechos":8,"cajasConBordeLateral":0,"radioMax":8,"gapLista":"normal","rielX":333,"caminoX":333,"guiarIzq":0,"barraJustify":"flex-start","marcas":[],"desborde":false}
+ok   despues-1440-oscuro: 8 hechos sin caja propia (bordes laterales/superior = 0 en 8)
+ok   despues-1440-oscuro: radio de los hechos ≤ --r-sm (8px)
+ok   despues-1440-oscuro: los hechos se agrupan sin hueco entre cajas (gap normal)
+ok   despues-1440-oscuro: «Lo que se descartó en el camino» arranca en el riel de consultas (x 333.0 vs 333.0)
+ok   despues-1440-oscuro: «Ver paso a paso» al inicio de la fila (a 0px del borde izquierdo; justify flex-start)
+ok   despues-1440-oscuro: marcas sin jerga []
+ok   despues-1440-oscuro: sin desplazamiento horizontal
+ok   despues-1440-oscuro: foco por teclado visible en el hecho (activo true, :focus-visible true, box-shadow «rgb(159, 216, 208) 0px 0px 0px 3px», outline none)
+ok   despues-1440-oscuro: sin errores de página []
+
+fallas: 0

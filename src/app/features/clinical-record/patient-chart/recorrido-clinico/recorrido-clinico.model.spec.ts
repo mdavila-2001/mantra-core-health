@@ -49,7 +49,8 @@ describe('conectadosA', () => {
 });
 
 describe('describirIntervalo', () => {
-  const desde = new Date(2026, 0, 1);
+  // Fixed instants (La Paz offset): the result does not depend on the machine's zone.
+  const desde = new Date('2026-01-01T12:00:00-04:00');
   const mas = (dias: number) => new Date(desde.getTime() + dias * 86_400_000);
 
   it.each([
@@ -65,8 +66,17 @@ describe('describirIntervalo', () => {
   });
 
   it('cuenta días de calendario, no tramos de 24 horas', () => {
-    expect(describirIntervalo(new Date(2026, 0, 1, 8), new Date(2026, 0, 1, 21))).toBe('el mismo día');
-    expect(describirIntervalo(new Date(2026, 0, 1, 23), new Date(2026, 0, 2, 6))).toBe('1 día');
+    expect(describirIntervalo(new Date('2026-01-01T08:00:00-04:00'), new Date('2026-01-01T21:00:00-04:00'))).toBe('el mismo día');
+    expect(describirIntervalo(new Date('2026-01-01T23:00:00-04:00'), new Date('2026-01-02T06:00:00-04:00'))).toBe('1 día');
+  });
+
+  it('cuenta días clínicos de La Paz, no los del navegador', () => {
+    // 20:30 in La Paz is 00:30 UTC of the next day: still a different clinical day from 10:00 the next morning.
+    const noche = new Date('2026-03-11T00:30:00Z');
+    const manana = new Date('2026-03-11T14:00:00Z');
+    expect(describirIntervalo(noche, manana)).toBe('1 día');
+    // 23:30 and 01:00 UTC are both the same evening in La Paz.
+    expect(describirIntervalo(new Date('2026-03-10T23:30:00Z'), new Date('2026-03-11T01:00:00Z'))).toBe('el mismo día');
   });
 });
 

@@ -42,7 +42,9 @@
     }
   </div>
 } @else if (d().certeza === 'presuntivo') {
-  <p class="panel__pendiente">Todavía no se confirmó ni se descartó · registrado {{ hace() }}</p>
+  <p class="panel__pendiente">
+    Todavía no se confirmó ni se descartó · registrado <span [attr.title]="haceExacto()">{{ hace() }}</span>
+  </p>
 }
 @if (d().reemplazadoPor; as rp) {
   <p class="panel__linea" data-testid="red-panel-reemplazo">

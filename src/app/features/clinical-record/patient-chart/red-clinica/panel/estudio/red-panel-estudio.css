@@ -19,6 +19,7 @@
   border-collapse: collapse;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums;
 }
 
 .panel__tabla th,
@@ -44,23 +45,39 @@
   font-weight: 500;
 }
 
+.panel__referencia {
+  white-space: nowrap;
+}
+
+/* Order: category and priority share a row; the reason takes the whole row. */
+.panel__pares--pedido {
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+}
+
+.panel__par--ancho {
+  grid-column: 1 / -1;
+}
+
 /* Out of range: a warning rule on the row's edge, not a filled row. Filled,
    the dark theme's brown left the secondary text under AA. */
 .panel__fila--fuera th {
   box-shadow: inset 3px 0 0 var(--st-warning-fg);
 }
 
+/* The reading chip always sits under the value, in every row: inline, it
+   wrapped on some rows and not on others. */
 .panel__valor {
-  font-variant-numeric: tabular-nums;
+  display: block;
   font-weight: 600;
   white-space: nowrap;
 }
 
 .panel__lectura {
-  display: inline-flex;
+  display: flex;
+  inline-size: fit-content;
   align-items: center;
   gap: var(--sp-1);
-  margin-inline-start: var(--sp-2);
+  margin: var(--sp-1) 0 0;
   padding: 0 var(--sp-2);
   border-radius: var(--r-pill);
   border: 1px solid;
@@ -96,8 +113,8 @@
 }
 
 /* The file name can be long («Informe de TSH por
-   quimioluminiscencia.pdf»): one line, cut with an ellipsis; the full name
-   is in the accessible name and the tooltip. */
+   quimioluminiscencia.pdf»): it reads whole, wrapping inside the button (at
+   spaces, or anywhere for a name without them), never cut with «…». */
 .panel__archivos li {
   min-inline-size: 0;
   max-inline-size: 100%;
@@ -105,11 +122,33 @@
 
 .panel__archivos .btn {
   max-inline-size: 100%;
+  justify-content: flex-start;
+  text-align: start;
 }
 
 .panel__archivo-nombre {
   min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* S3: the notice, what to wait for and the next action, stacked. */
+.panel__sin-resultado {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.panel__sin-resultado-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.panel__sin-resultado-acciones:empty {
+  display: none;
+}
+
+/* Without a notice the wrapper is not a grid item: no extra gap. */
+.panel__aviso-descarga:empty {
+  display: none;
 }

@@ -35,7 +35,7 @@ button.panel__vinculo:hover {
 
 button.panel__vinculo:focus-visible {
   outline: none;
-  box-shadow: var(--focus-ring);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .panel__vinculo--fuera {

@@ -1,15 +1,17 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 
+import { failureOf, isLoading } from '../../../../core/view-state/view-state';
+import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AccordionPanel } from '../../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
-import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DrawerPanel } from '../../../../shared/components/organisms/drawer-panel/drawer-panel';
 import type { Episodio, Recorrido } from './episodios';
 import type { PasoNarrado } from './narracion';
 import { fechaCorta } from './redaccion';
 import { type RegistroConVinculos } from './registro-con-vinculos.types';
 import { MiRecorridoDetalle } from './detalle/mi-recorrido-detalle';
+import { RecorridoFalta } from './falta/recorrido-falta';
 
 /** Which «Por fecha» tab each record type's detail leads to. */
 export type SeccionDeDestino = 'atenciones' | 'diagnosticos' | 'recetas';
@@ -47,11 +49,11 @@ const TIPO_EN_PALABRAS: Readonly<Record<RegistroConVinculos['tipo'], string>> = 
   selector: 'app-mi-recorrido',
   imports: [
     AccordionPanel,
-    Alert,
     AppButton,
     DrawerPanel,
     NgTemplateOutlet,
     MiRecorridoDetalle,
+    RecorridoFalta,
   ],
   templateUrl: './mi-recorrido.html',
   styleUrl: './mi-recorrido.css',
@@ -59,12 +61,10 @@ const TIPO_EN_PALABRAS: Readonly<Record<RegistroConVinculos['tipo'], string>> = 
 })
 export class MiRecorrido {
   readonly recorrido = input.required<Recorrido>();
-  /** The orders and appointments are still arriving. */
-  readonly cargando = input(false);
-  /** The orders and appointments could not be read. */
-  readonly fallo = input(false);
-  /** Why the appointments (and with them the follow-ups) did not arrive, or `null`. */
-  readonly citasSinCargar = input<string | null>(null);
+  /** The lazy read of orders and appointments (M34), or `null` while nobody asked for it. */
+  readonly detalle = input<ViewState<unknown> | null>(null);
+  /** The failed read of the appointments (and with them the follow-ups), as M34 says it, or `null`. */
+  readonly citasSinCargar = input<ViewState<unknown> | null>(null);
   /** The prescription being downloaded now, if any. */
   readonly descargandoReceta = input<string | null>(null);
 
@@ -85,6 +85,15 @@ export class MiRecorrido {
   /** The record the detail sheet shows. */
   protected readonly enDetalle = signal<RegistroConVinculos | null>(null);
   protected readonly detalleAbierto = signal(false);
+
+  protected readonly cargando = computed(() => {
+    const estado = this.detalle();
+    return estado !== null && isLoading(estado);
+  });
+
+  /** The read failed: `falta/` tells S5 from S9 (no retry on a wall, request id on a fault). */
+  protected readonly faltaDelDetalle = computed(() => failureOf(this.detalle()));
+  protected readonly faltaDeLasCitas = computed(() => failureOf(this.citasSinCargar()));
 
   protected readonly vacio = computed(() => {
     const r = this.recorrido();
@@ -204,8 +213,12 @@ export class MiRecorrido {
     }
   }
 
-  /** A thread's folded label: the problem, its status and since when. */
-  /** The span, not only the start: the threads are ordered by their latest record, and «desde» alone made that order look random. */
+  /**
+   * A thread's folded label: the problem, its status and its span. The span,
+   * not only the start: the threads are ordered by its end, and «desde» alone
+   * made that order look random. Both come from the first read (`lapsoDe`),
+   * so they do not jump when the studies arrive.
+   */
   protected encabezadoDe(episodio: Episodio): string {
     const desde = fechaCorta(episodio.desde ?? undefined);
     const hasta = fechaCorta(episodio.hasta ?? undefined);

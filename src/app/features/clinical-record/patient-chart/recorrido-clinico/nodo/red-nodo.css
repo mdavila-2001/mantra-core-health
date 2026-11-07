@@ -11,6 +11,10 @@
   min-inline-size: 0;
 }
 
+/* The record's kind is said by the icon and the title, in the brand recipe:
+   status tones (`--st-success`, `--st-error`…) are kept for the clinical
+   status pill, so a diagnosis no longer reads as an error and green keeps one
+   meaning (`colors.md`, «brand tones are not statuses»). */
 .red__marca {
   display: inline-grid;
   place-items: center;
@@ -18,9 +22,9 @@
   inline-size: 22px;
   block-size: 22px;
   border-radius: var(--r-full);
-  background: var(--t-bg);
-  color: var(--t-fg);
-  border: 1px solid var(--t-bd);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+  border: 1px solid var(--st-primary-bd);
 }
 
 .red__marca app-nav-icon {
@@ -93,6 +97,24 @@
 :host(.red__nodo--descartado:not(.red__nodo--compacto)) .red__nodo-principal {
   text-decoration: line-through;
   text-decoration-color: var(--st-error-fg);
+}
+
+/* The ruled-out diagnosis's mark is struck through as well, like its diamond
+   on the strip and the legend: shape, not color alone. Ruled out is a status,
+   so the bar keeps the ruled-out ink over the mark's brand background. */
+:host(.red__nodo--descartado) .red__marca {
+  position: relative;
+}
+
+:host(.red__nodo--descartado) .red__marca::after {
+  content: '';
+  position: absolute;
+  inset-block: 1px;
+  inset-inline-start: calc(50% - 1px);
+  inline-size: 2px;
+  rotate: 45deg;
+  background: var(--st-error-fg);
+  box-shadow: 0 0 0 1px var(--st-primary-bg);
 }
 
 .red__nodo-compartido-marca {

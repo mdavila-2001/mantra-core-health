@@ -1,6 +1,6 @@
 import { computed, signal, type Signal, type WritableSignal } from '@angular/core';
 
-import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
+import type { CitaDelPaciente } from '../patient-chart.types';
 import { consentEncounter } from './consent-encounter';
 import { patientConsents, type PatientConsents } from './patient-consents';
 

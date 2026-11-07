@@ -1,0 +1,69 @@
+medica-1440-claro [final] franjas desplegadas 7; sin registros a la vista 6: [["HipotiroidismoEnfermedad activamar 2025 ",80],["Hipertensión arterial esencialEnfermedad",80],["DislipidemiaEn estudiodic 2025 – nov 202",80],["Infección respiratoria agudaEn estudioma",80],["Infección urinariaDiagnóstico históricoa",80],["Trastorno de ansiedad generalizadaEn est",80]]
+ok   medica-1440-claro [final] «HipotiroidismoEnfermedad activamar 2025 » sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [final] «Hipertensión arterial esencialEnfermedad» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [final] «DislipidemiaEn estudiodic 2025 – nov 202» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [final] «Infección respiratoria agudaEn estudioma» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [final] «Infección urinariaDiagnóstico históricoa» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [final] «Trastorno de ansiedad generalizadaEn est» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [final] extremos de línea fuera del lienzo visible: 0 de 0
+ok   medica-1440-claro [final] extremos que no tocan un nodo ni llevan indicador: 0 []
+ok   medica-1440-claro [final] clics junto a la llegada de una línea que caen en la línea y no en la tarjeta: 0 de 0
+medica-1440-claro [final] extremos con indicador «sigue»: 0
+medica-1440-claro [inicio] franjas desplegadas 7; sin registros a la vista 6: [["Hipertensión arterial esencialEnfermedad",80],["DislipidemiaEn estudiodic 2025 – nov 202",48],["Infección respiratoria agudaEn estudioma",48],["Infección urinariaDiagnóstico históricoa",80],["Trastorno de ansiedad generalizadaEn est",80],["Atenciones sin diagnóstico asociadoene 2",80]]
+ok   medica-1440-claro [inicio] «Hipertensión arterial esencialEnfermedad» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [inicio] «DislipidemiaEn estudiodic 2025 – nov 202» sin registros a la vista mide 48 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [inicio] «Infección respiratoria agudaEn estudioma» sin registros a la vista mide 48 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [inicio] «Infección urinariaDiagnóstico históricoa» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [inicio] «Trastorno de ansiedad generalizadaEn est» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [inicio] «Atenciones sin diagnóstico asociadoene 2» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [inicio] extremos de línea fuera del lienzo visible: 0 de 40
+ok   medica-1440-claro [inicio] extremos que no tocan un nodo ni llevan indicador: 0 []
+ok   medica-1440-claro [inicio] clics junto a la llegada de una línea que caen en la línea y no en la tarjeta: 0 de 37
+medica-1440-claro [inicio] extremos con indicador «sigue»: 3
+medica-1440-claro [medio] franjas desplegadas 7; sin registros a la vista 6: [["HipotiroidismoEnfermedad activamar 2025 ",80],["Hipertensión arterial esencialEnfermedad",80],["DislipidemiaEn estudiodic 2025 – nov 202",48],["Infección respiratoria agudaEn estudioma",48],["Infección urinariaDiagnóstico históricoa",80],["Trastorno de ansiedad generalizadaEn est",80]]
+ok   medica-1440-claro [medio] «HipotiroidismoEnfermedad activamar 2025 » sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [medio] «Hipertensión arterial esencialEnfermedad» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [medio] «DislipidemiaEn estudiodic 2025 – nov 202» sin registros a la vista mide 48 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [medio] «Infección respiratoria agudaEn estudioma» sin registros a la vista mide 48 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [medio] «Infección urinariaDiagnóstico históricoa» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [medio] «Trastorno de ansiedad generalizadaEn est» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1440-claro [medio] extremos de línea fuera del lienzo visible: 0 de 2
+ok   medica-1440-claro [medio] extremos que no tocan un nodo ni llevan indicador: 0 []
+ok   medica-1440-claro [medio] clics junto a la llegada de una línea que caen en la línea y no en la tarjeta: 0 de 0
+medica-1440-claro [medio] extremos con indicador «sigue»: 1
+ok   medica-1440-claro sin errores de consola: []
+medica-1920-claro [final] franjas desplegadas 7; sin registros a la vista 6: [["HipotiroidismoEnfermedad activamar 2025 ",80],["Hipertensión arterial esencialEnfermedad",80],["DislipidemiaEn estudiodic 2025 – nov 202",80],["Infección respiratoria agudaEn estudioma",80],["Infección urinariaDiagnóstico históricoa",80],["Trastorno de ansiedad generalizadaEn est",80]]
+ok   medica-1920-claro [final] «HipotiroidismoEnfermedad activamar 2025 » sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [final] «Hipertensión arterial esencialEnfermedad» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [final] «DislipidemiaEn estudiodic 2025 – nov 202» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [final] «Infección respiratoria agudaEn estudioma» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [final] «Infección urinariaDiagnóstico históricoa» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [final] «Trastorno de ansiedad generalizadaEn est» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [final] extremos de línea fuera del lienzo visible: 0 de 2
+ok   medica-1920-claro [final] extremos que no tocan un nodo ni llevan indicador: 0 []
+ok   medica-1920-claro [final] clics junto a la llegada de una línea que caen en la línea y no en la tarjeta: 0 de 1
+medica-1920-claro [final] extremos con indicador «sigue»: 1
+medica-1920-claro [inicio] franjas desplegadas 7; sin registros a la vista 6: [["Hipertensión arterial esencialEnfermedad",80],["DislipidemiaEn estudiodic 2025 – nov 202",48],["Infección respiratoria agudaEn estudioma",48],["Infección urinariaDiagnóstico históricoa",80],["Trastorno de ansiedad generalizadaEn est",80],["Atenciones sin diagnóstico asociadoene 2",80]]
+ok   medica-1920-claro [inicio] «Hipertensión arterial esencialEnfermedad» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [inicio] «DislipidemiaEn estudiodic 2025 – nov 202» sin registros a la vista mide 48 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [inicio] «Infección respiratoria agudaEn estudioma» sin registros a la vista mide 48 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [inicio] «Infección urinariaDiagnóstico históricoa» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [inicio] «Trastorno de ansiedad generalizadaEn est» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [inicio] «Atenciones sin diagnóstico asociadoene 2» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [inicio] extremos de línea fuera del lienzo visible: 0 de 48
+ok   medica-1920-claro [inicio] extremos que no tocan un nodo ni llevan indicador: 0 []
+ok   medica-1920-claro [inicio] clics junto a la llegada de una línea que caen en la línea y no en la tarjeta: 0 de 42
+medica-1920-claro [inicio] extremos con indicador «sigue»: 5
+medica-1920-claro [medio] franjas desplegadas 7; sin registros a la vista 6: [["HipotiroidismoEnfermedad activamar 2025 ",80],["Hipertensión arterial esencialEnfermedad",80],["DislipidemiaEn estudiodic 2025 – nov 202",48],["Infección respiratoria agudaEn estudioma",48],["Infección urinariaDiagnóstico históricoa",80],["Trastorno de ansiedad generalizadaEn est",80]]
+ok   medica-1920-claro [medio] «HipotiroidismoEnfermedad activamar 2025 » sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [medio] «Hipertensión arterial esencialEnfermedad» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [medio] «DislipidemiaEn estudiodic 2025 – nov 202» sin registros a la vista mide 48 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [medio] «Infección respiratoria agudaEn estudioma» sin registros a la vista mide 48 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [medio] «Infección urinariaDiagnóstico históricoa» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [medio] «Trastorno de ansiedad generalizadaEn est» sin registros a la vista mide 80 px (plegada: 80; solo «N después»: 48)
+ok   medica-1920-claro [medio] extremos de línea fuera del lienzo visible: 0 de 6
+ok   medica-1920-claro [medio] extremos que no tocan un nodo ni llevan indicador: 0 []
+ok   medica-1920-claro [medio] clics junto a la llegada de una línea que caen en la línea y no en la tarjeta: 0 de 0
+medica-1920-claro [medio] extremos con indicador «sigue»: 1
+ok   medica-1920-claro sin errores de consola: []
+fallas: 0

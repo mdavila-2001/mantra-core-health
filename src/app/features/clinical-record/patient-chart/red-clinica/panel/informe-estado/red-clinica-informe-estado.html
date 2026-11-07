@@ -1,31 +1,61 @@
 @switch (estado().status) {
   @case ('loading') {
-    <p class="estado__tenue" role="status" data-testid="red-panel-informe-cargando">Leyendo los valores del informe…</p>
+    <!-- S2: the shape of the values table, so the section does not jump when it arrives. -->
+    <div class="estado__carga" role="status" data-testid="red-panel-informe-cargando">
+      <span class="estado__oculto">Leyendo los valores del informe…</span>
+      <app-skeleton variant="text" width="12rem" />
+      <div class="estado__tabla">
+        @for (fila of filas; track $index) {
+          <div class="estado__fila" [class.estado__fila--cabecera]="$first">
+            <app-skeleton variant="text" width="45%" />
+            <app-skeleton variant="text" width="25%" />
+            <app-skeleton variant="text" width="30%" />
+          </div>
+        }
+      </div>
+    </div>
   }
   @case ('forbidden') {
     <app-alert tone="warning" title="No puede ver este informe" data-testid="red-panel-informe-error">
       El servidor no le da acceso a los valores de este informe.
+      <div alert-actions>
+        <button app-button variant="outline" size="sm" type="button" data-testid="red-panel-volver" (clicked)="volver.emit()">Volver a la red</button>
+      </div>
     </app-alert>
   }
   @case ('not-found') {
     <app-alert tone="warning" title="El informe no está disponible" data-testid="red-panel-informe-error">
       No se encontró un informe liberado para este estudio.
+      <div alert-actions>
+        <button app-button variant="outline" size="sm" type="button" data-testid="red-panel-volver" (clicked)="volver.emit()">Volver a la red</button>
+      </div>
     </app-alert>
   }
   @case ('validation') {
     @let v = estado();
-    <app-alert tone="warning" title="No se pudieron leer los valores ahora" data-testid="red-panel-informe-error">
-      {{ mensajes() }}
-      @if (v.status === 'validation' && v.retryAfterSeconds !== undefined) {
-        Reintente en {{ v.retryAfterSeconds }} segundos.
-      }
-      @if (v.status === 'validation' && v.requestId) {
-        Código de soporte: <code>{{ v.requestId }}</code>
-      }
-      <div alert-actions>
-        <button app-button variant="outline" size="sm" type="button" (clicked)="reintentar.emit()">Reintentar</button>
-      </div>
-    </app-alert>
+    @if (limitado()) {
+      <app-alert tone="warning" title="Demasiadas lecturas seguidas" data-testid="red-panel-informe-error">
+        El servidor pidió esperar antes de volver a leer los valores de este informe.
+        @if (v.status === 'validation' && v.retryAfterSeconds !== undefined) {
+          Reintente en {{ v.retryAfterSeconds }} segundos.
+        }
+        <div alert-actions>
+          <button app-button variant="outline" size="sm" type="button" (clicked)="reintentar.emit()">Reintentar</button>
+        </div>
+      </app-alert>
+    } @else {
+      <!-- The server's message is not shown: it speaks of what it validated,
+           not of this report. Retrying would send the same rejected read. -->
+      <app-alert tone="warning" title="El servidor rechazó la lectura de este informe" data-testid="red-panel-informe-error">
+        Sus valores no se pueden mostrar. Leerlo de nuevo daría el mismo rechazo: si el problema sigue, informe el código de soporte.
+        @if (v.status === 'validation' && v.requestId) {
+          Código de soporte: <code>{{ v.requestId }}</code>
+        }
+        <div alert-actions>
+          <button app-button variant="outline" size="sm" type="button" data-testid="red-panel-volver" (clicked)="volver.emit()">Volver a la red</button>
+        </div>
+      </app-alert>
+    }
   }
   @case ('offline') {
     <app-alert tone="warning" title="Sin conexión" data-testid="red-panel-informe-error">

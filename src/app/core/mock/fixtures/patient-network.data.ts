@@ -6,8 +6,8 @@ import type {
   SimulatedObservation,
   SimulatedOrder,
   SimulatedPrescription,
-} from './clinic';
-import type { ReservaSimulada } from './agenda';
+  ReservaSimulada,
+} from './simulated-records.types';
 import {
   APPOINTMENT_TYPE,
   ACTIVITY,

@@ -20,7 +20,7 @@ import {
   type Nombres,
   type Suceso,
 } from './recorrido-guiado.sucesos';
-import { diaClinico, fechaCorta, fechaValida, libre, minusculaInicial } from './recorrido-guiado.texto';
+import { diaClinico, enumerar, fechaCorta, fechaValida, libre, minusculaInicial } from './recorrido-guiado.texto';
 import type { FraseDelPaso } from './recorrido-guiado.types';
 
 export function sucesosDeInternaciones(lista: readonly CareEpisode[], n: Nombres): Suceso[] {
@@ -112,6 +112,12 @@ export function sucesosDeDiagnosticos(lista: readonly Condition[], idx: Indices,
         titulo: `Se planteó ${nombre}`,
         enfocar: [c.id],
         frase: () => frase(`Se planteó ${nombre} como diagnóstico presuntivo.`, [c.id]),
+        // Several in the same encounter of a step are told in one sentence.
+        plural: {
+          clave: `diagnostico:${alta.atencionId ?? ''}`,
+          nombre,
+          texto: (_, nombres) => `Se plantearon ${enumerar(nombres)} como diagnósticos presuntivos.`,
+        },
       });
     }
     if (veredicto !== null) {
