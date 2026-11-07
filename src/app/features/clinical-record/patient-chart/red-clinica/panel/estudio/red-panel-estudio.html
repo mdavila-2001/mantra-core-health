@@ -1,18 +1,4 @@
-<section class="panel__seccion" aria-labelledby="red-panel-estudio">
-  <h3 class="panel__seccion-titulo" id="red-panel-estudio">Pedido</h3>
-  <dl class="panel__pares">
-    @if (d().categoria) {
-      <div><dt>Categoría</dt><dd>{{ d().categoria }}</dd></div>
-    }
-    @if (d().prioridad) {
-      <div><dt>Prioridad</dt><dd>{{ d().prioridad }}</dd></div>
-    }
-    @if (d().motivo) {
-      <div><dt>Motivo</dt><dd>{{ d().motivo }}</dd></div>
-    }
-  </dl>
-</section>
-
+<!-- The result first: it is what the doctor opens the study for. -->
 <section class="panel__seccion" aria-labelledby="red-panel-resultado" data-testid="red-panel-resultado">
   <h3 class="panel__seccion-titulo" id="red-panel-resultado">Resultado</h3>
   @if (resultado(); as r) {
@@ -76,7 +62,7 @@
                       </span>
                     }
                   </td>
-                  <td class="panel__tenue">{{ f.rango }}</td>
+                  <td class="panel__tenue panel__referencia">{{ f.rango }}</td>
                 </tr>
               }
             </tbody>
@@ -174,4 +160,19 @@
       </div>
     </div>
   }
+</section>
+
+<section class="panel__seccion" aria-labelledby="red-panel-estudio">
+  <h3 class="panel__seccion-titulo" id="red-panel-estudio">Pedido</h3>
+  <dl class="panel__pares panel__pares--pedido">
+    @if (d().categoria) {
+      <div><dt>Categoría</dt><dd>{{ d().categoria }}</dd></div>
+    }
+    @if (d().prioridad) {
+      <div><dt>Prioridad</dt><dd>{{ d().prioridad }}</dd></div>
+    }
+    @if (d().motivo) {
+      <div class="panel__par--ancho"><dt>Motivo</dt><dd>{{ d().motivo }}</dd></div>
+    }
+  </dl>
 </section>

@@ -36,6 +36,10 @@ async function estados(b, ancho, tema) {
   await hipo.click();
   const tsh = p.locator('[data-testid="recorrido-nodo"][data-clase="estudio"]').filter({ hasText: 'TSH' }).first();
   await tsh.waitFor();
+  // Scroll it into view and let the canvas settle before freezing the clock: with the
+  // clock paused, a node still moving never reads as stable and the click times out.
+  await tsh.scrollIntoViewIfNeeded();
+  await p.waitForTimeout(500);
   await p.clock.install();
   await p.clock.pauseAt(Date.now() + 1000);
   await tsh.click();
@@ -61,7 +65,7 @@ async function estados(b, ancho, tema) {
     ['s6-404', 'not-found', 'El informe no está disponible', true],
     ['s8-sin-conexion', 'red', 'Sin conexión', false],
     ['s9-error-con-id', 'error', 'Código de soporte', false],
-    ['s4-validacion', 'validation', 'No se pudieron leer los valores ahora', false],
+    ['s4-validacion', 'validation', 'El servidor rechazó la lectura de este informe', true],
   ];
   for (const [nombre, modo, texto, volver] of casos) {
     await fallar([{ patron: '/reports/', modo, metodos: ['GET'] }]);
@@ -76,6 +80,11 @@ async function estados(b, ancho, tema) {
     afirmar((await liberado.count()) === 0, `${pref} ${nombre}: sin «Resultado liberado» debajo`);
     const boton = p.getByTestId('red-panel-volver');
     afirmar((await boton.count()) === (volver ? 1 : 0), `${pref} ${nombre}: «Volver a la red» ${volver ? 'ofrecido' : 'no corresponde (tiene «Reintentar»)'}`);
+    if (modo === 'validation') {
+      // S4: the simulator's 422 text never reaches the panel, and the same request is not retried blindly.
+      afirmar(!dice.includes('Elija un medicamento'), `${pref} ${nombre}: sin el texto crudo del 422`);
+      afirmar((await error.getByRole('button', { name: 'Reintentar' }).count()) === 0, `${pref} ${nombre}: sin «Reintentar»`);
+    }
     await panel.screenshot({ path: `${OUT}/${pref}-${nombre}.png` });
     await fallar([]);
     if (volver) {
