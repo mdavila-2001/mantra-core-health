@@ -5,14 +5,14 @@ Pantalla nueva `src/app/features/admin/catalog-bulk/` + cliente
 `POST /pharmacies/:pharmacyId/{categories,products,prices,sites}/bulk`
 (CREATE/UPDATE/UPSERT, `dryRun`, ≤1000 filas). No toca `superadmin/bulk-imports`.
 
-## Ruta y menú propuestos (NO registrados)
+## Ruta y menú
 
-- Ruta: `superadmin/catalog-bulk` (entrada en `ADMIN_SCREENS`, `features/admin/admin.screens.ts`).
-- Menú: sección «Carga de catálogo de farmacia», grupo «Superadministración»,
-  roles `SECURITY_ADMIN`, `PLATFORM_ADMIN`, junto a «Cargas masivas».
-  El parche exacto está en `propuesta-ruta-y-menu.patch`. Es el que se aplicó
-  solo en local para las capturas y se revirtió.
-- `PHARMACY_STAFF` también puede llamar a la API; su acceso por menú de farmacia es decisión de negocio pendiente.
+- Ruta: `superadmin/catalog-bulk`, registrada SOLO como ruta hija en
+  `src/app/routes/app.routes.hijas-admin.ts` (excepción autorizada por Ender),
+  con `seccionRolesGuard` y roles `SECURITY_ADMIN`, `PHARMACY_STAFF`.
+- Menú: NO registrado. Propuesta: sección «Carga de catálogo de farmacia», grupo
+  «Superadministración», junto a «Cargas masivas» (`navigation.platform.ts`).
+  Pendiente de decisión.
 
 ## Estados
 
@@ -24,7 +24,8 @@ Pantalla nueva `src/app/features/admin/catalog-bulk/` + cliente
 | Persistencia de sucursales | no se ejecutó: no hay endpoint de lectura | — |
 | Contra la API real / Postgres | no se ejecutó | — |
 | Revisión visual independiente, móvil, tema oscuro | no se ejecutó | — |
-| `pre-push-gate.mjs` | ver PR: bloqueado, no pasó | — |
+| `pre-push-gate.mjs` | ver `pre-push-gate.log` | `pre-push-gate.log` |
+| Spec `playwright/catalog-bulk.spec.ts` (simulador, no PostgreSQL) | ver `pre-push-gate.log` | `pre-push-gate.log` |
 
 ## Simulado
 
