@@ -4,6 +4,8 @@ import { map, type Observable } from 'rxjs';
 
 import { queryParams, withDates, type Wire } from '../admin-portal/admin-portal.wire';
 import { API_BASE_URL, apiUrl } from '../api';
+import { toDirectoryUsersPage, type DirectoryUsersBody } from './authz-admin-directory.mapper';
+import type { DirectoryUsersPage, DirectoryUsersQuery } from './authz-admin-directory.types';
 import type {
   AdminPage,
   AssignableRole,
@@ -81,6 +83,17 @@ export class AuthzAdminClient {
         params: queryParams({ ...query }),
       })
       .pipe(map((page) => ({ ...page, items: page.items.map(toInternalUser) })));
+  }
+
+  /**
+   * PROVISIONAL (sesión G): todos los usuarios de la app, de cualquier tipo. La
+   * ruta la define el front hasta que la API de la sesión E publique la suya;
+   * el mapeo deja pasar sólo los campos del contrato (sin claves de más).
+   */
+  directoryUsers(query: DirectoryUsersQuery = {}): Observable<DirectoryUsersPage> {
+    return this.http
+      .get<DirectoryUsersBody>(this.url('/authz/directory-users'), { params: queryParams({ ...query }) })
+      .pipe(map(toDirectoryUsersPage));
   }
 
   /** Todas las asignaciones de un usuario, activas o no. */

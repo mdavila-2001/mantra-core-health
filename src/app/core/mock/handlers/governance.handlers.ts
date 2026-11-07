@@ -8,6 +8,7 @@ import {
   type MockRequest,
   type MockRouter,
 } from '../mock-router';
+import { registerGovernanceDirectory } from './governance-directory.handlers';
 
 /* ============================================================================
     Backend simulado del gobierno de acceso: bitácora de auditoría
@@ -509,5 +510,13 @@ function registerPermissionDrift(router: MockRouter): void {
 export function registerGovernance(router: MockRouter): void {
   registerAudit(router);
   registerAccessAdmin(router);
+  registerGovernanceDirectory(
+    router,
+    USERS.map((u) => {
+      const view = internalUserView(u);
+      const roles = [...new Set([...u.globalRoles, ...view.assignments.map((a) => a.roleCode)])];
+      return { id: u.id, displayName: u.displayName, roles: roles.map((code) => ({ code, name: roleByCode(code)?.name ?? code })), lastLoginAt: u.lastLoginAt };
+    }),
+  );
   registerPermissionDrift(router);
 }

@@ -44,7 +44,7 @@ describe('AccessPage', () => {
   let http: HttpTestingController;
   let confirmed: boolean;
 
-  async function open(url = SCREEN): Promise<void> {
+  async function open(url = `${SCREEN}?view=users`): Promise<void> {
     confirmed = true;
     TestBed.configureTestingModule({
       providers: [
@@ -78,8 +78,25 @@ describe('AccessPage', () => {
     http.expectNone((r) => r.url === '/authz/permissions' || r.url.endsWith('/permissions'));
   });
 
+  it('la pestaña por omisión es el directorio de todas las cuentas y no pide a los internos', async () => {
+    await open(SCREEN);
+    http.expectOne((r) => r.url === '/authz/directory-users').flush({ items: [], nextCursor: null, limit: 50 });
+    http.expectNone((r) => r.url === '/authz/internal-users');
+    expect(text()).toContain('Todos los usuarios');
+  });
+
+  it('desde el directorio, una persona interna abierta por su dirección se nombra con su ficha', async () => {
+    await open(`${SCREEN}?user=${STRANGER}`);
+    http.expectOne((r) => r.url === '/authz/directory-users').flush({ items: [], nextCursor: null, limit: 50 });
+    http.expectOne(`/authz/users/${STRANGER}/role-assignments`).flush({ userId: STRANGER, items: [] });
+    http.expectOne(`/iam/users/${STRANGER}`).flush({ id: STRANGER, displayName: 'Persona nueva' });
+    http.expectNone((r) => r.url === '/authz/internal-users');
+    harness.detectChanges();
+    expect(document.body.textContent).toContain('Persona nueva');
+  });
+
   it('lista a las personas internas con sus roles y sin mostrar identificadores', async () => {
-    await open(`${SCREEN}?q=elena&roleCode=DPO`);
+    await open(`${SCREEN}?view=users&q=elena&roleCode=DPO`);
     const req = users();
     expect(req.request.params.get('q')).toBe('elena');
     expect(req.request.params.get('roleCode')).toBe('DPO');
@@ -93,7 +110,7 @@ describe('AccessPage', () => {
   });
 
   it('el cajón de una persona muestra sus asignaciones con el alcance en palabras', async () => {
-    await open(`${SCREEN}?user=${USER}`);
+    await open(`${SCREEN}?view=users&user=${USER}`);
     users().flush({ items: [internalUser], nextCursor: null, limit: 50 });
     http.expectOne(`/authz/users/${USER}/role-assignments`).flush({ userId: USER, items: [assignment] });
     harness.detectChanges();
@@ -104,7 +121,7 @@ describe('AccessPage', () => {
   });
 
   it('quien no está en la lista se nombra con su ficha, una sola vez', async () => {
-    await open(`${SCREEN}?user=${STRANGER}`);
+    await open(`${SCREEN}?view=users&user=${STRANGER}`);
     http.expectOne(`/authz/users/${STRANGER}/role-assignments`).flush({ userId: STRANGER, items: [] });
     users().flush({ items: [internalUser], nextCursor: null, limit: 50 });
     harness.detectChanges();
@@ -115,7 +132,7 @@ describe('AccessPage', () => {
   });
 
   it('revocar pide confirmación, llama a la API y vuelve a leer el cajón y la lista', async () => {
-    await open(`${SCREEN}?user=${USER}`);
+    await open(`${SCREEN}?view=users&user=${USER}`);
     users().flush({ items: [internalUser], nextCursor: null, limit: 50 });
     http.expectOne(`/authz/users/${USER}/role-assignments`).flush({ userId: USER, items: [assignment] });
     harness.detectChanges();
@@ -136,7 +153,7 @@ describe('AccessPage', () => {
   });
 
   it('si la persona se arrepiente, no se revoca nada', async () => {
-    await open(`${SCREEN}?user=${USER}`);
+    await open(`${SCREEN}?view=users&user=${USER}`);
     confirmed = false;
     users().flush({ items: [internalUser], nextCursor: null, limit: 50 });
     http.expectOne(`/authz/users/${USER}/role-assignments`).flush({ userId: USER, items: [assignment] });
@@ -147,7 +164,7 @@ describe('AccessPage', () => {
   });
 
   it('un rechazo por asignación ya inactiva se explica por su motivo y relee el cajón', async () => {
-    await open(`${SCREEN}?user=${USER}`);
+    await open(`${SCREEN}?view=users&user=${USER}`);
     users().flush({ items: [internalUser], nextCursor: null, limit: 50 });
     http.expectOne(`/authz/users/${USER}/role-assignments`).flush({ userId: USER, items: [assignment] });
     harness.detectChanges();
@@ -164,7 +181,7 @@ describe('AccessPage', () => {
 
   it('la pestaña de permisos por rol lee el rol de la URL', async () => {
     await open(`${SCREEN}?view=role-permissions&role=r1`);
-    users().flush({ items: [], nextCursor: null, limit: 50 });
+    http.expectNone((r) => r.url === '/authz/internal-users');
     http.expectOne('/authz/roles/r1/permissions').flush({
       roleId: 'r1',
       roleCode: 'DPO',
