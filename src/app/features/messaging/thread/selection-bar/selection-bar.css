@@ -1,0 +1,49 @@
+:host {
+  flex: none;
+  display: block;
+  position: relative;
+  background: var(--sup-tarjeta);
+  border-block-start: 1px solid var(--filete);
+}
+
+.seleccion {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  min-block-size: 64px;
+  padding: var(--e2) var(--e4);
+  color: var(--tinta);
+}
+
+.seleccion__cancelar {
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.seleccion__cancelar svg {
+  inline-size: 22px;
+  block-size: 22px;
+}
+
+.seleccion__cancelar:hover,
+.seleccion__cancelar:focus-visible {
+  background: var(--sup-inset);
+}
+
+.seleccion__cancelar:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+.seleccion__cuenta {
+  flex: 1;
+  font-weight: 700;
+}

@@ -27,32 +27,6 @@
 
 /* La lista va dentro de `app-content-dialog`, que ya pone el título, el
    padding y el botón de salida: acá sólo queda la fila de cada destino. */
-.hilo__reenvio-lista {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.hilo__reenvio-lista button {
-  display: flex;
-  align-items: center;
-  gap: var(--e3);
-  inline-size: 100%;
-  padding: var(--e2) var(--e3);
-  border: 0;
-  border-radius: var(--r-ctrl);
-  background: none;
-  color: var(--tinta);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.hilo__reenvio-lista button:hover,
-.hilo__reenvio-lista button:focus-visible {
-  background: var(--sup-inset);
-}
-
 /* --- El menú del mensaje ------------------------------------------------- */
 
 .hilo__mas-mensaje {
@@ -461,4 +435,28 @@
   background: var(--st-warning-bg);
   color: var(--st-warning-fg);
   font-size: var(--fs-caption);
+}
+
+/* --- Selección para reenviar ------------------------------------------- */
+
+/* While selecting, a transparent button covers each bubble: one tap selects
+   it, and links, players or images inside cannot be triggered by mistake. */
+.hilo__seleccion {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  cursor: pointer;
+}
+
+.hilo__seleccion:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+.hilo__burbuja.is-seleccionado {
+  box-shadow: 0 0 0 3px var(--anillo-foco);
 }

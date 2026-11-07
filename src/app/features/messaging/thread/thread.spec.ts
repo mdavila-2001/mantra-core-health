@@ -522,7 +522,12 @@ describe('Thread', () => {
     ) as HTMLElement[];
     // Sólo la otra: reenviarse a la misma conversación no es reenviar.
     expect(destinos.map((d) => d.querySelector(':scope > span')?.textContent?.trim())).toEqual(['Dr. Ortega']);
+    // Choosing a chat does not send: several can be chosen, then confirmed.
     destinos[0]!.click();
+    fixture.detectChanges();
+    http.expectNone((r) => r.method === 'POST' && r.url === '/community/conversations/c-2/messages');
+    expect(consultar('reenvio-enviar')?.textContent).toContain('Reenviar a 1 chat');
+    consultar('reenvio-enviar')?.click();
     fixture.detectChanges();
 
     const enviado = http.expectOne(
