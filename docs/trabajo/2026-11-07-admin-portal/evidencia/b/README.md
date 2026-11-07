@@ -26,3 +26,11 @@ Para registrar la ruta y capturar se parchó `admin.screens.ts` y `navigation.ma
 1. `GET /diagnostics/lab/services` está tras `LabStaffGuard` en la API: un admin responde 403 (se ve en `DESPUES-2-laboratorio.png`). Hace falta decidir si el admin necesita una lectura propia del catálogo del laboratorio.
 2. «Médico» muestra todo `/admin/catalogs/services` sin filtrar por tipo (columna «Tipo de organización»); no se inventó qué tipos cuentan como «médico». Decisión de negocio pendiente.
 3. La paginación no existe: con `nextCursor`/`truncated` se avisa «Lista parcial».
+
+## Gate (`scripts/pre-push-gate.mjs`)
+
+Resultado: **BLOQUEADO — no se ejecutó completo, no hay PR ni push.**
+- `node scripts/pre-push-gate.mjs run --base dev` responde: «front code changed: pass --pw <spec>».
+- El spec debe vivir en `playwright/*.spec.ts` (fuera de la lista de archivos del carril) y la pantalla no es alcanzable sin registrar la ruta (fuera del carril). Se detiene y se reporta (regla 2).
+- Pasos del gate corridos a mano: typecheck 0 errores (`typecheck.log`), eslint limpio (`lint.log`), `yarn build` exit 0 (`build.log`). Playwright del gate: no se ejecutó.
+- Capturas hechas con `capturas.mjs` (Playwright, un navegador, sin `networkidle`; usa pausas fijas, por lo que el gate lo rechazaría como spec).
