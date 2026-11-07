@@ -58,6 +58,15 @@ test('una nota de voz sale sin bodyText y se ve como reproductor', async ({ page
   await expect(page.locator('app-composer')).toBeVisible({ timeout: 30_000 });
   await espiarEnvios(page);
 
+  // Records whether the loading skeleton ever shows up from here on: a sent
+  // voice note must go straight from its local copy to the player.
+  await page.evaluate(() => {
+    const w = window as unknown as { vioEsqueleto: boolean };
+    w.vioEsqueleto = false;
+    new MutationObserver(() => {
+      if (document.querySelector('[data-testid="hilo-adjunto-cargando"]')) w.vioEsqueleto = true;
+    }).observe(document.body, { childList: true, subtree: true });
+  });
   await page.getByTestId('composer-audio').click();
   // Recording time is the condition: wait until the recorder shows 2 seconds.
   await expect(page.locator('app-composer')).toContainText('0:02', { timeout: 15_000 });
@@ -71,9 +80,9 @@ test('una nota de voz sale sin bodyText y se ve como reproductor', async ({ page
   const leerEnvios = () => page.evaluate(() => (window as unknown as { envios: Record<string, unknown>[] }).envios);
   await expect.poll(async () => (await leerEnvios()).length, { timeout: 15_000 }).toBe(1);
   const envios = await leerEnvios();
-  // The sent message replaces the pending one and loads the audio from the server.
-  await expect(page.getByTestId('hilo-adjunto-cargando')).toHaveCount(0, { timeout: 15_000 });
-  await expect(nota).toBeVisible({ timeout: 15_000 });
+  // The sent message takes over the local copy: no skeleton in between.
+  await expect(nota).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { vioEsqueleto: boolean }).vioEsqueleto)).toBe(false);
   await expect(nota.getByTestId('nota-voz-tiempo')).toHaveText(/^0:0[2-3]$/);
   expect(envios[0]).toMatchObject({ contentType: 'MEDIA' });
   expect(envios[0]).not.toHaveProperty('bodyText');

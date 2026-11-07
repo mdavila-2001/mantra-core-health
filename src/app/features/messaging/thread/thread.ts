@@ -24,10 +24,7 @@ import { WallpaperDialog } from './wallpaper-dialog/wallpaper-dialog';
 import { ChatStore, editable, type MensajeDelHilo } from '../../../core/messaging/chat.store';
 import { stickerDe } from '../../../core/messaging/sticker-pack.generated';
 import { appointmentLinkOf, type MessageAppointment } from '../../../core/messaging/appointment-link';
-import type {
-  ConversationListItem,
-  MessageReaction,
-} from '../../../core/data-access/community/community.types';
+import type { MessageReaction } from '../../../core/data-access/community/community.types';
 import { ChatPreferences } from '../../../core/messaging/chat-preferences';
 import {
   conversationAvatar as avatarDeConQuienDe,
@@ -70,6 +67,9 @@ import {
 } from './thread-context';
 import { ImageViewer, type ImagenDelVisor } from './image-viewer/image-viewer';
 import { VoiceNote } from './voice-note/voice-note';
+import { ForwardDialog } from './forward-dialog/forward-dialog';
+import { SelectionBar } from './selection-bar/selection-bar';
+import { MessageSelection } from './message-selection';
 
 /**
  * Una línea del hilo: un separador —de día o de «no leídos»— o un mensaje con
@@ -301,6 +301,8 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
     Spinner,
     VoiceNote,
     WallpaperDialog,
+    ForwardDialog,
+    SelectionBar,
   ],
   templateUrl: './thread.html',
   styleUrls: ['./thread.css', './thread-layers.css', './thread-media.css', './thread-wallpaper.css'],
@@ -327,8 +329,6 @@ export class Thread {
   private readonly listaDeMensajes = viewChild<ElementRef<HTMLElement>>('lista');
   private readonly buscador = viewChild<ElementRef<HTMLInputElement>>('buscador');
   private readonly barraFijada = viewChild<ElementRef<HTMLElement>>('barraFijada');
-  private readonly forwardDialog = viewChild<ContentDialog>('forwardDialog');
-
   /** Si la vista está al pie. Arranca en `true`: un hilo se abre por el final. */
   private pegadoAbajo = true;
 
@@ -409,8 +409,11 @@ export class Thread {
   /** Lo que se busca dentro de la conversación. */
   protected readonly termino = signal('');
 
-  /** El mensaje que se está por reenviar, mientras se elige a quién. */
-  protected readonly reenviando = signal<MensajeDelHilo | null>(null);
+  /** Lo que se está por reenviar, mientras se elige a quiénes. */
+  protected readonly reenviando = signal<readonly MensajeDelHilo[] | null>(null);
+
+  /** Los mensajes elegidos para reenviar juntos («Seleccionar» del menú). */
+  protected readonly seleccion = new MessageSelection();
 
   /** «Reenviado a …», un momento, después de reenviar. */
   protected readonly avisoReenvio = signal<string | null>(null);
@@ -753,6 +756,7 @@ export class Thread {
         this.menuCabecera.set(false);
         this.cerrarBusqueda();
         this.reenviando.set(null);
+        this.seleccion.clear();
         this.infoDe.set(null);
         this.reaccionandoA.set(null);
         this.confirmandoBloqueo.set(false);
@@ -1162,36 +1166,35 @@ export class Thread {
       if (trigger instanceof HTMLElement) trigger.focus();
     }
     this.menuAbierto.set(null);
-    this.reenviando.set(mensaje);
+    this.reenviando.set([mensaje]);
   }
 
   protected cancelarReenvio(): void {
     this.reenviando.set(null);
   }
 
-  protected reenviarA(conversationId: string): void {
-    const mensaje = this.reenviando();
-    if (mensaje === null) {
-      return;
-    }
-    this.store.reenviar(mensaje, conversationId);
-    // Por el modal y no bajando la señal: así el foco vuelve a su origen y el
-    // scroll de la página se libera, igual que al cerrar con «Cancelar».
-    this.forwardDialog()?.close(true);
-    this.reenviando.set(null);
-    const destino = this.store.conversaciones().find((c) => c.id === conversationId);
-    this.avisoReenvio.set(`Reenviado a ${destino === undefined ? 'la conversación' : conQuienDe(destino)}`);
+  /** «Seleccionar»: enters selection mode with this message chosen. */
+  protected seleccionar(mensaje: MensajeDelHilo): void {
+    this.menuAbierto.set(null);
+    this.seleccion.toggle([mensaje]);
+  }
+
+  protected reenviarSeleccion(): void {
+    this.reenviando.set(this.seleccion.enOrden(this.lineas()));
+  }
+
+  /** Sends what was chosen to the chosen chats; the dialog closes itself. */
+  protected reenviarA(conversationIds: readonly string[]): void {
+    const mensajes = this.reenviando();
+    if (mensajes === null) return;
+    this.store.reenviar(mensajes, conversationIds);
+    this.seleccion.clear();
+    const destino = this.store.conversaciones().find((c) => c.id === conversationIds[0]);
+    const nombre = destino === undefined ? 'la conversación' : conQuienDe(destino);
+    this.avisoReenvio.set(conversationIds.length === 1 ? `Reenviado a ${nombre}` : `Reenviado a ${conversationIds.length} chats`);
     if (this.isBrowser) {
       setTimeout(() => this.avisoReenvio.set(null), 2500);
     }
-  }
-
-  protected nombreDeConversacion(conversacion: ConversationListItem): string {
-    return conQuienDe(conversacion);
-  }
-
-  protected avatarDeConversacion(conversacion: ConversationListItem): string | null {
-    return avatarDeConQuienDe(conversacion);
   }
 
   protected nombreDelAdjunto(mensaje: MensajeDelHilo): string {
