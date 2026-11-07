@@ -4,8 +4,8 @@ import { expect, test, type Page } from '@playwright/test';
 /**
  * Browser evidence (2026-11-06): every organization's Branches screen —pharmacy,
  * laboratory, imaging and medical organization— shows a map with each site's
- * exact point and its category (head office, branch, default) as a label and
- * as a "by waves" filter (`?categoria=`) applied to both table and map.
+ * exact point and its category (head office, branch, default) as a label. The
+ * "by waves" filter above the map was removed on request (2026-11-07).
  *
  * The mutation is proven UI → save → full reload → UI (the simulator persists
  * branches). The simulator answers inside the app (an HTTP interceptor), so no
@@ -15,9 +15,9 @@ import { expect, test, type Page } from '@playwright/test';
  *
  * Run against `ng serve --configuration development,demo` (E2E_BASE_URL).
  * Waits only on concrete elements (HMR never settles). Screenshots go to
- * `evidencias/sucursales-mapa-categorias-2026-11-06/`.
+ * `artifacts/evidencia/sucursales-mapa-categorias-2026-11-07/`.
  */
-const OUT = 'evidencias/sucursales-mapa-categorias-2026-11-06';
+const OUT = 'artifacts/evidencia/sucursales-mapa-categorias-2026-11-07';
 mkdirSync(OUT, { recursive: true });
 
 const ORGS = [
@@ -43,13 +43,13 @@ async function login(page: Page, email: string): Promise<void> {
 async function openBranches(page: Page, path: string): Promise<void> {
   await page.goto(path, { waitUntil: 'domcontentloaded' });
   await page.getByTestId('branches-table').waitFor({ timeout: 60_000 });
-  await page.getByTestId('branches-filter').waitFor({ timeout: 60_000 });
+  await expect(page.getByTestId('branches-filter')).toHaveCount(0);
   await page.locator(PINS).first().waitFor({ timeout: 60_000 });
 }
 
 test.describe('Sucursales · mapa y categorías en toda organización', () => {
   for (const org of ORGS) {
-    test(`${org.key}: mapa con un pin por sede, etiqueta y filtro por oleadas`, async ({ page }) => {
+    test(`${org.key}: mapa con un pin por sede y su etiqueta, sin filtros`, async ({ page }) => {
       const errors: string[] = [];
       page.on('pageerror', (e) => errors.push(e.message));
       await login(page, org.email);
@@ -65,13 +65,6 @@ test.describe('Sucursales · mapa y categorías en toda organización', () => {
       expect(labels.length).toBeGreaterThan(0);
       await page.screenshot({ path: `${OUT}/${org.key}-todas-1440.png`, fullPage: true });
 
-      await page.getByRole('radio', { name: /^Casa matriz/ }).click();
-      await page.waitForURL(/categoria=head_office/);
-      await expect(page.locator(PINS)).toHaveCount(1);
-      for (const label of await page.locator('[data-testid^="branches-category-"]').allTextContents()) {
-        expect(label.trim()).toBe('Casa matriz');
-      }
-      await page.screenshot({ path: `${OUT}/${org.key}-casa-matriz-1440.png`, fullPage: true });
       expect(errors).toEqual([]);
     });
   }
@@ -97,6 +90,39 @@ test.describe('Sucursales · mapa y categorías en toda organización', () => {
     await page.getByTestId('branches-table').waitFor({ timeout: 60_000 });
     await expect(page.getByTestId('branches-category-URUBO')).toHaveText(/Sucursal/);
     await page.screenshot({ path: `${OUT}/organizacion-medica-tras-recarga-1440.png`, fullPage: true });
+  });
+
+  test('organización médica: la sucursal se ubica con un enlace corto o tocando el mapa', async ({ page }) => {
+    await login(page, 'hospital.piloto@alovida.mock');
+    await openBranches(page, '/administration/medical-branches');
+    const before = await page.locator(PINS).count();
+
+    // Short link: the browser cannot read it, the API (the simulator here) does.
+    await page.getByTestId('branches-create').click();
+    await page.getByTestId('branches-name').fill('Palomanga');
+    await page.getByTestId('branches-location-url').fill('https://maps.app.goo.gl/uwjxPfc6SYBhtQ3e7');
+    const dialogPins = page.getByRole('dialog').locator(PINS);
+    await expect(dialogPins).toHaveCount(1);
+    await expect(page.getByRole('dialog')).toContainText('El punto está marcado en el mapa.');
+    await page.getByRole('button', { name: 'Agregar sucursal' }).last().click();
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(page.locator(PINS)).toHaveCount(before + 1);
+
+    // Touching the map marks the point and replaces whatever link was there.
+    await page.getByTestId('branches-create').click();
+    await page.getByTestId('branches-name').fill('Sur');
+    await expect(page.getByRole('dialog').locator(PINS)).toHaveCount(0);
+    await page.getByTestId('branches-location-map').click({ position: { x: 200, y: 140 } });
+    await expect(page.getByRole('dialog').locator(PINS)).toHaveCount(1);
+    await page.screenshot({ path: `${OUT}/organizacion-medica-dialogo-mapa-1440.png` });
+    await page.getByRole('button', { name: 'Agregar sucursal' }).last().click();
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(page.locator(PINS)).toHaveCount(before + 2);
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByTestId('branches-table').waitFor({ timeout: 60_000 });
+    await page.locator(PINS).first().waitFor({ timeout: 60_000 });
+    await expect(page.locator(PINS)).toHaveCount(before + 2);
   });
 
   test('390 px: el mapa y la tabla caben sin scroll horizontal', async ({ page }) => {

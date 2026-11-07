@@ -29,6 +29,7 @@ import { registerLabCatalog } from './lab-catalog.handlers';
 import { registerDiagnosisVerification } from './diagnosis-verification.handlers';
 import { registerMedicalNotes } from './medical-notes.handlers';
 import { registrarDirectorio } from './directory.handlers';
+import { registerBranchLocationPreview } from './directory.branch-location';
 import { registrarInvitacionesDeOrganizacion } from './directory-invitations.handlers';
 import { registerHealthcareServices } from './healthcare-services.handlers';
 import { registerRoleAssignments } from './role-assignments.handlers';
@@ -163,6 +164,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarArchivos(router);
   registrarNotificaciones(router);
   registrarDirectorio(router);
+  registerBranchLocationPreview(router);
   registrarInvitacionesDeOrganizacion(router);
   registrarIdentidad(router);
   registrarSeguros(router);

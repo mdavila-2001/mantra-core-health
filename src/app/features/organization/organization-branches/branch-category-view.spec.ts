@@ -1,16 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
+import { branchCategoryOf } from '../../../core/data-access/directory/branch-category';
 import type { BranchListItem } from '../../../core/data-access/directory/directory.types';
 import {
   branchCategoryOptions,
-  branchFilterFrom,
-  branchFilterOptions,
   branchPins,
-  filterBranches,
   mapUrlOf,
 } from './branch-category-view';
 
-/** Head office, branch and default (v4.2.91): the label, the filter and the pins. */
+/** Head office, branch and default (v4.2.91): the label and the pins. */
 function branch(partial: Partial<BranchListItem>): BranchListItem {
   return {
     id: partial.code ?? 'id',
@@ -30,24 +28,8 @@ const ALL = [MATRIZ, NORTE, VIEJA, SUR];
 
 describe('branch-category-view', () => {
   it('una sede sin categoría (API anterior) cuenta como «Por defecto»', () => {
-    expect(filterBranches(ALL, 'default')).toEqual([VIEJA]);
-    expect(filterBranches(ALL, 'branch')).toEqual([NORTE, SUR]);
-    expect(filterBranches(ALL, 'all')).toEqual(ALL);
-  });
-
-  it('el filtro dice cuántas hay en cada oleada', () => {
-    expect(branchFilterOptions(ALL).map((o) => o.label)).toEqual([
-      'Todas (4)',
-      'Casa matriz (1)',
-      'Sucursal (2)',
-      'Por defecto (1)',
-    ]);
-  });
-
-  it('lee el filtro de la URL y lo desconocido es «todas»', () => {
-    expect(branchFilterFrom('head_office')).toBe('head_office');
-    expect(branchFilterFrom('otra')).toBe('all');
-    expect(branchFilterFrom(null)).toBe('all');
+    expect(branchCategoryOf(VIEJA)).toBe('default');
+    expect(branchCategoryOf(NORTE)).toBe('branch');
   });
 
   it('un pin por sede con punto exacto, con su categoría escrita y el código como id', () => {
