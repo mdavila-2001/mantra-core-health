@@ -1,30 +1,26 @@
 <div class="directory">
   @if (source() === 'SIMULATED') {
     <app-alert tone="info" data-testid="directory-simulated">
-      Datos simulados: el listado de todos los usuarios usa un contrato provisional del front hasta que la API
-      publique el suyo. Ninguna persona de esta lista es real.
+      Datos simulados: esta lista sale del simulador del front, con la forma del contrato publicado por la API. No se
+      ha verificado contra la API real. Ninguna persona de esta lista es real.
     </app-alert>
   }
 
   <p class="directory__note">
     Todas las cuentas de la aplicación, por tipo. Sin contraseñas ni documentos, y con el correo enmascarado. Esta
     pantalla muestra lo que la API informa; no concede ni quita accesos por sí sola.
+    @if (scope() === 'TENANT') {
+      Se limita a su organización.
+    } @else if (scope() === 'PLATFORM') {
+      Abarca toda la plataforma.
+    }
   </p>
 
   <app-filter-bar
-    searchLabel="Buscar usuarios"
-    searchPlaceholder="Nombre visible"
+    [showSearch]="false"
     wrap
-    [filters]="filterDefs()"
-    [searchLoading]="list.state().status === 'loading'"
+    [filters]="filterDefs"
   />
-
-  @if (unavailable().length > 0) {
-    <app-alert tone="warning" data-testid="directory-partial">
-      Lista parcial: no se pudo leer {{ unavailableText() }}. Los demás tipos se muestran completos.
-      <button app-button size="sm" variant="secondary" class="directory__retry" (clicked)="list.reload()">Reintentar</button>
-    </app-alert>
-  }
 
   <app-data-table
     data-testid="portal-directory-table"
@@ -57,8 +53,7 @@
 </ng-template>
 
 <ng-template #statusCell let-row>
-  @let s = status(row.status);
-  <app-badge size="sm" [variant]="s.tone">{{ s.label }}</app-badge>
+  <app-badge size="sm" variant="secondary">{{ status(row.statusConceptId) }}</app-badge>
 </ng-template>
 
 <ng-template #rolesCell let-row>
@@ -66,15 +61,15 @@
     <span class="directory__secondary">Sin roles</span>
   } @else {
     <span class="directory__roles">
-      @for (role of row.roles; track role.code) {
-        <app-badge size="sm" variant="secondary">{{ role.code }}</app-badge>
+      @for (role of row.roles; track role.assignmentId) {
+        <app-badge size="sm" variant="secondary">{{ role.roleCode }}</app-badge>
       }
     </span>
   }
 </ng-template>
 
 <ng-template #permCell let-row>
-  <span class="directory__secondary" [attr.title]="row.permissions.resources.join(', ')">{{ perms(row.permissions) }}</span>
+  <span class="directory__secondary" >{{ perms(row.permissions) }}</span>
 </ng-template>
 
 <ng-template #loginCell let-row>

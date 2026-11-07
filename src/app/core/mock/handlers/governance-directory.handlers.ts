@@ -1,19 +1,19 @@
-import { validation, type MockRequest, type MockRouter } from '../mock-router';
+import { validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 
 /* ============================================================================
-    SIMULATED directory of all app users (`GET /authz/directory-users`).
+    SIMULATED `GET /authz/users/directory`, shaped like the contract published
+    in API PR #1409 (users-directory-query.dto / users-directory-response.dto).
+    It is NOT the real endpoint: every record is synthetic and the page says
+    `source: 'SIMULATED'` (a simulator-only marker the real API never sends).
 
-    PROVISIONAL CONTRACT defined by the front (session G); session E builds the
-    real endpoint and a person must reconcile both. See
-    docs/trabajo/2026-11-07-admin-portal/evidencia/g/CONTRATO-directorio-usuarios.md.
-
-    Every record is synthetic. The response says `source: 'SIMULATED'` so the
-    screen can say so. Like the real thing it carries no passwords, documents or
-    phones, and the e-mail is masked on the "server" side.
+    Mimicked rules: no free-text filter (an unknown query key is a 400, like the
+    API's `forbidNonWhitelisted`), `status` is a uuid, `roleCode` is
+    `^[A-Z0-9_]+$`, `limit` is 1..100 (default 50), opaque cursor, e-mail masked
+    as `u***@e***.org` and `null` when the login is not an e-mail. No passwords,
+    documents or phones. Contract notes: evidencia/g/CONTRATO-directorio-usuarios.md.
     ========================================================================== */
 
-type UserType = 'PATIENT' | 'DOCTOR' | 'PHARMACY' | 'LABORATORY' | 'INTERNAL';
-type Status = 'ACTIVE' | 'PENDING' | 'SUSPENDED' | 'BLOCKED';
+type UserType = 'PATIENT' | 'PRACTITIONER' | 'PHARMACY' | 'LABORATORY' | 'INTERNAL' | 'OTHER';
 
 export interface InternalDirectoryUser {
   readonly id: string;
@@ -24,57 +24,42 @@ export interface InternalDirectoryUser {
 
 interface DirectoryRow {
   readonly id: string;
-  readonly type: UserType;
   readonly displayName: string;
-  readonly maskedEmail: string | null;
-  readonly status: Status;
+  readonly type: UserType;
+  readonly statusConceptId: string;
+  readonly mfaStatusConceptId: string | null;
   readonly lastLoginAt: string | null;
-  readonly roles: readonly { code: string; name: string }[];
-  readonly permissions: { allowed: number; denied: number; dangerous: number; resources: readonly string[] };
+  readonly maskedEmail: string | null;
+  readonly roles: readonly { assignmentId: string; roleCode: string; roleName: string; tenantId: string | null; validTo: string | null }[];
+  readonly permissions: { allowed: number; denied: number; dangerous: number; directGrants: number };
 }
 
-const TYPES: readonly UserType[] = ['PATIENT', 'DOCTOR', 'PHARMACY', 'LABORATORY', 'INTERNAL'];
-const STATUSES: readonly Status[] = ['ACTIVE', 'PENDING', 'SUSPENDED', 'BLOCKED'];
-const DEFAULT_LIMIT = 20;
-const MAX_LIMIT = 200;
+const TYPES: readonly UserType[] = ['PATIENT', 'PRACTITIONER', 'PHARMACY', 'LABORATORY', 'INTERNAL', 'OTHER'];
+const KNOWN_KEYS = new Set(['type', 'status', 'roleCode', 'cursor', 'limit']);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const STATUS_ACTIVE = '00000000-0000-4000-8000-00000000c0f1';
+const STATUS_SUSPENDED = '00000000-0000-4000-8000-00000000c0f2';
+const DEFAULT_LIMIT = 50;
+const MAX_LIMIT = 100;
 const DAY_MS = 86_400_000;
-
 const GIVEN = ['Ana', 'Bruno', 'Camila', 'Diego', 'Elisa', 'Fabio', 'Gala', 'Hugo', 'Irma', 'Jorge'];
 const FAMILY = ['Rojas', 'Mendoza', 'Salas', 'Vargas', 'Ibáñez', 'Cruz', 'Lara'];
 
 const PER_TYPE: Record<Exclude<UserType, 'INTERNAL'>, {
   count: number;
-  role: { code: string; name: string };
+  role: { code: string; name: string } | null;
   permissions: DirectoryRow['permissions'];
   label: (i: number) => string;
 }> = {
-  PATIENT: {
-    count: 18,
-    role: { code: 'PATIENT', name: 'Paciente' },
-    permissions: { allowed: 6, denied: 0, dangerous: 0, resources: ['own_record', 'appointments'] },
-    label: (i) => `${GIVEN[i % 10]} ${FAMILY[i % 7]}`,
-  },
-  DOCTOR: {
-    count: 9,
-    role: { code: 'DOCTOR', name: 'Médico' },
-    permissions: { allowed: 21, denied: 1, dangerous: 2, resources: ['clinical_record', 'prescriptions', 'scheduling'] },
-    label: (i) => `Dr. ${GIVEN[(i + 3) % 10]} ${FAMILY[(i + 2) % 7]}`,
-  },
-  PHARMACY: {
-    count: 5,
-    role: { code: 'PHARMACY_STAFF', name: 'Farmacia' },
-    permissions: { allowed: 9, denied: 0, dangerous: 1, resources: ['dispensing', 'inventory'] },
-    label: (i) => `Farmacia ${FAMILY[(i + 4) % 7]}`,
-  },
-  LABORATORY: {
-    count: 4,
-    role: { code: 'LAB_STAFF', name: 'Laboratorio' },
-    permissions: { allowed: 8, denied: 0, dangerous: 0, resources: ['lab_orders', 'results'] },
-    label: (i) => `Laboratorio ${FAMILY[(i + 1) % 7]}`,
-  },
+  PATIENT: { count: 14, role: { code: 'PATIENT', name: 'Paciente' }, permissions: { allowed: 6, denied: 0, dangerous: 0, directGrants: 0 }, label: (i) => `${GIVEN[i % 10]} ${FAMILY[i % 7]}` },
+  PRACTITIONER: { count: 9, role: { code: 'PRACTITIONER', name: 'Profesional de salud' }, permissions: { allowed: 21, denied: 1, dangerous: 2, directGrants: 1 }, label: (i) => `Dr. ${GIVEN[(i + 3) % 10]} ${FAMILY[(i + 2) % 7]}` },
+  PHARMACY: { count: 5, role: { code: 'PHARMACY_STAFF', name: 'Farmacia' }, permissions: { allowed: 9, denied: 0, dangerous: 1, directGrants: 0 }, label: (i) => `Farmacia ${FAMILY[(i + 4) % 7]}` },
+  LABORATORY: { count: 4, role: { code: 'LAB_STAFF', name: 'Laboratorio' }, permissions: { allowed: 8, denied: 0, dangerous: 0, directGrants: 0 }, label: (i) => `Laboratorio ${FAMILY[(i + 1) % 7]}` },
+  OTHER: { count: 2, role: null, permissions: { allowed: 0, denied: 0, dangerous: 0, directGrants: 0 }, label: (i) => `Cuenta sin clasificar ${i + 1}` },
 };
 
-const mask = (local: string, domain: string) => `${local.charAt(0)}***@${domain}`;
+const mask = (local: string, domain: string) => `${local.charAt(0)}***@${domain.charAt(0)}***${domain.slice(domain.lastIndexOf('.'))}`;
+const uuid = (series: number, n: number) => `00000000-0000-4000-${series}-${String(n).padStart(12, '0')}`;
 
 function buildRows(internal: readonly InternalDirectoryUser[]): readonly DirectoryRow[] {
   const rows: DirectoryRow[] = [];
@@ -83,15 +68,17 @@ function buildRows(internal: readonly InternalDirectoryUser[]): readonly Directo
     const def = PER_TYPE[type];
     for (let i = 0; i < def.count; i += 1) {
       n += 1;
-      const status = STATUSES[n % 9 === 0 ? 2 : n % 7 === 0 ? 1 : n % 11 === 0 ? 3 : 0]!;
+      const name = def.label(i);
       rows.push({
-        id: `00000000-0000-4000-9200-${String(n).padStart(12, '0')}`,
+        id: uuid(9200, n),
+        displayName: `${name} (simulado)`,
         type,
-        displayName: `${def.label(i)} (simulado)`,
-        maskedEmail: n % 13 === 0 ? null : mask(def.label(i).replace(/[^a-z]/gi, '').toLowerCase(), 'ejemplo.test'),
-        status,
-        lastLoginAt: status === 'PENDING' ? null : new Date(Date.now() - (n % 30) * DAY_MS).toISOString(),
-        roles: [def.role],
+        statusConceptId: n % 9 === 0 ? STATUS_SUSPENDED : STATUS_ACTIVE,
+        mfaStatusConceptId: null,
+        lastLoginAt: n % 7 === 0 ? null : new Date(Date.now() - (n % 30) * DAY_MS).toISOString(),
+        // A login that is not an e-mail (national id) yields no mask: `null`, as the API.
+        maskedEmail: n % 13 === 0 ? null : mask(name.replace(/[^a-z]/gi, '').toLowerCase(), 'ejemplo.test'),
+        roles: def.role ? [{ assignmentId: uuid(9300, n), roleCode: def.role.code, roleName: def.role.name, tenantId: null, validTo: null }] : [],
         permissions: def.permissions,
       });
     }
@@ -99,59 +86,61 @@ function buildRows(internal: readonly InternalDirectoryUser[]): readonly Directo
   for (const user of internal) {
     rows.push({
       id: user.id,
-      type: 'INTERNAL',
       displayName: user.displayName,
-      maskedEmail: mask(user.displayName.split(' ')[0]!.toLowerCase(), 'alovida.test'),
-      status: 'ACTIVE',
+      type: 'INTERNAL',
+      statusConceptId: STATUS_ACTIVE,
+      mfaStatusConceptId: null,
       lastLoginAt: user.lastLoginAt,
-      roles: user.roles,
-      permissions: { allowed: user.roles.length * 3, denied: user.roles.length > 1 ? 1 : 0, dangerous: user.roles.length, resources: ['audit', 'authz'] },
+      maskedEmail: mask(user.displayName.split(' ')[0]!.toLowerCase(), 'alovida.test'),
+      roles: user.roles.map((r, i) => ({ assignmentId: uuid(9301, i), roleCode: r.code, roleName: r.name, tenantId: null, validTo: null })),
+      permissions: { allowed: user.roles.length * 3, denied: user.roles.length > 1 ? 1 : 0, dangerous: user.roles.length, directGrants: 0 },
     });
   }
-  return rows;
+  // Same order as the API's keyset: display name, then id.
+  return rows.sort((a, b) => a.displayName.localeCompare(b.displayName) || a.id.localeCompare(b.id));
 }
 
-function pageOf(req: MockRequest, rows: readonly DirectoryRow[]) {
-  const raw = req.query.get('limit');
-  const limit = raw === null ? DEFAULT_LIMIT : Number(raw);
-  if (!Number.isInteger(limit) || limit < 1 || limit > MAX_LIMIT) {
-    return validation('Error de validación', [{ field: 'limit', message: `must not be greater than ${MAX_LIMIT}` }]);
+function rejection(field: string, message: string): MockReply {
+  return validation('Error de validación', [{ field, message }]);
+}
+
+function invalidQuery(req: MockRequest): MockReply | null {
+  for (const key of req.query.keys()) {
+    if (!KNOWN_KEYS.has(key)) return rejection(key, 'property should not exist');
   }
-  const start = Number(req.query.get('cursor') ?? '0') || 0;
-  return {
-    items: rows.slice(start, start + limit),
-    nextCursor: start + limit < rows.length ? String(start + limit) : null,
-    limit,
-  };
+  const type = req.query.get('type');
+  if (type !== null && !TYPES.includes(type as UserType)) return rejection('type', `must be one of the following values: ${TYPES.join(', ')}`);
+  const status = req.query.get('status');
+  if (status !== null && !UUID.test(status)) return rejection('status', 'must be a UUID');
+  const roleCode = req.query.get('roleCode');
+  if (roleCode !== null && !/^[A-Z0-9_]{1,64}$/.test(roleCode)) return rejection('roleCode', 'must match /^[A-Z0-9_]+$/ regular expression');
+  const limit = req.query.get('limit');
+  if (limit !== null && !(Number.isInteger(Number(limit)) && Number(limit) >= 1 && Number(limit) <= MAX_LIMIT)) {
+    return rejection('limit', `must not be greater than ${MAX_LIMIT}`);
+  }
+  return null;
 }
 
 /** Registers the simulated directory; `internal` are the console staff the rest of the simulator already has. */
 export function registerGovernanceDirectory(router: MockRouter, internal: readonly InternalDirectoryUser[]): void {
   const all = buildRows(internal);
-  router.get('/authz/directory-users', (req) => {
-    const type = req.query.get('type');
-    const status = req.query.get('status');
-    if (type !== null && !TYPES.includes(type as UserType)) {
-      return validation('Error de validación', [{ field: 'type', message: `must be one of the following values: ${TYPES.join(', ')}` }]);
-    }
-    if (status !== null && !STATUSES.includes(status as Status)) {
-      return validation('Error de validación', [{ field: 'status', message: `must be one of the following values: ${STATUSES.join(', ')}` }]);
-    }
-    const text = req.query.get('q')?.trim().toLowerCase() ?? '';
-    const roleCode = req.query.get('roleCode');
-    const sameExceptType = all.filter(
+  router.get('/authz/users/directory', (req) => {
+    const invalid = invalidQuery(req);
+    if (invalid) return invalid;
+    const { type, status, roleCode } = Object.fromEntries(['type', 'status', 'roleCode'].map((k) => [k, req.query.get(k)]));
+    const rows = all.filter(
       (u) =>
-        (text === '' || u.displayName.toLowerCase().includes(text)) &&
-        (status === null || u.status === status) &&
-        (roleCode === null || u.roles.some((r) => r.code === roleCode)),
+        (type === null || u.type === type) &&
+        (status === null || u.statusConceptId === status) &&
+        (roleCode === null || u.roles.some((r) => r.roleCode === roleCode)),
     );
-    const rows = type === null ? sameExceptType : sameExceptType.filter((u) => u.type === type);
-    const page = pageOf(req, rows);
-    if (!('items' in page)) return page;
+    const limit = req.query.get('limit') === null ? DEFAULT_LIMIT : Number(req.query.get('limit'));
+    const start = Number(req.query.get('cursor') ?? '0') || 0;
     return {
-      ...page,
-      typeCounts: Object.fromEntries(TYPES.map((t) => [t, sameExceptType.filter((u) => u.type === t).length])),
-      unavailableTypes: [],
+      items: rows.slice(start, start + limit),
+      nextCursor: start + limit < rows.length ? String(start + limit) : null,
+      limit,
+      scope: 'PLATFORM',
       source: 'SIMULATED',
     };
   });

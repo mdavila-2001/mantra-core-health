@@ -23,7 +23,7 @@ test('the directory lists every account type, filters by type and never shows ra
   await estable(page);
 
   await expect(page.getByTestId('directory-simulated')).toBeVisible();
-  for (const tipo of ['Paciente', 'Médico', 'Farmacia', 'Laboratorio', 'Interno']) {
+  for (const tipo of ['Paciente', 'Profesional', 'Farmacia', 'Laboratorio', 'Interno']) {
     await expect(tabla).toContainText(tipo);
   }
   const texto = (await tabla.textContent()) ?? '';
@@ -31,9 +31,9 @@ test('the directory lists every account type, filters by type and never shows ra
   // Every e-mail on screen carries the mask character.
   expect(texto).not.toMatch(/[a-z]@(ejemplo|alovida)\.test/);
 
-  await page.getByRole('button', { name: /Médicos/ }).click();
-  await expect(page).toHaveURL(/type=DOCTOR/);
-  await expect(tabla).toContainText('Médico');
+  await page.getByRole('button', { name: /Profesionales/ }).click();
+  await expect(page).toHaveURL(/type=PRACTITIONER/);
+  await expect(tabla).toContainText('Profesional');
   await expect(tabla).not.toContainText('Paciente');
 });
 

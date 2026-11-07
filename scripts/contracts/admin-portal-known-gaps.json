@@ -52,6 +52,10 @@
   {
    "call": "POST /admin/catalog/fit/run",
    "reason": "Misma razón que GET /admin/catalog/fit: pedir una corrida de la sonda de ajuste (202, Idempotency-Key obligatoria), aún sin openapi en dev."
+  },
+  {
+   "call": "GET /authz/users/directory",
+   "reason": "Directorio de todos los usuarios (API PR #1409 de la sesión E, borrador): el OpenAPI de dev todavía no lo publica (E no regeneró openapi/** por choque con #1370). El front lo consume con un simulador declarado (SIMULADO) alineado a los DTO de ese PR; se borra de acá al ejecutar yarn contract:refresh con la API publicada."
   }
  ]
 }
