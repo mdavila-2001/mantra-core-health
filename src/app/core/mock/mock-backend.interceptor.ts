@@ -15,6 +15,7 @@ import { failureBody, failureFor, type SimulatedFailure } from './simulated-fail
 import { forcedRealApi } from './api-mode';
 import { isMockReply, type MockMethod, type MockReply, type MockRequest, type MockRouter } from './mock-router';
 import { bloqueoDelToken } from './mock-token-guard';
+import { mockQueryOf } from './mock-query';
 import { usuarioDeAccessToken } from './mock-session';
 
 /* ============================================================================
@@ -114,13 +115,12 @@ function atender(
   }
 
   const coincidencia = router.match(method, path);
-  const query = new URLSearchParams(request.params.toString());
   const user = usuarioDe(request);
   const peticion: MockRequest = {
     method,
     path,
     params: coincidencia?.params ?? {},
-    query,
+    query: mockQueryOf(request),
     body: request.body,
     headers: request.headers,
     user,

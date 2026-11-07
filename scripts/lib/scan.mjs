@@ -186,7 +186,7 @@ export function scanEndpoints() {
     // Los `\s*` no son decorativos: los clientes encadenan `this.http` y el
     // verbo en líneas distintas para que quepa el `.pipe(map(...))` de abajo.
     const call =
-      /this\.http\s*\.\s*(get|post|put|patch|delete)\s*(?:<(?:(?!this\.http)[\s\S])*?>)?\(\s*(?:\/\*[\s\S]*?\*\/\s*|\/\/[^\n]*\n\s*)*(?:this\.url|apiUrl)\(\s*(?:this\.baseUrl,\s*)?[`']([^`']+)[`']/g;
+      /this\.http\s*\.\s*(get|post|put|patch|delete)\s*(?:<(?:(?!this\.http)[\s\S])*?>)?\(\s*(?:\/\*[\s\S]*?\*\/\s*|\/\/[^\n]*\n\s*)*(this\.url|apiUrl)\(\s*(?:this\.baseUrl,\s*)?[`']([^`']+)[`']/g;
     // Un método puede armar la ruta en dos tramos: `const base = \u0060/community/…\u0060`
     // y después `this.url(\u0060${base}/reviews/…\u0060)`. Leído solo el segundo, el
     // endpoint sale sin su prefijo real —`:base/reviews/…`— y parece no estar
@@ -201,6 +201,12 @@ export function scanEndpoints() {
         value: declaracionMatch[2],
       });
     }
+
+    // Un cliente puede anteponer un prefijo en su `url(path)` privado:
+    // `return apiUrl(this.baseUrl, \u0060/admin/observability${path}\u0060)`, o con la constante
+    // `${BASE}${path}`. Sin leerlo, las rutas salen sin prefijo (`/summary`) y
+    // parecen no tener manejador aunque el simulador las sirva.
+    const prefijoDelEnvoltorio = prefijoDeUrl(source);
 
     // Un cliente puede envolver la llamada en un ayudante que recibe la ruta:
     // `private getPage<T>(path: string, …) { return this.http.get(this.url(path)…`.
@@ -225,18 +231,21 @@ export function scanEndpoints() {
           client,
           path,
           method: verbo,
-          endpoint: normalizeEndpoint(expandLocalBase(llamadaMatch[1], llamadaMatch.index, bases)),
+          endpoint: normalizeEndpoint(prefijoDelEnvoltorio + expandLocalBase(llamadaMatch[1], llamadaMatch.index, bases)),
         });
       }
     }
 
     let match;
     while ((match = call.exec(source)) !== null) {
+      // Solo `this.url(...)` pasa por el envoltorio que antepone el prefijo;
+      // `apiUrl(...)` directo ya trae la ruta entera.
+      const prefijo = match[2] === 'this.url' ? prefijoDelEnvoltorio : '';
       operations.push({
         client,
         path,
         method: match[1].toUpperCase(),
-        endpoint: normalizeEndpoint(expandLocalBase(match[2], match.index, bases)),
+        endpoint: normalizeEndpoint(prefijo + expandLocalBase(match[3], match.index, bases)),
       });
     }
   }
@@ -244,6 +253,25 @@ export function scanEndpoints() {
   return operations.sort(
     (a, b) => a.endpoint.localeCompare(b.endpoint) || a.method.localeCompare(b.method),
   );
+}
+
+/**
+ * El prefijo que el `private url(path)` de un cliente le antepone a toda ruta,
+ * o `''` si no antepone nada. Acepta el literal (`/admin/observability${path}`) o
+ * una constante de módulo (`${BASE}${path}`, con `const BASE = '/admin/…'`).
+ */
+function prefijoDeUrl(source) {
+  const envoltorio =
+    /private\s+url\s*\(\s*path:\s*string\s*\)\s*:\s*string\s*\{\s*return\s+apiUrl\(\s*this\.baseUrl,\s*`([^`]*)\$\{path\}`\s*\)/.exec(
+      source,
+    );
+  if (!envoltorio) return '';
+
+  const constante = /^\$\{(\w+)\}$/.exec(envoltorio[1]);
+  if (!constante) return envoltorio[1];
+
+  const valor = new RegExp(String.raw`const ${constante[1]}\s*=\s*['\u0060]([^'\u0060]+)['\u0060]`).exec(source);
+  return valor ? valor[1] : '';
 }
 
 /**

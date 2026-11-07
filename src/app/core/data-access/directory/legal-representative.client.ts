@@ -5,7 +5,7 @@ import type { Observable } from 'rxjs';
 import { TENANT_HEADER } from '../../http/auth.interceptor';
 import { API_BASE_URL, apiUrl } from '../api';
 
-/** The legal representative's name by parts, as `PATCH /tenants/{id}/legal-representative` takes it. */
+/** The legal representative's name by parts, as `PATCH /tenants/{id}/representatives/LEGAL_REPRESENTATIVE/name` takes it. */
 export interface LegalRepresentativeName {
   readonly name: string;
   readonly middleName?: string;
@@ -22,7 +22,7 @@ export class LegalRepresentativeClient {
   /** Only OWNER/ADMIN of that organization (or the platform); anyone else gets 403 from the API. */
   rename(tenantId: string, name: LegalRepresentativeName): Observable<{ readonly fullName: string }> {
     return this.http.patch<{ readonly fullName: string }>(
-      apiUrl(this.baseUrl, `/tenants/${tenantId}/legal-representative`),
+      apiUrl(this.baseUrl, `/tenants/${tenantId}/representatives/LEGAL_REPRESENTATIVE/name`),
       name,
       { headers: new HttpHeaders({ [TENANT_HEADER]: tenantId }) },
     );
