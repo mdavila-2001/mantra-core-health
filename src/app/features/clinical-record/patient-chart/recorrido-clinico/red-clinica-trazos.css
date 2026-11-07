@@ -6,9 +6,17 @@
 
 /* -- The canvas edges: content out of view fades and offers a jump --------- */
 
+/* Fade and jump are siblings, not nested, so each takes its own layer in the
+   canvas' stacking: fade (3, before the canvas in the DOM) over the nodes (2)
+   and under the thread headers (3, later); the stuck axis (4) over both; the
+   jump (5) over the stuck axis. */
+.red__borde-par {
+  display: contents;
+}
+
 .red__borde {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   inset-block: 1px;
   inline-size: var(--sp-12);
   pointer-events: none;
@@ -28,30 +36,33 @@
   background: linear-gradient(to left, var(--bg-inset) 20%, transparent);
 }
 
-.red__borde > button {
+.red__borde-salto {
   position: absolute;
-  /* On the axis line (`altoEje` - 14 in the geometry): over the marks, never
-     over a date label. Opaque, so the line does not run through it. */
-  inset-block-start: 62px;
+  z-index: 5;
+  /* A channel of its own: on the canvas' top border, 16 px in the gap above
+     it and 12 px in the axis' top padding (the dates start below), so it
+     never covers a date or an axis mark wherever the canvas is scrolled. When
+     the axis follows the page it comes along (`--red-eje-y`, in the 16 px band
+     kept above the stuck axis). -2px: two px up, clear of the dates. */
+  inset-block-start: calc(var(--red-eje-y, 0px) - 2px);
   translate: 0 -50%;
   --_btn-bg: var(--bg-surface);
-  /* 28 px tall: it fits between the context line and the threads. */
+  /* 28 px tall: the 16 px band above the axis plus its 12 px top padding. */
   --_btn-side: 28px;
   block-size: 28px;
   padding-block: var(--sp-1);
   white-space: nowrap;
-  pointer-events: auto;
 }
 
-.red__borde--inicio > button {
-  inset-inline-start: var(--sp-2);
+.red__borde-salto--inicio {
+  inset-inline-start: var(--sp-3);
 }
 
-.red__borde--final > button {
-  inset-inline-end: var(--sp-2);
+.red__borde-salto--final {
+  inset-inline-end: var(--sp-3);
 }
 
-.red__borde app-nav-icon {
+.red__borde-salto app-nav-icon {
   inline-size: 16px;
   block-size: 16px;
 }

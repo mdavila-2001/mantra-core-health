@@ -53,6 +53,8 @@
 .red__marco {
   position: relative;
   min-inline-size: 0;
+  /* Room for the edge jumps' upper part, which rides above the top border. */
+  margin-block-start: var(--sp-2);
 }
 
 .red__lienzo {
@@ -87,6 +89,32 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* The axis follows the page under the app header (`--red-eje-y`, set on the
+   frame by `DesplazamientoDelLienzo`), above the threads. */
+.red__eje {
+  position: absolute;
+  z-index: 4;
+  inset-block-start: 0;
+  inset-inline: 0;
+  translate: 0 var(--red-eje-y, 0px);
+}
+
+/* Stuck: the canvas color under it and 16 px above (`AIRE_DEL_EJE`, where the
+   edge jumps sit), and its own line, since the SVG one stays at the top. */
+.red__marco[data-eje-pegado] .red__eje {
+  background: var(--bg-inset);
+  box-shadow: 0 -16px 0 var(--bg-inset), 0 1px 0 var(--border-default);
+}
+
+.red__marco[data-eje-pegado] .red__eje::after {
+  content: '';
+  position: absolute;
+  inset-block-end: 13px;
+  inset-inline-start: var(--eje-desde);
+  inline-size: calc(var(--eje-hasta) - var(--eje-desde));
+  border-block-start: 2px solid var(--border-strong);
 }
 
 .red__columna {
@@ -348,7 +376,6 @@
   max-inline-size: none;
   padding: 0;
 }
-
 
 .red-v__momentos {
   position: relative;

@@ -9,7 +9,8 @@
   (click)="alternar.emit(h.episodio.id)"
 >
   <span class="red__chevron" aria-hidden="true"></span>
-  <span class="red__episodio-nombre">{{ h.episodio.nombre }}</span>
+  <!-- Capped at 36ch: a longer name shows whole on hover. -->
+  <span class="red__episodio-nombre" [attr.title]="h.episodio.nombre">{{ h.episodio.nombre }}</span>
   @if (h.episodio.estado !== '') {
     <span [class]="'red__estado tono--' + (h.episodio.tonoDelEstado ?? 'info')">{{ h.episodio.estado }}</span>
   }

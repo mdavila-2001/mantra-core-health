@@ -34,7 +34,7 @@ const medirBordes = (p) => p.evaluate(() => {
     bordeInicio: !!document.querySelector('[data-testid="red-borde-inicio"] button'),
     bordeFinal: !!document.querySelector('[data-testid="red-borde-final"] button'),
     // An edge button never lands on a date label (it sits on the axis line).
-    pisaEtiquetas: [...document.querySelectorAll('.red__borde button')].flatMap((b) => {
+    pisaEtiquetas: [...document.querySelectorAll('.red__borde-salto')].flatMap((b) => {
       const r = b.getBoundingClientRect();
       return [...document.querySelectorAll('.red__columna p')].filter((e) => {
         const t = e.getBoundingClientRect();
@@ -52,6 +52,37 @@ const medirChip = (p) => p.evaluate(() => {
   const cs = getComputedStyle(chip);
   return { texto: chip.textContent.trim(), fondo: cs.backgroundColor, anillo: cs.boxShadow };
 });
+
+/**
+ * A tall region whole. `fullPage` grows the viewport to the page's height
+ * *after* the clip was measured: the layout reflows at the new height (the
+ * canvas re-pins to its end, height-bound panels change) and the old box
+ * landed on other pixels. So the viewport is grown first, the layout settles,
+ * and the box is measured in that same layout. The app's sticky header and
+ * the demo badges would print over the region: hidden for this shot only.
+ */
+async function capturaCompleta(p, testId, path) {
+  const vista = p.viewportSize();
+  const oculto = await p.addStyleTag({ content: 'header[app-header], app-mock-banner { visibility: hidden !important; }' });
+  const cuadro = () => p.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  for (let i = 0; i < 3; i++) {
+    const alto = await p.evaluate(() => document.documentElement.scrollHeight);
+    if (alto <= p.viewportSize().height) break;
+    await p.setViewportSize({ width: vista.width, height: alto });
+    await cuadro();
+  }
+  await p.evaluate(() => window.scrollTo(0, 0));
+  await cuadro();
+  const medida = await p.getByTestId(testId).evaluate((e) => {
+    const r = e.getBoundingClientRect();
+    const d = document.documentElement;
+    return { caja: { x: r.x, y: r.y, width: r.width, height: r.height }, desborde: [d.scrollWidth, d.clientWidth], dentro: r.left >= 0 && r.right <= d.clientWidth + 0.5 };
+  });
+  await p.screenshot({ path, clip: medida.caja });
+  await oculto.evaluate((e) => e.remove());
+  await p.setViewportSize(vista);
+  return { ...medida, caja: Object.fromEntries(Object.entries(medida.caja).map(([k, v]) => [k, Math.round(v)])) };
+}
 
 async function medica(b, ancho, tema) {
   const pref = `medica-${ancho}-${tema === 'light' ? 'claro' : 'oscuro'}`;
@@ -85,22 +116,22 @@ async function medica(b, ancho, tema) {
     // Jump to the oldest: the start edge empties and the end edge offers to come back.
     await p.getByTestId('red-borde-inicio').getByRole('button').click();
     await p.waitForFunction(() => document.querySelector('.red__lienzo').scrollLeft <= 1, null, { timeout: 5000 });
-    await p.getByTestId('red-borde-final').waitFor({ timeout: 5000 });
+    await p.getByTestId('red-borde-final').getByRole('button').waitFor({ timeout: 5000 });
     const tras = await medirBordes(p);
     afirmar(!tras.bordeInicio && tras.bordeFinal === tras.ocultoFinal && tras.pisaEtiquetas.length === 0, `${pref}: tras «Lo más antiguo» ${JSON.stringify(tras)}`);
     await p.screenshot({ path: `${OUT}/${pref}-02-lo-mas-antiguo.png` });
   }
   if (ancho === 1440 || ancho === 390) {
-    // The app's fixed header would be stitched into the middle of a full-page clip: hide it for this shot only.
-    await p.addStyleTag({ content: 'header[app-header], app-mock-banner { visibility: hidden !important; }' });
-    const caja = await p.getByTestId('red-superficie').evaluate((e) => { const r = e.getBoundingClientRect(); return { x: r.x + scrollX, y: r.y + scrollY, width: r.width, height: r.height }; });
-    await p.screenshot({ path: `${OUT}/${pref}-03-red-completa.png`, fullPage: true, clip: caja });
+    const cap = await capturaCompleta(p, 'red-superficie', `${OUT}/${pref}-03-red-completa.png`);
+    afirmar(cap.desborde[0] <= cap.desborde[1] && cap.dentro, `${pref}: red completa sin desborde horizontal y entera en el recorte ${JSON.stringify(cap)}`);
   }
   afirmar(errores.length === 0, `${pref}: consola sin errores ${JSON.stringify(errores.slice(0, 3))}`);
   await ctx.close();
 }
 
-(async () => {
+module.exports = { capturaCompleta };
+
+if (require.main === module) (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   for (const ancho of [390, 768, 1024, 1440, 1920]) for (const tema of ['light', 'dark']) {
     if (process.env.SOLO && process.env.SOLO !== `${ancho}-${tema}`) continue;
