@@ -1,0 +1,40 @@
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+Output location: /home/user/mantra-core-health/dist/mantra-core-health
+▶ playwright: yarn pw playwright/services-grid.spec.ts
+Running 4 tests using 1 worker
+  ✓  1 [chromium] › playwright/services-grid.spec.ts:21:7 › Services grid (admin, simulator) › Médico lists the services with their organization type (8.0s)
+  ✓  2 [chromium] › playwright/services-grid.spec.ts:26:7 › Services grid (admin, simulator) › Laboratorio shows the 403 as a forbidden state, not an empty list (7.9s)
+  ✓  3 [chromium] › playwright/services-grid.spec.ts:31:7 › Services grid (admin, simulator) › Hospital says it has no catalog of its own and calls no endpoint for it (8.0s)
+  ✓  4 [chromium] › playwright/services-grid.spec.ts:38:7 › Services grid (admin, simulator) › Farmacia shows the partial notice and the screen only reads (8.0s)
+  4 passed (32.8s)
+PRE-PUSH GATE: PASS (5 steps) → .claude/gate/proof.json
