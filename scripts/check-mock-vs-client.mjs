@@ -74,33 +74,8 @@ const CONOCIDAS = [
     prompt: 'B7c (heredada de HEAD, sin asignar)',
   },
   {
-    method: 'POST',
-    endpoint: '/community/conversations/contacts/search',
-    prompt: 'B7c (heredada de HEAD, sin asignar)',
-  },
-  {
-    method: 'POST',
-    endpoint: '/iam/auth/upload-registration-signature-image',
-    prompt: 'B7c (heredada de HEAD, sin asignar)',
-  },
-  {
     method: 'GET',
     endpoint: '/identity/verification-cases/:caseId',
-    prompt: 'B7c (heredada de HEAD, sin asignar)',
-  },
-  {
-    method: 'POST',
-    endpoint: '/insurance/patients/conversation',
-    prompt: 'B7c (heredada de HEAD, sin asignar)',
-  },
-  {
-    method: 'GET',
-    endpoint: '/insurance/patients/options',
-    prompt: 'B7c (heredada de HEAD, sin asignar)',
-  },
-  {
-    method: 'POST',
-    endpoint: '/insurance/patients/search',
     prompt: 'B7c (heredada de HEAD, sin asignar)',
   },
   {
@@ -116,11 +91,6 @@ const CONOCIDAS = [
   {
     method: 'GET',
     endpoint: '/tenants/:tenantId/logo/content',
-    prompt: 'B7c (heredada de HEAD, sin asignar)',
-  },
-  {
-    method: 'GET',
-    endpoint: '/terminology/concepts/:conceptId/glossary-neighborhood',
     prompt: 'B7c (heredada de HEAD, sin asignar)',
   },
 ];
