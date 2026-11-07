@@ -206,35 +206,6 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     paths: ['administration/patients', 'administration/users', 'administration/admissions'],
   },
   {
-    label: 'Organizaciones',
-    group: 'Administración',
-    icon: 'building',
-    // El padrón de organizaciones y las que son de uno. Van juntas porque son
-    // la misma entidad vista desde arriba y desde adentro.
-    paths: [
-      'administration/organizations',
-      'administration/my-organization',
-      'administration/my-practice',
-    ],
-  },
-  {
-    label: 'Seguros',
-    group: 'Administración',
-    icon: 'umbrella',
-    // Quién paga, quién intermedia, qué se le presentó y qué dice el agregado.
-    paths: [
-      'administration/insurance',
-      'administration/brokers',
-      'administration/insurance-claims',
-      'administration/received-claims',
-      // Quién pide sumarse como prestador, y qué se le respondió.
-      'administration/insurer-practitioner-requests',
-      'administration/insurance-patients',
-      'administration/insurance-analytics',
-      'administration/insurance-campaigns',
-    ],
-  },
-  {
     label: 'Identidad y accesos',
     group: 'Administración',
     icon: 'shield',
@@ -263,6 +234,54 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     ],
   },
   {
+    label: 'Organizaciones',
+    group: 'Administración',
+    icon: 'building',
+    // El padrón de organizaciones y las que son de uno. Van juntas porque son
+    // la misma entidad vista desde arriba y desde adentro.
+    paths: [
+      'administration/organizations',
+      'administration/my-organization',
+      'administration/my-practice',
+    ],
+  },
+  {
+    label: 'Red de salud',
+    group: 'Administración',
+    icon: 'hospital',
+    // Las consolas de cada tipo de establecimiento. No es «mi organización»:
+    // es configurar la clínica, el laboratorio o la planta como institución.
+    paths: [
+      'administration/medical-organization',
+      'administration/medical-laboratory',
+      'administration/pharma-lab',
+    ],
+  },
+  {
+    label: 'Territorio',
+    group: 'Administración',
+    icon: 'globe',
+    // Dónde opera la plataforma: el país y el mapa.
+    paths: ['administration/health-context', 'administration/geolocation'],
+  },
+  {
+    label: 'Seguros',
+    group: 'Administración',
+    icon: 'umbrella',
+    // Quién paga, quién intermedia, qué se le presentó y qué dice el agregado.
+    paths: [
+      'administration/insurance',
+      'administration/brokers',
+      'administration/insurance-claims',
+      'administration/received-claims',
+      // Quién pide sumarse como prestador, y qué se le respondió.
+      'administration/insurer-practitioner-requests',
+      'administration/insurance-patients',
+      'administration/insurance-analytics',
+      'administration/insurance-campaigns',
+    ],
+  },
+  {
     label: 'Catálogos y contenido',
     group: 'Administración',
     icon: 'labels',
@@ -275,25 +294,6 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'administration/moderation',
       'administration/services-catalog',
       'administration/clinical-forms',
-    ],
-  },
-  {
-    label: 'Territorio',
-    group: 'Administración',
-    icon: 'globe',
-    // Dónde opera la plataforma: el país y el mapa.
-    paths: ['administration/health-context', 'administration/geolocation'],
-  },
-  {
-    label: 'Red de salud',
-    group: 'Administración',
-    icon: 'hospital',
-    // Las consolas de cada tipo de establecimiento. No es «mi organización»:
-    // es configurar la clínica, el laboratorio o la planta como institución.
-    paths: [
-      'administration/medical-organization',
-      'administration/medical-laboratory',
-      'administration/pharma-lab',
     ],
   },
   {

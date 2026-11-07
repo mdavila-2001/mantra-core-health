@@ -8,8 +8,9 @@ import { navScreenKey } from '../visibility/ui-element-keys';
 import { PracticeSetupStore } from '../data-access/practice-onboarding/practice-setup.store';
 import { UiVisibilityService } from '../visibility/ui-visibility.service';
 import { APP_SECTIONS } from './navigation.map';
-import { esPerfilDeGestion, seccionDeGestion } from './navigation.management';
+import { seccionEnMenuDeGestion, tieneRolDeGestion } from './navigation.management';
 import { MEDICAL_SETUP_PATH } from './navigation.medical-branches';
+import { ordenarPorDominio } from './navigation.order';
 import { NAV_GROUP_ICONS, SUBGROUP_BY_PATH, seAplanaElGrupo } from './navigation.subgroups';
 import {
   apareceEnElMenu,
@@ -121,7 +122,7 @@ export class NavigationService {
     // justo el invariante que fija la prueba de este servicio.
     // El perfil de gestión de la plataforma ve sólo gestión y medición (30/10/2026):
     // presentación, no permiso; ver `navigation.management.ts`.
-    const deGestion = esPerfilDeGestion(roles);
+    const deGestion = tieneRolDeGestion(roles);
     const enElMenu = APP_SECTIONS.filter(
       (section) =>
         apareceEnElMenu(section, roles, tenants, activeTenantType, accountKind) &&
@@ -129,7 +130,8 @@ export class NavigationService {
         // «Configurar práctica» is only a door until the practice exists.
         !(section.path === MEDICAL_SETUP_PATH && this.practiceSetup.done() === true) &&
         section.pinnedTop !== true &&
-        (!deGestion || seccionDeGestion(section)),
+        (!deGestion ||
+          seccionEnMenuDeGestion(section, roles, tenants, activeTenantType, accountKind)),
     );
 
     return NAV_GROUPS.map((group) => {
@@ -138,7 +140,7 @@ export class NavigationService {
         label: group,
         icon: NAV_GROUP_ICONS[group],
         items: delGrupo.map(menuItemOf),
-        blocks: repartirEnBloques(delGrupo),
+        blocks: ordenarPorDominio(group, activeTenantType, repartirEnBloques(delGrupo)),
         // Un grupo aplanado igual se reparte en bloques: `blocks` es la única
         // vista que conserva el orden de dibujo, y el día que alguien lo saque
         // de la lista tiene que volver a plegarse sin recalcular nada.
