@@ -42,7 +42,6 @@ test('Centro de la plataforma: una sola tarjeta con pestañas, a lo ancho del á
 
   await portales.getByRole('tab', { name: 'Observabilidad' }).click();
   await expect(page.getByTestId('portal-observabilidad')).toHaveAttribute('href', '/superadmin/observability');
-  await page.screenshot({ path: 'docs/trabajo/2026-11-07-admin-portal/evidencia/a/pw-portada.png' });
 });
 
 test('el menú de gestión conserva la gestión y sin «Mi cuenta» para quien solo gestiona', async ({ page }) => {
