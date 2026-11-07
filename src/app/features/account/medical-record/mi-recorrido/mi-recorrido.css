@@ -71,7 +71,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: var(--sp-2);
 }
 
@@ -157,9 +157,18 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
 }
 
+/* The records off the line (no consultation, or ruled out on the way) start
+   where the consultations do, not under the rail. */
+.recorrido__hechos--fuera-de-la-linea,
+.recorrido__en-el-camino {
+  display: block;
+  margin-inline-start: var(--sp-5);
+}
+
+/* Flat rows inside the accordion: grouped by space and a hairline, not by a
+   box inside a box (tokens.md, «superficie tonal sin borde ni sombra»). */
 .recorrido__hecho {
   display: flex;
   flex-wrap: wrap;
@@ -167,34 +176,45 @@
   gap: var(--sp-1) var(--sp-3);
   inline-size: 100%;
   padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
+  border: 0;
+  border-block-end: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: transparent;
   font: inherit;
   text-align: start;
   color: var(--text-primary);
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+  transition: background var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
 }
 
-.recorrido__hecho:hover {
-  background: var(--bg-inset);
+.recorrido__hechos > li:last-child > .recorrido__hecho {
+  border-block-end: 0;
+}
+
+@media (hover: hover) {
+  .recorrido__hecho:hover {
+    background: var(--bg-inset);
+  }
 }
 
 .recorrido__hecho:focus-visible {
   outline: none;
-  box-shadow: var(--focus-ring);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
-/* What only shares the consultation is shown, but in the background. */
+/* What only shares the consultation is shown, but in the background: its
+   textual mark already says why. */
 .recorrido__hecho.is-indirecto {
-  border-style: dashed;
   color: var(--text-secondary);
 }
 
 .recorrido__hecho.is-actual {
-  border-color: var(--brand-primary);
   background: var(--st-primary-bg);
+  box-shadow: inset 3px 0 0 var(--brand-primary);
+}
+
+.recorrido__hecho.is-actual:focus-visible {
+  box-shadow: inset 3px 0 0 var(--brand-primary), 0 0 0 3px var(--focus-ring);
 }
 
 .recorrido__hecho-tipo {
