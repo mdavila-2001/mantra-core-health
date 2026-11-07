@@ -1,0 +1,29 @@
+/* The screen is one card at full width: a practice picker (only when there are several) and the table. */
+.access__panel {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.access__main {
+  display: block;
+  font-weight: 600;
+}
+
+.access__service {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.access__state,
+.access__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-2);
+}
+
+.access__ask {
+  font-size: var(--fs-caption);
+}
