@@ -1,31 +1,67 @@
 <div class="catalog" data-testid="equipment-catalog">
-  <div class="catalog__filters">
-    <app-search-field label="Buscar equipo" placeholder="Marca, modelo o país" (searched)="query.set($event)" />
-    <app-segmented-control ariaLabel="Modalidad" wrap [options]="filters" [value]="filter()" (valueChange)="filter.set($event)" />
+  <div class="catalog__controls">
+    <app-search-field class="catalog__search" label="Buscar equipo" placeholder="Marca, modelo o país" (searched)="query.set($event)" />
+    <div class="catalog__chips" role="group" aria-label="Modalidad">
+      @for (f of filters; track f.value) {
+        <app-chip selectable size="sm" [label]="f.label + ', ' + f.count + ' equipos'" [selected]="filter() === f.value" (selectedChange)="filter.set(f.value)">
+          {{ f.label }} <span class="catalog__n">{{ f.count }}</span>
+        </app-chip>
+      }
+    </div>
   </div>
 
-  <p class="sr-only" role="status">{{ items().length }} equipo(s) en el catálogo</p>
-  <ul class="catalog__grid" role="list">
-    @for (item of items(); track item.id) {
-      <li>
-        <article class="card" [attr.aria-label]="item.manufacturer + ' ' + item.model">
-          <span class="card__modality">{{ modalityOf(item.modalityCode) }}</span>
-          <p class="card__maker">{{ item.manufacturer }}</p>
-          <h3 class="card__model">{{ item.model }}</h3>
-          <p class="card__detail">{{ item.highlight }}</p>
-          <p class="card__country">Origen: {{ item.country }}</p>
-          <button app-button size="sm" variant="outline" type="button" [attr.data-testid]="'equipment-catalog-pick-' + item.id" [attr.aria-label]="'Elegir ' + item.manufacturer + ' ' + item.model" (clicked)="picked.emit(toInput(item))">
-            Elegir
-          </button>
-        </article>
-      </li>
-    } @empty {
-      <li class="catalog__empty">Ningún equipo del catálogo coincide. Cárguelo a mano.</li>
-    }
-  </ul>
+  <p class="catalog__count" role="status" data-testid="equipment-catalog-count">
+    Mostrando {{ rows().length }} de {{ total }} equipos
+  </p>
+
+  @if (rows().length > 0) {
+    <app-data-table
+      class="catalog__table"
+      dense
+      maxHeight="min(30rem, 56vh)"
+      caption="Catálogo internacional de equipos"
+      [state]="state()"
+      [columns]="columns"
+      [trackBy]="trackById"
+      [rowLabel]="rowLabel"
+      [sort]="sort()"
+      (sortChanged)="sort.set($event)"
+    />
+  } @else {
+    <p class="catalog__empty" data-testid="equipment-catalog-empty">Ningún equipo del catálogo coincide. Pruebe con otra marca o cárguelo a mano.</p>
+  }
 
   <div class="catalog__by-hand">
     <span>¿No está en el catálogo?</span>
     <button app-button variant="ghost" type="button" data-testid="equipment-catalog-by-hand" (clicked)="picked.emit(blank)">Cargar a mano</button>
   </div>
 </div>
+
+<ng-template #modalityCell let-row>
+  <app-badge variant="secondary">{{ row.modality }}</app-badge>
+</ng-template>
+
+<ng-template #modelCell let-row>
+  <div class="catalog__device">
+    <app-equipment-thumb [kind]="row.modalityCode" [src]="row.imageUrl ?? null" />
+    <div>
+      <span class="catalog__maker">{{ row.manufacturer }}</span>
+      <span class="catalog__model">{{ row.model }}</span>
+      <span class="catalog__use">{{ row.highlight }}</span>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #actionCell let-row>
+  <button
+    app-button
+    size="sm"
+    variant="outline"
+    type="button"
+    [attr.data-testid]="'equipment-catalog-pick-' + row.id"
+    [attr.aria-label]="'Elegir ' + row.manufacturer + ' ' + row.model"
+    (clicked)="pick(row.id)"
+  >
+    Elegir
+  </button>
+</ng-template>
