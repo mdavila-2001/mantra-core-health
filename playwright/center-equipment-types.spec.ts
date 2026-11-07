@@ -42,6 +42,7 @@ test('an imaging center registers an MRI scanner and it stays after a reload', a
   await openEquipment(page);
 
   await page.getByTestId('centro-equipo-agregar').click();
+  await page.getByTestId('equipment-catalog-by-hand').click();
   const form = page.getByTestId('centro-equipo-formulario');
   await form.getByTestId('centro-equipo-nombre').fill(name);
   await form.getByTestId('centro-equipo-modalidad').locator('.select-trigger').click();
@@ -67,4 +68,36 @@ test('an imaging center registers an MRI scanner and it stays after a reload', a
   await expect(page.getByTestId('centro-horarios')).toBeVisible({ timeout: 120_000 });
   await page.getByRole('tab', { name: 'Equipos' }).click();
   await expect(page.getByRole('region', { name: 'Resonancia magnética' }).getByRole('article', { name })).toBeVisible();
+});
+
+test('a center picks a mammography unit from the international catalog and it stays after a reload', async ({ page }) => {
+  await signIn(page);
+  await openEquipment(page);
+
+  await page.getByTestId('centro-equipo-agregar').click();
+  const dialog = page.getByRole('dialog', { name: 'Agregar equipo' });
+  await dialog.getByRole('radio', { name: 'Mamografía' }).click();
+  await dialog.getByTestId('equipment-catalog-pick-ims-giotto-class').click();
+  const form = dialog.getByTestId('centro-equipo-formulario');
+  const serial = `GIO-${Date.now()}`;
+  await form.getByRole('textbox', { name: 'Nº de serie' }).fill(serial);
+
+  const before = await page.evaluate(() => ((window as unknown as { __mockRequests?: unknown[] }).__mockRequests ?? []).length);
+  await form.getByTestId('centro-equipo-guardar').click();
+  const sent = await page.waitForFunction(
+    (from) =>
+      ((window as unknown as { __mockRequests?: MockEntry[] }).__mockRequests ?? [])
+        .slice(from)
+        .find((r) => r.method === 'POST' && r.url.endsWith('/equipment')) ?? false,
+    before,
+  );
+  const request = (await sent.jsonValue()) as MockEntry;
+  expect(request.status).toBeLessThan(300);
+  expect(request.body).toMatchObject({ name: 'Mamógrafo Giotto Class', manufacturer: 'IMS Giotto', serialNumber: serial, modalityCode: 'MG' });
+  await expect(dialog).toBeHidden();
+
+  await page.reload();
+  await expect(page.getByTestId('centro-horarios')).toBeVisible({ timeout: 120_000 });
+  await page.getByRole('tab', { name: 'Equipos' }).click();
+  await expect(page.getByRole('region', { name: 'Mamografía' }).getByRole('article', { name: 'Mamógrafo Giotto Class' }).first()).toBeVisible();
 });

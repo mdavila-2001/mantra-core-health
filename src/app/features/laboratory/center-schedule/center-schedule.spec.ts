@@ -105,6 +105,7 @@ describe('CenterSchedulePage', () => {
     const addEquipment = vi.fn(() => of(VISTA));
     const { el, clic } = await abrirEquipos({ addEquipment });
     await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-equipo-agregar"]')!);
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="equipment-catalog-by-hand"]')!);
     const nombre = el.querySelector<HTMLInputElement>('[data-testid="centro-equipo-formulario"] input')!;
     nombre.value = 'Ecógrafo sala 2';
     nombre.dispatchEvent(new Event('input'));
@@ -112,6 +113,21 @@ describe('CenterSchedulePage', () => {
     await clic(nombre);
     await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-equipo-guardar"]')!);
     expect(addEquipment).toHaveBeenCalledWith('sur', { name: 'Ecógrafo sala 2', manufacturer: null, serialNumber: null, modalityCode: 'ECO' });
+  });
+
+  it('elegir un mamógrafo del catálogo completa nombre, fabricante y modalidad', async () => {
+    const addEquipment = vi.fn(() => of(VISTA));
+    const { el, clic } = await abrirEquipos({ addEquipment });
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-equipo-agregar"]')!);
+    expect(el.querySelector('[data-testid="equipment-catalog"]')).not.toBeNull();
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="equipment-catalog-pick-hologic-selenia-dimensions"]')!);
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-equipo-guardar"]')!);
+    expect(addEquipment).toHaveBeenCalledWith('sur', {
+      name: 'Mamógrafo Selenia Dimensions',
+      manufacturer: 'Hologic',
+      serialNumber: null,
+      modalityCode: 'MG',
+    });
   });
 
   it('un turno propio de equipo viaja con el horario publicado', async () => {

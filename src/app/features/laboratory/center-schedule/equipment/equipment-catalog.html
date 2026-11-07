@@ -1,0 +1,30 @@
+<div class="catalogo" data-testid="equipment-catalog">
+  <div class="catalogo__filtros">
+    <app-search-field label="Buscar equipo" placeholder="Marca, modelo o país" (searched)="query.set($event)" />
+    <app-segmented-control ariaLabel="Modalidad" wrap [options]="filters" [value]="filter()" (valueChange)="filter.set($event)" />
+  </div>
+
+  <ul class="catalogo__grilla" role="list" aria-live="polite">
+    @for (item of items(); track item.id) {
+      <li>
+        <article class="tarjeta" [attr.aria-label]="item.manufacturer + ' ' + item.model">
+          <span class="tarjeta__modalidad">{{ modalityOf(item.modalityCode) }}</span>
+          <p class="tarjeta__marca">{{ item.manufacturer }}</p>
+          <h3 class="tarjeta__modelo">{{ item.model }}</h3>
+          <p class="tarjeta__detalle">{{ item.highlight }}</p>
+          <p class="tarjeta__pais">Origen: {{ item.country }}</p>
+          <button app-button size="sm" variant="outline" type="button" [attr.data-testid]="'equipment-catalog-pick-' + item.id" (clicked)="picked.emit(item)">
+            Elegir
+          </button>
+        </article>
+      </li>
+    } @empty {
+      <li class="catalogo__vacio">Ningún equipo del catálogo coincide. Cárguelo a mano.</li>
+    }
+  </ul>
+
+  <div class="catalogo__manual">
+    <span>¿No está en el catálogo?</span>
+    <button app-button variant="ghost" type="button" data-testid="equipment-catalog-by-hand" (clicked)="byHand.emit()">Cargar a mano</button>
+  </div>
+</div>

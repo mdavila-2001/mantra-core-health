@@ -31,6 +31,8 @@ export class EquipmentForm {
   /** The device being edited, or `null` to register a new one. */
   readonly equipo = input<CenterEquipment | null>(null);
   readonly guardando = input(false);
+  /** Values to start a new device with (a pick from the catalog). Ignored when editing. */
+  readonly initial = input<CenterEquipmentInput | null>(null);
 
   readonly guardar = output<CenterEquipmentInput>();
   readonly cancelar = output<void>();
@@ -40,12 +42,14 @@ export class EquipmentForm {
     { value: SIN_MODALIDAD, label: 'Ninguna: analizador (no limita turnos)' },
   ];
 
-  protected readonly nombre = linkedSignal(() => this.equipo()?.model ?? this.equipo()?.name ?? '');
-  protected readonly fabricante = linkedSignal(() => this.equipo()?.manufacturer ?? '');
+  protected readonly nombre = linkedSignal(() => this.equipo()?.model ?? this.equipo()?.name ?? this.initial()?.name ?? '');
+  protected readonly fabricante = linkedSignal(() => this.equipo()?.manufacturer ?? this.initial()?.manufacturer ?? '');
   protected readonly serie = linkedSignal(() => this.equipo()?.serialNumber ?? '');
   protected readonly modalidad = linkedSignal<string>(() => {
     const e = this.equipo();
-    return e === null ? 'ECO' : (e.modalityCode ?? SIN_MODALIDAD);
+    if (e !== null) return e.modalityCode ?? SIN_MODALIDAD;
+    const i = this.initial();
+    return i === null ? 'ECO' : (i.modalityCode ?? SIN_MODALIDAD);
   });
 
   protected readonly aTexto = (v: string | number | null): string => String(v ?? '');

@@ -38,3 +38,13 @@
   padding: 0;
   list-style: none;
 }
+
+.equipos__paso {
+  display: grid;
+  gap: var(--sp-3);
+  justify-items: start;
+}
+
+.equipos__paso > app-equipment-form {
+  justify-self: stretch;
+}

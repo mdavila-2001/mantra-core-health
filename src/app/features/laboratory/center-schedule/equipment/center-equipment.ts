@@ -13,11 +13,14 @@ import type {
   ScheduleBlock,
 } from '../../../../core/data-access/diagnostic-units/center-schedule.types';
 import { turnoPropio } from '../../../../core/data-access/diagnostic-units/equipment-lines.rules';
+import { inputFromCatalog } from '../../../../core/data-access/diagnostic-units/equipment-catalog';
 import { MODALIDADES } from '../../../../core/data-access/diagnostic-units/modalidades';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
+import { EquipmentCatalog } from './equipment-catalog';
 import { EquipmentForm } from './equipment-form';
 import { EquipmentLine } from './equipment-line';
 
@@ -28,7 +31,7 @@ import { EquipmentLine } from './equipment-line';
  */
 @Component({
   selector: 'app-center-equipment',
-  imports: [AppButton, Alert, EquipmentForm, EquipmentLine],
+  imports: [AppButton, Alert, ContentDialog, EquipmentCatalog, EquipmentForm, EquipmentLine],
   templateUrl: './center-equipment.html',
   styleUrl: './center-equipment.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,6 +51,8 @@ export class CenterEquipmentTab implements OnInit {
   protected readonly editando = signal<string | null>(null);
   protected readonly ocupado = signal(false);
   protected readonly error = signal<string | null>(null);
+  /** Inside the «Agregar equipo» modal: `null` shows the catalog, otherwise the form prefilled with it. */
+  protected readonly newDraft = signal<CenterEquipmentInput | null>(null);
   private readonly hoy = signal<readonly CenterBooking[]>([]);
 
   protected readonly veGlosario = computed(() => this.navegacion.visibleSections().some((s) => s.path === 'glossary'));
@@ -61,6 +66,20 @@ export class CenterEquipmentTab implements OnInit {
   });
 
   protected readonly equipoEditado = computed(() => this.centro().equipment.find((e) => e.id === this.editando()) ?? null);
+
+  protected openNew(): void {
+    this.error.set(null);
+    this.newDraft.set(null);
+    this.editando.set('nuevo');
+  }
+
+  protected closeNew(): void {
+    if (this.ocupado()) return;
+    this.editando.set(null);
+  }
+
+  protected readonly fromCatalog = inputFromCatalog;
+  protected readonly blankDraft: CenterEquipmentInput = { name: '', manufacturer: null, serialNumber: null, modalityCode: 'ECO' };
 
   ngOnInit(): void {
     const desde = new Date();
