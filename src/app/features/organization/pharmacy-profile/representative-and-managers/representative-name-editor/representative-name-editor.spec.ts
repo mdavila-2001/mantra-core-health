@@ -35,7 +35,7 @@ describe('RepresentativeNameEditor', () => {
     fixture.detectChanges();
 
     const inputs = Array.from(el().querySelectorAll('input')).map((i) => i.value);
-    expect(inputs).toEqual(['Wendy', 'Jennyfer', 'Dávila', 'Tamal']);
+    expect(inputs).toEqual(['Wendy', 'Jennyfer', '', 'Dávila', 'Tamal']);
   });
 
   it('saves the typed parts, closes, and tells the owner of the data to reload', () => {
@@ -58,6 +58,32 @@ describe('RepresentativeNameEditor', () => {
     expect(byId('representante-editor')).toBeNull();
   });
 
+  it('folds the third name and the added names into the second name, as the registration does', () => {
+    mount();
+    client.rename.mockReturnValue(of({ fullName: 'Wendy Dávila' }));
+    byId<HTMLButtonElement>('representante-cambiar-nombre')?.click();
+    fixture.detectChanges();
+    byId<HTMLButtonElement>('representante-agregar-nombre')?.click();
+    fixture.detectChanges();
+    const typed = (id: string, value: string) => {
+      const input = byId<HTMLInputElement>(id)!;
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+    };
+    typed('representante-tercer-nombre', 'Lucía');
+    typed('representante-nombre-extra-0', 'María');
+    fixture.detectChanges();
+
+    submit();
+
+    expect(client.rename).toHaveBeenCalledWith('t-1', {
+      name: 'Wendy',
+      middleName: 'Jennyfer Lucía María',
+      lastName: 'Dávila',
+      motherLastName: 'Tamal',
+    });
+  });
+
   it('does not send a name without given name or last name', () => {
     mount();
     fixture.componentRef.setInput('parts', {});
@@ -67,7 +93,7 @@ describe('RepresentativeNameEditor', () => {
     submit();
 
     expect(client.rename).not.toHaveBeenCalled();
-    expect(el().textContent).toContain('Este dato es obligatorio.');
+    expect(el().textContent).toContain('Escriba el primer nombre.');
   });
 
   it('keeps the form open and says why when the API refuses', () => {

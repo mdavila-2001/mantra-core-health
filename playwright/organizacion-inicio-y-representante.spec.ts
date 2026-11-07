@@ -93,10 +93,15 @@ test('la cuenta de una organización: menú sin opciones de paciente, inicio pro
   await expect(page.getByTestId('ficha-representante')).toContainText('Mariana Siles');
   await page.getByTestId('representante-cambiar-nombre').click();
   // La ficha del alta de la maqueta sólo trae el nombre completo: las partes se escriben.
-  await page.getByTestId('representante-nombre').locator('input').fill('Mariana Elena');
-  await page.getByTestId('representante-apellido').locator('input').fill('Siles');
+  // Same block as the registration: third name and any number of further names.
+  await page.getByTestId('representante-nombre').fill('Mariana');
+  await page.getByTestId('representante-segundo-nombre').fill('Elena');
+  await page.getByTestId('representante-tercer-nombre').fill('Lucía');
+  await page.getByTestId('representante-agregar-nombre').click();
+  await page.getByTestId('representante-nombre-extra-0').fill('Paz');
+  await page.getByTestId('representante-apellido-paterno').fill('Siles');
   await page.getByRole('button', { name: 'Guardar nombre' }).click();
-  await expect(page.getByTestId('ficha-representante')).toContainText('Mariana Elena Siles');
+  await expect(page.getByTestId('ficha-representante')).toContainText('Mariana Elena Lucía Paz Siles');
   await expect(page.getByTestId('representante-editor')).toHaveCount(0);
   await page.screenshot({ path: join(SALIDA, 'representante-editado.png'), fullPage: true, animations: 'disabled' });
 
