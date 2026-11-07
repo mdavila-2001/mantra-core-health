@@ -39,12 +39,12 @@
   list-style: none;
 }
 
-.equipos__paso {
+.new-step {
   display: grid;
   gap: var(--sp-3);
   justify-items: start;
 }
 
-.equipos__paso > app-equipment-form {
+.new-step > app-equipment-form {
   justify-self: stretch;
 }

@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CenterScheduleClient } from '../../../core/data-access/diagnostic-units/center-schedule.client';
@@ -128,6 +129,31 @@ describe('CenterSchedulePage', () => {
       serialNumber: null,
       modalityCode: 'MG',
     });
+  });
+
+  it('cancelar el alta cierra el modal y el foco vuelve a «Agregar equipo»', async () => {
+    const { el, clic } = await abrirEquipos({});
+    const agregar = el.querySelector<HTMLButtonElement>('[data-testid="centro-equipo-agregar"]')!;
+    agregar.focus();
+    await clic(agregar);
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="equipment-catalog-by-hand"]')!);
+    const cancelar = [...el.querySelectorAll<HTMLButtonElement>('[data-testid="centro-equipo-formulario"] button')].find((b) => b.textContent?.trim() === 'Cancelar')!;
+    await clic(cancelar);
+    await vi.waitFor(() => expect(el.querySelector('[data-testid="content-dialog"]')).toBeNull());
+    expect(document.activeElement).toBe(agregar);
+  });
+
+  it('un alta rechazada muestra el error dentro del modal y no queda en la página al cerrarlo', async () => {
+    const addEquipment = vi.fn(() => throwError(() => new HttpErrorResponse({ status: 422, error: { message: 'Número de serie repetido.' } })));
+    const { el, clic } = await abrirEquipos({ addEquipment });
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-equipo-agregar"]')!);
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="equipment-catalog-pick-ge-lunar-idxa"]')!);
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-equipo-guardar"]')!);
+    expect(el.querySelector('[data-testid="content-dialog"]')?.textContent).toContain('Número de serie repetido.');
+    expect(el.querySelector('[data-testid="centro-equipo-error"]')).toBeNull();
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="content-dialog-close"]')!);
+    await vi.waitFor(() => expect(el.querySelector('[data-testid="content-dialog"]')).toBeNull());
+    expect(el.querySelector('[data-testid="centro-equipo-error"]')).toBeNull();
   });
 
   it('un turno propio de equipo viaja con el horario publicado', async () => {

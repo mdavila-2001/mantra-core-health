@@ -15,8 +15,8 @@ describe('equipment catalog', () => {
   });
 
   it('busca sin tildes ni mayúsculas, con todas las palabras', () => {
-    const hallados = searchCatalog(EQUIPMENT_CATALOG, 'ALL', 'mamografia hologic', name);
-    expect(hallados.map((i) => i.id)).toEqual(['hologic-selenia-dimensions', 'hologic-3dimensions']);
+    const found = searchCatalog(EQUIPMENT_CATALOG, 'ALL', 'mamografia hologic', name);
+    expect(found.map((i) => i.id)).toEqual(['hologic-selenia-dimensions', 'hologic-3dimensions']);
     expect(searchCatalog(EQUIPMENT_CATALOG, 'ALL', 'japon', name).every((i) => i.country === 'Japón')).toBe(true);
   });
 

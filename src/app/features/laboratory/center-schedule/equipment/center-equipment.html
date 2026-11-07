@@ -30,12 +30,12 @@
         <app-alert tone="error" title="No se guardó" dismissible (dismissed)="error.set(null)">{{ mensaje }}</app-alert>
       }
       @if (newDraft(); as draft) {
-        <div class="equipos__paso">
-          <button app-button variant="ghost" size="sm" type="button" data-testid="equipment-back-to-catalog" (clicked)="newDraft.set(null)">← Volver al catálogo</button>
-          <app-equipment-form [initial]="draft" [guardando]="ocupado()" (guardar)="guardar($event)" (cancelar)="closeNew()" />
+        <div class="new-step">
+          <button app-button variant="ghost" size="sm" type="button" data-testid="equipment-back-to-catalog" (clicked)="error.set(null); newDraft.set(null)">← Volver al catálogo</button>
+          <app-equipment-form [initial]="draft" [guardando]="ocupado()" (guardar)="guardar($event)" (cancelar)="dialog()?.close()" />
         </div>
       } @else {
-        <app-equipment-catalog (picked)="newDraft.set(fromCatalog($event))" (byHand)="newDraft.set(blankDraft)" />
+        <app-equipment-catalog (picked)="newDraft.set($event)" />
       }
     </app-content-dialog>
   }

@@ -4,17 +4,17 @@
   display: block;
 }
 
-.catalogo {
+.catalog {
   display: grid;
   gap: var(--sp-4);
 }
 
-.catalogo__filtros {
+.catalog__filters {
   display: grid;
   gap: var(--sp-3);
 }
 
-.catalogo__grilla {
+.catalog__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
   gap: var(--sp-3);
@@ -23,7 +23,7 @@
   list-style: none;
 }
 
-.tarjeta {
+.card {
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
@@ -34,11 +34,11 @@
   background: var(--bg-surface-alt);
 }
 
-.tarjeta:hover {
+.card:hover {
   border-color: var(--border-strong);
 }
 
-.tarjeta__modalidad {
+.card__modality {
   align-self: flex-start;
   padding: 0 var(--sp-2);
   border-radius: var(--r-pill);
@@ -47,41 +47,41 @@
   font-size: var(--fs-caption);
 }
 
-.tarjeta__marca,
-.tarjeta__pais,
-.tarjeta__detalle {
+.card__maker,
+.card__country,
+.card__detail {
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--fs-caption);
 }
 
-.tarjeta__marca {
+.card__maker {
   margin-block-start: var(--sp-2);
 }
 
-.tarjeta__modelo {
+.card__model {
   margin: 0;
   font-size: var(--fs-body-lg);
   color: var(--text-primary);
 }
 
-.tarjeta__detalle {
+.card__detail {
   flex: 1;
   color: var(--text-primary);
   font-size: var(--fs-body);
 }
 
-.tarjeta button {
+.card button {
   align-self: flex-start;
   margin-block-start: var(--sp-2);
 }
 
-.catalogo__vacio {
+.catalog__empty {
   grid-column: 1 / -1;
   color: var(--text-secondary);
 }
 
-.catalogo__manual {
+.catalog__by-hand {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);

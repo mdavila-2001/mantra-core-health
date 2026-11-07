@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, type OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, viewChild, type OnInit } from '@angular/core';
 
 import { CenterScheduleClient } from '../../../../core/data-access/diagnostic-units/center-schedule.client';
 import { resolverHorario } from '../../../../core/data-access/diagnostic-units/center-schedule.rules';
@@ -13,7 +13,6 @@ import type {
   ScheduleBlock,
 } from '../../../../core/data-access/diagnostic-units/center-schedule.types';
 import { turnoPropio } from '../../../../core/data-access/diagnostic-units/equipment-lines.rules';
-import { inputFromCatalog } from '../../../../core/data-access/diagnostic-units/equipment-catalog';
 import { MODALIDADES } from '../../../../core/data-access/diagnostic-units/modalidades';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
@@ -54,6 +53,8 @@ export class CenterEquipmentTab implements OnInit {
   /** Inside the «Agregar equipo» modal: `null` shows the catalog, otherwise the form prefilled with it. */
   protected readonly newDraft = signal<CenterEquipmentInput | null>(null);
   private readonly hoy = signal<readonly CenterBooking[]>([]);
+  /** Closing through the dialog returns focus to «Agregar equipo». */
+  protected readonly dialog = viewChild(ContentDialog);
 
   protected readonly veGlosario = computed(() => this.navegacion.visibleSections().some((s) => s.path === 'glossary'));
 
@@ -73,13 +74,11 @@ export class CenterEquipmentTab implements OnInit {
     this.editando.set('nuevo');
   }
 
+  /** `(closed)`: the dialog is already gone, so the state always follows. */
   protected closeNew(): void {
-    if (this.ocupado()) return;
+    this.error.set(null);
     this.editando.set(null);
   }
-
-  protected readonly fromCatalog = inputFromCatalog;
-  protected readonly blankDraft: CenterEquipmentInput = { name: '', manufacturer: null, serialNumber: null, modalityCode: 'ECO' };
 
   ngOnInit(): void {
     const desde = new Date();
@@ -137,7 +136,8 @@ export class CenterEquipmentTab implements OnInit {
     peticion.subscribe({
       next: (vista) => {
         this.ocupado.set(false);
-        this.editando.set(null);
+        this.dialog()?.close(true);
+        if (this.editando() !== 'nuevo') this.editando.set(null);
         this.vistaChange.emit(vista);
       },
       error: (error: unknown) => {

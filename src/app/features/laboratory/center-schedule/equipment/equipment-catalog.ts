@@ -3,8 +3,9 @@ import { ChangeDetectionStrategy, Component, computed, output, signal } from '@a
 import {
   searchCatalog,
   EQUIPMENT_CATALOG,
-  type CatalogEquipment,
+  inputFromCatalog,
 } from '../../../../core/data-access/diagnostic-units/equipment-catalog';
+import type { CenterEquipmentInput } from '../../../../core/data-access/diagnostic-units/center-schedule.types';
 import { modalidad, type ModalityCode } from '../../../../core/data-access/diagnostic-units/modalidades';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { SearchField } from '../../../../shared/components/molecules/search-field/search-field';
@@ -19,7 +20,8 @@ const modalityName = (code: ModalityCode | null): string => (code === null ? 'An
 
 /**
  * International device catalog: search and filter by modality, pick one to
- * prefill the form, or skip to typing it by hand. Presentational.
+ * prefill the form, or skip to typing it by hand. Presentational: it emits the
+ * form's starting input.
  */
 @Component({
   selector: 'app-equipment-catalog',
@@ -29,8 +31,8 @@ const modalityName = (code: ModalityCode | null): string => (code === null ? 'An
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EquipmentCatalog {
-  readonly picked = output<CatalogEquipment>();
-  readonly byHand = output<void>();
+  /** A catalog pick, or a blank device for «Cargar a mano». */
+  readonly picked = output<CenterEquipmentInput>();
 
   protected readonly filter = signal<CatalogFilter>('ALL');
   protected readonly query = signal('');
@@ -43,4 +45,6 @@ export class EquipmentCatalog {
   protected readonly items = computed(() => searchCatalog(EQUIPMENT_CATALOG, this.filter(), this.query(), modalityName));
 
   protected readonly modalityOf = modalityName;
+  protected readonly toInput = inputFromCatalog;
+  protected readonly blank: CenterEquipmentInput = { name: '', manufacturer: null, serialNumber: null, modalityCode: 'ECO' };
 }

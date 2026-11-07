@@ -44,7 +44,7 @@ export class EquipmentForm {
 
   protected readonly nombre = linkedSignal(() => this.equipo()?.model ?? this.equipo()?.name ?? this.initial()?.name ?? '');
   protected readonly fabricante = linkedSignal(() => this.equipo()?.manufacturer ?? this.initial()?.manufacturer ?? '');
-  protected readonly serie = linkedSignal(() => this.equipo()?.serialNumber ?? '');
+  protected readonly serie = linkedSignal(() => this.equipo()?.serialNumber ?? this.initial()?.serialNumber ?? '');
   protected readonly modalidad = linkedSignal<string>(() => {
     const e = this.equipo();
     if (e !== null) return e.modalityCode ?? SIN_MODALIDAD;
