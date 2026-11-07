@@ -20,6 +20,9 @@ import { entrar, estable, irA } from './support/sesion';
  * 5. Si la lectura del informe falla (fallo provocado con `mock:fallos`, ver
  *    `src/app/core/mock/simulated-failures.ts`), el panel dice qué pasó, da el
  *    código de soporte y «Reintentar» trae los valores.
+ * 5b. If the server rejects the read (S4, `modo: 'validation'`), the notice has
+ *    its own text (not the simulator's 422 message), no blind «Reintentar»,
+ *    and «Volver a la red» closes the panel and returns the focus to the node.
  * 6. At 768 and 1440 px, with and without the side panel, every episode name
  *    reads whole (the text's own box fits its span: no ellipsis).
  */
@@ -164,6 +167,29 @@ test.describe('Red clínica · recorrido y panel lateral', () => {
     await expect(panel.getByTestId('red-panel-informe-error')).toHaveCount(0);
     await expect(panel.getByTestId('red-panel-valor')).toHaveCount(2);
     await expect(panel.getByTestId('red-panel-liberado')).toBeVisible();
+  });
+
+  test('si el servidor rechaza la lectura (S4), el panel lo dice con texto propio, sin «Reintentar» a ciegas', async ({ page }) => {
+    await abrirRecorrido(page);
+    const tsh = await nodoTsh(page);
+    // The simulator's 422 speaks of a prescription field: that text must not reach the report's notice.
+    await page.evaluate(() =>
+      sessionStorage.setItem('mock:fallos', JSON.stringify([{ patron: '/reports/', modo: 'validation', metodos: ['GET'] }])),
+    );
+
+    await tsh.click();
+    const panel = page.getByTestId('red-panel');
+    const error = panel.getByTestId('red-panel-informe-error');
+    await expect(error).toContainText('El servidor rechazó la lectura de este informe');
+    await expect(error).not.toContainText('Elija un medicamento');
+    await expect(error).toContainText('Código de soporte');
+    await expect(error.getByRole('button', { name: 'Reintentar' })).toHaveCount(0);
+    await expect(panel.getByTestId('red-panel-liberado')).toHaveCount(0);
+
+    await page.evaluate(() => sessionStorage.removeItem('mock:fallos'));
+    await error.getByRole('button', { name: 'Volver a la red' }).click();
+    await expect(panel).toHaveCount(0);
+    await expect(tsh).toBeFocused();
   });
 
   for (const [ancho, alto] of [

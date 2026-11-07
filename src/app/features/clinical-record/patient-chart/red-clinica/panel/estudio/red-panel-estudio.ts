@@ -9,10 +9,11 @@ import {
   inject,
   Injector,
   input,
+  type TemplateRef,
   output,
   viewChild,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 
 import type { ViewState } from '../../../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../../../shared/components/atoms/button/button';
@@ -27,6 +28,7 @@ import {
   textoDelValor,
   type LecturaDeValor,
 } from '../../red-clinica-valores';
+import type { AccionDelPanel } from '../red-clinica-panel.vinculos';
 import type { ArchivoDeInforme, DetalleDeEstudio, ResultadoDeEstudio, ValorDeResultado } from '../../red-clinica.types';
 
 /** A row of the values table, already read. */
@@ -46,7 +48,7 @@ interface FilaDeValor {
  */
 @Component({
   selector: 'app-red-panel-estudio',
-  imports: [Alert, AppButton, DatePipe, NavIcon, RedClinicaInformeEstado],
+  imports: [Alert, AppButton, DatePipe, NavIcon, NgTemplateOutlet, RedClinicaInformeEstado],
   templateUrl: './red-panel-estudio.html',
   styleUrls: ['../red-clinica-panel.secciones.css', './red-panel-estudio.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,11 +65,19 @@ export class RedPanelEstudio {
   readonly descarga = input<{ readonly fileId: string; readonly estado: ViewState<null> } | null>(null);
   /** «hace N días» since the order, or `null` without a date. */
   readonly pedidoHace = input<string | null>(null);
+  /** The exact days when `pedidoHace` rounded to months, for its `title`. */
+  readonly pedidoHaceExacto = input<string | null>(null);
+  /** S3's next action without a released result: the panel's actions (e.g. «Ver el registro completo»). */
+  readonly accionPendiente = input<TemplateRef<unknown> | null>(null);
+  /** S3's own next action: open what the study was ordered for. */
+  readonly accionDelPedido = input<AccionDelPanel | null>(null);
 
   readonly releer = output<void>();
-  /** «Volver a la red» from a 403 or 404 of the report read. */
+  /** «Volver a la red» from a 403, 404 or rejected (S4) report read. */
   readonly volver = output<void>();
   readonly abrirArchivo = output<ArchivoDeInforme>();
+  /** Another node was chosen (S3's next action). */
+  readonly elegir = output<string>();
 
   /** The released content is drawn once the read succeeded, or when nothing is read (no patient). */
   protected readonly exito = computed(() => {

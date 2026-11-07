@@ -33,6 +33,7 @@ import { RecorridoGuiado, type PasoActualDelRecorrido } from '../../recorrido-gu
 import { armarRecorridoGuiado, type PasoDelRecorrido } from '../../recorrido-guiado/recorrido-guiado.model';
 import { RedClinicaAlertasLista } from '../alertas/red-clinica-alertas-lista';
 import { RedClinicaFiltros } from '../filtros/red-clinica-filtros';
+import { filtrosNombrados, unirConY } from '../filtros/red-clinica-filtros.nombres';
 import type { AlertaDeApoyo } from '../red-clinica-alertas.types';
 import type { LecturasComprobadas } from '../lecturas/red-clinica-lecturas';
 import { FILTRO_VACIO, type FiltroDeRed } from '../red-clinica-filtro';
@@ -171,6 +172,13 @@ export class RedClinicaSuperficie {
   protected readonly pasoSinNodos = computed(
     () => this.guiado() && this.visiblesDeLaRed().length === 1 && this.visiblesDeLaRed()[0] === NINGUNO_VISIBLE,
   );
+
+  /** The step notice names what hides the step («con este filtro: el hilo de …»), not «los filtros puestos». */
+  protected readonly filtrosQueOcultan = computed(() => {
+    const nombres = filtrosNombrados(this.filtro(), this.nodos());
+    if (nombres.length === 0) return 'con los filtros puestos';
+    return `${nombres.length === 1 ? 'con este filtro' : 'con estos filtros'}: ${unirConY(nombres)}`;
+  });
 
   protected readonly resaltados = computed<readonly string[]>(() =>
     this.guiado() ? (this.paso()?.enfocar ?? []) : this.resaltadosPorAlerta(),

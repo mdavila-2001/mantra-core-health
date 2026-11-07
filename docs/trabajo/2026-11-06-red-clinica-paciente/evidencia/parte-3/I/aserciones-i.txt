@@ -1,0 +1,22 @@
+ok   1440-claro L-1: rótulo del selector «Hilo»
+ok   1440-claro L-3: el botón de descarga entra entero {"cabe":true,"elipsis":"clip","panelDesborda":false}
+ok   1440-claro M-2: «Advertencia:El servidor rechazó la lectura de este informe Sus valores no se pueden mostrar. Leerlo de nuevo daría el mismo rechazo: si el problema sigue, informe el código de soporte. Código de soporte: mock-falloVolver a la red»
+ok   1440-claro M-2: sin «Reintentar», con «Volver a la red»
+ok   1440-claro S3: hay un estudio sin resultado en la demo
+ok   1440-claro M-6: «Sin resultado liberado todavía · pedido hace 14 días» (cifra y unidad con NBSP, sin paréntesis)
+ok   1440-claro M-1: ninguna línea queda con «días» o «meses» sola
+ok   1440-claro M-1: S3 ofrece «Ver la atención donde se pidió» bajo el aviso
+ok   1440-claro M-3: el estado «Pendiente» lleva tono de aviso (badge badge--sm badge--warning tone--warning)
+ok   1440-claro M-1: la acción abre otro nodo (Ecografía abdominal (incluye hígado, vía → Ambulatorio)
+ok   390-claro L-1: rótulo del selector «Hilo»
+ok   390-claro L-3: el botón de descarga entra entero {"cabe":true,"elipsis":"clip","panelDesborda":false}
+ok   390-claro M-2: «Advertencia:El servidor rechazó la lectura de este informe Sus valores no se pueden mostrar. Leerlo de nuevo daría el mismo rechazo: si el problema sigue, informe el código de soporte. Código de soporte: mock-falloVolver a la red»
+ok   390-claro M-2: sin «Reintentar», con «Volver a la red»
+ok   390-claro S3: hay un estudio sin resultado en la demo
+ok   390-claro M-6: «Sin resultado liberado todavía · pedido hace 14 días» (cifra y unidad con NBSP, sin paréntesis)
+ok   390-claro M-1: ninguna línea queda con «días» o «meses» sola
+ok   390-claro M-1: S3 ofrece «Ver la atención donde se pidió» bajo el aviso
+ok   390-claro M-3: el estado «Pendiente» lleva tono de aviso (badge badge--sm badge--warning tone--warning)
+ok   390-claro M-1: la acción abre otro nodo (Ecografía abdominal (incluye hígado, vía → Ambulatorio)
+
+TODO OK

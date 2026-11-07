@@ -18,17 +18,24 @@ export function diasEntre(desde: Date, hasta: Date): number {
   return Math.max(0, Math.floor((hasta.getTime() - desde.getTime()) / DIA_MS));
 }
 
+/** No-break space: a count and its unit never split across lines («hace 14 / días»). */
+const NBSP = '\u00a0';
+
 /**
- * «hoy», «hace 1 día», «hace 12 días»; from 60 days, «hace 3 meses (94 días)»:
- * months read fast and days are the figure compared with a deadline.
+ * «hoy», «hace 1 día», «hace 12 días»; from 60 days, «hace 3 meses»: months
+ * read fast. The exact days are not repeated beside them (`antiguedadExacta`
+ * gives them for a `title`, or the date next to it says it).
  */
 export function antiguedad(dias: number): string {
   if (dias === 0) return 'hoy';
-  if (dias === 1) return 'hace 1 día';
-  if (dias < 60) return `hace ${dias} días`;
-  const meses = Math.floor(dias / 30);
-  // No-break space: the count and its unit never split across lines.
-  return `hace ${meses} meses (${dias}\u00a0días)`;
+  if (dias === 1) return `hace 1${NBSP}día`;
+  if (dias < 60) return `hace ${dias}${NBSP}días`;
+  return `hace ${Math.floor(dias / 30)}${NBSP}meses`;
+}
+
+/** «94 días» when `antiguedad` rounded to months; `null` when it already says the days. */
+export function antiguedadExacta(dias: number): string | null {
+  return dias < 60 ? null : `${dias}${NBSP}días`;
 }
 
 export function prioridadPorPlazo(dias: number, plazo: number): PrioridadDeAlerta {

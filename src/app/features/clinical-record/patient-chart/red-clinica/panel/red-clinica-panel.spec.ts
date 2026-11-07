@@ -8,6 +8,7 @@ import { FileDownloadService } from '../../../../../shared/utils/file-download/f
 import { AHORA_DEMO, ARISTAS_DEMO, NODOS_DEMO } from '../red-clinica.demo';
 import type { NodoDeRed } from '../red-clinica.types';
 import { RedClinicaPanel, vinculosDe, type PresentacionDelPanel } from './red-clinica-panel';
+import { accionDelPedido } from './red-clinica-panel.vinculos';
 
 @Component({
   imports: [RedClinicaPanel],
@@ -23,7 +24,9 @@ import { RedClinicaPanel, vinculosDe, type PresentacionDelPanel } from './red-cl
       [pacienteId]="paciente()"
       (nodoElegido)="elegidos.push($event); abrir($event)"
       (cerrado)="cierres = cierres + 1; nodo.set(null)"
-    />
+    >
+      <button panel-acciones type="button" data-testid="accion-del-padre">Ver el registro completo</button>
+    </app-red-clinica-panel>
   `,
 })
 class Anfitrion {
@@ -67,6 +70,15 @@ describe('vinculosDe', () => {
   });
 });
 
+describe('accionDelPedido', () => {
+  it('lleva a lo que motivó el pedido; si no está, a la atención donde se pidió; si nada, null', () => {
+    expect(accionDelPedido(vinculosDe('e3', ARISTAS_DEMO, NODOS_DEMO))?.nodoId).toBe('dx2');
+    const sinMotivo = ARISTAS_DEMO.filter((a) => !(a.desde === 'e3' && a.tipo === 'pedido-para'));
+    expect(accionDelPedido(vinculosDe('e3', sinMotivo, NODOS_DEMO))).toEqual({ nodoId: 'a3', etiqueta: 'Ver la atención donde se pidió' });
+    expect(accionDelPedido(vinculosDe('e3', [], NODOS_DEMO))).toBeNull();
+  });
+});
+
 describe('RedClinicaPanel', () => {
   let fixture: ComponentFixture<Anfitrion>;
   let host: Anfitrion;
@@ -107,7 +119,11 @@ describe('RedClinicaPanel', () => {
     expect(texto()).toContain('Estudio');
     expect(texto()).toContain('Dra. Ana Rojas');
     expect(texto()).toContain('Resultado liberado');
-    expect(texto()).toContain('hace 3 meses (94 días)');
+    // Months alone in the text; the exact days, only as the `title`.
+    const hace = el().querySelector<HTMLElement>('.panel__hecho [title]')!;
+    expect(hace.textContent).toContain('hace 3\u00a0meses');
+    expect(hace.title).toBe('94\u00a0días');
+    expect(texto()).not.toContain('(94');
   });
 
   it('al abrir, el foco va al título; Escape cierra y lo devuelve a quien lo abrió', async () => {
@@ -148,10 +164,55 @@ describe('RedClinicaPanel', () => {
       expect(texto()).toContain('Patrón hipertensivo');
     });
 
-    it('sin resultado liberado lo dice, con la antigüedad del pedido', async () => {
+    it('sin resultado liberado lo dice, con la antigüedad del pedido sin repetir los días', async () => {
       await abrir('e3');
-      expect(el().querySelector('[data-testid="red-panel-sin-resultado"]')?.textContent).toContain('pedido hace 2 meses (65\u00a0días)');
+      const s3 = el().querySelector<HTMLElement>('[data-testid="red-panel-sin-resultado"]')!;
+      expect(s3.textContent).toContain('pedido hace 2\u00a0meses');
+      expect(s3.textContent).not.toContain('65');
+      expect(s3.querySelector<HTMLElement>('[title]')?.title).toBe('65\u00a0días');
       expect(el().querySelector('[data-testid="red-panel-valor"]')).toBeNull();
+    });
+
+    it('S3 ofrece su próxima acción: la del padre va bajo el aviso, no al pie', async () => {
+      await abrir('e3');
+      const s3 = el().querySelector('.panel__sin-resultado')!;
+      expect(s3.textContent).toContain('cuando el laboratorio libere el informe');
+      expect(s3.querySelector('[data-testid="accion-del-padre"]')).not.toBeNull();
+      expect(el().querySelectorAll('[data-testid="accion-del-padre"]')).toHaveLength(1);
+      // Its own next action, even when the parent adds none: what it was ordered for.
+      const propia = s3.querySelector<HTMLElement>('[data-testid="red-panel-sin-resultado-accion"]')!;
+      expect(propia.textContent?.trim()).toBe('Ver el diagnóstico por el que se pidió');
+      propia.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(host.elegidos).toEqual(['dx2']);
+      await abrir('e1');
+      expect(el().querySelector('.panel__sin-resultado')).toBeNull();
+      expect(el().querySelector('.panel__acciones [data-testid="accion-del-padre"]')).not.toBeNull();
+    });
+
+    it('menos de 60 días: cifra y unidad unidas (no se parte «hace 14 / días») y sin title redundante', async () => {
+      host.nodo.set({ ...NODOS_DEMO.find((n) => n.id === 'e3')!, cuando: new Date(AHORA_DEMO.getTime() - 14 * 86_400_000) });
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const s3 = el().querySelector<HTMLElement>('[data-testid="red-panel-sin-resultado"]')!;
+      expect(s3.textContent).toContain('pedido hace 14\u00a0días');
+      expect(s3.querySelector('[title]')).toBeNull();
+    });
+
+    it('«Pendiente» con el «info» genérico de las órdenes sale en el tono de aviso, no en el de «Completado»', async () => {
+      const e3 = NODOS_DEMO.find((n) => n.id === 'e3')!;
+      host.nodo.set({ ...e3, estado: { etiqueta: 'Pendiente', tono: 'info' } });
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const pendiente = panel()!.querySelector('.panel__hechos app-badge')!;
+      expect(pendiente.className).toContain('warning');
+      expect(pendiente.className).not.toContain('info');
+      host.nodo.set(NODOS_DEMO.find((n) => n.id === 'e1')!);
+      host.nodo.set({ ...host.nodo()!, estado: { etiqueta: 'Completado', tono: 'info' } });
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(panel()!.querySelector('.panel__hechos app-badge')!.className).toContain('success');
     });
 
     /** Con paciente, abrir el MAPA lee su informe; se responde con lo mismo que trae el nodo. */
@@ -298,7 +359,8 @@ describe('RedClinicaPanel', () => {
     it('un presuntivo sin decisión dice desde cuándo está abierto', async () => {
       await abrir('dx3');
       expect(texto()).toContain('Presuntivo, en estudio');
-      expect(texto()).toContain('Todavía no se confirmó ni se descartó · registrado hace 2 meses (65 días)');
+      expect(texto()).toContain('Todavía no se confirmó ni se descartó · registrado hace 2 meses');
+      expect(texto()).not.toContain('(65');
     });
   });
 

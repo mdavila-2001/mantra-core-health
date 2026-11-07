@@ -28,10 +28,11 @@ import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
 import { nextControlId } from '../../../../../shared/forms/form-control.context';
-import { antiguedad, diasEntre } from '../red-clinica-alertas';
+import { antiguedad, antiguedadExacta, diasEntre } from '../red-clinica-alertas.plazos';
 import { resultadoDelInforme } from '../red-clinica-informe';
-import { ORIGEN, SIGUIENTES, vinculosDe } from './red-clinica-panel.vinculos';
+import { accionDelPedido, ORIGEN, SIGUIENTES, vinculosDe } from './red-clinica-panel.vinculos';
 import { DescargaDelInforme } from './descarga-del-informe';
+import { tonoDelEstado } from './tono-del-estado';
 import { RedPanelEstudio } from './estudio/red-panel-estudio';
 import { RedPanelRazonamiento } from './razonamiento/red-panel-razonamiento';
 import { RedPanelDerivacion } from './derivacion/red-panel-derivacion';
@@ -73,9 +74,7 @@ export type PresentacionDelPanel = 'auto' | 'lateral' | 'hoja';
  * M34 states.
  *
  * ```html
- * <app-red-clinica-panel
- *   [nodo]="nodoAbierto()" [nodos]="nodos()" [aristas]="aristas()"
- *   (nodoElegido)="abrir($event)" (cerrado)="nodoAbierto.set(null)" />
+ * <app-red-clinica-panel [nodo]="abierto()" [nodos]="nodos()" [aristas]="aristas()" (cerrado)="abierto.set(null)" />
  * ```
  */
 @Component({
@@ -101,16 +100,15 @@ export class RedClinicaPanel {
   readonly ahora = input<Date>(new Date());
   readonly presentacion = input<PresentacionDelPanel>('auto');
   /**
-   * Whether closing the panel returns the focus to whoever opened it. `false`
-   * when the parent knows better where it goes (the node open now, which may
-   * not be the first): the panel only closes the sheet and does not compete for
-   * the focus.
+   * Whether closing returns the focus to whoever opened it. `false` when the
+   * parent knows better where it goes (the node open now): the panel only
+   * closes the sheet and does not compete for the focus.
    */
   readonly devolverFoco = input(true);
   /**
-   * The chart's person. With it, a study with a released report is read whole
-   * on opening and its files are downloaded through the practitioner route.
-   * Without it (the component bench), the panel shows what the node brings.
+   * The chart's person. With it, a released report is read whole on opening and
+   * its files come through the practitioner route; without it (the bench), the
+   * panel shows what the node brings.
    */
   readonly pacienteId = input<string | null>(null);
 
@@ -140,12 +138,9 @@ export class RedClinicaPanel {
     return n === null ? [] : vinculosDe(n.id, this.aristas(), this.nodos());
   });
 
-  protected readonly origen = computed(() =>
-    this.vinculos().filter((v) => ORIGEN.has(`${v.sentido}:${v.tipo}`)),
-  );
-  protected readonly siguientes = computed(() =>
-    this.vinculos().filter((v) => SIGUIENTES.has(`${v.sentido}:${v.tipo}`)),
-  );
+  protected readonly origen = computed(() => this.vinculos().filter((v) => ORIGEN.has(`${v.sentido}:${v.tipo}`)));
+  protected readonly siguientes = computed(() => this.vinculos().filter((v) => SIGUIENTES.has(`${v.sentido}:${v.tipo}`)));
+  protected readonly accionDelPedido = computed(() => accionDelPedido(this.vinculos()));
 
   /** The open study's report read, with its M34 states. */
   protected readonly lecturaDelInforme = signal<{ readonly informeId: string; readonly estado: ViewState<ResultadoDeEstudio> } | null>(null);
@@ -161,11 +156,13 @@ export class RedClinicaPanel {
       : d.resultado;
   });
 
-  /** «hace 12 días» since the node's date. */
-  protected readonly hace = computed(() => {
-    const cuando = this.nodo()?.cuando;
-    return cuando ? antiguedad(diasEntre(cuando, this.ahora())) : '';
-  });
+  /** Days since the node's date: «hace 12 días», and the exact days (for a `title`) when that rounded to months. */
+  private readonly dias = computed(() => { const c = this.nodo()?.cuando; return c ? diasEntre(c, this.ahora()) : null; });
+  protected readonly hace = computed(() => { const d = this.dias(); return d === null ? '' : antiguedad(d); });
+  protected readonly haceExacto = computed(() => { const d = this.dias(); return d === null ? null : antiguedadExacta(d); });
+
+  /** The status badge's tone: a study's says whether its result is out. */
+  protected readonly tonoDelEstado = computed(() => tonoDelEstado(this.nodo()));
 
   /** Who had the focus on opening: where it returns on closing. */
   private retorno: HTMLElement | null = null;

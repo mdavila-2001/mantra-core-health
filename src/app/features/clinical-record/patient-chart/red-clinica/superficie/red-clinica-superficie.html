@@ -67,7 +67,7 @@
       @if (pasoSinNodos()) {
         <!-- The way out: the same «clear filters» as the empty network. -->
         <div class="superficie__sin-nodos" data-testid="red-guiado-sin-nodos">
-          <p class="superficie__nota" role="status">Lo que cuenta este paso no queda a la vista con los filtros puestos.</p>
+          <p class="superficie__nota" role="status">Lo que cuenta este paso no queda a la vista {{ filtrosQueOcultan() }}.</p>
           <button app-button variant="outline" size="sm" type="button" data-testid="red-guiado-quitar-filtros" (clicked)="quitarFiltros()">
             Quitar filtros
           </button>

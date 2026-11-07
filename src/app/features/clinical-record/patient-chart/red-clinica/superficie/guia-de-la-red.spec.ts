@@ -75,7 +75,7 @@ describe('episodioPropuesto', () => {
     expect(episodioPropuesto(red, { seleccionado: 'rx1', hiloDeDiagnosticoId: 'dx2' })?.nombre).toBe('Hipotiroidismo');
   });
 
-  it('sin nodo abierto, el del filtro «Solo el hilo de este diagnóstico»', () => {
+  it('sin nodo abierto, el del filtro «Hilo»', () => {
     expect(episodioPropuesto(red, { seleccionado: null, hiloDeDiagnosticoId: 'dx2' })?.nombre).toBe('Pielonefritis');
   });
 

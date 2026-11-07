@@ -108,7 +108,7 @@ export function idsDelEpisodio(episodio: EpisodioClinico): readonly string[] {
 
 /**
  * The episode offered to follow on opening the tour: the panel's open node's
- * or, if none, the «Solo el hilo de este diagnóstico» filter's. The «Sin
+ * or, if none, the «Hilo» filter's. The «Sin
  * diagnóstico asociado» thread is not a problem to follow.
  */
 export function episodioPropuesto(

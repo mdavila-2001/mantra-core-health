@@ -96,8 +96,8 @@
 }
 
 /* The file name can be long («Informe de TSH por
-   quimioluminiscencia.pdf»): one line, cut with an ellipsis; the full name
-   is in the accessible name and the tooltip. */
+   quimioluminiscencia.pdf»): it reads whole, wrapping inside the button (at
+   spaces, or anywhere for a name without them), never cut with «…». */
 .panel__archivos li {
   min-inline-size: 0;
   max-inline-size: 100%;
@@ -105,13 +105,30 @@
 
 .panel__archivos .btn {
   max-inline-size: 100%;
+  justify-content: flex-start;
+  text-align: start;
 }
 
 .panel__archivo-nombre {
   min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* S3: the notice, what to wait for and the next action, stacked. */
+.panel__sin-resultado {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.panel__sin-resultado-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.panel__sin-resultado-acciones:empty {
+  display: none;
 }
 
 /* Without a notice the wrapper is not a grid item: no extra gap. */

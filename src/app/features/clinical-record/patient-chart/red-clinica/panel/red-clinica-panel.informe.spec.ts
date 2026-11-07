@@ -179,20 +179,47 @@ describe('RedClinicaPanel: el informe liberado, leído al abrir el estudio', () 
     expect(el().querySelectorAll('[data-testid="red-panel-valor"]')).toHaveLength(2);
   });
 
-  it('un 429 (S4) dice lo que contestó el servidor, cuánto esperar y ofrece reintentar', async () => {
+  it('un 429 (S4) lo dice con texto propio, cuánto esperar, y ofrece reintentar pasada la espera', async () => {
     await abrir(ESTUDIO);
     http
       .expectOne((r) => r.url.endsWith(URL))
-      .flush({ code: 'RATE_LIMITED', message: 'Demasiadas lecturas seguidas.' }, { status: 429, statusText: 'Too Many Requests', headers: { 'retry-after': '30' } });
+      .flush({ code: 'RATE_LIMITED', message: 'Too many requests' }, { status: 429, statusText: 'Too Many Requests', headers: { 'retry-after': '30' } });
     await pintar();
     const aviso = el().querySelector('[data-testid="red-panel-informe-error"]');
-    expect(aviso?.textContent).toContain('Demasiadas lecturas seguidas.');
+    expect(aviso?.textContent).toContain('Demasiadas lecturas seguidas');
     expect(aviso?.textContent).toContain('Reintente en 30 segundos');
+    expect(aviso?.textContent).not.toContain('Too many requests');
     Array.from(aviso!.querySelectorAll<HTMLElement>('button')).find((b) => b.textContent?.includes('Reintentar'))!.click();
     await pintar();
     http.expectOne((r) => r.url.endsWith(URL)).flush(LEIDO);
     await pintar();
     expect(el().querySelectorAll('[data-testid="red-panel-valor"]')).toHaveLength(2);
+  });
+
+  it('un 422 (S4) no muestra el mensaje ajeno del servidor ni reintenta a ciegas: texto propio, código y «Volver a la red»', async () => {
+    await abrir(ESTUDIO);
+    http.expectOne((r) => r.url.endsWith(URL)).flush(
+      {
+        code: 'VALIDATION_FAILED',
+        message: 'Error de validación.',
+        correlationId: 'req-422',
+        details: { fields: [{ field: 'medicationConceptId', constraints: ['isNotEmpty'], messages: ['Elija un medicamento del catálogo.'] }] },
+      },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+    await pintar();
+    const aviso = el().querySelector<HTMLElement>('[data-testid="red-panel-informe-error"]')!;
+    const dice = aviso.textContent!.replace(/\s+/g, ' ');
+    expect(dice).toContain('El servidor rechazó la lectura de este informe');
+    expect(dice).not.toContain('Elija un medicamento del catálogo');
+    expect(dice).not.toContain('Error de validación');
+    expect(dice).toContain('Código de soporte: req-422');
+    expect(Array.from(aviso.querySelectorAll('button')).map((b) => b.textContent?.trim())).toEqual(['Volver a la red']);
+    expect(el().querySelector('[data-testid="red-panel-liberado"]')).toBeNull();
+    el().querySelector<HTMLElement>('[data-testid="red-panel-volver"]')!.click();
+    await pintar();
+    http.expectNone((r) => r.url.endsWith(URL));
+    expect(el().querySelector('[data-testid="red-panel"]')).toBeNull();
   });
 
   it('una referencia nueva del mismo nodo no le quita el foco a quien lo tiene', async () => {

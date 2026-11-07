@@ -33,18 +33,29 @@
   }
   @case ('validation') {
     @let v = estado();
-    <app-alert tone="warning" title="No se pudieron leer los valores ahora" data-testid="red-panel-informe-error">
-      {{ mensajes() }}
-      @if (v.status === 'validation' && v.retryAfterSeconds !== undefined) {
-        Reintente en {{ v.retryAfterSeconds }} segundos.
-      }
-      @if (v.status === 'validation' && v.requestId) {
-        Código de soporte: <code>{{ v.requestId }}</code>
-      }
-      <div alert-actions>
-        <button app-button variant="outline" size="sm" type="button" (clicked)="reintentar.emit()">Reintentar</button>
-      </div>
-    </app-alert>
+    @if (limitado()) {
+      <app-alert tone="warning" title="Demasiadas lecturas seguidas" data-testid="red-panel-informe-error">
+        El servidor pidió esperar antes de volver a leer los valores de este informe.
+        @if (v.status === 'validation' && v.retryAfterSeconds !== undefined) {
+          Reintente en {{ v.retryAfterSeconds }} segundos.
+        }
+        <div alert-actions>
+          <button app-button variant="outline" size="sm" type="button" (clicked)="reintentar.emit()">Reintentar</button>
+        </div>
+      </app-alert>
+    } @else {
+      <!-- The server's message is not shown: it speaks of what it validated,
+           not of this report. Retrying would send the same rejected read. -->
+      <app-alert tone="warning" title="El servidor rechazó la lectura de este informe" data-testid="red-panel-informe-error">
+        Sus valores no se pueden mostrar. Leerlo de nuevo daría el mismo rechazo: si el problema sigue, informe el código de soporte.
+        @if (v.status === 'validation' && v.requestId) {
+          Código de soporte: <code>{{ v.requestId }}</code>
+        }
+        <div alert-actions>
+          <button app-button variant="outline" size="sm" type="button" data-testid="red-panel-volver" (clicked)="volver.emit()">Volver a la red</button>
+        </div>
+      </app-alert>
+    }
   }
   @case ('offline') {
     <app-alert tone="warning" title="Sin conexión" data-testid="red-panel-informe-error">

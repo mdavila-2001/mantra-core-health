@@ -1,4 +1,5 @@
 // Part 2, agent C — M5: the step notice offers «Quitar filtros».
+// Part 3, agent I: the value is read from the trigger, and the notice must name the thread filter.
 // Usage: BASE=http://localhost:4371 node captura-c-m5.cjs <out-dir>   (demo build, configuration development,demo)
 // Never `networkidle`: waits are on test ids. The step flow is the one of visual batch 3.
 const { chromium } = require('/opt/node-tools/node_modules/playwright');
@@ -20,7 +21,12 @@ async function m5(b, ancho, tema) {
   // A 2026 thread filter while the tour narrates the whole history from 2025.
   await p.getByTestId('red-filtro-hilo').click();
   await p.getByRole('option', { name: /^Trastorno de ansiedad/ }).first().click();
-  const hiloAntes = (await p.getByTestId('red-filtro-hilo').textContent()).replace(/\s+/g, ' ').trim();
+  // Only the trigger's shown value (`.select-value`), not the whole listbox's text.
+  const valorDelHilo = async () => (await p.getByTestId('red-filtro-hilo').locator('.select-value').textContent()).replace(/\s+/g, ' ').trim();
+  // The trigger repaints after the dialog closes: wait for the chosen value, do not read the old one.
+  await p.getByTestId('red-filtro-hilo').locator('.select-value').filter({ hasText: /Trastorno de ansiedad/ }).waitFor({ timeout: 10000 }).catch(() => {});
+  const hiloAntes = await valorDelHilo();
+  afirmar(/^Trastorno de ansiedad/.test(hiloAntes), `${pref}: el filtro del hilo muestra el diagnóstico elegido (${hiloAntes})`);
   await p.getByTestId('red-guiado-alternar').click();
   await p.getByTestId('red-guiado-episodio').click();
   await p.getByRole('option', { name: /^Toda la historia/ }).first().click();
@@ -33,6 +39,8 @@ async function m5(b, ancho, tema) {
     if (await nota.waitFor({ timeout: 1500 }).then(() => true, () => false)) break;
     await p.getByTestId('guiado-siguiente').click();
   }
+  const aviso = ((await nota.textContent()) ?? '').replace(/\s+/g, ' ').trim();
+  afirmar(aviso.includes(`con este filtro: el hilo de ${hiloAntes}`) && !aviso.includes('los filtros puestos'), `${pref}: el aviso nombra el filtro activo («${aviso}»)`);
   const quitar = p.getByTestId('red-guiado-quitar-filtros');
   afirmar(await quitar.isVisible(), `${pref}: el aviso de paso ofrece «${((await quitar.textContent().catch(() => '')) ?? '').trim()}» (filtro: ${hiloAntes})`);
   await nota.scrollIntoViewIfNeeded();
@@ -41,8 +49,9 @@ async function m5(b, ancho, tema) {
 
   await quitar.click();
   await nota.waitFor({ state: 'detached', timeout: 10000 });
-  const hiloDespues = (await p.getByTestId('red-filtro-hilo').textContent()).replace(/\s+/g, ' ').trim();
-  afirmar(hiloDespues !== hiloAntes, `${pref}: «Quitar filtros» limpia el filtro (${hiloAntes} → ${hiloDespues})`);
+  await p.getByTestId('red-filtro-hilo').locator('.select-value').filter({ hasText: 'Toda la historia' }).waitFor({ timeout: 10000 }).catch(() => {});
+  const hiloDespues = await valorDelHilo();
+  afirmar(hiloDespues === 'Toda la historia' && hiloDespues !== hiloAntes, `${pref}: «Quitar filtros» limpia el filtro (${hiloAntes} → ${hiloDespues})`);
   afirmar((await contador.textContent()).trim() === paso, `${pref}: el recorrido sigue en el mismo paso (${paso})`);
   const foco = await p.evaluate(() => document.activeElement?.getAttribute('data-testid') ?? document.activeElement?.tagName);
   afirmar(foco !== 'BODY', `${pref}: el foco no se pierde al desaparecer el botón (${foco})`);
@@ -54,7 +63,7 @@ async function m5(b, ancho, tema) {
   // Leaving the guided mode does not bring back the filters removed on purpose.
   await p.getByTestId('red-guiado-alternar').click();
   await p.getByTestId('red-guiado').waitFor({ state: 'detached' });
-  const hiloAlSalir = (await p.getByTestId('red-filtro-hilo').textContent()).replace(/\s+/g, ' ').trim();
+  const hiloAlSalir = await valorDelHilo();
   afirmar(hiloAlSalir === hiloDespues, `${pref}: al salir del paso a paso el filtro sigue quitado (${hiloAlSalir})`);
   await ctx.close();
 }

@@ -7,10 +7,17 @@ import { Alert } from '../../../../../../shared/components/molecules/alert/alert
 
 /**
  * The M34 states of reading a released report in the panel (everything but
- * `ready`, which the panel draws itself). A 429/412/409 arrives as
- * `validation` (`errorToViewState`): it says what the server answered, how
- * long to wait if it asked to (`retryAfterSeconds`) and offers a retry. A
- * 403 or 404 has nothing to retry: it offers going back to the network.
+ * `ready`, which the panel draws itself). S4 (`validation`, ADR-0005) is
+ * split by the error `code`, never by its message:
+ *
+ * - a rate limit (429, `RATE_LIMITED`) says how long to wait and offers a
+ *   retry: after the wait the same read is worth repeating;
+ * - any other rejection (422, 409, 412) gets a text of its own context: the
+ *   server's message speaks of whatever it validated, not of this report, and
+ *   repeating the same read would be rejected again. No retry: the support
+ *   code and «Volver a la red».
+ *
+ * A 403 or 404 has nothing to retry either: it offers going back to the network.
  *
  * ```html
  * <app-red-clinica-informe-estado [estado]="lectura.estado" (reintentar)="releer()" />
@@ -26,16 +33,15 @@ import { Alert } from '../../../../../../shared/components/molecules/alert/alert
 export class RedClinicaInformeEstado {
   readonly estado = input.required<ViewState<unknown>>();
   readonly reintentar = output<void>();
-  /** «Volver a la red» (403, 404): the panel closes and the focus returns to the node. */
+  /** «Volver a la red» (403, 404, a rejected read): the panel closes and the focus returns to the node. */
   readonly volver = output<void>();
 
   /** The loading skeleton's rows: the table header and three values. */
   protected readonly filas = [0, 1, 2, 3];
 
-  /** The server's messages, joined; a generic one when it sent none. */
-  protected readonly mensajes = computed(() => {
+  /** S4 from a rate limit: the only rejection worth retrying, once the wait is over. */
+  protected readonly limitado = computed(() => {
     const e = this.estado();
-    if (e.status !== 'validation') return '';
-    return e.issues.map((i) => i.message).join(' ') || 'El servidor no pudo atender la lectura ahora.';
+    return e.status === 'validation' && (e.retryAfterSeconds !== undefined || e.issues.some((i) => i.code === 'RATE_LIMITED'));
   });
 }

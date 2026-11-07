@@ -14,6 +14,7 @@ import {
   resultadosFueraDeRango,
 } from './red-clinica-alertas';
 import { derivacionesAbiertas, estudiosSinResultado, presuntivosSinResolver } from './red-clinica-alertas.pendientes';
+import { antiguedadExacta } from './red-clinica-alertas.plazos';
 import { type EntradaDeAlertas } from './red-clinica-alertas.types';
 
 const ahora = new Date(2026, 10, 6, 10);
@@ -60,12 +61,20 @@ describe('utilidades', () => {
     expect(diasEntre(new Date(ahora.getTime() + 1e9), ahora)).toBe(0);
   });
 
-  it('antigüedad en palabras', () => {
+  it('antigüedad en palabras: cifra y unidad unidas por un espacio no separable en todas las ramas', () => {
     expect(antiguedad(0)).toBe('hoy');
-    expect(antiguedad(1)).toBe('hace 1 día');
-    expect(antiguedad(45)).toBe('hace 45 días');
-    expect(antiguedad(95)).toBe('hace 3 meses (95\u00a0días)');
-    expect(antiguedad(470)).not.toContain('470 días');
+    expect(antiguedad(1)).toBe('hace 1\u00a0día');
+    expect(antiguedad(45)).toBe('hace 45\u00a0días');
+    expect(antiguedad(95)).toBe('hace 3\u00a0meses');
+    // From 60 days the months alone: the exact days are not repeated in brackets.
+    expect(antiguedad(540)).toBe('hace 18\u00a0meses');
+    expect(antiguedad(540)).not.toMatch(/\d\s*días/);
+    for (const dias of [1, 14, 59, 60, 540]) expect(antiguedad(dias)).not.toMatch(/\d +[a-zí]/);
+  });
+
+  it('los días exactos, sólo cuando la antigüedad se redondeó a meses', () => {
+    expect(antiguedadExacta(59)).toBeNull();
+    expect(antiguedadExacta(540)).toBe('540\u00a0días');
   });
 });
 
@@ -85,7 +94,7 @@ describe('presuntivosSinResolver', () => {
       ['c', 'alta', 50],
     ]);
     expect(alertas[1].titulo).toBe('Presuntivo sin resolver: Concepto c');
-    expect(alertas[1].detalle).toContain('hace 20 días');
+    expect(alertas[1].detalle).toContain('hace 20\u00a0días');
     expect(alertas[1].detalle).toContain('Sin estudios pedidos');
   });
 
@@ -153,7 +162,7 @@ describe('estudiosSinResultado', () => {
     });
     expect(alertas).toHaveLength(1);
     expect(alertas[0].prioridad).toBe('media');
-    expect(alertas[0].detalle).toContain('hace 9 días');
+    expect(alertas[0].detalle).toContain('hace 9\u00a0días');
     expect(alertas[0].detalle).toContain('Aún no hay informe');
   });
 
@@ -235,7 +244,7 @@ describe('derivacionesAbiertas', () => {
       ],
     });
     expect(alerta.tipo).toBe('derivacion-sin-contrarreferencia');
-    expect(alerta.detalle).toContain('llegó hace 30 días');
+    expect(alerta.detalle).toContain('llegó hace 30\u00a0días');
     expect(alerta.nodoIds).toEqual(['r', 'enc-destino']);
     expect(alerta.prioridad).toBe('media');
   });

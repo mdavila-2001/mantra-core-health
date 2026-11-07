@@ -151,11 +151,27 @@
       }
     }
   } @else {
-    <p class="panel__pendiente" data-testid="red-panel-sin-resultado">
-      Sin resultado liberado todavía
-      @if (pedidoHace() !== null) {
-        · pedido {{ pedidoHace() }}
-      }
-    </p>
+    <!-- S3 with its next action: what to wait for and where the order's state is. -->
+    <div class="panel__sin-resultado">
+      <p class="panel__pendiente" data-testid="red-panel-sin-resultado">
+        Sin resultado liberado todavía
+        @if (pedidoHace() !== null) {
+          · pedido <span [attr.title]="pedidoHaceExacto()">{{ pedidoHace() }}</span>
+        }
+      </p>
+      <p class="panel__tenue" data-testid="red-panel-sin-resultado-ayuda">
+        Los valores aparecen aquí cuando el laboratorio libere el informe.
+      </p>
+      <div class="panel__sin-resultado-acciones">
+        @if (accionDelPedido(); as a) {
+          <button app-button variant="outline" size="sm" type="button" data-testid="red-panel-sin-resultado-accion" (clicked)="elegir.emit(a.nodoId)">
+            {{ a.etiqueta }}
+          </button>
+        }
+        @if (accionPendiente(); as accion) {
+          <ng-container *ngTemplateOutlet="accion" />
+        }
+      </div>
+    </div>
   }
 </section>
