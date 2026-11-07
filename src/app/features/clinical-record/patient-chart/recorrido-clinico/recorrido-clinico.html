@@ -26,18 +26,6 @@
         Contraer todo
       </button>
     </div>
-    @if (!angosto()) {
-      <div class="red__saltos">
-        <button app-button variant="ghost" size="sm" type="button" (clicked)="irA('inicio')">
-          <app-nav-icon name="arrow-left" />
-          Lo más antiguo
-        </button>
-        <button app-button variant="ghost" size="sm" type="button" (clicked)="irA('final')">
-          Lo más reciente
-          <app-nav-icon name="arrow-right" />
-        </button>
-      </div>
-    }
   </div>
 
   <!-- The legend names each kind of line on screen, and the collapsed strip's
@@ -86,176 +74,190 @@
       }
     </ol>
   } @else {
-    <!-- The horizontal scroll lives in here and never on the page. -->
-    <div
-      #lienzo
-      class="red__lienzo"
-      role="region"
-      aria-label="Recorrido clínico por episodios, de lo más antiguo a lo más reciente"
-      tabindex="0"
-    >
-      <div class="red__plano" [style.width.px]="plano().ancho" [style.height.px]="plano().alto">
-        <!-- The axis: one mark per moment, with its date. Each node also says
-             it in its accessible name. -->
-        <ol class="red__eje" aria-hidden="true">
-          @for (columna of plano().columnas; track columna.clave) {
-            <li
-              class="red__columna"
-              [class.red__columna--angosta]="!columna.ancha"
-              [style.left.px]="columna.x"
-              [style.width.px]="columna.ancho"
-              [style.height.px]="medidas.altoEje"
-              [attr.title]="columna.intervalo === '' ? null : '+ ' + columna.intervalo"
-            >
-              @let mismoDia = columna.intervalo === 'el mismo día';
-              @if (columna.ancha && columna.intervalo !== '' && !mismoDia && columna.hueco >= 56) {
-                <span class="red__intervalo" [style.inset-inline-start.px]="-columna.hueco / 2">+ {{ columna.intervalo }}</span>
-              }
-              @if (columna.ancha) {
-                <!-- A second column on the same day does not repeat the date. -->
-                <p class="red__fecha">{{ mismoDia ? 'Mismo día' : columna.fecha ? (columna.fecha | date: 'd MMM y') : 'Sin fecha' }}</p>
-                <p class="red__contexto">{{ contextoDe(columna) }}</p>
-              } @else {
-                <p class="red__fecha red__fecha--corta">{{ mismoDia ? 'Mismo' : columna.fecha ? (columna.fecha | date: 'd MMM') : '—' }}</p>
-                <p class="red__contexto">{{ mismoDia ? 'día' : columna.fecha ? (columna.fecha | date: 'y') : 'Sin fecha' }}</p>
-              }
-              <span class="red__marca-eje" [class.red__marca-eje--atencion]="columna.contexto === 'atencion'"></span>
-            </li>
-          }
-        </ol>
-
-        <!-- The threads: one band per episode. Each one's button folds and
-             unfolds it; its records follow in chronological order. -->
-        <ol class="red__hilos">
-          @for (hilo of plano().hilos; track hilo.episodio.id) {
-            <li
-              class="red__hilo"
-              [class.red__hilo--desplegado]="hilo.desplegado"
-              [class.red__hilo--resaltado]="hiloResaltado(hilo.episodio)"
-              [class.red__hilo--sin-diagnostico]="hilo.episodio.clase === 'sin-diagnostico'"
-              [style.top.px]="hilo.y"
-              [style.height.px]="hilo.alto"
-              data-testid="red-hilo"
-              [attr.data-episodio]="hilo.episodio.id"
-            >
-              <div
-                app-red-cabecera
-                class="red__cabecera-hilo"
-                [style.height.px]="medidas.altoCabeceraHilo"
-                [hilo]="hilo"
-                (alternar)="alternarEpisodio($event)"
-              ></div>
-              @if (!hilo.desplegado) {
-                @let f = fuera().hilos.get(hilo.episodio.id);
-                @if (f && f.antes > 0) {
-                  <button type="button" class="red__fuera" data-testid="red-fuera" [style.top.px]="hilo.yPista - hilo.y" [style.left.px]="fuera().desde + 8" (click)="verHitos(hilo)" [attr.aria-label]="'Ver ' + f.antes + (f.antes === 1 ? ' marca de ' : ' marcas de ') + hilo.episodio.nombre + (f.antes === 1 ? ' anterior' : ' anteriores') + ' a lo visible'">← {{ f.antes }} antes</button>
+    <!-- The horizontal scroll lives in here and never on the page. Each edge
+         with content out of view fades and offers to go there (after the
+         canvas: above its nodes and lines, below the sticky headers). -->
+    <div class="red__marco">
+      <div
+        #lienzo
+        class="red__lienzo"
+        role="region"
+        aria-label="Recorrido clínico por episodios, de lo más antiguo a lo más reciente"
+        tabindex="0"
+      >
+        <div class="red__plano" [style.width.px]="plano().ancho" [style.height.px]="plano().alto">
+          <!-- The axis: one mark per moment, with its date. Each node also says
+               it in its accessible name. -->
+          <ol class="red__eje" aria-hidden="true">
+            @for (columna of plano().columnas; track columna.clave) {
+              <li
+                class="red__columna"
+                [class.red__columna--angosta]="!columna.ancha"
+                [style.left.px]="columna.x"
+                [style.width.px]="columna.ancho"
+                [style.height.px]="medidas.altoEje"
+                [attr.title]="columna.intervalo === '' ? null : '+ ' + columna.intervalo"
+              >
+                @let mismoDia = columna.intervalo === 'el mismo día';
+                @if (columna.ancha && columna.intervalo !== '' && !mismoDia && columna.hueco >= 56) {
+                  <span class="red__intervalo" [style.inset-inline-start.px]="-columna.hueco / 2">+ {{ columna.intervalo }}</span>
                 }
-                @if (f && f.despues > 0) {
-                  <button type="button" class="red__fuera red__fuera--despues" data-testid="red-fuera" [style.top.px]="hilo.yPista - hilo.y" [style.left.px]="fuera().hasta - 8" (click)="verHitos(hilo)" [attr.aria-label]="'Ver ' + f.despues + (f.despues === 1 ? ' marca de ' : ' marcas de ') + hilo.episodio.nombre + (f.despues === 1 ? ' posterior' : ' posteriores') + ' a lo visible'">{{ f.despues }} después →</button>
+                @if (columna.ancha) {
+                  <!-- A second column on the same day names the day and says it repeats. -->
+                  <p class="red__fecha">{{ columna.fecha ? (columna.fecha | date: (mismoDia ? 'd MMM' : 'd MMM y')) : 'Sin fecha' }}</p>
+                  <p class="red__contexto">{{ mismoDia ? 'Mismo día · ' : '' }}{{ contextoDe(columna) }}</p>
+                } @else {
+                  <p class="red__fecha red__fecha--corta">{{ columna.fecha ? (columna.fecha | date: 'd MMM') : '—' }}</p>
+                  <p class="red__contexto">{{ mismoDia ? 'mismo día' : columna.fecha ? (columna.fecha | date: 'y') : 'Sin fecha' }}</p>
                 }
-                @if (hilo.hitos.length > 1) {
-                  <span
-                    class="red__pista"
-                    aria-hidden="true"
-                    [style.top.px]="hilo.yPista - hilo.y"
-                    [style.left.px]="hilo.hitos[0].x"
-                    [style.width.px]="hilo.hitos[hilo.hitos.length - 1].x - hilo.hitos[0].x"
-                  ></span>
-                }
-                @for (hito of hilo.hitos; track hito.columna) {
-                  <span
-                    class="red__hito"
-                    [class]="'red__hito red__hito--' + hito.tipo"
-                    aria-hidden="true"
-                    [style.top.px]="hilo.yPista - hilo.y"
-                    [style.left.px]="hito.x"
-                    [attr.title]="tituloDelHito(hito.titulos)"
-                    data-testid="red-hito"
-                    [attr.data-tipo]="hito.tipo"
-                  ></span>
-                }
-              } @else {
-                <ul class="red__nodos" [attr.id]="'red-' + hilo.episodio.id">
-                  @for (nodo of nodosDelHilo(hilo); track nodo.id) {
-                    <li>
-                      <ng-container
-                        [ngTemplateOutlet]="plantillaDelNodo"
-                        [ngTemplateOutletContext]="{
-                          $implicit: nodo,
-                          columna: plano().columnas[nodo.columna],
-                          vertical: false,
-                          hilo: hilo,
-                        }"
-                      />
-                    </li>
-                  }
-                </ul>
-              }
-            </li>
-          }
-        </ol>
-
-        <!-- The lines, above the bands and below the nodes. -->
-        <svg
-          class="red__trazos"
-          [attr.width]="plano().ancho"
-          [attr.height]="plano().alto"
-          [attr.viewBox]="'0 0 ' + plano().ancho + ' ' + plano().alto"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <defs>
-            <marker id="red-punta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path class="red__punta" d="M 0 0 L 10 5 L 0 10 Z" />
-            </marker>
-            <marker id="red-punta-inferido" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path class="red__punta red__punta--inferido" d="M 0 0 L 10 5 L 0 10 Z" />
-            </marker>
-          </defs>
-          @if (plano().columnas.length > 1) {
-            <line
-              class="red__linea-eje"
-              [attr.x1]="plano().columnas[0].x + plano().columnas[0].ancho / 2"
-              [attr.x2]="plano().columnas[plano().columnas.length - 1].x + plano().columnas[plano().columnas.length - 1].ancho / 2"
-              [attr.y1]="medidas.altoEje - 14"
-              [attr.y2]="medidas.altoEje - 14"
-            />
-          }
-          @for (arista of plano().aristas; track arista.clave) {
-            @if (arista.familia === 'enlace') {
-              <path class="red__halo" [class.red__arista--atenuada]="aristaAtenuada(arista.clave)" [attr.d]="arista.trazo" />
+                <span class="red__marca-eje" [class.red__marca-eje--atencion]="columna.contexto === 'atencion'"></span>
+              </li>
             }
-            <path
-              class="red__arista"
-              [class.red__arista--tronco]="arista.familia === 'tronco'"
-              [class.red__arista--enlace]="arista.familia === 'enlace' && !arista.inferido"
-              [class.red__arista--inferido]="arista.inferido"
-              [class.red__arista--iluminada]="iluminada(arista.clave)"
-              [class.red__arista--atenuada]="aristaAtenuada(arista.clave)"
-              [attr.d]="arista.trazo"
-              [attr.data-motivo]="arista.motivo"
-              [attr.marker-end]="arista.familia === 'enlace' ? (arista.inferido ? 'url(#red-punta-inferido)' : 'url(#red-punta)') : null"
-            />
-          }
-        </svg>
+          </ol>
 
-        <!-- The word «inferido» on each deduced link: the dotted line alone
-             would be a code to guess. -->
-        @for (arista of plano().aristas; track arista.clave) {
-          @if (arista.etiqueta; as etiqueta) {
-            <span
-              class="red__etiqueta-inferido"
-              [class.red__etiqueta-inferido--vertical]="etiqueta.vertical"
-              [class.red__arista--atenuada]="aristaAtenuada(arista.clave)"
-              [style.left.px]="etiqueta.x"
-              [style.top.px]="etiqueta.y"
-              aria-hidden="true"
-              data-testid="red-inferido"
-              >inferido</span
-            >
+          <!-- The threads: one band per episode. Each one's button folds and
+               unfolds it; its records follow in chronological order. -->
+          <ol class="red__hilos">
+            @for (hilo of plano().hilos; track hilo.episodio.id) {
+              <li
+                class="red__hilo"
+                [class.red__hilo--desplegado]="hilo.desplegado"
+                [class.red__hilo--resaltado]="hiloResaltado(hilo.episodio)"
+                [class.red__hilo--sin-diagnostico]="hilo.episodio.clase === 'sin-diagnostico'"
+                [style.top.px]="hilo.y"
+                [style.height.px]="hilo.alto"
+                data-testid="red-hilo"
+                [attr.data-episodio]="hilo.episodio.id"
+              >
+                <div
+                  app-red-cabecera
+                  class="red__cabecera-hilo"
+                  [style.height.px]="medidas.altoCabeceraHilo"
+                  [hilo]="hilo"
+                  (alternar)="alternarEpisodio($event)"
+                ></div>
+                @if (!hilo.desplegado) {
+                  @let f = fuera().hilos.get(hilo.episodio.id);
+                  @if (f && f.antes > 0) {
+                    <button type="button" class="red__fuera" data-testid="red-fuera" [style.top.px]="hilo.yPista - hilo.y" [style.left.px]="fuera().desde + 8" (click)="verHitos(hilo)" [attr.aria-label]="'Ver ' + f.antes + (f.antes === 1 ? ' marca de ' : ' marcas de ') + hilo.episodio.nombre + (f.antes === 1 ? ' anterior' : ' anteriores') + ' a lo visible'">← {{ f.antes }} antes</button>
+                  }
+                  @if (f && f.despues > 0) {
+                    <button type="button" class="red__fuera red__fuera--despues" data-testid="red-fuera" [style.top.px]="hilo.yPista - hilo.y" [style.left.px]="fuera().hasta - 8" (click)="verHitos(hilo)" [attr.aria-label]="'Ver ' + f.despues + (f.despues === 1 ? ' marca de ' : ' marcas de ') + hilo.episodio.nombre + (f.despues === 1 ? ' posterior' : ' posteriores') + ' a lo visible'">{{ f.despues }} después →</button>
+                  }
+                  @if (hilo.hitos.length > 1) {
+                    <span
+                      class="red__pista"
+                      aria-hidden="true"
+                      [style.top.px]="hilo.yPista - hilo.y"
+                      [style.left.px]="hilo.hitos[0].x"
+                      [style.width.px]="hilo.hitos[hilo.hitos.length - 1].x - hilo.hitos[0].x"
+                    ></span>
+                  }
+                  @for (hito of hilo.hitos; track hito.columna) {
+                    <span
+                      class="red__hito"
+                      [class]="'red__hito red__hito--' + hito.tipo"
+                      aria-hidden="true"
+                      [style.top.px]="hilo.yPista - hilo.y"
+                      [style.left.px]="hito.x"
+                      [attr.title]="tituloDelHito(hito.titulos)"
+                      data-testid="red-hito"
+                      [attr.data-tipo]="hito.tipo"
+                    ></span>
+                  }
+                } @else {
+                  <ul class="red__nodos" [attr.id]="'red-' + hilo.episodio.id">
+                    @for (nodo of nodosDelHilo(hilo); track nodo.id) {
+                      <li>
+                        <ng-container
+                          [ngTemplateOutlet]="plantillaDelNodo"
+                          [ngTemplateOutletContext]="{
+                            $implicit: nodo,
+                            columna: plano().columnas[nodo.columna],
+                            vertical: false,
+                            hilo: hilo,
+                          }"
+                        />
+                      </li>
+                    }
+                  </ul>
+                }
+              </li>
+            }
+          </ol>
+
+          <!-- The lines, above the bands and below the nodes. -->
+          <svg
+            class="red__trazos"
+            [attr.width]="plano().ancho"
+            [attr.height]="plano().alto"
+            [attr.viewBox]="'0 0 ' + plano().ancho + ' ' + plano().alto"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <defs>
+              <marker id="red-punta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path class="red__punta" d="M 0 0 L 10 5 L 0 10 Z" />
+              </marker>
+              <marker id="red-punta-inferido" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path class="red__punta red__punta--inferido" d="M 0 0 L 10 5 L 0 10 Z" />
+              </marker>
+            </defs>
+            @if (plano().columnas.length > 1) {
+              <line
+                class="red__linea-eje"
+                [attr.x1]="plano().columnas[0].x + plano().columnas[0].ancho / 2"
+                [attr.x2]="plano().columnas[plano().columnas.length - 1].x + plano().columnas[plano().columnas.length - 1].ancho / 2"
+                [attr.y1]="medidas.altoEje - 14"
+                [attr.y2]="medidas.altoEje - 14"
+              />
+            }
+            @for (arista of plano().aristas; track arista.clave) {
+              @if (arista.familia === 'enlace') {
+                <path class="red__halo" [class.red__arista--atenuada]="aristaAtenuada(arista.clave)" [attr.d]="arista.trazo" />
+              }
+              <path
+                class="red__arista"
+                [class.red__arista--tronco]="arista.familia === 'tronco'"
+                [class.red__arista--enlace]="arista.familia === 'enlace' && !arista.inferido"
+                [class.red__arista--inferido]="arista.inferido"
+                [class.red__arista--iluminada]="iluminada(arista.clave)"
+                [class.red__arista--atenuada]="aristaAtenuada(arista.clave)"
+                [attr.d]="arista.trazo"
+                [attr.data-motivo]="arista.motivo"
+                [attr.marker-end]="arista.familia === 'enlace' ? (arista.inferido ? 'url(#red-punta-inferido)' : 'url(#red-punta)') : null"
+              />
+            }
+          </svg>
+
+          <!-- The word «inferido» on each deduced link: the dotted line alone
+               would be a code to guess. -->
+          @for (arista of plano().aristas; track arista.clave) {
+            @if (arista.etiqueta; as etiqueta) {
+              <span
+                class="red__etiqueta-inferido"
+                [class.red__etiqueta-inferido--vertical]="etiqueta.vertical"
+                [class.red__arista--atenuada]="aristaAtenuada(arista.clave)"
+                [style.left.px]="etiqueta.x"
+                [style.top.px]="etiqueta.y"
+                aria-hidden="true"
+                data-testid="red-inferido"
+                >inferido</span
+              >
+            }
           }
-        }
+        </div>
       </div>
+      @if (fuera().desde > 1) {
+        <div class="red__borde red__borde--inicio" data-testid="red-borde-inicio">
+          <button app-button variant="secondary" size="sm" type="button" (clicked)="irA('inicio')"><app-nav-icon name="arrow-left" />Lo más antiguo</button>
+        </div>
+      }
+      @if (fuera().hasta < plano().ancho - 1) {
+        <div class="red__borde red__borde--final" data-testid="red-borde-final">
+          <button app-button variant="secondary" size="sm" type="button" (clicked)="irA('final')">Lo más reciente<app-nav-icon name="arrow-right" /></button>
+        </div>
+      }
     </div>
   }
 </div>

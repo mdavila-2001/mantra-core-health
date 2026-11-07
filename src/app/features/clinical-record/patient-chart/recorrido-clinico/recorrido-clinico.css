@@ -31,16 +31,10 @@
   gap: var(--sp-3) var(--sp-6);
 }
 
-.red__acciones,
-.red__saltos {
+.red__acciones {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-1);
-}
-
-.red__saltos app-nav-icon {
-  inline-size: 16px;
-  block-size: 16px;
 }
 
 .red__leyenda {
@@ -55,7 +49,11 @@
   color: var(--text-secondary);
 }
 
-/* -- The canvas -------------------------------------------------------------- */
+/* -- The canvas (its edge fades live in `red-clinica-trazos.css`) ----------- */
+.red__marco {
+  position: relative;
+  min-inline-size: 0;
+}
 
 .red__lienzo {
   position: relative;
@@ -213,6 +211,8 @@
   background: var(--bg-surface);
   border: 1px dashed var(--border-strong);
   border-radius: var(--r-full);
+  /* A ring in the canvas color keeps the track line clear of the chip. */
+  box-shadow: 0 0 0 var(--sp-1) var(--bg-inset);
   white-space: nowrap;
   cursor: pointer;
 }

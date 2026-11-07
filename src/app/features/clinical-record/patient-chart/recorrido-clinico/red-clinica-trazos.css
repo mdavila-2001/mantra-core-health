@@ -4,6 +4,58 @@
     the same marks.
     ========================================================================== */
 
+/* -- The canvas edges: content out of view fades and offers a jump --------- */
+
+.red__borde {
+  position: absolute;
+  z-index: 2;
+  inset-block: 1px;
+  inline-size: var(--sp-12);
+  pointer-events: none;
+}
+
+.red__borde--inicio {
+  inset-inline-start: 1px;
+  border-start-start-radius: var(--r-md);
+  border-end-start-radius: var(--r-md);
+  background: linear-gradient(to right, var(--bg-inset) 20%, transparent);
+}
+
+.red__borde--final {
+  inset-inline-end: 1px;
+  border-start-end-radius: var(--r-md);
+  border-end-end-radius: var(--r-md);
+  background: linear-gradient(to left, var(--bg-inset) 20%, transparent);
+}
+
+.red__borde > button {
+  position: absolute;
+  /* On the axis line (`altoEje` - 14 in the geometry): over the marks, never
+     over a date label. Opaque, so the line does not run through it. */
+  inset-block-start: 62px;
+  translate: 0 -50%;
+  --_btn-bg: var(--bg-surface);
+  /* 28 px tall: it fits between the context line and the threads. */
+  --_btn-side: 28px;
+  block-size: 28px;
+  padding-block: var(--sp-1);
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+.red__borde--inicio > button {
+  inset-inline-start: var(--sp-2);
+}
+
+.red__borde--final > button {
+  inset-inline-end: var(--sp-2);
+}
+
+.red__borde app-nav-icon {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
 /* -- The collapsed strip: track and milestones -------------------------------- */
 
 .red__pista {
