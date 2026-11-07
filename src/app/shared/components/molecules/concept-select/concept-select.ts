@@ -106,16 +106,24 @@ export class ConceptSelect {
    */
   readonly clearable = input(true);
 
+  /**
+   * Filtra las opciones por su código estable. Sirve cuando el contexto limita el catálogo
+   * (p. ej. las muestras que admite el tipo de análisis). Sin filtro se ofrecen todas.
+   */
+  readonly accept = input<((code: string) => boolean) | null>(null);
+
   private readonly opcionesCrudas = signal<readonly DynamicEnumOption[]>([]);
   protected readonly cargando = signal(false);
   protected readonly fallo = signal(false);
 
   protected readonly opciones = computed<readonly SelectOption<string>[]>(() => [
     ...(this.clearable() ? [{ value: '', label: this.placeholder() }] : []),
-    ...this.opcionesCrudas().map((opcion) => ({
-      value: this.valueField() === 'code' ? opcion.code : opcion.conceptId,
-      label: this.labels()[opcion.code] ?? opcion.displayEs ?? opcion.display,
-    })),
+    ...this.opcionesCrudas()
+      .filter((opcion) => this.accept()?.(opcion.code) ?? true)
+      .map((opcion) => ({
+        value: this.valueField() === 'code' ? opcion.code : opcion.conceptId,
+        label: this.labels()[opcion.code] ?? opcion.displayEs ?? opcion.display,
+      })),
   ]);
 
   /**

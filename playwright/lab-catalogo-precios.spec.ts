@@ -6,6 +6,7 @@
  * 1. «Agregar del catálogo» leads to the catalog, grouped by sample type (blood,
  *    urine…) and filtered to urine; the Hemograma is added with its
  *    components and, after reloading, says it is already in the price list;
+ *    with one component unticked, which is then not offered at all;
  * 2. «Precios» shows the panel with its components under it, and the component
  *    that came without a suggested price waits as «Falta el precio»;
  * 3. its first price is typed and saved, and it is still there after reloading;
@@ -41,7 +42,12 @@ test('el laboratorio agrega el Hemograma del catálogo y le pone precio a un com
   const hemograma = page.locator('[data-testid="lab-catalog-item"][data-code="HEMOGRAMA"]');
   await expect(hemograma).toBeVisible();
   await hemograma.locator('summary').click();
-  await hemograma.locator('app-checkbox').click();
+  // Every component starts ticked; the lab unticks the ones it does not offer.
+  const partes = hemograma.getByTestId('lab-catalog-part');
+  await expect(partes.getByRole('checkbox', { checked: true })).toHaveCount(6);
+  await partes.filter({ hasText: 'Hematocrito' }).locator('app-checkbox').click();
+  await expect(hemograma).toContainText('Sus componentes: 5 de 6 elegidos');
+  await hemograma.locator('app-checkbox').first().click();
   await page.getByTestId('lab-catalog-add').click();
   await expect(page.getByTestId('lab-catalog-result')).toContainText('agreg');
 
@@ -54,6 +60,8 @@ test('el laboratorio agrega el Hemograma del catálogo y le pone precio a un com
   await page.getByRole('textbox', { name: 'Buscar un servicio' }).fill('hemograma');
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('lab-prices-price-HEMOGRAMA.VCM')).toBeVisible();
+  // The unticked component was never made a service: it is not in the price list.
+  await expect(page.getByTestId('lab-prices-price-HEMOGRAMA.HTO')).toHaveCount(0);
   await expect(page.locator('.price-table__of').first()).toContainText('Componente de');
   await expect(page.getByText('Falta el precio').first()).toBeVisible();
 

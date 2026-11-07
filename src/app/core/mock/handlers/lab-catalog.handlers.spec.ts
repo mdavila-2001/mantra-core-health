@@ -67,6 +67,26 @@ describe('handlers del catálogo de análisis del laboratorio', () => {
     expect(offered.offeredServiceId).toBe(panel.id);
   });
 
+  it('an unticked component is not made a service, like the API', () => {
+    const catalog = cuerpo<LabCatalog>(pedir('GET', '/diagnostics/lab/catalog'));
+    const ego = catalog.sections.flatMap((s) => s.items).find((i) => i.code === 'EGO')!;
+    expect(ego.components.length).toBeGreaterThan(1);
+    const [dropped, ...kept] = ego.components;
+    const result = cuerpo<LabCatalogImportResult>(
+      pedir('POST', '/diagnostics/lab/catalog/import', {
+        conceptIds: [ego.conceptId],
+        skipComponentIds: [dropped!.conceptId],
+      }),
+    );
+    expect(result.rows[0]).toMatchObject({ outcome: 'CREATED' });
+    const services = cuerpo<{ items: LabService[] }>(
+      pedir('GET', '/diagnostics/lab/services'),
+    ).items;
+    const parts = services.filter((s) => s.parentId === result.rows[0]!.serviceId);
+    expect(parts.map((s) => s.code).sort()).toEqual(kept.map((c) => c.code).sort());
+    expect(services.some((s) => s.code === dropped!.code)).toBe(false);
+  });
+
   it('a withdrawn panel can be added again and comes back', () => {
     const catalog = cuerpo<LabCatalog>(pedir('GET', '/diagnostics/lab/catalog'));
     const lipid = catalog.sections

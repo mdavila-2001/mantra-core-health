@@ -22,7 +22,7 @@
     #tablist
     class="tabs__list"
     role="tablist"
-    [attr.aria-orientation]="orientation()"
+    [attr.aria-orientation]="orientation() === 'vertical' && !dibujadaEnFila() ? 'vertical' : 'horizontal'"
     (scroll)="medirDesborde()"
   >
     @for (tab of tabs(); track tab.panelId; let i = $index) {
