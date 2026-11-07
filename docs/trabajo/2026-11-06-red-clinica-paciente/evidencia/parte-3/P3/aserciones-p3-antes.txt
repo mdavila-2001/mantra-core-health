@@ -1,0 +1,32 @@
+     antes-390-claro superficie: contorno de «app-card.superficie», controles a 1 px de él
+FALLA antes-390-claro #16: los controles quedan a ≥ 16 px del contorno visible (1 px, de app-card.superficie)
+FALLA antes-390-claro #9: «Resultado» antes que «Pedido» (Pedido › Resultado › Vínculos (3))
+FALLA antes-390-claro #10: cada chip Alto/Bajo bajo su valor, alineado a su izquierda [{"debajo":false,"izq":64}]
+ok   antes-390-claro #10: ninguna referencia se parte (líneas: 1)
+FALLA antes-390-claro #10: cifras tabulares en la tabla (normal)
+FALLA antes-390-claro #11: el título enfocado por teclado pinta el anillo de 3 px (none)
+FALLA antes-390-claro #11: un vínculo del panel enfocado por Tab pinta el anillo ({"cls":"panel__vinculo","sombra":"none"})
+     antes-390-oscuro superficie: contorno de «app-card.superficie», controles a 1 px de él
+FALLA antes-390-oscuro #16: los controles quedan a ≥ 16 px del contorno visible (1 px, de app-card.superficie)
+FALLA antes-390-oscuro #9: «Resultado» antes que «Pedido» (Pedido › Resultado › Vínculos (3))
+FALLA antes-390-oscuro #10: cada chip Alto/Bajo bajo su valor, alineado a su izquierda [{"debajo":false,"izq":64}]
+ok   antes-390-oscuro #10: ninguna referencia se parte (líneas: 1)
+FALLA antes-390-oscuro #10: cifras tabulares en la tabla (normal)
+FALLA antes-390-oscuro #11: el título enfocado por teclado pinta el anillo de 3 px (none)
+FALLA antes-390-oscuro #11: un vínculo del panel enfocado por Tab pinta el anillo ({"cls":"panel__vinculo","sombra":"none"})
+     antes-1440-claro superficie: contorno de «app-card.superficie», controles a 17 px de él
+FALLA antes-1440-claro #9: «Resultado» antes que «Pedido» (Pedido › Resultado › Vínculos (3))
+FALLA antes-1440-claro #10: cada chip Alto/Bajo bajo su valor, alineado a su izquierda [{"debajo":false,"izq":64},{"debajo":true,"izq":8}]
+FALLA antes-1440-claro #10: ninguna referencia se parte (líneas: 1, 2)
+FALLA antes-1440-claro #10: cifras tabulares en la tabla (normal)
+FALLA antes-1440-claro #11: el título enfocado por teclado pinta el anillo de 3 px (none)
+FALLA antes-1440-claro #11: un vínculo del panel enfocado por Tab pinta el anillo ({"cls":"panel__vinculo","sombra":"none"})
+     antes-1440-oscuro superficie: contorno de «app-card.superficie», controles a 17 px de él
+FALLA antes-1440-oscuro #9: «Resultado» antes que «Pedido» (Pedido › Resultado › Vínculos (3))
+FALLA antes-1440-oscuro #10: cada chip Alto/Bajo bajo su valor, alineado a su izquierda [{"debajo":false,"izq":64},{"debajo":true,"izq":8}]
+FALLA antes-1440-oscuro #10: ninguna referencia se parte (líneas: 1, 2)
+FALLA antes-1440-oscuro #10: cifras tabulares en la tabla (normal)
+FALLA antes-1440-oscuro #11: el título enfocado por teclado pinta el anillo de 3 px (none)
+FALLA antes-1440-oscuro #11: un vínculo del panel enfocado por Tab pinta el anillo ({"cls":"panel__vinculo","sombra":"none"})
+
+antes: 24 FALLA(S)

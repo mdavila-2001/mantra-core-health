@@ -15,6 +15,8 @@ export class RedPanelRazonamiento {
   readonly d = input.required<DetalleDeDiagnostico>();
   /** «hace N días» since the node's date. */
   readonly hace = input('');
+  /** The exact days when `hace` rounded to months, for its `title`. */
+  readonly haceExacto = input<string | null>(null);
   /** Another node was chosen from the evidence or the replacement. */
   readonly elegir = output<string>();
 }

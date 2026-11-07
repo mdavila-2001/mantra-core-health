@@ -1,5 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DOCUMENT,
+  effect,
+  ElementRef,
+  inject,
+  Injector,
+  input,
+  type TemplateRef,
+  output,
+  viewChild,
+} from '@angular/core';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 
 import type { ViewState } from '../../../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../../../shared/components/atoms/button/button';
@@ -14,6 +28,7 @@ import {
   textoDelValor,
   type LecturaDeValor,
 } from '../../red-clinica-valores';
+import type { AccionDelPanel } from '../red-clinica-panel.vinculos';
 import type { ArchivoDeInforme, DetalleDeEstudio, ResultadoDeEstudio, ValorDeResultado } from '../../red-clinica.types';
 
 /** A row of the values table, already read. */
@@ -33,7 +48,7 @@ interface FilaDeValor {
  */
 @Component({
   selector: 'app-red-panel-estudio',
-  imports: [Alert, AppButton, DatePipe, NavIcon, RedClinicaInformeEstado],
+  imports: [Alert, AppButton, DatePipe, NavIcon, NgTemplateOutlet, RedClinicaInformeEstado],
   templateUrl: './red-panel-estudio.html',
   styleUrls: ['../red-clinica-panel.secciones.css', './red-panel-estudio.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,9 +65,47 @@ export class RedPanelEstudio {
   readonly descarga = input<{ readonly fileId: string; readonly estado: ViewState<null> } | null>(null);
   /** «hace N días» since the order, or `null` without a date. */
   readonly pedidoHace = input<string | null>(null);
+  /** The exact days when `pedidoHace` rounded to months, for its `title`. */
+  readonly pedidoHaceExacto = input<string | null>(null);
+  /** S3's next action without a released result: the panel's actions (e.g. «Ver el registro completo»). */
+  readonly accionPendiente = input<TemplateRef<unknown> | null>(null);
+  /** S3's own next action: open what the study was ordered for. */
+  readonly accionDelPedido = input<AccionDelPanel | null>(null);
 
   readonly releer = output<void>();
+  /** «Volver a la red» from a 403, 404 or rejected (S4) report read. */
+  readonly volver = output<void>();
   readonly abrirArchivo = output<ArchivoDeInforme>();
+  /** Another node was chosen (S3's next action). */
+  readonly elegir = output<string>();
+
+  /** The released content is drawn once the read succeeded, or when nothing is read (no patient). */
+  protected readonly exito = computed(() => {
+    const status = this.lectura()?.estado.status;
+    return status === undefined || status === 'ready';
+  });
+
+  private readonly document = inject(DOCUMENT);
+  private readonly injector = inject(Injector);
+  private readonly avisoDeDescarga = viewChild<ElementRef<HTMLElement>>('avisoDeDescarga');
+
+  constructor() {
+    // A download's outcome appears under the file buttons, often below the
+    // fold: bring it into view, without animating under reduced motion.
+    effect(() => {
+      const status = this.descarga()?.estado.status;
+      if (status === undefined || status === 'loading') return;
+      afterNextRender(
+        () => {
+          const aviso = this.avisoDeDescarga()?.nativeElement;
+          if (typeof aviso?.scrollIntoView !== 'function') return;
+          const reducido = this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true;
+          aviso.scrollIntoView({ block: 'nearest', behavior: reducido ? 'auto' : 'smooth' });
+        },
+        { injector: this.injector },
+      );
+    });
+  }
 
   protected readonly textoDeLectura = TEXTO_DE_LECTURA;
 

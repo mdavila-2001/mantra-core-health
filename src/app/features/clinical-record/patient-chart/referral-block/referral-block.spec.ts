@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { signal, type WritableSignal } from '@angular/core';
 
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -12,6 +13,7 @@ import { empty, loading, ready, stale, unexpectedError } from '../../../../core/
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ReferralBlock } from './referral-block';
+import { ReferralDetail } from './referral-detail';
 import { inFormOrder } from './referral-block.model';
 import { emptyTransferDraft, type TransferDraft } from './referral-transfer.model';
 
@@ -1128,6 +1130,36 @@ describe('ReferralBlock', () => {
       expect(host().querySelector('[data-testid="referral-list-refreshing"]')?.textContent).toContain('14:32');
       // Sin el banner de S7 por omisión, que empujaba la lista.
       expect(host().textContent).not.toContain('pueden estar atrasados');
+    });
+
+    /** Opens r-1's detail and returns the arrival encounter the dialog's `app-referral-detail` received. */
+    function arrivalGivenToDetail(): string | null {
+      member<{ open: (id: string) => void }>('detail').open('r-1');
+      http.expectOne((r) => r.url === '/referrals/r-1').flush({
+        id: 'r-1',
+        patientProfileId: 'pat-1',
+        statusConceptId: 'st-pendiente',
+        createdAt: '2026-10-20T12:00:00.000Z',
+        status: 'PENDING',
+        sourceEncounterId: 'enc-origen',
+      });
+      fixture.detectChanges();
+      const detail = fixture.debugElement.query(By.directive(ReferralDetail));
+      return (detail.componentInstance as ReferralDetail).arrivalEncounterId();
+    }
+
+    it('saber abrir un encuentro no es tener la atención de llegada: sin el input explícito no viaja ninguna', () => {
+      create('enc-1');
+      fixture.componentRef.setInput('offersOpenEncounter', true);
+      fixture.detectChanges();
+      expect(arrivalGivenToDetail()).toBeNull();
+    });
+
+    it('la atención de llegada llega al detalle sólo por su propio input', () => {
+      create('enc-1');
+      fixture.componentRef.setInput('arrivalEncounterId', 'enc-llegada');
+      fixture.detectChanges();
+      expect(arrivalGivenToDetail()).toBe('enc-llegada');
     });
 
     it('los estados que no son datos pasan tal cual al anfitrión', () => {

@@ -1,0 +1,80 @@
+medica-768-claro reposo: {"tope":61,"scrollLeft":2904,"choques":[],"saltos":["Lo más antiguo@211-239"],"primera":"4 nov / 2026","huerfanos":[],"ejeTop":228,"fechasTop":240,"lienzoTop":227,"lienzoBottom":1047,"pegado":false,"tapaChip":[],"plegados":[96,96,96,96,96,96,96],"desborde":[768,768]}
+ok   medica-768-claro: en reposo el eje está en su lugar (lienzo 227 bajo la barra 61, sin pegar)
+ok   medica-768-claro abierto al final: ningún salto pisa un punto del eje ni una fecha (Lo más antiguo@211-239) []
+ok   medica-768-claro abierto al final (scrollLeft 2904): la primera columna visible dice el año «4 nov / 2026», «mismo día» sin su día a la vista: []
+ok   medica-768-claro: el documento no desborda a lo ancho (scrollWidth 768 ≤ clientWidth 768)
+medica-768-claro: alto de cada franja plegada [96,96,96,96,96,96,96] (M-9, geometría de G)
+medica-768-claro: chips «N antes/después» tapados por las insignias de demostración: [] (L-4)
+ok   medica-768-claro: recorriendo el lienzo de 0 a 2904 px, ninguna posición con un salto sobre un punto ni una primera columna sin año []
+ok   medica-768-claro: «Lo más antiguo» con Enter deja el foco en el lienzo (DIV.red__lienzo)
+ok   medica-768-claro: orden de tabulación salto → lienzo → episodios ["salto","lienzo","red-episodio"]
+ok   medica-768-claro tras «Lo más antiguo»: ningún salto pisa un punto del eje ni una fecha (Lo más reciente@211-239) []
+ok   medica-768-claro tras «Lo más antiguo» (scrollLeft 1): la primera columna visible dice el año «15 may / 2025», «mismo día» sin su día a la vista: []
+medica-768-claro página desplazada: {"tope":61,"lienzoTop":-298,"ejeTop":79,"fechasTop":91,"pegado":true,"saltos":["Lo más antiguo@62-90","Lo más reciente@62-90"]}
+ok   medica-768-claro: el lienzo sube detrás de la barra (lienzo -298 < barra 61) y el eje queda pegado
+ok   medica-768-claro: las fechas del eje quedan debajo de la barra, no detrás (fechas 91 ≥ barra 61)
+ok   medica-768-claro: los saltos siguen al eje y no quedan bajo la barra ["Lo más antiguo@62-90","Lo más reciente@62-90"]
+ok   medica-768-claro con el eje pegado: ningún salto pisa un punto del eje ni una fecha (Lo más antiguo@62-90, Lo más reciente@62-90) []
+ok   medica-768-claro: al final del lienzo el eje se detiene dentro de él (eje 79, lienzo -298–946)
+ok   medica-768-claro: consola sin errores []
+medica-1024-claro reposo: {"tope":60,"scrollLeft":2896,"choques":[],"saltos":["Lo más antiguo@84-112"],"primera":"4 nov / 2026","huerfanos":[],"ejeTop":101,"fechasTop":113,"lienzoTop":100,"lienzoBottom":920,"pegado":false,"tapaChip":[],"plegados":[96,96,96,96,96,96,96],"desborde":[1024,1024]}
+ok   medica-1024-claro: en reposo el eje está en su lugar (lienzo 100 bajo la barra 60, sin pegar)
+ok   medica-1024-claro abierto al final: ningún salto pisa un punto del eje ni una fecha (Lo más antiguo@84-112) []
+ok   medica-1024-claro abierto al final (scrollLeft 2896): la primera columna visible dice el año «4 nov / 2026», «mismo día» sin su día a la vista: []
+ok   medica-1024-claro: el documento no desborda a lo ancho (scrollWidth 1024 ≤ clientWidth 1024)
+medica-1024-claro: alto de cada franja plegada [96,96,96,96,96,96,96] (M-9, geometría de G)
+medica-1024-claro: chips «N antes/después» tapados por las insignias de demostración: [] (L-4)
+ok   medica-1024-claro: recorriendo el lienzo de 0 a 2896 px, ninguna posición con un salto sobre un punto ni una primera columna sin año []
+ok   medica-1024-claro: «Lo más antiguo» con Enter deja el foco en el lienzo (DIV.red__lienzo)
+ok   medica-1024-claro: orden de tabulación salto → lienzo → episodios ["salto","lienzo","red-episodio"]
+ok   medica-1024-claro tras «Lo más antiguo»: ningún salto pisa un punto del eje ni una fecha (Lo más reciente@84-112) []
+ok   medica-1024-claro tras «Lo más antiguo» (scrollLeft 1): la primera columna visible dice el año «15 may / 2025», «mismo día» sin su día a la vista: []
+medica-1024-claro página desplazada: {"tope":60,"lienzoTop":-340,"ejeTop":77,"fechasTop":89,"pegado":true,"saltos":["Lo más antiguo@60-88","Lo más reciente@60-88"]}
+ok   medica-1024-claro: el lienzo sube detrás de la barra (lienzo -340 < barra 60) y el eje queda pegado
+ok   medica-1024-claro: las fechas del eje quedan debajo de la barra, no detrás (fechas 89 ≥ barra 60)
+ok   medica-1024-claro: los saltos siguen al eje y no quedan bajo la barra ["Lo más antiguo@60-88","Lo más reciente@60-88"]
+ok   medica-1024-claro con el eje pegado: ningún salto pisa un punto del eje ni una fecha (Lo más antiguo@60-88, Lo más reciente@60-88) []
+ok   medica-1024-claro: al final del lienzo el eje se detiene dentro de él (eje 77, lienzo -558–686)
+ok   medica-1024-claro: consola sin errores []
+medica-1440-claro reposo: {"tope":56,"scrollLeft":2520,"choques":[],"saltos":["Lo más antiguo@80-108"],"primera":"1 nov / 2026","huerfanos":[],"ejeTop":97,"fechasTop":109,"lienzoTop":96,"lienzoBottom":916,"pegado":false,"tapaChip":["← 9 antes","← 9 antes"],"plegados":[96,96,96,96,96,96,96],"desborde":[1440,1440]}
+ok   medica-1440-claro: en reposo el eje está en su lugar (lienzo 96 bajo la barra 56, sin pegar)
+ok   medica-1440-claro abierto al final: ningún salto pisa un punto del eje ni una fecha (Lo más antiguo@80-108) []
+ok   medica-1440-claro abierto al final (scrollLeft 2520): la primera columna visible dice el año «1 nov / 2026», «mismo día» sin su día a la vista: []
+ok   medica-1440-claro: el documento no desborda a lo ancho (scrollWidth 1440 ≤ clientWidth 1440)
+medica-1440-claro: alto de cada franja plegada [96,96,96,96,96,96,96] (M-9, geometría de G)
+medica-1440-claro: chips «N antes/después» tapados por las insignias de demostración: ["← 9 antes","← 9 antes"] (L-4)
+ok   medica-1440-claro: recorriendo el lienzo de 0 a 2520 px, ninguna posición con un salto sobre un punto ni una primera columna sin año []
+ok   medica-1440-claro: «Lo más antiguo» con Enter deja el foco en el lienzo (DIV.red__lienzo)
+ok   medica-1440-claro: orden de tabulación salto → lienzo → episodios ["salto","lienzo","red-episodio"]
+ok   medica-1440-claro tras «Lo más antiguo»: ningún salto pisa un punto del eje ni una fecha (Lo más reciente@80-108) []
+ok   medica-1440-claro tras «Lo más antiguo» (scrollLeft 0): la primera columna visible dice el año «15 may / 2025», «mismo día» sin su día a la vista: []
+medica-1440-claro página desplazada: {"tope":56,"lienzoTop":-344,"ejeTop":73,"fechasTop":85,"pegado":true,"saltos":["Lo más antiguo@56-84","Lo más reciente@56-84"]}
+ok   medica-1440-claro: el lienzo sube detrás de la barra (lienzo -344 < barra 56) y el eje queda pegado
+ok   medica-1440-claro: las fechas del eje quedan debajo de la barra, no detrás (fechas 85 ≥ barra 56)
+ok   medica-1440-claro: los saltos siguen al eje y no quedan bajo la barra ["Lo más antiguo@56-84","Lo más reciente@56-84"]
+ok   medica-1440-claro con el eje pegado: ningún salto pisa un punto del eje ni una fecha (Lo más antiguo@56-84, Lo más reciente@56-84) []
+ok   medica-1440-claro: al final del lienzo el eje se detiene dentro de él (eje 73, lienzo -450–794)
+medica-1440-claro captura completa: {"caja":{"x":305,"y":669,"width":1070,"height":1225},"desborde":[1440,1440],"dentro":true}
+ok   medica-1440-claro: la red completa entra en la página sin desborde horizontal y el recorte la contiene entera {"caja":{"x":305,"y":669,"width":1070,"height":1225},"desborde":[1440,1440],"dentro":true}
+ok   medica-1440-claro: consola sin errores []
+medica-1920-claro reposo: {"tope":56,"scrollLeft":2280,"choques":[],"saltos":["Lo más antiguo@234-262"],"primera":"13 oct / 2026","huerfanos":[],"ejeTop":251,"fechasTop":263,"lienzoTop":250,"lienzoBottom":1070,"pegado":false,"tapaChip":["← 8 antes"],"plegados":[96,96,96,96,96,96,96],"desborde":[1920,1920]}
+ok   medica-1920-claro: en reposo el eje está en su lugar (lienzo 250 bajo la barra 56, sin pegar)
+ok   medica-1920-claro abierto al final: ningún salto pisa un punto del eje ni una fecha (Lo más antiguo@234-262) []
+ok   medica-1920-claro abierto al final (scrollLeft 2280): la primera columna visible dice el año «13 oct / 2026», «mismo día» sin su día a la vista: []
+ok   medica-1920-claro: el documento no desborda a lo ancho (scrollWidth 1920 ≤ clientWidth 1920)
+medica-1920-claro: alto de cada franja plegada [96,96,96,96,96,96,96] (M-9, geometría de G)
+medica-1920-claro: chips «N antes/después» tapados por las insignias de demostración: ["← 8 antes"] (L-4)
+ok   medica-1920-claro: recorriendo el lienzo de 0 a 2280 px, ninguna posición con un salto sobre un punto ni una primera columna sin año []
+ok   medica-1920-claro: «Lo más antiguo» con Enter deja el foco en el lienzo (DIV.red__lienzo)
+ok   medica-1920-claro: orden de tabulación salto → lienzo → episodios ["salto","lienzo","red-episodio"]
+ok   medica-1920-claro tras «Lo más antiguo»: ningún salto pisa un punto del eje ni una fecha (Lo más reciente@234-262) []
+ok   medica-1920-claro tras «Lo más antiguo» (scrollLeft 1): la primera columna visible dice el año «15 may / 2025», «mismo día» sin su día a la vista: []
+medica-1920-claro página desplazada: {"tope":56,"lienzoTop":-270,"ejeTop":73,"fechasTop":85,"pegado":true,"saltos":["Lo más antiguo@56-84","Lo más reciente@56-84"]}
+ok   medica-1920-claro: el lienzo sube detrás de la barra (lienzo -270 < barra 56) y el eje queda pegado
+ok   medica-1920-claro: las fechas del eje quedan debajo de la barra, no detrás (fechas 85 ≥ barra 56)
+ok   medica-1920-claro: los saltos siguen al eje y no quedan bajo la barra ["Lo más antiguo@56-84","Lo más reciente@56-84"]
+ok   medica-1920-claro con el eje pegado: ningún salto pisa un punto del eje ni una fecha (Lo más antiguo@56-84, Lo más reciente@56-84) []
+ok   medica-1920-claro: al final del lienzo el eje se detiene dentro de él (eje 73, lienzo -270–974)
+ok   medica-1920-claro: consola sin errores []
+
+TODO OK

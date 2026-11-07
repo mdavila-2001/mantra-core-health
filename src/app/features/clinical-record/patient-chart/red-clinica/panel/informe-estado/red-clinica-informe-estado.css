@@ -1,5 +1,40 @@
-.estado__tenue {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
+.estado__carga {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.estado__oculto {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The same box, padding and line height as the values table. */
+.estado__tabla {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.estado__fila {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.estado__fila:last-child {
+  border-block-end: none;
+}
+
+.estado__fila--cabecera {
+  background: var(--bg-surface-alt);
+}
+
+.estado__fila app-skeleton {
+  --lh-body: var(--lh-caption);
 }

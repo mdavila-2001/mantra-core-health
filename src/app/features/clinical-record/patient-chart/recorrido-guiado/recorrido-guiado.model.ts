@@ -196,7 +196,7 @@ function armarPaso(
         for (const id of s.enfocar) if (!enfocar.includes(id)) enfocar.push(id);
         continue;
       }
-      f = frase(s.plural.texto(grupo.length), grupo.flatMap((g) => g.enfocar));
+      f = frase(s.plural.texto(grupo.length, grupo.map((g) => g.plural?.nombre ?? '')), grupo.flatMap((g) => g.enfocar));
     }
     // What is loose on a day with an encounter is said as a date coincidence, not an encounter one.
     const suelto = contexto.hayAtencion && s.atencionId === undefined && frases.length > 0;

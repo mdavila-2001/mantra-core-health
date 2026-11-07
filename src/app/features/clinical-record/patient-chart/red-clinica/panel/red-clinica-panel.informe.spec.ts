@@ -99,13 +99,20 @@ describe('RedClinicaPanel: el informe liberado, leído al abrir el estudio', () 
 
   afterEach(() => http.verify());
 
-  it('mientras lee lo dice (S1) y sigue diciendo que está liberado; nada se lee por adelantado', async () => {
+  it('mientras lee (S2) muestra el esqueleto de la tabla y lo anuncia; nada se lee por adelantado', async () => {
     http.expectNone((r) => r.url.endsWith(URL));
     await abrir(ESTUDIO);
     const req = http.expectOne((r) => r.url.endsWith(URL));
-    expect(el().querySelector('[data-testid="red-panel-informe-cargando"]')).not.toBeNull();
-    expect(el().querySelector('[data-testid="red-panel-liberado"]')?.textContent).toContain('Resultado liberado');
+    const cargando = el().querySelector('[data-testid="red-panel-informe-cargando"]');
+    expect(cargando?.getAttribute('role')).toBe('status');
+    expect(cargando?.textContent).toContain('Leyendo los valores del informe…');
+    expect(cargando?.querySelectorAll('.estado__fila app-skeleton').length).toBe(12);
+    // «Resultado liberado» is said only once the read succeeded.
+    expect(el().querySelector('[data-testid="red-panel-liberado"]')).toBeNull();
     req.flush(LEIDO);
+    await pintar();
+    expect(el().querySelector('[data-testid="red-panel-informe-cargando"]')).toBeNull();
+    expect(el().querySelector('[data-testid="red-panel-liberado"]')).not.toBeNull();
   });
 
   it('con el informe: fecha, valores con rango, el rótulo del laboratorio y el fuera de rango en texto', async () => {
@@ -134,14 +141,27 @@ describe('RedClinicaPanel: el informe liberado, leído al abrir el estudio', () 
     expect(el().querySelector('[data-testid="red-panel-sin-publicar"]')?.textContent).toContain('Liberado sin publicar al paciente');
   });
 
-  it('un 404 dice que no está disponible (S6), sin borrar que estaba liberado', async () => {
+  it.each([
+    [404, 'NOT_FOUND', 'El informe no está disponible'],
+    [403, 'FORBIDDEN', 'No puede ver este informe'],
+  ])('un %i lo dice, sin «Resultado liberado», y «Volver a la red» cierra el panel', async (status, code, titulo) => {
     await abrir(ESTUDIO);
-    http
-      .expectOne((r) => r.url.endsWith(URL))
-      .flush({ code: 'NOT_FOUND', message: 'x', reason: 'DIAGNOSTICS_RESOURCE_NOT_AVAILABLE' }, { status: 404, statusText: 'Not Found' });
+    http.expectOne((r) => r.url.endsWith(URL)).flush({ code, message: 'x' }, { status, statusText: 'x' });
     await pintar();
-    expect(el().querySelector('[data-testid="red-panel-informe-error"]')?.textContent).toContain('El informe no está disponible');
-    expect(el().querySelector('[data-testid="red-panel-liberado"]')).not.toBeNull();
+    expect(el().querySelector('[data-testid="red-panel-informe-error"]')?.textContent).toContain(titulo);
+    expect(el().querySelector('[data-testid="red-panel-liberado"]')).toBeNull();
+    el().querySelector<HTMLElement>('[data-testid="red-panel-volver"]')!.click();
+    await pintar();
+    expect(el().querySelector('[data-testid="red-panel"]')).toBeNull();
+  });
+
+  it('ningún error deja «Resultado liberado» debajo de su tarjeta', async () => {
+    await abrir(ESTUDIO);
+    http.expectOne((r) => r.url.endsWith(URL)).flush({}, { status: 500, statusText: 'Error', headers: { 'x-request-id': 'req-9' } });
+    await pintar();
+    expect(el().querySelector('[data-testid="red-panel-informe-error"]')).not.toBeNull();
+    expect(el().querySelector('[data-testid="red-panel-liberado"]')).toBeNull();
+    expect(el().querySelector('[data-testid="red-panel-volver"]')).toBeNull();
   });
 
   it('un 500 muestra el id de petición (S9) y «Reintentar» vuelve a leer', async () => {
@@ -159,20 +179,47 @@ describe('RedClinicaPanel: el informe liberado, leído al abrir el estudio', () 
     expect(el().querySelectorAll('[data-testid="red-panel-valor"]')).toHaveLength(2);
   });
 
-  it('un 429 (S4) dice lo que contestó el servidor, cuánto esperar y ofrece reintentar', async () => {
+  it('un 429 (S4) lo dice con texto propio, cuánto esperar, y ofrece reintentar pasada la espera', async () => {
     await abrir(ESTUDIO);
     http
       .expectOne((r) => r.url.endsWith(URL))
-      .flush({ code: 'RATE_LIMITED', message: 'Demasiadas lecturas seguidas.' }, { status: 429, statusText: 'Too Many Requests', headers: { 'retry-after': '30' } });
+      .flush({ code: 'RATE_LIMITED', message: 'Too many requests' }, { status: 429, statusText: 'Too Many Requests', headers: { 'retry-after': '30' } });
     await pintar();
     const aviso = el().querySelector('[data-testid="red-panel-informe-error"]');
-    expect(aviso?.textContent).toContain('Demasiadas lecturas seguidas.');
+    expect(aviso?.textContent).toContain('Demasiadas lecturas seguidas');
     expect(aviso?.textContent).toContain('Reintente en 30 segundos');
+    expect(aviso?.textContent).not.toContain('Too many requests');
     Array.from(aviso!.querySelectorAll<HTMLElement>('button')).find((b) => b.textContent?.includes('Reintentar'))!.click();
     await pintar();
     http.expectOne((r) => r.url.endsWith(URL)).flush(LEIDO);
     await pintar();
     expect(el().querySelectorAll('[data-testid="red-panel-valor"]')).toHaveLength(2);
+  });
+
+  it('un 422 (S4) no muestra el mensaje ajeno del servidor ni reintenta a ciegas: texto propio, código y «Volver a la red»', async () => {
+    await abrir(ESTUDIO);
+    http.expectOne((r) => r.url.endsWith(URL)).flush(
+      {
+        code: 'VALIDATION_FAILED',
+        message: 'Error de validación.',
+        correlationId: 'req-422',
+        details: { fields: [{ field: 'medicationConceptId', constraints: ['isNotEmpty'], messages: ['Elija un medicamento del catálogo.'] }] },
+      },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+    await pintar();
+    const aviso = el().querySelector<HTMLElement>('[data-testid="red-panel-informe-error"]')!;
+    const dice = aviso.textContent!.replace(/\s+/g, ' ');
+    expect(dice).toContain('El servidor rechazó la lectura de este informe');
+    expect(dice).not.toContain('Elija un medicamento del catálogo');
+    expect(dice).not.toContain('Error de validación');
+    expect(dice).toContain('Código de soporte: req-422');
+    expect(Array.from(aviso.querySelectorAll('button')).map((b) => b.textContent?.trim())).toEqual(['Volver a la red']);
+    expect(el().querySelector('[data-testid="red-panel-liberado"]')).toBeNull();
+    el().querySelector<HTMLElement>('[data-testid="red-panel-volver"]')!.click();
+    await pintar();
+    http.expectNone((r) => r.url.endsWith(URL));
+    expect(el().querySelector('[data-testid="red-panel"]')).toBeNull();
   });
 
   it('una referencia nueva del mismo nodo no le quita el foco a quien lo tiene', async () => {

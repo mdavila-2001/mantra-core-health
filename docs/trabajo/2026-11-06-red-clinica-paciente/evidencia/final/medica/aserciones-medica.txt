@@ -1,0 +1,414 @@
+medica-390-claro reposo: plegadas []
+ok   medica-390-claro reposo: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-390-claro reposo: sin desplazamiento horizontal (scrollWidth 390 ≤ 390)
+n/a  medica-390-claro reposo: vista angosta (lista vertical): sin eje, chips de borde ni aristas
+ok   medica-390-claro expandido (final): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-390-claro expandido (final): sin desplazamiento horizontal (scrollWidth 390 ≤ 390)
+n/a  medica-390-claro expandido (final): vista angosta (lista vertical): sin eje, chips de borde ni aristas
+n/a  medica-390-claro eje pegado: la vista angosta no tiene eje (lista vertical); se captura la página desplazada
+ok   medica-390-claro desplazada: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-390-claro desplazada: sin desplazamiento horizontal (scrollWidth 390 ≤ 390)
+n/a  medica-390-claro desplazada: vista angosta (lista vertical): sin eje, chips de borde ni aristas
+ok   medica-390-claro panel: nada del panel se sale por la derecha y el panel entra en la ventana {"sale":0,"dentroDeLaVentana":true}
+ok   medica-390-claro panel abierto (hoja modal): sin desplazamiento horizontal
+ok   medica-390-claro: consola sin errores []
+medica-768-claro reposo: plegadas [80,80,80,80,80,80,80]
+ok   medica-768-claro reposo: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-768-claro reposo: sin desplazamiento horizontal (scrollWidth 768 ≤ 768)
+ok   medica-768-claro reposo: los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-768-claro reposo: los dos chips del borde no se pisan entre sí []
+ok   medica-768-claro reposo: la primera columna visible muestra el año «4 nov / 2026» (scrollLeft 2904); «mismo día» huérfanos []
+ok   medica-768-claro reposo: ninguna fecha del eje bajo la barra de la app (barra 61, fecha más alta 336, debajo de la barra: 0)
+ok   medica-768-claro expandido (final): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-768-claro expandido (final): sin desplazamiento horizontal (scrollWidth 768 ≤ 768)
+ok   medica-768-claro expandido (final): los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-768-claro expandido (final): los dos chips del borde no se pisan entre sí []
+ok   medica-768-claro expandido (final): la primera columna visible muestra el año «11 nov 2026 / Sin atención» (scrollLeft 11654); «mismo día» huérfanos []
+ok   medica-768-claro expandido (final): ninguna fecha del eje bajo la barra de la app (barra 61, fecha más alta 183, debajo de la barra: 0)
+ok   medica-768-claro expandido (final): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",80],["Infección respiratoria agudaEn estud",80],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-768-claro expandido (final): 0 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 0)
+ok   medica-768-claro expandido (inicio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-768-claro expandido (inicio): sin desplazamiento horizontal (scrollWidth 768 ≤ 768)
+ok   medica-768-claro expandido (inicio): los chips del borde (Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-768-claro expandido (inicio): los dos chips del borde no se pisan entre sí []
+ok   medica-768-claro expandido (inicio): la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 0); «mismo día» huérfanos []
+ok   medica-768-claro expandido (inicio): ninguna fecha del eje bajo la barra de la app (barra 61, fecha más alta 183, debajo de la barra: 0)
+ok   medica-768-claro expandido (inicio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80],["Atenciones sin diagnóstico asociadoe",80]]
+ok   medica-768-claro expandido (inicio): 38 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 7)
+ok   medica-768-claro expandido (medio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-768-claro expandido (medio): sin desplazamiento horizontal (scrollWidth 768 ≤ 768)
+ok   medica-768-claro expandido (medio): los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-768-claro expandido (medio): los dos chips del borde no se pisan entre sí []
+ok   medica-768-claro expandido (medio): la primera columna visible muestra el año «6 sept 2026 / Sin atención» (scrollLeft 5827); «mismo día» huérfanos []
+ok   medica-768-claro expandido (medio): ninguna fecha del eje bajo la barra de la app (barra 61, fecha más alta 183, debajo de la barra: 0)
+ok   medica-768-claro expandido (medio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-768-claro expandido (medio): 2 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 2)
+medica-768-claro eje pegado: {"tope":61,"lienzoTop":-130,"fechasTop":90,"pegado":true}
+ok   medica-768-claro eje pegado: el lienzo sube detrás de la barra (-130 < 61) y el eje se pega
+ok   medica-768-claro eje pegado: las fechas quedan justo bajo la barra (fechas 90, barra 61)
+ok   medica-768-claro eje pegado: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-768-claro eje pegado: sin desplazamiento horizontal (scrollWidth 768 ≤ 768)
+ok   medica-768-claro eje pegado: los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-768-claro eje pegado: los dos chips del borde no se pisan entre sí []
+ok   medica-768-claro eje pegado: la primera columna visible muestra el año «6 sept 2026 / Sin atención» (scrollLeft 5827); «mismo día» huérfanos []
+ok   medica-768-claro eje pegado: ninguna fecha del eje bajo la barra de la app (barra 61, fecha más alta 90, debajo de la barra: 0)
+ok   medica-768-claro panel: nada del panel se sale por la derecha y el panel entra en la ventana {"sale":0,"dentroDeLaVentana":true}
+ok   medica-768-claro panel abierto: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-768-claro panel abierto: sin desplazamiento horizontal (scrollWidth 768 ≤ 768)
+ok   medica-768-claro panel abierto: los chips del borde (Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-768-claro panel abierto: los dos chips del borde no se pisan entre sí []
+ok   medica-768-claro panel abierto: la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 0); «mismo día» huérfanos []
+ok   medica-768-claro panel abierto: ninguna fecha del eje bajo la barra de la app (barra 61, fecha más alta 327, debajo de la barra: 0)
+ok   medica-768-claro: consola sin errores []
+medica-1024-claro reposo: plegadas [80,80,80,80,80,80,80]
+ok   medica-1024-claro reposo: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1024-claro reposo: sin desplazamiento horizontal (scrollWidth 1024 ≤ 1024)
+ok   medica-1024-claro reposo: los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-1024-claro reposo: los dos chips del borde no se pisan entre sí []
+ok   medica-1024-claro reposo: la primera columna visible muestra el año «4 nov / 2026» (scrollLeft 2896); «mismo día» huérfanos []
+ok   medica-1024-claro reposo: ninguna fecha del eje bajo la barra de la app (barra 60, fecha más alta 182, debajo de la barra: 0)
+ok   medica-1024-claro expandido (final): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1024-claro expandido (final): sin desplazamiento horizontal (scrollWidth 1024 ≤ 1024)
+ok   medica-1024-claro expandido (final): los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-1024-claro expandido (final): los dos chips del borde no se pisan entre sí []
+ok   medica-1024-claro expandido (final): la primera columna visible muestra el año «11 nov 2026 / Sin atención» (scrollLeft 11646); «mismo día» huérfanos []
+ok   medica-1024-claro expandido (final): ninguna fecha del eje bajo la barra de la app (barra 60, fecha más alta 182, debajo de la barra: 0)
+ok   medica-1024-claro expandido (final): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",80],["Infección respiratoria agudaEn estud",80],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-1024-claro expandido (final): 0 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 0)
+ok   medica-1024-claro expandido (inicio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1024-claro expandido (inicio): sin desplazamiento horizontal (scrollWidth 1024 ≤ 1024)
+ok   medica-1024-claro expandido (inicio): los chips del borde (Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1024-claro expandido (inicio): los dos chips del borde no se pisan entre sí []
+ok   medica-1024-claro expandido (inicio): la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 0); «mismo día» huérfanos []
+ok   medica-1024-claro expandido (inicio): ninguna fecha del eje bajo la barra de la app (barra 60, fecha más alta 182, debajo de la barra: 0)
+ok   medica-1024-claro expandido (inicio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80],["Atenciones sin diagnóstico asociadoe",80]]
+ok   medica-1024-claro expandido (inicio): 38 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 7)
+ok   medica-1024-claro expandido (medio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1024-claro expandido (medio): sin desplazamiento horizontal (scrollWidth 1024 ≤ 1024)
+ok   medica-1024-claro expandido (medio): los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1024-claro expandido (medio): los dos chips del borde no se pisan entre sí []
+ok   medica-1024-claro expandido (medio): la primera columna visible muestra el año «6 sept 2026 / Sin atención» (scrollLeft 5823); «mismo día» huérfanos []
+ok   medica-1024-claro expandido (medio): ninguna fecha del eje bajo la barra de la app (barra 60, fecha más alta 182, debajo de la barra: 0)
+ok   medica-1024-claro expandido (medio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-1024-claro expandido (medio): 2 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 2)
+medica-1024-claro eje pegado: {"tope":60,"lienzoTop":-340,"fechasTop":89,"pegado":true}
+ok   medica-1024-claro eje pegado: el lienzo sube detrás de la barra (-340 < 60) y el eje se pega
+ok   medica-1024-claro eje pegado: las fechas quedan justo bajo la barra (fechas 89, barra 60)
+ok   medica-1024-claro eje pegado: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1024-claro eje pegado: sin desplazamiento horizontal (scrollWidth 1024 ≤ 1024)
+ok   medica-1024-claro eje pegado: los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1024-claro eje pegado: los dos chips del borde no se pisan entre sí []
+ok   medica-1024-claro eje pegado: la primera columna visible muestra el año «6 sept 2026 / Sin atención» (scrollLeft 5823); «mismo día» huérfanos []
+ok   medica-1024-claro eje pegado: ninguna fecha del eje bajo la barra de la app (barra 60, fecha más alta 89, debajo de la barra: 0)
+ok   medica-1024-claro panel: nada del panel se sale por la derecha y el panel entra en la ventana {"sale":0,"dentroDeLaVentana":true}
+FALLA medica-1024-claro panel abierto: ningún nombre de episodio cortado (Range vs caja) ["Hipotiroidismo","Hipertensión arterial esencial","Dislipidemia","Infección respiratoria aguda","Infección urinaria","Trastorno de ansiedad generalizada","Atenciones sin diagnóstico asociado"]
+ok   medica-1024-claro panel abierto: sin desplazamiento horizontal (scrollWidth 1024 ≤ 1024)
+ok   medica-1024-claro panel abierto: los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+FALLA medica-1024-claro panel abierto: los dos chips del borde no se pisan entre sí ["Lo más antiguo × Lo más reciente"]
+ok   medica-1024-claro panel abierto: la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 49); «mismo día» huérfanos []
+ok   medica-1024-claro panel abierto: ninguna fecha del eje bajo la barra de la app (barra 60, fecha más alta 89, debajo de la barra: 0)
+ok   medica-1024-claro: consola sin errores []
+medica-1440-claro reposo: plegadas [80,80,80,80,80,80,80]
+ok   medica-1440-claro reposo: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1440-claro reposo: sin desplazamiento horizontal (scrollWidth 1440 ≤ 1440)
+ok   medica-1440-claro reposo: los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-1440-claro reposo: los dos chips del borde no se pisan entre sí []
+ok   medica-1440-claro reposo: la primera columna visible muestra el año «1 nov / 2026» (scrollLeft 2520); «mismo día» huérfanos []
+ok   medica-1440-claro reposo: ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 179, debajo de la barra: 0)
+ok   medica-1440-claro expandido (final): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1440-claro expandido (final): sin desplazamiento horizontal (scrollWidth 1440 ≤ 1440)
+ok   medica-1440-claro expandido (final): los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-1440-claro expandido (final): los dos chips del borde no se pisan entre sí []
+ok   medica-1440-claro expandido (final): la primera columna visible muestra el año «10 nov 2026 / Sin atención» (scrollLeft 11270); «mismo día» huérfanos []
+ok   medica-1440-claro expandido (final): ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 153, debajo de la barra: 0)
+ok   medica-1440-claro expandido (final): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",80],["Infección respiratoria agudaEn estud",80],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-1440-claro expandido (final): 0 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 0)
+ok   medica-1440-claro expandido (inicio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1440-claro expandido (inicio): sin desplazamiento horizontal (scrollWidth 1440 ≤ 1440)
+ok   medica-1440-claro expandido (inicio): los chips del borde (Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1440-claro expandido (inicio): los dos chips del borde no se pisan entre sí []
+ok   medica-1440-claro expandido (inicio): la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 0); «mismo día» huérfanos []
+ok   medica-1440-claro expandido (inicio): ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 153, debajo de la barra: 0)
+ok   medica-1440-claro expandido (inicio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80],["Atenciones sin diagnóstico asociadoe",80]]
+ok   medica-1440-claro expandido (inicio): 40 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 3)
+ok   medica-1440-claro expandido (medio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1440-claro expandido (medio): sin desplazamiento horizontal (scrollWidth 1440 ≤ 1440)
+ok   medica-1440-claro expandido (medio): los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1440-claro expandido (medio): los dos chips del borde no se pisan entre sí []
+ok   medica-1440-claro expandido (medio): la primera columna visible muestra el año «6 sept 2026 / Sin atención» (scrollLeft 5635); «mismo día» huérfanos []
+ok   medica-1440-claro expandido (medio): ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 153, debajo de la barra: 0)
+ok   medica-1440-claro expandido (medio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-1440-claro expandido (medio): 2 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 1)
+medica-1440-claro eje pegado: {"tope":56,"lienzoTop":-282,"fechasTop":85,"pegado":true}
+ok   medica-1440-claro eje pegado: el lienzo sube detrás de la barra (-282 < 56) y el eje se pega
+ok   medica-1440-claro eje pegado: las fechas quedan justo bajo la barra (fechas 85, barra 56)
+ok   medica-1440-claro eje pegado: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1440-claro eje pegado: sin desplazamiento horizontal (scrollWidth 1440 ≤ 1440)
+ok   medica-1440-claro eje pegado: los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1440-claro eje pegado: los dos chips del borde no se pisan entre sí []
+ok   medica-1440-claro eje pegado: la primera columna visible muestra el año «6 sept 2026 / Sin atención» (scrollLeft 5635); «mismo día» huérfanos []
+ok   medica-1440-claro eje pegado: ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 85, debajo de la barra: 0)
+ok   medica-1440-claro panel: nada del panel se sale por la derecha y el panel entra en la ventana {"sale":0,"dentroDeLaVentana":true}
+ok   medica-1440-claro panel abierto: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1440-claro panel abierto: sin desplazamiento horizontal (scrollWidth 1440 ≤ 1440)
+ok   medica-1440-claro panel abierto: los chips del borde (Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1440-claro panel abierto: los dos chips del borde no se pisan entre sí []
+ok   medica-1440-claro panel abierto: la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 0); «mismo día» huérfanos []
+ok   medica-1440-claro panel abierto: ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 201, debajo de la barra: 0)
+ok   medica-1440-claro: consola sin errores []
+medica-1920-claro reposo: plegadas [80,80,80,80,80,80,80]
+ok   medica-1920-claro reposo: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1920-claro reposo: sin desplazamiento horizontal (scrollWidth 1920 ≤ 1920)
+ok   medica-1920-claro reposo: los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-1920-claro reposo: los dos chips del borde no se pisan entre sí []
+ok   medica-1920-claro reposo: la primera columna visible muestra el año «13 oct / 2026» (scrollLeft 2280); «mismo día» huérfanos []
+ok   medica-1920-claro reposo: ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 359, debajo de la barra: 0)
+ok   medica-1920-claro expandido (final): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1920-claro expandido (final): sin desplazamiento horizontal (scrollWidth 1920 ≤ 1920)
+ok   medica-1920-claro expandido (final): los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-1920-claro expandido (final): los dos chips del borde no se pisan entre sí []
+ok   medica-1920-claro expandido (final): la primera columna visible muestra el año «9 nov 2026 / Sin atención» (scrollLeft 11030); «mismo día» huérfanos []
+ok   medica-1920-claro expandido (final): ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 153, debajo de la barra: 0)
+ok   medica-1920-claro expandido (final): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",80],["Infección respiratoria agudaEn estud",80],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-1920-claro expandido (final): 2 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 1)
+ok   medica-1920-claro expandido (inicio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1920-claro expandido (inicio): sin desplazamiento horizontal (scrollWidth 1920 ≤ 1920)
+ok   medica-1920-claro expandido (inicio): los chips del borde (Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1920-claro expandido (inicio): los dos chips del borde no se pisan entre sí []
+ok   medica-1920-claro expandido (inicio): la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 0); «mismo día» huérfanos []
+ok   medica-1920-claro expandido (inicio): ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 153, debajo de la barra: 0)
+ok   medica-1920-claro expandido (inicio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80],["Atenciones sin diagnóstico asociadoe",80]]
+ok   medica-1920-claro expandido (inicio): 48 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 5)
+ok   medica-1920-claro expandido (medio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1920-claro expandido (medio): sin desplazamiento horizontal (scrollWidth 1920 ≤ 1920)
+ok   medica-1920-claro expandido (medio): los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1920-claro expandido (medio): los dos chips del borde no se pisan entre sí []
+ok   medica-1920-claro expandido (medio): la primera columna visible muestra el año «6 ago 2026 / Atención» (scrollLeft 5515); «mismo día» huérfanos []
+ok   medica-1920-claro expandido (medio): ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 153, debajo de la barra: 0)
+ok   medica-1920-claro expandido (medio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-1920-claro expandido (medio): 6 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 1)
+medica-1920-claro eje pegado: {"tope":56,"lienzoTop":-102,"fechasTop":85,"pegado":true}
+ok   medica-1920-claro eje pegado: el lienzo sube detrás de la barra (-102 < 56) y el eje se pega
+ok   medica-1920-claro eje pegado: las fechas quedan justo bajo la barra (fechas 85, barra 56)
+ok   medica-1920-claro eje pegado: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1920-claro eje pegado: sin desplazamiento horizontal (scrollWidth 1920 ≤ 1920)
+ok   medica-1920-claro eje pegado: los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1920-claro eje pegado: los dos chips del borde no se pisan entre sí []
+ok   medica-1920-claro eje pegado: la primera columna visible muestra el año «6 ago 2026 / Atención» (scrollLeft 5515); «mismo día» huérfanos []
+ok   medica-1920-claro eje pegado: ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 85, debajo de la barra: 0)
+ok   medica-1920-claro panel: nada del panel se sale por la derecha y el panel entra en la ventana {"sale":0,"dentroDeLaVentana":true}
+ok   medica-1920-claro panel abierto: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1920-claro panel abierto: sin desplazamiento horizontal (scrollWidth 1920 ≤ 1920)
+ok   medica-1920-claro panel abierto: los chips del borde (Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1920-claro panel abierto: los dos chips del borde no se pisan entre sí []
+ok   medica-1920-claro panel abierto: la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 0); «mismo día» huérfanos []
+ok   medica-1920-claro panel abierto: ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 381, debajo de la barra: 0)
+ok   medica-1920-claro: consola sin errores []
+medica-390-oscuro reposo: plegadas []
+ok   medica-390-oscuro reposo: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-390-oscuro reposo: sin desplazamiento horizontal (scrollWidth 390 ≤ 390)
+n/a  medica-390-oscuro reposo: vista angosta (lista vertical): sin eje, chips de borde ni aristas
+ok   medica-390-oscuro expandido (final): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-390-oscuro expandido (final): sin desplazamiento horizontal (scrollWidth 390 ≤ 390)
+n/a  medica-390-oscuro expandido (final): vista angosta (lista vertical): sin eje, chips de borde ni aristas
+n/a  medica-390-oscuro eje pegado: la vista angosta no tiene eje (lista vertical); se captura la página desplazada
+ok   medica-390-oscuro desplazada: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-390-oscuro desplazada: sin desplazamiento horizontal (scrollWidth 390 ≤ 390)
+n/a  medica-390-oscuro desplazada: vista angosta (lista vertical): sin eje, chips de borde ni aristas
+ok   medica-390-oscuro panel: nada del panel se sale por la derecha y el panel entra en la ventana {"sale":0,"dentroDeLaVentana":true}
+ok   medica-390-oscuro panel abierto (hoja modal): sin desplazamiento horizontal
+ok   medica-390-oscuro: consola sin errores []
+medica-768-oscuro reposo: plegadas [80,80,80,80,80,80,80]
+ok   medica-768-oscuro reposo: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-768-oscuro reposo: sin desplazamiento horizontal (scrollWidth 768 ≤ 768)
+ok   medica-768-oscuro reposo: los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-768-oscuro reposo: los dos chips del borde no se pisan entre sí []
+ok   medica-768-oscuro reposo: la primera columna visible muestra el año «4 nov / 2026» (scrollLeft 2904); «mismo día» huérfanos []
+ok   medica-768-oscuro reposo: ninguna fecha del eje bajo la barra de la app (barra 61, fecha más alta 336, debajo de la barra: 0)
+ok   medica-768-oscuro expandido (final): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-768-oscuro expandido (final): sin desplazamiento horizontal (scrollWidth 768 ≤ 768)
+ok   medica-768-oscuro expandido (final): los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-768-oscuro expandido (final): los dos chips del borde no se pisan entre sí []
+ok   medica-768-oscuro expandido (final): la primera columna visible muestra el año «11 nov 2026 / Sin atención» (scrollLeft 11654); «mismo día» huérfanos []
+ok   medica-768-oscuro expandido (final): ninguna fecha del eje bajo la barra de la app (barra 61, fecha más alta 183, debajo de la barra: 0)
+ok   medica-768-oscuro expandido (final): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",80],["Infección respiratoria agudaEn estud",80],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-768-oscuro expandido (final): 0 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 0)
+ok   medica-768-oscuro expandido (inicio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-768-oscuro expandido (inicio): sin desplazamiento horizontal (scrollWidth 768 ≤ 768)
+ok   medica-768-oscuro expandido (inicio): los chips del borde (Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-768-oscuro expandido (inicio): los dos chips del borde no se pisan entre sí []
+ok   medica-768-oscuro expandido (inicio): la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 0); «mismo día» huérfanos []
+ok   medica-768-oscuro expandido (inicio): ninguna fecha del eje bajo la barra de la app (barra 61, fecha más alta 183, debajo de la barra: 0)
+ok   medica-768-oscuro expandido (inicio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80],["Atenciones sin diagnóstico asociadoe",80]]
+ok   medica-768-oscuro expandido (inicio): 38 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 7)
+ok   medica-768-oscuro expandido (medio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-768-oscuro expandido (medio): sin desplazamiento horizontal (scrollWidth 768 ≤ 768)
+ok   medica-768-oscuro expandido (medio): los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-768-oscuro expandido (medio): los dos chips del borde no se pisan entre sí []
+ok   medica-768-oscuro expandido (medio): la primera columna visible muestra el año «6 sept 2026 / Sin atención» (scrollLeft 5827); «mismo día» huérfanos []
+ok   medica-768-oscuro expandido (medio): ninguna fecha del eje bajo la barra de la app (barra 61, fecha más alta 183, debajo de la barra: 0)
+ok   medica-768-oscuro expandido (medio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-768-oscuro expandido (medio): 2 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 2)
+medica-768-oscuro eje pegado: {"tope":61,"lienzoTop":-130,"fechasTop":90,"pegado":true}
+ok   medica-768-oscuro eje pegado: el lienzo sube detrás de la barra (-130 < 61) y el eje se pega
+ok   medica-768-oscuro eje pegado: las fechas quedan justo bajo la barra (fechas 90, barra 61)
+ok   medica-768-oscuro eje pegado: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-768-oscuro eje pegado: sin desplazamiento horizontal (scrollWidth 768 ≤ 768)
+ok   medica-768-oscuro eje pegado: los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-768-oscuro eje pegado: los dos chips del borde no se pisan entre sí []
+ok   medica-768-oscuro eje pegado: la primera columna visible muestra el año «6 sept 2026 / Sin atención» (scrollLeft 5827); «mismo día» huérfanos []
+ok   medica-768-oscuro eje pegado: ninguna fecha del eje bajo la barra de la app (barra 61, fecha más alta 90, debajo de la barra: 0)
+ok   medica-768-oscuro panel: nada del panel se sale por la derecha y el panel entra en la ventana {"sale":0,"dentroDeLaVentana":true}
+ok   medica-768-oscuro panel abierto: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-768-oscuro panel abierto: sin desplazamiento horizontal (scrollWidth 768 ≤ 768)
+ok   medica-768-oscuro panel abierto: los chips del borde (Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-768-oscuro panel abierto: los dos chips del borde no se pisan entre sí []
+ok   medica-768-oscuro panel abierto: la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 0); «mismo día» huérfanos []
+ok   medica-768-oscuro panel abierto: ninguna fecha del eje bajo la barra de la app (barra 61, fecha más alta 327, debajo de la barra: 0)
+ok   medica-768-oscuro: consola sin errores []
+medica-1024-oscuro reposo: plegadas [80,80,80,80,80,80,80]
+ok   medica-1024-oscuro reposo: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1024-oscuro reposo: sin desplazamiento horizontal (scrollWidth 1024 ≤ 1024)
+ok   medica-1024-oscuro reposo: los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-1024-oscuro reposo: los dos chips del borde no se pisan entre sí []
+ok   medica-1024-oscuro reposo: la primera columna visible muestra el año «4 nov / 2026» (scrollLeft 2896); «mismo día» huérfanos []
+ok   medica-1024-oscuro reposo: ninguna fecha del eje bajo la barra de la app (barra 60, fecha más alta 182, debajo de la barra: 0)
+ok   medica-1024-oscuro expandido (final): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1024-oscuro expandido (final): sin desplazamiento horizontal (scrollWidth 1024 ≤ 1024)
+ok   medica-1024-oscuro expandido (final): los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-1024-oscuro expandido (final): los dos chips del borde no se pisan entre sí []
+ok   medica-1024-oscuro expandido (final): la primera columna visible muestra el año «11 nov 2026 / Sin atención» (scrollLeft 11646); «mismo día» huérfanos []
+ok   medica-1024-oscuro expandido (final): ninguna fecha del eje bajo la barra de la app (barra 60, fecha más alta 182, debajo de la barra: 0)
+ok   medica-1024-oscuro expandido (final): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",80],["Infección respiratoria agudaEn estud",80],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-1024-oscuro expandido (final): 0 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 0)
+ok   medica-1024-oscuro expandido (inicio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1024-oscuro expandido (inicio): sin desplazamiento horizontal (scrollWidth 1024 ≤ 1024)
+ok   medica-1024-oscuro expandido (inicio): los chips del borde (Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1024-oscuro expandido (inicio): los dos chips del borde no se pisan entre sí []
+ok   medica-1024-oscuro expandido (inicio): la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 0); «mismo día» huérfanos []
+ok   medica-1024-oscuro expandido (inicio): ninguna fecha del eje bajo la barra de la app (barra 60, fecha más alta 222, debajo de la barra: 0)
+ok   medica-1024-oscuro expandido (inicio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80],["Atenciones sin diagnóstico asociadoe",80]]
+ok   medica-1024-oscuro expandido (inicio): 38 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 7)
+ok   medica-1024-oscuro expandido (medio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1024-oscuro expandido (medio): sin desplazamiento horizontal (scrollWidth 1024 ≤ 1024)
+ok   medica-1024-oscuro expandido (medio): los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1024-oscuro expandido (medio): los dos chips del borde no se pisan entre sí []
+ok   medica-1024-oscuro expandido (medio): la primera columna visible muestra el año «6 sept 2026 / Sin atención» (scrollLeft 5823); «mismo día» huérfanos []
+ok   medica-1024-oscuro expandido (medio): ninguna fecha del eje bajo la barra de la app (barra 60, fecha más alta 222, debajo de la barra: 0)
+ok   medica-1024-oscuro expandido (medio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-1024-oscuro expandido (medio): 2 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 2)
+medica-1024-oscuro eje pegado: {"tope":60,"lienzoTop":-340,"fechasTop":89,"pegado":true}
+ok   medica-1024-oscuro eje pegado: el lienzo sube detrás de la barra (-340 < 60) y el eje se pega
+ok   medica-1024-oscuro eje pegado: las fechas quedan justo bajo la barra (fechas 89, barra 60)
+ok   medica-1024-oscuro eje pegado: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1024-oscuro eje pegado: sin desplazamiento horizontal (scrollWidth 1024 ≤ 1024)
+ok   medica-1024-oscuro eje pegado: los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1024-oscuro eje pegado: los dos chips del borde no se pisan entre sí []
+ok   medica-1024-oscuro eje pegado: la primera columna visible muestra el año «6 sept 2026 / Sin atención» (scrollLeft 5823); «mismo día» huérfanos []
+ok   medica-1024-oscuro eje pegado: ninguna fecha del eje bajo la barra de la app (barra 60, fecha más alta 89, debajo de la barra: 0)
+ok   medica-1024-oscuro panel: nada del panel se sale por la derecha y el panel entra en la ventana {"sale":0,"dentroDeLaVentana":true}
+FALLA medica-1024-oscuro panel abierto: ningún nombre de episodio cortado (Range vs caja) ["Hipotiroidismo","Hipertensión arterial esencial","Dislipidemia","Infección respiratoria aguda","Infección urinaria","Trastorno de ansiedad generalizada","Atenciones sin diagnóstico asociado"]
+ok   medica-1024-oscuro panel abierto: sin desplazamiento horizontal (scrollWidth 1024 ≤ 1024)
+ok   medica-1024-oscuro panel abierto: los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+FALLA medica-1024-oscuro panel abierto: los dos chips del borde no se pisan entre sí ["Lo más antiguo × Lo más reciente"]
+ok   medica-1024-oscuro panel abierto: la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 49); «mismo día» huérfanos []
+ok   medica-1024-oscuro panel abierto: ninguna fecha del eje bajo la barra de la app (barra 60, fecha más alta 89, debajo de la barra: 0)
+ok   medica-1024-oscuro: consola sin errores []
+medica-1440-oscuro reposo: plegadas [80,80,80,80,80,80,80]
+ok   medica-1440-oscuro reposo: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1440-oscuro reposo: sin desplazamiento horizontal (scrollWidth 1440 ≤ 1440)
+ok   medica-1440-oscuro reposo: los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-1440-oscuro reposo: los dos chips del borde no se pisan entre sí []
+ok   medica-1440-oscuro reposo: la primera columna visible muestra el año «1 nov / 2026» (scrollLeft 2520); «mismo día» huérfanos []
+ok   medica-1440-oscuro reposo: ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 179, debajo de la barra: 0)
+ok   medica-1440-oscuro expandido (final): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1440-oscuro expandido (final): sin desplazamiento horizontal (scrollWidth 1440 ≤ 1440)
+ok   medica-1440-oscuro expandido (final): los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-1440-oscuro expandido (final): los dos chips del borde no se pisan entre sí []
+ok   medica-1440-oscuro expandido (final): la primera columna visible muestra el año «10 nov 2026 / Sin atención» (scrollLeft 11270); «mismo día» huérfanos []
+ok   medica-1440-oscuro expandido (final): ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 153, debajo de la barra: 0)
+ok   medica-1440-oscuro expandido (final): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",80],["Infección respiratoria agudaEn estud",80],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-1440-oscuro expandido (final): 0 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 0)
+ok   medica-1440-oscuro expandido (inicio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1440-oscuro expandido (inicio): sin desplazamiento horizontal (scrollWidth 1440 ≤ 1440)
+ok   medica-1440-oscuro expandido (inicio): los chips del borde (Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1440-oscuro expandido (inicio): los dos chips del borde no se pisan entre sí []
+ok   medica-1440-oscuro expandido (inicio): la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 0); «mismo día» huérfanos []
+ok   medica-1440-oscuro expandido (inicio): ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 153, debajo de la barra: 0)
+ok   medica-1440-oscuro expandido (inicio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80],["Atenciones sin diagnóstico asociadoe",80]]
+ok   medica-1440-oscuro expandido (inicio): 40 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 3)
+ok   medica-1440-oscuro expandido (medio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1440-oscuro expandido (medio): sin desplazamiento horizontal (scrollWidth 1440 ≤ 1440)
+ok   medica-1440-oscuro expandido (medio): los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1440-oscuro expandido (medio): los dos chips del borde no se pisan entre sí []
+ok   medica-1440-oscuro expandido (medio): la primera columna visible muestra el año «6 sept 2026 / Sin atención» (scrollLeft 5635); «mismo día» huérfanos []
+ok   medica-1440-oscuro expandido (medio): ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 153, debajo de la barra: 0)
+ok   medica-1440-oscuro expandido (medio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-1440-oscuro expandido (medio): 2 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 1)
+medica-1440-oscuro eje pegado: {"tope":56,"lienzoTop":-282,"fechasTop":85,"pegado":true}
+ok   medica-1440-oscuro eje pegado: el lienzo sube detrás de la barra (-282 < 56) y el eje se pega
+ok   medica-1440-oscuro eje pegado: las fechas quedan justo bajo la barra (fechas 85, barra 56)
+ok   medica-1440-oscuro eje pegado: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1440-oscuro eje pegado: sin desplazamiento horizontal (scrollWidth 1440 ≤ 1440)
+ok   medica-1440-oscuro eje pegado: los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1440-oscuro eje pegado: los dos chips del borde no se pisan entre sí []
+ok   medica-1440-oscuro eje pegado: la primera columna visible muestra el año «6 sept 2026 / Sin atención» (scrollLeft 5635); «mismo día» huérfanos []
+ok   medica-1440-oscuro eje pegado: ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 85, debajo de la barra: 0)
+ok   medica-1440-oscuro panel: nada del panel se sale por la derecha y el panel entra en la ventana {"sale":0,"dentroDeLaVentana":true}
+ok   medica-1440-oscuro panel abierto: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1440-oscuro panel abierto: sin desplazamiento horizontal (scrollWidth 1440 ≤ 1440)
+ok   medica-1440-oscuro panel abierto: los chips del borde (Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1440-oscuro panel abierto: los dos chips del borde no se pisan entre sí []
+ok   medica-1440-oscuro panel abierto: la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 0); «mismo día» huérfanos []
+ok   medica-1440-oscuro panel abierto: ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 201, debajo de la barra: 0)
+ok   medica-1440-oscuro: consola sin errores []
+medica-1920-oscuro reposo: plegadas [80,80,80,80,80,80,80]
+ok   medica-1920-oscuro reposo: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1920-oscuro reposo: sin desplazamiento horizontal (scrollWidth 1920 ≤ 1920)
+ok   medica-1920-oscuro reposo: los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-1920-oscuro reposo: los dos chips del borde no se pisan entre sí []
+ok   medica-1920-oscuro reposo: la primera columna visible muestra el año «13 oct / 2026» (scrollLeft 2280); «mismo día» huérfanos []
+ok   medica-1920-oscuro reposo: ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 359, debajo de la barra: 0)
+ok   medica-1920-oscuro expandido (final): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1920-oscuro expandido (final): sin desplazamiento horizontal (scrollWidth 1920 ≤ 1920)
+ok   medica-1920-oscuro expandido (final): los chips del borde (Lo más antiguo) no tocan puntos del eje ni fechas []
+ok   medica-1920-oscuro expandido (final): los dos chips del borde no se pisan entre sí []
+ok   medica-1920-oscuro expandido (final): la primera columna visible muestra el año «9 nov 2026 / Sin atención» (scrollLeft 11030); «mismo día» huérfanos []
+ok   medica-1920-oscuro expandido (final): ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 153, debajo de la barra: 0)
+ok   medica-1920-oscuro expandido (final): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",80],["Infección respiratoria agudaEn estud",80],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-1920-oscuro expandido (final): 2 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 1)
+ok   medica-1920-oscuro expandido (inicio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1920-oscuro expandido (inicio): sin desplazamiento horizontal (scrollWidth 1920 ≤ 1920)
+ok   medica-1920-oscuro expandido (inicio): los chips del borde (Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1920-oscuro expandido (inicio): los dos chips del borde no se pisan entre sí []
+ok   medica-1920-oscuro expandido (inicio): la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 0); «mismo día» huérfanos []
+ok   medica-1920-oscuro expandido (inicio): ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 153, debajo de la barra: 0)
+ok   medica-1920-oscuro expandido (inicio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80],["Atenciones sin diagnóstico asociadoe",80]]
+ok   medica-1920-oscuro expandido (inicio): 48 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 5)
+ok   medica-1920-oscuro expandido (medio): ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1920-oscuro expandido (medio): sin desplazamiento horizontal (scrollWidth 1920 ≤ 1920)
+ok   medica-1920-oscuro expandido (medio): los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1920-oscuro expandido (medio): los dos chips del borde no se pisan entre sí []
+ok   medica-1920-oscuro expandido (medio): la primera columna visible muestra el año «6 ago 2026 / Atención» (scrollLeft 5515); «mismo día» huérfanos []
+ok   medica-1920-oscuro expandido (medio): ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 153, debajo de la barra: 0)
+ok   medica-1920-oscuro expandido (medio): las 6 franjas desplegadas sin registros a la vista miden 80 o 48 px [["HipotiroidismoEnfermedad activamar 2",80],["Hipertensión arterial esencialEnferm",80],["DislipidemiaEn estudiodic 2025 – nov",48],["Infección respiratoria agudaEn estud",48],["Infección urinariaDiagnóstico histór",80],["Trastorno de ansiedad generalizadaEn",80]]
+ok   medica-1920-oscuro expandido (medio): 6 extremos de arista; fuera del lienzo o sueltos sin indicador: 0 [] (con «sigue»: 1)
+medica-1920-oscuro eje pegado: {"tope":56,"lienzoTop":-102,"fechasTop":85,"pegado":true}
+ok   medica-1920-oscuro eje pegado: el lienzo sube detrás de la barra (-102 < 56) y el eje se pega
+ok   medica-1920-oscuro eje pegado: las fechas quedan justo bajo la barra (fechas 85, barra 56)
+ok   medica-1920-oscuro eje pegado: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1920-oscuro eje pegado: sin desplazamiento horizontal (scrollWidth 1920 ≤ 1920)
+ok   medica-1920-oscuro eje pegado: los chips del borde (Lo más antiguo, Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1920-oscuro eje pegado: los dos chips del borde no se pisan entre sí []
+ok   medica-1920-oscuro eje pegado: la primera columna visible muestra el año «6 ago 2026 / Atención» (scrollLeft 5515); «mismo día» huérfanos []
+ok   medica-1920-oscuro eje pegado: ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 85, debajo de la barra: 0)
+ok   medica-1920-oscuro panel: nada del panel se sale por la derecha y el panel entra en la ventana {"sale":0,"dentroDeLaVentana":true}
+ok   medica-1920-oscuro panel abierto: ningún nombre de episodio cortado (Range vs caja) []
+ok   medica-1920-oscuro panel abierto: sin desplazamiento horizontal (scrollWidth 1920 ≤ 1920)
+ok   medica-1920-oscuro panel abierto: los chips del borde (Lo más reciente) no tocan puntos del eje ni fechas []
+ok   medica-1920-oscuro panel abierto: los dos chips del borde no se pisan entre sí []
+ok   medica-1920-oscuro panel abierto: la primera columna visible muestra el año «15 may 2025 / Atención» (scrollLeft 0); «mismo día» huérfanos []
+ok   medica-1920-oscuro panel abierto: ninguna fecha del eje bajo la barra de la app (barra 56, fecha más alta 381, debajo de la barra: 0)
+ok   medica-1920-oscuro: consola sin errores []
+
+4 FALLA(S)

@@ -61,3 +61,22 @@ export function vinculosDe(
     (a, b) => (a.sentido === b.sentido ? 0 : a.sentido === 'saliente' ? -1 : 1) || t(a) - t(b),
   );
 }
+
+/** A concrete next step the panel can take itself: open another node. */
+export interface AccionDelPanel {
+  readonly nodoId: string;
+  readonly etiqueta: string;
+}
+
+/**
+ * S3's next action for a study without a released result (ADR-0005): open
+ * what it was ordered for, or else the encounter where it was ordered. `null`
+ * when neither is in view.
+ */
+export function accionDelPedido(vinculos: readonly VinculoDelPanel[]): AccionDelPanel | null {
+  const de = (tipo: TipoDeVinculo) => vinculos.find((v) => v.sentido === 'saliente' && v.tipo === tipo && v.otro !== null);
+  const motivo = de('pedido-para');
+  if (motivo) return { nodoId: motivo.otroId, etiqueta: 'Ver el diagnóstico por el que se pidió' };
+  const atencion = de('registrado-en');
+  return atencion ? { nodoId: atencion.otroId, etiqueta: 'Ver la atención donde se pidió' } : null;
+}

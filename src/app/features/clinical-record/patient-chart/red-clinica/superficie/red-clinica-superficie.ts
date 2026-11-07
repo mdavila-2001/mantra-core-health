@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DOCUMENT,
   effect,
   inject,
   Injector,
@@ -32,6 +33,7 @@ import { RecorridoGuiado, type PasoActualDelRecorrido } from '../../recorrido-gu
 import { armarRecorridoGuiado, type PasoDelRecorrido } from '../../recorrido-guiado/recorrido-guiado.model';
 import { RedClinicaAlertasLista } from '../alertas/red-clinica-alertas-lista';
 import { RedClinicaFiltros } from '../filtros/red-clinica-filtros';
+import { filtrosNombrados, unirConY } from '../filtros/red-clinica-filtros.nombres';
 import type { AlertaDeApoyo } from '../red-clinica-alertas.types';
 import type { LecturasComprobadas } from '../lecturas/red-clinica-lecturas';
 import { FILTRO_VACIO, type FiltroDeRed } from '../red-clinica-filtro';
@@ -89,6 +91,7 @@ const TODA = '';
 })
 export class RedClinicaSuperficie {
   private readonly injector = inject(Injector);
+  private readonly document = inject(DOCUMENT);
 
   readonly registros = input.required<readonly RegistroDeLaRed[]>();
   readonly vinculos = input.required<readonly VinculoDeLaRed[]>();
@@ -170,6 +173,13 @@ export class RedClinicaSuperficie {
     () => this.guiado() && this.visiblesDeLaRed().length === 1 && this.visiblesDeLaRed()[0] === NINGUNO_VISIBLE,
   );
 
+  /** The step notice names what hides the step («con este filtro: el hilo de …»), not «los filtros puestos». */
+  protected readonly filtrosQueOcultan = computed(() => {
+    const nombres = filtrosNombrados(this.filtro(), this.nodos());
+    if (nombres.length === 0) return 'con los filtros puestos';
+    return `${nombres.length === 1 ? 'con este filtro' : 'con estos filtros'}: ${unirConY(nombres)}`;
+  });
+
   protected readonly resaltados = computed<readonly string[]>(() =>
     this.guiado() ? (this.paso()?.enfocar ?? []) : this.resaltadosPorAlerta(),
   );
@@ -222,6 +232,24 @@ export class RedClinicaSuperficie {
         const red = this.red();
         if (red === undefined || !this.guiado()) return;
         [...paso.enfocar].reverse().forEach((id) => red.irANodo(id));
+      },
+      { injector: this.injector },
+    );
+  }
+
+  /**
+   * «Quitar filtros» from the step notice. The parent clears its filters,
+   * which are the only copy: leaving the guided mode restores the fold, not
+   * the filters the person removed on purpose. The button disappears with the
+   * notice, so the focus goes to what the step tells, now in view.
+   */
+  protected quitarFiltros(): void {
+    this.limpiar.emit();
+    afterNextRender(
+      () => {
+        const id = this.paso()?.enfocar[0];
+        const activo = this.document.activeElement;
+        if (id !== undefined && (activo === null || activo === this.document.body)) this.red()?.irANodo(id, { foco: true });
       },
       { injector: this.injector },
     );

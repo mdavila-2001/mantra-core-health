@@ -11,6 +11,14 @@ export function reducirMovimiento(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+/**
+ * Room above the axis once it follows the page: the edge jumps («Lo más
+ * antiguo», «Lo más reciente») sit there, clear of the dates and the marks.
+ * The 28 px jump rides 16 px above the axis' top and 12 px into its padding;
+ * the stuck axis paints the same band (`.red__eje`).
+ */
+const AIRE_DEL_EJE = 16;
+
 export class DesplazamientoDelLienzo {
   /**
    * The stretch of the plane in view, in canvas pixels. With it each thread
@@ -47,11 +55,13 @@ export class DesplazamientoDelLienzo {
       propio = lienzo.scrollLeft;
     };
     const medir = (): void => this.ventana.set({ desde: lienzo.scrollLeft, hasta: lienzo.scrollLeft + lienzo.clientWidth });
+    const seguir = this.seguirAlEje(lienzo);
     const observador = new ResizeObserver(() => {
       if (this.pegadoAlFinal) {
         pegar();
       }
       medir();
+      seguir.medir();
     });
     observador.observe(lienzo);
     if (lienzo.firstElementChild !== null) {
@@ -72,6 +82,41 @@ export class DesplazamientoDelLienzo {
     this.soltarLienzo = () => {
       observador.disconnect();
       lienzo.removeEventListener('scroll', alDesplazar);
+      seguir.soltar();
+    };
+  }
+
+  /**
+   * The axis follows the page under the app header: seven threads are taller
+   * than the screen, and reading the last ones the dates were gone. A CSS
+   * sticky cannot do it, since the canvas scrolls sideways (a scroll container
+   * in both axes). The offset goes on the frame as `--red-eje-y`, read by the
+   * axis and by the edge jumps; `data-eje-pegado` paints the axis' background.
+   */
+  private seguirAlEje(lienzo: HTMLElement): { readonly medir: () => void; readonly soltar: () => void } {
+    const marco = lienzo.parentElement;
+    const medir = (): void => {
+      if (marco === null) {
+        return;
+      }
+      // The app header is sticky; whatever its height at this width, the axis goes right under it.
+      const tope = Math.max(0, document.querySelector('header[app-header]')?.getBoundingClientRect().bottom ?? 0);
+      const caja = lienzo.getBoundingClientRect();
+      const altoEje = lienzo.querySelector<HTMLElement>('.red__eje')?.offsetHeight ?? 0;
+      const y = Math.round(Math.min(Math.max(0, tope - caja.top + AIRE_DEL_EJE), Math.max(0, caja.height - altoEje - AIRE_DEL_EJE)));
+      marco.style.setProperty('--red-eje-y', `${y}px`);
+      marco.toggleAttribute('data-eje-pegado', y > 0);
+    };
+    // Capture: the page may scroll on the document or on a shell container.
+    document.addEventListener('scroll', medir, { capture: true, passive: true });
+    window.addEventListener('resize', medir, { passive: true });
+    medir();
+    return {
+      medir,
+      soltar: () => {
+        document.removeEventListener('scroll', medir, { capture: true });
+        window.removeEventListener('resize', medir);
+      },
     };
   }
 

@@ -1,0 +1,62 @@
+antes-390-claro: {"hechos":8,"cajasConBordeLateral":8,"radioMax":12,"gapLista":"8px","rielX":65,"caminoX":45,"guiarIzq":179,"barraJustify":"flex-end","marcas":[],"desborde":false}
+antes antes-390-claro: 8 hechos sin caja propia (bordes laterales/superior = 0 en 0)
+antes antes-390-claro: radio de los hechos ≤ --r-sm (12px)
+antes antes-390-claro: los hechos se agrupan sin hueco entre cajas (gap 8px)
+antes antes-390-claro: «Lo que se descartó en el camino» arranca en el riel de consultas (x 45.0 vs 65.0)
+antes antes-390-claro: «Ver paso a paso» al inicio de la fila (a 179px del borde izquierdo; justify flex-end)
+ok   antes-390-claro: marcas sin jerga []
+ok   antes-390-claro: sin desplazamiento horizontal
+antes antes-390-claro: foco por teclado visible en el hecho (box-shadow «none», outline none)
+ok   antes-390-claro: sin errores de página []
+antes-1024-claro: {"hechos":8,"cajasConBordeLateral":8,"radioMax":12,"gapLista":"8px","rielX":309,"caminoX":289,"guiarIzq":557,"barraJustify":"flex-end","marcas":[],"desborde":false}
+antes antes-1024-claro: 8 hechos sin caja propia (bordes laterales/superior = 0 en 0)
+antes antes-1024-claro: radio de los hechos ≤ --r-sm (12px)
+antes antes-1024-claro: los hechos se agrupan sin hueco entre cajas (gap 8px)
+antes antes-1024-claro: «Lo que se descartó en el camino» arranca en el riel de consultas (x 289.0 vs 309.0)
+antes antes-1024-claro: «Ver paso a paso» al inicio de la fila (a 557px del borde izquierdo; justify flex-end)
+ok   antes-1024-claro: marcas sin jerga []
+ok   antes-1024-claro: sin desplazamiento horizontal
+antes antes-1024-claro: foco por teclado visible en el hecho (box-shadow «none», outline none)
+ok   antes-1024-claro: sin errores de página []
+antes-1440-claro: {"hechos":8,"cajasConBordeLateral":8,"radioMax":12,"gapLista":"8px","rielX":333,"caminoX":313,"guiarIzq":933,"barraJustify":"flex-end","marcas":[],"desborde":false}
+antes antes-1440-claro: 8 hechos sin caja propia (bordes laterales/superior = 0 en 0)
+antes antes-1440-claro: radio de los hechos ≤ --r-sm (12px)
+antes antes-1440-claro: los hechos se agrupan sin hueco entre cajas (gap 8px)
+antes antes-1440-claro: «Lo que se descartó en el camino» arranca en el riel de consultas (x 313.0 vs 333.0)
+antes antes-1440-claro: «Ver paso a paso» al inicio de la fila (a 933px del borde izquierdo; justify flex-end)
+ok   antes-1440-claro: marcas sin jerga []
+ok   antes-1440-claro: sin desplazamiento horizontal
+antes antes-1440-claro: foco por teclado visible en el hecho (box-shadow «none», outline none)
+ok   antes-1440-claro: sin errores de página []
+antes-390-oscuro: {"hechos":8,"cajasConBordeLateral":8,"radioMax":12,"gapLista":"8px","rielX":65,"caminoX":45,"guiarIzq":179,"barraJustify":"flex-end","marcas":[],"desborde":false}
+antes antes-390-oscuro: 8 hechos sin caja propia (bordes laterales/superior = 0 en 0)
+antes antes-390-oscuro: radio de los hechos ≤ --r-sm (12px)
+antes antes-390-oscuro: los hechos se agrupan sin hueco entre cajas (gap 8px)
+antes antes-390-oscuro: «Lo que se descartó en el camino» arranca en el riel de consultas (x 45.0 vs 65.0)
+antes antes-390-oscuro: «Ver paso a paso» al inicio de la fila (a 179px del borde izquierdo; justify flex-end)
+ok   antes-390-oscuro: marcas sin jerga []
+ok   antes-390-oscuro: sin desplazamiento horizontal
+antes antes-390-oscuro: foco por teclado visible en el hecho (box-shadow «none», outline none)
+ok   antes-390-oscuro: sin errores de página []
+antes-1024-oscuro: {"hechos":8,"cajasConBordeLateral":8,"radioMax":12,"gapLista":"8px","rielX":309,"caminoX":289,"guiarIzq":557,"barraJustify":"flex-end","marcas":[],"desborde":false}
+antes antes-1024-oscuro: 8 hechos sin caja propia (bordes laterales/superior = 0 en 0)
+antes antes-1024-oscuro: radio de los hechos ≤ --r-sm (12px)
+antes antes-1024-oscuro: los hechos se agrupan sin hueco entre cajas (gap 8px)
+antes antes-1024-oscuro: «Lo que se descartó en el camino» arranca en el riel de consultas (x 289.0 vs 309.0)
+antes antes-1024-oscuro: «Ver paso a paso» al inicio de la fila (a 557px del borde izquierdo; justify flex-end)
+ok   antes-1024-oscuro: marcas sin jerga []
+ok   antes-1024-oscuro: sin desplazamiento horizontal
+antes antes-1024-oscuro: foco por teclado visible en el hecho (box-shadow «none», outline none)
+ok   antes-1024-oscuro: sin errores de página []
+antes-1440-oscuro: {"hechos":8,"cajasConBordeLateral":8,"radioMax":12,"gapLista":"8px","rielX":333,"caminoX":313,"guiarIzq":933,"barraJustify":"flex-end","marcas":[],"desborde":false}
+antes antes-1440-oscuro: 8 hechos sin caja propia (bordes laterales/superior = 0 en 0)
+antes antes-1440-oscuro: radio de los hechos ≤ --r-sm (12px)
+antes antes-1440-oscuro: los hechos se agrupan sin hueco entre cajas (gap 8px)
+antes antes-1440-oscuro: «Lo que se descartó en el camino» arranca en el riel de consultas (x 313.0 vs 333.0)
+antes antes-1440-oscuro: «Ver paso a paso» al inicio de la fila (a 933px del borde izquierdo; justify flex-end)
+ok   antes-1440-oscuro: marcas sin jerga []
+ok   antes-1440-oscuro: sin desplazamiento horizontal
+antes antes-1440-oscuro: foco por teclado visible en el hecho (box-shadow «none», outline none)
+ok   antes-1440-oscuro: sin errores de página []
+
+fallas: 0

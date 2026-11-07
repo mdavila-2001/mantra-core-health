@@ -53,7 +53,7 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import type { DynamicEnumOption } from '../../../../core/data-access/system-context/system-context.types';
-import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
+import type { CitaDelPaciente, DiagnosisOption } from '../patient-chart.types';
 import { writeFailureMessage } from '../../write-message';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
@@ -117,35 +117,6 @@ const PROPIEDAD_CONCENTRACIONES = 'strengths';
 const PROPIEDAD_FRECUENCIA_POR_DEFECTO = 'default_frequency';
 
 /**
- * Un diagnóstico de la persona, ya traducido, para elegirlo como indicación.
- *
- * Baja del expediente hecho —`id` y palabras— por lo mismo que las recetas: acá
- * no hay mapa de etiquetas ni petición de terminología que valga la pena
- * duplicar, y la lista ya está cargada del otro lado.
- */
-export interface DiagnosisOption {
-  /** El `clinical.conditions.id`, que es lo que viaja como indicación. */
-  readonly id: string;
-  /** El diagnóstico en palabras. Nunca el uuid del concepto. */
-  readonly etiqueta: string;
-  /**
-   * Si el diagnóstico está **confirmado**. La receta sólo se liga a uno
-   * confirmado (pedido literal del propietario, C5) — ver
-   * `opcionesDeIndicacion()`. Lo arma {@link diagnosticoParaReceta}.
-   */
-  readonly confirmado?: boolean;
-  /**
-   * Cuándo se confirmó, si se sabe: la fecha de la decisión de C3
-   * (`verification.decidedAt`). `null` cuando el diagnóstico está confirmado
-   * pero no hay registro de esa decisión —los de la semilla, o los cargados
-   * ya confirmados—: es un confirmado sin fecha, no un presuntivo.
-   */
-  readonly confirmadoEl?: string | null;
-  /** Ruled out (REFUTED): not offered as a link for anything (clinical network, v4291). */
-  readonly descartado?: boolean;
-}
-
-/**
  * Un diagnóstico del expediente como opción de «¿para qué es esta receta?».
  *
  * ## Por qué existe
@@ -188,6 +159,7 @@ export function diagnosticoParaReceta(
 
 /** Alias de compatibilidad: `patient-chart.ts` (C3, fuera de mi alcance) sigue importando el nombre viejo. */
 export type DiagnosticoEnFicha = DiagnosisOption;
+export type { DiagnosisOption } from '../patient-chart.types';
 
 /** Una receta del expediente, ya sin uuid y con su ciclo resuelto. */
 export interface PrescriptionInChart {

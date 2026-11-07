@@ -19,12 +19,23 @@
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--r-full);
-  box-shadow: var(--shadow-sm);
+  /* Flat at rest: seven raised headers competed with the one card that is
+     read. It rises only when pointed at, focused or open. */
   cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
 }
 
-.red__alternar:hover {
-  border-color: var(--border-strong);
+.red__alternar[aria-expanded='true'] {
+  box-shadow: var(--shadow-sm);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .red__alternar:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-sm);
+  }
 }
 
 .red__alternar:focus-visible {
@@ -39,9 +50,11 @@
 }
 
 .red__episodio-nombre {
-  /* The name gives way last: the counts are cut first. */
-  flex: 0 1 auto;
-  min-inline-size: 8ch;
+  /* The name never shrinks: any shrink share, however small, turns into an
+     ellipsis that eats letters. The counts give way instead; a long name is
+     capped so the toggle still fits its row. */
+  flex: 0 0 auto;
+  max-inline-size: min(100%, 36ch);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

@@ -1,0 +1,18 @@
+<app-view-state-host [state]="estado()" (retry)="reintentar.emit()">
+  <div vsh-forbidden>
+    @if (prohibido(); as muro) {
+      <app-alert tone="warning" [title]="muro.title ?? 'No puede ver ' + que()" data-testid="recorrido-sin-acceso">
+        {{ muro.message ?? 'El servidor no le da acceso a esta parte de su historia.' }}
+        @if (muro.nextAction; as accion) {
+          <div alert-actions>
+            @if (accion.route) {
+              <a app-link [routerLink]="enlace(accion.route, accion.queryParams)">{{ accion.label }}</a>
+            } @else {
+              <span>{{ accion.label }}</span>
+            }
+          </div>
+        }
+      </app-alert>
+    }
+  </div>
+</app-view-state-host>

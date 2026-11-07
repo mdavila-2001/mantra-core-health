@@ -65,8 +65,7 @@
           @if (vista() === 'recorrido') {
             <app-mi-recorrido
               [recorrido]="recorrido()"
-              [cargando]="cargandoDetalle()"
-              [fallo]="falloElDetalle()"
+              [detalle]="detalle()"
               [citasSinCargar]="citasSinCargar()"
               [descargandoReceta]="descargandoReceta()"
               (descargarReceta)="descargarRecetaPorId($event)"
@@ -140,38 +139,29 @@
         @if (atenciones().length === 0) {
           <p class="historia__vacio">Todavía no tiene atenciones registradas.</p>
         } @else {
-          @if (falloElDetalle()) {
-            <!-- La línea se dibuja igual con lo que el resumen ya trajo: perder
-                 las notas y los estudios no justifica perder las atenciones. -->
-            <app-alert tone="warning" title="Falta parte del detalle">
-              No pudimos traer las notas ni los estudios de sus atenciones. Lo demás se muestra
-              igual.
-            </app-alert>
+          <!-- The line is drawn anyway with what the summary brought: losing the notes and the
+               studies does not justify losing the encounters. The M34 host says why (S5 is a wall
+               without retry, S9 a fault with its request id). -->
+          @if (faltaDelDetalle(); as falta) {
+            <div class="historia__falta" data-testid="historia-detalle-falta">
+              <p class="historia__vacio">
+                Falta parte del detalle: las notas y los estudios de sus atenciones. Lo demás se
+                muestra igual.
+              </p>
+              <app-view-state-host [state]="falta" (retry)="recargarDetalle()" />
+            </div>
           }
 
-          <!-- Sin las citas, la línea no puede decir qué atención tuvo
-               reconsulta. Se avisa: un hueco callado se lee como «no hubo». -->
-          @if (citasSinCargar(); as motivo) {
-            <app-alert
-              tone="warning"
-              title="Faltan las reconsultas"
-              data-testid="historia-citas-sin-cargar"
-            >
-              {{ motivo }} Sus atenciones se muestran igual, pero sin indicar cuáles tuvieron
-              reconsulta.
-              <div alert-actions>
-                <button
-                  app-button
-                  variant="secondary"
-                  size="sm"
-                  type="button"
-                  data-testid="historia-citas-reintentar"
-                  (clicked)="recargarDetalle()"
-                >
-                  Volver a cargar
-                </button>
-              </div>
-            </app-alert>
+          <!-- Without the appointments the line cannot say which encounter had a follow-up. It is
+               said: a silent gap reads as «there was none». -->
+          @if (citasSinCargar(); as falta) {
+            <div class="historia__falta" data-testid="historia-citas-sin-cargar">
+              <p class="historia__vacio">
+                Faltan las reconsultas: sus atenciones se muestran igual, pero sin indicar cuáles
+                tuvieron reconsulta.
+              </p>
+              <app-view-state-host [state]="falta" (retry)="recargarDetalle()" />
+            </div>
           }
 
           <!-- C6 · cada atención se despliega en su línea del encuentro. El

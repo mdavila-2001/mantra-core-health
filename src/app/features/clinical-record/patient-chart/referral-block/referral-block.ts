@@ -96,8 +96,8 @@ const REASON_MAX_LENGTH = 500;
  * organización médica, por **un servicio concreto** de su catálogo («tipo
  * tratamiento», pedido del cliente, 28/10/2026).
  *
- * Uso: `<app-referral-block [patientProfileId] [encounterId] [referrals]
- * [offersOpenEncounter] (cambio) (retry) (openEncounter) />`.
+ * Usage: `<app-referral-block [patientProfileId] [encounterId] [referrals]
+ * [offersOpenEncounter] [arrivalEncounterId] (cambio) (retry) (openEncounter) />`.
  *
  * ## El recorrido
  *
@@ -183,24 +183,25 @@ export class ReferralBlock {
   private readonly injector = inject(Injector);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
-  /** La persona que se deriva. */
+  /** The person being referred. */
   readonly patientProfileId = input.required<string>();
 
-  /** El encuentro en curso, o `null` si no hay uno abierto. */
+  /** The encounter in progress, or `null` when none is open. */
   readonly encounterId = input<string | null>(null);
 
-  /** Las derivaciones de la persona, leídas por quien monta el bloque; `null` no dibuja la lista. */
+  /** The person's referrals, read by the host; `null` draws no list. */
   readonly referrals = input<ViewState<readonly Referral[]> | null>(null);
 
   /**
-   * Avisa que una derivación cambió desde su detalle (respuesta,
-   * contrarreferencia, anulación, consentimiento), para que quien monta el
-   * bloque relea. La emisión no pasa por acá: ver `ReferralsClient.issued`.
+   * A referral changed from its detail (answer, counter-referral, cancellation, consent), so the host
+   * reloads. Issuing does not go through here: see `ReferralsClient.issued`.
    */
   readonly cambio = output<void>();
 
-  /** Sin encuentro: quien monta el bloque sabe abrirlo y lo ofrece. */
+  /** No encounter: the host knows how to open one and offers it. */
   readonly offersOpenEncounter = input(false);
+  /** The arrival encounter for accepting (`targetEncounterId`): only when the host knows it is the accepter's own. */
+  readonly arrivalEncounterId = input<string | null>(null);
 
   /** La persona pidió ir a abrir el encuentro. */
   readonly openEncounter = output<void>();

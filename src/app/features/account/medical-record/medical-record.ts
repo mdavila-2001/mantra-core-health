@@ -25,7 +25,7 @@ import type { ConceptLabels } from '../../../core/data-access/terminology/termin
 import { isAllergyCode } from '../../../shared/utils/allergies/allergies';
 import { describeApiFailure } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { empty, loading, ready } from '../../../core/view-state/view-state';
+import { dataOf, empty, failureOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
@@ -296,62 +296,55 @@ export class MedicalRecord {
 
   private readonly etiquetas = signal<ConceptLabels>(new Map());
 
-  /* ---- C6 · lo que la línea del encuentro necesita, al primer despliegue --- */
+  /* ---- C6 · what the encounter line needs, on the first expansion -------- */
 
   /**
-   * Las notas y las órdenes, o `null` si **todavía nadie desplegó una atención**.
+   * The notes and orders, or `null` while **nobody has expanded an encounter yet**.
    *
-   * `null` no es «vacío»: es «no se pidió». La distinción es lo que hace que la
-   * pantalla no salga a la red al abrirse. Son dos lecturas más que sólo sirven
-   * cuando alguien quiere ver qué pasó en una consulta, y cobrárselas a todos
-   * para que el acordeón esté listo por si acaso es exactamente lo que el
-   * carril prohíbe.
+   * `null` is not «empty»: it is «not asked». That distinction keeps the screen
+   * off the network when it opens. They are two more reads that only matter when
+   * someone wants to see what happened in a visit, and charging everyone for them
+   * so the accordion is ready just in case is exactly what the lane forbids.
    *
-   * Y son **dos**, no dos por atención: `getChart` y `getOwnOrders` traen todo
-   * el historial de una vez y después se reparte por `encounterId` acá.
+   * And they are **two**, not two per encounter: `getChart` and `getOwnOrders`
+   * bring the whole history at once and it is split by `encounterId` here.
    */
-  private readonly detalle = signal<ViewState<DetalleDeAtenciones> | null>(null);
+  protected readonly detalle = signal<ViewState<DetalleDeAtenciones> | null>(null);
 
   /**
-   * Por qué no se pudieron leer las citas del titular, o `null`.
+   * The failed read of the holder's appointments (M34), or `null`.
    *
-   * La línea de cada atención se dibuja igual sin ellas —lo único que aportan
-   * es la reconsulta—, pero antes el fallo caía a `{ items: [] }` y una
-   * atención con reconsulta se leía como una sin ella. Ahora se dice.
+   * Each encounter's line is drawn without them —they only add the follow-up—,
+   * but the failure used to fall back to `{ items: [] }` and an encounter with a
+   * follow-up read as one without it. Now it is said, as the API said it.
    */
-  protected readonly citasSinCargar = signal<string | null>(null);
+  protected readonly citasSinCargar = signal<ViewState<never> | null>(null);
 
-  /** Lo que ya llegó. Sin nada pedido —o con la lectura fallada— va vacío. */
+  /** What already arrived. With nothing asked —or the read failed— it is empty. */
   private readonly detalleCargado = computed<DetalleDeAtenciones>(() => {
     const estado = this.detalle();
-    if (estado === null || (estado.status !== 'ready' && estado.status !== 'stale')) {
-      return { notas: [], ordenes: [], citas: [] };
-    }
-    return estado.data;
+    return (estado === null ? null : dataOf(estado)) ?? { notas: [], ordenes: [], citas: [] };
   });
 
-  /** Hay una lectura en vuelo: la línea lo declara en vez de callarse. */
+  /** A read is in flight: the line says so instead of staying silent. */
   protected readonly cargandoDetalle = computed(() => this.detalle()?.status === 'loading');
 
-  /** La lectura falló: la línea se dibuja con lo que hay y el aviso lo explica. */
-  protected readonly falloElDetalle = computed(() => {
-    const estado = this.detalle();
-    return estado !== null && estado.status !== 'loading' && estado.status !== 'ready';
-  });
+  /** The read failed, in its M34 state (S5 is not S9): the line is drawn with what there is. */
+  protected readonly faltaDelDetalle = computed(() => failureOf(this.detalle()));
 
   /**
-   * Alguien desplegó una atención.
+   * Someone expanded an encounter.
    *
-   * Sólo el **primer** despliegue sale a la red: `detalle() !== null` ya
-   * significa pedido, con lo cual plegar y desplegar diez veces sigue siendo
-   * una lectura.
+   * Only the **first** expansion goes to the network: `detalle() !== null`
+   * already means asked, so folding and unfolding ten times is still one
+   * read.
    */
   protected desplegarAtencion(abierta: boolean): void {
     if (!abierta || this.detalle() !== null || this.perfil === null) return;
     this.cargarDetalle(this.perfil);
   }
 
-  /** Vuelve a pedir el detalle de las atenciones, desde el aviso de lo que faltó. */
+  /** Asks again for the encounters' detail, from the notice of what was missing. */
   protected recargarDetalle(): void {
     if (this.perfil === null) return;
     this.cargarDetalle(this.perfil);
@@ -364,13 +357,13 @@ export class MedicalRecord {
     forkJoin({
       expediente: this.clinical.getChart(perfil, TOPE),
       ordenes: this.diagnostics.getOwnOrders(TOPE),
-      // C8: las citas del titular, de donde sale la reconsulta de cada
-      // atención. Si esta lectura falla la historia no se pierde: la línea se
-      // dibuja sin el hecho de la reconsulta, que es lo único que aporta —y el
-      // aviso dice que falta, para que no se lea como «sin reconsulta»—.
+      // C8: the holder's appointments, where each encounter's follow-up comes
+      // from. If this read fails the history is not lost: the line is drawn
+      // without the follow-up, which is all it adds —and the notice says it is
+      // missing, so it does not read as «no follow-up»—.
       citas: this.scheduling.searchBookings({ patientProfileId: perfil, limit: TOPE }).pipe(
         catchError((error: unknown) => {
-          this.citasSinCargar.set(describeApiFailure(error, 'No pudimos traer sus citas.'));
+          this.citasSinCargar.set(errorToViewState<never>(error));
           return of({ items: [] as readonly Booking[] });
         }),
       ),
@@ -381,10 +374,10 @@ export class MedicalRecord {
             expediente: of(expediente),
             ordenes: of(ordenes),
             citas: of(citas),
-            // Las órdenes traen conceptos que el resumen no tenía —el estudio,
-            // su categoría, su estado—. Sin esta segunda lectura la línea
-            // mostraría «Sin registrar» donde hay un hemograma. Lo mismo vale
-            // para el estado de la reconsulta, que también es un concepto.
+            // The orders bring concepts the summary did not have —the study,
+            // its category, its status—. Without this second read the line
+            // would show «Sin registrar» where there is a blood count. The same
+            // goes for the follow-up's status, which is also a concept.
             etiquetas: this.terminology
               .readConceptLabels([
                 ...conceptosDeLasOrdenes(ordenes.items),

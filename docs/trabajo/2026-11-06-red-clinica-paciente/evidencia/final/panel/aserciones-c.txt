@@ -1,0 +1,98 @@
+ok   1440-claro S2: esqueleto visible (13 siluetas: línea + 4 filas × 3)
+ok   1440-claro S2: sin «Resultado liberado» mientras lee
+1440-claro S2: alto del esqueleto 137 px, alto de la tabla leída 149 px
+ok   1440-claro éxito: «Liberado el 17 de mayo de 2025 · 2 valores fuera de rango»
+ok   1440-claro s5-403: «Advertencia:No puede ver este informe El servidor no le da acceso a los valores de este informe. Volver a la r»
+ok   1440-claro s5-403: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   1440-claro s5-403: sin «Resultado liberado» debajo
+ok   1440-claro s5-403: «Volver a la red» ofrecido
+ok   1440-claro s5-403: «Volver a la red» cierra y el foco vuelve al nodo (TSH por quimioluminiscenciaCompletadoOrd)
+ok   1440-claro s6-404: «Advertencia:El informe no está disponible No se encontró un informe liberado para este estudio. Volver a la re»
+ok   1440-claro s6-404: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   1440-claro s6-404: sin «Resultado liberado» debajo
+ok   1440-claro s6-404: «Volver a la red» ofrecido
+ok   1440-claro s6-404: «Volver a la red» cierra y el foco vuelve al nodo (TSH por quimioluminiscenciaCompletadoOrd)
+ok   1440-claro s8-sin-conexion: «Advertencia:Sin conexión No se pudieron leer los valores del informe. Reintentar»
+ok   1440-claro s8-sin-conexion: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   1440-claro s8-sin-conexion: sin «Resultado liberado» debajo
+ok   1440-claro s8-sin-conexion: «Volver a la red» no corresponde (tiene «Reintentar»)
+ok   1440-claro s9-error-con-id: «Error:No se pudieron leer los valores del informe Código de soporte: mock-falloReintentar»
+ok   1440-claro s9-error-con-id: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   1440-claro s9-error-con-id: sin «Resultado liberado» debajo
+ok   1440-claro s9-error-con-id: «Volver a la red» no corresponde (tiene «Reintentar»)
+ok   1440-claro s4-validacion: «Advertencia:El servidor rechazó la lectura de este informe Sus valores no se pueden mostrar. Leerlo de nuevo d»
+ok   1440-claro s4-validacion: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   1440-claro s4-validacion: sin «Resultado liberado» debajo
+ok   1440-claro s4-validacion: «Volver a la red» ofrecido
+ok   1440-claro s4-validacion: sin el texto crudo del 422
+ok   1440-claro s4-validacion: sin «Reintentar»
+ok   1440-claro s4-validacion: «Volver a la red» cierra y el foco vuelve al nodo (TSH por quimioluminiscenciaCompletadoOrd)
+ok   1440-claro descarga-validación: el aviso queda entero en la ventana sin desplazar a mano
+ok   1440-claro S3: «Sin resultado liberado todavía · pedido hace 14 días»
+ok   1440-claro: consola sin errores ajenos a los fallos provocados (6 provocados) []
+ok   1440-oscuro S2: esqueleto visible (13 siluetas: línea + 4 filas × 3)
+ok   1440-oscuro S2: sin «Resultado liberado» mientras lee
+1440-oscuro S2: alto del esqueleto 137 px, alto de la tabla leída 149 px
+ok   1440-oscuro éxito: «Liberado el 17 de mayo de 2025 · 2 valores fuera de rango»
+ok   1440-oscuro s5-403: «Advertencia:No puede ver este informe El servidor no le da acceso a los valores de este informe. Volver a la r»
+ok   1440-oscuro s5-403: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   1440-oscuro s5-403: sin «Resultado liberado» debajo
+ok   1440-oscuro s5-403: «Volver a la red» ofrecido
+ok   1440-oscuro s5-403: «Volver a la red» cierra y el foco vuelve al nodo (TSH por quimioluminiscenciaCompletadoOrd)
+ok   1440-oscuro s6-404: «Advertencia:El informe no está disponible No se encontró un informe liberado para este estudio. Volver a la re»
+ok   1440-oscuro s6-404: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   1440-oscuro s6-404: sin «Resultado liberado» debajo
+ok   1440-oscuro s6-404: «Volver a la red» ofrecido
+ok   1440-oscuro s6-404: «Volver a la red» cierra y el foco vuelve al nodo (TSH por quimioluminiscenciaCompletadoOrd)
+ok   1440-oscuro s8-sin-conexion: «Advertencia:Sin conexión No se pudieron leer los valores del informe. Reintentar»
+ok   1440-oscuro s8-sin-conexion: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   1440-oscuro s8-sin-conexion: sin «Resultado liberado» debajo
+ok   1440-oscuro s8-sin-conexion: «Volver a la red» no corresponde (tiene «Reintentar»)
+ok   1440-oscuro s9-error-con-id: «Error:No se pudieron leer los valores del informe Código de soporte: mock-falloReintentar»
+ok   1440-oscuro s9-error-con-id: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   1440-oscuro s9-error-con-id: sin «Resultado liberado» debajo
+ok   1440-oscuro s9-error-con-id: «Volver a la red» no corresponde (tiene «Reintentar»)
+ok   1440-oscuro s4-validacion: «Advertencia:El servidor rechazó la lectura de este informe Sus valores no se pueden mostrar. Leerlo de nuevo d»
+ok   1440-oscuro s4-validacion: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   1440-oscuro s4-validacion: sin «Resultado liberado» debajo
+ok   1440-oscuro s4-validacion: «Volver a la red» ofrecido
+ok   1440-oscuro s4-validacion: sin el texto crudo del 422
+ok   1440-oscuro s4-validacion: sin «Reintentar»
+ok   1440-oscuro s4-validacion: «Volver a la red» cierra y el foco vuelve al nodo (TSH por quimioluminiscenciaCompletadoOrd)
+ok   1440-oscuro descarga-validación: el aviso queda entero en la ventana sin desplazar a mano
+ok   1440-oscuro S3: «Sin resultado liberado todavía · pedido hace 14 días»
+ok   1440-oscuro: consola sin errores ajenos a los fallos provocados (6 provocados) []
+ok   390-claro S2: esqueleto visible (13 siluetas: línea + 4 filas × 3)
+ok   390-claro S2: sin «Resultado liberado» mientras lee
+390-claro S2: alto del esqueleto 137 px, alto de la tabla leída 92 px
+ok   390-claro éxito: «Liberado el 26 de julio de 2025 · 1 valor fuera de rango»
+ok   390-claro s5-403: «Advertencia:No puede ver este informe El servidor no le da acceso a los valores de este informe. Volver a la r»
+ok   390-claro s5-403: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   390-claro s5-403: sin «Resultado liberado» debajo
+ok   390-claro s5-403: «Volver a la red» ofrecido
+ok   390-claro s5-403: «Volver a la red» cierra y el foco vuelve al nodo (TSH por quimioluminiscenciaCompletadoOrd)
+ok   390-claro s6-404: «Advertencia:El informe no está disponible No se encontró un informe liberado para este estudio. Volver a la re»
+ok   390-claro s6-404: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   390-claro s6-404: sin «Resultado liberado» debajo
+ok   390-claro s6-404: «Volver a la red» ofrecido
+ok   390-claro s6-404: «Volver a la red» cierra y el foco vuelve al nodo (TSH por quimioluminiscenciaCompletadoOrd)
+ok   390-claro s8-sin-conexion: «Advertencia:Sin conexión No se pudieron leer los valores del informe. Reintentar»
+ok   390-claro s8-sin-conexion: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   390-claro s8-sin-conexion: sin «Resultado liberado» debajo
+ok   390-claro s8-sin-conexion: «Volver a la red» no corresponde (tiene «Reintentar»)
+ok   390-claro s9-error-con-id: «Error:No se pudieron leer los valores del informe Código de soporte: mock-falloReintentar»
+ok   390-claro s9-error-con-id: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   390-claro s9-error-con-id: sin «Resultado liberado» debajo
+ok   390-claro s9-error-con-id: «Volver a la red» no corresponde (tiene «Reintentar»)
+ok   390-claro s4-validacion: «Advertencia:El servidor rechazó la lectura de este informe Sus valores no se pueden mostrar. Leerlo de nuevo d»
+ok   390-claro s4-validacion: lleva ícono {"svg":true,"opacidad":"1","ancho":20}
+ok   390-claro s4-validacion: sin «Resultado liberado» debajo
+ok   390-claro s4-validacion: «Volver a la red» ofrecido
+ok   390-claro s4-validacion: sin el texto crudo del 422
+ok   390-claro s4-validacion: sin «Reintentar»
+ok   390-claro s4-validacion: «Volver a la red» cierra y el foco vuelve al nodo (TSH por quimioluminiscenciaCompletadoOrd)
+ok   390-claro descarga-validación: el aviso queda entero en la ventana sin desplazar a mano
+ok   390-claro S3: «Sin resultado liberado todavía · pedido hace 14 días»
+ok   390-claro: consola sin errores ajenos a los fallos provocados (6 provocados) []
+
+TODO OK

@@ -1,6 +1,7 @@
 /* ============================================================================
-    Shared by the clinical network and its header and node subcomponents: the
-    tone map, the status pill and the fold chevron.
+    Shared by the clinical network and its header, node and legend
+    subcomponents: the tone map, the status pill, the fold chevron and the
+    strike of the ruled-out diamond.
     ========================================================================== */
 
 /* -- Tones -------------------------------------------------------------------
@@ -23,7 +24,7 @@
   border-inline-end: 2px solid currentColor;
   border-block-end: 2px solid currentColor;
   rotate: -45deg;
-  transition: rotate var(--dur-fast) ease;
+  transition: rotate var(--dur-fast) var(--ease-standard);
 }
 
 .red__chevron--abierto {
@@ -40,6 +41,28 @@
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   font-weight: 600;
+}
+
+/* -- Ruled-out strike ----------------------------------------------------------
+   ADR-0021 level 1: «struck through: ruled out». A bar across the diamond, on
+   the strip and on the legend sample, so ruled out is told apart from
+   presumptive by shape and not by color alone (WCAG 1.4.1). The diamond is
+   rotated 45deg, so a vertical bar reads as «/» and pokes 2px out of it. The
+   bar is the cue, so the border is solid: on an 11px sample a dashed border
+   with the bar across it broke into two strokes and no diamond was left
+   (`.red__hito` doubled to outweigh the dashed border of the strokes sheet). */
+.red__hito.red__hito--descartado,
+.red__muestra-hito.red__hito--descartado {
+  border-style: solid;
+}
+
+.red__hito--descartado::after {
+  content: '';
+  position: absolute;
+  inset-block: -4px;
+  inset-inline-start: calc(50% - 1px);
+  inline-size: 2px;
+  background: var(--st-error-fg);
 }
 
 @media (prefers-reduced-motion: reduce) {

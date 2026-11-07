@@ -1,0 +1,62 @@
+ok   medica-390-claro: el placeholder entra entero ({"texto":"Diagnóstico, estudio, profesional…","ancho":229,"libre":246})
+ok   medica-390-claro: consola sin errores []
+ok   medica-390-oscuro: el placeholder entra entero ({"texto":"Diagnóstico, estudio, profesional…","ancho":229,"libre":246})
+ok   medica-390-oscuro: consola sin errores []
+ok   medica-768-claro: el placeholder entra entero ({"texto":"Diagnóstico, estudio, profesional…","ancho":229,"libre":584})
+ok   medica-768-claro: 78 etiquetas del eje, ninguna más ancha que su columna []
+medica-768-claro: columnas del mismo día → ["mismo día","mismo día","mismo día"]
+ok   medica-768-claro: cada borde con contenido oculto lo señala {"ocultoInicio":true,"ocultoFinal":false,"bordeInicio":true,"bordeFinal":false,"pisaEtiquetas":[]}
+medica-768-claro: chip de «Atenciones sin diagnóstico» {"texto":"← 10 antes","fondo":"rgb(255, 255, 255)","anillo":"rgb(249, 248, 244) 0px 0px 0px 4px"}
+ok   medica-768-claro: tras «Lo más antiguo» {"ocultoInicio":false,"ocultoFinal":true,"bordeInicio":false,"bordeFinal":true,"pisaEtiquetas":[]}
+ok   medica-768-claro: consola sin errores []
+ok   medica-768-oscuro: el placeholder entra entero ({"texto":"Diagnóstico, estudio, profesional…","ancho":229,"libre":584})
+ok   medica-768-oscuro: 78 etiquetas del eje, ninguna más ancha que su columna []
+medica-768-oscuro: columnas del mismo día → ["mismo día","mismo día","mismo día"]
+ok   medica-768-oscuro: cada borde con contenido oculto lo señala {"ocultoInicio":true,"ocultoFinal":false,"bordeInicio":true,"bordeFinal":false,"pisaEtiquetas":[]}
+medica-768-oscuro: chip de «Atenciones sin diagnóstico» {"texto":"← 10 antes","fondo":"rgb(10, 43, 61)","anillo":"rgb(15, 46, 66) 0px 0px 0px 4px"}
+ok   medica-768-oscuro: tras «Lo más antiguo» {"ocultoInicio":false,"ocultoFinal":true,"bordeInicio":false,"bordeFinal":true,"pisaEtiquetas":[]}
+ok   medica-768-oscuro: consola sin errores []
+ok   medica-1024-claro: el placeholder entra entero ({"texto":"Diagnóstico, estudio, profesional…","ancho":229,"libre":329})
+ok   medica-1024-claro: 78 etiquetas del eje, ninguna más ancha que su columna []
+medica-1024-claro: columnas del mismo día → ["mismo día","mismo día","mismo día"]
+ok   medica-1024-claro: cada borde con contenido oculto lo señala {"ocultoInicio":true,"ocultoFinal":false,"bordeInicio":true,"bordeFinal":false,"pisaEtiquetas":[]}
+medica-1024-claro: chip de «Atenciones sin diagnóstico» {"texto":"← 10 antes","fondo":"rgb(255, 255, 255)","anillo":"rgb(249, 248, 244) 0px 0px 0px 4px"}
+ok   medica-1024-claro: tras «Lo más antiguo» {"ocultoInicio":false,"ocultoFinal":true,"bordeInicio":false,"bordeFinal":true,"pisaEtiquetas":[]}
+ok   medica-1024-claro: consola sin errores []
+ok   medica-1024-oscuro: el placeholder entra entero ({"texto":"Diagnóstico, estudio, profesional…","ancho":229,"libre":329})
+ok   medica-1024-oscuro: 78 etiquetas del eje, ninguna más ancha que su columna []
+medica-1024-oscuro: columnas del mismo día → ["mismo día","mismo día","mismo día"]
+ok   medica-1024-oscuro: cada borde con contenido oculto lo señala {"ocultoInicio":true,"ocultoFinal":false,"bordeInicio":true,"bordeFinal":false,"pisaEtiquetas":[]}
+medica-1024-oscuro: chip de «Atenciones sin diagnóstico» {"texto":"← 10 antes","fondo":"rgb(10, 43, 61)","anillo":"rgb(15, 46, 66) 0px 0px 0px 4px"}
+ok   medica-1024-oscuro: tras «Lo más antiguo» {"ocultoInicio":false,"ocultoFinal":true,"bordeInicio":false,"bordeFinal":true,"pisaEtiquetas":[]}
+ok   medica-1024-oscuro: consola sin errores []
+ok   medica-1440-claro: el placeholder entra entero ({"texto":"Diagnóstico, estudio, profesional…","ancho":229,"libre":554})
+ok   medica-1440-claro: 78 etiquetas del eje, ninguna más ancha que su columna []
+medica-1440-claro: columnas del mismo día → ["mismo día","mismo día","mismo día"]
+ok   medica-1440-claro: cada borde con contenido oculto lo señala {"ocultoInicio":true,"ocultoFinal":false,"bordeInicio":true,"bordeFinal":false,"pisaEtiquetas":[]}
+medica-1440-claro: chip de «Atenciones sin diagnóstico» {"texto":"← 9 antes","fondo":"rgb(255, 255, 255)","anillo":"rgb(249, 248, 244) 0px 0px 0px 4px"}
+ok   medica-1440-claro: tras «Lo más antiguo» {"ocultoInicio":false,"ocultoFinal":true,"bordeInicio":false,"bordeFinal":true,"pisaEtiquetas":[]}
+ok   medica-1440-claro: consola sin errores []
+ok   medica-1440-oscuro: el placeholder entra entero ({"texto":"Diagnóstico, estudio, profesional…","ancho":229,"libre":554})
+ok   medica-1440-oscuro: 78 etiquetas del eje, ninguna más ancha que su columna []
+medica-1440-oscuro: columnas del mismo día → ["mismo día","mismo día","mismo día"]
+ok   medica-1440-oscuro: cada borde con contenido oculto lo señala {"ocultoInicio":true,"ocultoFinal":false,"bordeInicio":true,"bordeFinal":false,"pisaEtiquetas":[]}
+medica-1440-oscuro: chip de «Atenciones sin diagnóstico» {"texto":"← 9 antes","fondo":"rgb(10, 43, 61)","anillo":"rgb(15, 46, 66) 0px 0px 0px 4px"}
+ok   medica-1440-oscuro: tras «Lo más antiguo» {"ocultoInicio":false,"ocultoFinal":true,"bordeInicio":false,"bordeFinal":true,"pisaEtiquetas":[]}
+ok   medica-1440-oscuro: consola sin errores []
+ok   medica-1920-claro: el placeholder entra entero ({"texto":"Diagnóstico, estudio, profesional…","ancho":229,"libre":698})
+ok   medica-1920-claro: 78 etiquetas del eje, ninguna más ancha que su columna []
+medica-1920-claro: columnas del mismo día → ["mismo día","mismo día","mismo día"]
+ok   medica-1920-claro: cada borde con contenido oculto lo señala {"ocultoInicio":true,"ocultoFinal":false,"bordeInicio":true,"bordeFinal":false,"pisaEtiquetas":[]}
+medica-1920-claro: chip de «Atenciones sin diagnóstico» {"texto":"← 8 antes","fondo":"rgb(255, 255, 255)","anillo":"rgb(249, 248, 244) 0px 0px 0px 4px"}
+ok   medica-1920-claro: tras «Lo más antiguo» {"ocultoInicio":false,"ocultoFinal":true,"bordeInicio":false,"bordeFinal":true,"pisaEtiquetas":[]}
+ok   medica-1920-claro: consola sin errores []
+ok   medica-1920-oscuro: el placeholder entra entero ({"texto":"Diagnóstico, estudio, profesional…","ancho":229,"libre":698})
+ok   medica-1920-oscuro: 78 etiquetas del eje, ninguna más ancha que su columna []
+medica-1920-oscuro: columnas del mismo día → ["mismo día","mismo día","mismo día"]
+ok   medica-1920-oscuro: cada borde con contenido oculto lo señala {"ocultoInicio":true,"ocultoFinal":false,"bordeInicio":true,"bordeFinal":false,"pisaEtiquetas":[]}
+medica-1920-oscuro: chip de «Atenciones sin diagnóstico» {"texto":"← 8 antes","fondo":"rgb(10, 43, 61)","anillo":"rgb(15, 46, 66) 0px 0px 0px 4px"}
+ok   medica-1920-oscuro: tras «Lo más antiguo» {"ocultoInicio":false,"ocultoFinal":true,"bordeInicio":false,"bordeFinal":true,"pisaEtiquetas":[]}
+ok   medica-1920-oscuro: consola sin errores []
+
+TODO OK

@@ -19,11 +19,12 @@ import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { conectadosA } from './recorrido-clinico.model';
-import { ASPECTO_DE_LA_CLASE, type ClaseDeLaRed, type RegistroDeLaRed, type VinculoDeLaRed } from './red-clinica.model';
+import { ASPECTO_DE_LA_CLASE, NOMBRE_DEL_MOTIVO, type ClaseDeLaRed, type RegistroDeLaRed, type VinculoDeLaRed } from './red-clinica.model';
 import { agruparEnEpisodios } from './red-clinica.episodios';
 import { type EpisodioClinico } from './red-clinica.episodio';
 import { relacionesDe } from './red-clinica.vinculos';
 import { ubicarRed } from './red-clinica.geometria';
+import { ajustarALaVentana, tramoDelEpisodio } from './red-clinica.geometria.ventana';
 import {
   DISTANCIA_DEL_TRONCO,
   MEDIDAS_DE_LA_RED,
@@ -36,6 +37,7 @@ import { DesplazamientoDelLienzo, reducirMovimiento } from './desplazamiento-del
 import { RedNodo } from './nodo/red-nodo';
 import { RedCabecera } from './cabecera/red-cabecera';
 import { RedLeyenda } from './leyenda/red-leyenda';
+import { FECHAS_DEL_DIA_CLINICO } from './recorrido-clinico.zona';
 
 /**
  * The chosen node, for whoever wants to show its detail (the Strip 3 side
@@ -91,6 +93,8 @@ export interface PlegadoDeLaRed {
   imports: [AppButton, DatePipe, NavIcon, NgTemplateOutlet, RedCabecera, RedLeyenda, RedNodo],
   templateUrl: './recorrido-clinico.html',
   styleUrls: ['./red-clinica-tonos.css', './recorrido-clinico.css', './red-clinica-trazos.css'],
+  // Dates print in the clinical day's zone, as the columns group (`recorrido-clinico.zona.ts`).
+  providers: [FECHAS_DEL_DIA_CLINICO],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecorridoClinico {
@@ -112,6 +116,7 @@ export class RecorridoClinico {
   readonly elegido = output<NodoElegido>();
 
   protected readonly medidas = MEDIDAS_DE_LA_RED;
+  protected readonly nombreDelMotivo = NOMBRE_DEL_MOTIVO;
   protected readonly distanciaDelTronco = DISTANCIA_DEL_TRONCO;
   protected readonly contextoDe = contextoDe;
 
@@ -125,13 +130,12 @@ export class RecorridoClinico {
   private readonly conjuntoVisible = computed(() => new Set(this.visibles()));
   private readonly conjuntoResaltado = computed(() => new Set(this.resaltados()));
 
-  protected readonly plano = computed(() =>
-    ubicarRed(this.registros(), this.vinculos(), this.red(), {
-      desplegados: this.desplegados(),
-      abiertos: this.abiertos(),
-      visibles: this.conjuntoVisible(),
-    }),
+  private readonly planoCompleto = computed(() =>
+    ubicarRed(this.registros(), this.vinculos(), this.red(), { desplegados: this.desplegados(), abiertos: this.abiertos(), visibles: this.conjuntoVisible() }),
   );
+
+  /** The plane fitted to what is in view: empty expanded threads shrink and lines stop at the edge. */
+  protected readonly plano = computed(() => ajustarALaVentana(this.planoCompleto(), this.desplazamiento.ventana()));
 
   private readonly porId = computed(() => new Map(this.registros().map((r) => [r.id, r])));
   private readonly episodioPorId = computed(() => new Map(this.red().episodios.map((e) => [e.id, e])));
@@ -185,16 +189,19 @@ export class RecorridoClinico {
     this.destroyRef.onDestroy(() => this.desplazamiento.soltar());
   }
 
-  /** Per collapsed thread, how many of its milestones are left and right of the view, and where the view is. */
+  /**
+   * Per collapsed thread, how many of its milestones are left and right of the
+   * view; per expanded thread with nothing in view, how many of its records.
+   */
   protected readonly fuera = computed(() => {
     const v = this.desplazamiento.ventana();
-    const conteo = (h: HiloDeLaRed) => ({ antes: h.hitos.filter((x) => x.x < v.desde).length, despues: h.hitos.filter((x) => x.x > v.hasta).length });
-    return { ...v, hilos: new Map(this.plano().hilos.filter((h) => !h.desplegado).map((h) => [h.episodio.id, conteo(h)])) };
+    const conteo = (h: HiloDeLaRed) => h.fueraDeLaVentana ?? { antes: h.hitos.filter((x) => x.x < v.desde).length, despues: h.hitos.filter((x) => x.x > v.hasta).length };
+    return { ...v, hilos: new Map(this.plano().hilos.filter((h) => !h.desplegado || h.fueraDeLaVentana).map((h) => [h.episodio.id, conteo(h)])) };
   });
 
   protected verHitos(hilo: HiloDeLaRed): void {
     this.desplazamiento.pegadoAlFinal = false;
-    this.desplazamiento.mostrarTramo(hilo.hitos[0].x - this.medidas.anchoAncha, hilo.hitos[hilo.hitos.length - 1].x + this.distanciaDelTronco);
+    this.irAlEpisodio(hilo.episodio.id);
   }
 
   protected irA(extremo: 'inicio' | 'final'): void {
@@ -216,12 +223,8 @@ export class RecorridoClinico {
   }
 
   private irAlEpisodio(id: string): void {
-    const xs = this.plano()
-      .nodos.filter((n) => n.episodio === id)
-      .map((n) => n.x);
-    if (xs.length > 0) {
-      this.desplazamiento.mostrarTramo(Math.min(...xs) - 2 * this.distanciaDelTronco, Math.max(...xs) + this.medidas.anchoAncha);
-    }
+    const tramo = tramoDelEpisodio(this.plano(), id);
+    if (tramo !== null) this.desplazamiento.mostrarTramo(...tramo);
   }
 
   protected desplegarTodo(): void {
@@ -387,9 +390,7 @@ export class RecorridoClinico {
   }
 
   protected nodosDelHilo(hilo: HiloDeLaRed): readonly NodoDeLaRed[] {
-    return this.plano()
-      .nodos.filter((n) => n.episodio === hilo.episodio.id)
-      .sort((a, b) => a.columna - b.columna || a.y - b.y);
+    return this.plano().nodos.filter((n) => n.episodio === hilo.episodio.id).sort((a, b) => a.columna - b.columna || a.y - b.y);
   }
 
   protected tituloDelHito(titulos: readonly string[]): string {

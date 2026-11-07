@@ -291,7 +291,7 @@
           [appointments]="citas()"
           [referrals]="referrals.state()"
           [refreshError]="referrals.refreshError()"
-          [offersOpenEncounter]="true"
+          [offersOpenEncounter]="true" [arrivalEncounterId]="encuentroActual()"
           (cambio)="referrals.reload()"
           (retry)="referrals.reload()"
           (openEncounter)="irAAbrirElEncuentro()"

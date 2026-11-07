@@ -69,7 +69,7 @@
         <dd>
           @if (n.cuando) {
             <time [attr.datetime]="n.cuando.toISOString()">{{ n.cuando | date: "d 'de' MMMM 'de' y, HH:mm" }}</time>
-            <span class="panel__tenue"> · {{ hace() }}</span>
+            <span class="panel__tenue" [attr.title]="haceExacto()"> · {{ hace() }}</span>
           } @else {
             <span class="panel__tenue">Sin fecha registrada</span>
           }
@@ -103,7 +103,12 @@
             [descargable]="descargable()"
             [descarga]="descarga.estado()"
             [pedidoHace]="n.cuando ? hace() : null"
+            [pedidoHaceExacto]="haceExacto()"
+            [accionPendiente]="acciones"
+            [accionDelPedido]="accionDelPedido()"
+            (elegir)="elegir($event)"
             (releer)="releerInforme()"
+            (volver)="cerrar()"
             (abrirArchivo)="abrirArchivo($event)"
           />
         }
@@ -117,6 +122,7 @@
             data-testid="red-panel-razonamiento"
             [d]="d"
             [hace]="hace()"
+            [haceExacto]="haceExacto()"
             (elegir)="elegir($event)"
           ></section>
         }
@@ -187,11 +193,11 @@
       </section>
     }
 
-    <!-- What the parent adds at the foot of the detail (e.g. «Ver el registro
-         completo»): the panel knows nothing of blocks or modals. -->
-    <div class="panel__acciones">
-      <ng-content select="[panel-acciones]" />
-    </div>
+    <!-- A study without a released result draws the actions under its S3
+         notice (its next action); everything else, here. -->
+    @if (n.detalle?.tipo !== 'estudio' || resultado() !== null) {
+      <ng-container *ngTemplateOutlet="acciones" />
+    }
 
     <section class="panel__seccion" aria-labelledby="red-panel-vinculos" data-testid="red-panel-vinculos">
       <h3 class="panel__seccion-titulo" id="red-panel-vinculos">
@@ -207,6 +213,14 @@
         <p class="panel__tenue">Este registro no tiene vínculos guardados con otros.</p>
       }
     </section>
+  </div>
+</ng-template>
+
+<!-- What the parent adds at the foot of the detail (e.g. «Ver el registro
+     completo»): the panel knows nothing of blocks or modals. Drawn once. -->
+<ng-template #acciones>
+  <div class="panel__acciones">
+    <ng-content select="[panel-acciones]" />
   </div>
 </ng-template>
 
