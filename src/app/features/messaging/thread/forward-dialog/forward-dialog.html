@@ -1,0 +1,41 @@
+<app-content-dialog
+  heading="Reenviar a…"
+  size="sm"
+  closeLabel="Cancelar"
+  data-testid="thread-forward-dialog"
+  [description]="resumen()"
+  (closed)="cerrado.emit()"
+>
+  <label class="reenvio__buscar">
+    <span class="solo-lectores">Buscar un chat</span>
+    <input
+      type="search"
+      placeholder="Buscar un chat"
+      autocomplete="off"
+      data-testid="reenvio-buscar"
+      [value]="filtro()"
+      (input)="filtro.set($any($event.target).value)"
+    />
+  </label>
+  <ul class="reenvio__lista">
+    @for (destino of visibles(); track destino.id) {
+      <li>
+        <label class="reenvio__destino" data-testid="hilo-reenviar-destino">
+          <input type="checkbox" [checked]="elegidos().has(destino.id)" (change)="alternar(destino.id)" />
+          <app-avatar [src]="avatar(destino)" [name]="nombre(destino)" size="md" />
+          <span class="reenvio__nombre">{{ nombre(destino) }}</span>
+        </label>
+      </li>
+    } @empty {
+      <li class="reenvio__vacio">Ningún chat coincide con «{{ filtro() }}».</li>
+    }
+  </ul>
+  <button
+    dialog-actions
+    app-button
+    variant="primary"
+    data-testid="reenvio-enviar"
+    [disabled]="elegidos().size === 0"
+    (clicked)="confirmar()"
+  >{{ etiquetaDelBoton() }}</button>
+</app-content-dialog>

@@ -19,7 +19,6 @@ import { Spinner } from '@shared/components/atoms/spinner/spinner';
 import { DayLoad, type DayRead, type DayState } from './day-load';
 import { formatDate, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { calculateSlots } from '../agenda-create/agenda-slots';
-import { concatMap, from, toArray } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { bookingChangeDeniedText } from '../../../core/data-access/scheduling/booking-change-denied';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
@@ -63,7 +62,7 @@ import type { RowAction } from '../../../shared/components/molecules/row-actions
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { monthFirstDay, sumMonths } from '../../../shared/date/month-calendar';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
-import { aMedianoche, conHora, type BloqueoPedido } from './block-form/block-form';
+import { aMedianoche, type BloqueoPedido } from './block-form/block-form';
 import {
   DayView,
   type EstadoResuelto,
@@ -1001,29 +1000,11 @@ export class MyAgenda implements OnInit {
       return;
     }
 
-    const intervalos = pedido.franjaHoraria
-      ? franjasPorDia(pedido)
-      : [{ startAt: pedido.desde, endAt: pedido.hasta }];
-
     this.bloqueando.set(true);
-    // Un intervalo a la vez, no en paralelo: si varios días tienen citas, la
-    // persona responde un modal por día, en orden, en vez de ver varios
-    // superpuestos. Un día que decide no cancelar queda sin bloquear (`null`).
-    from(intervalos)
-      .pipe(
-        concatMap((intervalo) =>
-          this.cancellations.withConfirmation((confirmed) =>
-            this.scheduling.createException(recurso.id, {
-              exceptionType: pedido.exceptionType,
-              startAt: intervalo.startAt.toISOString(),
-              endAt: intervalo.endAt.toISOString(),
-              reason: pedido.motivo,
-              ...(confirmed ? { cancelAffectedBookings: true } : {}),
-            }),
-          ),
-        ),
-        toArray(),
-      )
+    // Shared with /schedule/blocks: one exception per day for a time range,
+    // one dialog per day with bookings, `null` for a day left unblocked.
+    this.cancellations
+      .createBlock(recurso.id, pedido)
       .subscribe({
         next: (resultados) => {
           this.bloqueando.set(false);
@@ -2267,30 +2248,4 @@ export class MyAgenda implements OnInit {
   }
 }
 
-/**
- * Una franja horaria por cada día del rango.
- *
- * `pedido.desde` y `pedido.hasta` traen ya la hora de inicio y la de fin de la
- * franja; lo que falta es repetirla día por día. Se recorre por fecha local y
- * no sumando 24 horas en milisegundos: en un cambio de horario de verano un día
- * dura 23 o 25, y sumar 86 400 000 correría la franja una hora a partir de ahí.
- */
-export function franjasPorDia(pedido: BloqueoPedido): readonly { startAt: Date; endAt: Date }[] {
-  const horaDesde = `${dosDigitos(pedido.desde.getHours())}:${dosDigitos(pedido.desde.getMinutes())}`;
-  const horaHasta = `${dosDigitos(pedido.hasta.getHours())}:${dosDigitos(pedido.hasta.getMinutes())}`;
-
-  const intervalos: { startAt: Date; endAt: Date }[] = [];
-  const ultimo = aMedianoche(pedido.hasta);
-  for (let dia = aMedianoche(pedido.desde); dia <= ultimo; dia = siguienteDia(dia)) {
-    intervalos.push({ startAt: conHora(dia, horaDesde), endAt: conHora(dia, horaHasta) });
-  }
-  return intervalos;
-}
-
-function siguienteDia(fecha: Date): Date {
-  return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate() + 1);
-}
-
-function dosDigitos(valor: number): string {
-  return String(valor).padStart(2, '0');
-}
+export { franjasPorDia } from '../block-intervals';

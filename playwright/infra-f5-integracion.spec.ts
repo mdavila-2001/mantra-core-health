@@ -20,7 +20,14 @@ import { abrirExpedienteDelPrimero } from './support/expediente';
  * ruta, cuerpo, estado, respuesta) y los errores de consola.
  */
 
-const OUT = join(process.cwd(), 'docs', 'refactor-profesional', 'trabajo', 'evidencias', 'infra-f5-integracion');
+const OUT = join(
+  process.cwd(),
+  'docs',
+  'refactor-profesional',
+  'trabajo',
+  'evidencias',
+  'infra-f5-integracion',
+);
 const WIDTHS = [
   { name: '1440', width: 1440, height: 900 },
   { name: '768', width: 768, height: 1024 },
@@ -41,7 +48,12 @@ if (process.env['PW_CHROMIUM_PATH']) {
 }
 
 test.beforeAll(() => mkdirSync(OUT, { recursive: true }));
-test.afterAll(() => writeFileSync(join(OUT, 'resultados.json'), JSON.stringify({ date: new Date().toISOString(), log, consoleErrors }, null, 2)));
+test.afterAll(() =>
+  writeFileSync(
+    join(OUT, 'resultados.json'),
+    JSON.stringify({ date: new Date().toISOString(), log, consoleErrors }, null, 2),
+  ),
+);
 
 async function login(page: Page, email: string, tenantName = 'Hospital San Lucas'): Promise<void> {
   page.on('console', (m) => {
@@ -62,7 +74,9 @@ async function login(page: Page, email: string, tenantName = 'Hospital San Lucas
       portal.waitFor({ timeout: 30_000 }).catch(() => undefined),
       tenant.waitFor({ timeout: 30_000 }).catch(() => undefined),
     ]);
-    const choosing = (await portal.isVisible().catch(() => false)) || (await tenant.isVisible().catch(() => false));
+    const choosing =
+      (await portal.isVisible().catch(() => false)) ||
+      (await tenant.isVisible().catch(() => false));
     if (!choosing && !page.url().includes('/auth')) break;
     if (await tenant.isVisible().catch(() => false)) await tenant.click();
     else if (await portal.isVisible().catch(() => false)) await portal.click();
@@ -85,11 +99,16 @@ interface Write {
 async function lastWrite(page: Page, method: string, path: RegExp): Promise<Write> {
   let found: Write | undefined;
   await expect
-    .poll(async () => {
-      const list = await page.evaluate(() => JSON.parse(sessionStorage.getItem('mock:registro') ?? '[]') as Write[]);
-      found = [...list].reverse().find((e) => e.method === method && path.test(e.path));
-      return found !== undefined;
-    }, { timeout: 30_000 })
+    .poll(
+      async () => {
+        const list = await page.evaluate(
+          () => JSON.parse(sessionStorage.getItem('mock:registro') ?? '[]') as Write[],
+        );
+        found = [...list].reverse().find((e) => e.method === method && path.test(e.path));
+        return found !== undefined;
+      },
+      { timeout: 30_000 },
+    )
     .toBe(true);
   return found!;
 }
@@ -102,24 +121,37 @@ async function shot(page: Page, name: string, width: string): Promise<void> {
 }
 
 async function overflow(page: Page): Promise<number> {
-  return page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  return page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
 }
 
 /** Regla 6: holgura izquierda ≈ derecha respecto de `.app-main__inner` y ancho ≥ 85 %. */
-async function measureCard(page: Page, selector: string): Promise<{ left: number; right: number; ratio: number }> {
+async function measureCard(
+  page: Page,
+  selector: string,
+): Promise<{ left: number; right: number; ratio: number }> {
   return page.evaluate((sel) => {
     const area = document.querySelector('.app-main__inner')!.getBoundingClientRect();
     const card = document.querySelector(sel)!.getBoundingClientRect();
     const style = getComputedStyle(document.querySelector('.app-main__inner')!);
     const l = area.left + parseFloat(style.paddingLeft);
     const r = area.right - parseFloat(style.paddingRight);
-    return { left: Math.round(card.left - l), right: Math.round(r - card.right), ratio: Math.round((card.width / (r - l)) * 100) };
+    return {
+      left: Math.round(card.left - l),
+      right: Math.round(r - card.right),
+      ratio: Math.round((card.width / (r - l)) * 100),
+    };
   }, selector);
 }
 
 async function choose(page: Page, testId: string, option: RegExp): Promise<void> {
   await page.getByTestId(testId).locator('.select-trigger').click();
-  await page.locator('dialog.select-dialog[open]').getByRole('option', { name: option }).first().click();
+  await page
+    .locator('dialog.select-dialog[open]')
+    .getByRole('option', { name: option })
+    .first()
+    .click();
   await expect(page.locator('dialog.select-dialog[open]')).toHaveCount(0);
 }
 
@@ -127,7 +159,11 @@ async function fail(page: Page, pattern: string | null, mode?: string): Promise<
   await page.evaluate(
     ([p, m]) => {
       if (p === null) sessionStorage.removeItem('mock:fallos');
-      else sessionStorage.setItem('mock:fallos', JSON.stringify([{ patron: p, modo: m, metodos: ['GET'] }]));
+      else
+        sessionStorage.setItem(
+          'mock:fallos',
+          JSON.stringify([{ patron: p, modo: m, metodos: ['GET'] }]),
+        );
     },
     [pattern, mode ?? null] as const,
   );
@@ -146,12 +182,24 @@ async function nextWeekday(page: Page, weekday: number, min: number): Promise<st
   );
 }
 
-async function record(page: Page, what: string, method: string, path: RegExp, after: Record<string, unknown> = {}): Promise<Write> {
+async function record(
+  page: Page,
+  what: string,
+  method: string,
+  path: RegExp,
+  after: Record<string, unknown> = {},
+): Promise<Write> {
   const w = await lastWrite(page, method, path);
-  log.push({ what, data: { request: { method: w.method, path: w.path, ifMatch: w.ifMatch, body: w.body }, response: { status: w.status, body: w.response }, ...after } });
+  log.push({
+    what,
+    data: {
+      request: { method: w.method, path: w.path, ifMatch: w.ifMatch, body: w.body },
+      response: { status: w.status, body: w.response },
+      ...after,
+    },
+  });
   return w;
 }
-
 
 /* ---- consulta del paciente sembrado (mismo recorrido que carril-insurance-antifraud) ---- */
 
@@ -163,10 +211,14 @@ async function openConsultation(page: Page): Promise<void> {
   await page.getByTestId('clinical-record-search-by-document').click();
   await abrirExpedienteDelPrimero(page);
   await page.waitForURL(/\/medical-records\/[^/]+$/, { timeout: 60_000 });
-  await page.goto(`${new URL(page.url()).pathname}/consultation`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${new URL(page.url()).pathname}/consultation`, {
+    waitUntil: 'domcontentloaded',
+  });
   await expect(page.getByTestId('consulta-rejilla')).toBeVisible({ timeout: 60_000 });
   const open = page.getByTestId('consulta-abrir-encuentro');
-  await expect(open.or(page.getByTestId('encuentros-en-curso')).first()).toBeVisible({ timeout: 30_000 });
+  await expect(open.or(page.getByTestId('encuentros-en-curso')).first()).toBeVisible({
+    timeout: 30_000,
+  });
   if (await open.isVisible()) await open.click();
   await expect(page.getByTestId('encuentros-en-curso')).toBeVisible({ timeout: 30_000 });
 }
@@ -178,7 +230,11 @@ async function openBox(page: Page, key: string): Promise<Locator> {
   return modal;
 }
 
-async function pick(zone: Locator, trigger: Locator, row: (list: Locator) => Locator): Promise<void> {
+async function pick(
+  zone: Locator,
+  trigger: Locator,
+  row: (list: Locator) => Locator,
+): Promise<void> {
   await trigger.click();
   const list = zone.page().locator('dialog.select-dialog[open]');
   await expect(list).toBeVisible();
@@ -190,7 +246,10 @@ async function answerField(field: Locator): Promise<void> {
   const no = field.getByRole('radio', { name: 'No' }).or(field.getByRole('button', { name: 'No' }));
   if ((await no.count()) > 0) return no.first().click();
   const combo = field.getByRole('combobox');
-  if ((await combo.count()) > 0) return pick(field, combo.first(), (l) => l.getByRole('option').filter({ hasNot: field.page().locator('[aria-disabled=true]') }));
+  if ((await combo.count()) > 0)
+    return pick(field, combo.first(), (l) =>
+      l.getByRole('option').filter({ hasNot: field.page().locator('[aria-disabled=true]') }),
+    );
   const area = field.locator('textarea');
   if ((await area.count()) > 0) return area.first().fill('Sin hallazgos relevantes.');
   const num = field.locator('input[type=number]');
@@ -202,7 +261,9 @@ async function answerField(field: Locator): Promise<void> {
 async function submitMedicalForm(page: Page): Promise<void> {
   const modal = await openBox(page, 'formulario');
   const done = modal.getByTestId('formulario-respondido');
-  await expect(done.or(modal.getByTestId('campo-especialidad')).first()).toBeVisible({ timeout: 30_000 });
+  await expect(done.or(modal.getByTestId('campo-especialidad')).first()).toBeVisible({
+    timeout: 30_000,
+  });
   if (!(await done.isVisible())) {
     const fields = modal.getByTestId('campo-especialidad');
     for (let i = 0; i < (await fields.count()); i += 1) await answerField(fields.nth(i));
@@ -244,18 +305,32 @@ for (const w of WIDTHS) {
     test('activos y centros de costo, y el consultorio de la agenda', async ({ page }) => {
       test.setTimeout(300_000);
       await login(page, 'superadmin@alovida.mock');
-      await page.goto('/administration/accounting/infrastructure', { waitUntil: 'domcontentloaded' });
-      await expect(page.getByTestId('infra-accounting-path').first()).toBeVisible({ timeout: 60_000 });
-      log.push({ what: `activos ${w.name}`, data: { overflow: await overflow(page), card: await measureCard(page, '[data-testid=infra-accounting]') } });
+      await page.goto('/administration/accounting/infrastructure', {
+        waitUntil: 'domcontentloaded',
+      });
+      await expect(page.getByTestId('infra-accounting-path').first()).toBeVisible({
+        timeout: 60_000,
+      });
+      log.push({
+        what: `activos ${w.name}`,
+        data: {
+          overflow: await overflow(page),
+          card: await measureCard(page, '[data-testid=infra-accounting]'),
+        },
+      });
       await shot(page, '10-activos', w.name);
       await page.getByTestId('infra-accounting-locate-AF-0103').click();
       await expect(page.locator('[role=tree]')).toBeVisible();
       await shot(page, '11-activo-arbol', w.name);
       await page.getByRole('tab', { name: 'Centros de costo' }).click();
-      await expect(page.getByTestId('infra-accounting-centers')).toContainText('CC-110', { timeout: 60_000 });
+      await expect(page.getByTestId('infra-accounting-centers')).toContainText('CC-110', {
+        timeout: 60_000,
+      });
       await shot(page, '12-centros-de-costo', w.name);
       await fail(page, '/accounting/infrastructure-items', 'error');
-      await page.goto('/administration/accounting/infrastructure', { waitUntil: 'domcontentloaded' });
+      await page.goto('/administration/accounting/infrastructure', {
+        waitUntil: 'domcontentloaded',
+      });
       await expect(page.getByText('Algo salió mal').first()).toBeVisible({ timeout: 60_000 });
       await shot(page, '13-estado-S9-activos', w.name);
       await fail(page, null);
@@ -266,7 +341,9 @@ for (const w of WIDTHS) {
       test.setTimeout(300_000);
       await login(page, 'medica@alovida.mock', 'Clínica Los Olivos');
       await page.goto('/schedule/edit', { waitUntil: 'domcontentloaded' });
-      await expect(page.getByRole('heading', { name: '¿Qué días atiende?' })).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByRole('heading', { name: '¿Qué días atiende?' })).toBeVisible({
+        timeout: 60_000,
+      });
       await expect(page.getByTestId('agenda-create-room-block')).toHaveCount(0);
       log.push({ what: `consultorio ${w.name}`, data: { overflow: await overflow(page) } });
       await shot(page, '20-agenda-sin-consultorio', w.name);
@@ -279,19 +356,34 @@ for (const w of WIDTHS) {
 test.describe('Cadenas de integración a 1440', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('F5b (H6) · pedir un laboratorio: la orden no lleva suggestedCareSpaceId y se ve tras recargar', async ({ page }) => {
+  test('F5b (H6) · pedir un laboratorio: la orden no lleva suggestedCareSpaceId y se ve tras recargar', async ({
+    page,
+  }) => {
     test.setTimeout(600_000);
     await login(page, 'medica@alovida.mock');
     await openConsultation(page);
     await submitMedicalForm(page);
     let modal = await openOrders(page);
-    await pick(modal, modal.getByRole('combobox', { name: /^Estudio\b/ }), (l) => l.getByRole('option', { name: /Glucosa/ }));
-    const kind = modal.getByRole('combobox', { name: /^Tipo\b/ });
-    if ((await kind.count()) > 0) await pick(modal, kind, (l) => l.getByRole('option', { name: 'Laboratorio', exact: true }));
+    // Lo primero que pregunta el formulario es el tipo de orden; «otro estudio» ofrece todo el catálogo.
+    await pick(modal, modal.getByRole('combobox', { name: /^Tipo de orden\b/ }), (l) =>
+      l.getByRole('option', { name: /^Otro estudio/ }),
+    );
+    await pick(modal, modal.getByRole('combobox', { name: /^Estudio\b/ }), (l) =>
+      l.getByRole('option', { name: /Glucosa/ }),
+    );
+    // Un laboratorio pide la muestra (obligatoria desde 2026-11-06).
+    const muestra = modal.getByRole('combobox', { name: /^Muestra\b/ });
+    if ((await muestra.count()) > 0)
+      await pick(modal, muestra, (l) => l.getByRole('option').first());
     await expect(page.getByTestId('order-collection-point')).toHaveCount(0);
     await shot(page, '30-orden-sin-punto-de-toma', '1440');
     await modal.getByRole('button', { name: 'Pedir estudio' }).click();
-    const w = await record(page, 'pedir laboratorio sin punto de toma', 'POST', /^\/clinical\/service-requests$/);
+    const w = await record(
+      page,
+      'pedir laboratorio sin punto de toma',
+      'POST',
+      /^\/clinical\/service-requests$/,
+    );
     expect(w.status).toBe(201);
     expect(w.body as object).not.toHaveProperty('suggestedCareSpaceId');
     await page.reload({ waitUntil: 'domcontentloaded' });
@@ -306,19 +398,35 @@ test.describe('Cadenas de integración a 1440', () => {
     await login(page, 'superadmin@alovida.mock');
     await page.goto('/administration/accounting/infrastructure', { waitUntil: 'domcontentloaded' });
     await page.getByTestId('infra-accounting-locate-AF-0103').click();
-    await page.locator('[role=tree]').getByRole('treeitem', { name: /Quirófano 2/ }).first().click();
+    await page
+      .locator('[role=tree]')
+      .getByRole('treeitem', { name: /Quirófano 2/ })
+      .first()
+      .click();
     await page.getByTestId('infra-accounting-locate-confirm').click();
-    const located = await record(page, 'ubicar la lámpara cialítica en QX-02', 'PATCH', /^\/accounting\/infrastructure-items\//);
+    const located = await record(
+      page,
+      'ubicar la lámpara cialítica en QX-02',
+      'PATCH',
+      /^\/accounting\/infrastructure-items\//,
+    );
     expect(located.status).toBe(200);
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.getByTestId('infra-accounting-items')).toContainText('Quirófano 2', { timeout: 60_000 });
+    await expect(page.getByTestId('infra-accounting-items')).toContainText('Quirófano 2', {
+      timeout: 60_000,
+    });
     await shot(page, '40-activo-ubicado-recarga', '1440');
 
     await page.getByRole('tab', { name: 'Centros de costo' }).click();
     await page.getByTestId('infra-accounting-link-CC-900').click();
     await choose(page, 'infra-accounting-unit', /Internación de medicina interna/);
     await page.getByTestId('infra-accounting-link-confirm').click();
-    const conflict = await record(page, 'ligar CC-900 a una unidad que ya tiene centro (409)', 'POST', /\/unit-link$/);
+    const conflict = await record(
+      page,
+      'ligar CC-900 a una unidad que ya tiene centro (409)',
+      'POST',
+      /\/unit-link$/,
+    );
     expect(conflict.status).toBe(409);
     await expect(page.getByTestId('infra-accounting-failure')).toBeVisible({ timeout: 30_000 });
     await shot(page, '41-estado-S4-centro-duplicado', '1440');
@@ -329,7 +437,9 @@ test.describe('Cadenas de integración a 1440', () => {
     expect(linked.status).toBe(200);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.getByRole('tab', { name: 'Centros de costo' }).click();
-    await expect(page.getByTestId('infra-accounting-centers')).toContainText('Bloque quirúrgico', { timeout: 60_000 });
+    await expect(page.getByTestId('infra-accounting-centers')).toContainText('Bloque quirúrgico', {
+      timeout: 60_000,
+    });
     await shot(page, '42-centro-ligado-recarga', '1440');
   });
 
@@ -369,15 +479,22 @@ test.describe('Cadenas de integración a 1440', () => {
     await phase('SIGN_OUT');
     await event('PATIENT_OUT_OF_ROOM');
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.getByTestId('room-events-turnover-status')).toContainText('Sucia', { timeout: 60_000 });
+    await expect(page.getByTestId('room-events-turnover-status')).toContainText('Sucia', {
+      timeout: 60_000,
+    });
     await shot(page, '50-recambio-pendiente', '1440');
     for (const label of ['Inicio de limpieza', 'Fin de limpieza', 'Sala lista']) {
       await page.getByTestId('room-events-turnover-next').click();
       await record(page, `recambio · ${label}`, 'POST', /^\/cleaning-orders\//);
-      await expect(page.getByTestId('room-events-timeline')).toContainText(label, { timeout: 60_000 });
+      await expect(page.getByTestId('room-events-timeline')).toContainText(label, {
+        timeout: 60_000,
+      });
     }
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.getByTestId('room-events-turnover-status')).toContainText('Lista para el próximo caso', { timeout: 60_000 });
+    await expect(page.getByTestId('room-events-turnover-status')).toContainText(
+      'Lista para el próximo caso',
+      { timeout: 60_000 },
+    );
     await shot(page, '51-recambio-completo-recarga', '1440');
 
     // La pestaña «Cargos» la lee Facturación: el uso de quirófano por tiempo.
@@ -389,7 +506,12 @@ test.describe('Cadenas de integración a 1440', () => {
     await login(billing, 'facturacion@alovida.mock');
     await billing.goto(`${caseUrl}?tab=charges`, { waitUntil: 'domcontentloaded' });
     await expect(billing.getByTestId('case-charge')).toContainText('ORTIME:', { timeout: 60_000 });
-    log.push({ what: 'cargo de quirófano', data: { text: (await billing.getByTestId('case-charge').textContent())?.replace(/\s+/g, ' ').trim() } });
+    log.push({
+      what: 'cargo de quirófano',
+      data: {
+        text: (await billing.getByTestId('case-charge').textContent())?.replace(/\s+/g, ' ').trim(),
+      },
+    });
     await shot(billing, '52-cargo-quirofano', '1440');
   });
 });

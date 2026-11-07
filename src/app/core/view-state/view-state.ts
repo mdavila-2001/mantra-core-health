@@ -76,6 +76,7 @@ export function validation(
  * existe. Si no puede saberlo, corresponde {@link notFound}.
  */
 export function forbidden(options?: {
+  title?: string;
   message?: string;
   nextAction?: ViewStateNextAction;
   requestId?: string;
@@ -83,6 +84,7 @@ export function forbidden(options?: {
   const state: ForbiddenViewState = { status: 'forbidden' };
   return {
     ...state,
+    ...(options?.title === undefined ? {} : { title: options.title }),
     ...(options?.message === undefined ? {} : { message: options.message }),
     ...(options?.nextAction === undefined ? {} : { nextAction: options.nextAction }),
     ...(options?.requestId === undefined ? {} : { requestId: options.requestId }),

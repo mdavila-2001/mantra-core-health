@@ -18,13 +18,8 @@
 :host {
     display: block;
     font-family: var(--font-body);
-    /* Sin esto, un ancestro `display:grid` o `display:flex` (la pantalla de
-       Turnos, carril 13) le da al host su tamaño de min-content en vez del
-       ancho disponible: una tabla ancha adentro empuja al host entero a
-       657px en un viewport de 390, y la página entera scrollea de costado
-       en vez de que la tabla scrollee sola dentro de su caja. Ya estaba
-       resuelto para la variante vertical (ver abajo); esto lo hace el
-       comportamiento por defecto. */
+    /* Without it a grid/flex ancestor sizes the host to min-content and a wide
+       table inside scrolls the whole page sideways (Turnos, carril 13). */
     min-width: 0;
 }
 
@@ -49,20 +44,12 @@
     overflow-x: auto;
     /* deja lugar al anillo de foco, que si no queda recortado por el scroll */
     padding-bottom: 2px;
-    /* La barra del sistema no: el desplazamiento lo ofrecen las flechas, que
-       además dicen de qué lado queda tira. Ocupaba tanto como una pestaña, y
-       una barra que aparece y desaparece movía la tira entera. La rueda y el
-       gesto táctil siguen funcionando igual. */
+    /* No system scrollbar: the arrows offer scrolling; wheel and touch still work. */
     scrollbar-width: none;
 
-    /* Regla de UI de ALOVIDA: las pestañas ocupan el ancho máximo posible y van
-       centradas, nunca apelotonadas contra el borde izquierdo.
-
-       `safe` no es decorativo. Con `center` a secas, una fila que desborda
-       reparte el sobrante a los dos lados y el primer elemento queda a la
-       izquierda del origen del scroll: inalcanzable, ni con la rueda ni con el
-       teclado. `safe center` centra mientras entra y se comporta como
-       `flex-start` en cuanto no entra. */
+    /* ALOVIDA rule: tabs fill the width, centered. `safe` keeps the first tab
+       reachable when the strip overflows (plain `center` puts it before the
+       scroll origin). */
     justify-content: safe center;
 }
 
@@ -106,6 +93,7 @@
 
 .tabs__tab {
     position: relative;
+    outline-offset: -5px; /* 4px ring fully inside: the scrolling strip clips anything outside */
     /* Crecen para repartirse el ancho entero. `min-width: max-content` hace lo
        que antes hacía `flex-shrink: 0` —no encogen por debajo de su texto— sin
        impedirles crecer. */
@@ -229,8 +217,6 @@
     border: 1px solid transparent;
     border-bottom: none;
     border-radius: var(--r-sm) var(--r-sm) 0 0;
-    /* el anillo de foco hacia adentro: la tira recorta lo que se salga */
-    outline-offset: -3px;
 }
 
 /* Un rótulo partido en dos renglones deforma la tira entera: la pestaña de al
@@ -271,13 +257,14 @@
    aparecen porque la tira no desborda a lo ancho. */
 :host(.tabs--vertical) .tabs__bar {
     flex-direction: column;
+    flex: 0 0 var(--tabs-indice, auto); /* the host may fix the index width */
 }
 
-/* En vertical el reparto del ancho no aplica: la columna ya es del ancho de la
-   lista, y `flex: 1 1 auto` con la dirección cambiada estiraría cada pestaña a
-   lo alto para llenar la columna. */
+/* Width sharing does not apply in a column: `flex: 1 1 auto` would stretch each tab vertically. */
 :host(.tabs--vertical) .tabs__tab {
     flex: 0 0 auto;
+    text-align: left;
+    border-radius: var(--r-sm) 0 0 var(--r-sm);
 }
 
 :host(.tabs--vertical) .tabs__list {
@@ -287,11 +274,6 @@
     border-bottom: none;
     border-right: 1px solid var(--border-default);
     overflow-x: visible;
-}
-
-:host(.tabs--vertical) .tabs__tab {
-    text-align: left;
-    border-radius: var(--r-sm) 0 0 var(--r-sm);
 }
 
 /* en vertical la línea va al costado, no abajo */
@@ -312,6 +294,23 @@
 :host(.tabs--vertical) .tabs__panels {
     flex: 1;
     min-width: 0;
+}
+
+/* Phone: a side index would leave the panel ~200 px wide, so the vertical
+   variant becomes the horizontal strip above the panel. Arrow keys already
+   work both ways (tabs.ts), so only the drawing changes. */
+@media (max-width: 40rem) {
+    :host(.tabs--vertical) { flex-direction: column; }
+    :host(.tabs--vertical) .tabs__bar { flex-direction: row; flex: none; }
+    :host(.tabs--vertical) .tabs__list {
+        flex-direction: row;
+        border-right: none;
+        border-bottom: 1px solid var(--border-default);
+        overflow-x: auto;
+    }
+    :host(.tabs--vertical) .tabs__tab { border-radius: var(--r-sm) var(--r-sm) 0 0; white-space: nowrap; }
+    :host(.tabs--vertical) .tabs__tab::after { inset: auto 0 -1px; width: auto; height: 2px; transform: scaleX(0); }
+    :host(.tabs--vertical) .tabs__tab.is-selected::after { transform: scaleX(1); }
 }
 
 /* ─── Teléfono: las pestañas se reparten el ancho y parten el rótulo ─────────

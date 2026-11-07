@@ -13,6 +13,7 @@ import { Input } from '../../../shared/components/atoms/input/input';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { apiMessage } from '../billing-setup-errors';
+import { MY_SERVICES_ROUTE } from '../../my-services/my-services.routes';
 
 /** El código del ítem que cobra una consulta (S-4): lo crea la API al dar de alta la práctica. */
 export const CONSULTATION_ITEM_CODE = 'CITA_MEDICA';
@@ -20,8 +21,6 @@ export const CONSULTATION_ITEM_CODE = 'CITA_MEDICA';
 /** Importe con hasta dos decimales; la coma se acepta y viaja como punto. */
 const AMOUNT = /^\d+(\.\d{1,2})?$/;
 
-/** «Mis servicios», donde se corrige el resto del catálogo. */
-export const MY_SERVICES_ROUTE = '/my-services';
 
 /**
  * «Precio de la consulta»: el ítem `CITA_MEDICA` de la práctica, editable con

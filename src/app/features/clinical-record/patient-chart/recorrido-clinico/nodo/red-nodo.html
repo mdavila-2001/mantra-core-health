@@ -1,0 +1,62 @@
+@let n = nodo();
+@switch (n.forma) {
+  @case ('grupo') {
+    <span class="red__nodo-cabeza">
+      <span class="red__nodo-principal">
+        {{ n.grupo?.accion === 'expandir' ? '+' + n.grupo?.ocultos?.length + ' de detalle' : 'Agrupar el detalle' }}
+      </span>
+    </span>
+    @if (n.grupo?.accion === 'expandir') {
+      <span class="red__nodo-secundario">{{ titulosDe(n) }}</span>
+    }
+  }
+  @case ('descartado') {
+    <span class="red__nodo-cabeza">
+      <span class="red__marca"><app-nav-icon name="heart" /></span>
+      <span class="red__nodo-una-linea"><span class="red__descartado-rotulo">Descartado</span> {{ n.registro?.titulo }}</span>
+    </span>
+  }
+  @case ('plegar') {
+    <span class="red__nodo-cabeza">
+      <span class="red__chevron red__chevron--abierto" aria-hidden="true"></span>
+      <span class="red__nodo-una-linea">Ocultar el descartado</span>
+    </span>
+  }
+  @default {
+    @if (n.registro; as registro) {
+      <span class="red__nodo-cabeza">
+        <span class="red__marca">
+          <app-nav-icon [name]="aspecto[registro.clase].icono" />
+        </span>
+        <span class="red__nodo-principal">{{ registro.titulo }}</span>
+      </span>
+      <span class="red__nodo-pie">
+        @if (registro.estado !== '') {
+          <span [class]="'red__nodo-estado tono--' + (registro.tonoDelEstado ?? 'info')">{{ registro.estado }}</span>
+        }
+        @if (propia(); as propia) {
+          <span class="red__nodo-fecha" [attr.title]="propia.rotulo + ' ' + (propia.fecha | date: 'd MMMM y')"
+            >{{ propia.rotulo }} {{ propia.fecha | date: propia.formato }}</span
+          >
+        }
+        @if (registro.detalle !== '') {
+          <span class="red__nodo-secundario">{{ registro.detalle }}</span>
+        }
+      </span>
+      @if (vertical()) {
+        @for (frase of relaciones(); track frase) {
+          <span class="red__nodo-relacion" [class.red__nodo-relacion--inferido]="frase.startsWith('vínculo inferido')">{{ frase }}</span>
+        }
+      }
+      @if (compartidoCon().length > 0) {
+        @if (vertical()) {
+          <span class="red__nodo-compartido">También en: {{ compartidoCon().join(', ') }}</span>
+        } @else {
+          <span class="red__nodo-compartido-marca" [attr.title]="'También en: ' + compartidoCon().join(', ')">
+            <app-nav-icon name="link" />
+          </span>
+        }
+      }
+    }
+  }
+}

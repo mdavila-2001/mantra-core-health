@@ -1,0 +1,17 @@
+<app-content-dialog size="lg" [heading]="survey().title" [description]="survey().subtitle" (closed)="closed.emit()">
+  @if (survey().questions.length > 0) {
+    <ol class="por-servicio__preguntas" data-testid="service-surveys-questions">
+      @for (question of survey().questions; track $index) {
+        <li>
+          <span class="por-servicio__pregunta">{{ question.text }}</span>
+          <span class="por-servicio__respuesta">{{ answerFormat(question) }}</span>
+        </li>
+      }
+    </ol>
+  } @else {
+    <p class="por-servicio__nota">Tiene {{ questionCount(survey().total) }}. El servidor todavía no envía el texto de cada una.</p>
+  }
+  <div dialog-actions class="por-servicio__pie">
+    <button app-button type="button" variant="primary" (clicked)="closed.emit()">Listo</button>
+  </div>
+</app-content-dialog>

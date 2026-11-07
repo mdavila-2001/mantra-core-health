@@ -1425,4 +1425,93 @@ describe('MedicalRecord', () => {
       /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
     );
   });
+  /* ---- Franja 5a · «Mi recorrido» --------------------------------------- */
+
+  /** Elige una vista del selector y espera la navegación (vive en la URL). */
+  async function elegirVista(valor: 'fecha' | 'recorrido'): Promise<void> {
+    harness.routeNativeElement
+      ?.querySelector<HTMLButtonElement>(`[data-testid="segmentado-${valor}"]`)
+      ?.click();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+  }
+
+  it('entra en «Por fecha», con las pestañas de siempre', async () => {
+    await montar();
+    responder();
+
+    const raiz = harness.routeNativeElement!;
+    expect(raiz.querySelector('[data-testid="historia-vista"]')).not.toBeNull();
+    expect(raiz.querySelector('[data-testid="segmentado-fecha"]')?.getAttribute('aria-checked')).toBe('true');
+    expect(raiz.querySelector('[data-testid="historia-tabs"]')).not.toBeNull();
+    expect(raiz.querySelector('[data-testid="mi-recorrido"]')).toBeNull();
+  });
+
+  it('«Mi recorrido» pide sólo las tres lecturas del portal, una vez, y arma el hilo', async () => {
+    await montar();
+    responder();
+    await elegirVista('recorrido');
+
+    // Las mismas tres lecturas perezosas que la vista por fecha: nada nuevo.
+    responderDetalle();
+    http.expectNone((r) => r.url.startsWith('/referrals'));
+
+    const raiz = harness.routeNativeElement!;
+    expect(raiz.querySelector('[data-testid="historia-tabs"]')).toBeNull();
+    expect(raiz.querySelector('[data-testid="mi-recorrido"]')).not.toBeNull();
+    const hilo = raiz.querySelector('[data-testid="recorrido-hilo"]');
+    expect(hilo?.textContent).toContain('Faringitis aguda');
+    // Plegado al entrar: el nivel lo declara el botón.
+    expect(hilo?.querySelector('.accordion-panel__trigger')?.getAttribute('aria-expanded')).toBe('false');
+    // Las derivaciones no viajan al portal: se dice, no se calla.
+    expect(raiz.textContent).toContain('Las derivaciones a otros profesionales todavía no se muestran');
+
+    // Volver y entrar de nuevo no repite la lectura.
+    await elegirVista('fecha');
+    await elegirVista('recorrido');
+    http.expectNone((r) => r.url === '/diagnostic-results/me/orders');
+  });
+
+  it('el paso a paso narra en la región viva y avanza con «Siguiente»', async () => {
+    await montar();
+    responder();
+    await elegirVista('recorrido');
+    responderDetalle();
+
+    const raiz = harness.routeNativeElement!;
+    raiz.querySelector<HTMLButtonElement>('[data-testid="recorrido-hilo"] .accordion-panel__trigger')!.click();
+    harness.detectChanges();
+    raiz.querySelector<HTMLButtonElement>('[data-testid="recorrido-empezar-guiado"]')!.click();
+    harness.detectChanges();
+
+    const viva = raiz.querySelector('[data-testid="recorrido-narracion-viva"]');
+    expect(viva?.getAttribute('aria-live')).toBe('polite');
+    expect(raiz.querySelector('[data-testid="recorrido-narracion"]')?.textContent?.trim()).toMatch(
+      /^El 1 de marzo de 2026 consultó por dolor de garganta\.$/,
+    );
+    expect(viva?.textContent).toContain('Paso 1 de');
+
+    raiz.querySelector<HTMLButtonElement>('[data-testid="recorrido-siguiente"]')!.click();
+    harness.detectChanges();
+    expect(viva?.textContent).toContain('Paso 2 de');
+    // La atención del paso queda desplegada para que lo narrado se vea.
+    expect(raiz.querySelector('[data-testid="recorrido-atencion"] .accordion-panel__trigger')?.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('ningún uuid llega al HTML del recorrido, ni desplegado', async () => {
+    const uuid = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeee0001';
+    await montar();
+    responder({
+      ...RESUMEN,
+      conditions: [{ ...RESUMEN.conditions[0], id: uuid }],
+    });
+    await elegirVista('recorrido');
+    responderDetalle();
+    const raiz = harness.routeNativeElement!;
+    raiz.querySelector<HTMLButtonElement>('[data-testid="recorrido-hilo"] .accordion-panel__trigger')!.click();
+    harness.detectChanges();
+    raiz.querySelector<HTMLButtonElement>('[data-testid="recorrido-empezar-guiado"]')!.click();
+    harness.detectChanges();
+    expect(raiz.innerHTML).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+  });
 });

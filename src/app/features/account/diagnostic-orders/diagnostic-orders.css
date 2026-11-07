@@ -67,3 +67,11 @@
     min-inline-size: 15rem;
   }
 }
+
+/* La muestra o la parte del cuerpo, debajo del estudio: dato secundario, pero legible. */
+.ordenes__detalle {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

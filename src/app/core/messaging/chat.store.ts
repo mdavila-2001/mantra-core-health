@@ -49,6 +49,7 @@ import type {
   MessageReaction,
   MessageReceipt,
 } from '../data-access/community/community.types';
+import { claveTemporal, pendientesDeReenvio } from './forwarding';
 
 /** Cada cuánto se relee la bandeja, en milisegundos. */
 const SONDEO_BANDEJA_MS = 60_000;
@@ -219,17 +220,13 @@ function requestIdDe(error: unknown): string {
 }
 
 /**
- * Cuánto tiempo se puede editar un mensaje después de mandarlo.
+ * How long a message can be edited after sending it: 15 minutes, as WhatsApp.
  *
- * Cinco minutos, contados contra `sentAt` — la hora del servidor, no la del
- * navegador de quien edita: el reloj local se puede atrasar, y la ventana sería
- * la que quisiera cada máquina.
- *
- * **La regla también vive en el servidor.** Acá se aplica para que el menú no
- * ofrezca algo que va a fallar; ocultar el botón no es la barrera. La maqueta
- * responde 422 fuera de la ventana, igual que la API.
+ * Counted against `sentAt` (server time). The view adds `desfase` to
+ * the browser clock: a laptop clock two minutes ahead used to close the
+ * window at minute three. The API enforces the same rule (`EDIT_WINDOW_MS`).
  */
-export const VENTANA_DE_EDICION_MS = 5 * 60_000;
+export const VENTANA_DE_EDICION_MS = 15 * 60_000;
 
 /**
  * `true` si el mensaje todavía se puede editar.
@@ -477,6 +474,7 @@ export class ChatStore {
   readonly hiloCargado = signal(false);
   readonly enviando = signal(false);
 
+  readonly desfase = signal(0); // server minus browser clock, measured by the thread
   /** Los que todavía no acusó el servidor, de todas las conversaciones. */
   readonly pendientes = signal<readonly MensajePendiente[]>([]);
 
@@ -695,7 +693,8 @@ export class ChatStore {
       .pipe(takeUntilDestroyed())
       .subscribe((mensaje) => {
         if (mensaje.conversationId === this.activaId()) {
-          this.aplicarTexto(mensaje.id, mensaje.bodyText, mensaje.isEdited ?? true);
+          if (mensaje.reactions) this.aplicarReacciones(mensaje.id, mensaje.reactions); // reaction: text untouched
+          else this.aplicarTexto(mensaje.id, mensaje.bodyText, mensaje.isEdited ?? true);
         }
         this.recargarBandeja();
       });
@@ -1663,7 +1662,7 @@ export class ChatStore {
       this.editando.set(null);
       return;
     }
-    if (!editable(mensaje, this.perfil(), Date.now())) {
+    if (!editable(mensaje, this.perfil(), Date.now() + this.desfase())) {
       return;
     }
     this.respondiendoA.set(null);
@@ -1712,7 +1711,7 @@ export class ChatStore {
           this.aplicarTexto(messageId, editado.bodyText ?? cuerpo, true);
           this.recargarBandeja();
         },
-        // El plazo de cinco minutos lo explica la API cuando es eso
+        // El plazo de quince minutos lo explica la API cuando es eso
         // (`PRECONDITION_FAILED`); un corte de red no es un plazo vencido.
         error: (error: unknown) => {
           this.aplicarTexto(messageId, anterior, mensaje.isEdited ?? false);
@@ -1806,31 +1805,17 @@ export class ChatStore {
   }
 
   /**
-   * Reenvía un mensaje —su texto y su adjunto— a otra conversación.
-   *
-   * Va por el mismo camino que un envío normal: si la conversación destino no
-   * es la abierta, la burbuja no se pinta acá pero la fila de la bandeja se
-   * actualiza en cuanto el servidor acusa. El adjunto se manda por su
-   * `fileId`: es el mismo archivo, no una copia.
+   * Forwards messages —text and attachment— to other conversations, in thread
+   * order and one after another (the send queue), so each destination reads
+   * them as they were. A destination that is not open updates its inbox row
+   * once the server acknowledges.
    */
-  reenviar(mensaje: MensajeDelHilo, conversationId: string): void {
+  reenviar(mensajes: readonly MensajeDelHilo[], conversationIds: readonly string[]): void {
     const propio = this.perfil();
-    if (propio === null || mensaje.estado !== 'enviado') {
-      return;
-    }
-    const pendiente: MensajePendiente = {
-      claveTemporal: claveTemporal(),
-      conversationId,
-      profileId: propio,
-      bodyText: mensaje.bodyText ?? '',
-      ...(mensaje.attachmentFileId
-        ? { adjunto: { fileId: mensaje.attachmentFileId, nombre: 'Archivo adjunto', tipo: '' } }
-        : {}),
-      creadoEn: new Date(),
-      estado: 'enviando',
-    };
-    this.pendientes.update((lista) => [...lista, pendiente]);
-    this.despachar(pendiente);
+    if (propio === null) return;
+    const nuevos = pendientesDeReenvio(mensajes, conversationIds, propio);
+    this.pendientes.update((lista) => [...lista, ...nuevos]);
+    for (const pendiente of nuevos) this.enTurnoDeEnvio((liberar) => this.despachar(pendiente, liberar));
   }
 
   /**
@@ -1928,7 +1913,8 @@ export class ChatStore {
     this.community
       .sendMessage(pendiente.conversationId, {
         senderProfileId: propio,
-        bodyText: pendiente.bodyText,
+        // Uncaptioned attachment: no `bodyText` at all, `''` is not a text.
+        ...(pendiente.bodyText.trim() ? { bodyText: pendiente.bodyText } : {}),
         ...(pendiente.replyToMessageId
           ? { replyToMessageId: pendiente.replyToMessageId }
           : {}),
@@ -1943,6 +1929,13 @@ export class ChatStore {
         next: (acuse) => {
           this.enviando.set(false);
           alTerminar?.();
+          // The local copy already on screen becomes the sent message's file:
+          // it is drawn at once, with no skeleton and no refetch of the bytes.
+          const vista = this.pendientes().find((p) => p.claveTemporal === pendiente.claveTemporal)?.adjunto?.vistaPrevia;
+          const fileId = pendiente.adjunto?.fileId;
+          if (fileId && vista?.startsWith('data:')) {
+            this.urlesDeArchivo.update((mapa) => new Map(mapa).set(`${pendiente.conversationId}:${fileId}`, vista));
+          }
           // El mensaje real entra en la lista y el pendiente sale en el mismo
           // paso, así la burbuja no parpadea. Sólo si se sigue mirando ese
           // hilo con esa identidad.
@@ -2078,7 +2071,8 @@ export class ChatStore {
         },
       };
       this.archivosSinSubir.set(pendiente.claveTemporal, archivo);
-      if (esImagen && !yaLeida) {
+      // Audio too: a voice note is playable while it goes out, or if it fails.
+      if ((esImagen || archivo.type.startsWith('audio/')) && !yaLeida) {
         this.ponerVistaPrevia(pendiente.claveTemporal, archivo);
       }
       return { pendiente, archivo };
@@ -2957,11 +2951,6 @@ function armarExportacion(
               },
       })),
   };
-}
-
-/** Identidad de un mensaje mientras no tenga la del servidor. */
-function claveTemporal(): string {
-  return `tmp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 /**

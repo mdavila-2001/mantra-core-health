@@ -1,0 +1,11 @@
+.recorrido__nota {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.recorrido__detalle-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

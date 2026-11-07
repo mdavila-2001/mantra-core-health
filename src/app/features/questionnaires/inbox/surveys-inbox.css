@@ -1,0 +1,33 @@
+/* «Buzón» (06/11/2026): read-only. Search sits above the list, inside the
+   ready state: it is a tool over what is already loaded. */
+
+.encuestas__bajada {
+  color: var(--text-secondary);
+  margin-block: 0 var(--sp-3);
+}
+
+.encuestas__barra {
+  display: flex;
+  margin-block-end: var(--sp-3);
+}
+
+.encuestas__buscador {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+  max-inline-size: 40rem;
+}
+
+.encuestas__recuento {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin-block: 0 var(--sp-4);
+}
+
+.encuestas__lista {
+  display: grid;
+  gap: var(--sp-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}

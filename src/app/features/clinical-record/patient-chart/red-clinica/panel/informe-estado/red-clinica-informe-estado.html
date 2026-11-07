@@ -1,0 +1,49 @@
+@switch (estado().status) {
+  @case ('loading') {
+    <p class="estado__tenue" role="status" data-testid="red-panel-informe-cargando">Leyendo los valores del informe…</p>
+  }
+  @case ('forbidden') {
+    <app-alert tone="warning" title="No puede ver este informe" data-testid="red-panel-informe-error">
+      El servidor no le da acceso a los valores de este informe.
+    </app-alert>
+  }
+  @case ('not-found') {
+    <app-alert tone="warning" title="El informe no está disponible" data-testid="red-panel-informe-error">
+      No se encontró un informe liberado para este estudio.
+    </app-alert>
+  }
+  @case ('validation') {
+    @let v = estado();
+    <app-alert tone="warning" title="No se pudieron leer los valores ahora" data-testid="red-panel-informe-error">
+      {{ mensajes() }}
+      @if (v.status === 'validation' && v.retryAfterSeconds !== undefined) {
+        Reintente en {{ v.retryAfterSeconds }} segundos.
+      }
+      @if (v.status === 'validation' && v.requestId) {
+        Código de soporte: <code>{{ v.requestId }}</code>
+      }
+      <div alert-actions>
+        <button app-button variant="outline" size="sm" type="button" (clicked)="reintentar.emit()">Reintentar</button>
+      </div>
+    </app-alert>
+  }
+  @case ('offline') {
+    <app-alert tone="warning" title="Sin conexión" data-testid="red-panel-informe-error">
+      No se pudieron leer los valores del informe.
+      <div alert-actions>
+        <button app-button variant="outline" size="sm" type="button" (clicked)="reintentar.emit()">Reintentar</button>
+      </div>
+    </app-alert>
+  }
+  @case ('error') {
+    @let e = estado();
+    <app-alert tone="error" title="No se pudieron leer los valores del informe" data-testid="red-panel-informe-error">
+      @if (e.status === 'error') {
+        Código de soporte: <code>{{ e.requestId }}</code>
+      }
+      <div alert-actions>
+        <button app-button variant="outline" size="sm" type="button" (clicked)="reintentar.emit()">Reintentar</button>
+      </div>
+    </app-alert>
+  }
+}

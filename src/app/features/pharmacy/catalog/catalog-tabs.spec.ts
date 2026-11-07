@@ -48,7 +48,7 @@ describe('pestañas del catálogo', () => {
     expect(IMPORT_TARGET_BY_TAB).toEqual({
       products: 'products',
       categories: 'categories',
-      prices: 'prices',
+      prices: 'products',
       inventory: 'products',
       integration: 'products',
     });

@@ -65,6 +65,9 @@ describe('NAV_SUBGROUPS', () => {
     // «Configurar práctica» (2026-11-05): owner request, it leaves «Administración»
     // and sits loose in «Atención», not inside any block.
     'administration/medical-center-setup',
+    // «Sucursales» de la organización médica (06/11/2026): suelta en «Atención»,
+    // junto a «Configurar práctica», como en el menú plano de farmacia y laboratorio.
+    'administration/medical-branches',
   ];
 
   it('reparte el registro entero: ninguna sección se queda sin bloque por descuido', () => {

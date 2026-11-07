@@ -15,14 +15,16 @@ import {
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink, type UrlTree } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { pointerOutside } from '../menu-dismiss';
+import { placeMessageMenu } from './message-menu';
+import { clockSkew } from './clock-skew';
+import { ChatWallpaper } from '../../../core/messaging/chat-wallpaper';
+import { WallpaperDialog } from './wallpaper-dialog/wallpaper-dialog';
 
 import { ChatStore, editable, type MensajeDelHilo } from '../../../core/messaging/chat.store';
 import { stickerDe } from '../../../core/messaging/sticker-pack.generated';
 import { appointmentLinkOf, type MessageAppointment } from '../../../core/messaging/appointment-link';
-import type {
-  ConversationListItem,
-  MessageReaction,
-} from '../../../core/data-access/community/community.types';
+import type { MessageReaction } from '../../../core/data-access/community/community.types';
 import { ChatPreferences } from '../../../core/messaging/chat-preferences';
 import {
   conversationAvatar as avatarDeConQuienDe,
@@ -64,6 +66,10 @@ import {
   VERBO_DE_CONTEXTO,
 } from './thread-context';
 import { ImageViewer, type ImagenDelVisor } from './image-viewer/image-viewer';
+import { VoiceNote } from './voice-note/voice-note';
+import { ForwardDialog } from './forward-dialog/forward-dialog';
+import { SelectionBar } from './selection-bar/selection-bar';
+import { MessageSelection } from './message-selection';
 
 /**
  * Una línea del hilo: un separador —de día o de «no leídos»— o un mensaje con
@@ -120,14 +126,7 @@ export interface LineaDeGaleria extends BloqueDeAutor {
 /** Cuántos tonos rotan los nombres de autor en un grupo. */
 const TONOS = 8;
 
-/**
- * Cada cuánto se revisa si algún mensaje salió de la ventana de edición.
- *
- * Treinta segundos: el menú tiene que dejar de ofrecer «Editar» cuando la
- * ventana vence, y sin un tic propio eso sólo pasaría si algo más provocara un
- * redibujo. Preciso al medio minuto alcanza —el servidor es quien decide—, y
- * un tic por segundo sería redibujar el hilo entero sesenta veces de más.
- */
+/** Edit-window tick: 30 s is precise enough (the server decides) and cheap. */
 const TIC_DE_EDICION_MS = 30_000;
 
 /**
@@ -147,9 +146,6 @@ export interface FilaDeInfo {
   /** `true` si se sabe que lo leyó pero la API no dice cuándo. */
   readonly leidoSinHora: boolean;
 }
-
-/** Cuánto lugar libre bajo la flecha hace falta para abrir el menú hacia abajo. */
-const ESPACIO_PARA_EL_MENU = 340;
 
 /** A cuántos píxeles del tope se pide la página anterior. */
 const MARGEN_DE_CARGA = 220;
@@ -277,13 +273,8 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
 }
 
 /**
- * El hilo de una conversación — carril P2.
- *
- * ## Es el panel derecho, no una pantalla
- *
- * Se pinta dentro del `router-outlet` de `Messaging`, que es quien tiene la
- * lista. Por eso acá no hay carril de conversaciones ni se vuelve a pedir la
- * bandeja: el marco ya la tiene, y todo el estado sale del `ChatStore`.
+ * El hilo de una conversación — carril P2. Panel derecho dentro del
+ * `router-outlet` de `Messaging`; todo el estado sale del `ChatStore`.
  *
  * ## Lo único que hace por su cuenta es el scroll
  *
@@ -308,13 +299,26 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
     RouterLink,
     EmojiPicker,
     Spinner,
+    VoiceNote,
+    WallpaperDialog,
+    ForwardDialog,
+    SelectionBar,
   ],
   templateUrl: './thread.html',
-  styleUrls: ['./thread.css', './thread-layers.css', './thread-media.css'],
+  styleUrls: ['./thread.css', './thread-layers.css', './thread-media.css', './thread-wallpaper.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:pointerdown)': 'alTocarAfuera($event)',
+    '(document:keydown.escape)': 'cerrarMenus()',
+    '[class.con-fondo]': 'fondo.elegido() !== null',
+    '[style.--chat-fondo]': 'fondo.cssUrl()',
+  },
 })
 export class Thread {
   protected readonly store = inject(ChatStore);
+  protected readonly fondo = inject(ChatWallpaper);
+  /** Whether the «Fondo de pantalla» dialog is open. */
+  protected readonly eligiendoFondo = signal(false);
   private readonly preferencias = inject(ChatPreferences);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -325,8 +329,6 @@ export class Thread {
   private readonly listaDeMensajes = viewChild<ElementRef<HTMLElement>>('lista');
   private readonly buscador = viewChild<ElementRef<HTMLInputElement>>('buscador');
   private readonly barraFijada = viewChild<ElementRef<HTMLElement>>('barraFijada');
-  private readonly forwardDialog = viewChild<ContentDialog>('forwardDialog');
-
   /** Si la vista está al pie. Arranca en `true`: un hilo se abre por el final. */
   private pegadoAbajo = true;
 
@@ -342,11 +344,12 @@ export class Thread {
   /** Cuántos mensajes nuevos llegaron mientras se leía hacia arriba. */
   protected readonly nuevosAbajo = signal(0);
 
+  private readonly injector = inject(Injector);
+  private anclaDelMenu: HTMLElement | null = null; // the fixed menu follows it on scroll
+  private enviadoEn = 0; // local time of the last send, to measure the server clock skew
+
   /** Qué mensaje tiene el menú abierto. */
   protected readonly menuAbierto = signal<string | null>(null);
-
-  /** Si el menú abierto se despliega hacia arriba, por falta de lugar abajo. */
-  protected readonly menuArriba = signal(false);
 
   /** Si está abierto el menú de la cabecera. */
   protected readonly menuCabecera = signal(false);
@@ -406,8 +409,11 @@ export class Thread {
   /** Lo que se busca dentro de la conversación. */
   protected readonly termino = signal('');
 
-  /** El mensaje que se está por reenviar, mientras se elige a quién. */
-  protected readonly reenviando = signal<MensajeDelHilo | null>(null);
+  /** Lo que se está por reenviar, mientras se elige a quiénes. */
+  protected readonly reenviando = signal<readonly MensajeDelHilo[] | null>(null);
+
+  /** Los mensajes elegidos para reenviar juntos («Seleccionar» del menú). */
+  protected readonly seleccion = new MessageSelection();
 
   /** «Reenviado a …», un momento, después de reenviar. */
   protected readonly avisoReenvio = signal<string | null>(null);
@@ -435,15 +441,8 @@ export class Thread {
   });
 
   /**
-   * El subtítulo de la cabecera, o `''` si no hay nada cierto que decir.
-   *
-   * En un grupo, los participantes. En una conversación directa que vino desde
-   * una ficha, de qué se habla —«Pedido · #22BE», «Consulta por
-   * Paracetamol»—, como la cabecera del chat de una app de delivery, sin
-   * repetir la farmacia que ya es el nombre. Si no, nada: «Conversación
-   * directa» no decía nada que no se viera, el contrato no trae el tipo de
-   * contacto (farmacia, profesional) ni la presencia, y una «en línea»
-   * inventada sería peor que ninguna.
+   * Header subtitle, or `''`: the participants of a group, or what a direct
+   * conversation is about («Pedido · #22BE»). Never an invented «en línea».
    */
   protected readonly subtitulo = computed(() => {
     const activa = this.store.conversacionActiva();
@@ -739,6 +738,12 @@ export class Thread {
   protected readonly fotosEnGrilla = FOTOS_EN_GRILLA;
 
   constructor() {
+    effect(() => {
+      const skew = clockSkew(this.store.enOrden(), this.store.perfil(), this.enviadoEn);
+      if (skew === null) return;
+      this.store.desfase.set(skew);
+      this.enviadoEn = 0;
+    });
     // Por `paramMap` y no por `snapshot`: al ir de un hilo a otro el router
     // reutiliza el componente, y con el snapshot quedaría mostrando el
     // anterior.
@@ -751,6 +756,7 @@ export class Thread {
         this.menuCabecera.set(false);
         this.cerrarBusqueda();
         this.reenviando.set(null);
+        this.seleccion.clear();
         this.infoDe.set(null);
         this.reaccionandoA.set(null);
         this.confirmandoBloqueo.set(false);
@@ -831,24 +837,15 @@ export class Thread {
   }
 
   /**
-   * Recoge la barra fijada mientras la tarjeta original está a la vista.
-   *
-   * Un solo observador por marco, con el marco como raíz: lo que importa es
-   * si la tarjeta se ve **dentro del hilo**, no en la ventana. Cuando cambia
-   * la tarjeta (llega otra más nueva, una búsqueda la saca de la lista) se
-   * deja de observar la anterior. Sólo en el navegador y con
-   * `IntersectionObserver`; al destruir se desconecta.
-   *
-   * Recoger o mostrar la barra cambia el alto del marco por arriba. Si se
-   * está leyendo en el medio, eso corría las burbujas bajo el dedo; por eso
-   * se compensa el scroll con el alto de la barra. Al pie no hace falta: el
-   * `ResizeObserver` ya lo mantiene pegado.
+   * Collapses the pinned bar while the original card is visible inside the
+   * thread (one `IntersectionObserver` rooted at the frame, browser only),
+   * compensating the scroll by the bar's height.
    */
   private observarLaTarjetaFijada(destroyRef: DestroyRef): void {
     if (!this.isBrowser || typeof IntersectionObserver === 'undefined') {
       return;
     }
-    const injector = inject(Injector);
+    const injector = this.injector;
     let observador: IntersectionObserver | null = null;
     let raiz: HTMLElement | null = null;
     let observada: Element | null = null;
@@ -1169,36 +1166,35 @@ export class Thread {
       if (trigger instanceof HTMLElement) trigger.focus();
     }
     this.menuAbierto.set(null);
-    this.reenviando.set(mensaje);
+    this.reenviando.set([mensaje]);
   }
 
   protected cancelarReenvio(): void {
     this.reenviando.set(null);
   }
 
-  protected reenviarA(conversationId: string): void {
-    const mensaje = this.reenviando();
-    if (mensaje === null) {
-      return;
-    }
-    this.store.reenviar(mensaje, conversationId);
-    // Por el modal y no bajando la señal: así el foco vuelve a su origen y el
-    // scroll de la página se libera, igual que al cerrar con «Cancelar».
-    this.forwardDialog()?.close(true);
-    this.reenviando.set(null);
-    const destino = this.store.conversaciones().find((c) => c.id === conversationId);
-    this.avisoReenvio.set(`Reenviado a ${destino === undefined ? 'la conversación' : conQuienDe(destino)}`);
+  /** «Seleccionar»: enters selection mode with this message chosen. */
+  protected seleccionar(mensaje: MensajeDelHilo): void {
+    this.menuAbierto.set(null);
+    this.seleccion.toggle([mensaje]);
+  }
+
+  protected reenviarSeleccion(): void {
+    this.reenviando.set(this.seleccion.enOrden(this.lineas()));
+  }
+
+  /** Sends what was chosen to the chosen chats; the dialog closes itself. */
+  protected reenviarA(conversationIds: readonly string[]): void {
+    const mensajes = this.reenviando();
+    if (mensajes === null) return;
+    this.store.reenviar(mensajes, conversationIds);
+    this.seleccion.clear();
+    const destino = this.store.conversaciones().find((c) => c.id === conversationIds[0]);
+    const nombre = destino === undefined ? 'la conversación' : conQuienDe(destino);
+    this.avisoReenvio.set(conversationIds.length === 1 ? `Reenviado a ${nombre}` : `Reenviado a ${conversationIds.length} chats`);
     if (this.isBrowser) {
       setTimeout(() => this.avisoReenvio.set(null), 2500);
     }
-  }
-
-  protected nombreDeConversacion(conversacion: ConversationListItem): string {
-    return conQuienDe(conversacion);
-  }
-
-  protected avatarDeConversacion(conversacion: ConversationListItem): string | null {
-    return avatarDeConQuienDe(conversacion);
   }
 
   protected nombreDelAdjunto(mensaje: MensajeDelHilo): string {
@@ -1352,11 +1348,8 @@ export class Thread {
   /**
    * Abre la hoja del contacto.
    *
-   * Antes navegaba a `/public-profile/<profileId>`, **una ruta que no existe**:
-   * las fichas públicas son `/p|o|f|l|s/:slug` y se llega por slug, no por id.
-   * Así que «Ver perfil» caía en el 404 desde el menú del hilo y desde el de la
-   * fila de la bandeja. Ver `ContactPanel` para por qué la respuesta es un
-   * panel y no un enlace arreglado.
+   * A panel, not a link: public profiles are reached by slug, not by id
+   * (`/public-profile/<id>` was a 404). See `ContactPanel`.
    */
   protected verPerfil(): void {
     this.menuCabecera.set(false);
@@ -1412,33 +1405,39 @@ export class Thread {
 
   protected alternarMenu(clave: string, evento: Event): void {
     evento.stopPropagation();
-    // Cerca del pie el menú se abre hacia arriba: el de la última burbuja se
-    // cortaba contra el borde. El menú mide unos 20 rem con la barra de
-    // reacciones, así que el umbral es un poco más.
-    const boton = evento.currentTarget;
-    const marco = this.marco()?.nativeElement;
-    if (boton instanceof HTMLElement && marco) {
-      const libre = marco.getBoundingClientRect().bottom - boton.getBoundingClientRect().bottom;
-      this.menuArriba.set(libre < ESPACIO_PARA_EL_MENU);
-    }
-    this.menuAbierto.set(this.menuAbierto() === clave ? null : clave);
+    this.abrirMenu(this.menuAbierto() === clave ? null : clave, evento.currentTarget);
+  }
+
+  /** Opens (or closes, with `null`) a message menu and places it once rendered. */
+  private abrirMenu(clave: string | null, ancla: EventTarget | null): void {
+    this.menuAbierto.set(clave);
+    this.anclaDelMenu = clave !== null && ancla instanceof HTMLElement ? ancla : null;
+    if (this.anclaDelMenu === null) return;
+    const anclada = this.anclaDelMenu;
+    afterNextRender(() => placeMessageMenu(anclada, this.marco()?.nativeElement), { injector: this.injector });
+  }
+
+  /** Any pointer outside an open menu closes it, like WhatsApp. */
+  protected alTocarAfuera(evento: Event): void {
+    if (this.menuAbierto() !== null && pointerOutside(evento.target, '.hilo__menu--mensaje, .hilo__mas-mensaje')) this.menuAbierto.set(null);
+    if (this.menuCabecera() && pointerOutside(evento.target, '.hilo__menu--cabecera, [data-testid="hilo-menu"]')) this.menuCabecera.set(false);
+  }
+
+  protected cerrarMenus(): void {
+    this.menuAbierto.set(null);
+    this.menuCabecera.set(false);
   }
 
   /* --- Pulsación larga (pantallas táctiles) -------------------------------- */
 
   /**
-   * Un dedo se apoyó en una burbuja: si se queda medio segundo quieto, se abre
-   * el menú del mensaje, como en WhatsApp.
-   *
-   * Sólo con el dedo —el ratón tiene el chevron al pasar— y sin
-   * `preventDefault`: el navegador sigue desplazando el hilo y seleccionando
-   * texto como siempre. Si el dedo se mueve, el navegador toma el gesto para
-   * desplazar (`pointercancel`) o el movimiento pasa la tolerancia, y la
-   * pulsación se olvida.
+   * Long touch on a bubble opens its menu after half a second (WhatsApp).
+   * Touch only; moving the finger beyond the tolerance or scrolling cancels it.
    */
   protected alApoyar(clave: string, estado: MensajeDelHilo['estado'], evento: PointerEvent): void {
     this.cancelarPulsacion();
     if (!this.isBrowser || evento.pointerType !== 'touch' || estado !== 'enviado') return;
+    const chevron = (evento.currentTarget as HTMLElement).querySelector('.hilo__mas-mensaje');
     const tic = setTimeout(() => {
       this.pulsacion = null;
       if (this.destruido) return;
@@ -1446,7 +1445,7 @@ export class Thread {
       // encima taparía los tiradores de la selección.
       const seleccion = typeof window.getSelection === 'function' ? window.getSelection() : null;
       if (seleccion !== null && !seleccion.isCollapsed && seleccion.toString().trim() !== '') return;
-      this.menuAbierto.set(clave);
+      this.abrirMenu(clave, chevron);
     }, PULSACION_LARGA_MS);
     this.pulsacion = { tic, x: evento.clientX, y: evento.clientY };
   }
@@ -1474,13 +1473,13 @@ export class Thread {
   }
 
   /**
-   * `true` si el mensaje todavía está dentro de la ventana de cinco minutos.
+   * `true` si el mensaje todavía está dentro de la ventana de quince minutos.
    *
    * La regla vive en el store —y también en el servidor—; acá sólo se decide si
    * el menú lo ofrece.
    */
   protected puedeEditarse(mensaje: MensajeDelHilo): boolean {
-    return editable(mensaje, this.store.perfil(), this.ahora());
+    return editable(mensaje, this.store.perfil(), this.ahora() + this.store.desfase());
   }
 
   /**
@@ -1675,6 +1674,7 @@ export class Thread {
 
   protected alScrollear(evento: Event): void {
     const marco = evento.target as HTMLElement;
+    if (this.menuAbierto() !== null && this.anclaDelMenu && !placeMessageMenu(this.anclaDelMenu, marco)) this.menuAbierto.set(null);
     this.pegadoAbajo =
       marco.scrollHeight - marco.scrollTop - marco.clientHeight < MARGEN_DEL_PIE;
     if (this.pegadoAbajo) {
@@ -1706,6 +1706,7 @@ export class Thread {
   /** Al enviar siempre se baja: escribió usted. */
   protected alEnviar(): void {
     this.pegadoAbajo = true;
+    this.enviadoEn = Date.now();
   }
 }
 

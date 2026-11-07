@@ -1,27 +1,18 @@
-/* El índice de secciones a la izquierda y el panel a la derecha, que es como se
-   lee unos ajustes. La molécula ya pinta la lista vertical; acá sólo se le da
-   el ancho de columna y el aire, y se vuelve a apilar cuando no entra. */
-.ajustes__tabs {
-  --ajustes-indice: 15rem;
-}
-
+/* Section index on the left, panel on the right. The tabs molecule draws the
+   column and, on a phone, turns it into the horizontal strip above the panel
+   (tabs.css). Encapsulation keeps this sheet out of its inside, so the index
+   width travels as a custom property: a fixed column, so the panel does not
+   shift when the bold selected label changes width. */
 .ajustes__tabs.tabs--vertical {
+  --tabs-indice: 12rem;
   gap: var(--e5);
 }
 
-.ajustes__tabs.tabs--vertical > .tabs__list {
-  flex: 0 0 var(--ajustes-indice);
-}
-
-@media (width < 48rem) {
-  .ajustes__tabs {
-    --ajustes-indice: auto;
-  }
-}
-
+/* Full panel width in every tab (client rule 6, user request 2026-11-06).
+   It is also the container the rows measure themselves against. */
 .ajustes__bloque {
   margin-bottom: var(--e5);
-  max-inline-size: 68ch;
+  container-type: inline-size;
 }
 
 .ajustes__bloque:last-child {
@@ -83,24 +74,31 @@
   min-inline-size: 0;
 }
 
-.ajustes__interruptor,
-.ajustes__accion {
+.ajustes__interruptor {
   flex-shrink: 0;
 }
 
-/* On a phone a row's button drops under the text instead of squeezing it to one word per line. */
-@media (width < 36rem) {
-  .ajustes__fila:has(.ajustes__accion) {
-    flex-wrap: wrap;
-  }
+/* A long label wraps inside the button instead of pushing past the row. */
+.ajustes__accion {
+  flex-shrink: 0;
+  max-inline-size: 50%;
+  block-size: auto;
+  white-space: normal;
+}
 
-  .ajustes__fila .ajustes__texto {
-    flex-basis: 0;
+/* When the block is narrow (phone, or a tablet next to the index) a row's
+   button takes a second line, aligned with the text. Measured on the block,
+   not the viewport, so no width range is left where text and button collide. */
+@container (width < 34rem) {
+  .ajustes__fila:has(.ajustes__accion) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .ajustes__fila .ajustes__accion {
+    grid-column: 2;
+    justify-self: start;
     max-inline-size: 100%;
-    white-space: normal;
   }
 }
 
@@ -118,6 +116,7 @@
 
 .ajustes__texto {
   display: flex;
+  overflow-wrap: anywhere;
   flex-direction: column;
   gap: 0.15rem;
 }

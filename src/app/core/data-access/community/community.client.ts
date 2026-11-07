@@ -4,7 +4,6 @@ import { map, switchMap, type Observable } from 'rxjs';
 
 import type { ChallengeRequestOptions } from '../../access-challenge/access-challenge';
 import { API_BASE_URL, apiUrl } from '../api';
-import { simulatorOnly } from '../simulator-only';
 import { maybeDate, sinNulos } from '../wire';
 import { blobToDataUrl } from '../files/blob-to-data-url';
 import type {
@@ -1304,10 +1303,8 @@ export class CommunityClient {
 
   /**
    * `PUT /community/conversations/:id/messages/:messageId/reaction` —
-   * reacciona a un mensaje.
-   *
-   * La API real no publica este endpoint: sólo lo responde la maqueta, con el
-   * contrato de acá.
+   * reacciona a un mensaje. Publicado por la API desde el patch v4.2.91
+   * (`community.message_reactions`); antes sólo lo respondía la maqueta.
    *
    * @param conversationId - El hilo.
    * @param messageId - Qué mensaje.
@@ -1322,9 +1319,7 @@ export class CommunityClient {
     const url = this.url(
       `/community/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}/reaction`,
     );
-    return simulatorOnly('Reaccionar a un mensaje', url, () =>
-      this.http.put<WireMessage>(url, datos),
-    ).pipe(map(toMessage));
+    return this.http.put<WireMessage>(url, datos).pipe(map(toMessage));
   }
 
   /**

@@ -50,8 +50,12 @@
   margin: 0;
 }
 
+/* A long label wraps inside the button instead of pushing past the row. */
 .dispositivos__accion {
   flex-shrink: 0;
+  max-inline-size: 50%;
+  block-size: auto;
+  white-space: normal;
 }
 
 /* The code form sits under the text column, past the icon. */
@@ -60,23 +64,23 @@
   margin-inline-start: calc(1.25rem + var(--e3));
 }
 
-/* On a phone the button drops under the text instead of squeezing it. */
-@media (width < 36rem) {
-  .dispositivos__renglon {
-    flex-wrap: wrap;
-  }
+/* When the section is narrow the button takes a second line, aligned with the
+   text, like the code form under it. Measured on the section, not the viewport. */
+.dispositivos {
+  display: block;
+  container-type: inline-size;
+}
 
-  .dispositivos__cuerpo {
-    flex-basis: 0;
+@container (width < 34rem) {
+  .dispositivos__renglon {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .dispositivos__accion {
+    grid-column: 2;
+    justify-self: start;
     max-inline-size: 100%;
-    white-space: normal;
-  }
-
-  .dispositivos__formulario {
-    margin-inline-start: 0;
   }
 }
 

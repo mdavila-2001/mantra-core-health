@@ -515,13 +515,6 @@
 
 /* --- Adjuntos ------------------------------------------------------------ */
 
-.hilo__audio {
-  display: block;
-  inline-size: 15rem;
-  max-inline-size: 100%;
-  margin-block-end: 3px;
-}
-
 .hilo__documento {
   display: flex;
   align-items: center;

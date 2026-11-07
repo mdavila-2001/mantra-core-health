@@ -3,8 +3,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   DestroyRef,
+  effect,
   ElementRef,
   inject,
   Injector,
@@ -18,122 +18,148 @@ import { DatePipe, NgTemplateOutlet } from '@angular/common';
 
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
-import type { NavIconName } from '../../../../shared/components/atoms/nav-icon/nav-icon.types';
+import { conectadosA } from './recorrido-clinico.model';
+import { ASPECTO_DE_LA_CLASE, type ClaseDeLaRed, type RegistroDeLaRed, type VinculoDeLaRed } from './red-clinica.model';
+import { agruparEnEpisodios } from './red-clinica.episodios';
+import { type EpisodioClinico } from './red-clinica.episodio';
+import { relacionesDe } from './red-clinica.vinculos';
+import { ubicarRed } from './red-clinica.geometria';
 import {
-  ASPECTO_DEL_TIPO,
-  conectadosA,
-  MEDIDAS,
-  ubicarRecorrido,
-  type AristaDelRecorrido,
-  type ColumnaUbicada,
-  type NodoDelRecorrido,
-  type NodoUbicado,
-  type TipoDelRecorrido,
-} from './recorrido-clinico.model';
+  DISTANCIA_DEL_TRONCO,
+  MEDIDAS_DE_LA_RED,
+  type ColumnaDeLaRed,
+  type HiloDeLaRed,
+  type NodoDeLaRed,
+} from './red-clinica.geometria.types';
+import { contextoDe, fechaPropia, nombresDeLosNodos, type FechaPropia } from './recorrido-clinico.textos';
+import { DesplazamientoDelLienzo, reducirMovimiento } from './desplazamiento-del-lienzo';
+import { RedNodo } from './nodo/red-nodo';
+import { RedCabecera } from './cabecera/red-cabecera';
+import { RedLeyenda } from './leyenda/red-leyenda';
 
 /**
- * **Recorrido clínico** — la historia de una persona como un mapa de decisiones.
+ * The chosen node, for whoever wants to show its detail (the Strip 3 side
+ * panel). The `id` is the real record's id.
+ */
+export interface NodoElegido {
+  readonly id: string;
+  readonly clase: ClaseDeLaRed;
+  readonly episodio: string;
+}
+
+/** What `plegado()` saves and `restaurarPlegado()` puts back. */
+export interface PlegadoDeLaRed {
+  readonly desplegados: ReadonlySet<string>;
+  readonly abiertos: ReadonlySet<string>;
+  readonly desplazamiento: number | null;
+}
+
+/**
+ * **Clinical tour** — a person's history as a network of episodes.
  *
- * ## Qué responde que las pestañas no
+ * ## What it answers
  *
- * Las pestañas contestan «¿qué diagnósticos tiene?». El recorrido contesta
- * «¿qué pasó, en qué orden y qué se decidió a partir de qué?»: de esta consulta
- * salió este diagnóstico, y para ese diagnóstico se indicó esta receta, que se
- * renovó tres meses después en otra consulta.
+ * «What happened to them, problem by problem, and in what order?». Each
+ * thread is a clinical episode —a problem and everything done for it:
+ * encounters, studies, prescriptions, referrals, follow-ups—, and time runs
+ * left to right, aligned across threads. The grouping rule is in
+ * `red-clinica.model.ts` and `docs/adr/ADR-0021-red-clinica-por-episodios.md`.
  *
- * ## Cómo se lee
+ * ## Progressive disclosure
  *
- * - De izquierda a derecha, el tiempo: una columna por atención o por día con
- *   actividad, con el intervalo escrito sobre el eje.
- * - De arriba abajo, el razonamiento: un carril por tipo de registro, en el
- *   orden atender → observar → diagnosticar → tratar → dejar constancia.
- * - Las líneas son los vínculos que el contrato guarda, y ninguno más.
+ * 1. Collapsed, each episode is a summary strip: name, status, dates, counts
+ *    and the key milestones on the axis.
+ * 2. Expanded, its records over time, with the contract's links.
+ * 3. The detail (observations, notes, plans, documents) grouped behind a «+N»
+ *    per moment; ruled-out diagnoses, folded into a marker.
  *
- * Al pasar o enfocar un nodo se ilumina su camino —de dónde viene y qué derivó—
- * y el resto se atenúa. El clic abre el mismo detalle que la tabla.
+ * ## Extension points
  *
- * ## Accesibilidad
+ * - `elegido` emits the chosen node, with the real record's id.
+ * - `resaltados`: ids of records to highlight (alerts). Empty, no effect.
+ * - `visibles`: ids of records to draw (filter). Empty, no effect.
  *
- * Cada columna es una sección con su fecha y cada nodo un botón con nombre
- * completo, conexiones incluidas, en orden cronológico. Las líneas son
- * decorativas (`aria-hidden`): lo que dicen ya está en el nombre del botón.
+ * ## Accessibility
+ *
+ * Each episode is a button with `aria-expanded` whose name summarises the
+ * episode, followed by its records in chronological order. The lines are
+ * decorative: what they say is in each node's name, and an inferred link says
+ * so with that word.
  */
 @Component({
   selector: 'app-recorrido-clinico',
-  imports: [AppButton, DatePipe, NavIcon, NgTemplateOutlet],
+  imports: [AppButton, DatePipe, NavIcon, NgTemplateOutlet, RedCabecera, RedLeyenda, RedNodo],
   templateUrl: './recorrido-clinico.html',
-  styleUrl: './recorrido-clinico.css',
+  styleUrls: ['./red-clinica-tonos.css', './recorrido-clinico.css', './red-clinica-trazos.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecorridoClinico {
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly nodos = input.required<readonly NodoDelRecorrido[]>();
-  readonly aristas = input.required<readonly AristaDelRecorrido[]>();
+  readonly registros = input.required<readonly RegistroDeLaRed[]>();
+  readonly vinculos = input.required<readonly VinculoDeLaRed[]>();
+  /** Ids of records to highlight. Empty: none. */
+  readonly resaltados = input<readonly string[]>([]);
+  /** Ids of records to draw. Empty: all. */
+  readonly visibles = input<readonly string[]>([]);
+  /** The record whose detail is open (in the panel): it is marked on the network. */
+  readonly seleccionado = input<string | null>(null);
 
-  /** Se pidió el detalle de un registro. */
+  /** A record's detail was requested (the one the chart already opens). */
   readonly abrir = output<string>();
+  /** A node was chosen: for the detail panel. */
+  readonly elegido = output<NodoElegido>();
 
-  protected readonly medidas = MEDIDAS;
-  protected readonly aspecto = ASPECTO_DEL_TIPO;
+  protected readonly medidas = MEDIDAS_DE_LA_RED;
+  protected readonly distanciaDelTronco = DISTANCIA_DEL_TRONCO;
+  protected readonly contextoDe = contextoDe;
 
-  /** Las celdas agrupadas que se abrieron. */
-  protected readonly celdasAbiertas = signal<ReadonlySet<string>>(new Set());
+  /** The expanded episodes. Everything starts collapsed: level 1. */
+  protected readonly desplegados = signal<ReadonlySet<string>>(new Set());
+  /** Open ruled-out diagnoses (by id) and open detail groups (by key). */
+  protected readonly abiertos = signal<ReadonlySet<string>>(new Set());
+
+  protected readonly red = computed(() => agruparEnEpisodios(this.registros(), this.vinculos()));
+
+  private readonly conjuntoVisible = computed(() => new Set(this.visibles()));
+  private readonly conjuntoResaltado = computed(() => new Set(this.resaltados()));
 
   protected readonly plano = computed(() =>
-    ubicarRecorrido(this.nodos(), this.aristas(), this.celdasAbiertas()),
+    ubicarRed(this.registros(), this.vinculos(), this.red(), {
+      desplegados: this.desplegados(),
+      abiertos: this.abiertos(),
+      visibles: this.conjuntoVisible(),
+    }),
   );
 
-  /**
-   * El nodo bajo el puntero y el que tiene el foco, por separado: si fueran una
-   * sola señal, sacar el puntero de un nodo apagaría el camino del que sigue
-   * enfocado con el teclado. El puntero manda mientras está sobre un nodo.
+  private readonly porId = computed(() => new Map(this.registros().map((r) => [r.id, r])));
+  private readonly episodioPorId = computed(() => new Map(this.red().episodios.map((e) => [e.id, e])));
+
+  protected readonly todoDesplegado = computed(() =>
+    this.plano().hilos.every((h) => h.desplegado),
+  );
+  protected readonly nadaDesplegado = computed(() => this.plano().hilos.every((h) => !h.desplegado));
+
+  /*
+   * The node under the pointer and the focused one, apart: moving the pointer
+   * away does not switch off the path of the one still focused by keyboard.
    */
   private readonly bajoElPuntero = signal<string | null>(null);
   private readonly conElFoco = signal<string | null>(null);
-
   protected readonly enfocado = computed(() => this.bajoElPuntero() ?? this.conElFoco());
 
   protected readonly camino = computed(() => {
     const id = this.enfocado();
-    // Sobre las conexiones ya dibujadas, que apuntan a los grupos y no a los
-    // registros ocultos en ellos.
     return id === null ? null : conectadosA(id, this.plano().aristas);
   });
 
-  protected readonly hayIndicaciones = computed(() =>
-    this.plano().aristas.some((a) => a.motivo === 'indicacion'),
-  );
-
   private readonly lienzo = viewChild<ElementRef<HTMLElement>>('lienzo');
+  private readonly anfitrion = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly desplazamiento = new DesplazamientoDelLienzo(() => this.lienzo()?.nativeElement);
 
-  /**
-   * Pantalla angosta: el recorrido se dibuja en vertical. El corte es
-   * `--bp-sm` (650 px), el de la escala del sistema. Arranca en `false` —en el
-   * servidor no hay pantalla— y se ajusta al montar en el navegador.
-   */
+  /** Narrow screen (`--bp-sm`, 650 px): the network reads vertically. */
   protected readonly angosto = signal(false);
-
-  /** Para el teléfono: lo más reciente arriba. */
-  protected readonly columnasRecientesPrimero = computed(() => [...this.plano().columnas].reverse());
-
-  /**
-   * Para qué diagnóstico se indicó cada receta, por id de receta, con el
-   * nombre real aunque el diagnóstico esté agrupado. En vertical no hay
-   * flecha: lo dice el texto.
-   */
-  protected readonly indicaciones = computed(() => {
-    const porId = new Map(this.nodos().map((n) => [n.id, n]));
-    const mapa = new Map<string, string>();
-    for (const arista of this.aristas()) {
-      const diagnostico = porId.get(arista.desde);
-      if (arista.motivo === 'indicacion' && diagnostico !== undefined) {
-        mapa.set(arista.hasta, diagnostico.principal);
-      }
-    }
-    return mapa;
-  });
 
   constructor() {
     afterNextRender(() => {
@@ -147,181 +173,145 @@ export class RecorridoClinico {
       this.destroyRef.onDestroy(() => consulta.removeEventListener('change', alCambiar));
     });
 
-    // Lo más reciente es lo que se viene a mirar: el lienzo abre por el final.
-    // Cada vez que se CREA un lienzo —al entrar a la vista, o al volver de
-    // angosto a ancho, que arma uno nuevo con el desplazamiento en cero—, y
-    // no cuando cambia el filtro: a quien ya se movió no se le arranca la
-    // posición.
+    // The most recent is what people come to see: the canvas opens at the end
+    // every time a canvas is CREATED, and not when an episode is expanded.
     effect(() => {
       const lienzo = this.lienzo()?.nativeElement;
       if (lienzo === undefined) {
         return;
       }
-      untracked(() =>
-        afterNextRender(() => this.fijarAlFinal(lienzo), { injector: this.injector }),
-      );
+      untracked(() => afterNextRender(() => this.desplazamiento.fijarAlFinal(lienzo), { injector: this.injector }));
     });
-    this.destroyRef.onDestroy(() => this.soltarLienzo?.());
+    this.destroyRef.onDestroy(() => this.desplazamiento.soltar());
   }
 
-  /** Desconecta el observador del lienzo anterior. */
-  private soltarLienzo: (() => void) | null = null;
+  /** Per collapsed thread, how many of its milestones are left and right of the view, and where the view is. */
+  protected readonly fuera = computed(() => {
+    const v = this.desplazamiento.ventana();
+    const conteo = (h: HiloDeLaRed) => ({ antes: h.hitos.filter((x) => x.x < v.desde).length, despues: h.hitos.filter((x) => x.x > v.hasta).length });
+    return { ...v, hilos: new Map(this.plano().hilos.filter((h) => !h.desplegado).map((h) => [h.episodio.id, conteo(h)])) };
+  });
 
-  /**
-   * Abre por el final y se queda ahí mientras quien mira no se mueva.
-   *
-   * Una sola pasada no alcanza: después del primer render el lienzo todavía
-   * cambia de ancho —la página gana su barra de desplazamiento vertical, la
-   * fuente termina de cargar— y la última columna quedaba asomando cortada.
-   * Así que, hasta el primer desplazamiento de la persona, cada cambio de
-   * tamaño vuelve a pegar el lienzo al final.
-   */
-  private fijarAlFinal(lienzo: HTMLElement): void {
-    this.soltarLienzo?.();
-    this.soltarLienzo = null;
-    if (typeof ResizeObserver !== 'function') {
-      this.irA('final', false);
-      return;
-    }
-    let pegado = true;
-    // Dónde lo dejó el propio componente. El evento `scroll` de ese ajuste
-    // llega después, cuando el lienzo ya pudo crecer: sin esto se leía como un
-    // desplazamiento de la persona y el lienzo se soltaba antes de tiempo.
-    let propio = lienzo.scrollLeft;
-    const pegar = (): void => {
-      this.irA('final', false);
-      propio = lienzo.scrollLeft;
-    };
-    const observador = new ResizeObserver(() => {
-      if (pegado) {
-        pegar();
-      }
-    });
-    observador.observe(lienzo);
-    if (lienzo.firstElementChild !== null) {
-      observador.observe(lienzo.firstElementChild);
-    }
-    // Un desplazamiento que no es el propio y no deja el lienzo al final es
-    // de la persona: desde ahí, el lienzo es suyo.
-    const alDesplazar = (): void => {
-      if (Math.abs(lienzo.scrollLeft - propio) <= 1) {
-        return;
-      }
-      if (lienzo.scrollLeft < lienzo.scrollWidth - lienzo.clientWidth - 2) {
-        pegado = false;
-      }
-    };
-    lienzo.addEventListener('scroll', alDesplazar, { passive: true });
-    pegar();
-    this.soltarLienzo = () => {
-      observador.disconnect();
-      lienzo.removeEventListener('scroll', alDesplazar);
-    };
+  protected verHitos(hilo: HiloDeLaRed): void {
+    this.desplazamiento.pegadoAlFinal = false;
+    this.desplazamiento.mostrarTramo(hilo.hitos[0].x - this.medidas.anchoAncha, hilo.hitos[hilo.hitos.length - 1].x + this.distanciaDelTronco);
   }
 
-  protected irA(extremo: 'inicio' | 'final', suave = true): void {
-    const lienzo = this.lienzo()?.nativeElement;
-    if (lienzo === undefined) {
-      return;
-    }
-    const destino = extremo === 'inicio' ? 0 : lienzo.scrollWidth;
-    if (typeof lienzo.scrollTo === 'function') {
-      // El desplazamiento suave también es movimiento: con «reducir
-      // movimiento» se salta, igual que las transiciones del CSS.
-      const reducir =
-        typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-      lienzo.scrollTo({ left: destino, behavior: suave && !reducir ? 'smooth' : 'auto' });
-    } else {
-      lienzo.scrollLeft = destino;
+  protected irA(extremo: 'inicio' | 'final'): void {
+    this.desplazamiento.irA(extremo);
+  }
+
+  /* -- Fold and unfold ----------------------------------------------------- */
+
+  protected alternarEpisodio(id: string): void {
+    const desplegar = !this.desplegados().has(id);
+    this.desplegados.update((actual) => (desplegar ? new Set([...actual, id]) : new Set([...actual].filter((e) => e !== id))));
+    if (desplegar) {
+      // Expanded, the episode may have its records left of what is in view (it
+      // started a year ago): the canvas goes to its first moment, so as not to
+      // show an open, empty thread.
+      this.desplazamiento.pegadoAlFinal = false;
+      afterNextRender(() => this.irAlEpisodio(id), { injector: this.injector });
     }
   }
 
-  /*
-   * Un control de grupo no ilumina camino: no es un registro, y al abrirse
-   * («Mostrar menos») atenuaba justo lo que se acababa de mostrar.
-   */
-  protected apuntar(nodo: NodoUbicado | null): void {
-    this.bajoElPuntero.set(nodo === null || nodo.grupo !== undefined ? null : nodo.id);
-  }
-
-  protected enfocar(nodo: NodoUbicado | null): void {
-    this.conElFoco.set(nodo === null || nodo.grupo !== undefined ? null : nodo.id);
-  }
-
-  /** Qué es la columna, en palabras: cabecera visible. */
-  protected contextoDe(columna: ColumnaUbicada): string {
-    return columna.contexto === 'atencion'
-      ? 'Atención'
-      : columna.contexto === 'dia'
-        ? 'Registros del día'
-        : 'Sin atención';
-  }
-
-  /** El nombre accesible de una columna: su fecha y qué es. */
-  protected rotuloDeColumna(columna: ColumnaUbicada): string {
-    const fecha =
-      columna.fecha === null
-        ? 'Sin fecha'
-        : columna.fecha.toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' });
-    const que =
-      columna.contexto === 'atencion'
-        ? 'atención'
-        : columna.contexto === 'dia'
-          ? 'registros de atenciones que no están a la vista'
-          : 'registros sin atención';
-    return `${fecha}, ${que}`;
-  }
-
-  /**
-   * La fecha propia del registro cuando no es la de su columna, con un rótulo
-   * que dice qué fecha es. `null` cuando coinciden: repetirla sería ruido.
-   */
-  protected fechaPropia(
-    nodo: NodoUbicado,
-    columna: ColumnaUbicada,
-  ): { readonly rotulo: string; readonly fecha: Date; readonly formato: string } | null {
-    if (nodo.grupo !== undefined || nodo.cuando === null || columna.fecha === null) {
-      return null;
+  private irAlEpisodio(id: string): void {
+    const xs = this.plano()
+      .nodos.filter((n) => n.episodio === id)
+      .map((n) => n.x);
+    if (xs.length > 0) {
+      this.desplazamiento.mostrarTramo(Math.min(...xs) - 2 * this.distanciaDelTronco, Math.max(...xs) + this.medidas.anchoAncha);
     }
-    if (nodo.cuando.toDateString() === columna.fecha.toDateString()) {
-      return null;
-    }
-    const rotulo = nodo.tipo === 'diagnosticos' ? 'Inicio' : nodo.tipo === 'medicacion' ? 'Desde' : 'Del';
-    // Corta, porque la tarjeta es angosta y con el estado al lado la fecha
-    // completa se cortaba («8 Oct 20…»): sin el año si es el de la columna, y
-    // mes y año si es otro —para el comienzo de una enfermedad alcanza—. La
-    // fecha entera va en el título y en el nombre accesible.
-    // En vertical hay lugar para la fecha entera; y cuando la diferencia es de
-    // días (un 28 de diciembre en una columna del 5 de enero) el día importa
-    // aunque el año cambie.
-    const dias = Math.abs(nodo.cuando.getTime() - columna.fecha.getTime()) / 86_400_000;
-    const formato = this.angosto()
-      ? 'd MMM y'
-      : nodo.cuando.getFullYear() === columna.fecha.getFullYear()
-        ? 'd MMM'
-        : dias < 90
-          ? 'd MMM y'
-          : 'MMM y';
-    return { rotulo, fecha: nodo.cuando, formato };
   }
 
-  /** Un registro abre su detalle; un nodo de grupo abre o cierra su celda. */
-  protected activar(nodo: NodoUbicado): void {
-    if (nodo.grupo === undefined) {
-      this.abrir.emit(nodo.id);
-      return;
-    }
-    const { celda, accion } = nodo.grupo;
-    this.celdasAbiertas.update((actual) => {
-      const siguiente = new Set(actual);
-      if (accion === 'expandir') {
-        siguiente.add(celda);
-      } else {
-        siguiente.delete(celda);
-      }
-      return siguiente;
-    });
+  protected desplegarTodo(): void {
+    this.desplegados.set(new Set(this.plano().hilos.map((h) => h.episodio.id)));
+  }
+
+  protected plegarTodo(): void {
+    this.desplegados.set(new Set());
     this.bajoElPuntero.set(null);
+  }
+
+  private alternarAbierto(clave: string, abrir: boolean): void {
+    this.abiertos.update((actual) => (abrir ? new Set([...actual, clave]) : new Set([...actual].filter((c) => c !== clave))));
+  }
+
+  /** What is expanded and open, and where the canvas is: to come back there (on leaving the guided tour). */
+  plegado(): PlegadoDeLaRed {
+    return { desplegados: this.desplegados(), abiertos: this.abiertos(), desplazamiento: this.lienzo()?.nativeElement.scrollLeft ?? null };
+  }
+
+  restaurarPlegado(previo: PlegadoDeLaRed): void {
+    this.desplegados.set(previo.desplegados);
+    this.abiertos.set(previo.abiertos);
+    this.bajoElPuntero.set(null);
+    this.conElFoco.set(null);
+    this.desplazamiento.pegadoAlFinal = false;
+    const izquierda = previo.desplazamiento;
+    if (izquierda !== null) afterNextRender(() => this.lienzo()?.nativeElement.scrollTo?.({ left: izquierda }), { injector: this.injector });
+  }
+
+  /** A record opens its detail; the controls open or close their own. */
+  protected activar(nodo: NodoDeLaRed): void {
+    if (nodo.forma === 'grupo' && nodo.grupo !== undefined) {
+      this.alternarAbierto(nodo.grupo.clave, nodo.grupo.accion === 'expandir');
+      this.bajoElPuntero.set(null);
+      return;
+    }
+    if (nodo.forma === 'descartado' && nodo.registro !== undefined) {
+      this.alternarAbierto(nodo.registro.id, true);
+      return;
+    }
+    if (nodo.forma === 'plegar' && nodo.registro !== undefined) {
+      this.alternarAbierto(nodo.registro.id, false);
+      this.bajoElPuntero.set(null);
+      return;
+    }
+    if (nodo.registro !== undefined) {
+      this.abrir.emit(nodo.registro.id);
+      this.elegido.emit({ id: nodo.registro.id, clase: nodo.registro.clase, episodio: nodo.episodio });
+    }
+  }
+
+  /* -- Go to a record (from the panel or an alert) -------------------------- */
+
+  /**
+   * Takes the network to a record: expands its episode, opens the ruled-out
+   * marker or the «+N» hiding it, brings it into view and marks it focused
+   * (`foco`: also the keyboard focus, on closing the panel). `false` if it is
+   * not there or was filtered out.
+   */
+  irANodo(id: string, opciones: { readonly foco?: boolean } = {}): boolean {
+    const [registro, episodio, visibles] = [this.porId().get(id), this.red().episodioDe.get(id), this.conjuntoVisible()];
+    if (registro === undefined || episodio === undefined || (visibles.size > 0 && !visibles.has(id))) return false;
+    if (!this.desplegados().has(episodio)) this.desplegados.update((actual) => new Set([...actual, episodio]));
+    if (registro.clase === 'diagnostico' && registro.certeza === 'descartado') this.alternarAbierto(id, true);
+    const grupo = this.plano().nodos.find((n) => n.grupo?.accion === 'expandir' && n.grupo.ocultos.some((r) => r.id === id));
+    if (grupo?.grupo !== undefined) this.alternarAbierto(grupo.grupo.clave, true);
+    this.desplazamiento.pegadoAlFinal = false;
+    this.conElFoco.set(id);
+    afterNextRender(
+      () => {
+        const nodos = this.anfitrion.nativeElement.querySelectorAll<HTMLElement>('[data-testid="recorrido-nodo"]');
+        const boton = Array.from(nodos).find((b) => b.dataset['id'] === id);
+        boton?.scrollIntoView?.({ block: 'nearest', inline: 'center', behavior: reducirMovimiento() ? 'auto' : 'smooth' });
+        if (opciones.foco === true) boton?.focus({ preventScroll: true });
+      },
+      { injector: this.injector },
+    );
+    return true;
+  }
+
+  /* -- Lit path ------------------------------------------------------------- */
+
+  /** Only records light up a path: a control is not a record. */
+  protected apuntar(nodo: NodoDeLaRed | null): void {
+    this.bajoElPuntero.set(nodo === null || nodo.forma === 'grupo' || nodo.forma === 'plegar' ? null : nodo.id);
+  }
+
+  protected enfocar(nodo: NodoDeLaRed | null): void {
+    this.conElFoco.set(nodo === null || nodo.forma === 'grupo' || nodo.forma === 'plegar' ? null : nodo.id);
   }
 
   protected atenuado(id: string): boolean {
@@ -338,66 +328,71 @@ export class RecorridoClinico {
     return camino !== null && !camino.aristas.has(clave);
   }
 
-  /**
-   * El nombre accesible de cada nodo: tipo, registro, estado y sus vínculos. Es
-   * lo que reemplaza a las líneas para quien no las ve.
-   */
-  protected readonly nombres = computed(() => {
-    // Los vínculos se nombran con las aristas ORIGINALES, no con las del plano:
-    // ahí un diagnóstico agrupado figura como «+2 diagnósticos», y «indicado
-    // para +2 diagnósticos» no le dice nada a quien escucha.
-    const aristas = this.aristas();
-    const porId = new Map(this.nodos().map((n) => [n.id, n]));
-    const nombres = new Map<string, string>();
-    for (const nodo of this.plano().nodos) {
-      if (nodo.grupo !== undefined) {
-        nombres.set(
-          nodo.id,
-          nodo.grupo.accion === 'expandir'
-            ? `Mostrar ${nodo.grupo.ocultos} ${this.aspecto[nodo.tipo].plural.toLowerCase()} más: ${nodo.secundario}`
-            : `Mostrar menos ${this.aspecto[nodo.tipo].plural.toLowerCase()}`,
-        );
-        continue;
-      }
-      const partes = [
-        `${this.aspecto[nodo.tipo].singular}: ${nodo.principal}`,
-        nodo.secundario,
-        nodo.estado,
-        // La fecha propia del registro: la columna puede ser la de la atención
-        // y no la suya, y quien escucha no ve la tarjeta.
-        nodo.cuando === null
-          ? ''
-          : `fecha ${nodo.cuando.toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' })}`,
-      ];
-      for (const arista of aristas) {
-        if (arista.hasta === nodo.id) {
-          const origen = porId.get(arista.desde);
-          if (origen !== undefined) {
-            partes.push(
-              arista.motivo === 'atencion'
-                ? `registrado en la atención ${origen.principal}`
-                : `indicado para ${origen.principal}`,
-            );
-          }
-        }
-        if (arista.desde === nodo.id && arista.motivo === 'indicacion') {
-          const destino = porId.get(arista.hasta);
-          if (destino !== undefined) {
-            partes.push(`tratado con ${destino.principal}`);
-          }
-        }
-      }
-      nombres.set(nodo.id, partes.filter((parte) => parte !== '').join('. '));
-    }
-    return nombres;
-  });
-
-  /** El ícono del tipo. Método y no índice: en la plantilla del nodo el contexto llega sin tipo. */
-  protected iconoDe(tipo: TipoDelRecorrido): NavIconName {
-    return this.aspecto[tipo].icono;
+  protected resaltado(id: string): boolean {
+    return this.conjuntoResaltado().has(id);
   }
 
-  protected tonoDe(tipo: TipoDelRecorrido): string {
-    return this.aspecto[tipo].tono;
+  protected hiloResaltado(episodio: EpisodioClinico): boolean {
+    const resaltados = this.conjuntoResaltado();
+    return resaltados.size > 0 && [...episodio.miembros, ...episodio.compartidos].some((id) => resaltados.has(id));
+  }
+
+  /* -- Texts ---------------------------------------------------------------- */
+
+  /** The other episodes a record drawn here belongs to. */
+  protected compartidoCon(nodo: NodoDeLaRed): readonly string[] {
+    if (nodo.registro === undefined) return [];
+    const episodios = this.episodioPorId();
+    return (this.red().pertenencias.get(nodo.registro.id) ?? [])
+      .slice(1)
+      .map((id) => episodios.get(id)?.nombre ?? '')
+      .filter((n) => n !== '');
+  }
+
+  /** The node's relations in words: what replaces the lines in the vertical layout. */
+  protected readonly relaciones = computed(() => {
+    const [porId, vinculos] = [this.porId(), this.vinculos()];
+    return new Map<string, readonly string[]>(this.registros().map((r) => [r.id, relacionesDe(r.id, vinculos, porId)]));
+  });
+
+  protected readonly nombres = computed(() =>
+    nombresDeLosNodos(this.plano(), this.relaciones(), (nodo) => this.compartidoCon(nodo), (id) => this.resaltado(id)),
+  );
+
+  protected fechaPropia(nodo: NodoDeLaRed, columna: ColumnaDeLaRed | undefined): FechaPropia | null {
+    return fechaPropia(nodo, columna, this.angosto());
+  }
+
+  protected tonoDe(nodo: NodoDeLaRed): string {
+    return nodo.forma === 'grupo' ? 'neutral' : ASPECTO_DE_LA_CLASE[nodo.registro!.clase].tono;
+  }
+
+  /* -- The vertical layout -------------------------------------------------- */
+
+  /**
+   * The moments of an expanded episode, most recent first, with their nodes:
+   * the same plane as the canvas, read another way.
+   */
+  protected momentosDe(hilo: HiloDeLaRed): readonly { readonly columna: ColumnaDeLaRed; readonly nodos: readonly NodoDeLaRed[] }[] {
+    const plano = this.plano();
+    const porColumna = new Map<number, NodoDeLaRed[]>();
+    for (const n of plano.nodos) {
+      if (n.episodio === hilo.episodio.id) {
+        porColumna.set(n.columna, [...(porColumna.get(n.columna) ?? []), n]);
+      }
+    }
+    return [...porColumna.entries()]
+      .sort(([a], [b]) => b - a)
+      .map(([c, nodos]) => ({ columna: plano.columnas[c], nodos: [...nodos].sort((a, b) => a.y - b.y) }));
+  }
+
+  protected nodosDelHilo(hilo: HiloDeLaRed): readonly NodoDeLaRed[] {
+    return this.plano()
+      .nodos.filter((n) => n.episodio === hilo.episodio.id)
+      .sort((a, b) => a.columna - b.columna || a.y - b.y);
+  }
+
+  protected tituloDelHito(titulos: readonly string[]): string {
+    return titulos.join(' · ');
   }
 }

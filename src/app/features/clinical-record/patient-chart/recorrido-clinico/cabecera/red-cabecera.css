@@ -1,0 +1,134 @@
+/* ============================================================================
+    A thread header's toggle: the button that folds and unfolds the episode,
+    with its summary. The sticky wrapper is styled by the network; the vertical
+    layout and the thread without a diagnosis are read from the ancestors.
+    ========================================================================== */
+
+.red__alternar {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  min-block-size: 40px;
+  padding: var(--sp-1) var(--sp-3);
+  font: inherit;
+  text-align: start;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.red__alternar:hover {
+  border-color: var(--border-strong);
+}
+
+.red__alternar:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--focus-ring),
+    var(--shadow-sm);
+}
+
+.red__alternar[aria-expanded='true'] .red__chevron {
+  rotate: 45deg;
+}
+
+.red__episodio-nombre {
+  /* The name gives way last: the counts are cut first. */
+  flex: 0 1 auto;
+  min-inline-size: 8ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+:host-context(.red__hilo--sin-diagnostico) .red__episodio-nombre {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.red__episodio-datos {
+  /* Block, not flex: a cut-off summary ends in an ellipsis, not mid-word. */
+  display: block;
+  flex: 0 1000 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.red__episodio-rango {
+  font-variant-numeric: tabular-nums;
+}
+
+.red__episodio-conteo::before,
+.red__episodio-descartados::before {
+  content: '·';
+  margin-inline: var(--sp-1);
+}
+
+/* With no date range the first count opens the line: no loose «·». */
+.red__episodio-datos > :first-child::before {
+  content: none;
+}
+
+.red__episodio-descartados {
+  color: var(--st-error-fg);
+}
+
+:host-context(.red-v__episodio.red__hilo--resaltado) .red__alternar {
+  border-inline-start: 4px solid var(--st-warning-fg);
+}
+
+:host-context(.red-v) .red__alternar {
+  flex-wrap: wrap;
+  inline-size: 100%;
+  border-radius: var(--r-md);
+}
+
+:host-context(.red-v) .red__episodio-nombre {
+  white-space: normal;
+}
+
+:host-context(.red-v) .red__episodio-datos {
+  /* On the phone the summary wraps: separated by gap, never by a «·» left
+     alone at a line's end. */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-3);
+  white-space: normal;
+  inline-size: 100%;
+}
+
+:host-context(.red-v) .red__episodio-datos > ::before {
+  content: none;
+}
+
+/* A narrow canvas (the side panel open at 1024 px): the name is what must
+   read. Status and counts step aside (they stay in the button's accessible
+   name) and the name wraps to two lines instead of being cut. */
+@container (max-width: 480px) {
+  .red__alternar > .red__estado,
+  .red__episodio-datos {
+    display: none;
+  }
+
+  .red__episodio-nombre {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    line-height: var(--lh-caption);
+  }
+}

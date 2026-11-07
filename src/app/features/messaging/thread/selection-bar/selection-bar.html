@@ -1,0 +1,9 @@
+<div class="seleccion" role="toolbar" aria-label="Mensajes seleccionados" data-testid="hilo-barra-seleccion">
+  <button class="seleccion__cancelar" type="button" aria-label="Cancelar la selección" data-testid="hilo-seleccion-cancelar" (click)="cancelar.emit()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" /></svg>
+  </button>
+  <span class="seleccion__cuenta" role="status" data-testid="hilo-seleccion-cuenta">{{ texto() }}</span>
+  <button app-button variant="primary" data-testid="hilo-seleccion-reenviar" (clicked)="reenviar.emit()">
+    Reenviar
+  </button>
+</div>

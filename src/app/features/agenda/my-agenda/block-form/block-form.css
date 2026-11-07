@@ -1,11 +1,18 @@
 /* ============================================================================
-    El formulario de bloqueo. Panel y no modal: la decisión se toma mirando el
-    calendario que un modal taparía.
+    Block form. A panel, not a modal: the decision is made looking at the
+    calendar a modal would cover.
+
+    Two sections ("When", "Why") in ONE full-width card, fields in pairs
+    (composition-rules §5): never a single column stuck to the left.
     ========================================================================== */
 
 :host {
     display: block;
     margin-block-end: var(--sp-4);
+}
+
+.bloqueo__cabecera {
+    margin-block-end: var(--sp-5);
 }
 
 .bloqueo__titulo {
@@ -16,8 +23,8 @@
 
 .bloqueo__texto,
 .bloqueo__nota {
-    margin: 0 0 var(--sp-4);
-    max-inline-size: 68ch;
+    margin: 0;
+    max-inline-size: 72ch;
     color: var(--text-secondary);
     font-size: var(--fs-caption);
     line-height: var(--lh-caption);
@@ -26,59 +33,131 @@
 .bloqueo__form {
     display: flex;
     flex-direction: column;
-    gap: var(--sp-4);
+    gap: var(--sp-5);
 }
 
-.bloqueo__fechas,
-.bloqueo__horas {
+/* ── Sections ────────────────────────────────────────────────────────────── */
+
+.bloqueo__seccion {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: var(--sp-4);
 }
 
-.bloqueo__fechas > *,
-.bloqueo__horas > * {
-    flex: 1 1 14rem;
+.bloqueo__seccion + .bloqueo__seccion {
+    padding-block-start: var(--sp-5);
+    border-block-start: 1px solid var(--border-subtle);
 }
 
-.bloqueo__cuenta {
-    margin: calc(-1 * var(--sp-2)) 0 0;
-    color: var(--text-secondary);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
-    font-variant-numeric: tabular-nums;
-}
-
-.bloqueo__alcance {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--sp-4);
+.bloqueo__subtitulo {
     margin: 0;
-    padding: 0;
-    border: none;
-}
-
-.bloqueo__leyenda {
-    padding: 0;
-    margin-block-end: var(--sp-2);
     color: var(--text-secondary);
     font-size: var(--fs-caption);
     font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
-.bloqueo__opcion {
-    display: inline-flex;
-    align-items: center;
+/* Two fields side by side, one per row on narrow screens. Grid rather than
+   wrapping flex: with flex a wrapped field stretches full width and stops
+   lining up with the one above. */
+.bloqueo__par {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: var(--sp-4);
+}
+
+/* ── Scope ───────────────────────────────────────────────────────────────── */
+
+.bloqueo__alcance {
+    display: flex;
+    flex-direction: column;
     gap: var(--sp-2);
-    /* Área táctil de control, no de texto: elegir entre dos radios en un
-       teléfono no puede depender de acertarle a un círculo de 12 px. */
-    min-block-size: var(--h-ctrl-sm, 36px);
-    cursor: pointer;
 }
 
-.bloqueo__nota {
-    margin: calc(-1 * var(--sp-2)) 0 0;
+/* Same treatment as the `app-form-field` label, so the question reads as a
+   field and not as a note. */
+.bloqueo__leyenda {
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    font-weight: 500;
 }
+
+/* ── Time range ──────────────────────────────────────────────────────────── */
+
+.bloqueo__franja {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    background: var(--bg-inset);
+}
+
+/* Presets in a grid: four per row on wide screens, two on phones (one per
+   row wasted most of the panel at 390 px). */
+.bloqueo__atajos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+    gap: var(--sp-2);
+}
+
+.bloqueo__atajo-horas {
+    margin-inline-start: var(--sp-1);
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Summary ─────────────────────────────────────────────────────────────── */
+
+.bloqueo__resumen {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    border: 1px solid var(--border-subtle);
+    border-inline-start: 3px solid var(--brand-primary);
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+}
+
+.bloqueo__resumen-icono {
+    flex-shrink: 0;
+    inline-size: 20px;
+    block-size: 20px;
+    margin-block-start: 2px;
+    color: var(--brand-primary);
+}
+
+.bloqueo__resumen p {
+    margin: 0;
+}
+
+.bloqueo__resumen-cuando {
+    font-weight: 600;
+}
+
+/* `formatDate` yields a lowercase weekday, which starts the sentence when the
+   block is a single day. */
+.bloqueo__resumen-cuando::first-letter {
+    text-transform: uppercase;
+}
+
+.bloqueo__resumen-cuanto {
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.bloqueo__resumen .bloqueo__resumen-nota {
+    margin-block-start: var(--sp-2);
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
 
 .bloqueo__error {
     margin: 0;
@@ -87,8 +166,23 @@
     line-height: var(--lh-caption);
 }
 
+/* Primary action on the right, where reading the form ends. On phones both
+   go full width with the primary one on top, within thumb reach. */
 .bloqueo__acciones {
     display: flex;
     flex-wrap: wrap;
+    justify-content: flex-end;
     gap: var(--sp-3);
+    padding-block-start: var(--sp-4);
+    border-block-start: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 539px) {
+    .bloqueo__acciones {
+        flex-direction: column-reverse;
+    }
+
+    .bloqueo__acciones > * {
+        inline-size: 100%;
+    }
 }

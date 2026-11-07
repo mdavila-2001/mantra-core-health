@@ -35,3 +35,30 @@
     min-block-size: 44px;
   }
 }
+
+/* "Branches" tab: no form-width cap and no empty column
+   (composition-rules.md §5). The shared sheet caps the prescription field at
+   34 rem; inside the sheet it takes the full width and the button goes below. */
+.ficha-card .ficha-publica__receta {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.ficha-card .ficha-publica__receta-campo {
+  max-inline-size: none;
+  inline-size: 100%;
+}
+
+/* A single branch spans the full width instead of a third with two empty columns. */
+.ficha-card .ficha-publica__rejilla > li:only-child {
+  grid-column: 1 / -1;
+}
+
+/* The long "use my location" label wraps at 390 px instead of leaving the card. */
+.ficha-card__ubicacion {
+  max-inline-size: 100%;
+  white-space: normal;
+  text-align: center;
+  block-size: auto;
+  min-block-size: 44px;
+}

@@ -1,0 +1,63 @@
+<div class="nota-voz" data-testid="hilo-nota-voz">
+  <audio
+    #audio
+    preload="metadata"
+    [attr.src]="playable()"
+    (loadedmetadata)="onMetadata(audio)"
+    (timeupdate)="current.set(audio.currentTime)"
+    (play)="playing.set(true)"
+    (pause)="playing.set(false)"
+    (ended)="onEnded()"
+  ></audio>
+
+  <button
+    class="nota-voz__play"
+    type="button"
+    data-testid="nota-voz-play"
+    [attr.aria-label]="playing() ? 'Pausar nota de voz' : 'Reproducir nota de voz'"
+    (click)="toggle(audio)"
+  >
+    @if (playing()) {
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+    } @else {
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg>
+    }
+  </button>
+
+  <div class="nota-voz__cuerpo">
+    <div class="nota-voz__onda">
+      <div class="nota-voz__barras" aria-hidden="true">
+        @for (peak of peaks(); track $index) {
+          <span
+            class="nota-voz__barra"
+            [class.is-oida]="($index + 0.5) / peaks().length <= progress()"
+            [style.block-size.%]="peak * 100"
+          ></span>
+        }
+      </div>
+      <!-- The real control: keyboard and screen readers seek here. -->
+      <input
+        class="nota-voz__posicion"
+        type="range"
+        min="0"
+        step="0.1"
+        data-testid="nota-voz-posicion"
+        aria-label="Posición de la nota de voz"
+        [max]="duration() || 0"
+        [value]="current()"
+        [attr.aria-valuetext]="clock(current()) + ' de ' + clock(duration())"
+        (input)="seek(audio, $any($event.target).value)"
+      />
+    </div>
+    <div class="nota-voz__pie">
+      <span class="nota-voz__tiempo" data-testid="nota-voz-tiempo">{{ label() }}</span>
+      <button
+        class="nota-voz__velocidad"
+        type="button"
+        data-testid="nota-voz-velocidad"
+        [attr.aria-label]="'Velocidad ' + rateLabel()"
+        (click)="cycleRate(audio)"
+      >{{ rateLabel() }}</button>
+    </div>
+  </div>
+</div>

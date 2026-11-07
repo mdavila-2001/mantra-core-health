@@ -1,3 +1,5 @@
+import type { StudyDetailRead } from './study-detail.types';
+
 /* ============================================================================
     El circuito del laboratorio propio: acesión, espécimen, versión de informe
     y liberación (CV-02, CL-47). Antes tenían endpoint y no tenían cliente —
@@ -14,6 +16,25 @@
 export interface ResourceCreated {
   readonly id: string;
   readonly status: string;
+}
+
+/**
+ * El espécimen que se registra al recibir una orden de la bandeja, **precargado**
+ * con lo que el médico pidió: el tipo de muestra (`specimenTypeConceptId`) y, si
+ * pidió la parte del cuerpo, esa región (`bodySiteConceptId`). Precargar no es
+ * decidir: quien recibe lo puede cambiar, y sin lo pedido no se inventa nada.
+ */
+export function specimenDraftFromInboxItem(
+  item: LabInboxItem,
+  custodianTenantId: string,
+): Partial<NewSpecimen> & Pick<NewSpecimen, 'patientProfileId' | 'custodianTenantId' | 'serviceRequestId'> {
+  return {
+    patientProfileId: item.patientProfileId,
+    custodianTenantId,
+    serviceRequestId: item.serviceRequestId,
+    ...(item.specimenTypeConceptId === undefined ? {} : { specimenTypeConceptId: item.specimenTypeConceptId }),
+    ...(item.bodySiteConceptId === undefined ? {} : { bodySiteConceptId: item.bodySiteConceptId }),
+  };
 }
 
 /** Alta de un espécimen (soporte de la acesión). */
@@ -211,7 +232,7 @@ export interface LabInboxQuery {
 }
 
 /** Una orden de la bandeja de recepción. */
-export interface LabInboxItem {
+export interface LabInboxItem extends StudyDetailRead {
   readonly serviceRequestId: string;
   readonly patientProfileId: string;
   readonly patientDisplayName: string | null;

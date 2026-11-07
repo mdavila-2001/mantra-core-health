@@ -10,13 +10,13 @@
        explicación: «no se puede» sin decir qué falta obliga a adivinar. -->
   @if (sinOrganizacion()) {
     <app-alert tone="info" title="Elija una organización">
-      El pedido queda bajo la custodia de una organización. Elija una en el selector del
-      encabezado para poder solicitarlo.
+      El pedido queda bajo la custodia de una organización. Elija una en el selector del encabezado
+      para poder solicitarlo.
     </app-alert>
   } @else if (!hayEncuentro()) {
     <app-alert tone="info" title="Abra el encuentro para pedir">
-      El estudio se pide dentro de la consulta que lo motivó. Registre el encuentro acá arriba y
-      el formulario aparece. El histórico de abajo se ve igual.
+      El estudio se pide dentro de la consulta que lo motivó. Registre el encuentro acá arriba y el
+      formulario aparece. El histórico de abajo se ve igual.
     </app-alert>
   } @else if (catalogoListo() === false) {
     <!-- El selector no cae a texto libre por diseño: un uuid tecleado a mano es
@@ -42,21 +42,159 @@
           [(notaSeleccionada)]="notaDelFormularioLibre"
         />
       }
-      <!-- El tipo no se elige: sale del estudio. Un segundo selector dejaba
-           pedir un hemograma como imagen. -->
+      <!-- Lo primero que se elige es a quién va la orden. Cambia qué se pregunta
+           después: un laboratorio pide tipo de análisis, estudio y muestra; una
+           imagen pide el tipo de imagen, el estudio y la parte del cuerpo. -->
       <app-form-field
         class="app-form-grid__ancho"
-        label="Estudio"
-        [hint]="tipo.label() === null ? 'Busque por nombre: hemograma, radiografía de tórax, ecocardiograma…' : 'Tipo: ' + tipo.label()"
+        label="Tipo de orden"
+        hint="Laboratorio, imagenología u otro estudio."
         [required]="true"
       >
-        <app-concept-select
-          [target]="targetEstudio"
-          [(value)]="estudio"
-          [clearable]="false"
-          placeholder="Elija un estudio"
+        <app-select
+          [options]="orden.kindOptions"
+          [value]="orden.kind()"
+          placeholder="Elija laboratorio o imagenología"
+          ariaLabel="Tipo de orden"
+          data-testid="order-kind"
+          (valueChange)="elegirTipoDeOrden($event)"
         />
       </app-form-field>
+
+      @switch (orden.kind()) {
+        @case ('LAB') {
+          <!-- Laboratorio: el tipo de análisis arma el árbol de estudios y limita la muestra. -->
+          <app-form-field
+            class="app-form-grid__ancho"
+            label="Tipo de análisis"
+            [hint]="orden.labTypeSummary() ?? 'Sangre, orina, heces, fluidos o genético.'"
+            [required]="true"
+          >
+            <app-select
+              [options]="orden.labTypeOptions()"
+              [value]="orden.labType()"
+              placeholder="Elija el tipo de análisis"
+              ariaLabel="Tipo de análisis"
+              data-testid="lab-type"
+              (valueChange)="orden.chooseLabType($event)"
+            />
+          </app-form-field>
+
+          @if (orden.labType() !== null) {
+            @if (orden.labTree().length === 0) {
+              <p class="estudios__vacio app-form-grid__ancho" data-testid="lab-tree-empty">
+                Todavía no hay estudios de este tipo en el catálogo. Elija otro tipo de análisis; si
+                lo necesita, pida que se agreguen estudios a este tipo.
+              </p>
+            } @else {
+              <app-form-field
+                class="app-form-grid__ancho"
+                label="Estudio"
+                [hint]="
+                  tipo.label() === null
+                    ? 'Busque por nombre o abra una rama del árbol.'
+                    : 'Tipo: ' + tipo.label()
+                "
+                [required]="true"
+              >
+                <app-tree-select
+                  [groups]="orden.labTree()"
+                  [(value)]="estudio"
+                  placeholder="Elija un estudio"
+                  dialogTitle="Estudio de laboratorio"
+                  searchPlaceholder="Buscar un estudio…"
+                  emptyMessage="No hay ningún estudio con ese nombre en este tipo de análisis."
+                />
+              </app-form-field>
+            }
+          }
+        }
+        @case ('IMAGING') {
+          <!-- Imagenología: tipo de imagen, estudio de ese tipo y, abajo, la parte del cuerpo. -->
+          @if (orden.hasModalities()) {
+            <app-form-field
+              class="app-form-grid__ancho"
+              label="Tipo de imagen"
+              hint="Rayos X, ecografía, tomografía, resonancia…"
+            >
+              <app-select
+                [options]="orden.modalityOptions()"
+                [value]="orden.modality()"
+                placeholder="Elija el tipo de imagen"
+                ariaLabel="Tipo de imagen"
+                data-testid="imaging-modality"
+                (valueChange)="orden.chooseModality($event)"
+              />
+            </app-form-field>
+          }
+
+          <app-form-field
+            class="app-form-grid__ancho"
+            label="Estudio"
+            [hint]="
+              tipo.label() === null
+                ? 'Busque por nombre: radiografía de tórax, ecografía abdominal…'
+                : 'Tipo: ' + tipo.label()
+            "
+            [required]="true"
+          >
+            <app-select
+              [options]="orden.imagingStudyOptions()"
+              [value]="estudio()"
+              placeholder="Elija un estudio"
+              ariaLabel="Estudio de imagen"
+              data-testid="imaging-study"
+              (valueChange)="orden.chooseImagingStudy($event)"
+            />
+          </app-form-field>
+
+          @if (orden.guidance(); as ficha) {
+            <section
+              class="estudios__ficha app-form-grid__ancho"
+              aria-label="Sobre este estudio"
+              data-testid="imaging-guidance"
+            >
+              <h3 class="estudios__ficha-titulo">{{ ficha.label }}: qué hace</h3>
+              <p class="estudios__ficha-texto">{{ ficha.whatItDoes }}</p>
+              <h4 class="estudios__ficha-subtitulo">Para revisar antes de pedirlo</h4>
+              <ul class="estudios__ficha-lista">
+                @for (punto of ficha.review; track punto) {
+                  <li>{{ punto }}</li>
+                }
+              </ul>
+              <p class="estudios__ficha-aviso">{{ orden.guidanceNotice }}</p>
+            </section>
+          }
+        }
+        @case ('OTHER') {
+          <!-- Otros estudios: lo que ya se podía pedir (cardiología, anatomía patológica,
+               procedimientos). El tipo de la orden sale del estudio. -->
+          <app-form-field
+            class="app-form-grid__ancho"
+            label="Estudio"
+            [hint]="
+              tipo.label() === null
+                ? 'Busque por nombre: electrocardiograma, biopsia, endoscopia…'
+                : 'Tipo: ' + tipo.label()
+            "
+            [required]="true"
+          >
+            <app-concept-select
+              [target]="targetEstudio"
+              [(value)]="estudio"
+              [clearable]="false"
+              placeholder="Elija un estudio"
+            />
+          </app-form-field>
+        }
+      }
+
+      <!-- La muestra (laboratorio) o la parte del cuerpo (imagen): excluyentes, según el estudio. -->
+      <app-study-detail-section
+        [family]="tipo.family()"
+        [specimenAccepts]="orden.specimenAccepts()"
+        [modalityPreset]="orden.modality()"
+      />
 
       <app-form-field
         class="app-form-grid__ancho"
@@ -71,13 +209,34 @@
         />
       </app-form-field>
 
+      <!-- Clinical network (patch v4291): the diagnosis the study seeks to
+           confirm, rule out or follow. Optional: only the not ruled out ones. -->
+      @if (opcionesDeDiagnostico().length > 0) {
+        <app-form-field
+          class="app-form-grid__ancho"
+          label="Para qué diagnóstico"
+          hint="Opcional. El diagnóstico que este estudio busca confirmar, descartar o seguir."
+          [errorMessage]="errorDelDiagnostico()"
+        >
+          <app-select
+            data-testid="estudios-para-diagnostico"
+            [value]="paraDiagnostico()"
+            (valueChange)="paraDiagnostico.set($event); errorDelDiagnostico.set('')"
+            [options]="opcionesDeDiagnostico()"
+            placeholder="Sin diagnóstico asociado"
+          />
+        </app-form-field>
+      }
+
       @if (performer.isProcedure()) {
-        <!-- Quién realiza el procedimiento: una recomendación, no una asignación.
+        <!-- Quién realiza el estudio: una recomendación, no una asignación.
              Por defecto «Que elija el paciente»; nada viaja hasta que el médico
              elige otra cosa. -->
         <app-performer-selector
           class="app-form-grid__ancho"
           [procedureConceptId]="estudio()"
+          [titulo]="orden.performerTitle()"
+          [termino]="orden.kind() === 'OTHER' ? 'procedimiento' : 'estudio'"
           [ownSites]="performer.sites().own"
           [centerSites]="performer.sites().center"
           [sitesLoading]="performer.sites().loading"
@@ -86,7 +245,10 @@
         />
       }
 
-      <app-collection-point-select class="app-form-grid__ancho" [siteId]="performer.choice().siteId" />
+      <app-collection-point-select
+        class="app-form-grid__ancho"
+        [siteId]="performer.choice().siteId"
+      />
 
       @if (checkingDuplicate()) {
         <!-- Corta a propósito: alimentar `[pending]` acá correría el foco
@@ -136,12 +298,22 @@
             <div class="estudios__principal">
               <span class="estudios__nombre">{{ estudio.estudio }}</span>
               <span class="estudios__categoria">{{ estudio.categoria }}</span>
+              @if (estudio.paraDiagnostico; as dx) {
+                <span class="estudios__categoria" data-testid="estudios-fila-diagnostico">Para: {{ dx }}</span>
+              }
               <app-informed-consent-badge [consent]="consent.consents.of('SERVICE_REQUEST', estudio.id)" />
             </div>
             <div class="estudios__meta">
               <span class="estudios__estado">{{ estudio.estado }}</span>
+              @if (estudio.detalle) {
+                <span class="estudios__resultado" data-testid="study-detail">{{
+                  estudio.detalle
+                }}</span>
+              }
               @if (estudio.collectionPoint) {
-                <span class="estudios__resultado" data-testid="study-collection-point">Toma en {{ estudio.collectionPoint }}</span>
+                <span class="estudios__resultado" data-testid="study-collection-point"
+                  >Toma en {{ estudio.collectionPoint }}</span
+                >
               }
               <!-- Antiduplicación (v4.2.17, T-26): estas dos líneas priman
                    sobre «con resultado» — una orden reutilizada o repetida ya
@@ -216,7 +388,13 @@
     targetType="SERVICE_REQUEST"
     [targetId]="estudio.id"
     [targetLabel]="estudio.estudio + ' · ' + estudio.categoria"
-    [defaults]="{ purposeText: estudio.categoria + ': ' + estudio.estudio + ', para orientar el diagnóstico o el tratamiento.' }"
+    [defaults]="{
+      purposeText:
+        estudio.categoria +
+        ': ' +
+        estudio.estudio +
+        ', para orientar el diagnóstico o el tratamiento.',
+    }"
     (consentChanged)="consent.consents.upsert($event)"
     (closed)="consent.target.set(null)"
   />

@@ -90,6 +90,9 @@
           </li>
         }
       </ul>
+      @if (permissions.avisoDePush(); as aviso) {
+        <app-alert tone="warning" data-testid="permission-avisos-notice">{{ aviso }}</app-alert>
+      }
     </section>
 
     <section class="ajustes__bloque">

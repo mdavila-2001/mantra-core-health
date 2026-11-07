@@ -80,8 +80,8 @@ import {
   type DiagnosticoEnFicha,
   type RecetaEnFicha,
   diagnosticoParaReceta,
-  vinculoDeReceta,
 } from '../patient-chart/medication-block/medication-block';
+import { vinculoDeReceta } from '../patient-chart/medication-block/medication-block.vinculo';
 import { PaymentsBlock } from '../patient-chart/payments-block/payments-block';
 import { SpecialtyFormBlock } from '../patient-chart/specialty-form-block/specialty-form-block';
 import {

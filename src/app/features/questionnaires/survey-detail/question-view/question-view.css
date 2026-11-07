@@ -1,0 +1,53 @@
+/* One read-only question of the survey sheet: a row in a list, with its own
+   frame (no nested card). System tokens only. */
+:host {
+  display: block;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pregunta__fila {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+/* Tabular, fixed width: the number is a column. */
+.pregunta__posicion {
+  flex: none;
+  inline-size: 1.5rem;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--lh-body);
+}
+
+.pregunta__icono {
+  flex: none;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin-block-start: 0.15rem;
+  color: var(--brand-primary);
+}
+
+.pregunta__cuerpo {
+  display: grid;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.pregunta__texto {
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+
+.pregunta__meta {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  overflow-wrap: anywhere;
+}

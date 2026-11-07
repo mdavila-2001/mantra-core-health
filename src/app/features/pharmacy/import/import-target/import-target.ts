@@ -7,31 +7,30 @@ import type { SegmentedOption } from '../../../../shared/components/molecules/se
 import { EntityImport } from '../entity-import/entity-import';
 import { PharmacyImport } from '../pharmacy-import';
 
-/** Qué se importa: los productos tienen su asistente; lo demás, la importación genérica. */
-export type ImportTarget = 'products' | 'categories' | 'prices' | 'sites';
+/**
+ * What is imported. Prices travel in the products file (`codigo,precio` updates
+ * only the price), so there is no separate prices option; sites are not imported here.
+ */
+export type ImportTarget = 'products' | 'categories';
 
-/** La clave de «Qué va a importar» en la URL: `?tab=import&target=prices`. */
+/** The «Qué va a importar» key in the URL: `?tab=import&target=categories`. */
 export const IMPORT_TARGET_PARAM = 'target';
 
 export const IMPORT_TARGETS: readonly SegmentedOption<ImportTarget>[] = [
-  { value: 'products', label: 'Productos' },
+  { value: 'products', label: 'Productos y precios' },
   { value: 'categories', label: 'Categorías' },
-  { value: 'prices', label: 'Precios' },
-  { value: 'sites', label: 'Sucursales' },
 ];
 
 /**
  * Content of the catalog «Importar CSV» modal: the «Qué va a importar» picker
- * and, below, the chosen screen. Products open the product wizard
- * ({@link PharmacyImport}); categories, prices and sites the generic import
- * ({@link EntityImport}). Switching option mounts the other screen from
- * scratch: a prices file has nothing to do in categories.
+ * and, below, the chosen screen. Products and prices open the product wizard
+ * ({@link PharmacyImport}); categories the generic import ({@link EntityImport}).
  *
  * All of them are upserts: what exists is updated and what is new is created.
  * The inventory CSV upload is not here: it stays in the Inventory tab.
  *
- * The choice lives in the URL (`?target=`), so the prices import can be linked
- * directly; without a value, or with an unknown one, it opens products.
+ * The choice lives in the URL (`?target=`). Without a value, or with an
+ * unknown or retired one (`prices`, `sites` from old links), it opens products.
  */
 @Component({
   selector: 'app-import-target',

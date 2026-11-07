@@ -351,7 +351,10 @@ describe('ShellLayout', () => {
    * en silencio: la geometría del marco —que es lo que la hoja de la bóveda
    * espera encontrar— y que el menú siga saliendo del registro de secciones.
    */
-  it('el aviso de consentimiento vive dentro del contenido (en el flujo), no suelto en la raíz de la app', () => {
+  it('el aviso de consentimiento vive dentro del contenido (en el flujo), no suelto en la raíz de la app', async () => {
+    fixture.detectChanges();
+    // The notices are a deferred chunk (`@defer (on immediate)`): wait for it to load.
+    await fixture.whenStable();
     fixture.detectChanges();
     const main = (fixture.nativeElement as HTMLElement).querySelector('main#contenido-principal');
     expect(main?.querySelector('app-ux-consent-notice')).not.toBeNull();
@@ -1475,10 +1478,10 @@ describe('ShellLayout', () => {
     });
 
     /**
-     * 28/10/2026 · La bandeja de encuestas del paciente, arriba. Sólo la ve el
-     * paciente, y sólo cuando una atención terminada le generó una encuesta
-     * (`GET /surveys/me/invitations` devolvió alguna). El número son las
-     * pendientes dentro del plazo.
+     * 28/10/2026 · The patient's survey inbox, in the top bar. Only the patient
+     * sees it and, since 06/11/2026, ALWAYS: with or without invitations (the
+     * screen explains with an empty state when they arrive). The number is the
+     * pending ones still in time, and it only shows when there is one.
      */
     describe('Mis encuestas en la cabecera', () => {
       const EN_UN_DIA = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -1531,11 +1534,22 @@ describe('ShellLayout', () => {
         };
       }
 
-      it('el paciente SIN ninguna encuesta no ve el ícono: no hay a dónde llevarlo', () => {
+      it('el paciente SIN ninguna encuesta también ve el ícono, sin número', () => {
         abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
         responder([]);
 
-        expect(enlace()).toBeNull();
+        expect(enlace()).not.toBeNull();
+        expect(enlace()?.getAttribute('href')).toBe('/my-account/questionnaires?seccion=encuestas');
+        expect(badge()).toBeNull();
+        expect(enlace()?.getAttribute('aria-label')).toBe('Mis encuestas');
+      });
+
+      it('el paciente ve el ícono antes de que la bandeja responda', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        raiz();
+
+        expect(enlace()).not.toBeNull();
+        expect(badge()).toBeNull();
       });
 
       it('el paciente CON una encuesta ve el ícono, hasta si ya la respondió', () => {
@@ -1664,14 +1678,16 @@ describe('ShellLayout', () => {
         http.expectNone('/surveys/me/invitations');
       });
 
-      it('si la lectura falla, el ícono no aparece de más ni rompe la cabecera', () => {
+      it('si la lectura falla, el ícono sigue sin número inventado y la cabecera no se rompe', () => {
         abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
         raiz();
         TestBed.inject(HttpTestingController)
           .match((pedido) => pedido.url === '/surveys/me/invitations')
           .forEach((pedido) => pedido.flush({ message: 'boom' }, { status: 500, statusText: 'x' }));
+        fixture.detectChanges();
 
-        expect(enlace()).toBeNull();
+        expect(enlace()).not.toBeNull();
+        expect(badge()).toBeNull();
         expect(raiz().querySelector('[data-testid="header-chats"]')).not.toBeNull();
       });
 
@@ -1682,7 +1698,7 @@ describe('ShellLayout', () => {
 
         abrirSesion({ sub: 'u-2', roles: ['PRACTITIONER'], tenants: ['t-1'] });
         expect(enlace()).toBeNull();
-        expect(TestBed.inject(PatientSurveyInbox).hayInvitaciones()).toBe(false);
+        expect(TestBed.inject(PatientSurveyInbox).invitaciones().length > 0).toBe(false);
       });
     });
 

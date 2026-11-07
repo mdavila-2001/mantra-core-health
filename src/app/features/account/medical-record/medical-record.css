@@ -33,67 +33,11 @@
   min-inline-size: 0;
 }
 
-.historia__bloque {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-}
-
-.historia__titulo {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.historia__vacio {
-  margin: 0;
-  font-size: var(--fs-body);
-  color: var(--text-secondary);
-}
-
-.historia__lista {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.historia__item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
-}
-
-/* Las listas de sólo lectura no tienen acciones: no necesitan el mismo aire. */
-.historia__lista--simple .historia__item {
-  padding: var(--sp-3) var(--sp-4);
-}
-
 .historia__datos {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-}
-
-.historia__principal {
-  font-size: var(--fs-body);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.historia__secundario {
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
 }
 
 .historia__acciones {
@@ -104,12 +48,6 @@
 }
 
 @media (min-width: 48rem) {
-  .historia__item {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-
   .historia__acciones {
     flex: none;
   }
@@ -273,20 +211,6 @@
 :host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__region {
   padding: var(--sp-4) var(--sp-5) var(--sp-5);
   border-block-start: 1px solid var(--border-default);
-}
-
-/* Recetas, alergias, resultados y diagnósticos: filas separadas, con el
-   mismo borde redondo que las atenciones. */
-:host-context(.app-shell--paciente) .historia__lista {
-  display: grid;
-  gap: var(--sp-3);
-}
-
-:host-context(.app-shell--paciente) .historia__item {
-  padding: var(--sp-4) var(--sp-5);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-xl);
-  background: var(--bg-surface);
 }
 
 /* En oscuro el círculo claro apagaba la carpeta aguamarina. */

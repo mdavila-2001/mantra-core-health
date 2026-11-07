@@ -127,8 +127,8 @@ seleccionable: *«copiar es comodidad, verlo es el requisito».*
 
 | Elemento | Estado |
 |---|---|
-| Centro de notificaciones persistente | No existe |
-| Notificaciones push del navegador | No existe |
+| Centro de notificaciones persistente | Existe: `/notification-center` (bandeja, `core/notifications/notifications.store.ts`) |
+| Notificaciones push del navegador | Existe: `public/push-sw.js` + `core/notifications/web-push.service.ts` (+ `web-push-local.ts`). Se ofrece una vez por persona (primera reserva o el aviso del área privada `features/shell-layout/web-push-offer`, que espera a los demás avisos de `shell-notices`) y desde Ajustes. Una suscripción pertenece a una persona: cerrar sesión da de baja el navegador, y al entrar `resync` quita cualquier suscripción viva de otra persona o de dueño desconocido y recupera la propia sólo para quien la había activado. El PUT a la API sólo se repite si cambió el endpoint. Al tocar el aviso se abre la ruta del payload o `/notification-center`. |
 | Avisos con acción de deshacer | No existe |
 | Agrupación de avisos repetidos | No existe |
 | Sonido | No existe |

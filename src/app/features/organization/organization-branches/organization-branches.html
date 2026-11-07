@@ -60,9 +60,42 @@
       </app-alert>
     }
 
+    @if (branches().status === 'ready') {
+      <div class="branches__waves" data-testid="branches-filter">
+        <app-segmented-control
+          [options]="categories.options()"
+          [value]="categories.filter()"
+          [wrap]="true"
+          ariaLabel="Qué sedes ver, por categoría"
+          (valueChange)="categories.select($event)"
+        />
+      </div>
+
+      <section class="branches__map" aria-labelledby="branches-map-title" data-testid="branches-map">
+        <h2 id="branches-map-title" class="branches__map-title">Mapa de sus sedes</h2>
+        @if (categories.pins().length > 0) {
+          <app-map
+            [pines]="categories.pins()"
+            etiqueta="Mapa con el punto exacto de cada sede; la tabla de abajo repite los mismos datos"
+          />
+        } @else {
+          <p class="branches__muted" data-testid="branches-map-empty">
+            Ninguna de estas sedes tiene su punto en el mapa. Use «Editar» y pegue el enlace de
+            Google Maps u OpenStreetMap de cada una.
+          </p>
+        }
+        @if (categories.pins().length > 0 && categories.withoutPoint().length > 0) {
+          <p class="branches__muted" data-testid="branches-map-missing">
+            {{ categories.withoutPoint().length === 1 ? 'Una sede no aparece' : categories.withoutPoint().length + ' sedes no aparecen' }}
+            en el mapa porque no tienen su punto: {{ categories.missingNames() }}. Use «Editar» y pegue su enlace de ubicación.
+          </p>
+        }
+      </section>
+    }
+
     <app-data-table
       caption="Sucursales de su organización"
-      [state]="branches()"
+      [state]="categories.tableState()"
       [columns]="columns()"
       [trackBy]="rowId"
       [rowLabel]="rowLabel"
@@ -78,6 +111,16 @@
   <code class="branches__code">{{ branch.code }}</code>
 </ng-template>
 
+<ng-template #categoryCell let-branch>
+  <app-chip
+    size="sm"
+    [variant]="categories.tones[categories.of(branch)]"
+    [attr.data-testid]="'branches-category-' + branch.code"
+  >
+    {{ categories.labels[categories.of(branch)] }}
+  </app-chip>
+</ng-template>
+
 <ng-template #descriptionCell let-branch>
   @if (branch.description) {
     <span class="branches__description">{{ branch.description }}</span>
@@ -87,8 +130,8 @@
 </ng-template>
 
 <ng-template #locationCell let-branch>
-  @if (branch.locationUrl) {
-    <a app-link [href]="branch.locationUrl">Ver en el mapa</a>
+  @if (categories.mapUrlOf(branch); as url) {
+    <a app-link [href]="url">Ver en el mapa</a>
   } @else {
     <span class="branches__muted">Sin ubicación</span>
   }
@@ -116,6 +159,8 @@
     [pending]="bulkSaving()"
     [existingNames]="existingNames()"
     contextNote="Cada fila se crea como una sucursal activa de su organización."
+    [withCategory]="true"
+    [headOfficeName]="categories.headOfficeName()"
     (imported)="createBatch($event)"
     (closed)="bulkOpen.set(false)"
   />
@@ -145,6 +190,21 @@
           (valueChange)="setField('name', $event)"
           [hasError]="submitted() && nameError() !== ''"
           testId="branches-name"
+        />
+      </app-form-field>
+
+      <app-form-field
+        icon="tag"
+        label="Categoría"
+        hint="Sirve para ver las sedes por oleadas. Sólo una puede ser la casa matriz."
+      >
+        <app-select
+          [options]="categories.dialogOptions()"
+          [value]="form().category"
+          (valueChange)="setCategory($event)"
+          ariaLabel="Categoría de la sede"
+          [searchable]="false"
+          data-testid="branches-category"
         />
       </app-form-field>
 

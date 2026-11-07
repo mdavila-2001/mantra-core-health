@@ -268,6 +268,14 @@ export interface LabOrder {
   readonly reason: string | null;
   /** The API admits REJECT now: received, with an open specimen (imaging never). */
   readonly canReject?: boolean;
+  /** The center entered it (paper or walk-in), not a practitioner: only these can be edited or annulled. */
+  readonly registeredByPerformer?: boolean;
+  /** `PUT /diagnostics/lab/orders/:id` applies now: the center's own order, not received yet. */
+  readonly canEdit?: boolean;
+  readonly codeConceptId?: string;
+  readonly priorityConceptId?: string | null;
+  readonly externalRequesterName?: string | null;
+  readonly externalRequesterLicense?: string | null;
   readonly files: readonly LabOrderFile[];
 }
 

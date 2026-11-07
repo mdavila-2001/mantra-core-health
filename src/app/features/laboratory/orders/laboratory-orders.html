@@ -1,7 +1,19 @@
 <app-page-header
   title="Órdenes"
   subtitle="Reciba cada orden, márquela como procesada, suba sus resultados y descárguelos."
-/>
+>
+  <button app-button page-actions type="button" (clicked)="intakeFor.set(null)" data-testid="lab-orders-new">
+    Nueva orden
+  </button>
+</app-page-header>
+
+@if (intakeFor() !== undefined) {
+  <app-lab-order-intake-dialog
+    [order]="intakeFor() ?? null"
+    (saved)="intakeSaved()"
+    (closed)="intakeFor.set(undefined)"
+  />
+}
 
 <!-- UNA tarjeta con pestañas, a lo ancho y centrada: la regla de la casa
      (`docs/components/composition-rules.md` §5). Cada pestaña es un estado. -->

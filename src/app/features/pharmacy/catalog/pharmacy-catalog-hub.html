@@ -51,8 +51,9 @@
 @if (importOpen()) {
   <app-content-dialog
     heading="Importar CSV"
-    description="Productos, categorías, precios o sucursales: lo que ya existe se actualiza y lo nuevo se crea."
+    description="Productos con sus precios, o categorías: lo que ya existe se actualiza y lo nuevo se crea."
     size="xl"
+    data-stable-height
     [closeGuard]="importGuard"
     data-testid="catalog-import-dialog"
     (closed)="closeImport()"

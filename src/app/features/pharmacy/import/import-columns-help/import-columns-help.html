@@ -1,0 +1,25 @@
+<h2 [id]="headingId()" class="columns-help__title">Las columnas</h2>
+<dl class="columns-help__columns">
+  @for (column of columns(); track column.header) {
+    <div>
+      <dt><code>{{ column.header }}</code></dt>
+      <dd>{{ column.description }}</dd>
+    </div>
+  }
+</dl>
+@if (note()) {
+  <p class="columns-help__note" data-testid="import-columns-note">{{ note() }}</p>
+}
+<div class="columns-help__actions">
+  @for (template of templates(); track template.value) {
+    <button
+      app-button
+      variant="outline"
+      type="button"
+      (clicked)="download.emit(template.value)"
+      [attr.data-testid]="template.testId"
+    >
+      {{ template.label }}
+    </button>
+  }
+</div>

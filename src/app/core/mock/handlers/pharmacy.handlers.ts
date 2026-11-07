@@ -1,8 +1,9 @@
+import { ETIQUETA, type EstadoPedido } from './pharmacy-orders.data';
 import { CATALOGO_MEDICAMENTOS, type CatalogFixtureRow } from '../fixtures/medication-catalog.generated';
 import { CORPUS_PHARMACIES } from '../fixtures/bolivia-central-axis';
 import { patientSettlementForItems } from '../fixtures/patient-settlements';
 import { CONCEPT, conversationList, showcaseOf, showcases } from '../fixtures/community';
-import { MEDICAMENTO, displayOf } from '../fixtures/concepts';
+import { MEDICAMENTO, MEDICAMENTO_POR_CONCENTRACION, displayOf } from '../fixtures/concepts';
 import { prescriptionList } from '../fixtures/clinic';
 import { PACIENTE, patientById, professionalById } from '../fixtures/people';
 // T-I3 · los identificadores de los pedidos de ejemplo de la bandeja viven en
@@ -14,7 +15,7 @@ import {
 } from '../fixtures/pharmacy-orders';
 import { horarioDeFarmacias } from './pharmacy-opening-hours.handlers';
 import { conflict, forbidden, notFound, precondition, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
-import { sucursalesDelTenant } from './directory.handlers';
+import { activeTenantBranches } from './directory-branches.mock';
 import { TENANT_TYPES } from '../mock-session';
 import { haversineKm, withStockUpdatedAt } from './pharmacy-availability.mock';
 import { ahora, Coleccion, contiene, contieneSinTildes, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';
@@ -420,9 +421,14 @@ function nombreDeCategoriaInvalido() {
  */
 const STOCK_SIN_CONTEO = null;
 
+/*
+ * The separate strengths (`MEDICAMENTO_POR_CONCENTRACION`) go last: pharmacies
+ * also sell 25 and 75 mcg levothyroxine, and «dónde comprarla» searches by the
+ * prescription's concept. Last, so the usual products keep price and stock.
+ */
 export const productos = new Coleccion<ProductoSimulado>(
   FARMACIAS.flatMap((f, fi) =>
-    Object.entries(MEDICAMENTO).map(([code, conceptId], i) => {
+    Object.entries({ ...MEDICAMENTO, ...MEDICAMENTO_POR_CONCENTRACION }).map(([code, conceptId], i) => {
       const display = displayOf(conceptId);
       const [generico, ...resto] = display.split(' ');
       const forma = display.includes('inhalador') ? c('INHALER', 'Inhalador') : display.includes('cápsulas') ? c('CAPSULE', 'Cápsula') : display.includes('UI/ml') ? c('INJECTABLE', 'Inyectable') : c('TABLET', 'Comprimido');
@@ -526,21 +532,6 @@ function resumenDe(pharmacyId: string) {
 
 /* ---- pedidos ---------------------------------------------------------------- */
 
-type EstadoPedido = 'ENVIADO' | 'EN_REVISION' | 'CONFIRMADO' | 'ACEPTACION_PENDIENTE' | 'ACEPTADO' | 'LISTO_PARA_RETIRO' | 'RETIRADO' | 'RECHAZADO' | 'VENCIDO' | 'CANCELADO';
-
-const ETIQUETA: Record<EstadoPedido, string> = {
-  ENVIADO: 'Enviado',
-  EN_REVISION: 'En revisión',
-  CONFIRMADO: 'Confirmado',
-  ACEPTACION_PENDIENTE: 'Esperando su aceptación',
-  ACEPTADO: 'Aceptado',
-  LISTO_PARA_RETIRO: 'Listo para retirar',
-  RETIRADO: 'Retirado',
-  RECHAZADO: 'Rechazado',
-  VENCIDO: 'Vencido',
-  CANCELADO: 'Cancelado',
-};
-
 interface LineaSimulada {
   readonly productId: string;
   readonly requestedQuantity: number;
@@ -613,7 +604,7 @@ const HORARIO = horarioDeFarmacias([...FARMACIAS, ...SEDES_ADICIONALES.map((s) =
  */
 function sedesCargadas(pharmacyId: string, propias: readonly string[]) {
   const conocidas = new Set([...propias, ...(pharmacyId === FARMACIAS[0]!.id ? SEDES_ADICIONALES.map((s) => s.name) : [])]);
-  return sucursalesDelTenant(pharmacyId)
+  return activeTenantBranches(pharmacyId)
     .filter((s) => !conocidas.has(s.name))
     .map((s) => ({
       id: s.id,

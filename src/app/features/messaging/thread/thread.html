@@ -82,6 +82,9 @@
           </li>
         }
         <li role="none">
+          <button role="menuitem" type="button" data-testid="hilo-fondo" (click)="menuCabecera.set(false); eligiendoFondo.set(true)">Fondo de pantalla</button>
+        </li>
+        <li role="none">
           <button
             role="menuitem"
             type="button"
@@ -97,14 +100,8 @@
   </div>
 </header>
 
-<!-- «Consulta sobre: …» — la tarjeta de la conversación, fijada arriba como el
-     resumen del pedido en el chat de una app de delivery: se sabe de qué se
-     habla sin subir hasta el primer mensaje.
-
-     Mientras la tarjeta original está a la vista en el hilo, la barra se
-     recoge: las dos juntas decían lo mismo dos veces en 390 px. Se recoge con
-     una clase y no con `@if`, para que siga siendo el mismo nodo —y lo que se
-     lee de ella no dependa de dónde quedó el scroll—. -->
+<!-- «Consulta sobre: …», pinned on top. Collapsed (by class, same node) while
+     the original card is on screen, so the two never say the same twice. -->
 @if (contextoFijado(); as fijado) {
   <!-- Con quién la envió: el texto de una tarjeta lo escribe un participante,
        y sin decirlo cualquiera podía hacerla pasar por un dato de la app. -->
@@ -200,7 +197,9 @@
               [class.is-cierra]="linea.cierraBloque"
               [attr.data-propio]="linea.propio"
               [attr.data-cuantas]="fotosDeLaGrilla(linea.mensajes).length"
+              [class.is-seleccionado]="seleccion.has(linea.mensajes)"
             >
+              <ng-container *ngTemplateOutlet="selector; context: { $implicit: linea.mensajes }" />
               @if (esGrupo() && linea.abreBloque && !linea.propio) {
                 <p class="hilo__autor" [attr.data-tono]="linea.tono">{{ linea.autor }}</p>
               }
@@ -259,7 +258,9 @@
               (pointerup)="cancelarPulsacion()"
               (pointercancel)="cancelarPulsacion()"
               (pointerleave)="cancelarPulsacion()"
+              [class.is-seleccionado]="seleccion.has([linea.mensaje])"
             >
+              <ng-container *ngTemplateOutlet="selector; context: { $implicit: [linea.mensaje] }" />
               @if (esGrupo() && linea.abreBloque && !linea.propio) {
                 <p class="hilo__autor" [attr.data-tono]="linea.tono">{{ linea.autor }}</p>
               }
@@ -334,7 +335,7 @@
                       }
                     </div>
                   } @else if (esAudio(linea.mensaje)) {
-                    <audio class="hilo__audio" controls [src]="url"></audio>
+                    <app-voice-note [src]="url" />
                   } @else {
                     <div class="hilo__documento-bloque">
                       <!-- `download` y no `target="_blank"`: es una `data:` URL, y
@@ -377,7 +378,7 @@
                 } @else if (adjuntoNoDisponible(linea.mensaje)) {
                   <p class="hilo__subiendo" role="status">Archivo no disponible</p>
                 } @else if (linea.mensaje.pendiente) {
-                  <p class="hilo__subiendo" role="status"><app-spinner size="sm" decorative /> Subiendo el archivo…</p>
+                  <p class="hilo__subiendo" role="status" data-testid="hilo-adjunto-estado">@if (linea.mensaje.estado === 'fallado') {No se pudo enviar el archivo.} @else {<app-spinner size="sm" decorative /> Subiendo el archivo…}</p>
                 } @else {
                   <!-- Ya está en el servidor y se está leyendo: esqueleto, no
                        «subiendo», que sería mentir sobre lo que pasa. -->
@@ -498,7 +499,7 @@
                 </button>
 
                 @if (menuAbierto() === linea.clave) {
-                  <ul class="hilo__menu hilo__menu--mensaje" role="menu" [class.hilo__menu--arriba]="menuArriba()">
+                  <ul class="hilo__menu hilo__menu--mensaje" role="menu">
                     <!-- La barra de reacciones, arriba del todo. Las seis de
                          siempre y un «+» con el catálogo entero. -->
                     <li role="none" class="hilo__menu-reacciones">
@@ -528,7 +529,7 @@
                       </button>
                     </li>
                     <!-- «Editar» se ofrece siempre en un texto propio. Dentro de
-                         los cinco minutos hace lo suyo; después queda apagado y
+                         los quince minutos hace lo suyo; después queda apagado y
                          dice por qué: esconderlo hacía creer que la función no
                          existía. El servidor es quien decide igual. -->
                     @if (esEditableEnTeoria(linea.mensaje)) {
@@ -538,12 +539,12 @@
                           type="button"
                           data-testid="hilo-editar"
                           [disabled]="!puedeEditarse(linea.mensaje)"
-                          [attr.title]="puedeEditarse(linea.mensaje) ? null : 'Sólo se puede editar durante los primeros 5 minutos'"
+                          [attr.title]="puedeEditarse(linea.mensaje) ? null : 'Sólo se puede editar durante los primeros 15 minutos'"
                           (click)="editar(linea.mensaje)"
                         >
                           Editar
                           @if (!puedeEditarse(linea.mensaje)) {
-                            <span class="hilo__menu-nota">Pasaron más de 5 min</span>
+                            <span class="hilo__menu-nota">Pasaron más de 15 min</span>
                           }
                         </button>
                       </li>
@@ -558,6 +559,9 @@
                         <button role="menuitem" type="button" data-testid="hilo-reenviar" (click)="reenviar(linea.mensaje, $event)">
                           Reenviar
                         </button>
+                      </li>
+                      <li role="none">
+                        <button role="menuitem" type="button" data-testid="hilo-seleccionar" (click)="seleccionar(linea.mensaje)">Seleccionar</button>
                       </li>
                     }
                     <!-- Qué pasó con lo que mandaste: cuándo salió, llegó y se leyó. -->
@@ -597,9 +601,7 @@
   <p class="hilo__aviso" role="status" data-testid="hilo-aviso">{{ aviso }}</p>
 }
 
-<!-- En angosto el selector «Escribiendo como» queda en la bandeja, que con el
-     hilo abierto no se ve: esta franja dice en nombre de quién sale la
-     respuesta. En ancho el selector está a la vista y la franja se esconde. -->
+<!-- Narrow screens: on whose behalf the reply goes out (the selector is in the inbox). -->
 @if (respondiendoComo(); as vitrina) {
   <p class="hilo__como" data-testid="hilo-respondiendo-como">
     Respondiendo como <strong>{{ vitrina }}</strong>
@@ -613,38 +615,23 @@
     <p>Bloqueó a {{ conQuien() }}. No puede enviarle mensajes ni recibir los suyos.</p>
     <button type="button" data-testid="hilo-desbloquear-aviso" (click)="desbloquear()">Desbloquear</button>
   </div>
+} @else if (seleccion.activa()) {
+  <app-selection-bar [cantidad]="seleccion.cantidad()" (reenviar)="reenviarSeleccion()" (cancelar)="seleccion.clear()" />
 } @else {
   <app-composer [sugerencias]="sugerencias()" (enviado)="alEnviar()" />
 }
 
-<!-- Elegir a quién reenviar: la misma lista de la bandeja, sin ésta.
-
-     En `app-content-dialog` y no en un `div role="dialog"` propio: aquél
-     declaraba `aria-modal` pero no lo cumplía —el `Tab` salía a la bandeja y
-     el hilo de atrás seguía tocable—. El `<dialog>` nativo con `showModal()`
-     trae la trampa de foco, el fondo inerte y `Escape`; el foco vuelve al
-     botón «Opciones del mensaje» (ver `reenviar`). -->
-@if (reenviando()) {
-  <app-content-dialog
-    #forwardDialog
-    heading="Reenviar a…"
-    size="sm"
-    closeLabel="Cancelar"
-    data-testid="thread-forward-dialog"
-    (closed)="cancelarReenvio()"
-  >
-    <ul class="hilo__reenvio-lista">
-      @for (destino of destinosDeReenvio(); track destino.id) {
-        <li>
-          <button type="button" data-testid="hilo-reenviar-destino" (click)="reenviarA(destino.id)">
-            <app-avatar [src]="avatarDeConversacion(destino)" [name]="nombreDeConversacion(destino)" size="md" />
-            <span>{{ nombreDeConversacion(destino) }}</span>
-          </button>
-        </li>
-      }
-    </ul>
-  </app-content-dialog>
+<!-- Elegir a quiénes reenviar: varios chats de la bandeja, sin éste. -->
+@if (reenviando(); as mensajes) {
+  <app-forward-dialog [destinos]="destinosDeReenvio()" [cantidad]="mensajes.length" (enviar)="reenviarA($event)" (cerrado)="cancelarReenvio()" />
 }
+
+<!-- The selection overlay of a bubble or a photo grid (see `thread-layers.css`). -->
+<ng-template #selector let-mensajes>
+  @if (seleccion.activa() && mensajes[0].estado === 'enviado') {
+    <button class="hilo__seleccion" type="button" data-testid="hilo-seleccionar-mensaje" aria-label="Seleccionar para reenviar" [attr.aria-pressed]="seleccion.has(mensajes)" (click)="seleccion.toggle(mensajes)"></button>
+  }
+</ng-template>
 
 <!-- Info. del mensaje: cuándo salió, cuándo llegó y cuándo se leyó. -->
 @if (infoDe(); as info) {
@@ -684,6 +671,10 @@
       }
     </dl>
   </app-content-dialog>
+}
+
+@if (eligiendoFondo()) {
+  <app-wallpaper-dialog (closed)="eligiendoFondo.set(false)" />
 }
 
 <!-- «Más reacciones»: el catálogo de emojis entero, para reaccionar. -->

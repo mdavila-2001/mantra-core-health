@@ -205,7 +205,6 @@
         data-testid="consulta-lo-registrado"
       >
         <h2 id="consulta-linea-titulo" class="consulta__titulo">Lo registrado en este encuentro</h2>
-
         <app-encounter-timeline
           data-testid="consulta-linea-encuentro"
           [encounter]="registrado.encabezado"
@@ -268,6 +267,7 @@
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
           [ofreceRespuesta]="true"
+          [diagnosticos]="diagnosticosParaReceta()"
           (cambio)="altaRegistrada()"
         />
       }
@@ -288,6 +288,7 @@
         <app-referral-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
+          [appointments]="citas()"
           [referrals]="referrals.state()"
           [refreshError]="referrals.refreshError()"
           [offersOpenEncounter]="true"

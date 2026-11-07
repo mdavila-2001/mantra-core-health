@@ -43,6 +43,7 @@
 }
 .item__parts li {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--sp-3);
   font-size: var(--fs-caption);

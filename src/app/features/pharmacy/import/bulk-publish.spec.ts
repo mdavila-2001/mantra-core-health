@@ -11,6 +11,7 @@ import {
   countOutcomes,
   productBulkRow,
   productResultRows,
+  readyRowsOf,
   sendProducts,
   toFileRows,
   type ReadyRow,
@@ -48,6 +49,23 @@ describe('bulk-publish', () => {
     });
     // El cambio no lleva lo que sólo admite el alta, ni borra lo que la fila dejó vacío.
     expect(productBulkRow(updated!)).toEqual({ productCode: 'PAR-500', brandName: 'Ya está', inStock: true });
+  });
+
+  // A price list (`codigo,precio`) used to send `inStock: true` for every
+  // existing product, putting out-of-stock ones back on sale.
+  it('un archivo sin «disponible» actualiza el precio y conserva la disponibilidad de lo que ya existe', () => {
+    const rows = readyRowsOf(reviewed('codigo;marca;precio\nPAR-500;;20\nNUEVO-1;Nuevo;5'), false);
+
+    expect(rows.map(productBulkRow)).toEqual([
+      { productCode: 'PAR-500', unitPrice: 20 },
+      { productCode: 'NUEVO-1', brandName: 'Nuevo', unitPrice: 5, inStock: true },
+    ]);
+  });
+
+  it('con «disponible» en el archivo, la disponibilidad viaja también en las actualizaciones', () => {
+    const rows = readyRowsOf(reviewed('codigo;precio;disponible\nPAR-500;20;agotado'), true);
+
+    expect(rows.map(productBulkRow)).toEqual([{ productCode: 'PAR-500', unitPrice: 20, inStock: false }]);
   });
 
   it('sendProducts manda las filas listas por la carga masiva y devuelve el resultado con la línea del archivo', () => {

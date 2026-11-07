@@ -1,0 +1,188 @@
+/* ============================================================================
+    The clinical network's marks: the collapsed strip (track and milestones)
+    and the lines. Shared by the canvas and the legend, which draws samples of
+    the same marks.
+    ========================================================================== */
+
+/* -- The collapsed strip: track and milestones -------------------------------- */
+
+.red__pista {
+  position: absolute;
+  block-size: 0;
+  border-block-start: 2px solid var(--border-strong);
+}
+
+.red__hito {
+  position: absolute;
+  inline-size: 12px;
+  block-size: 12px;
+  margin: -5px 0 0 -6px;
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  border: 2px solid var(--border-strong);
+}
+
+.red__muestra-hito.red__hito--momento,
+.red__hito--momento {
+  background: var(--brand-primary);
+  border-color: var(--bg-surface);
+  inline-size: 10px;
+  block-size: 10px;
+  margin: -4px 0 0 -5px;
+}
+
+.red__muestra-hito.red__hito--momento {
+  margin: 0;
+}
+
+/* Diagnoses: a diamond, and its fill tells the certainty. Never color alone:
+   presumptive is hollow, confirmed filled, ruled out dashed. */
+.red__hito--confirmado,
+.red__hito--presuntivo,
+.red__hito--descartado,
+.red__hito--historico {
+  inline-size: 14px;
+  block-size: 14px;
+  margin: -6px 0 0 -7px;
+  border-radius: 2px;
+  rotate: 45deg;
+}
+
+.red__muestra-hito.red__hito--confirmado,
+.red__muestra-hito.red__hito--presuntivo,
+.red__muestra-hito.red__hito--descartado {
+  inline-size: 11px;
+  block-size: 11px;
+  margin: 0;
+}
+
+.red__hito--confirmado {
+  background: var(--st-success-fg);
+  border-color: var(--st-success-fg);
+}
+
+.red__hito--presuntivo {
+  background: var(--st-warning-bg);
+  border-color: var(--st-warning-fg);
+}
+
+.red__hito--descartado {
+  background: var(--bg-surface);
+  border: 2px dashed var(--st-error-fg);
+}
+
+.red__hito--historico {
+  background: var(--st-secondary-bg);
+  border-color: var(--st-secondary-fg);
+}
+
+.red__hito--derivacion,
+.red__hito--internacion,
+.red__hito--procedimiento {
+  border-radius: 2px;
+  background: var(--st-secondary-bg);
+  border-color: var(--st-secondary-fg);
+}
+
+.red__hito--internacion {
+  background: var(--st-warning-bg);
+  border-color: var(--st-warning-fg);
+}
+
+/* -- The lines --------------------------------------------------------------- */
+
+.red__trazos {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.red__linea-eje {
+  stroke: var(--border-strong);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.red__arista {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition:
+    opacity var(--dur-base) ease,
+    stroke-width var(--dur-fast) ease;
+}
+
+.red__arista--tronco {
+  stroke: var(--brand-primary);
+  stroke-width: 1.5;
+  opacity: 0.55;
+}
+
+/* Real links: solid. */
+.red__arista--enlace {
+  stroke: var(--st-success-fg);
+  stroke-width: 2;
+}
+
+/* Inferred ones: thin dots in another tone, with the word next to them. */
+.red__arista--inferido {
+  stroke: var(--st-warning-fg);
+  stroke-width: 2;
+  stroke-dasharray: 2 5;
+}
+
+.red__halo {
+  fill: none;
+  stroke: var(--bg-inset);
+  stroke-width: 6;
+  stroke-linecap: butt;
+  stroke-linejoin: round;
+}
+
+.red__punta {
+  fill: var(--st-success-fg);
+}
+
+.red__punta--inferido {
+  fill: var(--st-warning-fg);
+}
+
+.red__arista--iluminada {
+  opacity: 1;
+  stroke-width: 3;
+}
+
+.red__arista--atenuada {
+  opacity: 0.12;
+}
+
+.red__etiqueta-inferido {
+  position: absolute;
+  z-index: 2;
+  translate: -50% -50%;
+  padding: 0 var(--sp-1);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  border: 1px dashed var(--st-warning-fg);
+  font-size: var(--fs-overline);
+  line-height: 16px;
+  font-weight: 600;
+  color: var(--st-warning-fg);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.red__etiqueta-inferido--vertical {
+  writing-mode: vertical-rl;
+  rotate: 180deg;
+  translate: 50% 50%;
+  padding: var(--sp-1) 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .red__arista {
+    transition: none;
+  }
+}

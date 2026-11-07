@@ -18,13 +18,14 @@ import {
   listaDeTextos,
   valorDeTexto,
 } from '../../../../core/data-access/terminology/terminology.types';
-import type { Condition, MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
+import type { Condition } from '../../../../core/data-access/clinical/clinical.types';
 import { describeApiFailure } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { fieldIssueOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import {
   CODIGO_CONFIRMADO,
+  CODIGO_DESCARTADO,
   normalizarCodigoDx,
   type ResolverCodigo,
 } from '../../../../shared/clinical/diagnosis-state';
@@ -140,6 +141,8 @@ export interface DiagnosisOption {
    * ya confirmados—: es un confirmado sin fecha, no un presuntivo.
    */
   readonly confirmadoEl?: string | null;
+  /** Ruled out (REFUTED): not offered as a link for anything (clinical network, v4291). */
+  readonly descartado?: boolean;
 }
 
 /**
@@ -176,33 +179,11 @@ export function diagnosticoParaReceta(
     etiqueta: condicion.resolvedAt === undefined ? etiqueta : `${etiqueta} · Resuelto`,
     confirmado,
     confirmadoEl: confirmado && decision?.outcome === 'CONFIRMED' ? decision.decidedAt : null,
+    // Only when it is: the other options keep their shape.
+    ...((certeza !== undefined ? certeza === normalizarCodigoDx(CODIGO_DESCARTADO) : decision?.outcome === 'REFUTED')
+      ? { descartado: true }
+      : {}),
   };
-}
-
-/**
- * Lo que la lista de recetas muestra como su vínculo: el diagnóstico (con el
- * nombre que ya tiene en la lista de diagnósticos) o el motivo escrito a mano.
- *
- * Un `indicationConditionId` que no está entre los diagnósticos a la vista —
- * quedó fuera del tope de la lectura— se dice así, en vez de callarlo: decir
- * «sin vínculo» sería falso.
- */
-export function vinculoDeReceta(
-  receta: Pick<MedicationRequest, 'indicationConditionId' | 'indicationText'>,
-  diagnosticos: readonly DiagnosisOption[],
-): Pick<PrescriptionInChart, 'vinculo' | 'vinculoEsDiagnostico' | 'indicationConditionId'> {
-  if (receta.indicationConditionId !== undefined) {
-    const dx = diagnosticos.find((d) => d.id === receta.indicationConditionId);
-    return {
-      vinculo: dx?.etiqueta ?? 'Diagnóstico de la historia',
-      vinculoEsDiagnostico: true,
-      indicationConditionId: receta.indicationConditionId,
-    };
-  }
-  const motivo = receta.indicationText?.trim() ?? '';
-  return motivo === ''
-    ? { vinculo: null, vinculoEsDiagnostico: false, indicationConditionId: null }
-    : { vinculo: motivo, vinculoEsDiagnostico: false, indicationConditionId: null };
 }
 
 /** Alias de compatibilidad: `patient-chart.ts` (C3, fuera de mi alcance) sigue importando el nombre viejo. */

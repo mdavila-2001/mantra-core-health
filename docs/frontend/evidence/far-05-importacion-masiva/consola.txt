@@ -56,3 +56,28 @@ tras recargar, la fila: Seleccionar PARACETAMOL CINFA 650 MG COMPRIMIDOS EFG PAR
 
 Escrituras y errores:
 [alta claro 1440] POST /pharmacies/:id/products → 201
+
+## Caso 9 · un lote de más de 1 MB (413)
+
+[claro 1440] revisión local: 250 productos nuevos 0 se actualizan (ya estaban) 0 filas a corregir de productos-lote-grande.csv
+[claro 1440] POST …/products/bulk (dryRun) → 413 · cuerpo enviado 1073790 bytes (tope 1 048 576)
+[claro 1440] aviso: «Error: No pudimos pedir la vista previa El servidor rechazó el envío por tamaño: un lote pasó de 1 MB. Divida el archivo en partes más chicas. Reintentar» · «Publicar» deshabilitado: true · sin desborde: true
+[oscuro 1440] revisión local: 250 productos nuevos 0 se actualizan (ya estaban) 0 filas a corregir de productos-lote-grande.csv
+[oscuro 1440] POST …/products/bulk (dryRun) → 413 · cuerpo enviado 1073790 bytes (tope 1 048 576)
+[oscuro 1440] aviso: «Error: No pudimos pedir la vista previa El servidor rechazó el envío por tamaño: un lote pasó de 1 MB. Divida el archivo en partes más chicas. Reintentar» · «Publicar» deshabilitado: true · sin desborde: true
+[claro 390] revisión local: 250 productos nuevos 0 se actualizan (ya estaban) 0 filas a corregir de productos-lote-grande.csv
+[claro 390] POST …/products/bulk (dryRun) → 413 · cuerpo enviado 1073790 bytes (tope 1 048 576)
+[claro 390] aviso: «Error: No pudimos pedir la vista previa El servidor rechazó el envío por tamaño: un lote pasó de 1 MB. Divida el archivo en partes más chicas. Reintentar» · «Publicar» deshabilitado: true · sin desborde: true
+[oscuro 390] revisión local: 250 productos nuevos 0 se actualizan (ya estaban) 0 filas a corregir de productos-lote-grande.csv
+[oscuro 390] POST …/products/bulk (dryRun) → 413 · cuerpo enviado 1073790 bytes (tope 1 048 576)
+[oscuro 390] aviso: «Error: No pudimos pedir la vista previa El servidor rechazó el envío por tamaño: un lote pasó de 1 MB. Divida el archivo en partes más chicas. Reintentar» · «Publicar» deshabilitado: true · sin desborde: true
+
+Escrituras y errores:
+[413 claro 1440] POST /pharmacies/:id/products/bulk → 413
+[413 claro 1440] console.error: Failed to load resource: the server responded with a status of 413 (Payload Too Large)
+[413 oscuro 1440] POST /pharmacies/:id/products/bulk → 413
+[413 oscuro 1440] console.error: Failed to load resource: the server responded with a status of 413 (Payload Too Large)
+[413 claro 390] POST /pharmacies/:id/products/bulk → 413
+[413 claro 390] console.error: Failed to load resource: the server responded with a status of 413 (Payload Too Large)
+[413 oscuro 390] POST /pharmacies/:id/products/bulk → 413
+[413 oscuro 390] console.error: Failed to load resource: the server responded with a status of 413 (Payload Too Large)

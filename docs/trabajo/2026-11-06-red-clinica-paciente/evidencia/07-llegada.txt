@@ -1,0 +1,35 @@
+Aceptada
+Tipo
+Interconsulta
+Destino
+Valeria Rojas Mendoza
+Servicio pedido
+Interconsulta con cardiología por dolor torácico atípico
+Diagnóstico
+Dolor torácico no especificado (R07.4)
+Resumen clínico
+Dolor punzante intermitente de 2 semanas, no relacionado con esfuerzo. ECG en reposo normal.
+Emitida
+4 nov 2026, 16:00
+Vigente hasta
+1 dic 2026
+Atención de llegada
+6 nov 2026, 04:36 a. m. · Consulta
+Traslado
+Se traslada
+Sí
+Estado al salir
+Inestable
+Medio
+Ambulancia avanzada (terapia intensiva móvil) · Unidad 12 · placa 3456-KTR
+Personal de salud
+Lic. Ana Suárez (Enfermería)
+Signos vitales
+PA 96/60 mmHg · FC 112 lpm · SatO₂ 93 % — 5 nov 2026, 08:00
+Aviso al receptor
+Sí, a Guardia de cardiología
+Salida
+5 nov 2026, 09:00
+Registrar llegada
+Anular derivación
+Registrar contrarreferencia

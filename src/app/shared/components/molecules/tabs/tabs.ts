@@ -19,6 +19,7 @@ import {
 
 import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import { Tab } from './tab/tab';
+import { availableWidth, measureStrip } from './tabs-overflow';
 import {
   TABS_PARENT,
   type TabsAppearance,
@@ -45,14 +46,15 @@ import {
   selector: 'app-tabs',
   imports: [NavIcon],
   templateUrl: './tabs.html',
-  styleUrl: './tabs.css',
+  styleUrls: ['./tabs.css', './tabs-segmented.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: TABS_PARENT, useExisting: forwardRef(() => Tabs) }],
   host: {
     class: 'tabs',
     '[class.tabs--vertical]': 'orientation() === "vertical"',
     '[class.tabs--browser]': 'appearance() === "browser" && orientation() === "horizontal"',
-    '(window:resize)': 'medirDesborde()',
+    '[class.tabs--segmented]': 'appearance() === "segmented" && orientation() === "horizontal"',
+    '(window:resize)': 'onWidthChange()',
   },
 })
 export class Tabs implements TabsHost {
@@ -63,6 +65,8 @@ export class Tabs implements TabsHost {
 
   /** La tira, para medir su desborde y desplazarla cuando no entra. */
   private readonly tablist = viewChild<ElementRef<HTMLElement>>('tablist');
+  /** The bar holding the strip and its arrows: its width is the strip's room without arrows. */
+  private readonly tabbar = viewChild<ElementRef<HTMLElement>>('tabbar');
 
   readonly selectedIndex = model<number>(0);
   readonly orientation = input<TabsOrientation>('horizontal');
@@ -172,6 +176,7 @@ export class Tabs implements TabsHost {
 
   /** Hay más tira de la que entra: se muestran las flechas. */
   protected readonly desborda = signal(false);
+  protected readonly dibujadaEnFila = signal(false); // vertical drawn as a row: phone, tabs.css
 
   /** Queda tira hacia atrás / hacia adelante desde donde está el scroll. */
   protected readonly puedeRetroceder = signal(false);
@@ -210,20 +215,11 @@ export class Tabs implements TabsHost {
   });
 
   constructor() {
-    // Y cuando cambia el ancho DISPONIBLE, que no depende de ninguna señal: el
-    // menú lateral que se pliega, una columna que se reparte de otra manera.
-    // `afterNextRender` no corre en el servidor, así que ahí no hay nada que
-    // guardar.
-    //
-    // **Pero «navegador» no garantiza `ResizeObserver`.** jsdom —el entorno de
-    // las 5 000 pruebas de este repo— ejecuta `afterNextRender` y **no** lo
-    // implementa: el `new ResizeObserver` tiraba `ReferenceError` y volteaba la
-    // prueba entera de cualquier pantalla con pestañas suficientes para
-    // desbordar la tira. Se descubrió el 2026-09-10 al agregarle la octava
-    // pestaña a «Organización médica»: con siete no desbordaba y el fallo no
-    // aparecía. Sin el observador la tira sigue midiéndose al cambiar de
-    // pestaña y al cambiar el contenido; lo único que se pierde es el remedido
-    // ante un cambio de ancho, que en una prueba no ocurre.
+    // Also when the AVAILABLE width changes, which no signal tracks (a folding
+    // rail, a resize). `afterNextRender` never runs on the server. jsdom (the
+    // unit-test DOM) runs it but has no `ResizeObserver` — a bare `new` threw and
+    // failed every screen whose strip overflowed (found 2026-09-10) — so it is
+    // guarded; without it the strip is still measured on tab and content changes.
     const destruccion = inject(DestroyRef);
     afterNextRender(() => {
       const tira = this.tablist()?.nativeElement;
@@ -236,7 +232,7 @@ export class Tabs implements TabsHost {
       if (typeof ResizeObserver === 'undefined') {
         return;
       }
-      const observador = new ResizeObserver(() => this.medirDesborde());
+      const observador = new ResizeObserver(() => this.onWidthChange());
       observador.observe(tira);
       destruccion.onDestroy(() => observador.disconnect());
     });
@@ -247,17 +243,25 @@ export class Tabs implements TabsHost {
     return /^\S+ \(\d+\)$/.test(rotulo);
   }
 
+  /** Measured against the room WITHOUT arrows (`tabs-overflow.ts`), so a strip that fits again drops them. */
   protected medirDesborde(): void {
     const tira = this.tablist()?.nativeElement;
-    if (tira === undefined) {
+    const barra = this.tabbar()?.nativeElement;
+    if (tira === undefined || barra === undefined) {
       return;
     }
-    // Un píxel de margen: con anchos fraccionarios `scrollWidth` supera a
-    // `clientWidth` por redondeo en tiras que sí entran enteras.
-    const sobrante = tira.scrollWidth - tira.clientWidth;
-    this.desborda.set(sobrante > 1);
-    this.puedeRetroceder.set(tira.scrollLeft > 1);
-    this.puedeAvanzar.set(tira.scrollLeft < sobrante - 1);
+    const { scrollWidth, clientWidth, scrollLeft } = tira;
+    this.dibujadaEnFila.set(getComputedStyle(tira).flexDirection === 'row');
+    const medida = measureStrip({ scrollWidth, clientWidth, scrollLeft, availableWidth: availableWidth(barra) });
+    this.desborda.set(medida.overflows);
+    this.puedeRetroceder.set(medida.canGoBack);
+    this.puedeAvanzar.set(medida.canGoForward);
+  }
+
+  /** The available width changed (resize, rotation, a folding rail): remeasure and keep the active tab whole. */
+  protected onWidthChange(): void {
+    this.medirDesborde();
+    this.traerALaVista(this.activeIndex());
   }
 
   /** Desplaza poco menos de un ancho, para dejar una pestaña de ancla. */

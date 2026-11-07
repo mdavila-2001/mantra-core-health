@@ -114,7 +114,7 @@ function normalizar(texto: string): string {
  *
  * La ficha es UNA `app-card`, centrada y a lo ancho (`composition-rules.md`
  * §5): arriba el resumen de la farmacia, que la reconoce y siempre se ve, y
- * debajo dos pestañas —**Medicamentos** y **Sucursales y receta**—. Antes eran
+ * debajo dos pestañas —**Medicamentos** y **Sucursales** (con la búsqueda de la receta)—. Antes eran
  * tres bloques apilados. Lo que cambió es dónde vive cada uno, no lo que dice.
  *
  * La pestaña abierta vive en `?tab=` en las dos direcciones. El estado de cada

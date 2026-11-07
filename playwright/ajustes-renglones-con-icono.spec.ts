@@ -53,10 +53,40 @@ for (const width of [1280, 390]) {
       expect(overflow, `${tab}: no horizontal scroll`).toBeLessThanOrEqual(0);
     }
 
-    // Dispositivos: the verify button sits inside the row, after the text.
+    // On a phone the index is a strip above the panel, so the panel takes the width.
+    if (width < 640) {
+      const list = await page.getByRole('tablist').boundingBox();
+      const panel = await page.locator('[role="tabpanel"]:visible').first().boundingBox();
+      expect(list && panel && list.y + list.height <= panel.y, 'tab strip above the panel').toBe(true);
+      expect(panel?.width ?? 0, 'panel uses the phone width').toBeGreaterThan(width - 80);
+    }
+
+    // Assistive tech is told how the strip is actually drawn.
+    await expect(page.getByRole('tablist')).toHaveAttribute('aria-orientation', width < 640 ? 'horizontal' : 'vertical');
+
+    // Every tab's first row card spans the panel (no capped block with an empty column beside it).
+    const panelX: number[] = [];
+    for (const tab of TABS) {
+      await page.getByRole('tab', { name: tab }).click();
+      const panel = page.locator('[role="tabpanel"]:visible').first();
+      await expect(panel.locator(ROWS[tab]).first()).toBeVisible();
+      const box = (await panel.boundingBox())!;
+      panelX.push(box.x);
+      if (tab !== 'Chats') {
+        const row = (await panel.locator(ROWS[tab]).first().boundingBox())!;
+        expect(row.width, `${tab}: row spans the panel`).toBeGreaterThan(box.width - 40);
+      }
+    }
+    // The index column has a fixed width: the panel does not move between tabs.
+    expect(new Set(panelX).size, 'panel x is stable across tabs').toBe(1);
+
+    // Dispositivos: the verify button sits inside the row; the code form opens aligned with the text.
     await page.getByRole('tab', { name: 'Dispositivos' }).click();
-    const button = page.getByTestId('device-verificar').first();
-    await expect(button).toBeVisible();
-    await expect(page.locator('.dispositivos__renglon').first().getByTestId('device-verificar')).toHaveCount(1);
+    const row = page.locator('.dispositivos__renglon').first();
+    await expect(row.getByTestId('device-verificar')).toHaveCount(1);
+    const textX = (await row.locator('.dispositivos__cuerpo').boundingBox())!.x;
+    await row.getByTestId('device-verificar').click();
+    const formX = (await page.getByTestId('device-verify').boundingBox())!.x;
+    expect(Math.abs(formX - textX), 'code form aligned with the text').toBeLessThanOrEqual(1);
   });
 }

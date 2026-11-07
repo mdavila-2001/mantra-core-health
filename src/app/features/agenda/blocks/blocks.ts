@@ -160,23 +160,20 @@ export class Blocks {
     }
   }
 
+  /** Fixes a block; see `BlockCancellations.updateBlock` for multi-day ranges. */
   private guardarCorreccion(id: string, pedido: BloqueoPedido): void {
     this.guardando.set(true);
-    this.scheduling
-      .updateException(id, {
-        exceptionType: pedido.exceptionType,
-        reason: pedido.motivo,
-        startAt: pedido.desde.toISOString(),
-        endAt: pedido.hasta.toISOString(),
-      })
+    this.cancellations
+      .updateBlock(id, this.recursoId(), pedido)
       .subscribe({
-        next: (res) => {
+        next: ({ res, nuevos }) => {
           this.guardando.set(false);
           this.editando.set(null);
           this.toast.success(
-            res.blockedSlots > 0
+            (res.blockedSlots > 0
               ? `Se cerraron ${res.blockedSlots} ${res.blockedSlots === 1 ? 'horario' : 'horarios'} que quedaron dentro.`
-              : 'Los horarios que ya estaban cerrados siguen cerrados.',
+              : 'Los horarios que ya estaban cerrados siguen cerrados.') +
+              (nuevos > 0 ? ` La misma franja quedó en ${nuevos} ${nuevos === 1 ? 'día' : 'días'} más.` : ''),
             'Bloqueo corregido',
           );
           this.cargar();
@@ -189,13 +186,16 @@ export class Blocks {
               : 'No se pudo guardar el cambio.',
             'No se guardó',
           );
+          // A partial save must show up: reload either way.
+          this.cargar();
         },
       });
   }
 
   /**
-   * Crea el bloqueo. Si el rato tiene citas, la API lo dice antes de cancelar
-   * nada y `BlockCancellations` muestra a quién se deja sin cita; con el sí se
+   * Crea el bloqueo, una excepción por día si es una franja
+   * (`BlockCancellations.createBlock`). Si un día tiene citas, la API lo dice
+   * antes de cancelar nada y se muestra a quién se deja sin cita; con el sí se
    * repite el pedido confirmado y a cada paciente le llega el aviso.
    */
   private guardarAlta(pedido: BloqueoPedido): void {
@@ -203,39 +203,33 @@ export class Blocks {
     if (resourceId === null) return;
 
     this.guardando.set(true);
-    this.cancellations
-      .withConfirmation((confirmed) =>
-        this.scheduling.createException(resourceId, {
-          exceptionType: pedido.exceptionType,
-          startAt: pedido.desde.toISOString(),
-          endAt: pedido.hasta.toISOString(),
-          ...(pedido.motivo.trim() === '' ? {} : { reason: pedido.motivo.trim() }),
-          ...(confirmed ? { cancelAffectedBookings: true } : {}),
-        }),
-      )
-      .subscribe({
-        next: (res) => {
-          this.guardando.set(false);
-          // `null`: la persona vio las citas y eligió no cancelarlas. El
-          // formulario queda como estaba; no hubo error que mostrar.
-          if (res === null) return;
-          this.creando.set(false);
-          this.toast.success(
-            `El rato queda cerrado.${cancelledBookingsText(res.cancelledBookings)}`,
-            'Bloqueo creado',
-          );
-          this.cargar();
-        },
-        error: (error: unknown) => {
-          this.guardando.set(false);
-          this.toast.error(
-            errorToViewState(error).status === 'forbidden'
-              ? 'Esa agenda no es suya.'
-              : 'No se pudo crear el bloqueo.',
-            'No se creó',
-          );
-        },
-      });
+    this.cancellations.createBlock(resourceId, pedido).subscribe({
+      next: (resultados) => {
+        this.guardando.set(false);
+        const hechos = resultados.filter((r) => r !== null);
+        // Every day had bookings and none was confirmed: nothing was blocked,
+        // so the form stays as it was. Not an error.
+        if (hechos.length === 0) return;
+        this.creando.set(false);
+        const canceladas = hechos.reduce((suma, r) => suma + r.cancelledBookings, 0);
+        this.toast.success(
+          `El rato queda cerrado.${cancelledBookingsText(canceladas)}`,
+          hechos.length === 1 ? 'Bloqueo creado' : `Se crearon ${hechos.length} bloqueos, uno por día`,
+        );
+        this.cargar();
+      },
+      error: (error: unknown) => {
+        this.guardando.set(false);
+        this.toast.error(
+          errorToViewState(error).status === 'forbidden'
+            ? 'Esa agenda no es suya.'
+            : 'No se pudo crear el bloqueo.',
+          'No se creó',
+        );
+        // Some days may have been created before the failure: show them.
+        this.cargar();
+      },
+    });
   }
 
   private readonly recursoId = signal<string | null>(null);

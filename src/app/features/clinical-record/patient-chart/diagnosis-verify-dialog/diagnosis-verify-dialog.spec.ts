@@ -69,9 +69,27 @@ const NOTAS = {
   nextCursor: null,
 };
 
+/**
+ * The person's diagnoses as the host passes them: the presumptive itself, a
+ * confirmed one, another in study and a refuted one. Only the confirmed one
+ * can have been «confirmed instead».
+ */
+const DIAGNOSTICOS = [
+  { id: 'c-1', etiqueta: 'Hipertensión', confirmado: false },
+  { id: 'c-hipo', etiqueta: 'Hipotiroidismo', confirmado: true },
+  { id: 'c-ans', etiqueta: 'Ansiedad', confirmado: false },
+  { id: 'c-anemia', etiqueta: 'Anemia', confirmado: true, descartado: true },
+];
+
 const ETIQUETAS = {
   items: [
     { conceptId: 'st-hemo', code: 'HEMO', display: 'Hemograma completo', codeSystemVersionId: 'v' },
+    { conceptId: 'dx-hipo', code: 'E03.9', display: 'Hipotiroidismo', codeSystemVersionId: 'v' },
+    { conceptId: 'dx-ans', code: 'F41.1', display: 'Ansiedad', codeSystemVersionId: 'v' },
+    { conceptId: 'dx-anemia', code: 'D50', display: 'Anemia', codeSystemVersionId: 'v' },
+    { conceptId: 'st-confirmada', code: 'COND_CONFIRMED', display: 'Confirmado', codeSystemVersionId: 'v' },
+    { conceptId: 'st-provisional', code: 'COND_PROVISIONAL', display: 'Provisional', codeSystemVersionId: 'v' },
+    { conceptId: 'st-descartada', code: 'COND_REFUTED', display: 'Descartado', codeSystemVersionId: 'v' },
   ],
   count: 1,
   limit: 200,
@@ -152,12 +170,17 @@ describe('DiagnosisVerifyDialog', () => {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
   }
 
-  /** Pinta el diálogo y responde las cuatro lecturas con las que se arma. */
-  function abrir(outcome: DiagnosisOutcome = 'CONFIRMED'): void {
+  /**
+   * Paints the dialog and answers its four reads. The candidates for «Se
+   * confirmó en su lugar» come from the host (`diagnosticos`): no summary read.
+   */
+  function abrir(outcome: DiagnosisOutcome = 'CONFIRMED', diagnosticos: readonly object[] = DIAGNOSTICOS): void {
     fixture.componentRef.setInput('outcome', outcome);
+    fixture.componentRef.setInput('diagnosticos', diagnosticos);
     fixture.detectChanges();
     http.expectOne((r) => r.url === '/diagnostics/patients/p-1/orders').flush(CIRCUITO);
     http.expectOne((r) => r.url === '/charts/notes').flush(NOTAS);
+    http.expectNone((r) => r.url === '/clinical/patients/p-1/summary');
     http.expectOne((r) => r.url === '/terminology/concepts').flush(ETIQUETAS);
     http.expectOne((r) => r.url === '/system-context/dynamic-enums').flush(CATALOGO_DE_CURSO);
     fixture.detectChanges();
@@ -290,5 +313,66 @@ describe('DiagnosisVerifyDialog', () => {
     expect(señal<string>('motivo')()).toBe('Cuadro compatible');
     expect(interno<() => boolean>('enviando')()).toBe(false);
     expect(cierres).toBe(0);
+  });
+
+  /* -- Red clínica (patch v4291): «Se confirmó en su lugar» -------------- */
+
+  it('al rechazar ofrece sólo los otros diagnósticos confirmados: ni en estudio, ni descartados, ni a sí mismo', () => {
+    abrir('REFUTED');
+    expect(interno<() => readonly { label: string; value: string | null }[]>('opcionesDeReemplazo')()).toEqual([
+      { value: 'c-hipo', label: 'Hipotiroidismo · Confirmado' },
+    ]);
+    expect(fixture.nativeElement.querySelector('[data-testid="verificar-reemplazo"]')).not.toBeNull();
+  });
+
+  it('al confirmar no muestra el selector de reemplazo', () => {
+    abrir('CONFIRMED');
+    expect(fixture.nativeElement.querySelector('[data-testid="verificar-reemplazo"]')).toBeNull();
+  });
+
+  it('el reemplazo elegido viaja como replacedByConditionId con REFUTED', () => {
+    abrir('REFUTED');
+    señal<string>('motivo').set('TSH suprimida');
+    señal<string | null>('reemplazo').set('c-hipo');
+    enviar();
+    const req = http.expectOne('/clinical/conditions/c-1/verification');
+    expect(req.request.body).toEqual({ outcome: 'REFUTED', reasonText: 'TSH suprimida', replacedByConditionId: 'c-hipo' });
+    req.flush({ ...DECIDIDA, replacedByConditionId: 'c-hipo' });
+  });
+
+  it('sin elegir reemplazo, la clave no viaja', () => {
+    abrir('REFUTED');
+    señal<string>('motivo').set('Descartado por clínica');
+    enviar();
+    const req = http.expectOne('/clinical/conditions/c-1/verification');
+    expect('replacedByConditionId' in req.request.body).toBe(false);
+    req.flush(DECIDIDA);
+  });
+
+  it('un 422 CONDITION_REPLACEMENT_INVALID se muestra en el selector y no arriba', () => {
+    abrir('REFUTED');
+    señal<string>('motivo').set('TSH suprimida');
+    señal<string | null>('reemplazo').set('c-hipo');
+    enviar();
+    http.expectOne('/clinical/conditions/c-1/verification').flush(
+      {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message: 'El diagnóstico de reemplazo no existe o no es de esta persona',
+        reason: 'CONDITION_REPLACEMENT_INVALID',
+        details: { field: 'replacedByConditionId' },
+      },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+    fixture.detectChanges();
+    expect(señal<string>('errorDeReemplazo')()).toBe('El diagnóstico de reemplazo no existe o no es de esta persona');
+    expect(interno<() => string | null>('errorDelServidor')()).toBeNull();
+    expect(texto()).toContain('El diagnóstico de reemplazo no existe');
+  });
+
+  it('sin otro diagnóstico confirmado, el rechazo sigue disponible sin reemplazo', () => {
+    abrir('REFUTED', [{ id: 'c-ans', etiqueta: 'Ansiedad', confirmado: false }]);
+    expect(interno<() => readonly unknown[]>('opcionesDeReemplazo')()).toEqual([]);
+    expect(texto()).toContain('no tiene otro diagnóstico confirmado');
   });
 });

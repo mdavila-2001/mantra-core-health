@@ -109,11 +109,8 @@ import { consentEncounter } from './informed-consent/consent-encounter';
 import { InformedConsentBadge } from './informed-consent/informed-consent-badge';
 import { InformedConsentDialog } from './informed-consent/informed-consent-dialog';
 import { patientConsents } from './informed-consent/patient-consents';
-import {
-  MedicationBlock,
-  diagnosticoParaReceta,
-  vinculoDeReceta,
-} from './medication-block/medication-block';
+import { MedicationBlock, diagnosticoParaReceta } from './medication-block/medication-block';
+import { vinculoDeReceta } from './medication-block/medication-block.vinculo';
 import type { DiagnosticoEnFicha, RecetaEnFicha } from './medication-block/medication-block';
 import { ObservationBlock } from './observation-block/observation-block';
 import { ReferralBlock } from './referral-block/referral-block';
@@ -128,9 +125,11 @@ import { LoadingState } from '../../../shared/components/molecules/loading-state
 import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
-import { RecorridoClinico } from './recorrido-clinico/recorrido-clinico';
+import { RedClinicaDelExpediente } from './red-clinica/expediente/red-clinica-del-expediente';
+import { RedDelExpediente, type FilaDeLaRed } from './red-clinica/expediente/red-del-expediente';
+import { SeleccionDeLaRed } from './red-clinica/expediente/seleccion-de-la-red';
+import { SIN_DATO, TOPE } from './patient-chart.constants';
 import {
-  aristasDelHistorial,
   atencionDeCadaRegistro,
   compararFilas,
   type FuenteDelHistorial,
@@ -138,17 +137,10 @@ import {
 import {
   ASPECTO_DEL_TIPO,
   TIPOS_DEL_RECORRIDO,
-  type AristaDelRecorrido,
   type AspectoDelTipo,
-  type NodoDelRecorrido,
   type TipoDelRecorrido,
 } from './recorrido-clinico/recorrido-clinico.model';
-
-/** Tope por bloque. La API aplica 50 si no se pide otro. */
-const TOPE = 50;
-
-/** Lo que se muestra cuando el registro no trae ese dato. */
-const SIN_DATO = 'Sin registrar';
+import { RedClinicaLecturasAviso } from './red-clinica/lecturas/red-clinica-lecturas-aviso';
 
 /** Nombre legible de cada bloque, para el aviso de recorte. */
 const NOMBRE_DE_BLOQUE: Readonly<Record<string, string>> = {
@@ -272,6 +264,9 @@ export interface FilaClinica {
 
   /** La condición cruda (C3), para pasársela a `app-diagnosis-verify-dialog`. */
   readonly condicionOriginal?: Condition;
+
+  /** The diagnosis' C3 state: the certainty the tour reads. */
+  readonly estadoDx?: DiagnosisState;
 
   /**
    * Los vínculos clínicos del registro, en pares rótulo/valor y ya en palabras.
@@ -468,7 +463,8 @@ interface Expediente {
     ReferralBlock,
     ReceivedServicesPanel,
     Progress,
-    RecorridoClinico,
+    RedClinicaDelExpediente,
+    RedClinicaLecturasAviso,
     SegmentedControl,
     Tab,
     Tabs,
@@ -476,6 +472,7 @@ interface Expediente {
     ViewStateHost,
     LoadingState,
   ],
+  providers: [RedDelExpediente, SeleccionDeLaRed],
   templateUrl: './patient-chart.html',
   styleUrl: './patient-chart.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -737,6 +734,7 @@ export class PatientChart {
         decision: fila.verification?.reasonText ?? '',
         presuntivo: estadoDx === 'IN_STUDY',
         condicionOriginal: fila,
+        estadoDx,
       }));
   });
 
@@ -1192,46 +1190,25 @@ export class PatientChart {
     return this.bloques().filter((bloque) => !ocultos.has(bloque.clave as TipoDelRecorrido));
   });
 
-  /** Los registros de los tipos visibles, como nodos del recorrido. */
-  protected readonly nodosDelRecorrido = computed<readonly NodoDelRecorrido[]>(() => {
-    const atencionDe = this.atencionDeCadaRegistro();
-    return this.bloquesVisibles().flatMap((bloque) => {
-      const tipo = bloque.clave as TipoDelRecorrido;
-      return bloque.filas.map((fila) => ({
-        id: fila.id,
-        tipo,
-        // Un nodo sin título es una caja muda: si el registro no trae nombre,
-        // al menos dice qué es.
-        principal:
-          fila.principal.trim() === '' || fila.principal === SIN_DATO
-            ? ASPECTO_DEL_TIPO[tipo].singular
-            : fila.principal,
-        // Lo que se decidió sobre un diagnóstico (por qué se confirmó o se
-        // descartó) es justo lo que el recorrido viene a contar.
-        // «Sin registrar» como dato secundario es ruido en una tarjeta chica: la
-        // tabla de cada bloque tampoco lo muestra.
-        secundario: fila.decision
-          ? `Decisión: ${fila.decision}`
-          : fila.secundario === SIN_DATO
-            ? ''
-            : fila.secundario,
-        estado: fila.estado === SIN_DATO ? '' : fila.estado,
-        tonoDelEstado: fila.estadoTono ?? 'info',
-        cuando: fila.cuando,
-        encuentroId: atencionDe.get(fila.id),
-      }));
-    });
+  /** The network by episodes (Recorrido): its reads and records, and what is chosen on it. */
+  protected readonly redDelExpediente = inject(RedDelExpediente).conectar({
+    profileId: () => this.profileId(),
+    datos: () => this.datos(),
+    bloques: () => this.bloques(),
+    tiposOcultos: this.tiposOcultos,
+    etiquetas: () => this.etiquetas(),
+    perfilPropio: () => this.perfilPropio(),
   });
+  private readonly seleccionDeLaRed = inject(SeleccionDeLaRed);
 
-  /** Las conexiones del recorrido: ver {@link aristasDelHistorial}. */
-  protected readonly aristasDelRecorrido = computed<readonly AristaDelRecorrido[]>(() => {
-    const fuente = this.fuenteDelHistorial();
-    return fuente === null ? [] : aristasDelHistorial(fuente);
-  });
+  /** «Ver el registro completo» from the network's panel: its rows are this screen's. */
+  protected verRegistroDeLaRed(fila: FilaDeLaRed): void {
+    this.verDetalle(fila as FilaClinica);
+  }
 
-  /** El estado del recorrido: el vacío con su salida, o los nodos. */
+  /** The tour's state: the empty one with its way out, or the network. */
   protected readonly estadoDelRecorrido = computed(() =>
-    this.estadoDelLibro(this.nodosDelRecorrido()),
+    this.estadoDelLibro(this.redDelExpediente.registros()),
   );
 
   /**
@@ -1256,16 +1233,6 @@ export class PatientChart {
       .map(({ aspecto }) => aspecto.plural.toLowerCase())
       .join(', '),
   );
-
-  /** Abre el detalle de un registro elegido en el recorrido. */
-  protected abrirDesdeElRecorrido(id: string): void {
-    const fila = this.bloques()
-      .flatMap((bloque) => bloque.filas)
-      .find((candidata) => candidata.id === id);
-    if (fila !== undefined) {
-      this.verDetalle(fila);
-    }
-  }
 
   /** Cómo está ordenada la tabla unificada. De lo más reciente a lo más viejo. */
   protected readonly ordenDelHistorial = signal<SortState>({ key: 'cuando', direction: 'desc' });
@@ -2301,6 +2268,13 @@ export class PatientChart {
   constructor() {
     // Salir con el detalle abierto no deja la carga escribiendo en la nada.
     inject(DestroyRef).onDestroy(() => this.cargaDeFormularios?.unsubscribe());
+    // The network requests its own on entering «Recorrido», once per chart
+    // read: `cargar()` sets it back to `null` and the next entry reads again.
+    effect(() => {
+      if (this.vista() === 'recorrido' && this.datos() !== null && this.redDelExpediente.lecturas() === null) {
+        untracked(() => this.redDelExpediente.cargar());
+      }
+    });
     // Ir de un expediente a otro reutiliza el componente: sin escuchar el
     // parámetro, el segundo seguiría mostrando los datos del primero.
     effect(() => {
@@ -2310,6 +2284,7 @@ export class PatientChart {
       // único que lo delataría sería un chip apagado. La vista elegida sí se
       // conserva: es una preferencia de lectura, no un dato del paciente.
       untracked(() => this.tiposOcultos.set(new Set()));
+      untracked(() => this.seleccionDeLaRed.reiniciar());
       untracked(() => this.cargar());
     });
 
@@ -2516,6 +2491,7 @@ export class PatientChart {
     this.expediente.set(loading());
     this.etiquetas.set(new Map());
     this.nombre.set('');
+    this.redDelExpediente.olvidar();
 
     if (profileId === '') {
       // S6 y no un error: sin identificador no hay recurso que buscar, y decir

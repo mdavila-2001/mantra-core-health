@@ -6,6 +6,7 @@ import {
   ChatSocketService,
   FABRICA_DE_SOCKET,
   type AuthDeSocket,
+  type ChatMessageEvent,
   type SocketDeChat,
 } from './chat-socket.service';
 
@@ -46,6 +47,11 @@ class SocketFalso {
     this.connected = false;
     this.oyentes.get('disconnect')?.forEach((o) => o('transport close'));
   }
+
+  /** El servidor empuja un evento. */
+  recibir(evento: string, payload: unknown): void {
+    this.oyentes.get(evento)?.forEach((o) => o(payload));
+  }
 }
 
 /**
@@ -82,6 +88,48 @@ describe('ChatSocketService', () => {
       ],
     });
     servicio = TestBed.inject(ChatSocketService);
+  });
+
+  it('un mensaje sin adjunto llega en vivo sin `attachmentFileId`: el servidor lo manda en null', () => {
+    const recibidos: ChatMessageEvent[] = [];
+    servicio.onMessage.subscribe((mensaje) => recibidos.push(mensaje));
+    servicio.joinInbox('pp-1');
+
+    creados[0]!.recibir('conversation:message', {
+      id: 'm-1',
+      conversationId: 'c-1',
+      senderProfileId: 'pp-2',
+      contentTypeConceptId: 'TEXT',
+      bodyText: 'Hola',
+      attachmentFileId: null,
+      replyToMessageId: null,
+      sentAt: '2026-11-06T21:00:00.000Z',
+      deletedAt: null,
+    });
+
+    expect(recibidos).toHaveLength(1);
+    expect(recibidos[0]).not.toHaveProperty('attachmentFileId');
+    expect(recibidos[0]).not.toHaveProperty('replyToMessageId');
+    expect(recibidos[0]!.bodyText).toBe('Hola');
+    expect(recibidos[0]!.sentAt).toEqual(new Date('2026-11-06T21:00:00.000Z'));
+    expect(recibidos[0]!.deletedAt).toBeUndefined();
+  });
+
+  it('un mensaje con adjunto conserva su `attachmentFileId`', () => {
+    const recibidos: ChatMessageEvent[] = [];
+    servicio.onMessage.subscribe((mensaje) => recibidos.push(mensaje));
+    servicio.joinInbox('pp-1');
+
+    creados[0]!.recibir('conversation:message', {
+      id: 'm-2',
+      conversationId: 'c-1',
+      senderProfileId: 'pp-2',
+      contentTypeConceptId: 'MEDIA',
+      attachmentFileId: 'file-1',
+      sentAt: '2026-11-06T21:00:00.000Z',
+    });
+
+    expect(recibidos[0]!.attachmentFileId).toBe('file-1');
   });
 
   it('un socket que se está conectando sirve: no se tira ni se abre otro', () => {

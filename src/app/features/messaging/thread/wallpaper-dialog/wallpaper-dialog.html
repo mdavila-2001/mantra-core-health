@@ -1,0 +1,34 @@
+<app-content-dialog
+  heading="Fondo de pantalla"
+  description="Se aplica a todos sus chats en este navegador."
+  size="md"
+  data-testid="thread-wallpaper-dialog"
+  (closed)="closed.emit()"
+>
+  <div class="fondos" role="group" aria-label="Fondos de pantalla">
+    <button
+      type="button"
+      class="fondos__opcion fondos__opcion--defecto"
+      data-testid="fondo-opcion"
+      data-fondo="predeterminado"
+      [attr.aria-pressed]="fondo.elegido() === null"
+      (click)="fondo.elegir(null)"
+    >
+      <span class="fondos__muestra" aria-hidden="true"></span>
+      <span class="fondos__nombre">Predeterminado</span>
+    </button>
+    @for (opcion of opciones; track opcion.id) {
+      <button
+        type="button"
+          class="fondos__opcion"
+        data-testid="fondo-opcion"
+        [attr.data-fondo]="opcion.id"
+        [attr.aria-pressed]="fondo.elegido()?.id === opcion.id"
+        (click)="fondo.elegir(opcion.id)"
+      >
+        <img class="fondos__muestra" [src]="mini(opcion.id)" alt="" width="384" height="216" loading="lazy" />
+        <span class="fondos__nombre">{{ opcion.nombre }}</span>
+      </button>
+    }
+  </div>
+</app-content-dialog>

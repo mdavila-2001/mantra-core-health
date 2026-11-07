@@ -338,6 +338,58 @@ describe('Thread', () => {
     expect(consultar('hilo-no-leidos')?.textContent).toContain('2 mensajes no leídos');
   });
 
+  it('a pointer outside closes the message menu and the header menu (bug 06/11)', () => {
+    abrir([mensaje('m-1', 'pp-2', 'Hola')]);
+    consultar('hilo-menu-mensaje')?.click();
+    fixture.detectChanges();
+    expect(consultar('hilo-responder')).not.toBeNull();
+
+    // Inside the menu does not close it.
+    consultar('hilo-responder')?.closest('ul')?.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    fixture.detectChanges();
+    expect(consultar('hilo-responder')).not.toBeNull();
+
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    fixture.detectChanges();
+    expect(consultar('hilo-responder')).toBeNull();
+
+    consultar('hilo-menu')?.click();
+    fixture.detectChanges();
+    expect(consultar('hilo-favorito')).not.toBeNull();
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    fixture.detectChanges();
+    expect(consultar('hilo-favorito')).toBeNull();
+  });
+
+  it('Esc closes the open menu', () => {
+    abrir([mensaje('m-1', 'pp-2', 'Hola')]);
+    consultar('hilo-menu')?.click();
+    fixture.detectChanges();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(consultar('hilo-favorito')).toBeNull();
+  });
+
+  it('«Fondo de pantalla» applies a Full HD wallpaper to the thread and remembers it', () => {
+    abrir([mensaje('m-1', 'pp-2', 'Hola')]);
+    consultar('hilo-menu')?.click();
+    fixture.detectChanges();
+    consultar('hilo-fondo')?.click();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    (host.querySelector('[data-fondo="cielo"]') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(host.classList).toContain('con-fondo');
+    expect(host.style.getPropertyValue('--chat-fondo')).toContain('/chat-fondos/cielo.jpg');
+    expect(localStorage.getItem('alovida.chat-wallpaper')).toBe('cielo');
+
+    (host.querySelector('[data-fondo="predeterminado"]') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(host.classList).not.toContain('con-fondo');
+    expect(localStorage.getItem('alovida.chat-wallpaper')).toBeNull();
+  });
+
   it('el menú de la cabecera marca favorito y archiva la conversación abierta', () => {
     abrir([mensaje('m-1', 'pp-2', 'Hola')]);
     const preferencias = TestBed.inject(ChatPreferences);
@@ -470,7 +522,12 @@ describe('Thread', () => {
     ) as HTMLElement[];
     // Sólo la otra: reenviarse a la misma conversación no es reenviar.
     expect(destinos.map((d) => d.querySelector(':scope > span')?.textContent?.trim())).toEqual(['Dr. Ortega']);
+    // Choosing a chat does not send: several can be chosen, then confirmed.
     destinos[0]!.click();
+    fixture.detectChanges();
+    http.expectNone((r) => r.method === 'POST' && r.url === '/community/conversations/c-2/messages');
+    expect(consultar('reenvio-enviar')?.textContent).toContain('Reenviar a 1 chat');
+    consultar('reenvio-enviar')?.click();
     fixture.detectChanges();
 
     const enviado = http.expectOne(
@@ -607,8 +664,8 @@ describe('Thread', () => {
       expect(consultar('hilo-editar')).not.toBeNull();
     });
 
-    it('pasados los cinco minutos queda visible pero apagado, con su motivo', () => {
-      abrir([propioReciente('m-1', 6 * 60_000, 'Viejo')]);
+    it('pasados los quince minutos queda visible pero apagado, con su motivo', () => {
+      abrir([propioReciente('m-1', 16 * 60_000, 'Viejo')]);
       abrirMenu();
 
       // Esconderlo hacía creer que la función no existía: se ve, y dice por qué
@@ -616,7 +673,7 @@ describe('Thread', () => {
       const editar = consultar('hilo-editar') as HTMLButtonElement;
       expect(editar).not.toBeNull();
       expect(editar.disabled).toBe(true);
-      expect(editar.textContent).toContain('Pasaron más de 5 min');
+      expect(editar.textContent).toContain('Pasaron más de 15 min');
     });
 
     it('no lo ofrece en el mensaje de otro', () => {

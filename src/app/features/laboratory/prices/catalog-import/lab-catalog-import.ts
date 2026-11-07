@@ -5,7 +5,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import type {
   LabCatalog,
   LabCatalogImportResult,
-  LabCatalogItem,
 } from '../../../../core/data-access/lab-portal/lab-import.types';
 import { LabPortalClient } from '../../../../core/data-access/lab-portal/lab-portal.client';
 import { describeApiFailure } from '../../../../core/http/api-failure';
@@ -18,10 +17,11 @@ import type { FilterDef } from '../../../../shared/components/organisms/filter-b
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { SpecialtyBrowser } from '../../../../shared/components/organisms/specialty-browser/specialty-browser';
 import { LabCatalogItemCard } from './lab-catalog-item';
-import { catalogGroups, importSummary } from './lab-catalog.rules';
+import { catalogGroups, importSummary, type CatalogEntry } from './lab-catalog.rules';
 
 const PRICES_ROUTE = '/administration/laboratory-prices';
 const SECTION = 'section';
+const SAMPLE = 'sample';
 
 /**
  * «Agregar del catálogo» (proceso 4.2): the lab picks análisis from the same
@@ -44,6 +44,8 @@ export class LabCatalogImport {
   protected readonly pricesRoute = PRICES_ROUTE;
   protected readonly catalog = signal<ViewState<LabCatalog>>(loading());
   protected readonly selected = signal<ReadonlySet<string>>(new Set());
+  /** Components the lab unticked, by concept id: they are skipped when adding. */
+  protected readonly unticked = signal<ReadonlySet<string>>(new Set());
   protected readonly importing = signal(false);
   protected readonly result = signal<LabCatalogImportResult | null>(null);
   protected readonly failure = signal<string | null>(null);
@@ -53,6 +55,15 @@ export class LabCatalogImport {
   });
 
   protected readonly filters = computed<readonly FilterDef[]>(() => [
+    {
+      key: SAMPLE,
+      label: 'Muestra',
+      placeholder: 'Todas las muestras',
+      options: (dataOf(this.catalog())?.sampleTypes ?? []).map((t) => ({
+        value: t.code,
+        label: t.name,
+      })),
+    },
     {
       key: SECTION,
       label: 'Sección',
@@ -65,11 +76,11 @@ export class LabCatalogImport {
   ]);
 
   protected readonly groups = computed(() =>
-    catalogGroups(
-      dataOf(this.catalog()),
-      this.params().get(SECTION) ?? '',
-      this.params().get('q') ?? '',
-    ),
+    catalogGroups(dataOf(this.catalog()), {
+      sample: this.params().get(SAMPLE) ?? '',
+      section: this.params().get(SECTION) ?? '',
+      text: this.params().get('q') ?? '',
+    }),
   );
 
   protected readonly summary = computed(() => {
@@ -82,14 +93,26 @@ export class LabCatalogImport {
     );
     return importSummary(result, (id) => names.get(id) ?? 'Un análisis');
   });
+  /** Not-yet-offered análisis the current view shows: what «Elegir todos» ticks. */
+  private readonly pickable = computed(() =>
+    this.groups().flatMap((g) => g.items.filter((i) => !i.offeredServiceId)),
+  );
+  protected readonly allPicked = computed(() =>
+    this.pickable().every((i) => this.selected().has(i.conceptId)),
+  );
   protected readonly addLabel = computed(() => {
     const n = this.selected().size;
     return n === 0 ? 'Agregar análisis' : n === 1 ? 'Agregar 1 análisis' : `Agregar ${n} análisis`;
   });
   protected readonly priceRule = computed(() => dataOf(this.catalog())?.priceRule ?? null);
-  protected readonly hasFilter = computed(
-    () => (this.params().get('q') ?? '') !== '' || (this.params().get(SECTION) ?? '') !== '',
+  protected readonly hasFilter = computed(() =>
+    ['q', SECTION, SAMPLE].some((key) => (this.params().get(key) ?? '') !== ''),
   );
+  /** Only the basic análisis are there: no LOINC catalog loaded in this environment. */
+  protected readonly notLoaded = computed(() => {
+    const catalog = dataOf(this.catalog());
+    return catalog !== null && catalog.catalogVersion === null;
+  });
 
   constructor() {
     this.load();
@@ -112,7 +135,7 @@ export class LabCatalogImport {
     });
   }
 
-  protected toggle(item: LabCatalogItem): void {
+  protected toggle(item: CatalogEntry): void {
     this.selected.update((current) => {
       const next = new Set(current);
       if (!next.delete(item.conceptId)) next.add(item.conceptId);
@@ -120,12 +143,32 @@ export class LabCatalogImport {
     });
   }
 
-  /** Selects every not-yet-offered item the current filter shows. */
-  protected selectShown(): void {
-    const ids = this.groups().flatMap((g) =>
-      g.items.filter((i) => !i.offeredServiceId).map((i) => i.conceptId),
-    );
+  protected toggleComponent(conceptId: string): void {
+    this.unticked.update((current) => {
+      const next = new Set(current);
+      if (!next.delete(conceptId)) next.add(conceptId);
+      return next;
+    });
+  }
+
+  /** Selects every not-yet-offered item in view: all of them, or the filtered ones. */
+  protected selectAll(): void {
+    const ids = this.pickable().map((i) => i.conceptId);
     this.selected.update((current) => new Set([...current, ...ids]));
+  }
+
+  protected clearSelection(): void {
+    this.selected.set(new Set());
+  }
+
+  /** The unticked components of the chosen análisis, so the API skips them. */
+  private skippedComponents(): string[] {
+    const chosen = this.selected();
+    return (dataOf(this.catalog())?.sections ?? [])
+      .flatMap((s) => s.items)
+      .filter((i) => chosen.has(i.conceptId))
+      .flatMap((i) => i.components.map((c) => c.conceptId))
+      .filter((id) => this.unticked().has(id));
   }
 
   protected add(): void {
@@ -133,11 +176,12 @@ export class LabCatalogImport {
     if (ids.length === 0 || this.importing()) return;
     this.importing.set(true);
     this.failure.set(null);
-    this.lab.importCatalog(ids).subscribe({
+    this.lab.importCatalog(ids, this.skippedComponents()).subscribe({
       next: (result) => {
         this.importing.set(false);
         this.result.set(result);
         this.selected.set(new Set());
+        this.unticked.set(new Set());
         // Reread: what was added now reads «Ya está en su lista de precios».
         this.load();
       },
