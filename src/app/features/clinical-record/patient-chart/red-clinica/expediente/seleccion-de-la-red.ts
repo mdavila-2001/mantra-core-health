@@ -117,7 +117,7 @@ export class SeleccionDeLaRed {
   });
 
   /** ≥ 780 px the panel goes next to the map; below, as a sheet. */
-  readonly panelAlLado = computed(() => this.nodoAbierto() !== null && !this.cajon.isNavDrawer());
+  readonly panelAlLado = computed(() => this.nodoAbierto() !== null && !this.cajon.panelEnHoja());
 
   /** The record the open panel can open in the usual detail (the blocks' ones). */
   readonly filaDelNodoAbierto = computed(() => {

@@ -194,6 +194,7 @@ test.describe('Red clínica · recorrido y panel lateral', () => {
 
   for (const [ancho, alto] of [
     [768, 1024],
+    [1024, 768],
     [1440, 900],
   ] as const) {
     test(`a ${ancho} px, con el panel abierto, ningún nombre de episodio se corta`, async ({ page }) => {
@@ -208,4 +209,18 @@ test.describe('Red clínica · recorrido y panel lateral', () => {
       expect(await nombresCortados(page)).toEqual([]);
     });
   }
+
+  test('a 1024 px el panel se abre como hoja y el lienzo conserva su ancho', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await abrirRecorrido(page);
+    const lienzo = page.locator('.red__lienzo').first();
+    const anchoAntes = (await lienzo.boundingBox())?.width ?? 0;
+
+    await (await nodoTsh(page)).click();
+    // Side panel + nav sidebar left the canvas at 280 px: below 1280 px it is a sheet.
+    await expect(page.locator('dialog.panel--hoja[open]')).toBeVisible();
+    const anchoDespues = (await lienzo.boundingBox())?.width ?? 0;
+    expect(anchoDespues).toBeGreaterThanOrEqual(anchoAntes - 1);
+    expect(anchoDespues).toBeGreaterThan(600);
+  });
 });

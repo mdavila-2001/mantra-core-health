@@ -2,32 +2,32 @@ import { DestroyRef, DOCUMENT, inject, Injectable, PLATFORM_ID, signal } from '@
 import { isPlatformBrowser } from '@angular/common';
 
 /**
- * The nav drawer query, mirrored from `Breakpoints.isNavDrawer`
- * (`core/layout/breakpoints.ts`, `NAV_DRAWER_MAX_WIDTH`).
+ * Below this width the network's side panel becomes a sheet.
  *
- * ## Why a mirror and not `Breakpoints`
+ * ## Why its own threshold and not the nav drawer one
  *
- * Lazy code that imports `core/layout/breakpoints.ts` makes the bundler split
- * that module into its own initial chunk (it is shared with the shell), and
- * the chunk's wrapping alone pushed the initial bundle over its 1.5 MB budget.
- * The duplication is of the same kind that file documents for its CSS mirror:
- * `ancho-del-cajon.spec.ts` pins this query to `NAV_DRAWER_MAX_WIDTH`, so the
- * two cannot drift apart silently.
+ * The side panel sits next to the canvas: nav sidebar (~15rem) + panel
+ * (up to 26rem) + a readable canvas (>= ~36rem) need about 1280 px. With the
+ * nav drawer threshold (780 px) a 1024 px window left the canvas at 280 px,
+ * with the edge jumps overlapping and episode names cut. The query lives here,
+ * not in `core/layout/breakpoints.ts`: importing that module from lazy code
+ * splits it into its own initial chunk and breaks the initial bundle budget.
+ * `ancho-del-cajon.spec.ts` keeps it above the nav drawer threshold.
  */
-export const CONSULTA_DEL_CAJON = '(max-width: 779px)';
+export const CONSULTA_DEL_CAJON = '(max-width: 1279px)';
 
 /**
- * Whether the window is below the nav drawer threshold, for the clinical
- * network (the side panel becomes a sheet). Unlike `Breakpoints` it reads the
- * window as soon as it is created: it is first injected by a screen that is
- * already rendering, never before the shell. On the server, desktop.
+ * Whether the network's panel must be shown as a sheet over the content.
+ * It reads the window as soon as it is created: it is first injected by a
+ * screen that is already rendering, never before the shell. On the server,
+ * desktop.
  */
 @Injectable({ providedIn: 'root' })
 export class AnchoDelCajon {
   private readonly estrecho = signal(false);
 
-  /** `true` when the nav behaves as a drawer over the content. */
-  readonly isNavDrawer = this.estrecho.asReadonly();
+  /** `true` when the side panel does not fit next to a readable canvas. */
+  readonly panelEnHoja = this.estrecho.asReadonly();
 
   constructor() {
     const view = inject(DOCUMENT).defaultView;

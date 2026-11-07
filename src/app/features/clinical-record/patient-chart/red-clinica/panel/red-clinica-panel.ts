@@ -132,7 +132,7 @@ export class RedClinicaPanel {
 
   protected readonly esHoja = computed(() => {
     const modo = this.presentacion();
-    return modo === 'hoja' || (modo === 'auto' && this.cajon.isNavDrawer());
+    return modo === 'hoja' || (modo === 'auto' && this.cajon.panelEnHoja());
   });
 
   protected readonly vinculos = computed(() => {
