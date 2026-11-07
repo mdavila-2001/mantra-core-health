@@ -13,15 +13,27 @@
     }
   </p>
   <div class="catalog__actions">
+    @if (selected().size > 0) {
+      <button
+        app-button
+        variant="ghost"
+        type="button"
+        data-testid="lab-catalog-clear"
+        [disabled]="importing()"
+        (clicked)="clearSelection()"
+      >
+        Quitar la elección
+      </button>
+    }
     <button
       app-button
       variant="outline"
       type="button"
       data-testid="lab-catalog-select-shown"
-      [disabled]="!hasFilter() || importing()"
-      (clicked)="selectShown()"
+      [disabled]="allPicked() || importing()"
+      (clicked)="selectAll()"
     >
-      Elegir los que se ven
+      {{ hasFilter() ? 'Elegir los que se ven' : 'Elegir todos' }}
     </button>
     <button
       app-button
@@ -90,7 +102,9 @@
       [item]="item"
       [section]="item.sectionName"
       [selected]="selected().has(item.conceptId)"
+      [unticked]="unticked()"
       (toggled)="toggle(item)"
+      (componentToggled)="toggleComponent($event)"
     />
   </ng-template>
 </app-specialty-browser>

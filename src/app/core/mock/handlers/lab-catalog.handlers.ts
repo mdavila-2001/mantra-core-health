@@ -115,7 +115,10 @@ export function registerLabCatalog(router: MockRouter): void {
   router.post('/diagnostics/lab/catalog/import', (request) => {
     const tenantId = laboratorioDe(request);
     if (tenantId === null) return forbidden();
-    const ids = [...new Set(((request.body ?? {}) as { conceptIds?: string[] }).conceptIds ?? [])];
+    const body = (request.body ?? {}) as { conceptIds?: string[]; skipComponentIds?: string[] };
+    const ids = [...new Set(body.conceptIds ?? [])];
+    // Unticked components are not offered: no service for them, like the API.
+    const skip = new Set(body.skipComponentIds ?? []);
     const add = (
       code: string,
       name: string,
@@ -172,7 +175,7 @@ export function registerLabCatalog(router: MockRouter): void {
         adopt?.id ?? add(item.code, item.name, item.suggestedPrice?.priceBs, item.conceptId, null);
       if (panelId === null)
         return row('REJECTED', null, `Ya tiene un servicio con el código «${item.code}».`);
-      for (const part of item.components) {
+      for (const part of item.components.filter((c) => !skip.has(c.conceptId))) {
         add(part.code, part.name, part.suggestedPrice?.priceBs, part.conceptId, panelId);
       }
       return row(adopt ? 'LINKED' : 'CREATED', panelId);
