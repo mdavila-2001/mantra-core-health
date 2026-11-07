@@ -28,7 +28,7 @@ const ORDEN_DE_LOS_MOTIVOS = Object.keys(NOMBRE_DEL_MOTIVO) as readonly MotivoDe
 @Component({
   selector: 'ul[app-red-leyenda]',
   templateUrl: './red-leyenda.html',
-  styleUrls: ['./red-leyenda.css', '../red-clinica-trazos.css'],
+  styleUrls: ['../red-clinica-tonos.css', './red-leyenda.css', '../red-clinica-trazos.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RedLeyenda {

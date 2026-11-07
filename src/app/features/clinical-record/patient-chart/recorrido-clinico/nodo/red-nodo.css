@@ -95,6 +95,23 @@
   text-decoration-color: var(--st-error-fg);
 }
 
+/* The ruled-out diagnosis's mark is struck through as well, like its diamond
+   on the strip and the legend: shape, not color alone. */
+:host(.red__nodo--descartado) .red__marca {
+  position: relative;
+}
+
+:host(.red__nodo--descartado) .red__marca::after {
+  content: '';
+  position: absolute;
+  inset-block: 1px;
+  inset-inline-start: calc(50% - 1px);
+  inline-size: 2px;
+  rotate: 45deg;
+  background: var(--t-fg);
+  box-shadow: 0 0 0 1px var(--t-bg);
+}
+
 .red__nodo-compartido-marca {
   position: absolute;
   inset-block-start: var(--sp-1);

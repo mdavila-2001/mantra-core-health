@@ -1,0 +1,26 @@
+claro leyenda descartado ::after {"borde":"solid","content":"\"\"","ancho":"2px","alto":"15px","rotacion":"none","color":"rgb(111, 56, 44)","contraFondoPadre":9.22,"contraRelleno":9.22}
+ok   claro leyenda: el rombo descartado lleva el trazo (2px)
+ok   claro leyenda: el borde del rombo descartado es continuo (solid), el trazo es la señal
+ok   claro leyenda: trazo contra el fondo 9.22:1 ≥ 3:1
+ok   claro leyenda: «Confirmado» sin trazo (content none)
+ok   claro leyenda: «Presuntivo» sin trazo (content none)
+claro franja: sin hito descartado en la demo; se fuerza la clase sobre un hito real
+claro franja hito descartado ::after {"borde":"solid","content":"\"\"","ancho":"2px","alto":"18px","rotacion":"none","color":"rgb(111, 56, 44)","contraFondoPadre":8.68,"contraRelleno":9.22}
+ok   claro franja: hito descartado tachado, 8.68:1 contra la franja
+claro nodo descartado marca ::after {"borde":"solid","content":"\"\"","ancho":"2px","alto":"14px","rotacion":"45deg","color":"rgb(111, 56, 44)","contraFondoPadre":8.68,"contraRelleno":7.53}
+ok   claro nodo: marca tachada, 7.53:1 contra su fondo
+ok   claro nodo: un diagnóstico no descartado no va tachado
+ok   claro sin errores de consola: []
+oscuro leyenda descartado ::after {"borde":"solid","content":"\"\"","ancho":"2px","alto":"15px","rotacion":"none","color":"rgb(223, 180, 170)","contraFondoPadre":7.89,"contraRelleno":7.89}
+ok   oscuro leyenda: el rombo descartado lleva el trazo (2px)
+ok   oscuro leyenda: el borde del rombo descartado es continuo (solid), el trazo es la señal
+ok   oscuro leyenda: trazo contra el fondo 7.89:1 ≥ 3:1
+ok   oscuro leyenda: «Confirmado» sin trazo (content none)
+ok   oscuro leyenda: «Presuntivo» sin trazo (content none)
+oscuro franja: sin hito descartado en la demo; se fuerza la clase sobre un hito real
+oscuro franja hito descartado ::after {"borde":"solid","content":"\"\"","ancho":"2px","alto":"18px","rotacion":"none","color":"rgb(223, 180, 170)","contraFondoPadre":7.55,"contraRelleno":7.89}
+ok   oscuro franja: hito descartado tachado, 7.55:1 contra la franja
+oscuro nodo descartado marca ::after {"borde":"solid","content":"\"\"","ancho":"2px","alto":"14px","rotacion":"45deg","color":"rgb(223, 180, 170)","contraFondoPadre":7.55,"contraRelleno":6.76}
+ok   oscuro nodo: marca tachada, 6.76:1 contra su fondo
+ok   oscuro nodo: un diagnóstico no descartado no va tachado
+ok   oscuro sin errores de consola: []
