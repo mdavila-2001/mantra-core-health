@@ -20,6 +20,11 @@ import { entrar, estable, irA } from './support/sesion';
  * 5. Si la lectura del informe falla (fallo provocado con `mock:fallos`, ver
  *    `src/app/core/mock/simulated-failures.ts`), el panel dice qué pasó, da el
  *    código de soporte y «Reintentar» trae los valores.
+ * 5b. If the server rejects the read (S4, `modo: 'validation'`), the notice has
+ *    its own text (not the simulator's 422 message), no blind «Reintentar»,
+ *    and «Volver a la red» closes the panel and returns the focus to the node.
+ * 6. At 768 and 1440 px, with and without the side panel, every episode name
+ *    reads whole (the text's own box fits its span: no ellipsis).
  */
 
 const MEDICA: Actor = { rol: 'doctora', identificador: 'medica@alovida.mock', clave: 'mock', nombre: 'Médica' };
@@ -59,6 +64,25 @@ async function nodoTsh(page: Page) {
   const tsh = page.locator('[data-testid="recorrido-nodo"][data-clase="estudio"]').filter({ hasText: 'TSH' }).first();
   await expect(tsh).toBeVisible();
   return tsh;
+}
+
+/**
+ * Episode names whose text does not fit their span. The text's own laid-out
+ * box (a `Range`) is compared with the span's: `scrollWidth` rounds to whole
+ * pixels and let a sub-pixel cut (an ellipsis eating two letters) pass.
+ */
+function nombresCortados(page: Page): Promise<string[]> {
+  return page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('.red__episodio-nombre')]
+      .filter((nombre) => {
+        const caja = nombre.getBoundingClientRect();
+        const rango = document.createRange();
+        rango.selectNodeContents(nombre);
+        const texto = rango.getBoundingClientRect();
+        return texto.width > caja.width || texto.height > caja.height;
+      })
+      .map((nombre) => nombre.textContent?.trim() ?? ''),
+  );
 }
 
 test.describe('Red clínica · recorrido y panel lateral', () => {
@@ -135,12 +159,68 @@ test.describe('Red clínica · recorrido y panel lateral', () => {
     await expect(error).toBeVisible();
     await expect(error).toContainText('No se pudieron leer los valores del informe');
     await expect(error).toContainText('Código de soporte');
-    // What was already known stays in view while the read fails.
-    await expect(panel.getByTestId('red-panel-liberado')).toBeVisible();
+    // «Resultado liberado» belongs to a successful read: under an error it would contradict it.
+    await expect(panel.getByTestId('red-panel-liberado')).toHaveCount(0);
 
     await page.evaluate(() => sessionStorage.removeItem('mock:fallos'));
     await error.getByRole('button', { name: 'Reintentar' }).click();
     await expect(panel.getByTestId('red-panel-informe-error')).toHaveCount(0);
     await expect(panel.getByTestId('red-panel-valor')).toHaveCount(2);
+    await expect(panel.getByTestId('red-panel-liberado')).toBeVisible();
+  });
+
+  test('si el servidor rechaza la lectura (S4), el panel lo dice con texto propio, sin «Reintentar» a ciegas', async ({ page }) => {
+    await abrirRecorrido(page);
+    const tsh = await nodoTsh(page);
+    // The simulator's 422 speaks of a prescription field: that text must not reach the report's notice.
+    await page.evaluate(() =>
+      sessionStorage.setItem('mock:fallos', JSON.stringify([{ patron: '/reports/', modo: 'validation', metodos: ['GET'] }])),
+    );
+
+    await tsh.click();
+    const panel = page.getByTestId('red-panel');
+    const error = panel.getByTestId('red-panel-informe-error');
+    await expect(error).toContainText('El servidor rechazó la lectura de este informe');
+    await expect(error).not.toContainText('Elija un medicamento');
+    await expect(error).toContainText('Código de soporte');
+    await expect(error.getByRole('button', { name: 'Reintentar' })).toHaveCount(0);
+    await expect(panel.getByTestId('red-panel-liberado')).toHaveCount(0);
+
+    await page.evaluate(() => sessionStorage.removeItem('mock:fallos'));
+    await error.getByRole('button', { name: 'Volver a la red' }).click();
+    await expect(panel).toHaveCount(0);
+    await expect(tsh).toBeFocused();
+  });
+
+  for (const [ancho, alto] of [
+    [768, 1024],
+    [1024, 768],
+    [1440, 900],
+  ] as const) {
+    test(`a ${ancho} px, con el panel abierto, ningún nombre de episodio se corta`, async ({ page }) => {
+      await page.setViewportSize({ width: ancho, height: alto });
+      await abrirRecorrido(page);
+      await expect(page.getByTestId('red-episodio').first()).toBeVisible();
+      expect(await nombresCortados(page)).toEqual([]);
+
+      await (await nodoTsh(page)).click();
+      await expect(page.getByTestId('red-panel')).toBeVisible();
+      await expect(page.getByTestId('red-panel-valor').first()).toBeVisible();
+      expect(await nombresCortados(page)).toEqual([]);
+    });
+  }
+
+  test('a 1024 px el panel se abre como hoja y el lienzo conserva su ancho', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await abrirRecorrido(page);
+    const lienzo = page.locator('.red__lienzo').first();
+    const anchoAntes = (await lienzo.boundingBox())?.width ?? 0;
+
+    await (await nodoTsh(page)).click();
+    // Side panel + nav sidebar left the canvas at 280 px: below 1280 px it is a sheet.
+    await expect(page.locator('dialog.panel--hoja[open]')).toBeVisible();
+    const anchoDespues = (await lienzo.boundingBox())?.width ?? 0;
+    expect(anchoDespues).toBeGreaterThanOrEqual(anchoAntes - 1);
+    expect(anchoDespues).toBeGreaterThan(600);
   });
 });

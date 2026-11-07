@@ -8,6 +8,7 @@ import { FileDownloadService } from '../../../../../shared/utils/file-download/f
 import { AHORA_DEMO, ARISTAS_DEMO, NODOS_DEMO } from '../red-clinica.demo';
 import type { NodoDeRed } from '../red-clinica.types';
 import { RedClinicaPanel, vinculosDe, type PresentacionDelPanel } from './red-clinica-panel';
+import { accionDelPedido } from './red-clinica-panel.vinculos';
 
 @Component({
   imports: [RedClinicaPanel],
@@ -23,7 +24,9 @@ import { RedClinicaPanel, vinculosDe, type PresentacionDelPanel } from './red-cl
       [pacienteId]="paciente()"
       (nodoElegido)="elegidos.push($event); abrir($event)"
       (cerrado)="cierres = cierres + 1; nodo.set(null)"
-    />
+    >
+      <button panel-acciones type="button" data-testid="accion-del-padre">Ver el registro completo</button>
+    </app-red-clinica-panel>
   `,
 })
 class Anfitrion {
@@ -32,7 +35,7 @@ class Anfitrion {
   readonly ahora = AHORA_DEMO;
   readonly nodo = signal<NodoDeRed | null>(null);
   readonly presentacion = signal<PresentacionDelPanel>('lateral');
-  /** Sin paciente (como en el banco), el panel muestra lo que trae el nodo y no lee nada. */
+  /** Without a patient (as in the stock bench), the panel shows what the node brings and reads nothing. */
   readonly paciente = signal<string | null>(null);
   readonly elegidos: string[] = [];
   cierres = 0;
@@ -64,6 +67,15 @@ describe('vinculosDe', () => {
 
   it('ignora los lazos de un nodo consigo mismo', () => {
     expect(vinculosDe('x', [{ desde: 'x', hasta: 'x', tipo: 'registrado-en' }], [])).toEqual([]);
+  });
+});
+
+describe('accionDelPedido', () => {
+  it('lleva a lo que motivó el pedido; si no está, a la atención donde se pidió; si nada, null', () => {
+    expect(accionDelPedido(vinculosDe('e3', ARISTAS_DEMO, NODOS_DEMO))?.nodoId).toBe('dx2');
+    const sinMotivo = ARISTAS_DEMO.filter((a) => !(a.desde === 'e3' && a.tipo === 'pedido-para'));
+    expect(accionDelPedido(vinculosDe('e3', sinMotivo, NODOS_DEMO))).toEqual({ nodoId: 'a3', etiqueta: 'Ver la atención donde se pidió' });
+    expect(accionDelPedido(vinculosDe('e3', [], NODOS_DEMO))).toBeNull();
   });
 });
 
@@ -107,7 +119,11 @@ describe('RedClinicaPanel', () => {
     expect(texto()).toContain('Estudio');
     expect(texto()).toContain('Dra. Ana Rojas');
     expect(texto()).toContain('Resultado liberado');
-    expect(texto()).toContain('hace 3 meses (94 días)');
+    // Months alone in the text; the exact days, only as the `title`.
+    const hace = el().querySelector<HTMLElement>('.panel__hecho [title]')!;
+    expect(hace.textContent).toContain('hace 3\u00a0meses');
+    expect(hace.title).toBe('94\u00a0días');
+    expect(texto()).not.toContain('(94');
   });
 
   it('al abrir, el foco va al título; Escape cierra y lo devuelve a quien lo abrió', async () => {
@@ -148,13 +164,76 @@ describe('RedClinicaPanel', () => {
       expect(texto()).toContain('Patrón hipertensivo');
     });
 
-    it('sin resultado liberado lo dice, con la antigüedad del pedido', async () => {
+    it('el resultado va antes que el pedido, y la lectura y la referencia van en su celda de siempre', async () => {
+      await abrir('e1');
+      const titulos = Array.from(el().querySelectorAll('.panel__seccion-titulo')).map((h) => h.textContent?.trim());
+      expect(titulos.indexOf('Resultado')).toBeGreaterThanOrEqual(0);
+      expect(titulos.indexOf('Resultado')).toBeLessThan(titulos.indexOf('Pedido'));
+      const filas = Array.from(el().querySelectorAll<HTMLTableRowElement>('[data-testid="red-panel-valor"]'));
+      for (const f of filas) {
+        expect(f.cells[2].classList).toContain('panel__referencia');
+        // The reading chip, when present, lives in the value cell, after the value.
+        const chip = f.querySelector('.panel__lectura');
+        if (chip) expect(chip.parentElement).toBe(f.cells[1]);
+      }
+    });
+
+    it('sin resultado liberado lo dice, con la antigüedad del pedido sin repetir los días', async () => {
       await abrir('e3');
-      expect(el().querySelector('[data-testid="red-panel-sin-resultado"]')?.textContent).toContain('pedido hace 2 meses (65 días)');
+      const s3 = el().querySelector<HTMLElement>('[data-testid="red-panel-sin-resultado"]')!;
+      expect(s3.textContent).toContain('pedido hace 2\u00a0meses');
+      expect(s3.textContent).not.toContain('65');
+      expect(s3.querySelector<HTMLElement>('[title]')?.title).toBe('65\u00a0días');
       expect(el().querySelector('[data-testid="red-panel-valor"]')).toBeNull();
     });
 
-    /** Con paciente, abrir el MAPA lee su informe; se responde con lo mismo que trae el nodo. */
+    it('S3 ofrece su próxima acción: la del padre va bajo el aviso, no al pie', async () => {
+      await abrir('e3');
+      const s3 = el().querySelector('.panel__sin-resultado')!;
+      expect(s3.textContent).toContain('cuando el laboratorio libere el informe');
+      expect(s3.querySelector('[data-testid="accion-del-padre"]')).not.toBeNull();
+      expect(el().querySelectorAll('[data-testid="accion-del-padre"]')).toHaveLength(1);
+      // Its own next action, even when the parent adds none: what it was ordered for.
+      const propia = s3.querySelector<HTMLElement>('[data-testid="red-panel-sin-resultado-accion"]')!;
+      expect(propia.textContent?.trim()).toBe('Ver el diagnóstico por el que se pidió');
+      propia.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(host.elegidos).toEqual(['dx2']);
+      await abrir('e1');
+      expect(el().querySelector('.panel__sin-resultado')).toBeNull();
+      expect(el().querySelector('.panel__acciones [data-testid="accion-del-padre"]')).not.toBeNull();
+    });
+
+    it('menos de 60 días: cifra y unidad unidas (no se parte «hace 14 / días») y sin title redundante', async () => {
+      host.nodo.set({ ...NODOS_DEMO.find((n) => n.id === 'e3')!, cuando: new Date(AHORA_DEMO.getTime() - 14 * 86_400_000) });
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const s3 = el().querySelector<HTMLElement>('[data-testid="red-panel-sin-resultado"]')!;
+      expect(s3.textContent).toContain('pedido hace 14\u00a0días');
+      expect(s3.querySelector('[title]')).toBeNull();
+    });
+
+    it('el estado sale en el tono que trae el nodo: «Pendiente» en aviso, «Completado» en éxito', async () => {
+      // The tone comes from the order's status code (`construirRed`); the panel does not guess it.
+      const e3 = NODOS_DEMO.find((n) => n.id === 'e3')!;
+      host.nodo.set({ ...e3, estado: { etiqueta: 'Pendiente', tono: 'warning' } });
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const pendiente = panel()!.querySelector('.panel__hechos app-badge')!;
+      expect(pendiente.className).toContain('warning');
+      expect(pendiente.className).not.toContain('success');
+      host.nodo.set({ ...NODOS_DEMO.find((n) => n.id === 'e1')!, estado: { etiqueta: 'Completado', tono: 'success' } });
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(panel()!.querySelector('.panel__hechos app-badge')!.className).toContain('success');
+      host.nodo.set({ ...e3, estado: { etiqueta: 'Borrador' } });
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(panel()!.querySelector('.panel__hechos app-badge')!.className).toContain('info');
+    });
+
+    /** With a patient, opening the MAPA reads its report; it is answered with what the node brings. */
     async function abrirMapaConInforme(): Promise<void> {
       host.paciente.set('pac-1');
       await abrir('e1');
@@ -220,6 +299,43 @@ describe('RedClinicaPanel', () => {
       expect(texto()).toContain('Código de soporte');
     });
 
+    it('cambiar el ancho (lateral ⇄ hoja) no cancela la descarga en curso', async () => {
+      vi.spyOn(TestBed.inject(FileDownloadService), 'save').mockImplementation(() => undefined);
+      await abrirMapaConInforme();
+      el().querySelector<HTMLElement>('[data-testid="red-panel-archivo"]')!.click();
+      fixture.detectChanges();
+      const req = http.expectOne((r) => r.url.endsWith(URL_DEL_PDF));
+      host.presentacion.set('hoja');
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(panel()?.tagName).toBe('DIALOG');
+      expect(req.cancelled).toBe(false);
+      req.flush(new Blob(['%PDF'], { type: 'application/pdf' }));
+      await vi.waitFor(() => {
+        fixture.detectChanges();
+        expect(texto()).toContain('Descarga iniciada');
+      });
+    });
+
+    it('el aviso de la descarga entra en vista al aparecer, sin animar con movimiento reducido', async () => {
+      const original = HTMLElement.prototype.scrollIntoView;
+      const scroll = vi.fn();
+      HTMLElement.prototype.scrollIntoView = scroll;
+      try {
+        await abrirMapaConInforme();
+        el().querySelector<HTMLElement>('[data-testid="red-panel-archivo"]')!.click();
+        fixture.detectChanges();
+        http.expectOne((r) => r.url.endsWith(URL_DEL_PDF)).flush(new Blob(['x']), { status: 500, statusText: 'Error' });
+        await vi.waitFor(() => {
+          fixture.detectChanges();
+          expect(scroll).toHaveBeenCalledWith({ block: 'nearest', behavior: 'auto' });
+        });
+        expect((scroll.mock.contexts[0] as HTMLElement).textContent).toContain('No se pudo descargar el archivo');
+      } finally {
+        HTMLElement.prototype.scrollIntoView = original;
+      }
+    });
+
     it('cambiar de nodo cancela la descarga en curso', async () => {
       await abrirMapaConInforme();
       el().querySelector<HTMLElement>('[data-testid="red-panel-archivo"]')!.click();
@@ -261,7 +377,8 @@ describe('RedClinicaPanel', () => {
     it('un presuntivo sin decisión dice desde cuándo está abierto', async () => {
       await abrir('dx3');
       expect(texto()).toContain('Presuntivo, en estudio');
-      expect(texto()).toContain('Todavía no se confirmó ni se descartó · registrado hace 2 meses (65 días)');
+      expect(texto()).toContain('Todavía no se confirmó ni se descartó · registrado hace 2 meses');
+      expect(texto()).not.toContain('(65');
     });
   });
 
@@ -342,9 +459,9 @@ describe('RedClinicaPanel', () => {
 });
 
 /**
- * Lo que la integración con el expediente real necesita del panel: nodos con
- * menos datos que la demostración (sin nombre del profesional, sin fecha de
- * liberación) y un padre que decide a dónde vuelve el foco.
+ * What the integration with the real chart needs from the panel: nodes with
+ * less data than the demo (no practitioner name, no release date) and a
+ * parent that decides where the focus returns.
  */
 @Component({
   imports: [RedClinicaPanel],

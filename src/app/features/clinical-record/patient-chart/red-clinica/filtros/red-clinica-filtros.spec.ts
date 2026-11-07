@@ -62,6 +62,13 @@ describe('RedClinicaFiltros', () => {
     expect(el().querySelector('[data-testid="red-filtro-hilo"]')).not.toBeNull();
   });
 
+  it('el selector del hilo se rotula «Hilo»: junto a «Toda la historia» no se contradice', () => {
+    const campo = el().querySelector('[data-testid="red-filtro-hilo"]')!.closest('app-form-field')!;
+    const rotulo = campo.querySelector('label')?.textContent?.replace(/\s+/g, ' ').trim();
+    expect(rotulo).toBe('Hilo');
+    expect(el().textContent).not.toContain('Solo el hilo de este diagnóstico');
+  });
+
   it('sin filtros resume el total y no ofrece «Limpiar»', () => {
     expect(cuenta()).toBe('14 registros en la historia');
     expect(el().querySelector('[data-testid="red-filtros-limpiar"]')).toBeNull();

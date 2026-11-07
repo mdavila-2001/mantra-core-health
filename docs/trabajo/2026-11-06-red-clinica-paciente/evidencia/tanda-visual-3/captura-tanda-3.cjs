@@ -79,9 +79,13 @@ const nombresEnteros = (p) => p.evaluate(() => {
   const lienzo = document.querySelector('.red__lienzo');
   if (!lienzo) return { vertical: true, cortados: [] };
   const caja = lienzo.getBoundingClientRect();
+  // The text's own laid-out box against the span's: scrollWidth rounds to whole pixels and hid a sub-pixel cut.
   const cortados = [...lienzo.querySelectorAll('.red__episodio-nombre')].filter((n) => {
     const r = n.getBoundingClientRect();
-    return r.left < caja.left - 1 || r.right > caja.right + 1 || n.scrollWidth > n.clientWidth + 1;
+    const rango = document.createRange();
+    rango.selectNodeContents(n);
+    const t = rango.getBoundingClientRect();
+    return r.left < caja.left - 1 || r.right > caja.right + 1 || t.width > r.width || t.height > r.height;
   }).map((n) => n.textContent.trim());
   return { vertical: false, cortados };
 });

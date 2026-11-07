@@ -4,9 +4,12 @@ import { MOTIVOS } from './agenda-motivos.data';
 import { ACTIVITY, CANAL, STATUS, BOOKING_STATUS, BLOCK_TYPE, APPOINTMENT_TYPE } from './concepts';
 import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, type ProfesionalSimulado } from './people';
 import { offers } from './offered-services';
-import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
+import type { ReservaSimulada } from './simulated-records.types';
 import { TENANT_CLINICA, TENANT_CONSULTORIO } from '../mock-session';
 import { ahora, Coleccion, fecha, iso, isoDia, masMinutos, uuid } from '../mock-store';
+
+// Re-exported for the handlers that name it from here.
+export type { ReservaSimulada } from './simulated-records.types';
 
 /* ============================================================================
     La agenda: recursos (uno por profesional), plantillas de horario, cupos
@@ -65,50 +68,6 @@ export interface CupoSimulado {
   readonly heldUntil?: string | null;
   /** Un cupo de consulta que un servicio pisó: deja de ofrecerse y vuelve si ya nada lo pisa. */
   readonly retractedByService?: boolean;
-}
-
-export interface ReservaSimulada {
-  readonly id: string;
-  readonly patientProfileId: string;
-  readonly resourceId: string;
-  readonly bookableSlotId: string;
-  readonly appointmentId: string | null;
-  readonly typeConceptId: string;
-  readonly startAt: string;
-  readonly endAt: string;
-  readonly statusConceptId: string;
-  readonly serviceConceptId: string;
-  readonly bookingChannelConceptId: string;
-  readonly confirmedAt: string | null;
-  readonly checkedInAt: string | null;
-  readonly reasonText: string;
-  readonly patientName: string;
-  readonly insuranceCarrierName: string | null;
-  readonly rescheduledFrom: string | null;
-  readonly statusReason: { reasonText: string; actorKind: 'PATIENT' | 'PROVIDER'; toStateConceptId: string; changedAt: string } | null;
-  readonly delayNotice: { delayMinutes: number; message: string; announcedAt: string } | null;
-  readonly paymentState: { state: 'PENDING' | 'PARTIALLY_PAID' | 'PAID'; label: string; conceptId: string; insuranceUsed: boolean; markedByUserId: string; markedAt: string } | null;
-  /** Importe del pago QR confirmado en la maqueta, en bolivianos. */
-  readonly paymentAmount?: string;
-  /**
-   * De qué cita salió ésta, si es una reconsulta (C4). `null` es lo corriente.
-   *
-   * El contrato equivalente es `Booking.followUpOf` de `scheduling.types.ts`;
-   * acá el instante viaja en texto, como todo lo que sirve el simulador.
-   */
-  readonly followUpOf: FollowUpOrigin | null;
-  /** La oferta de servicio que se reservó (v4.2.40). Ausente ≡ consulta. */
-  readonly serviceOfferingId?: string | null;
-  /** Lo que el paciente aceptó al reservar el servicio, congelado. */
-  readonly service?: {
-    readonly offeringId: string;
-    readonly name: string;
-    readonly price: string;
-    readonly minDurationMinutes: number;
-    readonly maxDurationMinutes: number;
-    readonly requiresApproval: boolean;
-  } | null;
-  readonly createdAt: string;
 }
 
 export interface BloqueoSimulado {

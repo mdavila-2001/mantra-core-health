@@ -1,0 +1,14 @@
+ok   S2: the lazy read is in flight for the first shot
+antes:   ["Hipertensión arterial esencial · Confirmado · 2 oct 2025 – 4 nov 2026","Dislipidemia · En estudio · 31 dic 2025 – 4 nov 2026","Infección respiratoria aguda · En estudio · 31 mar 2026 – 4 nov 2026","Trastorno de ansiedad generalizada · En estudio · 12 oct 2026","Hipotiroidismo · Confirmado · 15 may 2025 – 2 sept 2025","Infección urinaria · Resuelto · 10 abr 2026 – 30 abr 2026","Otras consultas · Sin diagnóstico asociado · 30 abr 2026 – 14 oct 2026"]
+despues: ["Hipertensión arterial esencial · Confirmado · 2 oct 2025 – 4 nov 2026","Dislipidemia · En estudio · 31 dic 2025 – 4 nov 2026","Infección respiratoria aguda · En estudio · 31 mar 2026 – 4 nov 2026","Trastorno de ansiedad generalizada · En estudio · 12 oct 2026","Hipotiroidismo · Confirmado · 15 may 2025 – 2 sept 2025","Infección urinaria · Resuelto · 10 abr 2026 – 30 abr 2026","Otras consultas · Sin diagnóstico asociado · 30 abr 2026 – 14 oct 2026"]
+ok   L-2: the 7 thread headings (order, status and span) are identical before and after the studies arrive
+ok   S5: the wall is the projected warning notice
+ok   S5: the notice is in the warning tone
+ok   S5: nothing in the error tone
+ok   S5: no «Código de soporte»
+ok   S5: no retry is offered
+tono S5: rgb(251, 242, 232) | rgb(243, 218, 190)
+tono S9: rgb(244, 229, 225) | rgb(223, 180, 170)
+ok   S5 and S9 are painted in different colours
+ok   S5: what arrived is still drawn
+TODO OK

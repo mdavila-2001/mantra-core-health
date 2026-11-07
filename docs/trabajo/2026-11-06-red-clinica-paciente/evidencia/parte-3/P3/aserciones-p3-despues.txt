@@ -1,0 +1,32 @@
+     despues-390-claro superficie: contorno de «expediente__ficha», controles a 26 px de él
+ok   despues-390-claro #16: los controles quedan a ≥ 16 px del contorno visible (26 px, de expediente__ficha)
+ok   despues-390-claro #9: «Resultado» antes que «Pedido» (Resultado › Pedido › Vínculos (3))
+ok   despues-390-claro #10: cada chip Alto/Bajo bajo su valor, alineado a su izquierda [{"debajo":true,"izq":0}]
+ok   despues-390-claro #10: ninguna referencia se parte (líneas: 1)
+ok   despues-390-claro #10: cifras tabulares en la tabla (tabular-nums)
+ok   despues-390-claro #11: el título enfocado por teclado pinta el anillo de 3 px (rgb(51, 112, 108) 0px 0px 0px 3px)
+ok   despues-390-claro #11: un vínculo del panel enfocado por Tab pinta el anillo ({"cls":"panel__vinculo","sombra":"rgb(51, 112, 108) 0px 0px 0px 3px"})
+     despues-390-oscuro superficie: contorno de «expediente__ficha», controles a 26 px de él
+ok   despues-390-oscuro #16: los controles quedan a ≥ 16 px del contorno visible (26 px, de expediente__ficha)
+ok   despues-390-oscuro #9: «Resultado» antes que «Pedido» (Resultado › Pedido › Vínculos (3))
+ok   despues-390-oscuro #10: cada chip Alto/Bajo bajo su valor, alineado a su izquierda [{"debajo":true,"izq":0}]
+ok   despues-390-oscuro #10: ninguna referencia se parte (líneas: 1)
+ok   despues-390-oscuro #10: cifras tabulares en la tabla (tabular-nums)
+ok   despues-390-oscuro #11: el título enfocado por teclado pinta el anillo de 3 px (rgb(159, 216, 208) 0px 0px 0px 3px)
+ok   despues-390-oscuro #11: un vínculo del panel enfocado por Tab pinta el anillo ({"cls":"panel__vinculo","sombra":"rgb(159, 216, 208) 0px 0px 0px 3px"})
+     despues-1440-claro superficie: contorno de «app-card.superficie», controles a 17 px de él
+ok   despues-1440-claro #9: «Resultado» antes que «Pedido» (Resultado › Pedido › Vínculos (3))
+ok   despues-1440-claro #10: cada chip Alto/Bajo bajo su valor, alineado a su izquierda [{"debajo":true,"izq":0},{"debajo":true,"izq":0}]
+ok   despues-1440-claro #10: ninguna referencia se parte (líneas: 1, 1)
+ok   despues-1440-claro #10: cifras tabulares en la tabla (tabular-nums)
+ok   despues-1440-claro #11: el título enfocado por teclado pinta el anillo de 3 px (rgb(51, 112, 108) 0px 0px 0px 3px)
+ok   despues-1440-claro #11: un vínculo del panel enfocado por Tab pinta el anillo ({"cls":"panel__vinculo","sombra":"rgb(51, 112, 108) 0px 0px 0px 3px"})
+     despues-1440-oscuro superficie: contorno de «app-card.superficie», controles a 17 px de él
+ok   despues-1440-oscuro #9: «Resultado» antes que «Pedido» (Resultado › Pedido › Vínculos (3))
+ok   despues-1440-oscuro #10: cada chip Alto/Bajo bajo su valor, alineado a su izquierda [{"debajo":true,"izq":0},{"debajo":true,"izq":0}]
+ok   despues-1440-oscuro #10: ninguna referencia se parte (líneas: 1, 1)
+ok   despues-1440-oscuro #10: cifras tabulares en la tabla (tabular-nums)
+ok   despues-1440-oscuro #11: el título enfocado por teclado pinta el anillo de 3 px (rgb(159, 216, 208) 0px 0px 0px 3px)
+ok   despues-1440-oscuro #11: un vínculo del panel enfocado por Tab pinta el anillo ({"cls":"panel__vinculo","sombra":"rgb(159, 216, 208) 0px 0px 0px 3px"})
+
+despues: TODO OK

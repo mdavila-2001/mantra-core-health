@@ -1,6 +1,6 @@
 import type { Condition } from '../../../../core/data-access/clinical/clinical.types';
 import { recorridoDelPaciente } from './episodios';
-import { AHORA, codigo, DIAGNOSTICOS, dia, etiqueta, fuentes, ORDENES, resumen } from './mi-recorrido.fixtures';
+import { AHORA, CITAS, codigo, DIAGNOSTICOS, dia, etiqueta, fuentes, ORDENES, resumen } from './mi-recorrido.fixtures';
 import { registrosDelPortal } from './registro-con-vinculos';
 
 const armar = (f = fuentes()) => recorridoDelPaciente(registrosDelPortal(f, etiqueta, codigo, AHORA));
@@ -96,6 +96,37 @@ describe('recorridoDelPaciente (agrupación)', () => {
     const recorrido = armar(fuentes({ resumen: resumen({ conditions: [soloMigrana] }) }));
     expect(recorrido.episodios).toEqual([]);
     expect(recorrido.descartados.map((e) => e.titulo)).toEqual(['Migraña']);
+  });
+
+  it('el lapso y el orden de los hilos no cambian cuando llegan los estudios y los controles', () => {
+    const gastritis: Condition = {
+      id: 'c-gastritis',
+      codeConceptId: 'dx-gastritis',
+      verificationStatusConceptId: 'confirmado',
+      encounterId: 'e3',
+      createdAt: dia('2026-04-01'),
+    };
+    const conGastritis = resumen({ conditions: [...DIAGNOSTICOS, gastritis] });
+    // Lazy data dated after every first-read record of the headache thread.
+    const estudioTardio = {
+      ...ORDENES[0],
+      id: 'sr-tarde',
+      encounterId: undefined,
+      reasonConditionId: 'c-tensional',
+      createdAt: dia('2026-05-20'),
+    };
+    const controlTardio = { ...CITAS[0], id: 'bk-tarde', startAt: dia('2026-07-01') };
+    const antes = armar(fuentes({ resumen: conGastritis, ordenes: [], citas: [] }));
+    const despues = armar(
+      fuentes({ resumen: conGastritis, ordenes: [...ORDENES, estudioTardio], citas: [...CITAS, controlTardio] }),
+    );
+    const lapsos = (r: typeof antes) =>
+      r.episodios.map((e) => [e.titulo, e.desde?.toISOString(), e.hasta?.toISOString()]);
+    expect(lapsos(despues)).toEqual(lapsos(antes));
+    expect(antes.episodios.map((e) => e.titulo)).toEqual(['Gastritis', 'Cefalea tensional']);
+    expect(despues.episodios[1].hasta).toEqual(dia('2026-03-10'));
+    // The late study still enters the thread: only the span ignores it.
+    expect(despues.episodios[1].sueltos.map((h) => h.registro.id)).toContain('sr-tarde');
   });
 
   it('corta un ciclo de reemplazos en vez de colgarse', () => {

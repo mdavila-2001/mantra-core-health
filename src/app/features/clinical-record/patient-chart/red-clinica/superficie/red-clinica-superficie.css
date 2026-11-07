@@ -74,21 +74,30 @@
   .superficie__franja {
     padding: var(--sp-3);
   }
-
-  .superficie__guiar {
-    inline-size: 100%;
-    justify-content: center;
-  }
 }
 
 /* On the phone the chart's card already frames the page: a second outline
-   inside it was a nested border. The strips keep their rules. */
+   inside it was a nested border, with the controls 1 px from it (measured at
+   390). The strips keep their rules. `.card` is repeated for the same reason
+   as the flattened modal cards in `alovida.css`: the shell's redesign paints
+   outlined cards with `:root[data-theme] .app-shell--redesign .app-main
+   .card.card--outlined` (six classes in the dark theme), and without this the
+   outline came back. */
 @media (max-width: 649px) {
-  .superficie.superficie {
+  :host app-card.superficie.card.card.card.card--outlined {
     border-color: transparent;
+    box-shadow: none;
   }
 
   .superficie__franja:not(.superficie__guiado) {
     padding-inline: 0;
   }
+}
+
+/* The step notice and its way out, on one line when they fit. */
+.superficie__sin-nodos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
 }

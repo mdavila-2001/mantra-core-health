@@ -1338,8 +1338,12 @@ describe('MedicalRecord', () => {
       '[data-testid="historia-citas-sin-cargar"]',
     );
     expect(aviso).not.toBeNull();
-    expect(aviso?.textContent).toContain('No pudimos traer sus citas.');
+    expect(aviso?.textContent).toContain('Faltan las reconsultas');
     expect(aviso?.textContent).toContain('sin indicar cuáles tuvieron reconsulta');
+    // A 500 is S9 (M34): the host says it, with a support code and a retry.
+    expect(aviso?.querySelector('app-view-state-host [data-testid="support-code"]')).not.toBeNull();
+    // The raw API message never reaches the screen.
+    expect(aviso?.textContent).not.toContain('Agenda caída');
   });
 
   it('el aviso de citas sin cargar trae el código de soporte, y releer lo quita', async () => {
@@ -1361,7 +1365,7 @@ describe('MedicalRecord', () => {
       'Código de soporte: corr-citas-9',
     );
 
-    (raiz?.querySelector('[data-testid="historia-citas-reintentar"]') as HTMLButtonElement).click();
+    botonCon(raiz?.querySelector('[data-testid="historia-citas-sin-cargar"]'), 'Reintentar')!.click();
     harness.detectChanges();
     responderDetalle();
 
@@ -1413,6 +1417,76 @@ describe('MedicalRecord', () => {
     expect(texto).toContain('Faringitis aguda');
     // …y la pérdida se declara en vez de callarse.
     expect(texto).toContain('Falta parte del detalle');
+  });
+
+  /** The button inside `raiz` whose text is `texto`, or `undefined`. */
+  function botonCon(raiz: Element | null | undefined, texto: string): HTMLButtonElement | undefined {
+    return [...(raiz?.querySelectorAll<HTMLButtonElement>('button') ?? [])].find(
+      (boton) => boton.textContent?.trim() === texto,
+    );
+  }
+
+  /** Answers the lazy detail with the orders read failing with `body`/`status`. */
+  function responderDetalleConOrdenesFallidas(body: object, status: number, statusText: string): void {
+    http.expectOne((r) => r.url === '/scheduling/bookings').flush(CITAS);
+    http.expectOne((r) => r.url === '/charts/patients/pp-1/chart').flush(EXPEDIENTE);
+    http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(body, { status, statusText });
+    harness.detectChanges();
+  }
+
+  it('un 403 en las órdenes es S5 en «Mi recorrido»: lo dice sin ofrecer reintentar', async () => {
+    await montar();
+    responder();
+    await elegirVista('recorrido');
+    responderDetalleConOrdenesFallidas(
+      { code: 'FORBIDDEN', message: 'Sin permiso', timestamp: '', path: '', correlationId: 'corr-403' },
+      403,
+      'Forbidden',
+    );
+
+    const falta = harness.routeNativeElement?.querySelector('[data-testid="recorrido-fallo"]');
+    expect(falta?.textContent).toContain('Falta parte del recorrido');
+    expect(falta?.querySelector('.alert--warning')?.textContent).toContain('No puede ver sus estudios y controles');
+    // S5 is a wall: retrying would get the same answer, so no retry is offered.
+    expect(botonCon(falta, 'Reintentar')).toBeUndefined();
+    expect(botonCon(falta, 'Volver a cargar')).toBeUndefined();
+    // And what already arrived is still drawn.
+    expect(harness.routeNativeElement?.querySelector('[data-testid="recorrido-hilo"]')).not.toBeNull();
+  });
+
+  it('un 500 en las órdenes es S9 en «Mi recorrido»: con el ID de petición, y reintentar vuelve a pedir', async () => {
+    await montar();
+    responder();
+    await elegirVista('recorrido');
+    responderDetalleConOrdenesFallidas(
+      { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '', correlationId: 'corr-500-7' },
+      500,
+      'Server Error',
+    );
+
+    const falta = harness.routeNativeElement?.querySelector('[data-testid="recorrido-fallo"]');
+    expect(falta?.querySelector('[data-testid="support-code"] code')?.textContent?.trim()).toBe('corr-500-7');
+    expect(falta?.textContent).not.toContain('Error interno');
+
+    botonCon(falta, 'Reintentar')!.click();
+    harness.detectChanges();
+    responderDetalle();
+    expect(harness.routeNativeElement?.querySelector('[data-testid="recorrido-fallo"]')).toBeNull();
+  });
+
+  it('un 403 en las órdenes también es S5 en «Por fecha», sin reintentar', async () => {
+    await montar();
+    responder();
+    desplegarAtencion();
+    responderDetalleConOrdenesFallidas(
+      { code: 'FORBIDDEN', message: 'Sin permiso', timestamp: '', path: '' },
+      403,
+      'Forbidden',
+    );
+
+    const falta = harness.routeNativeElement?.querySelector('[data-testid="historia-detalle-falta"]');
+    expect(falta?.textContent).toContain('No tiene acceso a esta sección');
+    expect(botonCon(falta, 'Reintentar')).toBeUndefined();
   });
 
   it('ningún uuid llega al HTML con la línea desplegada', async () => {

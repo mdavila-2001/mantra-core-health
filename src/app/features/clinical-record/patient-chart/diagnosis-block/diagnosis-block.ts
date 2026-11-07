@@ -32,6 +32,7 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
+import type { CitaDelPaciente } from '../patient-chart.types';
 import { conceptosDe, filasDe, type FilaDeDiagnostico } from './diagnosis-rows';
 import { PresuntivoForm } from './presuntivo-form/presuntivo-form';
 
@@ -43,19 +44,8 @@ export {
   TARGET_SEVERIDAD,
 } from './diagnosis-targets';
 
-/**
- * Una cita del paciente.
- *
- * Vestigio del formulario de alta que este bloque tenía (ver «Sólo la tabla»
- * más abajo): el input `citas` sigue existiendo porque los tres anfitriones
- * (`patient-chart`, `consultation`, `specialty-form-block`) se lo siguen
- * pasando, pero el bloque ya no lo usa para nada.
- */
-export interface CitaDelPaciente {
-  readonly id: string;
-  readonly etiqueta: string;
-  readonly enCurso: boolean;
-}
+// Re-exported for the blocks that still name it from here.
+export type { CitaDelPaciente } from '../patient-chart.types';
 
 export type { FilaDeDiagnostico } from './diagnosis-rows';
 

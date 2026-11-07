@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
 
+import { FECHAS_DEL_DIA_CLINICO } from '../../../clinical-record/patient-chart/recorrido-clinico/recorrido-clinico.zona';
+
 /** A row of the read-only lists (allergies, results). */
 export interface FilaVisible {
   readonly id: string;
@@ -16,6 +18,8 @@ export interface FilaVisible {
 @Component({
   selector: 'section[app-historia-lista]',
   imports: [DatePipe],
+  // The row dates in the clinical day's zone, not the browser's.
+  providers: [FECHAS_DEL_DIA_CLINICO],
   templateUrl: './historia-lista.html',
   styleUrl: '../medical-record.listas.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

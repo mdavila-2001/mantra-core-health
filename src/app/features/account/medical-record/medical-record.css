@@ -1,16 +1,16 @@
 /* ============================================================================
-    Mi historia clínica — el archivo del paciente.
+    My medical record — the patient's own file.
 
-    Mobile-first: una columna, y en pantalla ancha los datos y las acciones se
-    reparten la fila. La densidad clínica del expediente del profesional no
-    aplica acá: quien lee su propia historia lee poco y de a una cosa.
+    Mobile-first: one column, and on wide screens the data and the actions
+    share the row. The clinical density of the practitioner's chart does not
+    apply here: whoever reads their own record reads little, one thing at a time.
     ========================================================================== */
 
-/* FT-20 · la descarga arriba y el cuerpo a todo el ancho.
-   Una sola columna en cualquier ancho: la descarga va PRIMERO —es la acción por
-   la que mucha gente entra— y la tarjeta con pestañas ocupa el área entera.
-   Antes, en escritorio, la descarga iba en una columna lateral de 18rem que le
-   quitaba ese ancho a la tabla (pedido del cliente, 25/09/2026). */
+/* FT-20 · the download on top and the body at full width.
+   One column at any width: the download goes FIRST —it is the action many
+   people come for— and the tabbed card takes the whole area. Before, on
+   desktop, the download sat in an 18rem side column that took that width
+   from the table (client request, 25/09/2026). */
 .historia {
   display: flex;
   flex-direction: column;
@@ -53,9 +53,9 @@
   }
 }
 
-/* La descarga completa encabeza la pantalla: es lo que el registro del cliente
-   pide poder hacer, y quien viene a eso no debería recorrer todo primero. */
-/* El botón y su nota en una fila; en teléfono la nota baja sola. */
+/* The full download heads the screen: it is what the client's record asks to
+   be able to do, and whoever comes for it should not go through it all first.
+   The button and its note share a row; on a phone the note wraps below. */
 .historia__descarga-total {
   display: flex;
   flex-wrap: wrap;
@@ -69,11 +69,11 @@
   margin: 0;
 }
 
-/* ---- C6 · la tarjeta única, las atenciones y los diagnósticos ------------- */
+/* ---- C6 · the single card, the consultations and the diagnoses ------------ */
 
-/* Regla 8: una sola tarjeta con las pestañas dentro, a lo ancho del área de
-   contenido. Sin `max-inline-size` propio — el tope lo pone `.app-main__inner`
-   y nadie más. */
+/* Rule 8: one card with the tabs inside, as wide as the content area. No
+   `max-inline-size` of its own — `.app-main__inner` sets the limit, and
+   nothing else does. */
 .historia__tarjeta {
   display: block;
   inline-size: 100%;
@@ -83,17 +83,17 @@
   display: block;
 }
 
-/* El cuerpo de una atención desplegada: primero sus acciones, después la línea.
-   Las acciones arriba porque «Descargar PDF» es sobre la atención entera, y
-   debajo de la línea se leería como si fuera del último hecho. */
+/* The body of an open consultation: its actions first, then the line. The
+   actions go on top because «Descargar PDF» is about the whole consultation;
+   under the line it would read as belonging to the last fact. */
 .historia__atencion {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
 }
 
-/* Cada bloque de diagnósticos con su propio aire: en móvil son tres listas
-   seguidas y sin separación se leen como una sola. */
+/* Each block of diagnoses gets its own air: on mobile they are three lists in
+   a row, and without separation they read as one. */
 .historia__dx-bloque {
   display: flex;
   flex-direction: column;
@@ -114,8 +114,8 @@
   color: var(--text-primary);
 }
 
-/* El diagnóstico apila su cabecera y su tabla de datos: el badge tiene que
-   quedar al lado del nombre, no al final de la ficha. */
+/* The diagnosis stacks its header and its data table: the badge has to sit
+   next to the name, not at the end of the sheet. */
 .historia__dx {
   display: flex;
   flex-direction: column;
@@ -130,13 +130,13 @@
   gap: var(--sp-2);
 }
 
-/* ════ Rediseño del paciente, tercera vuelta (22/10/2026) ════
-   Va en la hoja del componente y no en `styles/paciente.css`: esa hoja cuenta
-   en el paquete inicial, que está al ras de su presupuesto, y estas reglas
-   sólo hacen falta al abrir esta pantalla. `:host-context` las sigue atando a
-   la sesión de paciente, igual que la capa global. */
+/* ════ Patient redesign, third round (22/10/2026) ════
+   It lives in the component sheet and not in `styles/paciente.css`: that sheet
+   counts in the initial bundle, which is at its budget, and these rules are
+   only needed when this screen opens. `:host-context` still ties them to the
+   patient session, like the global layer. */
 
-/* Cada atención, una tarjeta que se abre. */
+/* Each consultation, a card that opens. */
 :host-context(.app-shell--paciente) .historia__atenciones {
   display: grid;
   gap: var(--sp-3);
@@ -153,10 +153,17 @@
     border-color var(--dur-fast) var(--ease-standard);
 }
 
-:host-context(.app-shell--paciente) .historia__atenciones app-accordion-panel:hover,
 :host-context(.app-shell--paciente) .historia__atenciones app-accordion-panel.is-expanded {
   border-color: var(--c-aqua-300);
   box-shadow: var(--shadow-md);
+}
+
+/* Hover only where a pointer can hover: on touch it sticks after the tap. */
+@media (hover: hover) {
+  :host-context(.app-shell--paciente) .historia__atenciones app-accordion-panel:hover {
+    border-color: var(--c-aqua-300);
+    box-shadow: var(--shadow-md);
+  }
 }
 
 :host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__trigger {
@@ -165,9 +172,8 @@
   border-radius: 0;
 }
 
-/* A la izquierda, un círculo de color (el `::before` del botón) con una
-   carpeta clínica encima (el del encabezado), como máscara para que tome el
-   color del tema. */
+/* On the left, a coloured circle (the button's `::before`) with a clinical
+   folder on top (the heading's), as a mask so it takes the theme colour. */
 :host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__trigger::before {
   content: '';
   flex-shrink: 0;
@@ -213,7 +219,7 @@
   border-block-start: 1px solid var(--border-default);
 }
 
-/* En oscuro el círculo claro apagaba la carpeta aguamarina. */
+/* In the dark theme the light circle dimmed the aqua folder. */
 :host-context([data-theme='dark']) .historia__atenciones ::ng-deep .accordion-panel__trigger::before {
   background: var(--bg-inset);
   box-shadow: inset 0 0 0 1px var(--border-default);

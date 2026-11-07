@@ -185,7 +185,7 @@ export const RED_CLINICA_SCENARIOS: readonly ComponentScenario[] = [
     clave: KEY_FILTROS,
     variante: 'filtros',
     titulo: 'Barra de filtros sobre la historia de demostración',
-    seVe: 'Búsqueda, «Solo el hilo de este diagnóstico», especialidad, profesional, desde/hasta y chips de tipos; «14 registros en la historia».',
+    seVe: 'Búsqueda, el selector «Hilo», especialidad, profesional, desde/hasta y chips de tipos; «14 registros en la historia».',
     interacciones: [
       'Un chip o un criterio → filtroChange con el resumen; la lista de nodos se acota y la cuenta dice «N de 14».',
       '«Limpiar filtros» → filtroChange (vacío).',

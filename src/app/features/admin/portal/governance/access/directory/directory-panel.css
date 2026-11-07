@@ -1,0 +1,37 @@
+:host {
+  display: block;
+}
+
+.directory {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.directory__note {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.directory__person {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.directory__secondary {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.directory__roles {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.directory__retry {
+  margin-inline-start: var(--sp-2);
+}

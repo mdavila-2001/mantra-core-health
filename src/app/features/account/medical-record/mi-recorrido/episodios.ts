@@ -163,10 +163,6 @@ export function recorridoDelPaciente(registros: readonly RegistroConVinculos[]):
 
     const descartados = cadena.filter((d) => descartadoEnElCamino(d, final)).sort(porFecha);
     const estado = final.estado ?? 'en-estudio';
-    const fechas = [...directos, ...controlesDelHilo]
-      .flatMap((r) => [r.cuando, r.decididoEl, r.resueltoEl])
-      .filter((f): f is Date => f !== null)
-      .map((f) => f.getTime());
 
     episodios.push({
       id: final.id,
@@ -174,8 +170,7 @@ export function recorridoDelPaciente(registros: readonly RegistroConVinculos[]):
       titulo: final.nombre,
       estado,
       ...SELLO[estado],
-      desde: fechas.length === 0 ? null : new Date(Math.min(...fechas)),
-      hasta: fechas.length === 0 ? null : new Date(Math.max(...fechas)),
+      ...lapsoDe([...atenciones.map((a) => a.registro), ...directos, ...controlesDelHilo]),
       atenciones,
       descartados,
       sueltos,
@@ -194,6 +189,29 @@ export function recorridoDelPaciente(registros: readonly RegistroConVinculos[]):
     descartados: episodios.filter((e) => e.clase === 'descartado').sort(orden),
     otras: otrasConsultas(registros, atencionesConocidas, atencionesUsadas, accesoriosUsados),
   };
+}
+
+/** The records of the first read (the summary); studies and follow-ups arrive later, lazily. */
+const DE_LA_PRIMERA_LECTURA: ReadonlySet<RegistroConVinculos['tipo']> = new Set(['atencion', 'diagnostico', 'receta']);
+
+/**
+ * A thread's span, which also orders the threads. It is anchored on the first
+ * read's records only: measured over everything, the studies and the booked
+ * follow-ups arriving later moved the dates and reordered the threads under
+ * the person's eyes. Only a thread with no dated record of the first read
+ * falls back to the rest.
+ */
+function lapsoDe(registros: readonly RegistroConVinculos[]): Pick<Episodio, 'desde' | 'hasta'> {
+  const tiempos = (lista: readonly RegistroConVinculos[]): number[] =>
+    lista
+      .flatMap((r) => [r.cuando, r.decididoEl, r.resueltoEl])
+      .filter((f): f is Date => f !== null)
+      .map((f) => f.getTime());
+  const anclas = tiempos(registros.filter((r) => DE_LA_PRIMERA_LECTURA.has(r.tipo)));
+  const fechas = anclas.length > 0 ? anclas : tiempos(registros);
+  return fechas.length === 0
+    ? { desde: null, hasta: null }
+    : { desde: new Date(Math.min(...fechas)), hasta: new Date(Math.max(...fechas)) };
 }
 
 /** A ruled-out diagnosis that is not its chain's final one: it goes folded in the thread. */
@@ -246,7 +264,6 @@ function otrasConsultas(
       .map((registro) => ({ registro, directo: true })),
   }));
   const todos = [...libres, ...atenciones.flatMap((a) => a.hechos.map((h) => h.registro)), ...sinAtencion];
-  const fechas = todos.map((r) => r.cuando?.getTime()).filter((t): t is number => t !== undefined);
   const porId = new Map(registros.map((r) => [r.id, r]));
 
   return {
@@ -256,8 +273,7 @@ function otrasConsultas(
     estado: null,
     sello: 'Sin diagnóstico asociado',
     tono: 'info',
-    desde: fechas.length === 0 ? null : new Date(Math.min(...fechas)),
-    hasta: fechas.length === 0 ? null : new Date(Math.max(...fechas)),
+    ...lapsoDe(todos),
     atenciones,
     descartados: [],
     sueltos: sinAtencion.map((registro) => ({ registro, directo: true })),

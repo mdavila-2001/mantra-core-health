@@ -37,17 +37,18 @@ import { pagedList } from '../../support/paged-list';
 import { dateTime } from '../governance-labels';
 import { patchQuery, queryParamsSignal, queryFilters } from '../../support/route-query';
 import { roleCodesOf } from './access.model';
+import { DirectoryPanel } from './directory/directory-panel';
 import { PermissionCatalog } from './permission-catalog';
 import { RolePermissionsPanel } from './role-permissions-panel';
 import { UserAccessDrawer } from './user-access-drawer';
 
 const PAGE_SIZE = 50;
 const SCREEN = portalUrl('governance/users');
-const VIEWS = ['users', 'role-permissions', 'permissions'] as const;
+const VIEWS = ['directory', 'users', 'role-permissions', 'permissions'] as const;
 const URL_KEYS = ['view', 'q', 'roleCode', 'user', 'role'] as const;
 
 /**
- * Usuarios y roles: quiénes operan la consola, con qué roles y dónde valen;
+ * Usuarios y roles: todas las cuentas de la aplicación por tipo; quiénes operan la consola, con qué roles y dónde valen;
  * qué permite cada rol; y el catálogo de permisos. Asignar y revocar se hace
  * desde el cajón de cada persona (`?user=`), siempre con confirmación. Lo
  * decide todo la API: esta pantalla no oculta un rol ni impide un alcance.
@@ -65,6 +66,7 @@ const URL_KEYS = ['view', 'q', 'roleCode', 'user', 'role'] as const;
     DataTable,
     FilterBar,
     PageHeader,
+    DirectoryPanel,
     PermissionCatalog,
     RolePermissionsPanel,
     UserAccessDrawer,
@@ -147,8 +149,10 @@ export class AccessPage {
     });
     this.destroyRef.onDestroy(() => subscription.unsubscribe());
 
+    // The internal list is read only while its tab is open (the directory is the default tab).
     effect(() => {
       this.filters();
+      if (this.tabIndex() !== 1) return;
       untracked(() => this.users.restart());
     });
     // Los nombres salen de la página vigente; quien se abre por su dirección y
@@ -156,7 +160,8 @@ export class AccessPage {
     effect(() => {
       const state = this.users.state();
       const id = this.selectedUser();
-      if (state.status === 'loading') return;
+      // Outside the internal tab its list is never read, so there is nothing to wait for.
+      if (state.status === 'loading' && this.tabIndex() === 1) return;
       untracked(() => {
         if (state.status === 'ready') {
           this.names.update((m) => new Map([...m, ...state.data.map((u) => [u.id, u.displayName] as const)]));
@@ -178,7 +183,7 @@ export class AccessPage {
   }
 
   protected selectTab(index: number): void {
-    void patchQuery(this.router, this.route, { view: index === 0 ? null : VIEWS[index]! });
+    void patchQuery(this.router, this.route, { view: index === 0 ? null : VIEWS[index]!, q: null, roleCode: null, type: null, status: null });
   }
 
   protected open(row: InternalUser): void {

@@ -1,0 +1,182 @@
+antes-medica-768-claro reposo: {"barraUnaFila":false,"leyendaEnBarra":false,"variantes":["secondary","ghost"],"angostas":[{"fecha":"4 nov","ctx":"2026","fs":"11px"},{"fecha":"5 nov","ctx":"2026","fs":"11px"},{"fecha":"6 nov","ctx":"2026","fs":"11px"},{"fecha":"9 nov","ctx":"2026","fs":"11px"},{"fecha":"10 nov","ctx":"2026","fs":"11px"},{"fecha":"11 nov","ctx":"2026","fs":"11px"},{"fecha":"23 nov","ctx":"2026","fs":"11px"}],"intervalos":[],"cabeceras":[{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"}],"chips":[{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"}],"nodosConSombra":0,"nodos":0,"desborde":false}
+(antes) antes-medica-768-claro: la leyenda está dentro de la barra de controles
+(antes) antes-medica-768-claro: Expandir y Contraer son ghost ["secondary","ghost"]
+(antes) antes-medica-768-claro: el año solo en la primera columna visible y donde cambia ["2026","2026","2026","2026","2026","2026","2026"]
+(antes) antes-medica-768-claro: el contexto angosto y el intervalo usan --fs-caption (12px), no --fs-overline ["11px"]
+(antes) antes-medica-768-claro: las cabeceras plegadas no llevan sombra en reposo
+(antes) antes-medica-768-claro: las píldoras «N antes/después» miden 24 px, borde sólido, peso 500 {"alto":28,"borde":"dashed","peso":"600"}
+(antes) antes-medica-768-claro: la página no desborda a lo ancho
+(antes) antes-medica-768-claro: el tachado del descartado sigue en --st-error-fg {"rojo":"rgb(111, 56, 44)","rayas":["rgb(111, 56, 44)"]}
+(antes) antes-medica-768-claro: la cabecera con el puntero encima sube (rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px)
+(antes) antes-medica-768-claro: el foco por teclado dibuja el anillo de 3 px {"foco":true,"sombra":"rgb(51, 112, 108) 0px 0px 0px 3px, rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"}
+(antes) antes-medica-768-claro: la cabecera abierta lleva su sombra
+antes-medica-768-claro: franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-768-claro: el chip de una franja desplegada dice «registro(s)», no «marca(s)»
+(antes) antes-medica-768-claro: la franja de los nodos en reposo es neutra, no un tono de estado ["rgb(149, 181, 199)","rgb(223, 180, 170)","rgb(178, 222, 218)","rgb(195, 231, 226)","rgb(164, 204, 192)","rgb(243, 218, 190)","rgb(205, 217, 213)"]
+(antes) antes-medica-768-claro: el trazo de las aristas registradas es --st-success-fg (rgb(31, 89, 73))
+(antes) antes-medica-768-claro: los nodos en reposo van planos (75 de 82 con sombra)
+(antes) antes-medica-768-claro: con el puntero, la franja del nodo pasa a --brand-primary (rgb(11, 57, 83))
+(antes) antes-medica-768-claro: el nodo con el puntero sube de sombra sin moverse y con la curva del sistema {"desplazado":-1,"curva":"ease, ease, ease"}
+antes-medica-768-claro: al inicio, franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-768-claro: al inicio, el chip de una franja desplegada dice «registro(s)»
+(antes) antes-medica-768-claro: sin errores de consola []
+antes-medica-1024-claro reposo: {"barraUnaFila":false,"leyendaEnBarra":false,"variantes":["secondary","ghost"],"angostas":[{"fecha":"4 nov","ctx":"2026","fs":"11px"},{"fecha":"5 nov","ctx":"2026","fs":"11px"},{"fecha":"6 nov","ctx":"2026","fs":"11px"},{"fecha":"9 nov","ctx":"2026","fs":"11px"},{"fecha":"10 nov","ctx":"2026","fs":"11px"},{"fecha":"11 nov","ctx":"2026","fs":"11px"},{"fecha":"23 nov","ctx":"2026","fs":"11px"}],"intervalos":[],"cabeceras":[{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"}],"chips":[{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"}],"nodosConSombra":0,"nodos":0,"desborde":false}
+(antes) antes-medica-1024-claro: la leyenda está dentro de la barra de controles
+(antes) antes-medica-1024-claro: Expandir y Contraer son ghost ["secondary","ghost"]
+(antes) antes-medica-1024-claro: el año solo en la primera columna visible y donde cambia ["2026","2026","2026","2026","2026","2026","2026"]
+(antes) antes-medica-1024-claro: el contexto angosto y el intervalo usan --fs-caption (12px), no --fs-overline ["11px"]
+(antes) antes-medica-1024-claro: las cabeceras plegadas no llevan sombra en reposo
+(antes) antes-medica-1024-claro: las píldoras «N antes/después» miden 24 px, borde sólido, peso 500 {"alto":28,"borde":"dashed","peso":"600"}
+(antes) antes-medica-1024-claro: la página no desborda a lo ancho
+(antes) antes-medica-1024-claro: el tachado del descartado sigue en --st-error-fg {"rojo":"rgb(111, 56, 44)","rayas":["rgb(111, 56, 44)"]}
+(antes) antes-medica-1024-claro: la cabecera con el puntero encima sube (rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px)
+(antes) antes-medica-1024-claro: el foco por teclado dibuja el anillo de 3 px {"foco":true,"sombra":"rgb(51, 112, 108) 0px 0px 0px 3px, rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"}
+(antes) antes-medica-1024-claro: la cabecera abierta lleva su sombra
+antes-medica-1024-claro: franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-1024-claro: el chip de una franja desplegada dice «registro(s)», no «marca(s)»
+(antes) antes-medica-1024-claro: la franja de los nodos en reposo es neutra, no un tono de estado ["rgb(149, 181, 199)","rgb(223, 180, 170)","rgb(178, 222, 218)","rgb(195, 231, 226)","rgb(164, 204, 192)","rgb(243, 218, 190)","rgb(205, 217, 213)"]
+(antes) antes-medica-1024-claro: el trazo de las aristas registradas es --st-success-fg (rgb(31, 89, 73))
+(antes) antes-medica-1024-claro: los nodos en reposo van planos (75 de 82 con sombra)
+(antes) antes-medica-1024-claro: con el puntero, la franja del nodo pasa a --brand-primary (rgb(11, 57, 83))
+(antes) antes-medica-1024-claro: el nodo con el puntero sube de sombra sin moverse y con la curva del sistema {"desplazado":-1,"curva":"ease, ease, ease"}
+antes-medica-1024-claro: al inicio, franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-1024-claro: al inicio, el chip de una franja desplegada dice «registro(s)»
+(antes) antes-medica-1024-claro: sin errores de consola []
+antes-medica-1440-claro reposo: {"barraUnaFila":false,"leyendaEnBarra":false,"variantes":["secondary","ghost"],"angostas":[{"fecha":"1 nov","ctx":"2026","fs":"11px"},{"fecha":"2 nov","ctx":"2026","fs":"11px"},{"fecha":"3 nov","ctx":"2026","fs":"11px"},{"fecha":"4 nov","ctx":"2026","fs":"11px"},{"fecha":"4 nov","ctx":"mismo día","fs":"11px"},{"fecha":"5 nov","ctx":"2026","fs":"11px"},{"fecha":"6 nov","ctx":"2026","fs":"11px"},{"fecha":"9 nov","ctx":"2026","fs":"11px"},{"fecha":"10 nov","ctx":"2026","fs":"11px"},{"fecha":"11 nov","ctx":"2026","fs":"11px"},{"fecha":"23 nov","ctx":"2026","fs":"11px"}],"intervalos":[],"cabeceras":[{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"}],"chips":[{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"}],"nodosConSombra":0,"nodos":0,"desborde":false}
+(antes) antes-medica-1440-claro: la leyenda está dentro de la barra de controles
+(antes) antes-medica-1440-claro: botones y leyenda en una sola fila
+(antes) antes-medica-1440-claro: Expandir y Contraer son ghost ["secondary","ghost"]
+(antes) antes-medica-1440-claro: el año solo en la primera columna visible y donde cambia ["2026","2026","2026","2026","mismo día","2026","2026","2026","2026","2026","2026"]
+(antes) antes-medica-1440-claro: el contexto angosto y el intervalo usan --fs-caption (12px), no --fs-overline ["11px"]
+(antes) antes-medica-1440-claro: las cabeceras plegadas no llevan sombra en reposo
+(antes) antes-medica-1440-claro: las píldoras «N antes/después» miden 24 px, borde sólido, peso 500 {"alto":28,"borde":"dashed","peso":"600"}
+(antes) antes-medica-1440-claro: la página no desborda a lo ancho
+(antes) antes-medica-1440-claro: el tachado del descartado sigue en --st-error-fg {"rojo":"rgb(111, 56, 44)","rayas":["rgb(111, 56, 44)"]}
+(antes) antes-medica-1440-claro: la cabecera con el puntero encima sube (rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px)
+(antes) antes-medica-1440-claro: el foco por teclado dibuja el anillo de 3 px {"foco":true,"sombra":"rgb(51, 112, 108) 0px 0px 0px 3px, rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"}
+(antes) antes-medica-1440-claro: la cabecera abierta lleva su sombra
+antes-medica-1440-claro: franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-1440-claro: el chip de una franja desplegada dice «registro(s)», no «marca(s)»
+(antes) antes-medica-1440-claro: la franja de los nodos en reposo es neutra, no un tono de estado ["rgb(149, 181, 199)","rgb(223, 180, 170)","rgb(178, 222, 218)","rgb(195, 231, 226)","rgb(164, 204, 192)","rgb(243, 218, 190)","rgb(205, 217, 213)"]
+(antes) antes-medica-1440-claro: el trazo de las aristas registradas es --st-success-fg (rgb(31, 89, 73))
+(antes) antes-medica-1440-claro: los nodos en reposo van planos (75 de 82 con sombra)
+(antes) antes-medica-1440-claro: con el puntero, la franja del nodo pasa a --brand-primary (rgb(11, 57, 83))
+(antes) antes-medica-1440-claro: el nodo con el puntero sube de sombra sin moverse y con la curva del sistema {"desplazado":-1,"curva":"ease, ease, ease"}
+antes-medica-1440-claro: al inicio, franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-1440-claro: al inicio, el chip de una franja desplegada dice «registro(s)»
+(antes) antes-medica-1440-claro: sin errores de consola []
+antes-medica-1920-claro reposo: {"barraUnaFila":false,"leyendaEnBarra":false,"variantes":["secondary","ghost"],"angostas":[{"fecha":"13 oct","ctx":"2026","fs":"11px"},{"fecha":"14 oct","ctx":"2026","fs":"11px"},{"fecha":"16 oct","ctx":"2026","fs":"11px"},{"fecha":"1 nov","ctx":"2026","fs":"11px"},{"fecha":"2 nov","ctx":"2026","fs":"11px"},{"fecha":"3 nov","ctx":"2026","fs":"11px"},{"fecha":"4 nov","ctx":"2026","fs":"11px"},{"fecha":"4 nov","ctx":"mismo día","fs":"11px"},{"fecha":"5 nov","ctx":"2026","fs":"11px"},{"fecha":"6 nov","ctx":"2026","fs":"11px"},{"fecha":"9 nov","ctx":"2026","fs":"11px"},{"fecha":"10 nov","ctx":"2026","fs":"11px"},{"fecha":"11 nov","ctx":"2026","fs":"11px"},{"fecha":"23 nov","ctx":"2026","fs":"11px"}],"intervalos":[],"cabeceras":[{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"},{"abierto":"false","sombra":"rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"}],"chips":[{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"}],"nodosConSombra":0,"nodos":0,"desborde":false}
+(antes) antes-medica-1920-claro: la leyenda está dentro de la barra de controles
+(antes) antes-medica-1920-claro: botones y leyenda en una sola fila
+(antes) antes-medica-1920-claro: Expandir y Contraer son ghost ["secondary","ghost"]
+(antes) antes-medica-1920-claro: el año solo en la primera columna visible y donde cambia ["2026","2026","2026","2026","2026","2026","2026","mismo día","2026","2026","2026","2026","2026","2026"]
+(antes) antes-medica-1920-claro: el contexto angosto y el intervalo usan --fs-caption (12px), no --fs-overline ["11px"]
+(antes) antes-medica-1920-claro: las cabeceras plegadas no llevan sombra en reposo
+(antes) antes-medica-1920-claro: las píldoras «N antes/después» miden 24 px, borde sólido, peso 500 {"alto":28,"borde":"dashed","peso":"600"}
+(antes) antes-medica-1920-claro: la página no desborda a lo ancho
+(antes) antes-medica-1920-claro: el tachado del descartado sigue en --st-error-fg {"rojo":"rgb(111, 56, 44)","rayas":["rgb(111, 56, 44)"]}
+(antes) antes-medica-1920-claro: la cabecera con el puntero encima sube (rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px)
+(antes) antes-medica-1920-claro: el foco por teclado dibuja el anillo de 3 px {"foco":true,"sombra":"rgb(51, 112, 108) 0px 0px 0px 3px, rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"}
+(antes) antes-medica-1920-claro: la cabecera abierta lleva su sombra
+antes-medica-1920-claro: franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-1920-claro: el chip de una franja desplegada dice «registro(s)», no «marca(s)»
+(antes) antes-medica-1920-claro: la franja de los nodos en reposo es neutra, no un tono de estado ["rgb(149, 181, 199)","rgb(223, 180, 170)","rgb(178, 222, 218)","rgb(195, 231, 226)","rgb(164, 204, 192)","rgb(243, 218, 190)","rgb(205, 217, 213)"]
+(antes) antes-medica-1920-claro: el trazo de las aristas registradas es --st-success-fg (rgb(31, 89, 73))
+(antes) antes-medica-1920-claro: los nodos en reposo van planos (75 de 82 con sombra)
+(antes) antes-medica-1920-claro: con el puntero, la franja del nodo pasa a --brand-primary (rgb(11, 57, 83))
+(antes) antes-medica-1920-claro: el nodo con el puntero sube de sombra sin moverse y con la curva del sistema {"desplazado":-1,"curva":"ease, ease, ease"}
+antes-medica-1920-claro: al inicio, franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-1920-claro: al inicio, el chip de una franja desplegada dice «registro(s)»
+(antes) antes-medica-1920-claro: sin errores de consola []
+antes-medica-768-oscuro reposo: {"barraUnaFila":false,"leyendaEnBarra":false,"variantes":["secondary","ghost"],"angostas":[{"fecha":"4 nov","ctx":"2026","fs":"11px"},{"fecha":"5 nov","ctx":"2026","fs":"11px"},{"fecha":"6 nov","ctx":"2026","fs":"11px"},{"fecha":"9 nov","ctx":"2026","fs":"11px"},{"fecha":"10 nov","ctx":"2026","fs":"11px"},{"fecha":"11 nov","ctx":"2026","fs":"11px"},{"fecha":"23 nov","ctx":"2026","fs":"11px"}],"intervalos":[],"cabeceras":[{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"}],"chips":[{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"}],"nodosConSombra":0,"nodos":0,"desborde":false}
+(antes) antes-medica-768-oscuro: la leyenda está dentro de la barra de controles
+(antes) antes-medica-768-oscuro: Expandir y Contraer son ghost ["secondary","ghost"]
+(antes) antes-medica-768-oscuro: el año solo en la primera columna visible y donde cambia ["2026","2026","2026","2026","2026","2026","2026"]
+(antes) antes-medica-768-oscuro: el contexto angosto y el intervalo usan --fs-caption (12px), no --fs-overline ["11px"]
+(antes) antes-medica-768-oscuro: las cabeceras plegadas no llevan sombra en reposo
+(antes) antes-medica-768-oscuro: las píldoras «N antes/después» miden 24 px, borde sólido, peso 500 {"alto":28,"borde":"dashed","peso":"600"}
+(antes) antes-medica-768-oscuro: la página no desborda a lo ancho
+(antes) antes-medica-768-oscuro: el tachado del descartado sigue en --st-error-fg {"rojo":"rgb(223, 180, 170)","rayas":["rgb(223, 180, 170)"]}
+(antes) antes-medica-768-oscuro: la cabecera con el puntero encima sube (rgba(0, 0, 0, 0.35) 0px 1px 2px 0px)
+(antes) antes-medica-768-oscuro: el foco por teclado dibuja el anillo de 3 px {"foco":true,"sombra":"rgb(159, 216, 208) 0px 0px 0px 3px, rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"}
+(antes) antes-medica-768-oscuro: la cabecera abierta lleva su sombra
+antes-medica-768-oscuro: franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-768-oscuro: el chip de una franja desplegada dice «registro(s)», no «marca(s)»
+(antes) antes-medica-768-oscuro: la franja de los nodos en reposo es neutra, no un tono de estado ["rgb(57, 117, 150)","rgb(146, 69, 52)","rgb(65, 146, 138)","rgb(128, 175, 169)","rgb(39, 114, 92)","rgb(183, 138, 89)","rgba(255, 255, 255, 0.12)"]
+(antes) antes-medica-768-oscuro: el trazo de las aristas registradas es success-400 (más tenue) (rgb(164, 204, 192))
+(antes) antes-medica-768-oscuro: los nodos en reposo van planos (75 de 82 con sombra)
+(antes) antes-medica-768-oscuro: con el puntero, la franja del nodo pasa a --brand-primary (rgb(194, 213, 223))
+(antes) antes-medica-768-oscuro: el nodo con el puntero sube de sombra sin moverse y con la curva del sistema {"desplazado":-1,"curva":"ease, ease, ease"}
+antes-medica-768-oscuro: al inicio, franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-768-oscuro: al inicio, el chip de una franja desplegada dice «registro(s)»
+(antes) antes-medica-768-oscuro: sin errores de consola []
+antes-medica-1024-oscuro reposo: {"barraUnaFila":false,"leyendaEnBarra":false,"variantes":["secondary","ghost"],"angostas":[{"fecha":"4 nov","ctx":"2026","fs":"11px"},{"fecha":"5 nov","ctx":"2026","fs":"11px"},{"fecha":"6 nov","ctx":"2026","fs":"11px"},{"fecha":"9 nov","ctx":"2026","fs":"11px"},{"fecha":"10 nov","ctx":"2026","fs":"11px"},{"fecha":"11 nov","ctx":"2026","fs":"11px"},{"fecha":"23 nov","ctx":"2026","fs":"11px"}],"intervalos":[],"cabeceras":[{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"}],"chips":[{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"}],"nodosConSombra":0,"nodos":0,"desborde":false}
+(antes) antes-medica-1024-oscuro: la leyenda está dentro de la barra de controles
+(antes) antes-medica-1024-oscuro: Expandir y Contraer son ghost ["secondary","ghost"]
+(antes) antes-medica-1024-oscuro: el año solo en la primera columna visible y donde cambia ["2026","2026","2026","2026","2026","2026","2026"]
+(antes) antes-medica-1024-oscuro: el contexto angosto y el intervalo usan --fs-caption (12px), no --fs-overline ["11px"]
+(antes) antes-medica-1024-oscuro: las cabeceras plegadas no llevan sombra en reposo
+(antes) antes-medica-1024-oscuro: las píldoras «N antes/después» miden 24 px, borde sólido, peso 500 {"alto":28,"borde":"dashed","peso":"600"}
+(antes) antes-medica-1024-oscuro: la página no desborda a lo ancho
+(antes) antes-medica-1024-oscuro: el tachado del descartado sigue en --st-error-fg {"rojo":"rgb(223, 180, 170)","rayas":["rgb(223, 180, 170)"]}
+(antes) antes-medica-1024-oscuro: la cabecera con el puntero encima sube (rgba(0, 0, 0, 0.35) 0px 1px 2px 0px)
+(antes) antes-medica-1024-oscuro: el foco por teclado dibuja el anillo de 3 px {"foco":true,"sombra":"rgb(159, 216, 208) 0px 0px 0px 3px, rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"}
+(antes) antes-medica-1024-oscuro: la cabecera abierta lleva su sombra
+antes-medica-1024-oscuro: franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-1024-oscuro: el chip de una franja desplegada dice «registro(s)», no «marca(s)»
+(antes) antes-medica-1024-oscuro: la franja de los nodos en reposo es neutra, no un tono de estado ["rgb(57, 117, 150)","rgb(146, 69, 52)","rgb(65, 146, 138)","rgb(128, 175, 169)","rgb(39, 114, 92)","rgb(183, 138, 89)","rgba(255, 255, 255, 0.12)"]
+(antes) antes-medica-1024-oscuro: el trazo de las aristas registradas es success-400 (más tenue) (rgb(164, 204, 192))
+(antes) antes-medica-1024-oscuro: los nodos en reposo van planos (75 de 82 con sombra)
+(antes) antes-medica-1024-oscuro: con el puntero, la franja del nodo pasa a --brand-primary (rgb(194, 213, 223))
+(antes) antes-medica-1024-oscuro: el nodo con el puntero sube de sombra sin moverse y con la curva del sistema {"desplazado":-1,"curva":"ease, ease, ease"}
+antes-medica-1024-oscuro: al inicio, franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-1024-oscuro: al inicio, el chip de una franja desplegada dice «registro(s)»
+(antes) antes-medica-1024-oscuro: sin errores de consola []
+antes-medica-1440-oscuro reposo: {"barraUnaFila":false,"leyendaEnBarra":false,"variantes":["secondary","ghost"],"angostas":[{"fecha":"1 nov","ctx":"2026","fs":"11px"},{"fecha":"2 nov","ctx":"2026","fs":"11px"},{"fecha":"3 nov","ctx":"2026","fs":"11px"},{"fecha":"4 nov","ctx":"2026","fs":"11px"},{"fecha":"4 nov","ctx":"mismo día","fs":"11px"},{"fecha":"5 nov","ctx":"2026","fs":"11px"},{"fecha":"6 nov","ctx":"2026","fs":"11px"},{"fecha":"9 nov","ctx":"2026","fs":"11px"},{"fecha":"10 nov","ctx":"2026","fs":"11px"},{"fecha":"11 nov","ctx":"2026","fs":"11px"},{"fecha":"23 nov","ctx":"2026","fs":"11px"}],"intervalos":[],"cabeceras":[{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"}],"chips":[{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"}],"nodosConSombra":0,"nodos":0,"desborde":false}
+(antes) antes-medica-1440-oscuro: la leyenda está dentro de la barra de controles
+(antes) antes-medica-1440-oscuro: botones y leyenda en una sola fila
+(antes) antes-medica-1440-oscuro: Expandir y Contraer son ghost ["secondary","ghost"]
+(antes) antes-medica-1440-oscuro: el año solo en la primera columna visible y donde cambia ["2026","2026","2026","2026","mismo día","2026","2026","2026","2026","2026","2026"]
+(antes) antes-medica-1440-oscuro: el contexto angosto y el intervalo usan --fs-caption (12px), no --fs-overline ["11px"]
+(antes) antes-medica-1440-oscuro: las cabeceras plegadas no llevan sombra en reposo
+(antes) antes-medica-1440-oscuro: las píldoras «N antes/después» miden 24 px, borde sólido, peso 500 {"alto":28,"borde":"dashed","peso":"600"}
+(antes) antes-medica-1440-oscuro: la página no desborda a lo ancho
+(antes) antes-medica-1440-oscuro: el tachado del descartado sigue en --st-error-fg {"rojo":"rgb(223, 180, 170)","rayas":["rgb(223, 180, 170)"]}
+(antes) antes-medica-1440-oscuro: la cabecera con el puntero encima sube (rgba(0, 0, 0, 0.35) 0px 1px 2px 0px)
+(antes) antes-medica-1440-oscuro: el foco por teclado dibuja el anillo de 3 px {"foco":true,"sombra":"rgb(159, 216, 208) 0px 0px 0px 3px, rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"}
+(antes) antes-medica-1440-oscuro: la cabecera abierta lleva su sombra
+antes-medica-1440-oscuro: franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-1440-oscuro: el chip de una franja desplegada dice «registro(s)», no «marca(s)»
+(antes) antes-medica-1440-oscuro: la franja de los nodos en reposo es neutra, no un tono de estado ["rgb(57, 117, 150)","rgb(146, 69, 52)","rgb(65, 146, 138)","rgb(128, 175, 169)","rgb(39, 114, 92)","rgb(183, 138, 89)","rgba(255, 255, 255, 0.12)"]
+(antes) antes-medica-1440-oscuro: el trazo de las aristas registradas es success-400 (más tenue) (rgb(164, 204, 192))
+(antes) antes-medica-1440-oscuro: los nodos en reposo van planos (75 de 82 con sombra)
+(antes) antes-medica-1440-oscuro: con el puntero, la franja del nodo pasa a --brand-primary (rgb(194, 213, 223))
+(antes) antes-medica-1440-oscuro: el nodo con el puntero sube de sombra sin moverse y con la curva del sistema {"desplazado":-1,"curva":"ease, ease, ease"}
+antes-medica-1440-oscuro: al inicio, franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-1440-oscuro: al inicio, el chip de una franja desplegada dice «registro(s)»
+(antes) antes-medica-1440-oscuro: sin errores de consola []
+antes-medica-1920-oscuro reposo: {"barraUnaFila":false,"leyendaEnBarra":false,"variantes":["secondary","ghost"],"angostas":[{"fecha":"13 oct","ctx":"2026","fs":"11px"},{"fecha":"14 oct","ctx":"2026","fs":"11px"},{"fecha":"16 oct","ctx":"2026","fs":"11px"},{"fecha":"1 nov","ctx":"2026","fs":"11px"},{"fecha":"2 nov","ctx":"2026","fs":"11px"},{"fecha":"3 nov","ctx":"2026","fs":"11px"},{"fecha":"4 nov","ctx":"2026","fs":"11px"},{"fecha":"4 nov","ctx":"mismo día","fs":"11px"},{"fecha":"5 nov","ctx":"2026","fs":"11px"},{"fecha":"6 nov","ctx":"2026","fs":"11px"},{"fecha":"9 nov","ctx":"2026","fs":"11px"},{"fecha":"10 nov","ctx":"2026","fs":"11px"},{"fecha":"11 nov","ctx":"2026","fs":"11px"},{"fecha":"23 nov","ctx":"2026","fs":"11px"}],"intervalos":[],"cabeceras":[{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"},{"abierto":"false","sombra":"rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"}],"chips":[{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"},{"alto":28,"borde":"dashed","peso":"600"}],"nodosConSombra":0,"nodos":0,"desborde":false}
+(antes) antes-medica-1920-oscuro: la leyenda está dentro de la barra de controles
+(antes) antes-medica-1920-oscuro: botones y leyenda en una sola fila
+(antes) antes-medica-1920-oscuro: Expandir y Contraer son ghost ["secondary","ghost"]
+(antes) antes-medica-1920-oscuro: el año solo en la primera columna visible y donde cambia ["2026","2026","2026","2026","2026","2026","2026","mismo día","2026","2026","2026","2026","2026","2026"]
+(antes) antes-medica-1920-oscuro: el contexto angosto y el intervalo usan --fs-caption (12px), no --fs-overline ["11px"]
+(antes) antes-medica-1920-oscuro: las cabeceras plegadas no llevan sombra en reposo
+(antes) antes-medica-1920-oscuro: las píldoras «N antes/después» miden 24 px, borde sólido, peso 500 {"alto":28,"borde":"dashed","peso":"600"}
+(antes) antes-medica-1920-oscuro: la página no desborda a lo ancho
+(antes) antes-medica-1920-oscuro: el tachado del descartado sigue en --st-error-fg {"rojo":"rgb(223, 180, 170)","rayas":["rgb(223, 180, 170)"]}
+(antes) antes-medica-1920-oscuro: la cabecera con el puntero encima sube (rgba(0, 0, 0, 0.35) 0px 1px 2px 0px)
+(antes) antes-medica-1920-oscuro: el foco por teclado dibuja el anillo de 3 px {"foco":true,"sombra":"rgb(159, 216, 208) 0px 0px 0px 3px, rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"}
+(antes) antes-medica-1920-oscuro: la cabecera abierta lleva su sombra
+antes-medica-1920-oscuro: franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-1920-oscuro: el chip de una franja desplegada dice «registro(s)», no «marca(s)»
+(antes) antes-medica-1920-oscuro: la franja de los nodos en reposo es neutra, no un tono de estado ["rgb(57, 117, 150)","rgb(146, 69, 52)","rgb(65, 146, 138)","rgb(128, 175, 169)","rgb(39, 114, 92)","rgb(183, 138, 89)","rgba(255, 255, 255, 0.12)"]
+(antes) antes-medica-1920-oscuro: el trazo de las aristas registradas es success-400 (más tenue) (rgb(164, 204, 192))
+(antes) antes-medica-1920-oscuro: los nodos en reposo van planos (75 de 82 con sombra)
+(antes) antes-medica-1920-oscuro: con el puntero, la franja del nodo pasa a --brand-primary (rgb(194, 213, 223))
+(antes) antes-medica-1920-oscuro: el nodo con el puntero sube de sombra sin moverse y con la curva del sistema {"desplazado":-1,"curva":"ease, ease, ease"}
+antes-medica-1920-oscuro: al inicio, franjas desplegadas con chip (sus registros fuera de la vista) 0: []
+(antes) antes-medica-1920-oscuro: al inicio, el chip de una franja desplegada dice «registro(s)»
+(antes) antes-medica-1920-oscuro: sin errores de consola []
+
+fallas: 0

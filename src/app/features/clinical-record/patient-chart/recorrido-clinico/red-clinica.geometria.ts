@@ -35,7 +35,7 @@
     `red-clinica.geometria.types.ts`.
     ========================================================================== */
 
-import type { RegistroDeLaRed, VinculoDeLaRed } from './red-clinica.model';
+import { esInferido, type RegistroDeLaRed, type VinculoDeLaRed } from './red-clinica.model';
 import type { EpisodioClinico, HitoDelEpisodio, RedPorEpisodios } from './red-clinica.episodio';
 import { describirIntervalo } from './recorrido-clinico.model';
 import { armarCeldas } from './red-clinica.celdas';
@@ -48,6 +48,8 @@ import {
   MARGEN_DEL_CANAL,
   MEDIDAS_DE_LA_RED,
   PASO_DE_CARRIL,
+  PASO_DEL_CANAL,
+  ySalida,
   type ColumnaDeLaRed,
   type EstadoDeLaRed,
   type HiloDeLaRed,
@@ -85,7 +87,7 @@ export function ubicarRed(
       continue;
     }
     const carriles = carrilesDeCanal.get(e.id) ?? 0;
-    const altoCanal = carriles === 0 ? 4 : 2 * MARGEN_DEL_CANAL + (carriles - 1) * PASO_DE_CARRIL;
+    const altoCanal = carriles === 0 ? 4 : 2 * MARGEN_DEL_CANAL + (carriles - 1) * PASO_DEL_CANAL;
     const yCanal = yCabeza + m.altoCabeceraHilo;
     const yCeldas = yCanal + altoCanal + m.rellenoHilo;
     let maximo = 0;
@@ -105,7 +107,9 @@ export function ubicarRed(
   const hiloPorEpisodio = new Map(hilosSinX.map((h) => [h.episodio.id, h]));
 
   /* 5 · Each target's entries and the vertical stretches per aisle. */
-  const yCentro = (id: string): number => yDeNodo.get(id)! + ubicable.get(id)!.alto / 2;
+  const ySale = (p: Pendiente): number => ySalida({ y: yDeNodo.get(p.desde)!, alto: ubicable.get(p.desde)!.alto }, esInferido(p.motivo));
+  // A source's exits are shared per kind: recorded and inferred never on one stretch.
+  const grupoDeSalida = (p: Pendiente): string => `sale:${p.desde}:${esInferido(p.motivo) ? 'inferido' : 'registrado'}`;
   const entradasIzq = new Map<string, number>();
   const entradasDer = new Map<string, number>();
   const yEntrada = new Map<string, number>();
@@ -117,7 +121,7 @@ export function ubicarRed(
     ocupadas.set(pasillo, [...(ocupadas.get(pasillo) ?? []), yy]);
   };
   for (const p of enlaces) {
-    ocupar(ubicable.get(p.desde)!.columna, yCentro(p.desde));
+    ocupar(ubicable.get(p.desde)!.columna, ySale(p));
   }
   for (const p of enlaces) {
     const b = ubicable.get(p.hasta)!;
@@ -136,29 +140,42 @@ export function ubicarRed(
     yEntrada.set(p.clave, elegida);
   }
   const yDelCanal = (p: Pendiente): number =>
-    hiloPorEpisodio.get(ubicable.get(p.hasta)!.episodio)!.yCanal + MARGEN_DEL_CANAL + (carrilDeCanal.get(p.clave) ?? 0) * PASO_DE_CARRIL;
+    hiloPorEpisodio.get(ubicable.get(p.hasta)!.episodio)!.yCanal + MARGEN_DEL_CANAL + (carrilDeCanal.get(p.clave) ?? 0) * PASO_DEL_CANAL;
 
-  interface Tramo { readonly pasillo: number; readonly desde: number; readonly hasta: number; readonly clave: string; readonly rol: 'sale' | 'entra' }
-  const tramos: Tramo[] = [];
+  // A vertical stretch per aisle and lane. The exits of one source share a
+  // single stretch (a bus that branches towards each target): the eye follows
+  // one line out of the card instead of a bundle of parallel ones.
+  interface Tramo { readonly pasillo: number; desde: number; hasta: number; readonly claves: string[] }
+  const tramos = new Map<string, Tramo>();
+  const tramo = (pasillo: number, a: number, b: number, grupo: string, clave: string): void => {
+    const t = tramos.get(`${pasillo}#${grupo}`);
+    if (t === undefined) {
+      tramos.set(`${pasillo}#${grupo}`, { pasillo, desde: Math.min(a, b), hasta: Math.max(a, b), claves: [clave] });
+      return;
+    }
+    t.desde = Math.min(t.desde, a, b);
+    t.hasta = Math.max(t.hasta, a, b);
+    t.claves.push(clave);
+  };
   for (const p of enlaces) {
     const ca = ubicable.get(p.desde)!.columna;
     const cb = ubicable.get(p.hasta)!.columna;
-    const y0 = yCentro(p.desde);
+    const y0 = ySale(p);
     const y1 = yEntrada.get(p.clave)!;
     if (ca === cb || cb === ca + 1) {
-      tramos.push({ pasillo: ca, desde: Math.min(y0, y1), hasta: Math.max(y0, y1), clave: p.clave, rol: 'sale' });
+      tramo(ca, y0, y1, grupoDeSalida(p), `${p.clave}|sale`);
       continue;
     }
     const yc = yDelCanal(p);
-    tramos.push({ pasillo: ca, desde: Math.min(y0, yc), hasta: Math.max(y0, yc), clave: p.clave, rol: 'sale' });
-    tramos.push({ pasillo: cb - 1, desde: Math.min(yc, y1), hasta: Math.max(yc, y1), clave: p.clave, rol: 'entra' });
+    tramo(ca, y0, yc, grupoDeSalida(p), `${p.clave}|sale`);
+    tramo(cb - 1, yc, y1, `entra:${p.clave}`, `${p.clave}|entra`);
   }
   const carrilDelTramo = new Map<string, number>();
   const carrilesPorPasillo = new Map<number, number>();
   for (let k = -1; k < ordenadas.length; k++) {
-    const delPasillo = tramos
+    const delPasillo = [...tramos.values()]
       .filter((t) => t.pasillo === k)
-      .sort((a, b) => b.hasta - b.desde - (a.hasta - a.desde) || a.clave.localeCompare(b.clave));
+      .sort((a, b) => b.hasta - b.desde - (a.hasta - a.desde) || a.claves[0].localeCompare(b.claves[0]));
     const ocupados: { desde: number; hasta: number }[][] = [];
     for (const t of delPasillo) {
       let carril = ocupados.findIndex((enUso) =>
@@ -169,7 +186,7 @@ export function ubicarRed(
         ocupados.push([]);
       }
       ocupados[carril].push(t);
-      carrilDelTramo.set(`${t.clave}|${t.rol}`, carril);
+      for (const clave of t.claves) carrilDelTramo.set(clave, carril);
     }
     carrilesPorPasillo.set(k, ocupados.length);
   }

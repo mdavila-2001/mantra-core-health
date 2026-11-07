@@ -18,24 +18,24 @@
 
   @if (cargando()) {
     <p class="recorrido__aviso" role="status" data-testid="recorrido-cargando">
-      Estamos trayendo sus estudios y controles. Lo demás ya se muestra.
+      Todavía estamos cargando sus estudios y controles. El resto ya está a la vista.
     </p>
   }
 
-  @if (fallo()) {
-    <app-alert tone="warning" title="Falta parte del recorrido" data-testid="recorrido-fallo">
-      No pudimos traer sus estudios ni sus controles. Los diagnósticos, las consultas y las recetas
-      se muestran igual.
-      <div alert-actions>
-        <button app-button variant="secondary" size="sm" type="button" (clicked)="reintentar.emit()">
-          Volver a cargar
-        </button>
-      </div>
-    </app-alert>
-  } @else if (citasSinCargar(); as motivo) {
-    <app-alert tone="warning" title="Faltan los controles" data-testid="recorrido-citas-sin-cargar">
-      {{ motivo }} El recorrido se muestra igual, pero sin los controles agendados.
-    </app-alert>
+  <!-- Partial failure: what arrived is still drawn, and `falta/` says why the rest did not
+       (S5 as a warning without a retry, S9 with its request id). -->
+  @if (faltaDelDetalle(); as falta) {
+    <div class="recorrido__falta" data-testid="recorrido-fallo">
+      <p class="recorrido__aviso">
+        Falta parte del recorrido: los diagnósticos, las consultas y las recetas se muestran igual.
+      </p>
+      <app-recorrido-falta [estado]="falta" que="sus estudios y controles" (reintentar)="reintentar.emit()" />
+    </div>
+  } @else if (faltaDeLasCitas(); as falta) {
+    <div class="recorrido__falta" data-testid="recorrido-citas-sin-cargar">
+      <p class="recorrido__aviso">Faltan los controles: el recorrido se muestra igual, sin los agendados.</p>
+      <app-recorrido-falta [estado]="falta" que="sus controles agendados" (reintentar)="reintentar.emit()" />
+    </div>
   }
 
   @if (vacio()) {
@@ -206,7 +206,7 @@
                         <span class="recorrido__hecho-tipo">{{ tipoDe(hecho.registro) }}</span>
                         <span class="recorrido__hecho-texto">{{ resumenDe(hecho.registro) }}</span>
                         @if (!hecho.directo) {
-                          <span class="recorrido__hecho-marca">De esta consulta, sin vínculo a este problema</span>
+                          <span class="recorrido__hecho-marca">Se hizo en esta consulta, por otro motivo</span>
                         }
                       </button>
                     </li>
@@ -219,7 +219,7 @@
       }
 
       @if (episodio.sueltos.length > 0) {
-        <ul class="recorrido__hechos" aria-label="Registros sin una consulta asociada">
+        <ul class="recorrido__hechos recorrido__hechos--fuera-de-la-linea" aria-label="Registros que se hicieron fuera de una consulta">
           @for (hecho of episodio.sueltos; track hecho.registro.id) {
             <li>
               <button
@@ -230,7 +230,7 @@
               >
                 <span class="recorrido__hecho-tipo">{{ tipoDe(hecho.registro) }}</span>
                 <span class="recorrido__hecho-texto">{{ resumenDe(hecho.registro) }}</span>
-                <span class="recorrido__hecho-marca">Sin una consulta asociada</span>
+                <span class="recorrido__hecho-marca">Se registró fuera de una consulta</span>
               </button>
             </li>
           }

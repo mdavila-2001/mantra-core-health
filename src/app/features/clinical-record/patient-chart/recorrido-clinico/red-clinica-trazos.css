@@ -4,6 +4,85 @@
     the same marks.
     ========================================================================== */
 
+/* The recorded link's ink. In dark, `--st-success-fg` (success-200, 8:1 on the
+   canvas) outshone the nodes' text: success-400 keeps 4.6:1 on `--bg-inset`. */
+:host {
+  --red-enlace: var(--st-success-fg);
+}
+
+:host-context([data-theme='dark']) {
+  --red-enlace: var(--c-success-400);
+}
+
+@media (prefers-color-scheme: dark) {
+  :host-context(html:not([data-theme='light'])) {
+    --red-enlace: var(--c-success-400);
+  }
+}
+
+/* -- The canvas edges: content out of view fades and offers a jump --------- */
+
+/* Fade and jump are siblings, not nested, so each takes its own layer in the
+   canvas' stacking: fade (3, before the canvas in the DOM) over the nodes (2)
+   and under the thread headers (3, later); the stuck axis (4) over both; the
+   jump (5) over the stuck axis. */
+.red__borde-par {
+  display: contents;
+}
+
+.red__borde {
+  position: absolute;
+  z-index: 3;
+  inset-block: 1px;
+  inline-size: var(--sp-12);
+  pointer-events: none;
+}
+
+.red__borde--inicio {
+  inset-inline-start: 1px;
+  border-start-start-radius: var(--r-md);
+  border-end-start-radius: var(--r-md);
+  background: linear-gradient(to right, var(--bg-inset) 20%, transparent);
+}
+
+.red__borde--final {
+  inset-inline-end: 1px;
+  border-start-end-radius: var(--r-md);
+  border-end-end-radius: var(--r-md);
+  background: linear-gradient(to left, var(--bg-inset) 20%, transparent);
+}
+
+.red__borde-salto {
+  position: absolute;
+  z-index: 5;
+  /* A channel of its own: on the canvas' top border, 16 px in the gap above
+     it and 12 px in the axis' top padding (the dates start below), so it
+     never covers a date or an axis mark wherever the canvas is scrolled. When
+     the axis follows the page it comes along (`--red-eje-y`, in the 16 px band
+     kept above the stuck axis). -2px: two px up, clear of the dates. */
+  inset-block-start: calc(var(--red-eje-y, 0px) - 2px);
+  translate: 0 -50%;
+  --_btn-bg: var(--bg-surface);
+  /* 28 px tall: the 16 px band above the axis plus its 12 px top padding. */
+  --_btn-side: 28px;
+  block-size: 28px;
+  padding-block: var(--sp-1);
+  white-space: nowrap;
+}
+
+.red__borde-salto--inicio {
+  inset-inline-start: var(--sp-3);
+}
+
+.red__borde-salto--final {
+  inset-inline-end: var(--sp-3);
+}
+
+.red__borde-salto app-nav-icon {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
 /* -- The collapsed strip: track and milestones -------------------------------- */
 
 .red__pista {
@@ -33,10 +112,13 @@
 
 .red__muestra-hito.red__hito--momento {
   margin: 0;
+  /* Round as on the canvas: the legend's sample is the same mark. */
+  border-radius: var(--r-full);
 }
 
 /* Diagnoses: a diamond, and its fill tells the certainty. Never color alone:
-   presumptive is hollow, confirmed filled, ruled out dashed. */
+   presumptive is hollow, confirmed filled, historical smaller with a double
+   border; ruled out is struck through (`red-clinica-tonos.css`). */
 .red__hito--confirmado,
 .red__hito--presuntivo,
 .red__hito--descartado,
@@ -68,12 +150,21 @@
 
 .red__hito--descartado {
   background: var(--bg-surface);
-  border: 2px dashed var(--st-error-fg);
+  border-color: var(--st-error-fg);
 }
 
+/* Historical: its own shape, not only its color: a smaller diamond with a
+   double border (3 px: two 1 px lines and a 1 px gap). */
 .red__hito--historico {
+  inline-size: 12px;
+  block-size: 12px;
+  margin: -5px 0 0 -6px;
   background: var(--st-secondary-bg);
-  border-color: var(--st-secondary-fg);
+  border: 3px double var(--st-secondary-fg);
+}
+
+.red__muestra-hito.red__hito--historico {
+  margin: 0;
 }
 
 .red__hito--derivacion,
@@ -107,6 +198,8 @@
 
 .red__arista {
   fill: none;
+  /* Hover shows the relation name (<title>); nodes sit above (`.red__nodo`, z-index 2, over this SVG's 1, in the canvas' one stacking context). */
+  pointer-events: stroke;
   stroke-linecap: round;
   stroke-linejoin: round;
   transition:
@@ -114,15 +207,19 @@
     stroke-width var(--dur-fast) ease;
 }
 
+/* Three families, told apart without color: the trunk is thin and has no
+   arrowhead, a recorded link is solid with one, an inferred one is dotted.
+   The trunk's opacity keeps it ≥ 3:1 on the canvas in light and dark (at
+   0.55 it fell to 2.7:1 in light). */
 .red__arista--tronco {
   stroke: var(--brand-primary);
   stroke-width: 1.5;
-  opacity: 0.55;
+  opacity: 0.75;
 }
 
-/* Real links: solid. */
+/* Recorded links: solid. */
 .red__arista--enlace {
-  stroke: var(--st-success-fg);
+  stroke: var(--red-enlace, var(--st-success-fg));
   stroke-width: 2;
 }
 
@@ -142,11 +239,21 @@
 }
 
 .red__punta {
-  fill: var(--st-success-fg);
+  fill: var(--red-enlace, var(--st-success-fg));
 }
 
 .red__punta--inferido {
   fill: var(--st-warning-fg);
+}
+
+/* A line cut at the view's edge: neutral, so it reads as «continues» and not
+   as one more relation. */
+.red__sigue {
+  fill: none;
+  stroke: var(--text-secondary);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .red__arista--iluminada {

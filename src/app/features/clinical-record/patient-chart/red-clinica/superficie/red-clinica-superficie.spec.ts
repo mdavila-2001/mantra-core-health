@@ -9,6 +9,7 @@ import type { RegistroDeLaRed, VinculoDeLaRed } from '../../recorrido-clinico/re
 import { RecorridoGuiado } from '../../recorrido-guiado/recorrido-guiado';
 import type { AlertaDeApoyo } from '../red-clinica-alertas.types';
 import { FILTRO_VACIO, type FiltroDeRed } from '../red-clinica-filtro';
+import type { NodoDeRed } from '../red-clinica.types';
 import { guiaDelExpediente, NINGUNO_VISIBLE, type GuiaDeLaRed } from './guia-de-la-red';
 import { RedClinicaSuperficie } from './red-clinica-superficie';
 
@@ -72,24 +73,29 @@ const ALERTA: AlertaDeApoyo = {
     <app-red-clinica-superficie
       [registros]="registros"
       [vinculos]="vinculos"
+      [nodos]="nodos"
       [visibles]="visibles()"
       [alertas]="alertas()"
       [seleccionado]="seleccionado()"
       [guia]="guia"
       [(filtro)]="filtro"
       (nodoElegido)="desdeAlertas.push($event)"
+      (limpiar)="limpiezas = limpiezas + 1; filtro.set(filtroVacio); visibles.set([])"
     />
   `,
 })
 class Anfitrion {
   readonly registros = REGISTROS;
   readonly vinculos = VINCULOS;
+  readonly nodos: readonly NodoDeRed[] = [{ id: 'dx2', tipo: 'diagnostico', titulo: 'Pielonefritis', cuando: dia2 }];
   readonly guia = GUIA;
   readonly visibles = signal<readonly string[]>([]);
   readonly alertas = signal<readonly AlertaDeApoyo[]>([ALERTA]);
   readonly seleccionado = signal<string | null>(null);
   readonly filtro = signal<FiltroDeRed>(FILTRO_VACIO);
   readonly desdeAlertas: string[] = [];
+  readonly filtroVacio = FILTRO_VACIO;
+  limpiezas = 0;
 }
 
 describe('RedClinicaSuperficie', () => {
@@ -174,6 +180,40 @@ describe('RedClinicaSuperficie', () => {
     expect(red().visibles()).toEqual(['dx2']);
   });
 
+  it('el aviso de paso ofrece «Quitar filtros»: limpia los del padre y al salir no vuelven', async () => {
+    host.filtro.set({ ...FILTRO_VACIO, texto: 'pielo' });
+    host.visibles.set(['dx2']);
+    await pintar();
+    await abrirGuiado();
+    // It names the filter that hides the step, not a vague «los filtros puestos».
+    expect(por('red-guiado-sin-nodos')!.textContent?.replace(/\s+/g, ' ')).toContain(
+      'no queda a la vista con este filtro: la búsqueda «pielo».',
+    );
+    (por('red-guiado-quitar-filtros') as HTMLButtonElement).click();
+    await pintar();
+    expect(host.limpiezas).toBe(1);
+    expect(por('red-guiado-sin-nodos')).toBeNull();
+    expect([...red().visibles()].sort()).toEqual(['dx1', 'e1', 'rx1']);
+    (por('red-guiado-alternar') as HTMLButtonElement).click();
+    await pintar();
+    expect(host.filtro()).toEqual(FILTRO_VACIO);
+    expect(red().visibles()).toEqual([]);
+  });
+
+  it('el aviso de paso nombra el hilo puesto por su diagnóstico, y varios filtros juntos', async () => {
+    // What the parent lets through misses the followed episode: the step is left empty.
+    host.filtro.set({ ...FILTRO_VACIO, hiloDeDiagnosticoId: 'dx2' });
+    host.visibles.set(['rx1']);
+    await pintar();
+    await abrirGuiado();
+    const aviso = () => por('red-guiado-sin-nodos')?.textContent?.replace(/\s+/g, ' ') ?? '';
+    expect(aviso()).toContain('con este filtro: el hilo de Pielonefritis.');
+    expect(aviso()).not.toContain('los filtros puestos');
+    host.filtro.set({ ...FILTRO_VACIO, hiloDeDiagnosticoId: 'dx2', texto: 'fiebre' });
+    await pintar();
+    expect(aviso()).toContain('con estos filtros: el hilo de Pielonefritis y la búsqueda «fiebre».');
+  });
+
   it('el paso despliega y trae a la vista lo que enfoca (irANodo)', async () => {
     const ir = vi.spyOn(RecorridoClinico.prototype, 'irANodo');
     await abrirGuiado();
@@ -202,7 +242,7 @@ describe('RedClinicaSuperficie', () => {
     expect(por('guiado-contador')!.textContent).toContain('Paso 1 de 1');
   });
 
-  it('o el del filtro «Solo el hilo de este diagnóstico»', async () => {
+  it('o el del filtro «Hilo»', async () => {
     host.filtro.set({ ...FILTRO_VACIO, hiloDeDiagnosticoId: 'dx2' });
     await pintar();
     await abrirGuiado();

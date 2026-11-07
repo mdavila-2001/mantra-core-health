@@ -3,12 +3,12 @@
     <app-search-field
       class="filtros__buscar"
       label="Buscar en la historia"
-      placeholder="Buscar diagnóstico, estudio, profesional…"
+      placeholder="Diagnóstico, estudio, profesional…"
       [value]="filtro().texto"
       (searched)="buscar($event)"
     />
 
-    <app-form-field class="filtros__hilo" label="Solo el hilo de este diagnóstico">
+    <app-form-field class="filtros__hilo" label="Hilo">
       <app-select
         data-testid="red-filtro-hilo"
         [options]="opcionesDeHilo()"

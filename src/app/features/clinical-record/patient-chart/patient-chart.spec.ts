@@ -1744,6 +1744,31 @@ describe('PatientChart', () => {
       expect(interno<() => unknown>('formulariosDelEncuentro')()).toBeNull();
     });
 
+    it('«Ver el registro completo» de la red llega como id y abre la fila de la pantalla', () => {
+      responderNombre();
+      responderExpediente({
+        resumen: {
+          encounters: [
+            { id: 'e-1', statusConceptId: 'st-final', startAt: '2026-01-03T10:00:00.000Z' },
+          ],
+        },
+      });
+      // An id the screen does not list opens nothing: no row is invented from the network's data.
+      interno<(id: string) => void>('verRegistroDeLaRed')('e-desconocido');
+      expect(interno<() => unknown>('filaEnDetalle')()).toBeNull();
+
+      interno<(id: string) => void>('verRegistroDeLaRed')('e-1');
+      expect(interno<() => { fila: { id: string }; bloque: string } | null>('filaEnDetalle')()).toMatchObject({
+        fila: { id: 'e-1' },
+        bloque: 'encuentros',
+      });
+      responderProcedimientos();
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http
+        .expectOne((r) => r.url === '/forms/instances')
+        .flush({ encounterId: 'e-1', items: [], limit: 50, truncated: false });
+    });
+
     it('un fallo de `forms` se dice y se puede reintentar', () => {
       abrirEncuentro();
       responderProcedimientos();

@@ -27,6 +27,18 @@ class Host {
   readonly apagado = signal(false);
 }
 
+/** A parent panel open with a folded child projected into it. */
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AccordionPanel],
+  template: `
+    <app-accordion-panel heading="Consulta" [expanded]="true">
+      <app-accordion-panel heading="Receta" [expanded]="false"><p>Levotiroxina</p></app-accordion-panel>
+    </app-accordion-panel>
+  `,
+})
+class NestedHost {}
+
 describe('AccordionPanel', () => {
   let fixture: ComponentFixture<Host>;
   let panelOpened: ReturnType<typeof vi.fn>;
@@ -94,5 +106,17 @@ describe('AccordionPanel', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.abierto()).toBe(false);
+  });
+
+  it('anidado: el hijo plegado no hereda la flecha girada del padre abierto', () => {
+    const anidado = TestBed.createComponent(NestedHost);
+    anidado.detectChanges();
+    const [padre, hijo] = [...(anidado.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('.accordion-panel__trigger')];
+    const giro = (b: HTMLButtonElement): string => getComputedStyle(b.querySelector('.accordion-panel__chevron')!).transform;
+
+    expect(padre!.getAttribute('aria-expanded')).toBe('true');
+    expect(hijo!.getAttribute('aria-expanded')).toBe('false');
+    expect(giro(padre!)).toBe('rotate(180deg)');
+    expect(giro(hijo!)).not.toBe('rotate(180deg)');
   });
 });

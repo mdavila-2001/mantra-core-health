@@ -15,7 +15,7 @@ const HEREDA_DEL_ORIGEN: ReadonlySet<MotivoDelVinculo> = new Set<MotivoDelVincul
   'receta-reemplazada',
 ]);
 
-/** Those that pull only if the target has no episode of its own; inferred ones last (ADR-0021). */
+/** Those that pull only if the target has no episode of its own; inferred ones only once the real ones converged (ADR-0021). */
 const HEREDA_SI_HUERFANO: ReadonlySet<MotivoDelVinculo> = new Set<MotivoDelVinculo>([
   'resultado-de',
   'inferido-misma-atencion',
@@ -121,12 +121,31 @@ export function agruparEnEpisodios(
     propio.set(id, ordenados[0]);
   };
 
-  const huerfanos = validos // Inferred last: they never replace a real link.
-    .filter((v) => HEREDA_SI_HUERFANO.has(v.motivo))
-    .sort((a, b) => Number(a.motivo.startsWith('inferido')) - Number(b.motivo.startsWith('inferido')));
+  const huerfanos = validos.filter((v) => HEREDA_SI_HUERFANO.has(v.motivo));
+  const reales = huerfanos.filter((v) => !v.motivo.startsWith('inferido'));
+  const inferidos = huerfanos.filter((v) => v.motivo.startsWith('inferido'));
+  /** Gives the orphan target its source's episode; whether it did. */
+  const heredar = (v: VinculoDeLaRed): boolean => {
+    // In `inferido-mismo-dia` the source is the appointment and the target
+    // the encounter: whichever has none inherits.
+    const pares: [string, string][] =
+      v.motivo === 'inferido-mismo-dia' ? [[v.hasta, v.desde], [v.desde, v.hasta]] : [[v.desde, v.hasta]];
+    for (const [origen, destino] of pares) {
+      const e = propio.get(origen);
+      if (e !== undefined && (de.get(destino)?.size ?? 0) === 0) {
+        agregar(destino, e);
+        propio.set(destino, e);
+        return true;
+      }
+    }
+    return false;
+  };
+  // Inferred links never replace a real one, not even one whose source takes
+  // an episode in a later round: a single inferred link is applied only once
+  // the real ones converged, and then the real ones converge again.
+  let convergio = false;
   let vueltas = 0;
-  cambio = true;
-  while (cambio && vueltas++ < registros.length + 2) {
+  while (vueltas++ < 3 * registros.length + 4) {
     cambio = false;
     // Encounters belong to the episodes of what was entered in them.
     const pesoPorAtencion = new Map<string, Map<string, number>>();
@@ -159,20 +178,8 @@ export function agruparEnEpisodios(
       }
     }
     // Orphans inherit their source's own episode.
-    for (const v of huerfanos) {
-      // In `inferido-mismo-dia` the source is the appointment and the target
-      // the encounter: whichever has none inherits.
-      const pares: [string, string][] =
-        v.motivo === 'inferido-mismo-dia' ? [[v.hasta, v.desde], [v.desde, v.hasta]] : [[v.desde, v.hasta]];
-      for (const [origen, destino] of pares) {
-        const e = propio.get(origen);
-        if (e !== undefined && (de.get(destino)?.size ?? 0) === 0) {
-          agregar(destino, e);
-          propio.set(destino, e);
-          cambio = true;
-        }
-      }
-    }
+    for (const v of reales) cambio = heredar(v) || cambio;
+    if (convergio && !cambio) cambio = inferidos.some(heredar);
     // The admission goes to the episode of the first encounter inside it.
     for (const v of validos) {
       if (v.motivo !== 'durante-internacion') continue;
@@ -183,6 +190,8 @@ export function agruparEnEpisodios(
         cambio = true;
       }
     }
+    if (!cambio && convergio) break;
+    convergio = !cambio;
   }
 
   /* 4 · The episodes. */

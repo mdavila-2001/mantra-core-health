@@ -224,6 +224,33 @@ describe('OrganizationBranches', () => {
     }
   });
 
+  it('una sede guardada con enlace corto y sin punto lo recibe al abrirla: se guarda sin pegar nada', async () => {
+    vi.useFakeTimers();
+    try {
+      const sinPunto: BranchListItem = {
+        ...CENTRAL,
+        latitude: undefined,
+        longitude: undefined,
+        locationUrl: 'https://maps.app.goo.gl/uwjxPfc6SYBhtQ3e7',
+      };
+      internal().openEdit(sinPunto);
+      await vi.advanceTimersByTimeAsync(600);
+
+      expect(preview).toHaveBeenCalledWith(TENANT, 'https://maps.app.goo.gl/uwjxPfc6SYBhtQ3e7');
+      expect(internal().hasChanges()).toBe(true);
+      internal().save();
+      expect(updates.map((u) => u.changes)).toEqual([{ latitude: -16.5, longitude: -68.15 }]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('una sede con su punto no le pregunta nada a la API al abrirla', () => {
+    internal().openEdit(CENTRAL);
+
+    expect(preview).not.toHaveBeenCalled();
+  });
+
   it('un enlace que la API tampoco puede leer deja la sucursal sin punto y lo dice', async () => {
     vi.useFakeTimers();
     try {

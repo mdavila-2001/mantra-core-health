@@ -1,0 +1,32 @@
+medica-768-claro sin panel: ["Hipotiroidismo: texto 95.89 / caja 95.89","Hipertensión arterial esencial: texto 191.69 / caja 191.69","Dislipidemia: texto 80.58 / caja 80.58","Infección respiratoria aguda: texto 180.30 / caja 180.30"]
+ok   medica-768-claro: sin panel, ningún nombre cortado []
+medica-768-claro con panel: ["Hipotiroidismo: texto 95.89 / caja 95.89","Hipertensión arterial esencial: texto 191.69 / caja 191.69","Dislipidemia: texto 80.58 / caja 80.58","Infección respiratoria aguda: texto 180.30 / caja 180.30"]
+ok   medica-768-claro: con panel, ningún nombre cortado []
+ok   medica-768-claro: consola sin errores []
+medica-768-oscuro sin panel: ["Hipotiroidismo: texto 95.89 / caja 95.89","Hipertensión arterial esencial: texto 191.69 / caja 191.69","Dislipidemia: texto 80.58 / caja 80.58","Infección respiratoria aguda: texto 180.30 / caja 180.30"]
+ok   medica-768-oscuro: sin panel, ningún nombre cortado []
+medica-768-oscuro con panel: ["Hipotiroidismo: texto 95.89 / caja 95.89","Hipertensión arterial esencial: texto 191.69 / caja 191.69","Dislipidemia: texto 80.58 / caja 80.58","Infección respiratoria aguda: texto 180.30 / caja 180.30"]
+ok   medica-768-oscuro: con panel, ningún nombre cortado []
+ok   medica-768-oscuro: consola sin errores []
+medica-1440-claro sin panel: ["Hipotiroidismo: texto 95.89 / caja 95.89","Hipertensión arterial esencial: texto 191.69 / caja 191.69","Dislipidemia: texto 80.58 / caja 80.58","Infección respiratoria aguda: texto 180.30 / caja 180.30"]
+ok   medica-1440-claro: sin panel, ningún nombre cortado []
+medica-1440-claro con panel: ["Hipotiroidismo: texto 95.89 / caja 95.89","Hipertensión arterial esencial: texto 191.69 / caja 191.69","Dislipidemia: texto 80.58 / caja 80.58","Infección respiratoria aguda: texto 180.30 / caja 180.30"]
+ok   medica-1440-claro: con panel, ningún nombre cortado []
+ok   medica-1440-claro: consola sin errores []
+medica-1440-oscuro sin panel: ["Hipotiroidismo: texto 95.89 / caja 95.89","Hipertensión arterial esencial: texto 191.69 / caja 191.69","Dislipidemia: texto 80.58 / caja 80.58","Infección respiratoria aguda: texto 180.30 / caja 180.30"]
+ok   medica-1440-oscuro: sin panel, ningún nombre cortado []
+medica-1440-oscuro con panel: ["Hipotiroidismo: texto 95.89 / caja 95.89","Hipertensión arterial esencial: texto 191.69 / caja 191.69","Dislipidemia: texto 80.58 / caja 80.58","Infección respiratoria aguda: texto 180.30 / caja 180.30"]
+ok   medica-1440-oscuro: con panel, ningún nombre cortado []
+ok   medica-1440-oscuro: consola sin errores []
+ok   paciente-1440-claro: la portada muestra la próxima cita
+paciente-1440-claro: 12 disparadores, 4 hijos plegados dentro de un padre abierto
+ok   paciente-1440-claro: hay al menos un hijo plegado dentro de un padre abierto
+ok   paciente-1440-claro: cada flecha sigue a su propio aria-expanded (0 discrepancias)
+ok   paciente-1440-claro: consola sin errores []
+ok   paciente-1440-oscuro: la portada muestra la próxima cita
+paciente-1440-oscuro: 12 disparadores, 4 hijos plegados dentro de un padre abierto
+ok   paciente-1440-oscuro: hay al menos un hijo plegado dentro de un padre abierto
+ok   paciente-1440-oscuro: cada flecha sigue a su propio aria-expanded (0 discrepancias)
+ok   paciente-1440-oscuro: consola sin errores []
+
+TODO OK

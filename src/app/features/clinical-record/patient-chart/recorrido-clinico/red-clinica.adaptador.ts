@@ -39,6 +39,26 @@ const CITA: Readonly<Record<string, { tono: Tone; atendible: boolean }>> = {
   'BK-NO-SHOW': { tono: 'warning', atendible: false },
 };
 
+/**
+ * A study order's status, by code: the API's (`SR_*`, HL7 FHIR names) and the
+ * simulator's (`ST-*`). An order still waiting for its result warns; a
+ * fulfilled one succeeds; a withdrawn one is an error. Unknown stays neutral.
+ */
+const ORDEN: Readonly<Record<string, Tone>> = {
+  SR_DRAFT: 'info',
+  SR_ACTIVE: 'warning',
+  SR_ON_HOLD: 'warning',
+  SR_COMPLETED: 'success',
+  SR_SATISFIED_BY_PRIOR: 'success',
+  SR_REVOKED: 'error',
+  'ST-DRAFT': 'info',
+  'ST-PENDING': 'warning',
+  'ST-ACTIVE': 'warning',
+  'ST-COMPLETED': 'success',
+  'ST-SATISFIED-BY-PRIOR': 'success',
+  'ST-REVOKED': 'error',
+};
+
 /** A referral's status in words: the cycle sent → accepted → arrived → counter-referral. */
 export function estadoDeLaDerivacion(d: DerivacionDeLaFuente): { readonly estado: string; readonly tono: Tone } {
   if (d.counterReferralAt !== undefined) return { estado: 'Contrarreferencia', tono: 'success' };
@@ -131,7 +151,7 @@ export function construirRed(
       titulo: nombre(o.codeConceptId, 'Estudio'),
       detalle: 'Orden de estudio',
       estado: nombre(o.statusConceptId, ''),
-      tonoDelEstado: 'info',
+      tonoDelEstado: ORDEN[rotular(o.statusConceptId).code ?? ''] ?? 'info',
       cuando: o.createdAt,
       ...(o.encounterId ? { encuentroId: o.encounterId } : {}),
     });

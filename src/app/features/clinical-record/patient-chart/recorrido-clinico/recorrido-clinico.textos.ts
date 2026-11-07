@@ -7,6 +7,7 @@
 import { ASPECTO_DE_LA_CLASE, type ClaseDeLaRed } from './red-clinica.model';
 import type { EpisodioClinico } from './red-clinica.episodio';
 import type { ColumnaDeLaRed, HiloDeLaRed, NodoDeLaRed, PlanoDeLaRed } from './red-clinica.geometria.types';
+import { mismoDiaClinico, partesDelDia } from './dia-clinico';
 
 /** A record's own date when it is not its column's. */
 export interface FechaPropia {
@@ -103,12 +104,13 @@ export function contextoDe(columna: ColumnaDeLaRed): string {
 export function fechaPropia(nodo: NodoDeLaRed, columna: ColumnaDeLaRed | undefined, angosto: boolean): FechaPropia | null {
   const r = nodo.registro;
   if (nodo.forma !== 'tarjeta' || r === undefined || r.cuando === null || columna === undefined || columna.fecha === null) return null;
-  if (r.cuando.toDateString() === columna.fecha.toDateString()) return null;
+  // The clinical day (La Paz), the same one the columns are grouped by.
+  if (mismoDiaClinico(r.cuando, columna.fecha)) return null;
   const rotulo = r.clase === 'diagnostico' ? 'Inicio' : r.clase === 'medicacion' ? 'Desde' : 'Del';
   const dias = Math.abs(r.cuando.getTime() - columna.fecha.getTime()) / 86_400_000;
   const formato = angosto
     ? 'd MMM y'
-    : r.cuando.getFullYear() === columna.fecha.getFullYear()
+    : partesDelDia(r.cuando).anio === partesDelDia(columna.fecha).anio
       ? 'd MMM'
       : dias < 90
         ? 'd MMM y'
