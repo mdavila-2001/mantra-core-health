@@ -38,3 +38,13 @@
   padding: 0;
   list-style: none;
 }
+
+.new-step {
+  display: grid;
+  gap: var(--sp-3);
+  justify-items: start;
+}
+
+.new-step > app-equipment-form {
+  justify-self: stretch;
+}

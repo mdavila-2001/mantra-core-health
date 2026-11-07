@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, type OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, viewChild, type OnInit } from '@angular/core';
 
 import { CenterScheduleClient } from '../../../../core/data-access/diagnostic-units/center-schedule.client';
 import { resolverHorario } from '../../../../core/data-access/diagnostic-units/center-schedule.rules';
@@ -17,7 +17,9 @@ import { MODALIDADES } from '../../../../core/data-access/diagnostic-units/modal
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
+import { EquipmentCatalog } from './equipment-catalog';
 import { EquipmentForm } from './equipment-form';
 import { EquipmentLine } from './equipment-line';
 
@@ -28,7 +30,7 @@ import { EquipmentLine } from './equipment-line';
  */
 @Component({
   selector: 'app-center-equipment',
-  imports: [AppButton, Alert, EquipmentForm, EquipmentLine],
+  imports: [AppButton, Alert, ContentDialog, EquipmentCatalog, EquipmentForm, EquipmentLine],
   templateUrl: './center-equipment.html',
   styleUrl: './center-equipment.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,7 +50,11 @@ export class CenterEquipmentTab implements OnInit {
   protected readonly editando = signal<string | null>(null);
   protected readonly ocupado = signal(false);
   protected readonly error = signal<string | null>(null);
+  /** Inside the «Agregar equipo» modal: `null` shows the catalog, otherwise the form prefilled with it. */
+  protected readonly newDraft = signal<CenterEquipmentInput | null>(null);
   private readonly hoy = signal<readonly CenterBooking[]>([]);
+  /** Closing through the dialog returns focus to «Agregar equipo». */
+  protected readonly dialog = viewChild(ContentDialog);
 
   protected readonly veGlosario = computed(() => this.navegacion.visibleSections().some((s) => s.path === 'glossary'));
 
@@ -61,6 +67,18 @@ export class CenterEquipmentTab implements OnInit {
   });
 
   protected readonly equipoEditado = computed(() => this.centro().equipment.find((e) => e.id === this.editando()) ?? null);
+
+  protected openNew(): void {
+    this.error.set(null);
+    this.newDraft.set(null);
+    this.editando.set('nuevo');
+  }
+
+  /** `(closed)`: the dialog is already gone, so the state always follows. */
+  protected closeNew(): void {
+    this.error.set(null);
+    this.editando.set(null);
+  }
 
   ngOnInit(): void {
     const desde = new Date();
@@ -118,7 +136,8 @@ export class CenterEquipmentTab implements OnInit {
     peticion.subscribe({
       next: (vista) => {
         this.ocupado.set(false);
-        this.editando.set(null);
+        this.dialog()?.close(true);
+        if (this.editando() !== 'nuevo') this.editando.set(null);
         this.vistaChange.emit(vista);
       },
       error: (error: unknown) => {
