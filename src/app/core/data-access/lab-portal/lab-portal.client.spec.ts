@@ -101,6 +101,18 @@ describe('LabPortalClient contra la API real', () => {
     req.flush({});
   });
 
+  it('el catálogo manda los componentes destildados sólo si los hay', () => {
+    client.importCatalog(['a', 'b']).subscribe();
+    const plain = http.expectOne('/diagnostics/lab/catalog/import');
+    expect(plain.request.body).toEqual({ conceptIds: ['a', 'b'] });
+    plain.flush({});
+
+    client.importCatalog(['a'], ['p1']).subscribe();
+    const skipping = http.expectOne('/diagnostics/lab/catalog/import');
+    expect(skipping.request.body).toEqual({ conceptIds: ['a'], skipComponentIds: ['p1'] });
+    skipping.flush({});
+  });
+
   it('los servicios filtran sin mandar parámetros vacíos', () => {
     client.listServices({ q: 'hemo', categoryId: '' }).subscribe();
     const req = http.expectOne((r) => r.url === '/diagnostics/lab/services');

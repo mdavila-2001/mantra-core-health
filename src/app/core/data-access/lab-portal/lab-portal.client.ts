@@ -91,10 +91,9 @@ export class LabPortalClient {
     conceptIds: readonly string[],
     skipComponentIds: readonly string[] = [],
   ): Observable<LabCatalogImportResult> {
-    return this.http.post<LabCatalogImportResult>(this.url('/diagnostics/lab/catalog/import'), {
-      conceptIds,
-      skipComponentIds,
-    });
+    // Sent only when something is unticked: an API without the field keeps accepting the call.
+    const body = skipComponentIds.length > 0 ? { conceptIds, skipComponentIds } : { conceptIds };
+    return this.http.post<LabCatalogImportResult>(this.url('/diagnostics/lab/catalog/import'), body);
   }
 
   /* ---- categorías ------------------------------------------------------- */
