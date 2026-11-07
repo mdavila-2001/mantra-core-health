@@ -1,0 +1,13 @@
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.grid__source {
+  margin-block: 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
