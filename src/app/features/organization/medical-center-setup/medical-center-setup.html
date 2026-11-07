@@ -57,30 +57,42 @@
         <app-alert tone="error" data-testid="medical-center-setup-error">{{ message }}</app-alert>
       }
 
-      <app-paginated-form
-        [paginas]="pages"
-        [form]="form"
-        label="Configurar práctica"
-        submitLabel="Guardar la configuración"
-        [pending]="saving()"
-        (enviado)="save()"
-        data-testid="medical-center-setup-form"
-      >
-        <ng-template appCampoPersonalizado="point">
-          <app-map-location-picker
-            pinId="medical-center-site"
-            etiquetaConfirmada="Sede de su organización"
-            etiquetaQuitar="Quitar la ubicación de la sede"
-            etiquetaMapa="La sede en el mapa"
-            indicacionMarcar="Toque el mapa en el lugar exacto de la sede."
-            [ids]="pointIds"
-            etiquetaFicha="La dirección de la sede"
-            [inicial]="form.controls.point.value"
-            (confirmado)="setPoint($event)"
-            (localidad)="writeLocality($event)"
+      @if (registered(); as site) {
+        @if (!manual()) {
+          <app-registered-site-confirm
+            [site]="site"
+            [pending]="saving()"
+            (confirmed)="createFromRegistration(site)"
+            (other)="manual.set(true)"
           />
-        </ng-template>
-      </app-paginated-form>
+        }
+      }
+      @if (registered() === null || manual()) {
+        <app-paginated-form
+          [paginas]="pages"
+          [form]="form"
+          label="Configurar práctica"
+          submitLabel="Guardar la configuración"
+          [pending]="saving()"
+          (enviado)="save()"
+          data-testid="medical-center-setup-form"
+        >
+          <ng-template appCampoPersonalizado="point">
+            <app-map-location-picker
+              pinId="medical-center-site"
+              etiquetaConfirmada="Sede de su organización"
+              etiquetaQuitar="Quitar la ubicación de la sede"
+              etiquetaMapa="La sede en el mapa"
+              indicacionMarcar="Toque el mapa en el lugar exacto de la sede."
+              [ids]="pointIds"
+              etiquetaFicha="La dirección de la sede"
+              [inicial]="form.controls.point.value"
+              (confirmado)="setPoint($event)"
+              (localidad)="writeLocality($event)"
+            />
+          </ng-template>
+        </app-paginated-form>
+      }
     }
   </app-view-state-host>
 </app-card>

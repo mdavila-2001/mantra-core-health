@@ -1,0 +1,82 @@
+<div class="directory">
+  @if (source() === 'SIMULATED') {
+    <app-alert tone="info" data-testid="directory-simulated">
+      Datos simulados: el listado de todos los usuarios usa un contrato provisional del front hasta que la API
+      publique el suyo. Ninguna persona de esta lista es real.
+    </app-alert>
+  }
+
+  <p class="directory__note">
+    Todas las cuentas de la aplicación, por tipo. Sin contraseñas ni documentos, y con el correo enmascarado. Esta
+    pantalla muestra lo que la API informa; no concede ni quita accesos por sí sola.
+  </p>
+
+  <app-filter-bar
+    searchLabel="Buscar usuarios"
+    searchPlaceholder="Nombre visible"
+    wrap
+    [filters]="filterDefs()"
+    [searchLoading]="list.state().status === 'loading'"
+  />
+
+  @if (unavailable().length > 0) {
+    <app-alert tone="warning" data-testid="directory-partial">
+      Lista parcial: no se pudo leer {{ unavailableText() }}. Los demás tipos se muestran completos.
+      <button app-button size="sm" variant="secondary" class="directory__retry" (clicked)="list.reload()">Reintentar</button>
+    </app-alert>
+  }
+
+  <app-data-table
+    data-testid="portal-directory-table"
+    caption="Todos los usuarios"
+    [state]="list.state()"
+    [columns]="columns()"
+    [trackBy]="byId"
+    [rowLabel]="rowName"
+    [cursor]="list.cursor()"
+    stackedOnMobile
+    fitContainer
+    (cursorChanged)="list.move($event)"
+    (retry)="list.reload()"
+  />
+</div>
+
+<ng-template #personCell let-row>
+  <span class="directory__person">
+    @if (row.type === 'INTERNAL') {
+      <a app-link [routerLink]="[]" [queryParams]="{ user: row.id }" queryParamsHandling="merge">{{ row.displayName }}</a>
+    } @else {
+      <span>{{ row.displayName }}</span>
+    }
+    <span class="directory__secondary">{{ email(row.maskedEmail) }}</span>
+  </span>
+</ng-template>
+
+<ng-template #typeCell let-row>
+  <app-badge size="sm" variant="info">{{ singular(row.type) }}</app-badge>
+</ng-template>
+
+<ng-template #statusCell let-row>
+  @let s = status(row.status);
+  <app-badge size="sm" [variant]="s.tone">{{ s.label }}</app-badge>
+</ng-template>
+
+<ng-template #rolesCell let-row>
+  @if (row.roles.length === 0) {
+    <span class="directory__secondary">Sin roles</span>
+  } @else {
+    <span class="directory__roles">
+      @for (role of row.roles; track role.code) {
+        <app-badge size="sm" variant="secondary">{{ role.code }}</app-badge>
+      }
+    </span>
+  }
+</ng-template>
+
+<ng-template #permCell let-row>
+  <span class="directory__secondary" [attr.title]="row.permissions.resources.join(', ')">{{ perms(row.permissions) }}</span>
+</ng-template>
+
+<ng-template #loginCell let-row>
+  <span class="directory__secondary">{{ row.lastLoginAt ? when(row.lastLoginAt) : 'Nunca ingresó' }}</span>
+</ng-template>

@@ -70,14 +70,14 @@
           />
         } @else {
           <p class="branches__muted" data-testid="branches-map-empty">
-            Ninguna de estas sedes tiene su punto en el mapa. Use «Editar» y pegue el enlace de
-            Google Maps u OpenStreetMap de cada una.
+            Ninguna de estas sedes tiene su punto en el mapa. Use «Editar»: si la sede tiene enlace,
+            el punto se lee de ahí; si no, márquelo tocando el mapa.
           </p>
         }
         @if (categories.pins().length > 0 && categories.withoutPoint().length > 0) {
           <p class="branches__muted" data-testid="branches-map-missing">
             {{ categories.withoutPoint().length === 1 ? 'Una sede no aparece' : categories.withoutPoint().length + ' sedes no aparecen' }}
-            en el mapa porque no tienen su punto: {{ categories.missingNames() }}. Use «Editar» y pegue su enlace de ubicación.
+            en el mapa porque no tienen su punto: {{ categories.missingNames() }}. Use «Editar» y guarde: si tienen enlace, el punto se lee de ahí; si no, márquelo tocando el mapa.
           </p>
         }
       </section>

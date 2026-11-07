@@ -26,7 +26,9 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
+import { SETUP_PAGES } from './medical-center-setup.pages';
+import { registeredSiteOf, type RegisteredSite } from './registered-site';
+import { RegisteredSiteConfirm } from './registered-site-confirm';
 import {
   MapLocationPicker,
   type Coordinates,
@@ -104,6 +106,7 @@ export const RUTA_PANEL = '/dashboard';
   selector: 'app-medical-center-setup',
   imports: [
     Alert,
+    RegisteredSiteConfirm,
     Card,
     CustomField,
     EmptyState,
@@ -188,6 +191,9 @@ export class MedicalCenterSetup {
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly created = signal<CreatedOrganizationPractice | null>(null);
+  /** The site the registration already declared, when it is complete: one click creates the practice. */
+  protected readonly registered = signal<RegisteredSite | null>(null);
+  protected readonly manual = signal(false);
 
   protected readonly pointIds = {
     mapa: 'medical-center-site-map',
@@ -199,48 +205,7 @@ export class MedicalCenterSetup {
     marcarEnMapa: 'medical-center-site-location-pick',
   };
 
-  /** Dos páginas, de a cuatro campos como tope: la organización y su primera sede. */
-  protected readonly pages = paginateFields([
-    {
-      titulo: 'Su organización',
-      hint: 'Cómo la van a encontrar los pacientes y cómo se llama su primera sede.',
-      campos: [
-        {
-          key: 'practiceName',
-          label: 'Nombre de la organización',
-          hint: 'El nombre con el que atiende, como lo va a ver el paciente.',
-          control: 'text' as const,
-          required: true,
-          testId: 'medical-center-setup-practice-name',
-          mensajeDeError: 'Escriba el nombre de la organización.',
-        },
-        {
-          key: 'siteName',
-          label: 'Nombre de la sede',
-          hint: 'Como la va a ver el paciente: «Sede Norte», «Casa matriz».',
-          control: 'text' as const,
-          required: true,
-          testId: 'medical-center-setup-site-name',
-          mensajeDeError: 'Escriba el nombre de la sede.',
-        },
-      ],
-    },
-    {
-      titulo: 'La sede',
-      hint: 'Dónde queda: marque el punto exacto en el mapa; la dirección sale de ahí.',
-      campos: [
-        {
-          key: 'point',
-          label: 'Ubicación de la sede en el mapa',
-          hint: 'Use su GPS o toque el plano. De ese punto sacamos la dirección, el municipio y la zona.',
-          control: 'custom' as const,
-          ancho: 'completo' as const,
-          required: true,
-          mensajeDeError: 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
-        },
-      ],
-    },
-  ]);
+  protected readonly pages = SETUP_PAGES;
 
   constructor() {
     this.cargarVerificacion();
@@ -258,6 +223,7 @@ export class MedicalCenterSetup {
     this.directory.listMyOrganizations().subscribe({
       next: (organizaciones) => {
         const activa = organizaciones.find((organizacion) => organizacion.id === tenantId);
+        if (activa?.isVerified) this.loadRegistered(tenantId, activa.tradeName ?? activa.legalName);
         this.estado.set(
           activa !== undefined && !activa.isVerified
             ? empty(
@@ -269,6 +235,25 @@ export class MedicalCenterSetup {
       },
       error: (error: unknown) => this.estado.set(errorToViewState<true>(error)),
     });
+  }
+
+  /** What the registration already told us, so it is not asked twice. A failure just shows the form. */
+  private loadRegistered(tenantId: string, organizationName: string): void {
+    this.directory.listBranches(tenantId).subscribe({
+      next: (list) => this.registered.set(registeredSiteOf(organizationName, list.items)),
+      error: () => this.registered.set(null),
+    });
+  }
+
+  /** «Crear mi práctica»: the registered site goes through the same form and the same `save()`. */
+  protected createFromRegistration(site: RegisteredSite): void {
+    this.form.patchValue({
+      practiceName: site.practiceName,
+      siteName: site.siteName,
+      addressText: site.addressText,
+      point: { lat: site.latitude, lng: site.longitude },
+    });
+    this.save();
   }
 
   protected setPoint(point: Coordinates | null): void {

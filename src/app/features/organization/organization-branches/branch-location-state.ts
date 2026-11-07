@@ -48,10 +48,14 @@ export class BranchLocationState {
       });
   }
 
-  /** Opens the dialog with the branch's own point (or none). */
-  reset(point: BranchCoordinates | null): void {
+  /**
+   * Opens the dialog with the branch's own point (or none). A branch saved with a link but no
+   * point (a short link, before the API could read it) gets its point from that link now.
+   */
+  reset(point: BranchCoordinates | null, link = ''): void {
     this.point.set(point);
     this.note.set('');
+    if (point === null) this.fromLink(link);
   }
 
   /** Someone touched the map: that point wins over whatever link was pasted. */
