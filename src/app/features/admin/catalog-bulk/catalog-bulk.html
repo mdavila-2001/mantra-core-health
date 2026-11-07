@@ -1,0 +1,93 @@
+<app-page-header
+  title="Carga masiva de catálogo de farmacia"
+  subtitle="Categorías, productos, precios y sucursales de una farmacia. Primero se simula sin escribir nada; solo al confirmar se guarda."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="carga">
+  <app-card variant="outlined" padding="md">
+    <app-view-state-host [state]="pharmacies()">
+      <section class="carga__paso" aria-labelledby="cb-paso1">
+        <h3 id="cb-paso1" class="carga__titulo">1. Farmacia, tipo y modo</h3>
+        <div class="carga__rejilla">
+          <app-form-field label="Farmacia" [required]="true">
+            <app-select ariaLabel="Farmacia" data-testid="cb-pharmacy" [options]="pharmacyOptions()" [value]="pharmacyId()" (valueChange)="pick(pharmacyId, $event)" />
+          </app-form-field>
+          <app-form-field label="Qué se carga" [required]="true">
+            <app-select ariaLabel="Qué se carga" data-testid="cb-kind" [options]="kindOptions" [value]="kind()" (valueChange)="pickKind($event)" />
+          </app-form-field>
+          <app-form-field label="Modo" [required]="true">
+            <app-select ariaLabel="Modo" data-testid="cb-mode" [options]="modeOptions" [value]="mode()" (valueChange)="pick(mode, $event)" />
+          </app-form-field>
+        </div>
+        <p class="carga__ayuda" data-testid="cb-help">
+          Clave de cada fila: <code>{{ info().key }}</code>. Columnas: <code>{{ info().columns }}</code>.
+          Hasta 1000 filas por archivo; no puede repetir la clave dentro del archivo.
+        </p>
+      </section>
+
+      <section class="carga__paso" aria-labelledby="cb-paso2">
+        <h3 id="cb-paso2" class="carga__titulo">2. Archivo</h3>
+        <app-file-input
+          label="Elegir archivo CSV o JSON"
+          accept=".csv,.json"
+          [maxSizeBytes]="maxBytes"
+          [maxFiles]="1"
+          [files]="files()"
+          [showList]="true"
+          [hasError]="fileError() !== null"
+          (filesChange)="pickFile($event)"
+          (rejected)="rejectFile($event)"
+          testId="cb-file"
+        />
+        @if (fileError(); as msg) {
+          <app-alert tone="error" title="No se pudo leer el archivo" data-testid="cb-file-error">{{ msg }}</app-alert>
+        } @else if (rows().length > 0) {
+          <p class="carga__ayuda" data-testid="cb-rows-read">{{ rows().length }} filas leídas.</p>
+        }
+        <div class="carga__acciones">
+          <button app-button variant="secondary" [disabled]="!canSimulate()" [isLoading]="running() && !report()" (clicked)="simulate()" data-testid="cb-simulate">
+            Simular (sin guardar)
+          </button>
+          <button app-button [disabled]="!preview() || running() || !!report() || (count('CREATED') + count('UPDATED')) === 0" (clicked)="confirm()" data-testid="cb-confirm">
+            Confirmar y guardar
+          </button>
+        </div>
+      </section>
+
+      @if (failure(); as msg) {
+        <app-alert tone="error" title="La carga no se completó" data-testid="cb-failure">{{ msg }}</app-alert>
+      }
+
+      @if (current(); as res) {
+        <section class="carga__paso" aria-labelledby="cb-paso3">
+          <h3 id="cb-paso3" class="carga__titulo" data-testid="cb-result-title">
+            {{ report() ? '4. Informe de la carga' : '3. Resultado de la simulación' }}
+          </h3>
+          <app-alert [tone]="report() ? 'success' : 'info'" [title]="report() ? 'Carga guardada' : 'Simulación: no se escribió nada'" data-testid="cb-mode-banner">
+            {{ report() ? 'Estos resultados ya están guardados en el catálogo.' : 'Así quedaría cada fila si confirma.' }}
+          </app-alert>
+          <div class="carga__metricas">
+            @for (o of outcomes; track o) {
+              <app-metric-card [label]="label[o] + (o === 'UNCHANGED' ? '' : 's') + (!report() && (o === 'CREATED' || o === 'UPDATED') ? ' (previstas)' : '')" [value]="count(o)" [tone]="o === 'REJECTED' && count(o) > 0 ? 'error' : o === 'CREATED' ? 'success' : 'neutral'" [attr.data-testid]="'cb-count-' + o" />
+            }
+          </div>
+          <app-data-table [state]="resultRows()" [columns]="resultColumns" [trackBy]="byId" [rowLabel]="rowName" stackedOnMobile fitContainer caption="Resultado de cada fila" data-testid="cb-results" />
+        </section>
+      }
+
+      @if (report() && snapshot(); as snap) {
+        <section class="carga__paso" aria-labelledby="cb-paso5">
+          <h3 id="cb-paso5" class="carga__titulo">5. Verificación: lo que el catálogo guarda tras recargar</h3>
+          <app-view-state-host [state]="snap">
+            @if (snap.status === 'ready' && snap.data === null) {
+              <p class="carga__ayuda" data-testid="cb-snapshot-none">Las sucursales no tienen lectura en este cliente: la persistencia no se verifica desde aquí.</p>
+            } @else {
+              <app-data-table [state]="snapshotRows()" [columns]="snapshotColumns" [trackBy]="byId" [rowLabel]="snapshotName" stackedOnMobile fitContainer caption="Catálogo recargado de la API" data-testid="cb-snapshot" />
+            }
+          </app-view-state-host>
+        </section>
+      }
+    </app-view-state-host>
+  </app-card>
+</div>
