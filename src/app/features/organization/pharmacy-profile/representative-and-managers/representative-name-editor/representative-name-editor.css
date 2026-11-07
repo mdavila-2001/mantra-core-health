@@ -16,6 +16,8 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  /* The shared name block lays out its own two columns: give it the whole row. */
+  .editor app-inline-name-fields,
   .editor__error,
   .editor__acciones {
     grid-column: 1 / -1;
