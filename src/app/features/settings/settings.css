@@ -1,13 +1,18 @@
 /* Section index on the left, panel on the right. The tabs molecule draws the
    column and, on a phone, turns it into the horizontal strip above the panel
-   (tabs.css): component encapsulation keeps this sheet out of its inside. */
+   (tabs.css). Encapsulation keeps this sheet out of its inside, so the index
+   width travels as a custom property: a fixed column, so the panel does not
+   shift when the bold selected label changes width. */
 .ajustes__tabs.tabs--vertical {
+  --tabs-indice: 12rem;
   gap: var(--e5);
 }
 
+/* Full panel width in every tab (client rule 6, user request 2026-11-06).
+   It is also the container the rows measure themselves against. */
 .ajustes__bloque {
   margin-bottom: var(--e5);
-  max-inline-size: 68ch;
+  container-type: inline-size;
 }
 
 .ajustes__bloque:last-child {
@@ -69,13 +74,22 @@
   min-inline-size: 0;
 }
 
-.ajustes__interruptor,
-.ajustes__accion {
+.ajustes__interruptor {
   flex-shrink: 0;
 }
 
-/* On a phone a row's button takes a second line under the text, aligned with it. */
-@media (width < 36rem) {
+/* A long label wraps inside the button instead of pushing past the row. */
+.ajustes__accion {
+  flex-shrink: 0;
+  max-inline-size: 50%;
+  block-size: auto;
+  white-space: normal;
+}
+
+/* When the block is narrow (phone, or a tablet next to the index) a row's
+   button takes a second line, aligned with the text. Measured on the block,
+   not the viewport, so no width range is left where text and button collide. */
+@container (width < 34rem) {
   .ajustes__fila:has(.ajustes__accion) {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -85,7 +99,6 @@
     grid-column: 2;
     justify-self: start;
     max-inline-size: 100%;
-    white-space: normal;
   }
 }
 
@@ -103,6 +116,7 @@
 
 .ajustes__texto {
   display: flex;
+  overflow-wrap: anywhere;
   flex-direction: column;
   gap: 0.15rem;
 }

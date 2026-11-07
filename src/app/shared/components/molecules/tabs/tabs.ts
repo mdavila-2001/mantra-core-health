@@ -176,6 +176,7 @@ export class Tabs implements TabsHost {
 
   /** Hay más tira de la que entra: se muestran las flechas. */
   protected readonly desborda = signal(false);
+  protected readonly dibujadaEnFila = signal(false); // vertical drawn as a row: phone, tabs.css
 
   /** Queda tira hacia atrás / hacia adelante desde donde está el scroll. */
   protected readonly puedeRetroceder = signal(false);
@@ -250,6 +251,7 @@ export class Tabs implements TabsHost {
       return;
     }
     const { scrollWidth, clientWidth, scrollLeft } = tira;
+    this.dibujadaEnFila.set(getComputedStyle(tira).flexDirection === 'row');
     const medida = measureStrip({ scrollWidth, clientWidth, scrollLeft, availableWidth: availableWidth(barra) });
     this.desborda.set(medida.overflows);
     this.puedeRetroceder.set(medida.canGoBack);
