@@ -1,13 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 
-import {
-  LegalRepresentativeClient,
-  type LegalRepresentativeName,
-} from '../../../../../core/data-access/directory/legal-representative.client';
+import { LegalRepresentativeClient } from '../../../../../core/data-access/directory/legal-representative.client';
 import { describeApiFailure } from '../../../../../core/http/api-failure';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
-import { Input } from '../../../../../shared/components/atoms/input/input';
-import { FormField } from '../../../../../shared/components/molecules/form-field/form-field';
+import { InlineNameFields } from '../../../../auth/shared-registration/inline-name-fields/inline-name-fields';
+import { nameGroup, nameParts } from '../../../../auth/shared-registration/name-fields/person-name';
 import { FormActions } from '../../../../../shared/components/organisms/form-actions/form-actions';
 
 /** The name by parts, as the registration declared it; any part may be missing on old rows. */
@@ -21,14 +18,16 @@ export interface RepresentativeNameParts {
 /**
  * Lets whoever administers the organization correct the legal representative's name.
  *
- * It saves on its own (`PATCH /tenants/{id}/legal-representative`) and then says so with
+ * It uses the same name block as the registration (first, second and third name, any number of
+ * further names, both surnames) and sends it folded into the four parts the API stores. It saves
+ * on its own (`PATCH /tenants/{id}/representatives/LEGAL_REPRESENTATIVE/name`) and then says so with
  * `saved`, so the owner of the data reloads it: the screen shows what the server kept, not what
  * was typed. The API re-checks that the person administers the organization; this only decides
  * whether the button is offered.
  */
 @Component({
   selector: 'app-representative-name-editor',
-  imports: [AppButton, FormActions, FormField, Input],
+  imports: [AppButton, FormActions, InlineNameFields],
   templateUrl: './representative-name-editor.html',
   styleUrl: './representative-name-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,21 +41,21 @@ export class RepresentativeNameEditor {
 
   protected readonly editing = signal(false);
   protected readonly pending = signal(false);
-  protected readonly attempted = signal(false);
   protected readonly failure = signal('');
 
-  protected readonly name = signal('');
-  protected readonly middleName = signal('');
-  protected readonly lastName = signal('');
-  protected readonly motherLastName = signal('');
+  /** Same group as the registration; names travel in parts, so they are folded on save. */
+  protected readonly group = nameGroup(true, true);
 
   protected open(): void {
     const current = this.parts();
-    this.name.set(current.name ?? '');
-    this.middleName.set(current.middleName ?? '');
-    this.lastName.set(current.lastName ?? '');
-    this.motherLastName.set(current.motherLastName ?? '');
-    this.attempted.set(false);
+    this.group.controls.extraNames.clear();
+    this.group.reset({
+      name: current.name ?? '',
+      middleName: current.middleName ?? '',
+      thirdName: '',
+      lastName: current.lastName ?? '',
+      motherLastName: current.motherLastName ?? '',
+    });
     this.failure.set('');
     this.editing.set(true);
   }
@@ -65,19 +64,10 @@ export class RepresentativeNameEditor {
     this.editing.set(false);
   }
 
-  protected missing(value: string): string {
-    return this.attempted() && value.trim() === '' ? 'Este dato es obligatorio.' : '';
-  }
-
   protected save(): void {
-    this.attempted.set(true);
-    if (this.pending() || this.name().trim() === '' || this.lastName().trim() === '') return;
-    const body: LegalRepresentativeName = {
-      name: this.name().trim(),
-      lastName: this.lastName().trim(),
-      ...(this.middleName().trim() ? { middleName: this.middleName().trim() } : {}),
-      ...(this.motherLastName().trim() ? { motherLastName: this.motherLastName().trim() } : {}),
-    };
+    this.group.markAllAsTouched();
+    if (this.pending() || this.group.invalid) return;
+    const body = nameParts(this.group.getRawValue());
     this.pending.set(true);
     this.failure.set('');
     this.client.rename(this.tenantId(), body).subscribe({
