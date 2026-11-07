@@ -15,9 +15,9 @@ import {
 
 import { SessionStore } from '../../../core/auth/session.store';
 import {
-  branchCategoryOf,
   type BranchCategory,
 } from '../../../core/data-access/directory/branch-category';
+import { BranchLocationClient } from '../../../core/data-access/directory/branch-location.client';
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
 import type {
   BranchChanges,
@@ -30,7 +30,6 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { Select } from '../../../shared/components/atoms/select/select';
-import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import { AppMap } from '../../../shared/components/organisms/map/map';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Link } from '../../../shared/components/atoms/link/link';
@@ -40,6 +39,7 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
+import type { PuntoGeo } from '../../../shared/components/organisms/map/map-pin.types';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
@@ -50,9 +50,9 @@ import {
   BRANCH_DESCRIPTION_MAX_LENGTH,
   BRANCH_LOCATION_URL_MAX_LENGTH,
   BRANCH_NAME_MAX_LENGTH,
-  coordinatesFromMapUrl,
   isWebUrl,
   nameKey,
+  type BranchCoordinates,
   type BranchDraft,
 } from '../../../shared/utils/branch-import/branch-import';
 
@@ -62,7 +62,9 @@ import {
   type BranchRejection,
 } from './create-branches-in-series';
 import { EMPTY_FORM, type BranchForm, type Editing } from './organization-branches.types';
-import { branchChanges, newBranchFrom } from './branch-form';
+import { branchChanges, formOfBranch, newBranchFrom, pointOfBranch } from './branch-form';
+import { BranchLocationPicker } from './branch-location-picker';
+import { BranchLocationState } from './branch-location-state';
 import { BranchCategoryState } from './branch-category-state';
 
 /**
@@ -71,9 +73,8 @@ import { BranchCategoryState } from './branch-category-state';
  * subirlas en lote con un CSV.
  *
  * Since 2026-11-06 it serves every organization (pharmacy, laboratory, imaging,
- * medical organization): a map with each site's exact point, and its category
- * (head office, branch, default) as a label and as a "by waves" filter
- * (`?categoria=`) applied to both the table and the map.
+ * medical organization): a map with each site's exact point and its category
+ * (head office, branch, default) as a label.
  *
  * La carga masiva es la misma pieza que usan las altas y la ficha de
  * administración (`app-branch-bulk-import`), y crea en serie con
@@ -92,6 +93,7 @@ import { BranchCategoryState } from './branch-category-state';
     AppButton,
     AppMap,
     BranchBulkImport,
+    BranchLocationPicker,
     Card,
     Chip,
     ContentDialog,
@@ -102,7 +104,6 @@ import { BranchCategoryState } from './branch-category-state';
     Link,
     NgTemplateOutlet,
     PageHeader,
-    SegmentedControl,
     Select,
     Textarea,
   ],
@@ -162,6 +163,8 @@ export class OrganizationBranches {
       return editing?.mode === 'edit' ? editing.branch.id : null;
     }),
   );
+  /** The point of the branch in the dialog: marked on the map or read from the link. */
+  protected readonly location = new BranchLocationState(inject(BranchLocationClient), () => this.tenantId());
   protected readonly form = signal<BranchForm>(EMPTY_FORM);
   protected readonly submitted = signal(false);
   protected readonly saving = signal(false);
@@ -187,12 +190,6 @@ export class OrganizationBranches {
   protected readonly urlError = computed(() => {
     const url = this.form().locationUrl.trim();
     return url === '' || isWebUrl(url) ? '' : 'Pegue un enlace que empiece con https://.';
-  });
-
-  /** Si el enlace escrito trae el punto: se lo dice antes de guardar. */
-  protected readonly urlHasPoint = computed(() => {
-    const url = this.form().locationUrl.trim();
-    return url !== '' && this.urlError() === '' && coordinatesFromMapUrl(url) !== null;
   });
 
   protected readonly hasChanges = computed(() => {
@@ -299,24 +296,16 @@ export class OrganizationBranches {
   /* --- una sucursal ------------------------------------------------------- */
 
   protected openCreate(): void {
-    this.openDialog({ mode: 'create' }, EMPTY_FORM);
+    this.openDialog({ mode: 'create' }, EMPTY_FORM, null);
   }
 
   protected openEdit(branch: BranchListItem): void {
-    this.openDialog(
-      { mode: 'edit', branch },
-      {
-        name: branch.name,
-        code: branch.code,
-        description: branch.description ?? '',
-        locationUrl: branch.locationUrl ?? '',
-        category: branchCategoryOf(branch),
-      },
-    );
+    this.openDialog({ mode: 'edit', branch }, formOfBranch(branch), pointOfBranch(branch));
   }
 
-  private openDialog(editing: Editing, form: BranchForm): void {
+  private openDialog(editing: Editing, form: BranchForm, point: BranchCoordinates | null): void {
     this.form.set(form);
+    this.location.reset(point);
     this.submitted.set(false);
     this.saveError.set(null);
     this.editing.set(editing);
@@ -328,6 +317,17 @@ export class OrganizationBranches {
 
   protected setField(field: Exclude<keyof BranchForm, 'category'>, value: string | number | null): void {
     this.form.update((current) => ({ ...current, [field]: value === null ? '' : String(value) }));
+  }
+
+  protected setLink(value: string | number | null): void {
+    this.setField('locationUrl', value);
+    this.location.fromLink(String(value ?? ''));
+  }
+
+  /** A touch on the map wins over the pasted link, which would now point elsewhere. */
+  protected pickPoint(point: PuntoGeo): void {
+    this.location.pick(point);
+    this.setField('locationUrl', '');
   }
 
   /** Cancelar cierra por el diálogo, que devuelve el foco a quien lo abrió. */
@@ -377,10 +377,10 @@ export class OrganizationBranches {
   }
 
   private changesFor(branch: BranchListItem): BranchChanges {
-    return branchChanges(this.form(), branch);
+    return branchChanges(this.form(), branch, this.location.point());
   }
 
   private newBranch(): NewBranch {
-    return newBranchFrom(this.form(), this.loaded().map((b) => b.code));
+    return newBranchFrom(this.form(), this.loaded().map((b) => b.code), this.location.point());
   }
 }

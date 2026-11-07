@@ -1,11 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { of, throwError, type Observable } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionStore } from '../../../core/auth/session.store';
+import { BranchLocationClient } from '../../../core/data-access/directory/branch-location.client';
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
 import type {
   BranchChanges,
@@ -80,6 +81,8 @@ interface Internal {
   openEdit: (branch: BranchListItem) => void;
   openCreate: () => void;
   setField: (field: string, value: string) => void;
+  setLink: (value: string) => void;
+  pickPoint: (point: { lat: number; lng: number }) => void;
   setCategory: (category: string) => void;
   save: () => void;
   hasChanges: () => boolean;
@@ -98,6 +101,7 @@ describe('OrganizationBranches', () => {
   let updateReply: () => Observable<BranchListItem>;
   let listBranches: ReturnType<typeof vi.fn>;
   let tenantType: WritableSignal<string | null>;
+  let preview: ReturnType<typeof vi.fn>;
 
   const internal = (): Internal => fixture.componentInstance as unknown as Internal;
 
@@ -111,9 +115,11 @@ describe('OrganizationBranches', () => {
     listBranches = vi.fn(() => of({ items: [CENTRAL], count: 1 }));
 
     drawnPins = [];
+    preview = vi.fn(() => of({ resolved: true, latitude: -16.5, longitude: -68.15 }));
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
+        { provide: BranchLocationClient, useValue: { preview } },
         {
           provide: CARGADOR_DE_LEAFLET,
           useValue: (() => Promise.resolve(fakeLeaflet())) as CargadorDeLeaflet,
@@ -180,18 +186,13 @@ describe('OrganizationBranches', () => {
     expect(updates).toEqual([{ branchId: 'b-1', changes: { description: 'Segundo piso' } }]);
   });
 
-  it('un enlace nuevo reemplaza el punto: el que lo trae lo manda, el que no lo borra', () => {
+  it('un enlace que trae el punto lo manda con él; tocar el mapa manda el punto y borra el enlace', () => {
     internal().openEdit(CENTRAL);
-    internal().setField('locationUrl', 'https://www.openstreetmap.org/?mlat=-17.80&mlon=-63.20');
+    internal().setLink('https://www.openstreetmap.org/?mlat=-17.80&mlon=-63.20');
     internal().save();
 
     internal().openEdit(CENTRAL);
-    internal().setField('locationUrl', 'https://maps.app.goo.gl/abc123');
-    internal().save();
-
-    internal().openEdit(CENTRAL);
-    internal().setField('locationUrl', '');
-    internal().setField('description', '');
+    internal().pickPoint({ lat: -17.9, lng: -63.3 });
     internal().save();
 
     expect(updates.map((u) => u.changes)).toEqual([
@@ -200,9 +201,44 @@ describe('OrganizationBranches', () => {
         latitude: -17.8,
         longitude: -63.2,
       },
-      { locationUrl: 'https://maps.app.goo.gl/abc123', latitude: null, longitude: null },
-      { description: null, locationUrl: null, latitude: null, longitude: null },
+      { locationUrl: null, latitude: -17.9, longitude: -63.3 },
     ]);
+    expect(preview).not.toHaveBeenCalled();
+  });
+
+  it('un enlace corto que el navegador no lee se le pregunta a la API y el punto queda marcado', async () => {
+    vi.useFakeTimers();
+    try {
+      internal().openCreate();
+      internal().setField('name', 'Palomanga');
+      internal().setLink('https://maps.app.goo.gl/uwjxPfc6SYBhtQ3e7');
+      await vi.advanceTimersByTimeAsync(600);
+      internal().save();
+
+      expect(preview).toHaveBeenCalledWith(TENANT, 'https://maps.app.goo.gl/uwjxPfc6SYBhtQ3e7');
+      expect(created[0]).toEqual(
+        expect.objectContaining({ latitude: -16.5, longitude: -68.15, locationUrl: 'https://maps.app.goo.gl/uwjxPfc6SYBhtQ3e7' }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('un enlace que la API tampoco puede leer deja la sucursal sin punto y lo dice', async () => {
+    vi.useFakeTimers();
+    try {
+      preview.mockReturnValue(of({ resolved: false }));
+      internal().openCreate();
+      internal().setField('name', 'Palomanga');
+      internal().setLink('https://maps.app.goo.gl/nada');
+      await vi.advanceTimersByTimeAsync(600);
+      internal().save();
+
+      expect(created[0]).not.toHaveProperty('latitude');
+      expect((internal() as unknown as { location: { note: () => string } }).location.note()).toContain('márquelo tocando el mapa');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('sin nombre, con un enlace que no es web o con un nombre repetido no manda nada', () => {
@@ -226,7 +262,7 @@ describe('OrganizationBranches', () => {
   it('agregar una deriva el código del nombre si no se escribió', () => {
     internal().openCreate();
     internal().setField('name', 'Norte');
-    internal().setField('locationUrl', 'https://www.google.com/maps/@-17.75,-63.17,15z');
+    internal().setLink('https://www.google.com/maps/@-17.75,-63.17,15z');
     internal().save();
 
     expect(created).toEqual([
@@ -340,39 +376,6 @@ describe('OrganizationBranches', () => {
       // Without a pasted link, "Ver en el mapa" is built from the point.
       const links = [...el().querySelectorAll('a')].map((a) => a.getAttribute('href'));
       expect(links).toContain('https://www.openstreetmap.org/?mlat=-17.7&mlon=-63.1#map=17/-17.7/-63.1');
-    });
-
-    it('filtrar por oleada alcanza a la tabla y al mapa, y queda en la URL', async () => {
-      await showing([MATRIZ, NORTE, SIN_PUNTO]);
-      drawnPins = [];
-
-      const router = TestBed.inject(Router);
-      await router.navigate([], { queryParams: { categoria: 'branch' } });
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      const text = testId('branches-table')?.textContent ?? '';
-      expect(text).toContain('Norte');
-      expect(text).not.toContain('Frente a la plaza');
-      expect(drawnPins).toEqual(['Norte']);
-
-      const segmented = el().querySelectorAll<HTMLButtonElement>('[data-testid="branches-filter"] button');
-      const todas = [...segmented].find((b) => b.textContent?.includes('Todas'));
-      todas?.click();
-      await fixture.whenStable();
-      expect(router.url).not.toContain('categoria');
-    });
-
-    it('una oleada vacía lo dice en vez de mostrar una tabla vacía', async () => {
-      await showing([MATRIZ, NORTE]);
-      const router = TestBed.inject(Router);
-      await router.navigate([], { queryParams: { categoria: 'default' } });
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(testId('branches-table')?.textContent).toContain('No hay sedes con la etiqueta «Por defecto»');
     });
 
     it('editar la categoría manda sólo la categoría', async () => {
