@@ -1,0 +1,29 @@
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                            | Names                                                       |  Raw size
+spec-app-features-admin-services-grid-services-grid.js         | spec-app-features-admin-services-grid-services-grid         | 417.13 kB | 
+styles.css                                                     | styles                                                      | 189.63 kB | 
+setup-test-setup.js                                            | setup-test-setup                                            |  13.20 kB | 
+chunk-NJLWURWK.js                                              | -                                                           |   5.62 kB | 
+chunk-RSTWSNOR.js                                              | -                                                           |   4.75 kB | 
+spec-app-core-data-access-admin-portal-services-grid.client.js | spec-app-core-data-access-admin-portal-services-grid.client |   2.66 kB | 
+init-testbed.js                                                | init-testbed                                                |   1.21 kB | 
+vitest-mock-patch.js                                           | vitest-mock-patch                                           | 974 bytes | 
+
+                                                               | Initial total                                               | 635.19 kB
+
+Lazy chunk files                                               | Names                                                       |  Raw size
+paciente.css                                                   | paciente                                                    |  21.31 kB | 
+
+Application bundle generation complete. [156.312 seconds] - 2026-11-07T06:14:56.620Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/user/mantra-core-health[39m
+
+
+[2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m   Start at [22m 06:14:56
+[2m   Duration [22m 1.77s[2m (transform 329ms, setup 509ms, import 416ms, tests 655ms, environment 844ms)[22m
+
