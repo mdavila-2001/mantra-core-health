@@ -18,7 +18,7 @@
     ========================================================================== */
 
 import type { Condition, Encounter } from '../../../../core/data-access/clinical/clinical.types';
-import { fecha, type PrioridadDeAlerta } from './red-clinica-alertas.plazos';
+import { fechaClinica, type PrioridadDeAlerta } from './red-clinica-alertas.plazos';
 import { normalizarTexto } from './red-clinica-filtro';
 import { esCritico, estaFueraDeRango, textoDelRango, textoDelValor } from './red-clinica-valores';
 import type { ValorDeResultado } from './red-clinica.types';
@@ -51,7 +51,7 @@ export function diagnosticosRepetidos(entrada: EntradaDeAlertas): readonly Alert
         tipo: 'diagnostico-repetido' as const,
         prioridad: 'baja' as const,
         titulo: `Diagnóstico registrado ${lista.length} veces: ${nombre}`,
-        detalle: `Entre el ${fecha(primera)} y el ${fecha(ultima)}. Conviene revisar si es el mismo episodio o uno nuevo.`,
+        detalle: `Entre el ${fechaClinica(primera)} y el ${fechaClinica(ultima)}. Conviene revisar si es el mismo episodio o uno nuevo.`,
         nodoId: ids[ids.length - 1],
         nodoIds: ids,
       };
@@ -84,7 +84,7 @@ export function motivosRepetidos(entrada: EntradaDeAlertas): readonly AlertaDeAp
       const ids = ordenadas.map((e) => idDeNodo('atencion', e.id));
       const rango =
         fechas.length >= 2
-          ? `Entre el ${fecha(fechas[0])} y el ${fecha(fechas[fechas.length - 1])}.`
+          ? `Entre el ${fechaClinica(fechas[0])} y el ${fechaClinica(fechas[fechas.length - 1])}.`
           : 'En atenciones distintas.';
       return {
         id: `motivo-repetido:${clave}`,

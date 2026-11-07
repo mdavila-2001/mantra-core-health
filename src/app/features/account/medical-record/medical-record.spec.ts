@@ -1485,7 +1485,12 @@ describe('MedicalRecord', () => {
     );
 
     const falta = harness.routeNativeElement?.querySelector('[data-testid="historia-detalle-falta"]');
-    expect(falta?.textContent).toContain('No tiene acceso a esta sección');
+    // Same wall as in «Mi recorrido»: warning tone, no support code of an S9 fault.
+    expect(falta?.querySelector('.alert--warning')?.textContent).toContain(
+      'No puede ver las notas y los estudios de sus atenciones',
+    );
+    expect(falta?.querySelector('.alert--error')).toBeNull();
+    expect(falta?.querySelector('[data-testid="support-code"]')).toBeNull();
     expect(botonCon(falta, 'Reintentar')).toBeUndefined();
   });
 

@@ -72,6 +72,8 @@ import {
 } from './history-view-model';
 import { recorridoDelPaciente, type Recorrido } from './mi-recorrido/episodios';
 import { MiRecorrido, type SeccionDeDestino } from './mi-recorrido/mi-recorrido';
+import { RecorridoFalta } from './mi-recorrido/falta/recorrido-falta';
+import { desfaseDeLaZona } from '../../clinical-record/patient-chart/recorrido-clinico/recorrido-clinico.zona';
 import { registrosDelPortal } from './mi-recorrido/registro-con-vinculos';
 
 /** Tope por bloque. El backend admite hasta 200; nadie lee doscientas filas. */
@@ -151,6 +153,7 @@ interface RecetaVisible {
     MiRecorrido,
     NgTemplateOutlet,
     PageHeader,
+    RecorridoFalta,
     ReceivedServicesPanel,
     RouterLink,
     HistoriaLista,
@@ -173,6 +176,8 @@ export class MedicalRecord {
   private readonly auth = inject(AuthService);
   private readonly contexto = inject(PatientContextService);
   private readonly toasts = inject(ToastService);
+  /** The prescription row prints in La Paz, like the list and the timeline beside it. */
+  protected readonly zona = desfaseDeLaZona();
   private readonly descargas = inject(FileDownloader);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
