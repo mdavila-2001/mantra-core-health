@@ -193,7 +193,7 @@ describe('LaboratoryOrders', () => {
       expect(listOrders).toHaveBeenCalledTimes(1);
     });
 
-    it('cancelar no existe: la API responde 422 a CANCEL, así que ni abre el diálogo ni manda nada', async () => {
+    it('anular la orden de un médico no existe: ni abre el diálogo ni manda nada', async () => {
       create();
 
       internal().run('cancel', ORDERS[0]!);
@@ -201,6 +201,21 @@ describe('LaboratoryOrders', () => {
 
       expect(confirmWithReason).not.toHaveBeenCalled();
       expect(transitionOrder).not.toHaveBeenCalled();
+    });
+
+    it('anular la orden que cargó el centro pide motivo y manda CANCEL', async () => {
+      confirmWithReason.mockResolvedValue('Cargada por error');
+      create();
+      listOrders.mockClear();
+
+      internal().run('cancel', { ...ORDERS[0]!, registeredByPerformer: true, canEdit: true });
+      await flush();
+
+      const [config] = confirmWithReason.mock.calls[0] as [{ title: string; destructive: boolean }];
+      expect(config).toMatchObject({ title: 'Anular la orden', destructive: true });
+      expect(transitionOrder).toHaveBeenCalledExactlyOnceWith(ORDERS[0]!.orderId, 'CANCEL', 'Cargada por error');
+      expect(success).toHaveBeenCalledWith('Orden anulada.');
+      expect(listOrders).toHaveBeenCalledTimes(1);
     });
 
     it('si se cierra el diálogo sin motivo no se manda nada', async () => {
@@ -277,7 +292,9 @@ describe('LaboratoryOrders', () => {
   it('sin ninguna orden, el vacío lo dice', () => {
     listOrders.mockReturnValue(of({ items: [], count: 0 }));
     create();
-    expect(internal().table().message).toBe('Todavía no le derivaron ninguna orden.');
+    expect(internal().table().message).toBe(
+      'Todavía no hay órdenes: cargue una con «Nueva orden» o espere las que le deriven.',
+    );
   });
 
   it('si la lista falla, la tabla muestra el error con su reintento', () => {

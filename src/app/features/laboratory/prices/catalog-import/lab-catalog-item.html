@@ -13,6 +13,9 @@
     <div>
       <h4 class="item__name">{{ item().name }}</h4>
       <p class="item__meta">
+        @if (section(); as name) {
+          {{ name }} ·
+        }
         <code>{{ item().code }}</code>
         @if (item().loinc) {
           · LOINC {{ item().loinc }}

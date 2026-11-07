@@ -33,6 +33,8 @@ import { registrarInvitacionesDeOrganizacion } from './directory-invitations.han
 import { registerHealthcareServices } from './healthcare-services.handlers';
 import { registerRoleAssignments } from './role-assignments.handlers';
 import { registrarEncuestas } from './surveys-forms.handlers';
+import { registerSurveyCatalog } from './surveys-catalog.handlers';
+import { registerServiceSurveyAssignments } from './surveys-service-assignments.handlers';
 import { registrarFarmacia } from './pharmacy.handlers';
 import { registrarFinanzas } from './finance.handlers';
 import { registrarFacturacionSimulada } from './billing-simulated.handlers';
@@ -42,7 +44,8 @@ import { registrarInfraestructura } from './infrastructure.handlers';
 import { registerInfrastructureOps } from './infrastructure-ops.handlers';
 import { registerAdt } from './adt.handlers';
 import { registrarLaboratorioFarmaceutico } from './pharma-lab.handlers';
-import { registrarOrdenesDeLaboratorio } from './lab-orders.handlers';
+import { ordenDeRespuesta, registrarOrdenesDeLaboratorio } from './lab-orders.handlers';
+import { registrarOrdenesDelCentro } from './lab-order-intake.handlers';
 import {
   destinoDeOrden,
   laboratorioDe,
@@ -169,6 +172,8 @@ export function crearRouterSimulado(): MockRouter {
   registerInsurancePortability(router);
   registerInsuranceCampaigns(router);
   registrarEncuestas(router);
+  registerSurveyCatalog(router);
+  registerServiceSurveyAssignments(router);
   registrarFinanzas(router);
   // FACT-SIAT-MOCK · `/billing/simulated/*`, sin colisión con
   // `/billing/service-catalog`, que es de `registrarPracticas`.
@@ -178,10 +183,11 @@ export function crearRouterSimulado(): MockRouter {
   registrarFarmacia(router);
   registerPharmacyMedicationAvailability(router);
   registrarDiagnostico(router);
-  registrarOrdenesDeLaboratorio(router, {
+  const dependenciasDeOrdenes = { laboratorioDe, destinoDeOrden, archivos: resultadosDeLaboratorio };
+  registrarOrdenesDeLaboratorio(router, dependenciasDeOrdenes);
+  registrarOrdenesDelCentro(router, {
     laboratorioDe,
-    destinoDeOrden,
-    archivos: resultadosDeLaboratorio,
+    responder: (orderId) => ordenDeRespuesta(orderId, dependenciasDeOrdenes),
   });
   // Después de diagnóstico: usa sus unidades y la agenda que les abre.
   registrarCentros(router);

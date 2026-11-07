@@ -385,7 +385,7 @@ test.describe('NOVA · experiencia del paciente', () => {
     const pestañas = page.locator('[data-testid="cuestionarios-tabs"] [role="tab"]');
     await expect(pestañas).toHaveCount(2);
     await expect(pestañas.first()).toContainText('Aspectos médicos');
-    await expect(pestañas.nth(1)).toContainText('Encuestas');
+    await expect(pestañas.nth(1)).toContainText('Mis encuestas');
 
     const campo = page.getByTestId('aspecto-bloodType').locator('input');
     await expect(campo).toBeVisible();

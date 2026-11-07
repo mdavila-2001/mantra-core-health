@@ -1,0 +1,78 @@
+<span class="por-servicio__marca" aria-hidden="true"><app-nav-icon name="survey" /></span>
+<div class="por-servicio__datos">
+  <h3 class="por-servicio__servicio">{{ row().serviceName }}</h3>
+  @if (row().assignment; as assigned) {
+    <p class="por-servicio__encuesta">
+      {{ assigned.title }}
+      @if (entry(); as e) {
+        · {{ questionCount(e.questions.length) }}
+      }
+    </p>
+    @if (assigned.assignedAt) {
+      <p class="por-servicio__nota">Importada el {{ assigned.assignedAt | date: 'd MMM y' }}</p>
+    }
+  } @else {
+    <p class="por-servicio__encuesta por-servicio__encuesta--base" data-testid="service-surveys-base-only">
+      Sin encuesta propia (se usa la base de servicios)
+    </p>
+  }
+</div>
+<!-- Same slots in every row: badge, then the buttons, never wrapping one alone. -->
+<div class="por-servicio__acciones">
+  @if (row().assignment) {
+    <app-badge variant="success">Estándar</app-badge>
+    <div class="por-servicio__botones">
+      @if (entry()) {
+        <button
+          app-button
+          type="button"
+          variant="ghost"
+          size="sm"
+          (clicked)="viewQuestions.emit()"
+          [attr.aria-label]="'Ver las preguntas de la encuesta de ' + row().serviceName"
+        >
+          Ver preguntas
+        </button>
+      }
+      <button
+        app-button
+        type="button"
+        variant="outline"
+        size="sm"
+        [disabled]="!canPick()"
+        (clicked)="pick.emit()"
+        [attr.data-testid]="'service-survey-change-' + row().serviceId"
+        [attr.aria-label]="'Cambiar la encuesta de ' + row().serviceName"
+      >
+        Cambiar
+      </button>
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        [isLoading]="removing()"
+        (clicked)="remove.emit()"
+        [attr.data-testid]="'service-survey-remove-' + row().serviceId"
+        [attr.aria-label]="'Quitar la encuesta de ' + row().serviceName"
+      >
+        Quitar
+      </button>
+    </div>
+  } @else {
+    <div class="por-servicio__botones">
+      <button
+        app-button
+        type="button"
+        variant="outline"
+        size="sm"
+        [disabled]="!canPick()"
+        (clicked)="pick.emit()"
+        [attr.data-testid]="'service-survey-import-' + row().serviceId"
+        [attr.aria-label]="'Importar una encuesta para ' + row().serviceName"
+      >
+        Importar
+      </button>
+    </div>
+  }
+</div>
