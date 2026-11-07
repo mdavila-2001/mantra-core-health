@@ -1,0 +1,44 @@
+<app-page-header
+  title="Servicios por tipo de prestador"
+  subtitle="Consulta de solo lectura de los catálogos que ya existen. Aquí no se edita nada."
+/>
+
+<div class="grid">
+  <app-card variant="outlined" padding="md">
+    <app-tabs [selectedIndex]="selected()" (selectedIndexChange)="onTab($event)" data-testid="services-grid-tabs">
+      @for (tab of tabs; track tab.kind; let i = $index) {
+        <app-tab [label]="tab.label">
+          @if (tab.kind === 'hospital') {
+            <app-alert tone="info" title="El hospital no tiene un catálogo propio" data-testid="services-grid-hospital">
+              Los servicios de una práctica de tipo Hospital, si existen, aparecen en la pestaña «Médico»
+              (columna «Tipo de organización»). No hay un listado aparte para mostrar aquí.
+            </app-alert>
+          } @else {
+            <p class="grid__source">Origen: <code>{{ tab.source }}</code></p>
+            @if (selected() === i && isPartial(tab.kind)) {
+              <app-alert tone="warning" title="Lista parcial" data-testid="services-grid-partial">
+                La API devolvió solo las primeras filas. Hay más registros que los que se ven; esta pantalla
+                todavía no pagina.
+              </app-alert>
+            }
+            <app-data-table
+              [state]="rowsOf(tab.kind)"
+              [columns]="columnsOf(i)"
+              [trackBy]="rowKey"
+              [caption]="'Servicios: ' + tab.label"
+              (retry)="load(tab.kind)"
+              (refresh)="load(tab.kind)"
+            />
+          }
+        </app-tab>
+      }
+    </app-tabs>
+  </app-card>
+</div>
+
+<ng-template #statusCell let-row>
+  <app-badge [variant]="row.statusTone">{{ row.statusLabel }}</app-badge>
+</ng-template>
+<ng-template #priceCell let-row>
+  {{ row.price ?? 'Sin precio' }}
+</ng-template>

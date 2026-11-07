@@ -125,6 +125,23 @@ test.describe('Sucursales · mapa y categorías en toda organización', () => {
     await expect(page.locator(PINS)).toHaveCount(before + 2);
   });
 
+  test('una sede guardada con enlace corto y sin punto lo recibe al editarla y aparece en el mapa', async ({ page }) => {
+    await login(page, 'hospital.piloto@alovida.mock');
+    await openBranches(page, '/administration/medical-branches');
+    const before = await page.locator(PINS).count();
+    await expect(page.getByTestId('branches-map-missing')).toContainText('«Sede heredada»');
+
+    await page.getByTestId('branches-edit-LEGADA').click();
+    await expect(page.getByRole('dialog').locator(PINS)).toHaveCount(1);
+    await expect(page.getByRole('dialog')).toContainText('El punto está marcado en el mapa.');
+    await page.getByRole('button', { name: 'Guardar cambios' }).click();
+    await expect(page.getByRole('dialog')).toBeHidden();
+
+    await expect(page.locator(PINS)).toHaveCount(before + 1);
+    await expect(page.getByTestId('branches-map-missing')).toHaveCount(0);
+    await page.screenshot({ path: `${OUT}/sede-heredada-con-pin-1440.png`, fullPage: true });
+  });
+
   test('390 px: el mapa y la tabla caben sin scroll horizontal', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 1200 });
     await login(page, 'farmacia@alovida.mock');

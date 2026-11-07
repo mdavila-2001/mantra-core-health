@@ -129,6 +129,20 @@ export const branchRows = new Coleccion<{
     latitude,
     longitude,
   })),
+  // A branch saved by link before the API could read short links: it has the link and no point.
+  {
+    id: uuid('branch-piloto-legada'),
+    tenantId: TENANT_HOSPITAL_PILOTO,
+    category: 'branch' as BranchCategory,
+    code: 'LEGADA',
+    name: 'Sede heredada',
+    branchTypeConceptId: BRANCH_TYPE.CLINIC,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    timeZone: 'America/La_Paz',
+    createdAt: iso(-200),
+    description: 'Cargada con un enlace corto de Google Maps',
+    locationUrl: 'https://maps.app.goo.gl/uwjxPfc6SYBhtQ3e7',
+  },
   // Farmacia Vida: las mismas tres sedes que ofrece la bandeja del mostrador
   // («Sede») en `pharmacy.handlers`. Antes «Sucursales» decía «Todavía no
   // cargaste sucursales» mientras la bandeja ya repartía pedidos entre tres.

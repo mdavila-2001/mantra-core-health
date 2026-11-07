@@ -305,7 +305,7 @@ export class OrganizationBranches {
 
   private openDialog(editing: Editing, form: BranchForm, point: BranchCoordinates | null): void {
     this.form.set(form);
-    this.location.reset(point);
+    this.location.reset(point, form.locationUrl);
     this.submitted.set(false);
     this.saveError.set(null);
     this.editing.set(editing);
