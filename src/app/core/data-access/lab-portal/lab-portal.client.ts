@@ -83,10 +83,17 @@ export class LabPortalClient {
     return this.http.get<LabCatalog>(this.url('/diagnostics/lab/catalog'));
   }
 
-  /** Adds catalog análisis: panel, one service per component, suggested prices. */
-  importCatalog(conceptIds: readonly string[]): Observable<LabCatalogImportResult> {
+  /**
+   * Adds catalog análisis: panel, one service per component, suggested prices.
+   * `skipComponentIds` are the components the lab unticked: no service is made for them.
+   */
+  importCatalog(
+    conceptIds: readonly string[],
+    skipComponentIds: readonly string[] = [],
+  ): Observable<LabCatalogImportResult> {
     return this.http.post<LabCatalogImportResult>(this.url('/diagnostics/lab/catalog/import'), {
       conceptIds,
+      skipComponentIds,
     });
   }
 

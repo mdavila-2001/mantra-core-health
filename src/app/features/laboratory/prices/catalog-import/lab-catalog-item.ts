@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 import type {
   LabCatalogItem,
@@ -26,6 +26,18 @@ export class LabCatalogItemCard {
   /** Its section (Hematología), shown because cards are grouped by sample type. */
   readonly section = input<string | null>(null);
   readonly toggled = output<void>();
+  /** Components the lab unticked: they are not added with the análisis. */
+  readonly unticked = input<ReadonlySet<string>>(new Set());
+  /** A component was ticked or unticked (its concept id). */
+  readonly componentToggled = output<string>();
+
+  protected readonly partsLabel = computed(() => {
+    const all = this.item().components.length;
+    const kept = this.item().components.filter((c) => !this.unticked().has(c.conceptId)).length;
+    return kept === all
+      ? `Ver sus ${all} componentes`
+      : `Sus componentes: ${kept} de ${all} elegidos`;
+  });
 
   /** The amount in Bs, or «Sin precio sugerido» for a component without one. */
   protected priceOf(price: LabSuggestedPrice | null): string {
