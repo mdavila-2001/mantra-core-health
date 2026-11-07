@@ -1446,7 +1446,7 @@ describe('MedicalRecord', () => {
 
     const falta = harness.routeNativeElement?.querySelector('[data-testid="recorrido-fallo"]');
     expect(falta?.textContent).toContain('Falta parte del recorrido');
-    expect(falta?.textContent).toContain('No tiene acceso a esta sección');
+    expect(falta?.querySelector('.alert--warning')?.textContent).toContain('No puede ver sus estudios y controles');
     // S5 is a wall: retrying would get the same answer, so no retry is offered.
     expect(botonCon(falta, 'Reintentar')).toBeUndefined();
     expect(botonCon(falta, 'Volver a cargar')).toBeUndefined();

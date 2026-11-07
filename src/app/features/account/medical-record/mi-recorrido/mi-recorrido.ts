@@ -6,12 +6,12 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AccordionPanel } from '../../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
 import { DrawerPanel } from '../../../../shared/components/organisms/drawer-panel/drawer-panel';
-import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import type { Episodio, Recorrido } from './episodios';
 import type { PasoNarrado } from './narracion';
 import { fechaCorta } from './redaccion';
 import { type RegistroConVinculos } from './registro-con-vinculos.types';
 import { MiRecorridoDetalle } from './detalle/mi-recorrido-detalle';
+import { RecorridoFalta } from './falta/recorrido-falta';
 
 /** Which «Por fecha» tab each record type's detail leads to. */
 export type SeccionDeDestino = 'atenciones' | 'diagnosticos' | 'recetas';
@@ -53,7 +53,7 @@ const TIPO_EN_PALABRAS: Readonly<Record<RegistroConVinculos['tipo'], string>> = 
     DrawerPanel,
     NgTemplateOutlet,
     MiRecorridoDetalle,
-    ViewStateHost,
+    RecorridoFalta,
   ],
   templateUrl: './mi-recorrido.html',
   styleUrl: './mi-recorrido.css',
@@ -91,7 +91,7 @@ export class MiRecorrido {
     return estado !== null && isLoading(estado);
   });
 
-  /** The read failed: the host tells S5 from S9 (no retry on a wall, request id on a fault). */
+  /** The read failed: `falta/` tells S5 from S9 (no retry on a wall, request id on a fault). */
   protected readonly faltaDelDetalle = computed(() => fallido(this.detalle()));
   protected readonly faltaDeLasCitas = computed(() => fallido(this.citasSinCargar()));
 

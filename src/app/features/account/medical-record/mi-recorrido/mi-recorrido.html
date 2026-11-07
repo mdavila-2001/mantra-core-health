@@ -22,19 +22,19 @@
     </p>
   }
 
-  <!-- Partial failure: what arrived is still drawn, and the M34 host says why the rest did not
-       (S5 without a retry, S9 with its request id). -->
+  <!-- Partial failure: what arrived is still drawn, and `falta/` says why the rest did not
+       (S5 as a warning without a retry, S9 with its request id). -->
   @if (faltaDelDetalle(); as falta) {
     <div class="recorrido__falta" data-testid="recorrido-fallo">
       <p class="recorrido__aviso">
         Falta parte del recorrido: los diagnósticos, las consultas y las recetas se muestran igual.
       </p>
-      <app-view-state-host [state]="falta" (retry)="reintentar.emit()" />
+      <app-recorrido-falta [estado]="falta" que="sus estudios y controles" (reintentar)="reintentar.emit()" />
     </div>
   } @else if (faltaDeLasCitas(); as falta) {
     <div class="recorrido__falta" data-testid="recorrido-citas-sin-cargar">
       <p class="recorrido__aviso">Faltan los controles: el recorrido se muestra igual, sin los agendados.</p>
-      <app-view-state-host [state]="falta" (retry)="reintentar.emit()" />
+      <app-recorrido-falta [estado]="falta" que="sus controles agendados" (reintentar)="reintentar.emit()" />
     </div>
   }
 
