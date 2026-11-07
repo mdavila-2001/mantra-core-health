@@ -1,15 +1,6 @@
-@if (conHitos()) {
-  <li class="red__leyenda-item">
-    <span class="red__muestra-hito red__hito--confirmado" aria-hidden="true"></span> Confirmado
-  </li>
-  <li class="red__leyenda-item">
-    <span class="red__muestra-hito red__hito--presuntivo" aria-hidden="true"></span> Presuntivo
-  </li>
-  <li class="red__leyenda-item">
-    <span class="red__muestra-hito red__hito--descartado" aria-hidden="true"></span> Descartado
-  </li>
-  <li class="red__leyenda-item">
-    <span class="red__muestra-hito red__hito--momento" aria-hidden="true"></span> Atención o cita
+@for (hito of hitos(); track hito.muestra) {
+  <li class="red__leyenda-item" [attr.data-hito]="hito.muestra">
+    <span [class]="'red__muestra-hito red__hito--' + hito.muestra" aria-hidden="true"></span> {{ hito.nombre }}
   </li>
 }
 @for (item of items(); track item.familia) {

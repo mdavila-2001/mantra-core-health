@@ -24,7 +24,7 @@
   border-inline-end: 2px solid currentColor;
   border-block-end: 2px solid currentColor;
   rotate: -45deg;
-  transition: rotate var(--dur-fast) ease;
+  transition: rotate var(--dur-fast) var(--ease-standard);
 }
 
 .red__chevron--abierto {

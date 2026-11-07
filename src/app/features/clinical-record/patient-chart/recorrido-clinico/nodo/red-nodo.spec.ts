@@ -71,14 +71,33 @@ describe('RedNodo', () => {
       expect(trazo, forma).toBeDefined();
       expect(trazo.getPropertyValue('content')).toMatch(/^(''|"")$/);
       expect(trazo.getPropertyValue('rotate')).toBe('45deg');
-      // The bar is drawn in the tone's ink over the mark's own background.
-      expect(trazo.getPropertyValue('background')).toBe('var(--t-fg)');
-      expect(trazo.getPropertyValue('box-shadow')).toContain('var(--t-bg)');
+      // Ruled out is a status: the bar is drawn in the ruled-out ink over the mark's brand background.
+      expect(trazo.getPropertyValue('background')).toBe('var(--st-error-fg)');
+      expect(trazo.getPropertyValue('box-shadow')).toContain('var(--st-primary-bg)');
     }
   });
 
   it('no tacha la marca del confirmado ni la del presuntivo', () => {
     expect(tachado(marca(nodo('confirmado'), false))).toEqual([]);
     expect(tachado(marca(nodo('presuntivo'), false))).toEqual([]);
+  });
+
+  it('el ícono dice el tipo con la receta de marca, no con el tono de estado del anfitrión', () => {
+    const m = marca(nodo('confirmado'), false);
+    const reglas = [...document.styleSheets]
+      .flatMap((hoja) => [...hoja.cssRules])
+      .filter(
+        (r): r is CSSStyleRule =>
+          r instanceof CSSStyleRule && !r.selectorText.includes('::') && m.matches(r.selectorText),
+      );
+    const valor = (prop: string): string =>
+      reglas
+        .map((r) => r.style.getPropertyValue(prop))
+        .filter((v) => v !== '')
+        .at(-1) ?? '';
+    // The host carries `tono--error` (a diagnosis): the icon must not paint it.
+    expect(valor('background')).toBe('var(--st-primary-bg)');
+    expect(valor('color')).toBe('var(--st-primary-fg)');
+    expect(valor('border')).toContain('var(--st-primary-bd)');
   });
 });
