@@ -212,33 +212,33 @@
               <marker id="red-punta-inferido" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                 <path class="red__punta red__punta--inferido" d="M 0 0 L 10 5 L 0 10 Z" />
               </marker>
+              <!-- A line cut at the view's edge (`ajustarALaVentana`): a double chevron pointing out. -->
+              <marker id="red-sigue" viewBox="0 0 12 10" refX="11" refY="5" markerWidth="12" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="red__sigue" d="M 1 1 L 5 5 L 1 9 M 7 1 L 11 5 L 7 9" /></marker>
             </defs>
             @if (plano().columnas.length > 1) {
               <line
                 class="red__linea-eje"
                 [attr.x1]="plano().columnas[0].x + plano().columnas[0].ancho / 2"
                 [attr.x2]="plano().columnas[plano().columnas.length - 1].x + plano().columnas[plano().columnas.length - 1].ancho / 2"
-                [attr.y1]="medidas.altoEje - 14"
-                [attr.y2]="medidas.altoEje - 14"
+                [attr.y1]="medidas.altoEje - 14" [attr.y2]="medidas.altoEje - 14"
               />
             }
             @for (arista of plano().aristas; track arista.clave) {
-              @if (arista.familia === 'enlace') {
-                <path class="red__halo" [class.red__arista--atenuada]="aristaAtenuada(arista.clave)" [attr.d]="arista.trazo" />
+              @for (pieza of arista.piezas ?? []; track $index) {
+                @if (arista.familia === 'enlace') { <path class="red__halo" [class.red__arista--atenuada]="aristaAtenuada(arista.clave)" [attr.d]="pieza.trazo" /> }
+                <path
+                  class="red__arista"
+                  [class.red__arista--tronco]="arista.familia === 'tronco'"
+                  [class.red__arista--enlace]="arista.familia === 'enlace' && !arista.inferido"
+                  [class.red__arista--inferido]="arista.inferido"
+                  [class.red__arista--iluminada]="iluminada(arista.clave)"
+                  [class.red__arista--atenuada]="aristaAtenuada(arista.clave)"
+                  [attr.d]="pieza.trazo" [attr.data-motivo]="arista.motivo"
+                  [attr.marker-start]="pieza.cortaInicio ? 'url(#red-sigue)' : null" [attr.marker-end]="pieza.cortaFin ? 'url(#red-sigue)' : arista.familia === 'enlace' ? (arista.inferido ? 'url(#red-punta-inferido)' : 'url(#red-punta)') : null"
+                >
+                  <title>{{ nombreDelMotivo[arista.motivo] }}{{ pieza.cortaInicio || pieza.cortaFin ? ' · sigue fuera de la vista' : '' }}</title>
+                </path>
               }
-              <path
-                class="red__arista"
-                [class.red__arista--tronco]="arista.familia === 'tronco'"
-                [class.red__arista--enlace]="arista.familia === 'enlace' && !arista.inferido"
-                [class.red__arista--inferido]="arista.inferido"
-                [class.red__arista--iluminada]="iluminada(arista.clave)"
-                [class.red__arista--atenuada]="aristaAtenuada(arista.clave)"
-                [attr.d]="arista.trazo"
-                [attr.data-motivo]="arista.motivo"
-                [attr.marker-end]="arista.familia === 'enlace' ? (arista.inferido ? 'url(#red-punta-inferido)' : 'url(#red-punta)') : null"
-              >
-                <title>{{ nombreDelMotivo[arista.motivo] }}</title>
-              </path>
             }
           </svg>
 

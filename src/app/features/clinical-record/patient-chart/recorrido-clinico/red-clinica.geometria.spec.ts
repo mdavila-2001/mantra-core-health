@@ -4,12 +4,15 @@ import { type RegistroDeLaRed, type VinculoDeLaRed } from './red-clinica.model';
 import { agruparEnEpisodios } from './red-clinica.episodios';
 import { inferirVinculos } from './red-clinica.vinculos';
 import { ubicarRed } from './red-clinica.geometria';
+import { ajustarALaVentana, BORDE_DEL_LIENZO, tramoDelEpisodio } from './red-clinica.geometria.ventana';
 import {
   claveDeGrupo,
   DISTANCIA_DEL_TRONCO,
   MEDIDAS_DE_LA_RED,
   PASO_DE_CARRIL,
+  PASO_DEL_CANAL,
   type AristaDeLaRed,
+  type NodoDeLaRed,
   type EstadoDeLaRed,
   type PlanoDeLaRed,
 } from './red-clinica.geometria.types';
@@ -101,6 +104,12 @@ describe('ubicarRed · plegado (nivel 1)', () => {
     const hito = hta.hitos[0];
     const columna = p.columnas[hito.columna];
     expect(hito.x).toBe(columna.x + columna.ancho / 2);
+  });
+
+  it('una franja plegada mide 80 px: cabecera de 48 y pista de 32 (M-9)', () => {
+    expect(MEDIDAS_DE_LA_RED.altoCabeceraHilo).toBe(48);
+    expect(MEDIDAS_DE_LA_RED.altoPista).toBe(32);
+    for (const h of p.hilos) expect(h.alto).toBe(80);
   });
 
   it('los hilos no se superponen', () => {
@@ -321,6 +330,203 @@ describe('ubicarRed · muchas líneas', () => {
   }, 30_000);
 });
 
+describe('ubicarRed · registrado e inferido de un mismo origen', () => {
+  it('no comparten salida ni carril: el punteado y su «inferido» quedan sobre su propio tramo', () => {
+    const regs = [
+      r('e1', 'atencion', d(2025, 3)),
+      r('dx', 'diagnostico', d(2025, 3), { encuentroId: 'e1', certeza: 'presuntivo', concepto: 'HTA' }),
+      r('e2', 'atencion', d(2025, 4)),
+      r('rx', 'medicacion', d(2025, 4), { encuentroId: 'e2' }),
+      r('est', 'estudio', d(2025, 4), { encuentroId: 'e2' }),
+    ];
+    const vins: VinculoDeLaRed[] = [
+      { desde: 'e1', hasta: 'dx', motivo: 'registrado-en' },
+      { desde: 'e2', hasta: 'rx', motivo: 'registrado-en' },
+      { desde: 'e2', hasta: 'est', motivo: 'registrado-en' },
+      { desde: 'dx', hasta: 'rx', motivo: 'indicado-para' },
+      { desde: 'dx', hasta: 'est', motivo: 'inferido-misma-atencion' },
+    ];
+    const p = plano(regs, vins, { todo: true });
+    const registrado = p.aristas.find((a) => a.desde === 'dx' && a.motivo === 'indicado-para')!;
+    const inferido = p.aristas.find((a) => a.desde === 'dx' && a.motivo === 'inferido-misma-atencion')!;
+    expect(inferido.puntos[0][1]).not.toBe(registrado.puntos[0][1]);
+    const vertical = (a: AristaDeLaRed): number => segmentos(a).find((sg) => sg.ax === sg.bx)!.ax;
+    expect(Math.abs(vertical(inferido) - vertical(registrado))).toBeGreaterThanOrEqual(PASO_DE_CARRIL);
+    expect(inferido.etiqueta!.x).toBe(vertical(inferido));
+    verificarTrazado(p);
+  });
+});
+
+describe('ubicarRed · el canal de cada hilo', () => {
+  it.each([1, 2, 3, 4, 5, 6])('sus carriles quedan a un paso de canal (semilla %i): el haz superior se lee línea por línea', (semilla) => {
+    const { registros, vinculos } = historiaGenerada(semilla);
+    const p = plano(registros, vinculos, { todo: true });
+    expect(PASO_DEL_CANAL).toBeGreaterThanOrEqual(14);
+    for (const h of p.hilos.filter((x) => x.desplegado)) {
+      const ys = [
+        ...new Set(
+          p.aristas
+            .flatMap(segmentos)
+            .filter((sg) => sg.ay === sg.by && sg.ay > h.yCanal && sg.ay < h.yCanal + h.altoCanal)
+            .map((sg) => sg.ay),
+        ),
+      ].sort((a, b) => a - b);
+      for (let i = 1; i < ys.length; i++) expect(ys[i] - ys[i - 1], `canal de ${h.episodio.id}`).toBeGreaterThanOrEqual(PASO_DEL_CANAL);
+    }
+  });
+});
+
+describe('ajustarALaVentana · lo que se ve del plano', () => {
+  const completo = plano(REGISTROS, REALES, { todo: true });
+  const plegado = MEDIDAS_DE_LA_RED.altoCabeceraHilo + MEDIDAS_DE_LA_RED.altoPista;
+  const enVentana = (n: NodoDeLaRed, desde: number, hasta: number): boolean => n.x < hasta && n.x + n.ancho > desde;
+  const registrosDe = (n: NodoDeLaRed): number => (n.forma === 'plegar' ? 0 : n.forma === 'grupo' ? n.grupo!.ocultos.length : 1);
+
+  it('con la ventana entera no cambia nada y sigue cumpliendo las reglas del trazado', () => {
+    const v = ajustarALaVentana(completo, { desde: 0, hasta: Number.POSITIVE_INFINITY });
+    expect(v.hilos.map((h) => [h.y, h.alto, h.fueraDeLaVentana])).toEqual(completo.hilos.map((h) => [h.y, h.alto, undefined]));
+    expect(v.nodos).toEqual(completo.nodos);
+    for (const a of v.aristas) {
+      expect(a.piezas).toHaveLength(1);
+      expect(a.piezas![0]).toMatchObject({ cortaInicio: false, cortaFin: false, puntos: a.puntos });
+    }
+    verificarTrazado(v);
+  });
+
+  it('una franja desplegada sin registros a la vista mide lo mismo que plegada y dice cuántos hay antes y después', () => {
+    const ultima = completo.columnas.at(-1)!;
+    const [desde, hasta] = [ultima.x - 20, ultima.x + ultima.ancho + 20];
+    const v = ajustarALaVentana(completo, { desde, hasta });
+    let comprimidas = 0;
+    for (const h of v.hilos) {
+      const original = completo.hilos.find((x) => x.episodio.id === h.episodio.id)!;
+      const propios = completo.nodos.filter((n) => n.episodio === h.episodio.id);
+      if (propios.some((n) => enVentana(n, desde, hasta))) {
+        expect(h.alto, h.episodio.id).toBe(original.alto);
+        expect(h.fueraDeLaVentana).toBeUndefined();
+        continue;
+      }
+      comprimidas++;
+      const original2 = completo.hilos.find((x) => x.episodio.id === h.episodio.id)!;
+      const soloElChip = h.fueraDeLaVentana!.antes === 0 && original2.altoCanal <= 4;
+      expect(h.alto, `${h.episodio.id} mide lo que una franja plegada`).toBe(soloElChip ? MEDIDAS_DE_LA_RED.altoCabeceraHilo : plegado);
+      const antes = propios.filter((n) => n.x + n.ancho <= desde).reduce((s, n) => s + registrosDe(n), 0);
+      const despues = propios.filter((n) => n.x >= hasta).reduce((s, n) => s + registrosDe(n), 0);
+      expect(h.fueraDeLaVentana).toEqual({ antes, despues });
+      expect(antes + despues).toBeGreaterThan(0);
+      expect(h.yPista).toBe(h.alto === plegado ? h.y + MEDIDAS_DE_LA_RED.altoCabeceraHilo + MEDIDAS_DE_LA_RED.altoPista / 2 - 6 : h.y + MEDIDAS_DE_LA_RED.altoCabeceraHilo / 2);
+    }
+    expect(comprimidas).toBeGreaterThan(0);
+    // The threads below move up by what the shrunk ones gave back, and never overlap.
+    const devuelto = completo.hilos.reduce((s, h, i) => s + h.alto - v.hilos[i].alto, 0);
+    expect(v.alto).toBe(completo.alto - devuelto);
+    for (let i = 1; i < v.hilos.length; i++) expect(v.hilos[i].y).toBeGreaterThanOrEqual(v.hilos[i - 1].y + v.hilos[i - 1].alto);
+    // What is in view keeps its place inside its thread.
+    for (const n of v.nodos.filter((x) => enVentana(x, desde, hasta))) {
+      const [hv, hc] = [v.hilos, completo.hilos].map((hs) => hs.find((h) => h.episodio.id === n.episodio)!);
+      const original = completo.nodos.find((x) => x.id === n.id)!;
+      expect(n.y - hv.y).toBe(original.y - hc.y);
+    }
+  });
+
+  it('una arista hacia un nodo fuera de la ventana termina en el borde, marcada como cortada', () => {
+    const segunda = completo.columnas[1];
+    const hasta = segunda.x + segunda.ancho / 2;
+    const v = ajustarALaVentana(completo, { desde: 0, hasta });
+    const borde = hasta - BORDE_DEL_LIENZO;
+    let cortadas = 0;
+    for (const a of v.aristas) {
+      const sale = a.puntos.some(([x]) => x > borde);
+      for (const pieza of a.piezas!) for (const [x] of pieza.puntos) expect(x, `${a.clave} no pasa del borde`).toBeLessThanOrEqual(borde);
+      if (!sale) {
+        expect(a.piezas).toHaveLength(1);
+        expect(a.piezas![0].cortaFin).toBe(false);
+        continue;
+      }
+      if (a.puntos.at(-1)![0] > borde && a.piezas!.length > 0) {
+        cortadas++;
+        const ultima = a.piezas!.at(-1)!;
+        expect(ultima.cortaFin, `${a.clave} lleva el indicador`).toBe(true);
+        expect(ultima.puntos.at(-1)![0]).toBe(borde);
+      }
+    }
+    expect(cortadas).toBeGreaterThan(0);
+  });
+
+  it('una arista que viene de fuera de la ventana empieza en el borde, marcada', () => {
+    // The view starts just left of a link's target, in another column than its source.
+    const enlace = completo.aristas.find((a) => a.familia === 'enlace' && a.puntos[0][0] < a.puntos.at(-1)![0] - 100)!;
+    const desde = enlace.puntos.at(-1)![0] - 10 - BORDE_DEL_LIENZO;
+    const v = ajustarALaVentana(completo, { desde, hasta: completo.ancho });
+    const borde = desde + BORDE_DEL_LIENZO;
+    // From out of view to a target in view (a line out and back is covered by the generated histories).
+    const entrantes = v.aristas.filter((a) => a.puntos[0][0] < borde && a.puntos.at(-1)![0] >= borde);
+    expect(entrantes.length).toBeGreaterThan(0);
+    for (const a of entrantes) {
+      expect(a.piezas![0].cortaInicio, a.clave).toBe(true);
+      expect(a.piezas![0].puntos[0][0]).toBe(borde);
+      expect(a.piezas!.at(-1)!.cortaFin).toBe(false);
+    }
+  });
+
+  it.each([1, 4, 9, 13])('en una historia generada (semilla %i), ninguna línea sale de la vista sin indicador', (semilla) => {
+    const { registros, vinculos } = historiaGenerada(semilla);
+    const p = plano(registros, vinculos, { todo: true });
+    for (let desde = 0; desde < p.ancho; desde += 700) {
+      const hasta = desde + 1100;
+      const v = ajustarALaVentana(p, { desde, hasta });
+      const [izquierda, derecha] = [desde > 1 ? desde + BORDE_DEL_LIENZO : -Infinity, hasta < p.ancho - 1 ? hasta - BORDE_DEL_LIENZO : Infinity];
+      for (const a of v.aristas) {
+        const [inicio, fin] = [a.puntos[0], a.puntos.at(-1)!];
+        for (const pieza of a.piezas!) {
+          for (const [x] of pieza.puntos) {
+            expect(x).toBeGreaterThanOrEqual(izquierda);
+            expect(x).toBeLessThanOrEqual(derecha);
+          }
+          // An end that is not the line's own end is a cut, and says so.
+          expect(pieza.cortaInicio, a.clave).toBe(pieza.puntos[0] !== inicio);
+          expect(pieza.cortaFin, a.clave).toBe(pieza.puntos.at(-1) !== fin);
+        }
+      }
+      for (const h of v.hilos.filter((x) => x.fueraDeLaVentana)) expect([MEDIDAS_DE_LA_RED.altoCabeceraHilo, plegado]).toContain(h.alto);
+      const vistos = v.nodos.filter((n) => enVentana(n, desde, hasta));
+      for (const n of vistos) {
+        const hilo = v.hilos.find((h) => h.episodio.id === n.episodio)!;
+        expect(hilo.fueraDeLaVentana).toBeUndefined();
+        expect(n.y).toBeGreaterThanOrEqual(hilo.y);
+        expect(n.y + n.alto).toBeLessThanOrEqual(hilo.y + hilo.alto);
+      }
+    }
+  }, 30_000);
+
+  it('una franja plegada cuyo único rastro es «N después» va en la fila de la cabecera (M-9)', () => {
+    const cerrado = plano(REGISTROS, REALES);
+    const primera = cerrado.columnas[0];
+    const v = ajustarALaVentana(cerrado, { desde: 0, hasta: primera.x + primera.ancho + 1 });
+    let compactas = 0;
+    for (const h of v.hilos) {
+      const original = cerrado.hilos.find((x) => x.episodio.id === h.episodio.id)!;
+      const todoDespues = original.hitos.every((x) => x.x > primera.x + primera.ancho + 1);
+      expect(h.alto, h.episodio.id).toBe(todoDespues ? MEDIDAS_DE_LA_RED.altoCabeceraHilo : plegado);
+      if (todoDespues) {
+        compactas++;
+        expect(h.yPista).toBe(h.y + MEDIDAS_DE_LA_RED.altoCabeceraHilo / 2);
+      }
+    }
+    expect(compactas).toBeGreaterThan(0);
+    for (let i = 1; i < v.hilos.length; i++) expect(v.hilos[i].y).toBe(v.hilos[i - 1].y + v.hilos[i - 1].alto + MEDIDAS_DE_LA_RED.separacionHilos);
+  });
+
+  it('«N antes / N después» lleva el lienzo a los registros del episodio, o a sus hitos si está plegado', () => {
+    const e = completo.hilos[0].episodio.id;
+    const xs = completo.nodos.filter((n) => n.episodio === e);
+    expect(tramoDelEpisodio(completo, e)).toEqual([Math.min(...xs.map((n) => n.x)) - 2 * DISTANCIA_DEL_TRONCO, Math.max(...xs.map((n) => n.x + n.ancho))]);
+    const cerrado = plano(REGISTROS, REALES);
+    const hitos = cerrado.hilos[0].hitos;
+    expect(tramoDelEpisodio(cerrado, e)).toEqual([hitos[0].x - MEDIDAS_DE_LA_RED.anchoAncha, hitos.at(-1)!.x + DISTANCIA_DEL_TRONCO]);
+  });
+});
+
 /** The vertical link stretches running in the aisle right of column `columna`. */
 function verticalesDelPasillo(p: PlanoDeLaRed, columna: number): { x: number; clave: string }[] {
   const c = p.columnas[columna];
@@ -438,8 +644,10 @@ function verificarTrazado(p: PlanoDeLaRed): void {
   }
   const porId = new Map(p.nodos.map((n) => [n.id, n]));
   const enlaces = p.aristas.filter((a) => a.familia === 'enlace');
+  // One origin may open from the same exit, but only links of one kind: a
+  // recorded stretch would cover an inferred one and take its «inferido».
   const pueden = (a: AristaDeLaRed, b: AristaDeLaRed): boolean =>
-    a.desde === b.desde || (a.hasta === b.hasta && a.hasta.startsWith('grupo:'));
+    (a.desde === b.desde && a.inferido === b.inferido) || (a.hasta === b.hasta && a.hasta.startsWith('grupo:'));
   const troncos = p.columnas.map((c) => c.x - DISTANCIA_DEL_TRONCO);
 
   for (const a of enlaces) {

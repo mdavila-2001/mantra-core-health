@@ -96,10 +96,13 @@
 
 .red__muestra-hito.red__hito--momento {
   margin: 0;
+  /* Round as on the canvas: the legend's sample is the same mark. */
+  border-radius: var(--r-full);
 }
 
 /* Diagnoses: a diamond, and its fill tells the certainty. Never color alone:
-   presumptive is hollow, confirmed filled, ruled out dashed. */
+   presumptive is hollow, confirmed filled, historical smaller with a double
+   border; ruled out is struck through (`red-clinica-tonos.css`). */
 .red__hito--confirmado,
 .red__hito--presuntivo,
 .red__hito--descartado,
@@ -131,12 +134,21 @@
 
 .red__hito--descartado {
   background: var(--bg-surface);
-  border: 2px dashed var(--st-error-fg);
+  border-color: var(--st-error-fg);
 }
 
+/* Historical: its own shape, not only its color: a smaller diamond with a
+   double border (3 px: two 1 px lines and a 1 px gap). */
 .red__hito--historico {
+  inline-size: 12px;
+  block-size: 12px;
+  margin: -5px 0 0 -6px;
   background: var(--st-secondary-bg);
-  border-color: var(--st-secondary-fg);
+  border: 3px double var(--st-secondary-fg);
+}
+
+.red__muestra-hito.red__hito--historico {
+  margin: 0;
 }
 
 .red__hito--derivacion,
@@ -170,7 +182,7 @@
 
 .red__arista {
   fill: none;
-  /* Hover shows the relation name (<title>); nodes sit above (z-index 3). */
+  /* Hover shows the relation name (<title>); nodes sit above (`.red__nodo`, z-index 2, over this SVG's 1, in the canvas' one stacking context). */
   pointer-events: stroke;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -216,6 +228,16 @@
 
 .red__punta--inferido {
   fill: var(--st-warning-fg);
+}
+
+/* A line cut at the view's edge: neutral, so it reads as «continues» and not
+   as one more relation. */
+.red__sigue {
+  fill: none;
+  stroke: var(--text-secondary);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .red__arista--iluminada {

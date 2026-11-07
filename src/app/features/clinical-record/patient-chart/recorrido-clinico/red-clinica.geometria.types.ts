@@ -11,8 +11,8 @@ export const MEDIDAS_DE_LA_RED = {
   anchoAncha: 248,
   anchoAngosta: 76,
   altoEje: 76,
-  altoCabeceraHilo: 56,
-  altoPista: 40,
+  altoCabeceraHilo: 48,
+  altoPista: 32,
   altoNodo: 86,
   altoCompacto: 40,
   altoGrupo: 56,
@@ -32,6 +32,25 @@ export const INICIO_DEL_PASILLO = 18;
  * as separate lines (at 7 px the halos touched).
  */
 export const PASO_DE_CARRIL = 10;
+
+/**
+ * The distance between two lanes of a thread's channel. Wider than an aisle's:
+ * a channel's lines run side by side across several columns, and at 10 px a
+ * bundle of seven read as one thick band.
+ */
+export const PASO_DEL_CANAL = 14;
+
+/**
+ * How far below the card's middle an inferred link leaves. A recorded and an
+ * inferred link of one source never share their exit: on a shared stretch the
+ * solid line covered the dotted one, and «inferido» fell on a recorded stretch.
+ */
+export const DESVIO_DE_LO_INFERIDO = 12;
+
+/** Where a link leaves its source, in y: the middle, or below it if inferred. */
+export function ySalida(desde: { readonly y: number; readonly alto: number }, inferido: boolean): number {
+  return desde.y + desde.alto / 2 + (inferido ? DESVIO_DE_LO_INFERIDO : 0);
+}
 
 /** Room between the outermost lane and the next column's trunk. */
 export const AIRE_CON_EL_TRONCO = 12;
@@ -109,6 +128,12 @@ export interface HiloDeLaRed {
   /** Expanded: where the channel runs. */
   readonly yCanal: number;
   readonly altoCanal: number;
+  /**
+   * Expanded but with none of its records in view: it measures what a
+   * collapsed thread does, and says how many records are left and right of
+   * the view. Set by `ajustarALaVentana`.
+   */
+  readonly fueraDeLaVentana?: { readonly antes: number; readonly despues: number };
 }
 
 export type Punto = readonly [number, number];
@@ -125,6 +150,24 @@ export interface AristaDeLaRed {
   readonly puntos: readonly Punto[];
   /** Where the word «inferido» goes, if it is inferred. */
   readonly etiqueta?: { readonly x: number; readonly y: number; readonly vertical: boolean };
+  /**
+   * What is drawn of it inside the view, set by `ajustarALaVentana`: each
+   * piece says whether it was cut at the view's edge (and gets a marker there).
+   */
+  readonly piezas?: readonly PiezaDeArista[];
+}
+
+export interface PiezaDeArista {
+  readonly trazo: string;
+  readonly puntos: readonly Punto[];
+  readonly cortaInicio: boolean;
+  readonly cortaFin: boolean;
+}
+
+/** The stretch of the plane in view, in canvas pixels. */
+export interface VentanaDeLaRed {
+  readonly desde: number;
+  readonly hasta: number;
 }
 
 export interface PlanoDeLaRed {

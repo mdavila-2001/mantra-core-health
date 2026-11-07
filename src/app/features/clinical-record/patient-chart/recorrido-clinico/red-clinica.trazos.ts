@@ -5,7 +5,7 @@
 
 import { esInferido } from './red-clinica.model';
 import type { Pendiente } from './red-clinica.aristas';
-import { DISTANCIA_DEL_TRONCO, type AristaDeLaRed, type NodoDeLaRed, type Punto } from './red-clinica.geometria.types';
+import { DISTANCIA_DEL_TRONCO, ySalida, type AristaDeLaRed, type NodoDeLaRed, type Punto } from './red-clinica.geometria.types';
 
 export interface CarrilesDeLosEnlaces {
   /** The entry height of each link into its target. */
@@ -37,7 +37,7 @@ export function trazarAristas(
       });
       continue;
     }
-    const y0 = a.y + a.alto / 2;
+    const y0 = ySalida(a, inferido);
     const y1 = yEntrada.get(p.clave)!;
     const lx = xDelCarril(a.columna, carrilDelTramo.get(`${p.clave}|sale`) ?? 0);
     let puntos: Punto[];
