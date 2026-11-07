@@ -50,7 +50,7 @@
   },
   {
     "code": "SCZ25-C-0001",
-    "display": "EVALUACION CARDIOLÓGICA PREOPERATORIA",
+    "display": "EVALUACIÓN CARDIOLÓGICA PREOPERATORIA",
     "specialty": "Cardiología",
     "referencePrice": null,
     "priceUnit": null,
@@ -59,7 +59,7 @@
   },
   {
     "code": "SCZ25-C-0002",
-    "display": "Riesgo quirúrgico preoperatorio cardiológico programado en con: sultorio, incluye ECG.",
+    "display": "Riesgo quirúrgico preoperatorio cardiológico programado en consultorio, incluye ECG",
     "specialty": "Cardiología",
     "referencePrice": "6",
     "priceUnit": "UMA",
@@ -68,7 +68,7 @@
   },
   {
     "code": "SCZ25-C-0003",
-    "display": "Riesgo quirúrgico preoperatorio cardiológico programado en clinica hospital, incluye ECG.",
+    "display": "Riesgo quirúrgico preoperatorio cardiológico programado en clínica u hospital, incluye ECG",
     "specialty": "Cardiología",
     "referencePrice": "8",
     "priceUnit": "UMA",
@@ -77,7 +77,7 @@
   },
   {
     "code": "SCZ25-C-0004",
-    "display": "Riesgo quirúrgico preoperatorio cardiológico no programado ode emergencia en consultorio, clinica u hospital, incluye ECG. 02.09 CONSULTA O ATENCION MEDICA DE CORTESIA A CRITERIO",
+    "display": "Riesgo quirúrgico preoperatorio cardiológico no programado o de emergencia en consultorio, clínica u hospital, incluye ECG",
     "specialty": "Cardiología",
     "referencePrice": "10",
     "priceUnit": "UMA",
@@ -86,11 +86,12 @@
   },
   {
     "code": "SCZ25-C-0005",
-    "display": "Interconsultas",
+    "display": "INTERCONSULTAS",
     "specialty": "Cardiología",
     "referencePrice": null,
     "priceUnit": null,
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Interconsultas"
   },
   {
     "code": "SCZ25-C-0006",
@@ -102,7 +103,7 @@
   },
   {
     "code": "SCZ25-C-0007",
-    "display": "Interconsulta en unidad de terapialcuidados intensivos y/o intermedios, por visita.",
+    "display": "Interconsulta en unidad de terapia/cuidados intensivos y/o intermedios, por visita",
     "specialty": "Cardiología",
     "referencePrice": "10",
     "priceUnit": "UMA",
@@ -128,7 +129,7 @@
   },
   {
     "code": "SCZ25-C-0010",
-    "display": "Procedimientos diagnósticos complementarios no invasivos",
+    "display": "PROCEDIMIENTOS DIAGNÓSTICOS COMPLEMENTARIOS",
     "specialty": "Cardiología",
     "referencePrice": null,
     "priceUnit": null,
@@ -137,19 +138,21 @@
   },
   {
     "code": "SCZ25-C-0011",
-    "display": "Electrocardiograma (ECG) en consultori",
+    "display": "Electrocardiograma (ECG) en consultorio",
     "specialty": "Cardiología",
     "referencePrice": "3",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Electrocardiograma (ECG) en consultori"
   },
   {
     "code": "SCZ25-C-0012",
-    "display": "Electrocardiograma (ECG) paciente hospitalizado (internado) 303.04 Electrocardiograma (ECG) a domictio. 6",
+    "display": "Electrocardiograma (ECG) a paciente hospitalizado (internado)",
     "specialty": "Cardiología",
     "referencePrice": "4",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Electrocardiograma (ECG) paciente hospitalizado (internado) 303.04 Electrocardiograma (ECG) a domictio. 6"
   },
   {
     "code": "SCZ25-C-0013",
@@ -162,11 +165,12 @@
   },
   {
     "code": "SCZ25-C-0014",
-    "display": "Holter do 24 horas por eepocialista en arrtmias 3.0307 Holter protongado por especialsta en arrtmias (ahade 2 umas por dia)",
+    "display": "Holter de 24 horas por especialista en arritmias",
     "specialty": "Cardiología",
     "referencePrice": "20",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Holter do 24 horas por eepocialista en arrtmias 3.0307 Holter protongado por especialsta en arrtmias (ahade 2 umas por dia)"
   },
   {
     "code": "SCZ25-C-0015",
@@ -178,11 +182,12 @@
   },
   {
     "code": "SCZ25-C-0016",
-    "display": "Detector de eventos tipo kardia (por electro enviado)",
+    "display": "Detector de eventos tipo Kardia (por electro enviado)",
     "specialty": "Cardiología",
     "referencePrice": "20",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Detector de eventos tipo kardia (por electro enviado)"
   },
   {
     "code": "SCZ25-C-0017",
@@ -203,11 +208,11 @@
   },
   {
     "code": "SCZ25-C-0019",
-    "display": "Mapa de 24 horas (monitoreo ambulatorio de ta presión arterial) a7",
+    "display": "Mapa de 24 horas (monitoreo ambulatorio de la presión arterial)",
     "specialty": "Cardiología",
     "referencePrice": "10",
     "priceUnit": "UMA",
-    "ocrSuspect": true,
+    "ocrSuspect": false,
     "originalDisplay": "Mapa de 24 horas (monitoreo ambulatorio de ta presién arterial) a7"
   },
   {
@@ -221,15 +226,16 @@
   },
   {
     "code": "SCZ25-C-0021",
-    "display": "Evaluacion ¢e resineronizadores",
+    "display": "Evaluación de resincronizadores",
     "specialty": "Cardiología",
     "referencePrice": "15",
     "priceUnit": "UMA",
-    "ocrSuspect": true
+    "ocrSuspect": false,
+    "originalDisplay": "Evaluacion ¢e resineronizadores"
   },
   {
     "code": "SCZ25-C-0022",
-    "display": "Evaluación ce desfibritadores",
+    "display": "Evaluación de desfibriladores",
     "specialty": "Cardiología",
     "referencePrice": "15",
     "priceUnit": "UMA",
@@ -238,7 +244,7 @@
   },
   {
     "code": "SCZ25-C-0023",
-    "display": "Estimulación cardiaca trans esofágica",
+    "display": "Estimulación cardiaca transesofágica",
     "specialty": "Cardiología",
     "referencePrice": "20",
     "priceUnit": "UMA",
@@ -256,11 +262,12 @@
   },
   {
     "code": "SCZ25-C-0025",
-    "display": "Indice tobilo-brazo(ITB)",
+    "display": "Índice tobillo-brazo (ITB)",
     "specialty": "Cardiología",
     "referencePrice": "6",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Indice tobilo-brazo(ITB)"
   },
   {
     "code": "SCZ25-C-0026",
@@ -281,7 +288,7 @@
   },
   {
     "code": "SCZ25-C-0028",
-    "display": "Ecocardiograma transesofágico (ETE), no incluye honorarios de anestesidlogo.",
+    "display": "Ecocardiograma transesofágico (ETE), no incluye honorarios de anestesiólogo",
     "specialty": "Cardiología",
     "referencePrice": "35",
     "priceUnit": "UMA",
@@ -290,11 +297,12 @@
   },
   {
     "code": "SCZ25-C-0029",
-    "display": "Ecocardiograma con stress",
+    "display": "Ecocardiograma con estrés",
     "specialty": "Cardiología",
     "referencePrice": "36",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Ecocardiograma con stress"
   },
   {
     "code": "SCZ25-C-0030",
@@ -306,15 +314,16 @@
   },
   {
     "code": "SCZ25-C-0031",
-    "display": "Ecocardiograma pediatrco",
+    "display": "Ecocardiograma pediátrico",
     "specialty": "Cardiología",
     "referencePrice": "20",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Ecocardiograma pediatrco"
   },
   {
     "code": "SCZ25-C-0032",
-    "display": "Ecografía doppler para fistulas arteriovenosas",
+    "display": "Ecografía doppler para fístulas arteriovenosas",
     "specialty": "Cardiología",
     "referencePrice": "20",
     "priceUnit": "UMA",
@@ -323,15 +332,16 @@
   },
   {
     "code": "SCZ25-C-0033",
-    "display": "Ecocardiogratia fetal",
+    "display": "Ecocardiografía fetal",
     "specialty": "Cardiología",
     "referencePrice": "20",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Ecocardiogratia fetal"
   },
   {
     "code": "SCZ25-C-0034",
-    "display": "Eoocardiograma intraoperatorio o en sala de hemodinamia,",
+    "display": "Ecocardiograma intraoperatorio o en sala de hemodinamia",
     "specialty": "Cardiología",
     "referencePrice": "50",
     "priceUnit": "UMA",
@@ -348,23 +358,25 @@
   },
   {
     "code": "SCZ25-C-0036",
-    "display": "Doppler venaso periférico de un miembro",
+    "display": "Doppler venoso periférico de un miembro",
     "specialty": "Cardiología",
     "referencePrice": "20",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Doppler venaso periférico de un miembro"
   },
   {
     "code": "SCZ25-C-0037",
-    "display": "Eco doppler de arterias renales, unilateral o bilateral,",
+    "display": "Eco doppler de arterias renales, unilateral o bilateral",
     "specialty": "Cardiología",
     "referencePrice": "20",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Eco doppler de arterias renales, unilateral o bilateral,"
   },
   {
     "code": "SCZ25-C-0038",
-    "display": "TOMOGRAFIA,RESONANCIA MAGNÉTICA NUCLEAR,SPECT,PET",
+    "display": "TOMOGRAFÍA, RESONANCIA MAGNÉTICA NUCLEAR, SPECT, PET",
     "specialty": "Cardiología",
     "referencePrice": null,
     "priceUnit": null,
@@ -373,7 +385,7 @@
   },
   {
     "code": "SCZ25-C-0039",
-    "display": "Angiotomografia cardiaca, con o sin reconstrucción 3D",
+    "display": "Angiotomografía cardiaca, con o sin reconstrucción 3D",
     "specialty": "Cardiología",
     "referencePrice": "20",
     "priceUnit": "UMA",
@@ -391,7 +403,7 @@
   },
   {
     "code": "SCZ25-C-0041",
-    "display": "Tomogratia computarizada por emisión de fotbn simple (SPECTo cámara gama) cardiaca, con o sin viabilidad miocárdica,",
+    "display": "Tomografía computarizada por emisión de fotón simple (SPECT o cámara gamma) cardiaca, con o sin viabilidad miocárdica",
     "specialty": "Cardiología",
     "referencePrice": "20",
     "priceUnit": "UMA",
@@ -400,7 +412,7 @@
   },
   {
     "code": "SCZ25-C-0042",
-    "display": "—Tomografia por emisión de positrones (PET) cardiaca, cono sn Viabilidad miocárdica, 3.0800 PROCEDIMIENTOS DIAGNÓSTICOS INVASIVOS (100% PRI-",
+    "display": "Tomografía por emisión de positrones (PET) cardiaca, con o sin viabilidad miocárdica",
     "specialty": "Cardiología",
     "referencePrice": "20",
     "priceUnit": "UMA",
@@ -418,7 +430,7 @@
   },
   {
     "code": "SCZ25-C-0044",
-    "display": "Coronariografia con o sin ventriculografía (cateterismo cardiaco) 100,",
+    "display": "CATETERISMO CARDIACO",
     "specialty": "Cardiología",
     "referencePrice": null,
     "priceUnit": null,
@@ -436,15 +448,16 @@
   },
   {
     "code": "SCZ25-C-0046",
-    "display": "—_Ccronariografia con o sin ventriculogratia y cateterismo derecho (Cateterismo derecho e izquierdo)",
+    "display": "Coronariografía con o sin ventriculografía y cateterismo derecho (cateterismo derecho e izquierdo)",
     "specialty": "Cardiología",
     "referencePrice": "120",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "—_Ccronariografia con o sin ventriculogratia y cateterismo derecho (Cateterismo derecho e izquierdo)"
   },
   {
     "code": "SCZ25-C-0047",
-    "display": "Bliopsia endo miocárdica,",
+    "display": "Biopsia endomiocárdica",
     "specialty": "Cardiología",
     "referencePrice": "85",
     "priceUnit": "UMA",
@@ -453,7 +466,7 @@
   },
   {
     "code": "SCZ25-C-0048",
-    "display": "EN CARDIOPATÍAS CONGÉNITAS:",
+    "display": "EN CARDIOPATÍAS CONGÉNITAS",
     "specialty": "Cardiología",
     "referencePrice": null,
     "priceUnit": null,
@@ -516,7 +529,7 @@
   },
   {
     "code": "SCZ25-C-0055",
-    "display": "Angiografías de vasos cerebrales, unilateral o bilateral",
+    "display": "Angiografía de vasos cerebrales, unilateral o bilateral",
     "specialty": "Cardiología",
     "referencePrice": "110",
     "priceUnit": "UMA",
@@ -543,7 +556,7 @@
   },
   {
     "code": "SCZ25-C-0058",
-    "display": "Flebografía. Vena cava inferior",
+    "display": "Flebografía de vena cava inferior",
     "specialty": "Cardiología",
     "referencePrice": "50",
     "priceUnit": "UMA",
@@ -552,7 +565,7 @@
   },
   {
     "code": "SCZ25-C-0059",
-    "display": "—_Angiografía de vasos esplécnicos, con o sin aortografía, 3:08.09 Angiografía pulmonar, con o sin cateterismo derecho. 80",
+    "display": "Angiografía de vasos esplácnicos, con o sin aortografía",
     "specialty": "Cardiología",
     "referencePrice": "60",
     "priceUnit": "UMA",
@@ -569,11 +582,12 @@
   },
   {
     "code": "SCZ25-C-0061",
-    "display": "Angioplastia coronaria",
+    "display": "ANGIOPLASTIA CORONARIA",
     "specialty": "Cardiología",
     "referencePrice": null,
     "priceUnit": null,
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Angioplastia coronaria"
   },
   {
     "code": "SCZ25-C-0062",
@@ -586,7 +600,7 @@
   },
   {
     "code": "SCZ25-C-0063",
-    "display": "Angioplastia coronaria por lesión adicional tratada porbalon ylocon implante de STENT.",
+    "display": "Angioplastia coronaria por lesión adicional tratada por balón y/o con implante de STENT",
     "specialty": "Cardiología",
     "referencePrice": "60",
     "priceUnit": "UMA",
@@ -595,7 +609,7 @@
   },
   {
     "code": "SCZ25-C-0064",
-    "display": "Angioplastia primaria en infarto agudo de miocardio,",
+    "display": "Angioplastia primaria en infarto agudo de miocardio",
     "specialty": "Cardiología",
     "referencePrice": "300",
     "priceUnit": "UMA",
@@ -604,7 +618,7 @@
   },
   {
     "code": "SCZ25-C-0065",
-    "display": "Angioplastia de rescate o faciitada en infarto agudo de miocardio, posterior a uso de fibrinolíticos.",
+    "display": "Angioplastia de rescate o facilitada en infarto agudo de miocardio, posterior a uso de fibrinolíticos",
     "specialty": "Cardiología",
     "referencePrice": "300",
     "priceUnit": "UMA",
@@ -613,11 +627,12 @@
   },
   {
     "code": "SCZ25-C-0066",
-    "display": "ANGIOPLASTIAPERIFERICA.",
+    "display": "ANGIOPLASTIA PERIFÉRICA",
     "specialty": "Cardiología",
     "referencePrice": null,
     "priceUnit": null,
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "ANGIOPLASTIAPERIFERICA."
   },
   {
     "code": "SCZ25-C-0067",
@@ -638,11 +653,12 @@
   },
   {
     "code": "SCZ25-C-0069",
-    "display": "Tratamiento invasivo, mediante trombétisis dirigida por catéter, por miembro,",
+    "display": "Tratamiento mediante trombólisis dirigida por catéter, por miembro",
     "specialty": "Cardiología",
     "referencePrice": "80",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Tratamiento invasivo, mediante trombétisis dirigida por catéter, por miembro,"
   },
   {
     "code": "SCZ25-C-0070",
@@ -682,15 +698,16 @@
   },
   {
     "code": "SCZ25-C-0074",
-    "display": "Implante de fitra de vena cava inforor",
+    "display": "Implante de filtro de vena cava inferior",
     "specialty": "Cardiología",
     "referencePrice": "200",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Implante de fitra de vena cava inforor"
   },
   {
     "code": "SCZ25-C-0075",
-    "display": "Tratamiento invasivo, mediante trombblsis mecánica del tromboembolismo pulmonar (TEP)",
+    "display": "Tratamiento mediante trombólisis mecánica del tromboembolismo pulmonar (TEP)",
     "specialty": "Cardiología",
     "referencePrice": "200",
     "priceUnit": "UMA",
@@ -699,15 +716,16 @@
   },
   {
     "code": "SCZ25-C-0076",
-    "display": "Tratamiento invasivo, mediante trombolisis dirigida por catéter, del tromboembolismo pulmonar (TEP)",
+    "display": "Tratamiento mediante trombólisis dirigida por catéter del tromboembolismo pulmonar (TEP)",
     "specialty": "Cardiología",
     "referencePrice": "100",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Tratamiento invasivo, mediante trombolisis dirigida por catéter, del tromboembolismo pulmonar (TEP)"
   },
   {
     "code": "SCZ25-C-0077",
-    "display": "Angioplastia por balón y/o con implante de stent en fistula ertetio- venosa para hemodidlisis.",
+    "display": "Angioplastia por balón y/o con implante de STENT en fístula arteriovenosa para hemodiálisis",
     "specialty": "Cardiología",
     "referencePrice": "150",
     "priceUnit": "UMA",
@@ -716,23 +734,25 @@
   },
   {
     "code": "SCZ25-C-0078",
-    "display": "Embolzaciones(pulmonar, hepatica, renal, mlformaciones vasculares)",
+    "display": "Embolizaciones (pulmonar, hepática, renal, malformaciones vasculares)",
     "specialty": "Cardiología",
     "referencePrice": "180",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Embolzaciones(pulmonar, hepatica, renal, mlformaciones vasculares)"
   },
   {
     "code": "SCZ25-C-0079",
-    "display": "VALVULOPLASTIAS.",
+    "display": "VALVULOPLASTIAS",
     "specialty": "Cardiología",
     "referencePrice": null,
     "priceUnit": null,
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "VALVULOPLASTIAS."
   },
   {
     "code": "SCZ25-C-0080",
-    "display": "Valvuloplastia mitral o tricdspide por balón,",
+    "display": "Valvuloplastia mitral o tricúspide por balón",
     "specialty": "Cardiología",
     "referencePrice": "250",
     "priceUnit": "UMA",
@@ -750,7 +770,7 @@
   },
   {
     "code": "SCZ25-C-0082",
-    "display": "Implante/reemplazo percutáneo de válvula aórtica (TAVIOTAVR)",
+    "display": "Implante/reemplazo percutáneo de válvula aórtica (TAVI o TAVR)",
     "specialty": "Cardiología",
     "referencePrice": "500",
     "priceUnit": "UMA",
@@ -759,7 +779,7 @@
   },
   {
     "code": "SCZ25-C-0083",
-    "display": "CARDIOPATÍAS CONGÉNITAS:",
+    "display": "CARDIOPATÍAS CONGÉNITAS",
     "specialty": "Cardiología",
     "referencePrice": null,
     "priceUnit": null,
@@ -768,7 +788,7 @@
   },
   {
     "code": "SCZ25-C-0084",
-    "display": "Intervencionismo en oclusión de persistencia del conducto arterioso(PCA)",
+    "display": "Intervencionismo en oclusión de persistencia del conducto arterioso (PCA)",
     "specialty": "Cardiología",
     "referencePrice": "200",
     "priceUnit": "UMA",
@@ -786,7 +806,7 @@
   },
   {
     "code": "SCZ25-C-0086",
-    "display": "Intervencionismo en oclusin de comunicación interauricular (CIA)",
+    "display": "Intervencionismo en oclusión de comunicación interauricular (CIA)",
     "specialty": "Cardiología",
     "referencePrice": "250",
     "priceUnit": "UMA",
@@ -795,7 +815,7 @@
   },
   {
     "code": "SCZ25-C-0087",
-    "display": "Implante de dispositive auricular, cierre de orejuela izquierda",
+    "display": "Implante de dispositivo auricular, cierre de orejuela izquierda",
     "specialty": "Cardiología",
     "referencePrice": "300",
     "priceUnit": "UMA",
@@ -804,15 +824,16 @@
   },
   {
     "code": "SCZ25-C-0088",
-    "display": "Raschkind- intervencionista en ruptura del séptum interauricular (SIA)",
+    "display": "Rashkind intervencionista en ruptura del septum interauricular (SIA)",
     "specialty": "Cardiología",
     "referencePrice": "200",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Raschkind- intervencionista en ruptura del séptum interauricular (SIA)"
   },
   {
     "code": "SCZ25-C-0089",
-    "display": "ELECTROFISIOLOGÍA (100% PRIMER OPERADOR 30 % SE- Ns GUNDO OPERADOR)",
+    "display": "ELECTROFISIOLOGÍA (100% PRIMER OPERADOR, 30% SEGUNDO OPERADOR)",
     "specialty": "Cardiología",
     "referencePrice": null,
     "priceUnit": null,
@@ -821,15 +842,16 @@
   },
   {
     "code": "SCZ25-C-0090",
-    "display": "Implante de marcapaso transitorio,",
+    "display": "Implante de marcapaso transitorio",
     "specialty": "Cardiología",
     "referencePrice": "50",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Implante de marcapaso transitorio,"
   },
   {
     "code": "SCZ25-C-0091",
-    "display": "Estimulación del sistema de conducción 313.03 Estudio electrofisiológico. 120",
+    "display": "Estimulación del sistema de conducción",
     "specialty": "Cardiología",
     "referencePrice": "200",
     "priceUnit": "UMA",
@@ -838,7 +860,7 @@
   },
   {
     "code": "SCZ25-C-0092",
-    "display": "Ablación de arritmias supraventricular sin mapeamiento electro anatómico",
+    "display": "Ablación de arritmia supraventricular sin mapeo electroanatómico",
     "specialty": "Cardiología",
     "referencePrice": "200",
     "priceUnit": "UMA",
@@ -847,7 +869,7 @@
   },
   {
     "code": "SCZ25-C-0093",
-    "display": "Ablación de arritmias supraventricular con mapeamiento electro anatómico 3:13.06 Ablación de arritmias ventricular sin mapeamiento electro anatómico 250",
+    "display": "Ablación de arritmia supraventricular con mapeo electroanatómico",
     "specialty": "Cardiología",
     "referencePrice": "250",
     "priceUnit": "UMA",
@@ -856,7 +878,7 @@
   },
   {
     "code": "SCZ25-C-0094",
-    "display": "Ablación de arritmias ventricular con mapeamiento electro anatómico",
+    "display": "Ablación de arritmia ventricular con mapeo electroanatómico",
     "specialty": "Cardiología",
     "referencePrice": "300",
     "priceUnit": "UMA",
@@ -865,28 +887,30 @@
   },
   {
     "code": "SCZ25-C-0095",
-    "display": "Estudio electrofsiol6gico con evaluación de la conducción AV con droga",
+    "display": "Estudio electrofisiológico con evaluación de la conducción AV con droga",
     "specialty": "Cardiología",
     "referencePrice": "140",
     "priceUnit": "UMA",
-    "ocrSuspect": true,
+    "ocrSuspect": false,
     "originalDisplay": "Estudio electrofsiol6gico con evaluacién de la conduccién AV con droga"
   },
   {
     "code": "SCZ25-C-0096",
-    "display": "Cardioneuroablacion",
+    "display": "Cardioneuroablación",
     "specialty": "Cardiología",
     "referencePrice": "300",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Cardioneuroablacion"
   },
   {
     "code": "SCZ25-C-0097",
-    "display": "Implante de marcapaso tipo VWI",
+    "display": "Implante de marcapaso tipo VVI",
     "specialty": "Cardiología",
     "referencePrice": "100",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Implante de marcapaso tipo VWI"
   },
   {
     "code": "SCZ25-C-0098",
@@ -906,11 +930,12 @@
   },
   {
     "code": "SCZ25-C-0100",
-    "display": "Implante de marcapaso tricamaral (resincronizador)",
+    "display": "Implante de marcapaso tricameral (resincronizador)",
     "specialty": "Cardiología",
     "referencePrice": "200",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Implante de marcapaso tricamaral (resincronizador)"
   },
   {
     "code": "SCZ25-C-0101",
@@ -923,7 +948,7 @@
   },
   {
     "code": "SCZ25-C-0102",
-    "display": "Implante de desfibritador cardiaco automático tricamaral",
+    "display": "Implante de desfibrilador cardiaco automático tricameral",
     "specialty": "Cardiología",
     "referencePrice": "250",
     "priceUnit": "UMA",
@@ -940,7 +965,7 @@
   },
   {
     "code": "SCZ25-C-0104",
-    "display": "Hipertensión arterial",
+    "display": "HIPERTENSIÓN ARTERIAL",
     "specialty": "Cardiología",
     "referencePrice": null,
     "priceUnit": null,
@@ -975,15 +1000,16 @@
   },
   {
     "code": "SCZ25-C-0108",
-    "display": "Tratamiento de la insuficiencia cardiaca aguda, hasta 7 dias",
+    "display": "Tratamiento de la insuficiencia cardiaca aguda, hasta 7 días",
     "specialty": "Cardiología",
     "referencePrice": "80",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Tratamiento de la insuficiencia cardiaca aguda, hasta 7 dias"
   },
   {
     "code": "SCZ25-C-0109",
-    "display": "—Atencion médica de edema agudo de pulmón",
+    "display": "Atención médica de edema agudo de pulmón",
     "specialty": "Cardiología",
     "referencePrice": "80",
     "priceUnit": "UMA",
@@ -1001,7 +1027,7 @@
   },
   {
     "code": "SCZ25-C-0111",
-    "display": "Sindrome coronario agudo y/o infarto agudo de miocardio, hasta 5 dias (no incluye administración de fibriloniiticos)",
+    "display": "Síndrome coronario agudo y/o infarto agudo de miocardio, hasta 5 días (no incluye administración de fibrinolíticos)",
     "specialty": "Cardiología",
     "referencePrice": "100",
     "priceUnit": "UMA",
@@ -1010,7 +1036,7 @@
   },
   {
     "code": "SCZ25-C-0112",
-    "display": "Tratamiento con fibrinolíticos en infarto agudo de miocardio con su- pradesnivel del segmento ST.",
+    "display": "Tratamiento con fibrinolíticos en infarto agudo de miocardio con supradesnivel del segmento ST",
     "specialty": "Cardiología",
     "referencePrice": "100",
     "priceUnit": "UMA",
@@ -1019,11 +1045,12 @@
   },
   {
     "code": "SCZ25-C-0113",
-    "display": "Angina post infarto, hasta 3 dias",
+    "display": "Angina post infarto, hasta 3 días",
     "specialty": "Cardiología",
     "referencePrice": "80",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Angina post infarto, hasta 3 dias"
   },
   {
     "code": "SCZ25-C-0114",
@@ -1043,7 +1070,7 @@
   },
   {
     "code": "SCZ25-C-0116",
-    "display": "Atención médica de arrtmias severas, hasta 7 dias",
+    "display": "Atención médica de arritmias severas, hasta 7 días",
     "specialty": "Cardiología",
     "referencePrice": "80",
     "priceUnit": "UMA",
@@ -1052,7 +1079,7 @@
   },
   {
     "code": "SCZ25-C-0117",
-    "display": "Reanimación cardiopulmonar en para cartiaco",
+    "display": "Reanimación cardiopulmonar en paro cardiaco",
     "specialty": "Cardiología",
     "referencePrice": "120",
     "priceUnit": "UMA",
@@ -1061,11 +1088,12 @@
   },
   {
     "code": "SCZ25-C-0118",
-    "display": "ACOMPANAMIENTO CLINICO QUIRERGICO",
+    "display": "ACOMPAÑAMIENTO CLÍNICO QUIRÚRGICO",
     "specialty": "Cardiología",
     "referencePrice": null,
     "priceUnit": null,
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "ACOMPANAMIENTO CLINICO QUIRERGICO"
   },
   {
     "code": "SCZ25-C-0119",
@@ -1078,11 +1106,12 @@
   },
   {
     "code": "SCZ25-C-0120",
-    "display": "Acompefiamiento intraoperatorio por hora adicional",
+    "display": "Acompañamiento intraoperatorio por hora adicional",
     "specialty": "Cardiología",
     "referencePrice": "10",
     "priceUnit": "UMA",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Acompefiamiento intraoperatorio por hora adicional"
   },
   {
     "code": "SCZ25-C-0121",
@@ -5830,7 +5859,7 @@
   },
   {
     "code": "SCZ25-CG-0327",
-    "display": "CIRUGIA MÍNIMAMENTE INVASIVO PERCUTÁNEO:",
+    "display": "CIRUGÍA PERCUTÁNEA",
     "specialty": "Cirugía General",
     "referencePrice": null,
     "priceUnit": null,
@@ -11500,7 +11529,7 @@
   },
   {
     "code": "SCZ25-D-0103",
-    "display": "PROCEDIMIENTOS QUIRÚRGICOS MÍNIMAMENTE INVASIVOS",
+    "display": "PROCEDIMIENTOS QUIRÚRGICOS",
     "specialty": "Dermatología",
     "referencePrice": null,
     "priceUnit": null,
@@ -16526,7 +16555,7 @@
   },
   {
     "code": "SCZ25-N-0140",
-    "display": "Asistencia ventilatoria mecéinica no invasiva (no incluye equipamiento)",
+    "display": "Asistencia ventilatoria mecánica con mascarilla, sin intubación (no incluye equipamiento)",
     "specialty": "Nefrología",
     "referencePrice": "120",
     "priceUnit": "UMA",
@@ -20767,7 +20796,7 @@
   },
   {
     "code": "SCZ25-O-0039",
-    "display": "Cirugía mínimamente invasiva de estrabismo (miss)",
+    "display": "Cirugía de estrabismo por microincisiones (MISS)",
     "specialty": "Oftalmología",
     "referencePrice": "60",
     "priceUnit": "UMA",
@@ -38214,7 +38243,7 @@
   },
   {
     "code": "SCZ25-TIP-0012",
-    "display": "Monitorización invasiva (pic/pialpvelpoapige) (por cada parametro por dia)",
+    "display": "Monitorización con catéter de presiones (PIC/PIA/PVC/POAP), por cada parámetro por día",
     "specialty": "Terapia Intensiva Pediátrica",
     "referencePrice": "10",
     "priceUnit": "UMA",
@@ -38765,7 +38794,7 @@
   },
   {
     "code": "SCZ25-TIP-0077",
-    "display": "Ventilación no invasiva",
+    "display": "Ventilación mecánica con mascarilla, sin intubación",
     "specialty": "Terapia Intensiva Pediátrica",
     "referencePrice": "400",
     "priceUnit": "UMA",
