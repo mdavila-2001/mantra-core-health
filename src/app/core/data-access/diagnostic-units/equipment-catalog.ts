@@ -24,6 +24,8 @@ export interface CatalogEquipment {
   readonly modalityCode: ModalityCode | null;
   /** What sets it apart, in one line. */
   readonly highlight: string;
+  /** Product photo (optional): without it the row shows an illustration of its kind. */
+  readonly imageUrl?: string;
 }
 
 const e = (

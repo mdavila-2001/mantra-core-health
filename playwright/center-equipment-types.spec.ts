@@ -76,7 +76,7 @@ test('a center picks a mammography unit from the international catalog and it st
 
   await page.getByTestId('centro-equipo-agregar').click();
   const dialog = page.getByRole('dialog', { name: 'Agregar equipo' });
-  await dialog.getByRole('radio', { name: 'Mamografía' }).click();
+  await dialog.getByRole('button', { name: 'Mamografía, 6 equipos' }).click();
   await dialog.getByTestId('equipment-catalog-pick-ims-giotto-class').click();
   const form = dialog.getByTestId('centro-equipo-formulario');
   const serial = `GIO-${Date.now()}`;
@@ -100,4 +100,31 @@ test('a center picks a mammography unit from the international catalog and it st
   await expect(page.getByTestId('centro-horarios')).toBeVisible({ timeout: 120_000 });
   await page.getByRole('tab', { name: 'Equipos' }).click();
   await expect(page.getByRole('region', { name: 'Mamografía' }).getByRole('article', { name: 'Mamógrafo Giotto Class' }).first()).toBeVisible();
+});
+
+test('the catalog is a sortable table with modality chips, search and one «Elegir» per row', async ({ page }) => {
+  await signIn(page);
+  await openEquipment(page);
+
+  await page.getByTestId('centro-equipo-agregar').click();
+  const dialog = page.getByRole('dialog', { name: 'Agregar equipo' });
+  const count = dialog.getByTestId('equipment-catalog-count');
+  await expect(count).toContainText('Mostrando 41 de 41 equipos');
+  await expect(dialog.getByRole('columnheader', { name: /Equipo/ })).toBeVisible();
+  await expect(dialog.getByTestId('equipment-catalog-pick-ims-giotto-class')).toBeVisible();
+
+  await dialog.getByRole('button', { name: 'Resonancia, 6 equipos' }).click();
+  await expect(count).toContainText('Mostrando 6 de 41 equipos');
+  await expect(dialog.getByTestId('equipment-catalog-pick-siemens-magnetom-vida')).toBeVisible();
+
+  await dialog.getByRole('button', { name: 'Todos, 41 equipos' }).click();
+  await dialog.getByLabel('Buscar equipo').fill('hologic');
+  await expect(count).toContainText('Mostrando 3 de 41 equipos');
+
+  await dialog.getByLabel('Buscar equipo').fill('zzz-sin-resultados');
+  await expect(dialog.getByTestId('equipment-catalog-empty')).toBeVisible();
+
+  await dialog.getByLabel('Buscar equipo').fill('selenia');
+  await dialog.getByTestId('equipment-catalog-pick-hologic-selenia-dimensions').click();
+  await expect(dialog.getByTestId('centro-equipo-formulario')).toBeVisible();
 });

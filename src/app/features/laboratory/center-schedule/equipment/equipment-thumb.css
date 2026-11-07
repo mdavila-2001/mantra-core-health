@@ -1,0 +1,39 @@
+:host {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: 6rem;
+  block-size: 4.5rem;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: radial-gradient(circle at 30% 20%, #fff, #dfe9ee);
+}
+
+img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+/* Fixed device palette: the tile is always light, so the drawing reads in both themes. */
+.shadow { fill: #1d3b4f; opacity: 0.14; }
+.b { fill: #f7fafb; }
+.g { fill: #cbd6dd; }
+.d { fill: #33495a; }
+.a { fill: #2aa6a0; }
+.scr { fill: #0f2a3a; }
+.ln { stroke: #8fa1ad; stroke-width: 1.5; }
+.beam { fill: #2aa6a0; opacity: 0.28; }
+.beamline, .cable { fill: none; stroke: #5fd6cd; stroke-width: 1.5; stroke-linecap: round; }
+.cable { stroke: #33495a; stroke-width: 2.5; }
+.ring { fill: none; stroke: #2aa6a0; stroke-width: 2.5; }
+.paddle { fill: #9fd8e4; opacity: 0.85; }
+.rack { fill: #e4ecf0; stroke: #8fa1ad; stroke-width: 1.2; }
+.t1 { fill: #e5584f; }
+.t2 { fill: #f2b441; }
