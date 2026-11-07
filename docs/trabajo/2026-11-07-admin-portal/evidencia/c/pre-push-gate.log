@@ -1,0 +1,5 @@
+
+PRE-PUSH GATE: BLOCKED
+  - working tree not clean (untracked or modified files would mask the build: commit or remove them)
+  - HEAD does not contain origin/dev: merge it first and resolve keeping dev's content
+Run: node scripts/pre-push-gate.mjs run --base <base> [--pw <spec>] [--int <spec>]

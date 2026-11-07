@@ -27,6 +27,17 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
         .catch(chunkFallido),
   },
   {
+    // Pharmacy catalog bulk load (simulator-backed in demo). No menu entry yet; roles mirror the API.
+    path: 'superadmin/catalog-bulk',
+    title: `${APP_TITLE} - Carga de catálogo de farmacia`,
+    canActivate: [seccionRolesGuard],
+    data: { [ROLES_ROUTE_DATA]: ['SECURITY_ADMIN', 'PHARMACY_STAFF'] },
+    loadComponent: () =>
+      import('../features/admin/catalog-bulk/catalog-bulk')
+        .then((m) => m.CatalogBulk)
+        .catch(chunkFallido),
+  },
+  {
     path: 'administration/insurance-claims/:claimId',
     title: `${APP_TITLE} - Solicitud de seguro`,
     canActivate: [seccionRolesGuard],

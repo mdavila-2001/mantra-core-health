@@ -1,0 +1,54 @@
+  aviso: src/app/features/lab-reception/lab-reception.ts ya no supera 300 líneas; quitá su excepción con --actualizar
+  aviso: src/app/features/clinical-record/patient-chart/recorrido-clinico/recorrido-clinico.model.ts ya no supera 300 líneas; quitá su excepción con --actualizar
+  aviso: src/app/core/data-access/diagnostics/diagnostics.types.ts ya no supera 300 líneas; quitá su excepción con --actualizar
+  aviso: src/app/features/lab-reception/lab-reception.html ya no supera 300 líneas; quitá su excepción con --actualizar
+  aviso: src/app/core/data-access/referrals/referrals.types.ts ya no supera 300 líneas; quitá su excepción con --actualizar
+  aviso: src/app/features/clinical-record/patient-chart/diagnosis-block/diagnosis-block.ts ya no supera 300 líneas; quitá su excepción con --actualizar
+  aviso: src/app/features/support-access/my-support/my-support.html ya no supera 300 líneas; quitá su excepción con --actualizar
+  aviso: src/app/features/account/medical-record/medical-record.css ya no supera 300 líneas; quitá su excepción con --actualizar
+
+✗ check-max-lines — techo 300 líneas (hoy 2026-11-07)
+
+  4 archivo(s) por encima de 300 sin excepción:
+    src/app/core/mock/handlers/study-detail.handlers.ts: 426 líneas
+    src/app/features/clinical-record/patient-chart/analysis-order-block/study-order-kind.ts: 410 líneas
+    src/app/features/clinical-record/patient-chart/analysis-order-block/analysis-order-block.html: 396 líneas
+    src/app/shared/components/atoms/input/input.ts: 301 líneas
+  34 excepción(es) que crecieron por encima de su tamaño congelado:
+    src/app/features/agenda/agenda.ts: 3088 líneas (congelado en 2294)
+    src/app/features/account/appointments/appointments.ts: 2317 líneas (congelado en 2302)
+    src/app/core/mock/handlers/scheduling.handlers.ts: 1834 líneas (congelado en 1811)
+    src/app/shared/components/organisms/date-picker/date-picker.ts: 1693 líneas (congelado en 1681)
+    src/app/features/form-builder/form-builder.ts: 1594 líneas (congelado en 1593)
+    src/app/core/data-access/scheduling/scheduling.client.ts: 1459 líneas (congelado en 1401)
+    src/app/core/data-access/scheduling/scheduling.types.ts: 1429 líneas (congelado en 1408)
+    src/app/features/auth/register-practitioner/register-practitioner.html: 1165 líneas (congelado en 1147)
+    src/app/features/agenda/booking-new/booking-new.ts: 786 líneas (congelado en 751)
+    src/app/features/admin/bulk-imports/bulk-imports.ts: 752 líneas (congelado en 751)
+    src/app/features/clinical-record/patient-chart/analysis-order-block/analysis-order-block.ts: 703 líneas (congelado en 693)
+    src/app/features/admin/organizations/organization-new/organization-new.ts: 628 líneas (congelado en 623)
+    src/app/features/insurance/insurance-campaigns/insurance-campaigns.ts: 624 líneas (congelado en 623)
+    src/app/features/glossary/glossary-term.ts: 601 líneas (congelado en 600)
+    src/app/features/support-access/combined-agenda/combined-agenda.ts: 590 líneas (congelado en 589)
+    src/app/features/public-directories/pharmacy-detail/pharmacy-detail.html: 576 líneas (congelado en 571)
+    src/app/core/mock/handlers/practice.handlers.ts: 575 líneas (congelado en 555)
+    src/app/features/laboratory/results/laboratory-results.ts: 566 líneas (congelado en 561)
+    src/app/features/access-governance/campaigns/campaign-wizard/campaign-wizard.ts: 562 líneas (congelado en 561)
+    src/app/features/laboratory/results/laboratory-results.css: 497 líneas (congelado en 488)
+    src/app/features/form-builder/form-builder.css: 483 líneas (congelado en 479)
+    src/app/core/data-access/public-directory/public-directory.types.ts: 469 líneas (congelado en 464)
+    src/app/core/data-access/support-access/support-access.wire.ts: 451 líneas (congelado en 392)
+    src/app/features/auth/register-practitioner/register-practitioner.css: 425 líneas (congelado en 419)
+    src/app/features/admin/organizations/child-organization-new/child-organization-new.ts: 406 líneas (congelado en 401)
+    src/app/features/admin/practitioner-assisted-registration/practitioner-assisted-registration.ts: 395 líneas (congelado en 390)
+    src/app/core/messaging/chat-socket.service.ts: 389 líneas (congelado en 382)
+    src/app/features/shell-layout/shell-layout.css: 387 líneas (congelado en 365)
+    src/app/features/directory/practitioner-detail/practitioner-detail.ts: 372 líneas (congelado en 334)
+    src/app/features/laboratory/results/laboratory-results.html: 370 líneas (congelado en 359)
+    src/app/features/admin/organizations/membership-new/membership-new.ts: 366 líneas (congelado en 361)
+    src/app/features/admin/organizations/branch-new/branch-new.ts: 307 líneas (congelado en 303)
+    src/app/features/messaging/thread/composer/composer.html: 307 líneas (congelado en 306)
+    src/app/shared/components/organisms/date-picker/date-picker.html: 306 líneas (congelado en 304)
+
+  Partilo: plantilla en .html, estilos en .css, lógica en servicios/ayudas. No subas el techo.
+
