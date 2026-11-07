@@ -47,13 +47,13 @@ const shot = (page: Page, name: string) =>
 async function start(
   browser: Browser,
   api: MockApi,
-  opts: { permission?: NotificationPermission; answer?: NotificationPermission; push?: boolean; theme?: string } & BrowserContextOptions = {},
+  opts: { permission?: NotificationPermission; answer?: NotificationPermission; push?: boolean; serviceOff?: boolean; theme?: string } & BrowserContextOptions = {},
 ): Promise<Page> {
-  const { permission = 'default', answer, push, theme = 'light', ...context } = opts;
+  const { permission = 'default', answer, push, serviceOff, theme = 'light', ...context } = opts;
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', ...context });
   contexts.push(ctx);
   await ctx.addInitScript((mode) => localStorage.setItem('mantra-core-health.theme', mode), theme);
-  await fakeBrowserPush(ctx, { permission, answer, push });
+  await fakeBrowserPush(ctx, { permission, answer, push, serviceOff });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.log(`[pageerror] ${e.message}`));
   page.on('requestfailed', (r) => console.log(`[requestfailed] ${r.url()} ${r.failure()?.errorText}`));
@@ -159,6 +159,24 @@ test('errores: bloqueado dice cómo desbloquearlo, no disponible solo «Entendid
   broken.putDelayMs = 3000;
   await failed.getByTestId('web-push-offer-activar').click();
   await expect(failed.getByTestId('web-push-offer-entendido')).toHaveAttribute('aria-disabled', 'true');
+});
+
+test('Brave con su servicio push apagado: permiso concedido, dice dónde activarlo, sin «Reintentar» ni PUT', async ({ browser }) => {
+  for (const [theme, viewport] of [['light', { width: 390, height: 844 }], ['light', { width: 1280, height: 800 }], ['dark', { width: 390, height: 844 }]] as const) {
+    const api = mockApi('u-a');
+    const page = await start(browser, api, { permission: 'granted', serviceOff: true, theme, viewport });
+    await page.getByTestId('web-push-offer-activar').click();
+    const notice = page.getByTestId('web-push-offer-notice');
+    await expect(notice).toHaveAttribute('data-reason', 'service');
+    await expect(notice).toContainText('mensajería push');
+    await expect(notice).not.toContainText('Intente de nuevo');
+    await expect(page.getByTestId('web-push-offer-activar')).toHaveCount(0);
+    expect(pushCalls(api)).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
+    await shot(page, `oferta-push-error-service-${theme}-${viewport.width}`);
+    await page.getByTestId('web-push-offer-entendido').click();
+    await expect(offer(page)).toBeHidden();
+  }
 });
 
 test('sin PushManager (no soportado) no se ofrece ni se pregunta al servidor', async ({ browser }) => {

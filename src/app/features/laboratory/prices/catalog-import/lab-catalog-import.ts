@@ -44,6 +44,8 @@ export class LabCatalogImport {
   protected readonly pricesRoute = PRICES_ROUTE;
   protected readonly catalog = signal<ViewState<LabCatalog>>(loading());
   protected readonly selected = signal<ReadonlySet<string>>(new Set());
+  /** Components the lab unticked, by concept id: they are skipped when adding. */
+  protected readonly unticked = signal<ReadonlySet<string>>(new Set());
   protected readonly importing = signal(false);
   protected readonly result = signal<LabCatalogImportResult | null>(null);
   protected readonly failure = signal<string | null>(null);
@@ -91,6 +93,13 @@ export class LabCatalogImport {
     );
     return importSummary(result, (id) => names.get(id) ?? 'Un análisis');
   });
+  /** Not-yet-offered análisis the current view shows: what «Elegir todos» ticks. */
+  private readonly pickable = computed(() =>
+    this.groups().flatMap((g) => g.items.filter((i) => !i.offeredServiceId)),
+  );
+  protected readonly allPicked = computed(() =>
+    this.pickable().every((i) => this.selected().has(i.conceptId)),
+  );
   protected readonly addLabel = computed(() => {
     const n = this.selected().size;
     return n === 0 ? 'Agregar análisis' : n === 1 ? 'Agregar 1 análisis' : `Agregar ${n} análisis`;
@@ -134,12 +143,32 @@ export class LabCatalogImport {
     });
   }
 
-  /** Selects every not-yet-offered item the current filter shows. */
-  protected selectShown(): void {
-    const ids = this.groups().flatMap((g) =>
-      g.items.filter((i) => !i.offeredServiceId).map((i) => i.conceptId),
-    );
+  protected toggleComponent(conceptId: string): void {
+    this.unticked.update((current) => {
+      const next = new Set(current);
+      if (!next.delete(conceptId)) next.add(conceptId);
+      return next;
+    });
+  }
+
+  /** Selects every not-yet-offered item in view: all of them, or the filtered ones. */
+  protected selectAll(): void {
+    const ids = this.pickable().map((i) => i.conceptId);
     this.selected.update((current) => new Set([...current, ...ids]));
+  }
+
+  protected clearSelection(): void {
+    this.selected.set(new Set());
+  }
+
+  /** The unticked components of the chosen análisis, so the API skips them. */
+  private skippedComponents(): string[] {
+    const chosen = this.selected();
+    return (dataOf(this.catalog())?.sections ?? [])
+      .flatMap((s) => s.items)
+      .filter((i) => chosen.has(i.conceptId))
+      .flatMap((i) => i.components.map((c) => c.conceptId))
+      .filter((id) => this.unticked().has(id));
   }
 
   protected add(): void {
@@ -147,11 +176,12 @@ export class LabCatalogImport {
     if (ids.length === 0 || this.importing()) return;
     this.importing.set(true);
     this.failure.set(null);
-    this.lab.importCatalog(ids).subscribe({
+    this.lab.importCatalog(ids, this.skippedComponents()).subscribe({
       next: (result) => {
         this.importing.set(false);
         this.result.set(result);
         this.selected.set(new Set());
+        this.unticked.set(new Set());
         // Reread: what was added now reads «Ya está en su lista de precios».
         this.load();
       },

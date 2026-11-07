@@ -132,6 +132,21 @@ describe('WebPushOffer', () => {
     fake.busy.set(false);
   });
 
+  it('permission granted but the browser push service is off: says where to turn it on, no «Reintentar»', async () => {
+    outcome = 'service';
+    await mountSignedIn();
+    query('web-push-offer-activar')!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(query('web-push-offer-notice')?.getAttribute('data-reason')).toBe('service');
+    expect(query('web-push-offer-notice')?.textContent).toContain('mensajería push');
+    expect(query('web-push-offer-notice')?.textContent).not.toContain('Intente de nuevo');
+    // Retrying in AloVida cannot fix a browser setting.
+    expect(query('web-push-offer-activar')).toBeNull();
+    expect(query('web-push-offer-entendido')).not.toBeNull();
+  });
+
   it('a disabled «Ahora no» while activating does not fire', async () => {
     await mountSignedIn();
     fake.busy.set(true);

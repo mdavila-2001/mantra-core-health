@@ -1,11 +1,30 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 
-import { regionConceptCode, regionOfPart } from '../../../../../core/data-access/anatomy-atlas/anatomy-atlas.logic';
-import { LATERALITY_CODE_BY_SIDE, STUDY_DETAIL_TARGETS, type StudyDetailFields } from '../../../../../core/data-access/diagnostics/study-detail.types';
+import {
+  regionConceptCode,
+  regionOfPart,
+} from '../../../../../core/data-access/anatomy-atlas/anatomy-atlas.logic';
+import {
+  LATERALITY_CODE_BY_SIDE,
+  STUDY_DETAIL_TARGETS,
+  type StudyDetailFields,
+} from '../../../../../core/data-access/diagnostics/study-detail.types';
 import { SystemContextClient } from '../../../../../core/data-access/system-context/system-context.client';
 import { ConceptSelect } from '../../../../../shared/components/molecules/concept-select/concept-select';
 import { FormField } from '../../../../../shared/components/molecules/form-field/form-field';
-import { BodySitePicker, type BodySiteSelection } from '../../../../../shared/components/organisms/body-site-picker/body-site-picker';
+import {
+  BodySitePicker,
+  type BodySiteSelection,
+} from '../../../../../shared/components/organisms/body-site-picker/body-site-picker';
 import type { StudyFamily } from '../study-category';
 import type { BodyRegionsData } from '../../../../../core/data-access/anatomy-atlas/anatomy-atlas.logic';
 import { createBodyAtlasState } from './body-atlas-state';
@@ -49,6 +68,15 @@ export class StudyDetailSection {
   /** La familia del estudio elegido, o `null` sin estudio. */
   readonly family = input<StudyFamily | null>(null);
 
+  /** Laboratorio: si el tipo de análisis limita las muestras, qué código de muestra admite. `null`: todas. */
+  readonly specimenAccepts = input<((code: string) => boolean) | null>(null);
+
+  /**
+   * Imagen: el tipo de imagen que el médico ya eligió arriba (`conceptId` de la modalidad).
+   * Con valor, la modalidad no se vuelve a preguntar; sin él, se ofrece el campo opcional.
+   */
+  readonly modalityPreset = input<string | null>(null);
+
   protected readonly targets = STUDY_DETAIL_TARGETS;
   protected readonly lateralityLabels = LATERALITY_LABELS;
   protected readonly atlas = createBodyAtlasState();
@@ -56,6 +84,7 @@ export class StudyDetailSection {
   protected readonly specimen = signal<string | null>(null);
   protected readonly bodySite = signal<string | null>(null);
   protected readonly modality = signal<string | null>(null);
+  protected readonly contrast = signal<string | null>(null);
   protected readonly laterality = signal<string | null>(null);
   protected readonly boneType = signal<string | null>(null);
   protected readonly selection = signal<BodySiteSelection | null>(null);
@@ -77,11 +106,13 @@ export class StudyDetailSection {
       untracked(() => {
         this.atlas.load();
         this.systemContext.dynamicEnum(STUDY_DETAIL_TARGETS.laterality).subscribe({
-          next: (e) => this.lateralityByCode.set(new Map(e.options.map((o) => [o.code, o.conceptId]))),
+          next: (e) =>
+            this.lateralityByCode.set(new Map(e.options.map((o) => [o.code, o.conceptId]))),
           error: () => this.lateralityByCode.set(new Map()),
         });
         this.systemContext.dynamicEnum(STUDY_DETAIL_TARGETS.bodySite).subscribe({
-          next: (e) => this.bodySiteByCode.set(new Map(e.options.map((o) => [o.code, o.conceptId]))),
+          next: (e) =>
+            this.bodySiteByCode.set(new Map(e.options.map((o) => [o.code, o.conceptId]))),
           error: () => this.bodySiteByCode.set(new Map()),
         });
       });
@@ -95,6 +126,15 @@ export class StudyDetailSection {
       const regions = this.atlas.regions();
       const sites = this.bodySiteByCode();
       untracked(() => this.proposeRegion(selection, regions, sites));
+    });
+
+    // El tipo de imagen elegido arriba manda sobre el campo de modalidad; al cambiarlo, el contraste se vuelve a elegir.
+    effect(() => {
+      const preset = this.modalityPreset();
+      untracked(() => {
+        if (preset !== this.modality()) this.contrast.set(null);
+        this.modality.set(preset);
+      });
     });
 
     // Cambiar de familia (laboratorio ↔ imagen) no arrastra lo del otro: son excluyentes.
@@ -121,7 +161,9 @@ export class StudyDetailSection {
     const region = regionOfPart(selection, regions);
     const conceptId = region === null ? undefined : sites.get(regionConceptCode(region));
     if (region === null || conceptId === undefined) {
-      this.regionNote.set('La parte marcada no tiene una región equivalente en el catálogo: elija la región de la lista.');
+      this.regionNote.set(
+        'La parte marcada no tiene una región equivalente en el catálogo: elija la región de la lista.',
+      );
       return;
     }
     this.bodySite.set(conceptId);
@@ -150,8 +192,12 @@ export class StudyDetailSection {
       ['bodyStructureUberon', selection?.structureId],
       ['bodyMeshId', selection?.meshId],
       ['boneTypeConceptId', this.isBone() ? this.boneType() : null],
+      // La API exige el tipo de imagen para el contraste: sin él no viaja.
+      ['contrastConceptId', this.modality() === null ? null : this.contrast()],
     ];
-    return Object.fromEntries(entries.filter(([, v]) => v !== null && v !== undefined && v !== '')) as StudyDetailFields;
+    return Object.fromEntries(
+      entries.filter(([, v]) => v !== null && v !== undefined && v !== ''),
+    ) as StudyDetailFields;
   }
 
   /** Laboratorio exige la muestra; imagen, la región del catálogo. */
@@ -162,7 +208,10 @@ export class StudyDetailSection {
   }
 
   reset(): void {
-    for (const s of [this.specimen, this.bodySite, this.modality, this.laterality, this.boneType]) s.set(null);
+    for (const s of [this.specimen, this.bodySite, this.laterality, this.boneType, this.contrast])
+      s.set(null);
+    // El tipo de imagen elegido arriba no es del detalle: sobrevive (lo limpia quien lo eligió).
+    this.modality.set(this.modalityPreset());
     this.selection.set(null);
     this.regionNote.set(null);
     this.errors.set({});
@@ -178,6 +227,7 @@ export class StudyDetailSection {
 
   /** Al cambiar un campo se retira su error: ya no es lo que se mandó. */
   protected clearError(field: StudyDetailField): void {
-    if (this.errors()[field] !== undefined) this.errors.update((e) => ({ ...e, [field]: undefined }));
+    if (this.errors()[field] !== undefined)
+      this.errors.update((e) => ({ ...e, [field]: undefined }));
   }
 }

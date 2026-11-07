@@ -49,6 +49,7 @@ import type {
   MessageReaction,
   MessageReceipt,
 } from '../data-access/community/community.types';
+import { claveTemporal, pendientesDeReenvio } from './forwarding';
 
 /** Cada cuánto se relee la bandeja, en milisegundos. */
 const SONDEO_BANDEJA_MS = 60_000;
@@ -1804,31 +1805,17 @@ export class ChatStore {
   }
 
   /**
-   * Reenvía un mensaje —su texto y su adjunto— a otra conversación.
-   *
-   * Va por el mismo camino que un envío normal: si la conversación destino no
-   * es la abierta, la burbuja no se pinta acá pero la fila de la bandeja se
-   * actualiza en cuanto el servidor acusa. El adjunto se manda por su
-   * `fileId`: es el mismo archivo, no una copia.
+   * Forwards messages —text and attachment— to other conversations, in thread
+   * order and one after another (the send queue), so each destination reads
+   * them as they were. A destination that is not open updates its inbox row
+   * once the server acknowledges.
    */
-  reenviar(mensaje: MensajeDelHilo, conversationId: string): void {
+  reenviar(mensajes: readonly MensajeDelHilo[], conversationIds: readonly string[]): void {
     const propio = this.perfil();
-    if (propio === null || mensaje.estado !== 'enviado') {
-      return;
-    }
-    const pendiente: MensajePendiente = {
-      claveTemporal: claveTemporal(),
-      conversationId,
-      profileId: propio,
-      bodyText: mensaje.bodyText ?? '',
-      ...(mensaje.attachmentFileId
-        ? { adjunto: { fileId: mensaje.attachmentFileId, nombre: 'Archivo adjunto', tipo: '' } }
-        : {}),
-      creadoEn: new Date(),
-      estado: 'enviando',
-    };
-    this.pendientes.update((lista) => [...lista, pendiente]);
-    this.despachar(pendiente);
+    if (propio === null) return;
+    const nuevos = pendientesDeReenvio(mensajes, conversationIds, propio);
+    this.pendientes.update((lista) => [...lista, ...nuevos]);
+    for (const pendiente of nuevos) this.enTurnoDeEnvio((liberar) => this.despachar(pendiente, liberar));
   }
 
   /**
@@ -1942,6 +1929,13 @@ export class ChatStore {
         next: (acuse) => {
           this.enviando.set(false);
           alTerminar?.();
+          // The local copy already on screen becomes the sent message's file:
+          // it is drawn at once, with no skeleton and no refetch of the bytes.
+          const vista = this.pendientes().find((p) => p.claveTemporal === pendiente.claveTemporal)?.adjunto?.vistaPrevia;
+          const fileId = pendiente.adjunto?.fileId;
+          if (fileId && vista?.startsWith('data:')) {
+            this.urlesDeArchivo.update((mapa) => new Map(mapa).set(`${pendiente.conversationId}:${fileId}`, vista));
+          }
           // El mensaje real entra en la lista y el pendiente sale en el mismo
           // paso, así la burbuja no parpadea. Sólo si se sigue mirando ese
           // hilo con esa identidad.
@@ -2957,11 +2951,6 @@ function armarExportacion(
               },
       })),
   };
-}
-
-/** Identidad de un mensaje mientras no tenga la del servidor. */
-function claveTemporal(): string {
-  return `tmp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 /**

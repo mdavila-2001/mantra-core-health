@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { SessionStore } from '../auth/session.store';
 import { WebPushClient } from '../data-access/notifications/web-push.client';
+import { PushServiceError, pushServiceOutcome, type WebPushOutcome } from './web-push-outcome';
 import { endpointHash, migrateLegacyOffered, readFlag, readOwner, writeFlag, writeOwner } from './web-push-local';
 
 /** Dónde vive el service worker (raíz de `public/`, alcance completo). */
@@ -11,18 +12,7 @@ export const PUSH_WORKER_URL = '/push-sw.js';
 /** Message the service worker posts when the push service rotated the subscription. */
 export const SUBSCRIPTION_CHANGED_MESSAGE = 'alovida-push-subscription-changed';
 
-/** Por qué no se pudo activar, dicho para mostrarlo a la persona. */
-export type WebPushOutcome = 'enabled' | 'unsupported' | 'unavailable' | 'denied' | 'failed';
-
-/** Qué decirle a la persona cuando no se pudo activar, sin culparla. */
-export const WEB_PUSH_NOTICES: Record<Exclude<WebPushOutcome, 'enabled'>, string> = {
-  unsupported: 'Este navegador no admite avisos fuera de la página.',
-  unavailable: 'Los avisos del navegador todavía no están disponibles en este entorno.',
-  // AloVida cannot undo a browser block: say where the person does it.
-  denied:
-    'El navegador tiene bloqueados los avisos. Para permitirlos, toque el candado junto a la dirección de la página y active «Notificaciones».',
-  failed: 'No pudimos activar los avisos. Intente de nuevo en unos minutos.',
-};
+export { WEB_PUSH_NOTICES, type WebPushOutcome } from './web-push-outcome';
 
 /**
  * Avisos push del navegador.
@@ -203,8 +193,8 @@ export class WebPushService {
       const config = await firstValueFrom(this.client.config());
       if (!config.enabled || config.publicKey === null) return 'unavailable';
       return (await this.save(config.publicKey, userId, true)) ? 'enabled' : 'failed';
-    } catch {
-      return 'failed';
+    } catch (error) {
+      return error instanceof PushServiceError ? pushServiceOutcome(error) : 'failed';
     } finally {
       this.busy.set(false);
     }
@@ -255,10 +245,12 @@ export class WebPushService {
       subscription = null;
     }
     if (!this.still(userId)) return false;
-    subscription ??= await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToBytes(publicKey),
-    });
+    // The key is decoded inside the chain so a malformed one is classified too.
+    subscription ??= await Promise.resolve()
+      .then(() => registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToBytes(publicKey) }))
+      .catch((reason: unknown) => {
+        throw new PushServiceError(reason);
+      });
 
     const json = subscription.toJSON();
     const p256dh = json.keys?.['p256dh'];

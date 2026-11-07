@@ -1,0 +1,71 @@
+.reenvio__buscar {
+  display: block;
+  margin-block-end: var(--e2);
+}
+
+.reenvio__buscar input {
+  box-sizing: border-box;
+  inline-size: 100%;
+  block-size: 40px;
+  padding-inline: var(--e3);
+  border: 1px solid var(--filete-2);
+  border-radius: var(--r-pill);
+  background: var(--sup-inset);
+  font: inherit;
+  color: var(--tinta);
+}
+
+.reenvio__buscar input:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 1px;
+}
+
+.reenvio__lista {
+  max-block-size: 50vh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+/* The whole row is the label: 56 px tall, the checkbox at the start. */
+.reenvio__destino {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  min-block-size: 56px;
+  padding: var(--e2) var(--e3);
+  border-radius: var(--r-ctrl);
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.reenvio__destino:hover,
+.reenvio__destino:has(input:focus-visible) {
+  background: var(--sup-inset);
+}
+
+.reenvio__destino:has(input:focus-visible) {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: -2px;
+}
+
+.reenvio__destino input {
+  flex: none;
+  inline-size: 20px;
+  block-size: 20px;
+  margin: 0;
+  accent-color: var(--petroleo);
+}
+
+.reenvio__nombre {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reenvio__vacio {
+  padding: var(--e3);
+  color: var(--tinta-2);
+}

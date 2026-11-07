@@ -1,6 +1,5 @@
 @if (isLab()) {
   <app-form-field
-   
     label="Muestra"
     hint="Qué se analiza: sangre, orina… La elige usted; no se completa sola."
     [required]="true"
@@ -8,6 +7,7 @@
   >
     <app-concept-select
       [target]="targets.specimen"
+      [accept]="specimenAccepts()"
       [value]="specimen()"
       (valueChange)="specimen.set($event); clearError('specimen')"
       [clearable]="false"
@@ -16,7 +16,9 @@
     />
   </app-form-field>
   @if (!canSubmit()) {
-    <p class="detalle__falta" role="status" data-testid="order-detail-missing">Elija la muestra para poder pedir el estudio.</p>
+    <p class="detalle__falta" role="status" data-testid="order-detail-missing">
+      Elija la muestra para poder pedir el estudio.
+    </p>
   }
 }
 
@@ -29,7 +31,9 @@
       [index]="atlas.index()"
       [indexFailed]="atlas.indexFailed()"
       [modelUrls]="atlas.modelUrls"
-      [status]="atlas.status() === 'ready' ? 'ready' : atlas.status() === 'error' ? 'error' : 'loading'"
+      [status]="
+        atlas.status() === 'ready' ? 'ready' : atlas.status() === 'error' ? 'error' : 'loading'
+      "
       [value]="selection()"
       (valueChange)="pick($event)"
       (retry)="atlas.load()"
@@ -60,7 +64,11 @@
 
       <app-form-field
         label="Lado"
-        [hint]="selection()?.side ? 'Propuesto por la parte marcada; puede cambiarlo.' : 'Opcional. Sólo si la región tiene lado.'"
+        [hint]="
+          selection()?.side
+            ? 'Propuesto por la parte marcada; puede cambiarlo.'
+            : 'Opcional. Sólo si la región tiene lado.'
+        "
         [errorMessage]="errors()['laterality']"
       >
         <app-concept-select
@@ -73,19 +81,37 @@
         />
       </app-form-field>
 
-      <app-form-field
-        label="Modalidad"
-        hint="Opcional: si el estudio ya fija una, se usa la del estudio."
-        [errorMessage]="errors()['modality']"
-      >
-        <app-concept-select
-          [target]="targets.modality"
-          [value]="modality()"
-          (valueChange)="modality.set($event); clearError('modality')"
-          placeholder="La del estudio"
-          data-testid="order-modality"
-        />
-      </app-form-field>
+      @if (modalityPreset() === null) {
+        <app-form-field
+          label="Modalidad"
+          hint="Opcional: si el estudio ya fija una, se usa la del estudio."
+          [errorMessage]="errors()['modality']"
+        >
+          <app-concept-select
+            [target]="targets.modality"
+            [value]="modality()"
+            (valueChange)="modality.set($event); clearError('modality')"
+            placeholder="La del estudio"
+            data-testid="order-modality"
+          />
+        </app-form-field>
+      }
+
+      @if (modality() !== null) {
+        <app-form-field
+          label="Contraste"
+          hint="Opcional. Sin contraste, con contraste, o sin y con contraste."
+          [errorMessage]="errors()['contrast']"
+        >
+          <app-concept-select
+            [target]="targets.contrast"
+            [value]="contrast()"
+            (valueChange)="contrast.set($event); clearError('contrast')"
+            placeholder="Sin especificar"
+            data-testid="order-contrast"
+          />
+        </app-form-field>
+      }
 
       @if (isBone()) {
         <app-form-field
@@ -104,7 +130,9 @@
       }
     </div>
     @if (!canSubmit()) {
-      <p class="detalle__falta" role="status" data-testid="order-detail-missing">Elija la región del estudio para poder pedirlo.</p>
+      <p class="detalle__falta" role="status" data-testid="order-detail-missing">
+        Elija la región del estudio para poder pedirlo.
+      </p>
     }
   </fieldset>
 }

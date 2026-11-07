@@ -40,11 +40,20 @@
 
   @if (item().components.length > 0) {
     <details class="item__parts">
-      <summary>Ver sus {{ item().components.length }} componentes</summary>
+      <summary>{{ partsLabel() }}</summary>
       <ul>
         @for (part of item().components; track part.conceptId) {
-          <li>
-            <span>{{ part.name }}</span>
+          <li data-testid="lab-catalog-part" [attr.data-part-code]="part.code">
+            @if (item().offeredServiceId) {
+              <span>{{ part.name }}</span>
+            } @else {
+              <!-- Tick = the lab offers it: only the ticked ones become a priced service. -->
+              <app-checkbox
+                [label]="part.name"
+                [checked]="!unticked().has(part.conceptId)"
+                (checkedChange)="componentToggled.emit(part.conceptId)"
+              />
+            }
             <span class="item__part-price">{{ priceOf(part.suggestedPrice) }}</span>
           </li>
         }
