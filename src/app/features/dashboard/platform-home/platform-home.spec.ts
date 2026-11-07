@@ -65,6 +65,13 @@ describe('PlatformHome', () => {
     fixture.detectChanges();
   });
 
+  /** Opens a door's tab: a closed `app-tab` does not draw its panel. */
+  function abrirPestana(etiqueta: string): void {
+    const botones = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    botones.find((b) => b.textContent?.includes(etiqueta))!.click();
+    fixture.detectChanges();
+  }
+
   afterEach(() => http.verify({ ignoreCancelled: true }));
 
   /** Responde todo lo que la portada pide al abrir, salvo lo que se le indique. */
@@ -109,6 +116,7 @@ describe('PlatformHome', () => {
     http.expectOne((r) => r.url === '/admin/ops/tools').flush(HERRAMIENTAS);
     responderResto();
     fixture.detectChanges();
+    abrirPestana('Observabilidad');
     const puerta = q<HTMLAnchorElement>('[data-testid="portal-observabilidad"]');
     expect(puerta?.textContent?.trim()).toBe('Observabilidad y gobierno');
     expect(puerta?.getAttribute('href')).toBe('/superadmin/observability');
@@ -121,9 +129,21 @@ describe('PlatformHome', () => {
     http.expectOne((r) => r.url === '/admin/ops/tools').flush(HERRAMIENTAS);
     responderResto();
     fixture.detectChanges();
+    abrirPestana('Observabilidad');
     const enlaces = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('a[href="/superadmin/instances"]'));
     expect(enlaces.length).toBeGreaterThanOrEqual(2);
     expect(q('[data-testid="platform-home-portales"]')!.textContent).toContain('Instancias y herramientas');
+  });
+
+  it('las dos puertas son UNA tarjeta con pestañas, no dos tarjetas apiladas', () => {
+    http.expectOne((r) => r.url === '/admin/ops/instances/liveness').flush(SONDA);
+    http.expectOne((r) => r.url === '/admin/ops/tools').flush(HERRAMIENTAS);
+    responderResto();
+    fixture.detectChanges();
+    const portales = q('[data-testid="platform-home-portales"]')!;
+    expect(portales.querySelectorAll('app-tabs').length).toBe(1);
+    expect(portales.querySelectorAll('[role="tab"]').length).toBe(2);
+    expect(portales.parentElement!.querySelectorAll(':scope > app-card, :scope > [data-testid="platform-home-portales"]').length).toBe(1);
   });
 
   it('con el almacén de latidos caído lo dice en la tarjeta', () => {

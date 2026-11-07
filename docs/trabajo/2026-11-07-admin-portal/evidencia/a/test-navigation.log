@@ -1,0 +1,159 @@
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                    | Names                                               |  Raw size
+styles.css                                             | styles                                              | 189.63 kB | 
+chunk-CX4KNY3G.js                                      | -                                                   | 130.84 kB | 
+chunk-MU3WAUT2.js                                      | -                                                   |  90.74 kB | 
+spec-app-core-navigation-navigation.map.js             | spec-app-core-navigation-navigation.map             |  28.08 kB | 
+spec-app-core-navigation-navigation.service.js         | spec-app-core-navigation-navigation.service         |  27.56 kB | 
+chunk-JVW4IINN.js                                      | -                                                   |  27.12 kB | 
+chunk-6PHCCEKY.js                                      | -                                                   |  19.26 kB | 
+spec-app-core-navigation-section-roles.guard.js        | spec-app-core-navigation-section-roles.guard        |  15.39 kB | 
+chunk-3ZNNKZ56.js                                      | -                                                   |  15.24 kB | 
+chunk-ILMYH52H.js                                      | -                                                   |  13.36 kB | 
+setup-test-setup.js                                    | setup-test-setup                                    |  13.20 kB | 
+spec-app-core-navigation-navigation.management.js      | spec-app-core-navigation-navigation.management      |   8.35 kB | 
+spec-app-core-navigation-navigation.pharmacy.js        | spec-app-core-navigation-navigation.pharmacy        |   7.20 kB | 
+spec-app-core-navigation-navigation-history.service.js | spec-app-core-navigation-navigation-history.service |   6.49 kB | 
+spec-app-core-navigation-navigation.laboratory.js      | spec-app-core-navigation-navigation.laboratory      |   5.58 kB | 
+chunk-JBWBLPNK.js                                      | -                                                   |   5.19 kB | 
+spec-app-core-navigation-navigation.visibility.js      | spec-app-core-navigation-navigation.visibility      |   5.07 kB | 
+spec-app-core-navigation-navigation.subgroups.js       | spec-app-core-navigation-navigation.subgroups       |   4.55 kB | 
+spec-app-core-navigation-search-memory.service.js      | spec-app-core-navigation-search-memory.service      |   4.46 kB | 
+init-testbed.js                                        | init-testbed                                        |   1.21 kB | 
+vitest-mock-patch.js                                   | vitest-mock-patch                                   | 974 bytes | 
+
+                                                       | Initial total                                       | 619.50 kB
+
+Lazy chunk files                                       | Names                                               |  Raw size
+paciente.css                                           | paciente                                            |  21.31 kB | 
+
+Application bundle generation complete. [168.902 seconds] - 2026-11-07T06:10:43.421Z
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of Anomalies [plugin angular-compiler]
+
+    src/app/features/access-governance/anomalies/anomalies.ts:117:4:
+      117 │     RouterLink,
+          ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+      93 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+      105 │     RouterLink,
+          ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: SegmentedControl is not used within the template of Cockpit [plugin angular-compiler]
+
+    src/app/features/accounting/cockpit/cockpit.ts:104:4:
+      104 │     SegmentedControl,
+          ╵     ~~~~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: EmptyState is not used within the template of Cockpit [plugin angular-compiler]
+
+    src/app/features/accounting/cockpit/cockpit.ts:110:4:
+      110 │     EmptyState,
+          ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Alert is not used within the template of Summary [plugin angular-compiler]
+
+    src/app/features/accounting/summary/summary.ts:229:4:
+      229 │     Alert,
+          ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: LoadingState is not used within the template of Moderation [plugin angular-compiler]
+
+    src/app/features/admin/moderation/moderation.ts:111:4:
+      111 │     LoadingState,
+          ╵     ~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8102: NG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102 [plugin angular-compiler]
+
+    src/app/features/admin/portal/governance/filter-form.ts:50:25:
+      50 │                 [value]="draft()[field.key] ?? ''"
+         ╵                          ~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8102: NG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102 [plugin angular-compiler]
+
+    src/app/features/admin/portal/governance/filter-form.ts:58:25:
+      58 │                 [value]="draft()[field.key] ?? ''"
+         ╵                          ~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: DatePipe is not used within the template of PortalHub [plugin angular-compiler]
+
+    src/app/features/admin/portal/hub/portal-hub.ts:19:12:
+      19 │   imports: [DatePipe, RouterLink, MetricCard, PageHeader, ViewStat...
+         ╵             ~~~~~~~~
+
+
+▲ [WARNING] NG8113: Alert is not used within the template of SpaceTariffs [plugin angular-compiler]
+
+    src/app/features/admin/services-catalog/space-tariffs/space-tariffs.ts:61:12:
+      61 │   imports: [Alert, AppButton, AppButtonLink, Badge, DataTable, For...
+         ╵             ~~~~~
+
+
+▲ [WARNING] NG8113: Input is not used within the template of MapLocationPicker [plugin angular-compiler]
+
+    src/app/features/auth/shared-registration/map-location-picker/map-location-picker.ts:238:4:
+      238 │     Input,
+          ╵     ~~~~~
+
+
+▲ [WARNING] NG8011: Node matches the "[alert-actions]" slot of the "Alert" component, but will not be projected into the specific slot because the surrounding @if has more than one node at its root. To project the node in the right slot, you can:
+
+1. Wrap the content of the @if block in an <ng-container/> that matches the "[alert-actions]" selector.
+2. Split the content of the @if block across multiple @if blocks such that each one only has a single projectable node at its root.
+3. Remove all content from the @if block, except for the node being projected.
+
+This check can be disabled using the `extendedDiagnostics.checks.controlFlowPreventingContentProjection = "suppress" compiler option.` [plugin angular-compiler]
+
+    src/app/features/clinical-record/patient-chart/referral-block/referral-block.html:19:8:
+      19 │         <div alert-actions>
+         ╵         ~~~~~~~~~~~~~~~~~~~
+
+  Warning occurs in the template of component ReferralBlock.
+
+    src/app/features/clinical-record/patient-chart/referral-block/referral-block.ts:175:15:
+      175 │   templateUrl: './referral-block.html',
+          ╵                ~~~~~~~~~~~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: NavIcon is not used within the template of LabPendingResults [plugin angular-compiler]
+
+    src/app/features/laboratory/summary/blocks/lab-pending-results.ts:19:50:
+      19 │ ...ink, Badge, Card, DatePipe, NavIcon, RouterLink, SectionHeading...
+         ╵                                ~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:123:4:
+      123 │     Card,
+          ╵     ~~~~
+
+
+
+ RUN  v4.1.10 /home/user/mantra-core-health
+
+
+ Test Files  10 passed (10)
+      Tests  209 passed (209)
+   Start at  06:10:43
+   Duration  2.03s (transform 1.52s, setup 1.64s, import 1.98s, tests 883ms, environment 6.72s)
+

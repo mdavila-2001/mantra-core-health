@@ -7,34 +7,38 @@
   </button>
 </app-page-header>
 
-<!-- Las dos puertas. Primero se elige a qué portal se entra; el estado va debajo. -->
-<div class="portada__areas" data-testid="platform-home-portales">
-  @for (portal of portales(); track portal.id) {
-    <app-card variant="outlined" padding="lg">
-      <h2 class="portada__titulo">
-        @if (portal.ruta; as ruta) {
-          <a app-link [routerLink]="ruta" data-testid="portal-observabilidad">{{ portal.titulo }}</a>
-        } @else {
-          {{ portal.titulo }}
-        }
-      </h2>
-      <p class="portada__texto">{{ portal.descripcion }}</p>
-      @for (area of portal.areas; track area.titulo) {
-        <section class="centro__area" [attr.aria-label]="area.titulo">
-          <h3 class="centro__area-titulo">{{ area.titulo }}</h3>
-          <p class="centro__area-texto">{{ area.descripcion }}</p>
-          <ul class="portada__operaciones">
-            @for (destino of area.destinos; track destino.route) {
-              <li>
-                <a app-link [routerLink]="destino.route">{{ destino.label }}</a>
-              </li>
-            }
-          </ul>
-        </section>
-      }
-    </app-card>
-  }
-</div>
+<!-- One card, one tab per door (composition-rules §5): first pick the portal, the status goes below. -->
+<app-card variant="outlined" padding="md" data-testid="platform-home-portales">
+  <app-tabs>
+    @for (portal of portales(); track portal.id) {
+      <app-tab [label]="portal.pestana">
+        <h2 class="portada__titulo">
+          @if (portal.ruta; as ruta) {
+            <a app-link [routerLink]="ruta" data-testid="portal-observabilidad">{{ portal.titulo }}</a>
+          } @else {
+            {{ portal.titulo }}
+          }
+        </h2>
+        <p class="portada__texto">{{ portal.descripcion }}</p>
+        <div class="centro__areas">
+          @for (area of portal.areas; track area.titulo) {
+            <section class="centro__area" [attr.aria-label]="area.titulo">
+              <h3 class="centro__area-titulo">{{ area.titulo }}</h3>
+              <p class="centro__area-texto">{{ area.descripcion }}</p>
+              <ul class="portada__operaciones">
+                @for (destino of area.destinos; track destino.route) {
+                  <li>
+                    <a app-link [routerLink]="destino.route">{{ destino.label }}</a>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+        </div>
+      </app-tab>
+    }
+  </app-tabs>
+</app-card>
 
 <h2 class="centro__seccion">Estado de la plataforma</h2>
 

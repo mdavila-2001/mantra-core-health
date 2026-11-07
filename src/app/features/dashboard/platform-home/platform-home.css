@@ -1,5 +1,11 @@
+.centro__areas {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
 .centro__area {
-  margin-block-end: var(--sp-4);
+  margin: 0;
 }
 
 .centro__area-titulo {

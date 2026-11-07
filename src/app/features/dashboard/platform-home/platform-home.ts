@@ -26,6 +26,8 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { entero, porcentaje } from '../../admin/platform/platform-labels';
@@ -46,6 +48,8 @@ interface Area {
 interface Portal {
   readonly id: 'administrativo' | 'observabilidad';
   readonly titulo: string;
+  /** Short label of the tab that opens this door. */
+  readonly pestana: string;
   /** Pantalla a la que lleva el título de la puerta, si tiene portada propia. */
   readonly ruta?: string;
   readonly descripcion: string;
@@ -71,6 +75,7 @@ const PORTALES: readonly Portal[] = [
   {
     id: 'administrativo',
     titulo: 'Portal administrativo',
+    pestana: 'Administrativo',
     descripcion: 'Quién entra, qué datos existen y bajo qué reglas: personas, catálogos y gobierno de la información.',
     areas: [
       {
@@ -109,6 +114,7 @@ const PORTALES: readonly Portal[] = [
   {
     id: 'observabilidad',
     titulo: 'Observabilidad y gobierno',
+    pestana: 'Observabilidad',
     ruta: '/superadmin/observability',
     descripcion: 'Cuánto se usa cada herramienta, cuánto dinero mueve y dónde falla.',
     areas: [
@@ -154,7 +160,7 @@ const PORTALES: readonly Portal[] = [
  */
 @Component({
   selector: 'app-platform-home',
-  imports: [DatePipe, RouterLink, AppButton, Link, Card, PageHeader, ViewStateHost],
+  imports: [DatePipe, RouterLink, AppButton, Link, Card, PageHeader, Tab, Tabs, ViewStateHost],
   templateUrl: './platform-home.html',
   styleUrls: ['../../cover.css', './platform-home.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

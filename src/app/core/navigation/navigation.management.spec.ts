@@ -5,8 +5,14 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../auth/session.store';
-import { esPerfilDeGestion, seccionDeGestion } from './navigation.management';
+import {
+  esPerfilDeGestion,
+  seccionDeGestion,
+  seccionEnMenuDeGestion,
+  tieneRolDeGestion,
+} from './navigation.management';
 import { APP_SECTIONS } from './navigation.map';
+import { isVisibleTo } from './navigation.types';
 import { NavigationService } from './navigation.service';
 
 @Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
@@ -149,6 +155,38 @@ describe('Menú del perfil de gestión', () => {
       const mis = APP_SECTIONS.filter((s) => /^Mi[s]?\s/.test(s.label) && s.group !== 'Superadministración');
       expect(mis.length).toBeGreaterThan(0);
       for (const s of mis) expect(seccionDeGestion(s)).toBe(false);
+    });
+  });
+
+  describe('seccionEnMenuDeGestion (sesión mixta)', () => {
+    const rutas = (roles: readonly string[]) =>
+      APP_SECTIONS.filter((s) => seccionEnMenuDeGestion(s, roles, ['t-1'])).map((s) => s.path);
+
+    it('detecta el rol de gestión aunque haya otros', () => {
+      expect(tieneRolDeGestion(['SUPERADMIN', 'PATIENT'])).toBe(true);
+      expect(tieneRolDeGestion(['PATIENT'])).toBe(false);
+    });
+
+    it('una sesión solo de gestión conserva el menú estricto (sin cambios)', () => {
+      const esperadas = APP_SECTIONS.filter(seccionDeGestion).map((s) => s.path);
+      expect(rutas(['SUPERADMIN'])).toEqual(esperadas);
+      expect(rutas(['PLATFORM_ADMIN', 'BILLING', 'USER'])).toEqual(esperadas);
+    });
+
+    it('SUPERADMIN + PATIENT: gestión completa y lo del paciente, sin heredar lo clínico por el comodín', () => {
+      const r = rutas(['SUPERADMIN', 'PATIENT']);
+      expect(r).toEqual(expect.arrayContaining(['superadmin/observability', 'my-account/appointments']));
+      const porComodin = APP_SECTIONS.filter((s) => s.group === 'Atención' && s.roles?.every((x) => x !== 'PATIENT'));
+      expect(porComodin.length).toBeGreaterThan(0);
+      for (const s of porComodin) expect(r).not.toContain(s.path);
+    });
+
+    it('nunca quita lo que el rol personal concede', () => {
+      for (const personal of ['PATIENT', 'PRACTITIONER']) {
+        const r = rutas(['PLATFORM_ADMIN', personal]);
+        const propias = APP_SECTIONS.filter((s) => s.group !== 'Superadministración' && isVisibleTo(s, [personal], ['t-1']));
+        for (const s of propias) expect(r).toContain(s.path);
+      }
     });
   });
 });
