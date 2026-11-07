@@ -29,6 +29,7 @@ import { timeoutInterceptor } from './core/http/timeout.interceptor';
 import { apiFailureLogInterceptor } from './core/http/api-failure-log.interceptor';
 import { AuthService } from './core/auth/auth.service';
 import { SESSION_CLEANERS } from './core/auth/session-cleanup';
+import { BrowserPermissionsService } from './core/permissions/browser-permissions.service';
 import { IdleLogout } from './core/auth/idle-logout';
 import { SessionEndedRedirect } from './core/auth/session-ended-redirect';
 import { UiVisibilityService } from './core/visibility/ui-visibility.service';
@@ -190,16 +191,21 @@ export const appConfig: ApplicationConfig = {
     // Los avisos push de la cuenta que se va no deben seguir llegando a este
     // navegador (dispositivo compartido). Import dinámico por el presupuesto del
     // paquete inicial, igual que el limpiador de arriba.
+    // Every logout (manual, idle, other tab, everywhere) forgets the browser on purpose:
+    // the per-user opt-in stays, so WebPushService.resync restores it on that person's next login.
     {
       provide: SESSION_CLEANERS,
       multi: true,
       useFactory: () => {
         const injector = inject(Injector);
-        return () =>
+        return () => {
+          // The Settings push feedback is about the person who just left.
+          injector.get(BrowserPermissionsService).avisoDePush.set('');
           void import('./core/notifications/web-push.service')
             .then((m) => injector.get(m.WebPushService).forgetBrowser())
             // Mismo criterio que el limpiador de arriba: sin red el chunk puede no cargar y la sesión ya se cerró.
             .catch(() => undefined);
+        };
       },
     },
     // Se recupera la sesión ANTES de que el router evalúe el guard. Si no se

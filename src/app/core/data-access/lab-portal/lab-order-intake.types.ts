@@ -1,31 +1,26 @@
-import type { LabOrder } from './lab-portal.types';
+/* Orders the laboratory / imaging center enters itself: the paper order a
+   patient brings or a walk-in request (API v4.2.96, `/diagnostics/lab/…`). */
 
-/**
- * Which of the three ways an order reached the center: the QR the patient sent, a doctor's referral
- * (already accepted by the patient) or the center's own registration. `CLINIC` is the order that
- * already came addressed to the center.
- */
-export type LabOrderOrigin = 'PATIENT_QR' | 'DOCTOR_REFERRAL' | 'LAB_OWN' | 'CLINIC';
+/** What a laboratory / imaging center performs. */
+export type LabOrderCategory = 'LAB' | 'IMAGING';
 
-/** The patient that holds a national id, enough to confirm at the counter (`POST …/patients/lookup`). */
+/** The patient holding a national id, enough to confirm at the counter. */
 export interface LabPatientMatch {
   readonly patientProfileId: string;
   readonly displayName: string;
   readonly patientCode: string | null;
 }
 
-/** Body of `POST /diagnostics/lab/orders`: the center registers a paper/counter order. */
-export interface NewLabOrder {
-  readonly patientProfileId: string;
+/** The editable part of a center-registered order. Every field is replaced on edit. */
+export interface LabOrderIntakeFields {
   readonly codeConceptId: string;
-  readonly category: 'LAB' | 'IMAGING';
+  readonly category: LabOrderCategory;
   readonly priorityConceptId?: string;
+  /** Who signed the paper order; absent for a study the patient asks for. */
   readonly externalRequesterName?: string;
   readonly externalRequesterLicense?: string;
 }
 
-/** An order created from the patient's QR; `created` is `false` when the code was already used. */
-export interface LabOrderFromQr {
-  readonly order: LabOrder;
-  readonly created: boolean;
+export interface NewLabOrder extends LabOrderIntakeFields {
+  readonly patientProfileId: string;
 }

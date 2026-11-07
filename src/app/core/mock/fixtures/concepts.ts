@@ -4,6 +4,7 @@ import { imageBenefit } from './reference-prices';
 import { CATALOGO_MEDICAMENTOS } from './medication-catalog.generated';
 import { MEDICAMENTOS_LINAME, type MedicamentoLiname } from './liname.generated';
 import { PROFESIONES_COB_2023 } from './professions-cob-2023.generated';
+import { MUNICIPIOS_BO } from './municipalities-bo.data';
 
 /* ============================================================================
     El catálogo de terminología del backend simulado.
@@ -124,29 +125,7 @@ export const DEPARTMENT = define('VS_BO_DEPARTMENT', [
 ]);
 
 conjunto('VS_BO_MUNICIPALITY', 'Municipios de Bolivia', 'Municipios, agrupados por departamento.');
-export const MUNICIPALITY = define('VS_BO_MUNICIPALITY', [
-  ['SC-SCZ', 'Santa Cruz de la Sierra'],
-  ['SC-MON', 'Montero'],
-  ['SC-WAR', 'Warnes'],
-  ['SC-COT', 'Cotoca'],
-  ['SC-LGD', 'La Guardia'],
-  // Con el código del catálogo real (`03_terminology.seeds.json`): los traen
-  // los consultorios de la red de Nacional Seguros en la frontera con Brasil.
-  ['SC-PUERTO_SUAREZ', 'Puerto Suárez'],
-  ['SC-PUERTO_QUIJARRO', 'Puerto Quijarro'],
-  ['LP-LPZ', 'La Paz'],
-  ['LP-ELA', 'El Alto'],
-  ['LP-VIA', 'Viacha'],
-  ['CB-CBB', 'Cochabamba'],
-  ['CB-QUI', 'Quillacollo'],
-  ['CB-SAC', 'Sacaba'],
-  ['OR-ORU', 'Oruro'],
-  ['PT-PTS', 'Potosí'],
-  ['CH-SRE', 'Sucre'],
-  ['TJ-TJA', 'Tarija'],
-  ['BE-TRI', 'Trinidad'],
-  ['PD-COB', 'Cobija'],
-]);
+export const MUNICIPALITY = define('VS_BO_MUNICIPALITY', MUNICIPIOS_BO);
 
 /* Las ocupaciones y los empleadores llevan el código del catálogo real por lo
    mismo que los departamentos de acá arriba, y es la tercera vez que muerde: la
@@ -1269,6 +1248,19 @@ export const MEDICAMENTO = define('VS_MEDICATION', [
 ]);
 
 /**
+ * Demo strengths with no product of their own in the simulated universal catalog (there every levothyroxine hangs
+ * from `MED-LEVOTIROXINA`), so apart from `MEDICAMENTO` (the public showcase needs a catalog ATC for each). Used by
+ * `pid-paciente`'s story (`patient-network.data.ts`): 25, 50 and 75 mcg, each with its own concept. `ATC_DE_CONCENTRACION`
+ * ties them to their LINAME ATC, as `DEMONSTRATION_ATC` ties `MED-LEVOTIROXINA`: same `dose_forms` and presentations
+ * (below), and the strength is their own, which the LINAME does not list.
+ */
+export const MEDICAMENTO_POR_CONCENTRACION = define('VS_MEDICATION', [
+  ['MED-LEVOTIROXINA-25', 'Levotiroxina 25 mcg comprimidos', 'Hormona tiroidea.'],
+  ['MED-LEVOTIROXINA-75', 'Levotiroxina 75 mcg comprimidos', 'Hormona tiroidea.'],
+], 16);
+const ATC_DE_CONCENTRACION = { 'MED-LEVOTIROXINA-25': ['H03AA01', '25 mcg'], 'MED-LEVOTIROXINA-75': ['H03AA01', '75 mcg'] } as const;
+
+/**
  * Frecuencia por defecto del medicamento (C-20 / H4, reparto de Ender 2026-09-20).
  *
  * `property_code: 'default_frequency'` es una **extensión declarada del
@@ -1332,6 +1324,9 @@ const propertiesLiname = (m: MedicamentoLiname) => ({
 for (const m of MEDICAMENTOS_LINAME) {
   const demostracion = DEMONSTRATION_ATC.get(m.atc);
   if (demostracion !== undefined) declareProperties(demostracion, propertiesLiname(m));
+  for (const [code, [atc, dosis]] of Object.entries(ATC_DE_CONCENTRACION)) {
+    if (atc === m.atc) declareProperties(code, { ...propertiesLiname(m), strengths: [dosis] });
+  }
 }
 export const MEDICATION_LINAME = define(
   'VS_MEDICATION',

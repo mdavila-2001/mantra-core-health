@@ -25,6 +25,7 @@ import {
   DestroyRef,
   DOCUMENT,
   Injectable,
+  Injector,
   PLATFORM_ID,
   computed,
   inject,
@@ -66,6 +67,7 @@ const ESPERA_UBICACION_MS = 10_000;
 export class BrowserPermissionsService {
   private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(Injector);
   private readonly esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
 
   private readonly estados = signal<Readonly<Record<PermisoDelNavegador, EstadoPermiso>>>({
@@ -78,6 +80,9 @@ export class BrowserPermissionsService {
 
   /** Qué pide cada permiso ahora mismo, para deshabilitar su botón. */
   private readonly pidiendo = signal<readonly PermisoDelNavegador[]>([]);
+
+  /** Why turning on the notices switch did not leave push working ('' when it did). */
+  readonly avisoDePush = signal('');
 
   readonly estado = computed(() => this.estados());
 
@@ -205,8 +210,23 @@ export class BrowserPermissionsService {
     return 'sin-decidir';
   }
 
+  /**
+   * The only thing the product does with this permission is browser push, so
+   * granting it here also subscribes (otherwise the switch would read «on» while
+   * nothing arrives), and a failure is told in `avisoDePush`. The browser prompt
+   * goes first, inside the click's user activation; push is imported afterwards
+   * because this service is in the initial bundle (DelayNotice) and push must not be.
+   */
   private async pedirAvisos(): Promise<void> {
-    await this.ventana?.Notification?.requestPermission();
+    this.avisoDePush.set('');
+    const permiso = await this.ventana?.Notification?.requestPermission();
+    const { WebPushService, WEB_PUSH_NOTICES } = await import('../notifications/web-push.service');
+    if (permiso !== 'granted') {
+      if (permiso === 'denied') this.avisoDePush.set(WEB_PUSH_NOTICES.denied);
+      return;
+    }
+    const outcome = await this.injector.get(WebPushService).enable();
+    this.avisoDePush.set(outcome === 'enabled' ? '' : WEB_PUSH_NOTICES[outcome]);
   }
 
   /**

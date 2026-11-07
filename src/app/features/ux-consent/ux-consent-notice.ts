@@ -20,7 +20,7 @@ import { Alert } from '../../shared/components/molecules/alert/alert';
   selector: 'app-ux-consent-notice',
   imports: [Alert, AppButton, RouterLink],
   templateUrl: './ux-consent-notice.html',
-  styleUrl: './ux-consent-notice.css',
+  styleUrl: '../../shared/styles/aviso-unico.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UxConsentNotice {

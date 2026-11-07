@@ -12,3 +12,8 @@
   color: var(--text-primary);
   font-weight: 600;
 }
+
+/* The tile keeps its size: only the sentence wraps. */
+app-organization-identity {
+  flex: none;
+}

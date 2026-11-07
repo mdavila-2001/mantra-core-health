@@ -17,16 +17,16 @@ La primera versión (commit `3d05a1c7`) se hizo contra una base 2078 commits atr
 Solo se dirige/deriva una orden pendiente o activa (409 si no).
 
 ## Alcance
-- IN: «Nueva orden» (QR y orden propia), QR del paciente en «Mis órdenes», aceptar/rechazar derivación, «Derivar a un centro» en la ficha del médico, «Usar para una orden» en el visor de fotos del chat, `app-organization-identity` (logo/iniciales), chip de origen en la tabla.
+- IN: «Orden con QR del paciente» (diálogo en la pantalla de órdenes; la orden propia ya la entrega `dev` en «Nueva orden»), QR del paciente en «Mis órdenes», aceptar/rechazar derivación, «Derivar a un centro» en la ficha del médico, «Usar para una orden» en el visor de fotos del chat, `app-organization-identity` (logo/iniciales), chip de origen en la tabla.
 - OUT: API real de las vías 1 y 2; app móvil; PR a `test` (rama dada de baja el 30/10).
 
 ## H1 — Vía 3 y vía 1 desde «Órdenes»
 | ID | Microtarea | DoD | Estado |
 |---|---|---|---|
-| H1.M1 | Simulador: lookup + alta (contrato real) + from-qr | `ng test lab-orders-intake.handlers` | HECHO |
-| H1.M2 | Pestaña «Orden propia» (documento → paciente, estudio, firmante) | `ng test own-order-tab` + E2E | HECHO |
+| H1.M1 | Simulador: `from-qr` (el lookup y el alta ya los trae `dev`) | `ng test lab-order-qr.handlers` | HECHO |
+| H1.M2 | Pestaña «Orden propia» | — | DESCARTADO: otra sesión la entregó en `dev` (`order-intake/lab-order-intake-dialog`, contrato real); se retiró la versión propia para no duplicar. Decide: justin |
 | H1.M3 | Pestaña «QR del paciente» (cámara, imagen, soltar, Ctrl+V, código) | `ng test qr-order-tab` + E2E (código a mano) | A MEDIAS: cámara/imagen reales sin probar en un navegador con cámara |
-| H1.M4 | Ruta `?nueva=1`, identidad del centro, chip de origen | `ng test laboratory-orders-page order-origin` + E2E | HECHO |
+| H1.M4 | Identidad del centro + botón/diálogo del QR en órdenes, chip de origen | `ng test laboratory-orders-page order-origin` + E2E | HECHO |
 | H1.M5 | «Usar para una orden» en el chat | `ng test image-to-order` | A MEDIAS: sin E2E |
 
 ## H2 — Vía 2 (derivación con aceptación)

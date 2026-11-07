@@ -7,6 +7,15 @@ import { rutaDeNotificacion } from './notification-routes';
  * lo segundo se lee como producto roto.
  */
 describe('rutaDeNotificacion', () => {
+  it('opens the screens of the destinations added on 06/11/2026 (pharma/lab, critical result, surgery, groups)', () => {
+    expect(rutaDeNotificacion({ type: 'PHARMA_LAB_DOCTOR_VISITS', id: 'v-1' })).toBe('/lab-visits');
+    expect(rutaDeNotificacion({ type: 'PHARMA_LAB_VISITOR_VISITS', id: 'v-1' })).toBe('/my-visits');
+    expect(rutaDeNotificacion({ type: 'PHARMA_LAB_ADMIN', id: 'x' })).toBe('/administration/pharma-lab');
+    expect(rutaDeNotificacion({ type: 'CRITICAL_RESULT', id: 'r-1' })).toBe('/diagnostics');
+    expect(rutaDeNotificacion({ type: 'PROCEDURE_CASE', id: 'c-7' })).toBe('/interventions/c-7');
+    expect(rutaDeNotificacion({ type: 'community.groups', id: 'g/1' })).toBe('/groups/g%2F1');
+  });
+
   it('lleva la receta y la consulta al expediente propio', () => {
     expect(rutaDeNotificacion({ type: 'PRESCRIPTION', id: 'rx-1' })).toBe(
       '/my-account/medical-record',

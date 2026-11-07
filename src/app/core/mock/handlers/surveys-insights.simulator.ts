@@ -522,7 +522,7 @@ export function calcularInsights(
   const comments =
     todosLosComentarios.length < MIN_COHORTE
       ? []
-      : mezclar(todosLosComentarios).slice(0, 8).map((text) => ({ text }));
+      : mezclar([...new Set(todosLosComentarios)]).slice(0, 8).map((text) => ({ text })); // distinct: the fixture repeats phrases
 
   return {
     privacy: { minCohort: MIN_COHORTE, suppressed: false },

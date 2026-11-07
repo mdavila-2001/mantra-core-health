@@ -1,0 +1,74 @@
+/* ============================================================================
+    `segmented` appearance — a second tab level inside a section that already
+    has its own tabs: a compact inset track with a raised selected pill and no
+    underline, sized to its labels. Visibly subordinate to the page's tabs.
+    Kept in its own sheet: `tabs.css` is frozen (max-lines baseline).
+    ========================================================================== */
+
+:host(.tabs--segmented) .tabs__bar {
+    display: inline-flex;
+    max-inline-size: 100%;
+}
+
+:host(.tabs--segmented) .tabs__list {
+    flex: 0 1 auto;
+    gap: var(--sp-1);
+    padding: var(--sp-1);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-pill);
+    background: var(--bg-inset);
+}
+
+:host(.tabs--segmented) .tabs__tab {
+    flex: 0 0 auto;
+    min-block-size: 32px;
+    padding: 0 var(--sp-4);
+    border: 1px solid transparent;
+    border-radius: var(--r-pill);
+    font-size: var(--fs-caption);
+    line-height: 1;
+    white-space: nowrap;
+}
+
+:host(.tabs--segmented) .tabs__tab::after {
+    display: none;
+}
+
+/* Same look as `app-segmented-control`: hover is a veil (works in light and
+   dark) and never looks like the selected pill. */
+:host(.tabs--segmented) .tabs__tab:hover:not(:disabled):not(.is-selected) {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* Outside the track, so the frame never hides it. */
+:host(.tabs--segmented) .tabs__tab:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+/* Selected: surface, strong border (≥ 3:1 against the track, WCAG 1.4.11), ink and weight. */
+:host(.tabs--segmented) .tabs__tab.is-selected {
+    border-color: var(--border-strong);
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+:host(.tabs--segmented) .tabs__panels {
+    padding-block-start: var(--sp-4);
+}
+
+/* Phones: the options share the track's width; labels never wrap. */
+@media (max-width: 599px) {
+    :host(.tabs--segmented) .tabs__bar,
+    :host(.tabs--segmented) .tabs__list {
+        display: flex;
+        inline-size: 100%;
+    }
+
+    :host(.tabs--segmented) .tabs__tab {
+        flex: 1 1 auto;
+    }
+}

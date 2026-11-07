@@ -43,7 +43,7 @@ describe('PatientSurveyInbox', () => {
   it('arranca sin nada: ni encuestas ni pendientes', () => {
     const { bandeja, http } = montar();
 
-    expect(bandeja.hayInvitaciones()).toBe(false);
+    expect(bandeja.invitaciones().length > 0).toBe(false);
     expect(bandeja.pendientes()).toBe(0);
     expect(bandeja.cargada()).toBe(false);
     http.verify();
@@ -58,7 +58,7 @@ describe('PatientSurveyInbox', () => {
     http.expectOne(LECTURA).flush([enElCable('i-1', 'PENDING'), enElCable('i-2', 'ANSWERED')]);
 
     expect(bandeja.cargada()).toBe(true);
-    expect(bandeja.hayInvitaciones()).toBe(true);
+    expect(bandeja.invitaciones().length > 0).toBe(true);
     expect(bandeja.invitaciones()[0]!.expiresAt).toBeInstanceOf(Date);
     http.verify();
   });
@@ -73,7 +73,7 @@ describe('PatientSurveyInbox', () => {
     http.expectNone(LECTURA);
     // Sin encuestas es una respuesta válida: hay lectura, no hay bandeja.
     expect(bandeja.cargada()).toBe(true);
-    expect(bandeja.hayInvitaciones()).toBe(false);
+    expect(bandeja.invitaciones().length > 0).toBe(false);
   });
 
   it('las pendientes son las PENDING dentro del plazo (o sin plazo); vencidas y respondidas no', () => {
@@ -91,7 +91,7 @@ describe('PatientSurveyInbox', () => {
       ]);
 
     expect(bandeja.pendientes()).toBe(2);
-    expect(bandeja.hayInvitaciones()).toBe(true);
+    expect(bandeja.invitaciones().length > 0).toBe(true);
   });
 
   it('`refrescar` vuelve a pedir, y una lectura nueva reemplaza a la que seguía en vuelo', () => {
@@ -104,7 +104,7 @@ describe('PatientSurveyInbox', () => {
     http.expectOne(LECTURA).flush([enElCable('i-1', 'ANSWERED')]);
 
     expect(bandeja.pendientes()).toBe(0);
-    expect(bandeja.hayInvitaciones()).toBe(true);
+    expect(bandeja.invitaciones().length > 0).toBe(true);
   });
 
   it('`sincronizar` adopta lo que otra pantalla ya leyó, sin pedirlo de nuevo', () => {
@@ -156,7 +156,7 @@ describe('PatientSurveyInbox', () => {
     bandeja.limpiar();
 
     expect(enVuelo.cancelled).toBe(true);
-    expect(bandeja.hayInvitaciones()).toBe(false);
+    expect(bandeja.invitaciones().length > 0).toBe(false);
     expect(bandeja.cargada()).toBe(false);
   });
 

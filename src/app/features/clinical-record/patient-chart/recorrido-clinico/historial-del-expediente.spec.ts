@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  aristasDelHistorial,
   atencionDeCadaRegistro,
   compararFilas,
   type FilaOrdenable,
@@ -47,43 +46,9 @@ describe('atencionDeCadaRegistro', () => {
   });
 });
 
-describe('aristasDelHistorial', () => {
-  const fuente: FuenteDelHistorial = {
-    encounters: [{ id: 'c1' }],
-    conditions: [{ id: 'dx', encounterId: 'c1' }],
-    medicationRequests: [
-      { id: 'rx', encounterId: 'c1', indicationConditionId: 'dx' },
-      // Indicada para un diagnóstico que quedó fuera del tope de la lectura.
-      { id: 'rx-recortada', indicationConditionId: 'dx-fuera' },
-      // Motivo escrito a mano: no apunta a ningún diagnóstico registrado.
-      { id: 'rx-texto' },
-    ],
-    observations: [{ id: 'ob', encounterId: 'c-fuera' }],
-    notes: [],
-  };
-  const aristas = aristasDelHistorial(fuente);
-
-  it('conecta atención → registro y diagnóstico → receta cuando los dos extremos están', () => {
-    expect(aristas).toEqual([
-      { desde: 'c1', hasta: 'dx', motivo: 'atencion' },
-      { desde: 'c1', hasta: 'rx', motivo: 'atencion' },
-      { desde: 'dx', hasta: 'rx', motivo: 'indicacion' },
-    ]);
-  });
-
-  it('no traza hacia una atención que no llegó en la lectura', () => {
-    expect(aristas.some((a) => a.hasta === 'ob')).toBe(false);
-  });
-
-  it('no traza hacia un diagnóstico recortado ni desde un motivo escrito a mano', () => {
-    expect(aristas.some((a) => a.hasta === 'rx-recortada')).toBe(false);
-    expect(aristas.some((a) => a.hasta === 'rx-texto')).toBe(false);
-  });
-
-  it('un expediente vacío no tiene conexiones', () => {
-    expect(aristasDelHistorial(vacia)).toEqual([]);
-  });
-});
+// Las conexiones (antes `aristasDelHistorial`) se prueban con las mismas
+// promesas —sólo vínculos con los dos extremos a la vista, nada desde un
+// motivo escrito a mano— en `red-clinica.adaptador.spec.ts`.
 
 describe('compararFilas', () => {
   const fila = (principal: string, tipo: FilaOrdenable['tipo'], cuando: Date | null): FilaOrdenable => ({

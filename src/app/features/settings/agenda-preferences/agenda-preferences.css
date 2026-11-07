@@ -43,6 +43,7 @@
 
 .ajustes__texto {
   display: flex;
+  overflow-wrap: anywhere;
   flex: 1 1 auto;
   flex-direction: column;
   gap: 0.15rem;

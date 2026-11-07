@@ -8,20 +8,32 @@ import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../../shared/components/molecules/card/card';
 import type { SurveyCatalogEntry } from '../../../core/data-access/surveys/surveys-catalog.client';
 
-/** The card as the list needs it: the entry plus how it is painted. */
+/** The card as the inbox needs it: the entry plus how it is painted. */
 export interface SurveyCardData extends SurveyCatalogEntry {
-  readonly palabra: string;
-  readonly tono: BadgeVariant;
-  readonly ruta: string;
+  /** «Se envía», «Encuesta anterior (ya no se envía)» or «Envío sin confirmar». */
+  readonly label: string;
+  readonly tone: BadgeVariant;
+  /** The survey sheet, where its responses are read. */
+  readonly route: string;
+  /**
+   * Sent today (`yes`: a system base survey or a catalog survey imported for a
+   * service), not any more (`no`: a hand-made survey), or not known because the
+   * service list did not load (`unknown`: never claimed either way).
+   */
+  readonly sending: 'yes' | 'no' | 'unknown';
 }
 
 /** What each base survey is issued for, in words. */
-const ALCANCE_SISTEMA = {
-  CONSULTATION: 'Consultas sin servicio',
-  SERVICE: 'Todos los servicios',
+const SYSTEM_SCOPE = {
+  CONSULTATION: 'Toda cita médica',
+  SERVICE: 'Servicios sin encuesta propia',
 } as const;
 
-/** Presentational card of one survey: services it applies to and its response inbox. */
+/**
+ * Read-only card of one survey in the «Buzón»: where it is sent and a way to
+ * read its responses. Nothing here edits a survey: the standard survey of each
+ * service is chosen in «Encuestas por servicio».
+ */
 @Component({
   selector: 'app-survey-card',
   imports: [AppButtonLink, Badge, Card, NavIcon, RouterLink],
@@ -30,20 +42,21 @@ const ALCANCE_SISTEMA = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SurveyCard {
-  readonly encuesta = input.required<SurveyCardData>();
+  readonly survey = input.required<SurveyCardData>();
 
-  protected readonly esBase = computed(() => this.encuesta().origin === 'SYSTEM');
+  protected readonly isBase = computed(() => this.survey().origin === 'SYSTEM');
 
-  /** Names of what the survey is attached to; never a UUID. */
-  protected readonly servicios = computed<readonly string[]>(() => {
-    const { scope, assignments } = this.encuesta();
-    if (scope) return [ALCANCE_SISTEMA[scope]];
-    return assignments.map((a) =>
-      a.targetType === 'SERVICE' ? (a.targetName ?? 'Un servicio que ya no figura') : 'Todas mis consultas',
-    );
+  /** Names of what a current survey is sent for; never a UUID. Past surveys list none. */
+  protected readonly targets = computed<readonly string[]>(() => {
+    const { scope, assignments, sending } = this.survey();
+    if (scope) return [SYSTEM_SCOPE[scope]];
+    if (sending !== 'yes') return [];
+    return assignments
+      .filter((a) => a.targetType === 'SERVICE')
+      .map((a) => a.targetName ?? 'Un servicio que ya no figura');
   });
 
-  /** Base surveys show their aggregated summary; own ones open the inbox in the sheet. */
-  protected readonly destinoRespuestas = computed(() => (this.esBase() ? '/questionnaires' : this.encuesta().ruta));
-  protected readonly fragmento = computed(() => (this.esBase() ? 'resumen' : 'respuestas'));
+  /** Base surveys show their aggregated summary; the others open their responses in the sheet. */
+  protected readonly responsesRoute = computed(() => (this.isBase() ? '/questionnaires' : this.survey().route));
+  protected readonly responsesFragment = computed(() => (this.isBase() ? 'resumen' : 'respuestas'));
 }

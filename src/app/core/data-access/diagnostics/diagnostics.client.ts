@@ -4,15 +4,12 @@ import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { sendIdempotent, SubmissionKeys } from '../idempotency';
-import { normalizePatientSettlement } from '../insurance/patient-insurance-settlement.types';
 import { parseBlobError } from '../files/blob-error';
 import { nombreDeContentDisposition } from '../files/content-disposition';
 import type { DownloadedFile } from '../files/files.types';
-import { sinNulos, type ConNulos } from '../wire';
+import { toWireOrder } from './study-detail.types';
 import type {
-  DiagnosticOrder,
   DiagnosticOrderCreated,
-  DiagnosticReport,
   DiagnosticResultShare,
   DuplicateStudyCheck,
   DuplicateStudyCheckResult,
@@ -24,10 +21,30 @@ import type {
   PatientDiagnosticResult,
   PatientDiagnosticResults,
   PatientDiagnostics,
-  PatientOrder,
   PatientOwnOrders,
-  PreviousStudy,
 } from './diagnostics.types';
+import type { PractitionerDiagnosticResult } from './diagnostics-practitioner-result.types';
+import {
+  toDuplicateStudyCheckResult,
+  toOrder,
+  toOrderCreated,
+  toPatientOrder,
+  toPatientResult,
+  toPractitionerResult,
+  toReport,
+  toShare,
+  toWorkOrder,
+  type WireDuplicateStudyCheckResult,
+  type WireLabWorkOrder,
+  type WireOrderCreated,
+  type WirePatientDiagnostics,
+  type WirePatientOrders,
+  type WirePatientResult,
+  type WirePatientResults,
+  type WirePractitionerResult,
+  type WireShare,
+  type WireShares,
+} from './diagnostics.wire';
 
 /**
  * Cliente del circuito diagnóstico: `diagnostics` (M20) y el alta de orden de
@@ -101,6 +118,53 @@ export class DiagnosticsClient {
   }
 
   /**
+   * `GET /diagnostics/patients/:patientProfileId/reports/:reportId` — a
+   * **released** report, read by the practitioner: values with their range,
+   * conclusion and files.
+   *
+   * Same authorization as `getPatientDiagnostics`. Whatever cannot be read
+   * (missing, another person's or organization's, not released) is the same
+   * 404, without revealing which.
+   */
+  getPractitionerResult(patientProfileId: string, reportId: string): Observable<PractitionerDiagnosticResult> {
+    return this.http
+      .get<WirePractitionerResult>(
+        this.url(
+          `/diagnostics/patients/${encodeURIComponent(patientProfileId)}/reports/${encodeURIComponent(reportId)}`,
+        ),
+      )
+      .pipe(map(toPractitionerResult));
+  }
+
+  /**
+   * `GET /diagnostics/patients/:patientProfileId/reports/:reportId/files/:fileId/content`
+   * — a released report's file, for the practitioner.
+   *
+   * `/common/files/:id/content` only serves whoever uploaded the file (the
+   * lab): the doctor downloads it here, authorized by the record.
+   */
+  downloadPractitionerResultFile(
+    patientProfileId: string,
+    reportId: string,
+    fileId: string,
+  ): Observable<DownloadedFile> {
+    return this.http
+      .get(
+        this.url(
+          `/diagnostics/patients/${encodeURIComponent(patientProfileId)}/reports/${encodeURIComponent(reportId)}/files/${encodeURIComponent(fileId)}/content`,
+        ),
+        { responseType: 'blob', observe: 'response' },
+      )
+      .pipe(
+        map((respuesta) => {
+          const fileName = nombreDeContentDisposition(respuesta.headers.get('Content-Disposition'));
+          return { blob: respuesta.body ?? new Blob([]), ...(fileName === undefined ? {} : { fileName }) };
+        }),
+        parseBlobError(),
+      );
+  }
+
+  /**
    * `GET /diagnostics/patients/:id/imaging-studies` — los estudios de imagen
    * que efectivamente se produjeron.
    *
@@ -156,9 +220,8 @@ export class DiagnosticsClient {
    * @returns La orden creada, con su identificador y su estado inicial.
    */
   requestStudy(orden: NewDiagnosticOrder): Observable<DiagnosticOrderCreated> {
-    // Sin las claves ausentes: el backend valida con `forbidNonWhitelisted`
-    // y un opcional en `undefined` viaja como clave declarada.
-    const body = sinAusentes(orden);
+    // Sin claves ausentes (`forbidNonWhitelisted`) y con el detalle en la forma del cable.
+    const body = sinAusentes(toWireOrder(orden));
     return sendIdempotent(this.submissionKeys, 'service-request', body, (headers) =>
       this.http.post<WireOrderCreated>(this.url('/clinical/service-requests'), body, { headers }),
     ).pipe(map(toOrderCreated));
@@ -382,203 +445,4 @@ function filtrosDeCola(filtros: LabWorkOrderQuery): HttpParams {
     }
   }
   return params;
-}
-
-/* ---- formas de transporte ------------------------------------------------
-   Todas las fechas llegan como texto ISO; el resto del contrato viaja igual.
-   `Fechas<T, K>` declara **qué claves** son fechas en cada tipo, en vez de
-   inferirlas: una clave nueva del contrato tiene que obligar a decidir, no
-   convertirse sola. Mismo criterio —y misma forma— que en `clinical`. */
-
-type Fechas<T, K extends keyof T> = Omit<T, K> & Partial<Readonly<Record<K, string>>>;
-
-// `previousDiagnosticReportId`/`duplicateOverrideReason` (antiduplicación,
-// v4.2.17) son columnas nullable: MikroORM hidrata una fila sin valor como
-// `null`, no como propiedad ausente, así que el transporte también viaja con
-// `null` y hay que normalizarlo en `toOrder` — mismo motivo que el resto de
-// este archivo usa `Fechas<T, K>` en vez de confiar en el tipo de la vista.
-type WireOrder = Omit<
-  DiagnosticOrder,
-  'createdAt' | 'previousDiagnosticReportId' | 'duplicateOverrideReason' | 'previousServiceRequestId'
-> & {
-  readonly createdAt: string;
-  readonly previousDiagnosticReportId?: string | null;
-  readonly duplicateOverrideReason?: string | null;
-  readonly previousServiceRequestId?: string | null;
-};
-
-type WireReport = Omit<DiagnosticReport, 'createdAt'> & { readonly createdAt: string };
-
-type WireLabWorkOrder = Fechas<LabWorkOrder, 'scheduledAt' | 'completedAt'>;
-
-type WireOrderCreated = Omit<DiagnosticOrderCreated, 'createdAt'> & {
-  readonly createdAt: string;
-};
-
-interface WirePatientDiagnostics extends Omit<PatientDiagnostics, 'orders' | 'reports'> {
-  readonly orders: readonly WireOrder[];
-  readonly reports: readonly WireReport[];
-}
-
-function toOrder({
-  createdAt,
-  previousDiagnosticReportId,
-  duplicateOverrideReason,
-  previousServiceRequestId,
-  ...resto
-}: WireOrder): DiagnosticOrder {
-  return {
-    ...resto,
-    createdAt: new Date(createdAt),
-    ...(previousDiagnosticReportId == null ? {} : { previousDiagnosticReportId }),
-    ...(duplicateOverrideReason == null ? {} : { duplicateOverrideReason }),
-    ...(previousServiceRequestId == null ? {} : { previousServiceRequestId }),
-  };
-}
-
-function toReport({ createdAt, ...resto }: WireReport): DiagnosticReport {
-  return { ...resto, createdAt: new Date(createdAt) };
-}
-
-function toOrderCreated({ createdAt, ...resto }: WireOrderCreated): DiagnosticOrderCreated {
-  return { ...resto, createdAt: new Date(createdAt) };
-}
-
-/* ---- antiduplicación de estudios, formas de transporte --------------------
-   El backend manda `null` en los opcionales vacíos (previousStudy,
-   warningMessage, y dentro del estudio previo conclusionText/
-   reportDownloadUrl/serviceRequestId), no los omite: se normaliza con
-   `sinNulos`, igual que el resto de los clientes. */
-
-type WirePreviousStudy = ConNulos<Omit<PreviousStudy, 'performedAt'>> & {
-  readonly performedAt: string;
-};
-
-interface WireDuplicateStudyCheckResult
-  extends ConNulos<Omit<DuplicateStudyCheckResult, 'previousStudy'>> {
-  readonly previousStudy: WirePreviousStudy | null;
-}
-
-function toPreviousStudy({ performedAt, ...resto }: WirePreviousStudy): PreviousStudy {
-  return {
-    ...sinNulos<Omit<PreviousStudy, 'performedAt'>>(resto),
-    // `performedAt` no es opcional en el contrato del backend: siempre viene
-    // como texto cuando `previousStudy` no es `null`.
-    performedAt: new Date(performedAt),
-  };
-}
-
-function toDuplicateStudyCheckResult({
-  previousStudy,
-  ...resto
-}: WireDuplicateStudyCheckResult): DuplicateStudyCheckResult {
-  return {
-    ...sinNulos<Omit<DuplicateStudyCheckResult, 'previousStudy'>>(resto),
-    ...(previousStudy === null ? {} : { previousStudy: toPreviousStudy(previousStudy) }),
-  };
-}
-
-/**
- * Lee `details.previousStudy` de un 422 `DUPLICATE_STUDY_DETECTED` —la carrera
- * entre el chequeo y el alta (antiduplicación de estudios, T-26): alguien
- * liberó el informe entre que se mostró «sin duplicado» y que se mandó el
- * pedido, y el alta lo rechaza con el mismo estudio previo que hubiera dado
- * el chequeo. Es el único punto fuera de este cliente que necesita decodificar
- * la forma de transporte de `PreviousStudy`, así que se expone acá en vez de
- * hacer que quien la usa reimplemente `toPreviousStudy`.
- *
- * Devuelve `null` ante cualquier forma inesperada: no vale la pena fabricar un
- * estudio previo a medias para un diálogo que lo va a mostrar como si fuera
- * un dato real.
- */
-export function previousStudyFromErrorDetails(
-  details: Record<string, unknown> | undefined,
-): PreviousStudy | null {
-  const candidato = details?.['previousStudy'];
-  if (typeof candidato !== 'object' || candidato === null) {
-    return null;
-  }
-  const wire = candidato as Partial<WirePreviousStudy>;
-  if (
-    typeof wire.reportId !== 'string' ||
-    typeof wire.studyName !== 'string' ||
-    typeof wire.providerName !== 'string' ||
-    typeof wire.performedAt !== 'string' ||
-    typeof wire.daysAgo !== 'number' ||
-    typeof wire.resultsAvailable !== 'boolean' ||
-    typeof wire.sameOrganization !== 'boolean'
-  ) {
-    return null;
-  }
-  return toPreviousStudy(wire as WirePreviousStudy);
-}
-
-function toWorkOrder({ scheduledAt, completedAt, ...resto }: WireLabWorkOrder): LabWorkOrder {
-  return {
-    ...resto,
-    ...fecha('scheduledAt', scheduledAt),
-    ...fecha('completedAt', completedAt),
-  };
-}
-
-/**
- * La clave con su fecha, o nada.
- *
- * Devolver `{}` y esparcirlo —en vez de asignar `undefined`— es lo que deja la
- * clave **ausente** en el objeto resultante. Con `undefined` la clave existe con
- * valor vacío, y `'completedAt' in orden` pasaría a decir que sí hay dato.
- */
-function fecha<K extends string>(
-  key: K,
-  value: string | null | undefined,
-): Partial<Record<K, Date>> {
-  return value === null || value === undefined
-    ? {}
-    : ({ [key]: new Date(value) } as Record<K, Date>);
-}
-
-/* ---- el portal del paciente, formas de transporte ------------------------ */
-
-type WirePatientResult = Fechas<PatientDiagnosticResult, 'issuedAt' | 'releasedAt'> & {
-  // `releasedAt` no es opcional en el contrato: un resultado que llega a esta
-  // lista está liberado por definición, así que siempre trae cuándo.
-  readonly releasedAt: string;
-};
-
-interface WirePatientResults extends Omit<PatientDiagnosticResults, 'items'> {
-  readonly items: readonly WirePatientResult[];
-}
-
-type WirePatientOrder = Fechas<PatientOrder, 'createdAt'> & {
-  // Toda orden tiene fecha de pedido: es lo que la ordena en la lista.
-  readonly createdAt: string;
-};
-
-interface WirePatientOrders extends Omit<PatientOwnOrders, 'items'> {
-  readonly items: readonly WirePatientOrder[];
-}
-
-type WireShare = Fechas<DiagnosticResultShare, 'validFrom' | 'validTo'> & {
-  readonly validFrom: string;
-};
-
-interface WireShares {
-  readonly reportId: string;
-  readonly items: readonly WireShare[];
-}
-
-function toPatientResult({
-  issuedAt,
-  releasedAt,
-  ...resto
-}: WirePatientResult): PatientDiagnosticResult {
-  return { ...resto, ...fecha('issuedAt', issuedAt), releasedAt: new Date(releasedAt) };
-}
-
-function toPatientOrder({ createdAt, ...resto }: WirePatientOrder): PatientOrder {
-  return { ...resto, ...normalizePatientSettlement(resto), createdAt: new Date(createdAt) };
-}
-
-function toShare({ validFrom, validTo, ...resto }: WireShare): DiagnosticResultShare {
-  return { ...resto, validFrom: new Date(validFrom), ...fecha('validTo', validTo) };
 }

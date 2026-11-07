@@ -67,6 +67,16 @@ const RUTAS: Readonly<Record<string, ((id: string) => string) | null>> = {
   // Su médico la derivó (24/10/2026): el aviso abre la ficha del profesional
   // recomendado, donde reserva la cita de siempre.
   PRACTITIONER_PROFILE: (id) => `/directory/${id}`,
+  // Pharma/lab visits (06/11/2026): each side opens its own list; the visit
+  // itself has no detail route yet, so the id is not used.
+  PHARMA_LAB_DOCTOR_VISITS: () => '/lab-visits',
+  PHARMA_LAB_VISITOR_VISITS: () => '/my-visits',
+  PHARMA_LAB_ADMIN: () => '/administration/pharma-lab',
+  // A critical result opens the clinical diagnostics queue, where it is acknowledged.
+  CRITICAL_RESULT: () => '/diagnostics',
+  // Surgical case detail (`/interventions/:caseId`) and community group (`/groups/:groupId`).
+  PROCEDURE_CASE: (id) => `/interventions/${encodeURIComponent(id)}`,
+  'community.groups': (id) => `/groups/${encodeURIComponent(id)}`,
   // ORGANIZATION_PROFILE (derivación a una organización, 31/10/2026) no está
   // acá: su ruta no se arma con el id (el tenant) sino que la manda la API en
   // `payloadJson.route` — ver `organizationRoute`.

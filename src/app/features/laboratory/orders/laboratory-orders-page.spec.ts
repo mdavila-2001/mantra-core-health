@@ -1,7 +1,6 @@
-import { Component } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
-import { RouterTestingHarness } from '@angular/router/testing';
+import { Component, input, output } from '@angular/core';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 
 import { SessionStore } from '../../../core/auth/session.store';
@@ -9,58 +8,70 @@ import type { LabOrder } from '../../../core/data-access/lab-portal/lab-portal.t
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { LaboratoryOrders } from './laboratory-orders';
 import { LaboratoryOrdersPage } from './laboratory-orders-page';
-import { NewLaboratoryOrder } from './new-order/new-laboratory-order';
+import type { NewOrderResult } from './new-order/new-order.types';
+import { QrOrderDialog } from './new-order/qr-order-dialog';
 
-@Component({ selector: 'app-laboratory-orders', template: '<p data-testid="list">lista</p>' })
-class ListStub {}
-@Component({ selector: 'app-new-laboratory-order', template: '<p data-testid="creation">alta</p>' })
-class CreationStub {}
+const reload = vi.fn();
+
+// Stands in for the real list: the page finds it through the `LaboratoryOrders` token.
+@Component({
+  selector: 'app-laboratory-orders',
+  template: '<p data-testid="list">lista</p>',
+  providers: [{ provide: LaboratoryOrders, useExisting: ListStub }],
+})
+class ListStub {
+  readonly reload = reload;
+}
+@Component({ selector: 'app-qr-order-dialog', template: '<button data-testid="emit" (click)="created.emit(result())">crear</button>' })
+class DialogStub {
+  readonly result = input<NewOrderResult>({ order: { patientName: 'Ana Pérez', status: 'DRAFT' } as LabOrder, created: true });
+  readonly created = output<NewOrderResult>();
+  readonly closed = output<void>();
+}
 
 describe('LaboratoryOrdersPage', () => {
   const success = vi.fn();
+  let navigate: ReturnType<typeof vi.spyOn>;
 
-  async function open(url: string): Promise<{ harness: RouterTestingHarness; page: LaboratoryOrdersPage }> {
+  function open(): ComponentFixture<LaboratoryOrdersPage> {
     success.mockReset();
+    reload.mockReset();
     TestBed.configureTestingModule({
       providers: [
-        provideRouter([{ path: 'administration/laboratory-orders', component: LaboratoryOrdersPage }]),
+        provideRouter([]),
         { provide: ToastService, useValue: { success } },
         { provide: SessionStore, useValue: { activeTenantId: () => 't-1', tenantName: () => 'Laboratorio Central' } },
       ],
     });
-    TestBed.overrideComponent(LaboratoryOrdersPage, { remove: { imports: [LaboratoryOrders, NewLaboratoryOrder] }, add: { imports: [ListStub, CreationStub] } });
-    const harness = await RouterTestingHarness.create();
-    const page = await harness.navigateByUrl(url, LaboratoryOrdersPage);
-    harness.detectChanges();
-    return { harness, page };
+    TestBed.overrideComponent(LaboratoryOrdersPage, {
+      remove: { imports: [LaboratoryOrders, QrOrderDialog] },
+      add: { imports: [ListStub, DialogStub] },
+    });
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(LaboratoryOrdersPage);
+    fixture.detectChanges();
+    return fixture;
   }
 
-  it('shows the list with the center identity and the «Nueva orden» link', async () => {
-    const { harness } = await open('/administration/laboratory-orders');
-    const el = harness.routeNativeElement!;
+  it('shows the center identity over the queue, with no dialog open', () => {
+    const el = open().nativeElement as HTMLElement;
     expect(el.querySelector('[data-testid="list"]')).not.toBeNull();
     expect(el.textContent).toContain('Laboratorio Central');
-    const link = el.querySelector('[data-testid="lab-orders-new"]') as HTMLAnchorElement;
-    expect(link.getAttribute('href')).toContain('nueva=1');
+    expect(el.querySelector('app-qr-order-dialog')).toBeNull();
   });
 
-  it('with ?nueva=1 it shows the creation instead of the list', async () => {
-    const { harness } = await open('/administration/laboratory-orders?nueva=1');
-    const el = harness.routeNativeElement!;
-    expect(el.querySelector('[data-testid="creation"]')).not.toBeNull();
-    expect(el.querySelector('[data-testid="list"]')).toBeNull();
-  });
+  it('opens the QR dialog, and a created order closes it, says so and rereads the queue', () => {
+    const fixture = open();
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('[data-testid="lab-orders-new-qr"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('app-qr-order-dialog')).not.toBeNull();
 
-  it('a created order is announced and the list opens on «Borrador»', async () => {
-    const { page } = await open('/administration/laboratory-orders?nueva=1');
-    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    const order = { patientName: 'Ana', status: 'DRAFT' } as LabOrder;
-
-    (page as unknown as { onCreated: (r: { order: LabOrder; created: boolean }) => void }).onCreated({ order, created: true });
-    expect(success).toHaveBeenCalledWith('Orden creada para Ana.');
-    expect(navigate).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: { nueva: null, estado: 'draft' } }));
-
-    (page as unknown as { onCreated: (r: { order: LabOrder; created: boolean }) => void }).onCreated({ order, created: false });
-    expect(success).toHaveBeenLastCalledWith('Esa orden ya estaba cargada (Ana).');
+    (el.querySelector('[data-testid="emit"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(success).toHaveBeenCalledWith('Orden creada para Ana Pérez.');
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith([], { queryParams: { estado: 'draft' } });
+    expect(el.querySelector('app-qr-order-dialog')).toBeNull();
   });
 });

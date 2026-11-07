@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { withStudyDetail } from './study-detail.types';
 import type {
   AccessionCreated,
   AccessionDetail,
@@ -203,7 +204,7 @@ function toLabInboxPage(wire: WireLabInboxPage): LabInboxPage {
   return {
     ...wire,
     items: wire.items.map((item) => ({
-      ...item,
+      ...withStudyDetail(item),
       requestedAt: new Date(item.requestedAt),
       specimens: item.specimens.map(toSpecimenDetail),
     })),

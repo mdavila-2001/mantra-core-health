@@ -1,6 +1,7 @@
 import {
   PLAN_ACTIVITY,
   ALLERGY_CATEGORY,
+  ALLERGEN_SUBSTANCE,
   CATEGORY_DOCUMENTAL,
   ORDER_CATEGORY,
   ENCOUNTER_CLASS,
@@ -16,12 +17,14 @@ import {
   OBSERVATION,
   PRIORITY,
   SEVERITY,
-  UNIDAD,
+  OBSERVATION_UNIT,
   VERIFICATION_DX,
 } from './concepts';
 import { MEDICAL, PATIENTS, PROFESSIONALS, type PacienteSimulado } from './people';
 import { TENANT_CLINICA } from '../mock-session';
 import { Coleccion, iso, isoDia, uuid } from '../mock-store';
+import * as network from './patient-network.data';
+import { NOTE_ROWS, type SimulatedNoteRow } from './clinic-notes.data';
 
 /* ============================================================================
     El expediente clínico de cada paciente: condiciones, alergias, recetas,
@@ -70,6 +73,10 @@ export interface SimulatedCondition {
   readonly expectedResolutionAt?: string;
   readonly resolvedAt?: string;
   readonly noteText: string;
+  /** Only on a ruled-out one: the diagnosis that replaced it (patch v4291). */
+  readonly replacedByConditionId?: string;
+  /** The custodian (API fbf18626). The seed does not bring it: then it is not filtered by. */
+  readonly custodianTenantId?: string;
   readonly createdAt: string;
 }
 
@@ -110,6 +117,11 @@ export interface SimulatedPrescription {
   readonly indicationConditionId?: string;
   /** El motivo escrito a mano, cuando no hay diagnóstico detrás. Ver P24. */
   readonly indicationText?: string;
+  /**
+   * The prescription that replaced this one (`medication_requests.replaced_by_request_id`).
+   * Careful: the API's `GET …/summary` does not publish it yet; it lives in the seed.
+   */
+  readonly replacedByRequestId?: string;
   readonly statusConceptId: string;
   readonly prescriberProfileId: string;
   readonly doseText: string;
@@ -148,12 +160,6 @@ export interface SimulatedEncounter {
   readonly reasonText: string;
   readonly startAt: string;
   readonly endAt: string | null;
-}
-
-/** Una fila de la nota médica: el campo y lo que vale, como lo escribió la médica. */
-export interface SimulatedNoteRow {
-  readonly label: string;
-  readonly value: string;
 }
 
 export interface SimulatedNote {
@@ -263,7 +269,7 @@ const CLINICAL_PROFILES: readonly {
     ],
     alergias: [['MED-IBUPROFENO', 'CRIT-LOW']],
     recetas: [
-      ['MED-LEVOTIROXINA', '50 mcg', 'En ayunas, 30 minutos antes del desayuno', 'clinical:MEDICATION_REQUEST_ISSUED'],
+      ['MED-LEVOTIROXINA', '50 mcg', 'Una vez al día, en ayunas, 30 minutos antes del desayuno', 'clinical:MEDICATION_REQUEST_ISSUED'],
       ['MED-SULFATO-FERROSO', '300 mg', 'Una vez al día con jugo de naranja', 'clinical:MEDICATION_REQUEST_ISSUED'],
     ],
   },
@@ -305,16 +311,17 @@ const CLINICAL_PROFILES: readonly {
   },
 ];
 
-export const PEANUT_SUBSTANCE = uuid('concept-allergen-peanut');
-export const POWDER_SUBSTANCE = uuid('concept-allergen-dust');
+// The terminology catalog's own ids: a made-up uuid resolved to «Sin registrar».
+export const PEANUT_SUBSTANCE = ALLERGEN_SUBSTANCE['ALG_SUB_PEANUT']!;
+export const POWDER_SUBSTANCE = ALLERGEN_SUBSTANCE['ALG_SUB_DUST']!;
 
 function clinicalProfileOf(p: PacienteSimulado) {
   const indice = PATIENTS.indexOf(p);
   return CLINICAL_PROFILES[(indice < 0 ? 0 : indice) % CLINICAL_PROFILES.length]!;
 }
 
-export const conditionList = new Coleccion<SimulatedCondition>(
-  PATIENTS.flatMap((p) =>
+export const conditionList = new Coleccion<SimulatedCondition>([
+  ...PATIENTS.flatMap((p) =>
     clinicalProfileOf(p).dx.map(([code, estado, nota], i) => ({
       id: uuid(`condition-${p.id}-${code}`),
       patientProfileId: p.id,
@@ -331,7 +338,8 @@ export const conditionList = new Coleccion<SimulatedCondition>(
       createdAt: iso(-400 + i * 90),
     })),
   ),
-);
+  ...network.networkConditions(DX_CATEGORY),
+]);
 
 export const allergyList = new Coleccion<SimulatedAllergy>(
   PATIENTS.flatMap((p) =>
@@ -358,8 +366,8 @@ export const allergyList = new Coleccion<SimulatedAllergy>(
   ),
 );
 
-export const prescriptionList = new Coleccion<SimulatedPrescription>(
-  PATIENTS.flatMap((p, k) =>
+export const prescriptionList = new Coleccion<SimulatedPrescription>([
+  ...PATIENTS.flatMap((p, k) =>
     clinicalProfileOf(p).recetas.map(([med, dosis, frecuencia, estado], i) => ({
       id: uuid(`rx-${p.id}-${med}`),
       patientProfileId: p.id,
@@ -386,21 +394,24 @@ export const prescriptionList = new Coleccion<SimulatedPrescription>(
       createdAt: iso(estado === 'clinical:MEDICATION_REQUEST_ISSUED' ? -20 - i * 3 : -120, 9, 50),
     })),
   ),
-);
+  ...network.networkPrescriptions(),
+]);
 
-export const observationList = new Coleccion<SimulatedObservation>(
-  PATIENTS.flatMap((p, k) => {
+export const observationList = new Coleccion<SimulatedObservation>([
+  ...PATIENTS.flatMap((p, k) => {
     const base = [
-      ['OBS-BP-SYS', 118 + (k % 5) * 8, 'UNIT-MG'],
-      ['OBS-BP-DIA', 76 + (k % 4) * 4, 'UNIT-MG'],
-      ['OBS-HR', 64 + (k % 6) * 5, 'UNIT-MG'],
-      ['OBS-WEIGHT', 58 + (k % 7) * 6, 'UNIT-MG'],
-      ['OBS-HEIGHT', 158 + (k % 5) * 6, 'UNIT-MG'],
-      ['OBS-TEMP', 36.4 + (k % 3) * 0.2, 'UNIT-MG'],
-      ['OBS-SPO2', 96 + (k % 3), 'UNIT-MG'],
-      ['OBS-GLUCOSE', 88 + (k % 6) * 12, 'UNIT-MG'],
+      // The unit comes from `VS_OBSERVATION_UNIT`, not `VS_DOSE_UNIT`: with
+      // `UNIT-MG` for everything, the pressure read «118 mg» (06/11/2026).
+      ['OBS-BP-SYS', 118 + (k % 5) * 8, 'OBSU-MMHG'],
+      ['OBS-BP-DIA', 76 + (k % 4) * 4, 'OBSU-MMHG'],
+      ['OBS-HR', 64 + (k % 6) * 5, 'OBSU-BPM'],
+      ['OBS-WEIGHT', 58 + (k % 7) * 6, 'OBSU-KG'],
+      ['OBS-HEIGHT', 158 + (k % 5) * 6, 'OBSU-CM'],
+      ['OBS-TEMP', 36.4 + (k % 3) * 0.2, 'OBSU-CELSIUS'],
+      ['OBS-SPO2', 96 + (k % 3), 'OBSU-PERCENT'],
+      ['OBS-GLUCOSE', 88 + (k % 6) * 12, 'OBSU-MGDL'],
     ] as const;
-    return base.flatMap(([code, valor], i) =>
+    return base.flatMap(([code, valor, unidad], i) =>
       [0, 1, 2].map((visita) => ({
         id: uuid(`obs-${p.id}-${code}-${visita}`),
         patientProfileId: p.id,
@@ -408,16 +419,17 @@ export const observationList = new Coleccion<SimulatedObservation>(
         statusConceptId: STATUS['ST-COMPLETED']!,
         valueDecimal: String(Number((valor + visita * (i % 2 === 0 ? -1.5 : 1)).toFixed(1))),
         quantityValue: String(Number((valor + visita * (i % 2 === 0 ? -1.5 : 1)).toFixed(1))),
-        quantityUnitConceptId: UNIDAD['UNIT-MG']!,
+        quantityUnitConceptId: OBSERVATION_UNIT[unidad]!,
         effectiveStartAt: iso(-visita * 45 - 2, 9 + i),
         encounterId: uuid(`encounter-${p.id}-${visita}`),
       })),
     );
   }),
-);
+  ...network.networkObservations(),
+]);
 
-export const encounterList = new Coleccion<SimulatedEncounter>(
-  PATIENTS.flatMap((p, k) =>
+export const encounterList = new Coleccion<SimulatedEncounter>([
+  ...PATIENTS.flatMap((p, k) =>
     [0, 1, 2].map((visita) => ({
       id: uuid(`encounter-${p.id}-${visita}`),
       patientProfileId: p.id,
@@ -430,7 +442,8 @@ export const encounterList = new Coleccion<SimulatedEncounter>(
       endAt: iso(-visita * 45 - 2, 9, 35),
     })),
   ),
-);
+  ...network.networkEncounters(),
+]);
 
 export const episodeList = new Coleccion<{
   id: string;
@@ -442,8 +455,8 @@ export const episodeList = new Coleccion<{
   startAt: string;
   endAt: string | null;
   createdAt: string;
-}>(
-  PATIENTS.filter((_, k) => k % 4 === 3).map((p) => ({
+}>([
+  ...PATIENTS.filter((_, k) => k % 4 === 3).map((p) => ({
     id: uuid(`episode-${p.id}`),
     patientProfileId: p.id,
     tenantId: TENANT_CLINICA,
@@ -454,56 +467,11 @@ export const episodeList = new Coleccion<{
     endAt: iso(-92, 12),
     createdAt: iso(-95, 8),
   })),
-);
+  ...network.networkEpisodes(EPISODE_TYPE),
+]);
 
-/**
- * Las filas que una médica anota en una consulta, campo por campo. Cinco
- * juegos realistas de cuatro a siete filas: la semilla elige uno por paciente
- * y por visita, así dos notas de la misma persona nunca dicen lo mismo.
- */
-const NOTE_ROWS: readonly (readonly SimulatedNoteRow[])[] = [
-  [
-    { label: 'Presión arterial', value: '120/80 mmHg' },
-    { label: 'Frecuencia cardíaca', value: '72 lpm' },
-    { label: 'Peso', value: '68 kg' },
-    { label: 'Exploración', value: 'Abdomen blando, depresible, no doloroso' },
-    { label: 'Conducta', value: 'Continuar tratamiento. Control en 3 meses con laboratorio.' },
-  ],
-  [
-    { label: 'Dolor', value: 'Región lumbar, 6/10' },
-    { label: 'Duración', value: '3 días' },
-    { label: 'Irradiación', value: 'No' },
-    { label: 'Desencadenante', value: 'Esfuerzo al levantar peso' },
-    { label: 'Exploración', value: 'Contractura paravertebral, Lasègue negativo' },
-    { label: 'Conducta', value: 'Reposo relativo, analgesia, control en 7 días' },
-  ],
-  [
-    { label: 'Motivo', value: 'Cansancio y dolor de cabeza' },
-    { label: 'Tiempo de evolución', value: '2 semanas' },
-    { label: 'Presión arterial', value: '134/88 mmHg' },
-    { label: 'Temperatura', value: '36,6 °C' },
-    { label: 'Impresión', value: 'Cefalea tensional probable. Descartar anemia.' },
-    { label: 'Estudios pedidos', value: 'Hemograma, perfil tiroideo' },
-    { label: 'Conducta', value: 'Paracetamol a demanda. Control en 2 semanas.' },
-  ],
-  [
-    { label: 'Glucemia en ayunas', value: '112 mg/dL' },
-    { label: 'Hemoglobina glicosilada', value: '6,8 %' },
-    { label: 'Peso', value: '81 kg' },
-    { label: 'Adherencia', value: 'Buena, sin olvidos' },
-  ],
-  [
-    { label: 'Tos', value: 'Seca, de predominio nocturno' },
-    { label: 'Duración', value: '5 días' },
-    { label: 'Fiebre', value: 'No' },
-    { label: 'Saturación', value: '97 %' },
-    { label: 'Auscultación', value: 'Murmullo vesicular conservado, sin ruidos agregados' },
-    { label: 'Conducta', value: 'Antitusivo, hidratación, control si empeora' },
-  ],
-];
-
-export const noteList = new Coleccion<SimulatedNote>(
-  PATIENTS.flatMap((p, k) =>
+export const noteList = new Coleccion<SimulatedNote>([
+  ...PATIENTS.flatMap((p, k) =>
     [0, 1].map((visita) => ({
       noteId: uuid(`note-${p.id}-${visita}`),
       id: uuid(`note-${p.id}-${visita}`),
@@ -528,7 +496,8 @@ export const noteList = new Coleccion<SimulatedNote>(
       createdAt: iso(-visita * 45 - 2, 9, 40),
     })),
   ) as (SimulatedNote & { id: string })[],
-);
+  ...network.networkNotes(PROGRESS_NOTE_TYPE),
+]);
 
 /* ---- planes de cuidados y documentos --------------------------------------
 
@@ -719,10 +688,12 @@ export interface SimulatedOrder {
   readonly suggestedPracticeSiteId?: string;
   /** P40 (C2): las notas médicas que motivan la orden, en el orden citado. */
   readonly basedOnNoteIds?: readonly string[];
+  /** The diagnosis it was ordered for (patch v4291). */
+  readonly reasonConditionId?: string;
 }
 
-export const orderList = new Coleccion<SimulatedOrder>(
-  PATIENTS.flatMap((p, k) =>
+export const orderList = new Coleccion<SimulatedOrder>([
+  ...PATIENTS.flatMap((p, k) =>
     [
       ['STUDY-HEMOGRAMA', 'SRQ-LAB', 'ST-COMPLETED'],
       ['STUDY-PERFIL-LIPIDICO', 'SRQ-LAB', 'ST-COMPLETED'],
@@ -748,7 +719,8 @@ export const orderList = new Coleccion<SimulatedOrder>(
       createdAt: iso(-50 + i * 12),
     })),
   ),
-);
+  ...network.networkOrders(),
+]);
 
 /* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
 conditionList.persistirEn('mock.clinica.condiciones');

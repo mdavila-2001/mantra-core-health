@@ -466,12 +466,12 @@
           }
         </a>
 
-        <!-- Mis encuestas (propietario, 28/10/2026): la bandeja del paciente.
-             Sólo se ofrece cuando una atención terminada le generó una
-             encuesta (`GET /surveys/me/invitations` devolvió alguna); el número
-             son las pendientes dentro del plazo. Se marca en toda la pantalla
-             «Mis cuestionarios», no sólo con la pestaña de encuestas abierta:
-             por eso ignora los parámetros de consulta. -->
+        <!-- «Mis encuestas» (owner, 28/10/2026): the patient's survey inbox.
+             ALWAYS offered to the patient (06/11/2026), even with none yet: the
+             screen explains when they arrive. The number is the pending ones
+             still in time and is drawn only when there is one. Marked active on
+             the whole «Mis cuestionarios» screen, not only its surveys tab:
+             that is why it ignores query params. -->
         @if (ofreceMisEncuestas()) {
           <a
             class="app-header__ajustes"
@@ -752,14 +752,10 @@
     <!-- El índice negativo lo hace enfocable por script tras navegar sin
          meterlo en el orden de tabulación. -->
     <main class="app-main__inner" id="contenido-principal" tabindex="-1">
-      <!-- Solo aparece si el inicio de sesión fue desde un dispositivo nuevo y la
-           política de la organización lo avisa (`NewDeviceAlert`). -->
+      <!-- Security notice: eager, never behind a chunk that could fail to load (`NewDeviceAlert`). -->
       <app-new-device-banner />
-      <!-- Las organizaciones que niegan ahora a la persona (`deniedTenants` del token): aviso, no bloqueo. -->
-      <app-denied-tenants-banner />
-      <!-- Aviso de una sola vez sobre la medición de uso (consentimiento de los mapas de calor). En el flujo,
-           solo en el área autenticada: nunca sobre rutas públicas ni de acceso. -->
-      <app-ux-consent-notice />
+      <!-- Los demás avisos, en el flujo y en orden fijo (`ShellNotices`); chunk propio. -->
+      @defer (on immediate) { <app-shell-notices /> }
       <router-outlet />
     </main>
   </div>

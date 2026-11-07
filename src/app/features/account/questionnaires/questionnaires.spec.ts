@@ -86,7 +86,7 @@ describe('Questionnaires (Mis cuestionarios)', () => {
     cargar([enElCable('i-1', 'PENDING'), enElCable('i-2', 'EXPIRED')]);
 
     const bandeja = TestBed.inject(PatientSurveyInbox);
-    expect(bandeja.hayInvitaciones()).toBe(true);
+    expect(bandeja.invitaciones().length > 0).toBe(true);
     expect(bandeja.pendientes()).toBe(1);
     http.expectNone(LISTA);
   });
@@ -94,7 +94,23 @@ describe('Questionnaires (Mis cuestionarios)', () => {
   it('sin ninguna encuesta la bandeja de la cabecera queda vacía', () => {
     cargar([]);
 
-    expect(TestBed.inject(PatientSurveyInbox).hayInvitaciones()).toBe(false);
+    expect(TestBed.inject(PatientSurveyInbox).invitaciones().length > 0).toBe(false);
+  });
+
+  it('sin ninguna encuesta muestra el S3: de dónde salen y la próxima acción', () => {
+    cargar([]);
+
+    const vacio = raiz().querySelector('[data-testid="questionnaires-no-surveys"]');
+    expect(vacio).not.toBeNull();
+    expect(vacio?.textContent).toContain('Todavía no tiene encuestas');
+    expect(vacio?.textContent).toContain('después de una cita médica');
+    expect(vacio?.textContent).toContain('completó');
+    const accion = raiz().querySelector<HTMLAnchorElement>('[data-testid="questionnaires-see-appointments"]');
+    expect(accion?.textContent?.trim()).toBe('Ver mis citas');
+    expect(accion?.getAttribute('href')).toBeTruthy();
+    // Neither the empty list nor the host's generic empty state.
+    expect(raiz().querySelector('[data-testid="cuestionarios-lista"]')).toBeNull();
+    expect(raiz().textContent).not.toContain('Todavía no hay nada acá');
   });
 
   it('ofrece «Dejar reseña pública» sólo en las respondidas cuya atención se puede reseñar', () => {

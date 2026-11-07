@@ -17,9 +17,9 @@
   color: var(--text-secondary);
 }
 
+/* Full panel width, like every Settings tab (client rule 6). */
 .prefs__bloque {
   margin-bottom: var(--e5);
-  max-inline-size: 68ch;
 }
 
 .prefs__titulo {
@@ -51,6 +51,7 @@
 
 .prefs__texto {
   display: flex;
+  overflow-wrap: anywhere;
   flex: 1 1 auto;
   flex-direction: column;
   gap: 0.15rem;

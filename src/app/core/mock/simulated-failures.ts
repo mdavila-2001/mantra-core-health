@@ -55,8 +55,11 @@ const KEY = 'mock:fallos';
  * Los estados que una escritura puede encontrarse, en los términos del M34:
  * `red` es S8 —la petición no llegó—; los modos HTTP siguen el modelo de error
  * del backend. `validation` incluye un error estructurado por campo.
+ * `empty` is not a failure: a 200 with an empty list, to look at the S3 of a
+ * list read that always has data in the mock (e.g. `/surveys/me/invitations`).
+ * It only applies to GETs: an empty body for a write would be a lie.
  */
-export const FAILURE_MODES = ['red', 'forbidden', 'not-found', 'conflict', 'error', 'validation'] as const;
+export const FAILURE_MODES = ['red', 'forbidden', 'not-found', 'conflict', 'error', 'validation', 'empty'] as const;
 export type FailureMode = (typeof FAILURE_MODES)[number];
 
 /** Un fallo declarado: a qué rutas alcanza y de qué clase es. */
@@ -88,6 +91,10 @@ export function failureFor(method: string, path: string): SimulatedFailure | nul
     if (fallo.metodos !== undefined && !fallo.metodos.map((m) => m.toUpperCase()).includes(method)) {
       continue;
     }
+    // `empty` is a read-only answer: writes pass through untouched.
+    if (fallo.modo === 'empty' && method.toUpperCase() !== 'GET') {
+      continue;
+    }
     return fallo;
   }
   return null;
@@ -105,6 +112,8 @@ export function failureFor(method: string, path: string): SimulatedFailure | nul
 export function failureBody(fallo: SimulatedFailure, path: string): { status: number; body: unknown } {
   const base = { timestamp: new Date().toISOString(), path, correlationId: 'mock-fallo' };
   switch (fallo.modo) {
+    case 'empty':
+      return { status: 200, body: [] };
     case 'validation':
       return {
         status: 422,

@@ -97,6 +97,15 @@ export function registerLabCatalog(router: MockRouter): void {
     }));
     return {
       sections,
+      sampleTypes: [
+        { code: 'BLOOD', name: 'Análisis de sangre' },
+        { code: 'URINE', name: 'Análisis de orina' },
+        { code: 'STOOL', name: 'Análisis de heces' },
+        { code: 'FLUID', name: 'Líquidos corporales (LCR, pleural, sinovial…)' },
+        { code: 'SWAB', name: 'Hisopados, secreciones y raspados' },
+        { code: 'OTHER', name: 'Otras muestras' },
+      ],
+      catalogVersion: '2026-10-31',
       count: ITEMS.size,
       priceRule:
         'INLASA 2026 primero; FONASA 2026 convertido a Bs sólo donde INLASA no tiene el análisis; sin equivalente, sin precio.',
@@ -106,7 +115,10 @@ export function registerLabCatalog(router: MockRouter): void {
   router.post('/diagnostics/lab/catalog/import', (request) => {
     const tenantId = laboratorioDe(request);
     if (tenantId === null) return forbidden();
-    const ids = [...new Set(((request.body ?? {}) as { conceptIds?: string[] }).conceptIds ?? [])];
+    const body = (request.body ?? {}) as { conceptIds?: string[]; skipComponentIds?: string[] };
+    const ids = [...new Set(body.conceptIds ?? [])];
+    // Unticked components are not offered: no service for them, like the API.
+    const skip = new Set(body.skipComponentIds ?? []);
     const add = (
       code: string,
       name: string,
@@ -163,7 +175,7 @@ export function registerLabCatalog(router: MockRouter): void {
         adopt?.id ?? add(item.code, item.name, item.suggestedPrice?.priceBs, item.conceptId, null);
       if (panelId === null)
         return row('REJECTED', null, `Ya tiene un servicio con el código «${item.code}».`);
-      for (const part of item.components) {
+      for (const part of item.components.filter((c) => !skip.has(c.conceptId))) {
         add(part.code, part.name, part.suggestedPrice?.priceBs, part.conceptId, panelId);
       }
       return row(adopt ? 'LINKED' : 'CREATED', panelId);

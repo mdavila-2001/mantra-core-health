@@ -16,6 +16,7 @@ const item = (code: string, extra: Partial<LabCatalogItem> = {}): LabCatalogItem
   name: code,
   loinc: null,
   specimen: null,
+  sampleType: 'BLOOD',
   suggestedPrice: null,
   offeredServiceId: null,
   components: [],
@@ -23,8 +24,13 @@ const item = (code: string, extra: Partial<LabCatalogItem> = {}): LabCatalogItem
 });
 
 const CATALOG: LabCatalog = {
-  count: 3,
+  count: 4,
   priceRule: 'INLASA 2026 primero.',
+  catalogVersion: '2026-10-31',
+  sampleTypes: [
+    { code: 'BLOOD', name: 'Análisis de sangre' },
+    { code: 'URINE', name: 'Análisis de orina' },
+  ],
   sections: [
     {
       code: 'HEMATO',
@@ -69,6 +75,11 @@ const CATALOG: LabCatalog = {
       name: 'Bioquímica clínica',
       items: [item('GLUCOSA'), item('TSH', { offeredServiceId: 's-1' })],
     },
+    {
+      code: 'URIANALISIS',
+      name: 'Uroanálisis',
+      items: [item('EGO', { name: 'Examen general de orina', sampleType: 'URINE' })],
+    },
   ],
 };
 
@@ -93,9 +104,18 @@ describe('LabCatalogImport', () => {
     fixture.detectChanges();
   });
 
-  it('shows each análisis by section with its suggested price and its components', () => {
+  it('groups the análisis by sample type: blood first, then urine', () => {
+    const groups = [...root().querySelectorAll('[data-code]')].map((el) =>
+      el.getAttribute('data-code'),
+    );
+    expect(groups).toEqual(['GLUCOSA', 'HEMOGRAMA', 'TSH', 'EGO']);
     const text = root().textContent ?? '';
-    expect(text).toContain('Hematología');
+    expect(text.indexOf('Análisis de sangre')).toBeLessThan(text.indexOf('Análisis de orina'));
+  });
+
+  it('shows each análisis with its section, suggested price and components', () => {
+    const text = root().textContent ?? '';
+    expect(text).toContain('Hematología ·');
     expect(text).toContain('Sugerido 60.00 Bs · INLASA LAC-030');
     expect(text).toContain('Ver sus 2 componentes');
     expect(text).toContain('9.75 Bs');
@@ -115,11 +135,67 @@ describe('LabCatalogImport', () => {
 
     add.click();
     fixture.detectChanges();
-    expect(importCatalog).toHaveBeenCalledWith(['c-HEMOGRAMA']);
+    expect(importCatalog).toHaveBeenCalledWith(['c-HEMOGRAMA'], []);
     expect(getCatalog).toHaveBeenCalledTimes(2);
     expect(root().querySelector('[data-testid="lab-catalog-result"]')?.textContent).toContain(
       'Se agregó 1 análisis con sus componentes.',
     );
+  });
+
+  it('«Elegir todos» ticks every análisis not yet offered, with no filter on', () => {
+    const all = root().querySelector<HTMLButtonElement>(
+      '[data-testid="lab-catalog-select-shown"]',
+    )!;
+    expect(all.textContent?.trim()).toBe('Elegir todos');
+    all.click();
+    fixture.detectChanges();
+    const add = root().querySelector<HTMLButtonElement>('[data-testid="lab-catalog-add"]')!;
+    // GLUCOSA, HEMOGRAMA and EGO: TSH is already offered.
+    expect(add.textContent?.trim()).toBe('Agregar 3 análisis');
+    expect(all.getAttribute('aria-disabled')).toBe('true');
+
+    root().querySelector<HTMLButtonElement>('[data-testid="lab-catalog-clear"]')!.click();
+    fixture.detectChanges();
+    expect(add.textContent?.trim()).toBe('Agregar análisis');
+    expect(root().querySelector('[data-testid="lab-catalog-clear"]')).toBeNull();
+  });
+
+  it('each component is ticked by default and an unticked one is sent to be skipped', () => {
+    const vcm = () =>
+      root().querySelector<HTMLInputElement>(
+        '[data-part-code="HEMOGRAMA.VCM"] input[type="checkbox"]',
+      )!;
+    expect(
+      root().querySelectorAll('[data-code="HEMOGRAMA"] [data-testid="lab-catalog-part"]').length,
+    ).toBe(2);
+    expect(vcm().checked).toBe(true);
+
+    vcm().click();
+    fixture.detectChanges();
+    expect(vcm().checked).toBe(false);
+    expect(root().querySelector('[data-code="HEMOGRAMA"]')?.textContent).toContain(
+      'Sus componentes: 1 de 2 elegidos',
+    );
+
+    root()
+      .querySelector<HTMLInputElement>(
+        '[data-code="HEMOGRAMA"] .item__head input[type="checkbox"]',
+      )!
+      .click();
+    fixture.detectChanges();
+    root().querySelector<HTMLButtonElement>('[data-testid="lab-catalog-add"]')!.click();
+    expect(importCatalog).toHaveBeenCalledWith(['c-HEMOGRAMA'], ['p-vcm']);
+  });
+
+  it('an unticked component of an análisis that was not chosen is not sent', () => {
+    root()
+      .querySelector<HTMLInputElement>('[data-part-code="HEMOGRAMA.VCM"] input[type="checkbox"]')!
+      .click();
+    fixture.detectChanges();
+    root().querySelector<HTMLElement>('[data-code="GLUCOSA"] app-checkbox input')!.click();
+    fixture.detectChanges();
+    root().querySelector<HTMLButtonElement>('[data-testid="lab-catalog-add"]')!.click();
+    expect(importCatalog).toHaveBeenCalledWith(['c-GLUCOSA'], []);
   });
 
   it('an análisis already offered cannot be chosen again', () => {
@@ -154,9 +230,21 @@ describe('LabCatalogImport', () => {
   });
 
   it('an empty catalog is an empty state that leads back to Precios', () => {
-    getCatalog.mockReturnValue(of({ sections: [], count: 0, priceRule: '' }));
+    getCatalog.mockReturnValue(
+      of({ sections: [], sampleTypes: [], count: 0, priceRule: '', catalogVersion: null }),
+    );
     fixture = TestBed.createComponent(LabCatalogImport);
     fixture.detectChanges();
     expect(root().textContent).toContain('El catálogo de estudios todavía no está cargado.');
+  });
+
+  it('without the LOINC catalog loaded, says so instead of listing loose análisis', () => {
+    expect(root().querySelector('[data-testid="lab-catalog-not-loaded"]')).toBeNull();
+    getCatalog.mockReturnValue(of({ ...CATALOG, catalogVersion: null }));
+    fixture = TestBed.createComponent(LabCatalogImport);
+    fixture.detectChanges();
+    expect(root().querySelector('[data-testid="lab-catalog-not-loaded"]')?.textContent).toContain(
+      'sólo están los análisis básicos',
+    );
   });
 });

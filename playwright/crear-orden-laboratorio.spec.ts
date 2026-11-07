@@ -10,7 +10,7 @@ import { esperarAplicacionLista } from './support/sesion';
  *
  * Camino de punta a punta contra el SIMULADOR (la API real no tiene estas rutas):
  *   paciente muestra su QR → el laboratorio lo carga → la orden queda en «Borrador»
- *   y sobrevive a una recarga; y la orden propia del laboratorio.
+ *   y sobrevive a una recarga. La orden propia del laboratorio ya la cubre el diálogo de la lista.
  * La derivación del médico va en el segundo test.
  */
 
@@ -111,8 +111,8 @@ test.describe('Crear una orden en el laboratorio', () => {
     await entrarDemo(page, 'laboratorio@alovida.mock');
     await page.goto('/administration/laboratory-orders');
     await esperarAplicacionLista(page);
-    await page.getByTestId('lab-orders-new').click();
-    await expect(page.getByTestId('lab-new-order-card')).toBeVisible();
+    await page.getByTestId('lab-orders-new-qr').click();
+    await expect(page.getByRole('dialog', { name: 'Orden con el QR del paciente' })).toBeVisible();
     await page.getByTestId('lab-new-order-code').fill(texto);
     await page.getByTestId('lab-new-order-code-submit').click();
     await page.waitForURL(/estado=draft/);
@@ -127,16 +127,16 @@ test.describe('Crear una orden en el laboratorio', () => {
     await page.reload();
     await esperarAplicacionLista(page);
     await expect(page.locator('tbody tr')).toHaveCount(antes);
-    await page.getByTestId('lab-orders-new').click();
+    await page.getByTestId('lab-orders-new-qr').click();
     await page.getByTestId('lab-new-order-code').fill(texto);
     await page.getByTestId('lab-new-order-code-submit').click();
-    await page.waitForURL(/estado=/);
+    await expect(page.getByTestId('lab-qr-order-dialog')).toHaveCount(0);
     await expect(page.locator('tbody tr')).toHaveCount(antes);
 
     expect(errores.filter((e) => !/favicon|Failed to load resource.*(401|404)|Transition was skipped|patients\/lookup → 404/.test(e))).toEqual([]);
   });
 
-  test('orden propia del laboratorio y capturas en tres viewports', async ({ page }) => {
+  test('pantalla del laboratorio: identidad, entrada por QR y vía manual, en tres viewports y tema oscuro', async ({ page }) => {
     const errores = erroresDeConsola(page);
     await entrarDemo(page, 'laboratorio@alovida.mock');
 
@@ -145,54 +145,31 @@ test.describe('Crear una orden en el laboratorio', () => {
       await page.goto('/administration/laboratory-orders');
       await esperarAplicacionLista(page);
       await expect(page.getByTestId('lab-orders-new')).toBeVisible();
+      await expect(page.getByTestId('lab-orders-new-qr')).toBeVisible();
       await expect(page.getByRole('tab', { name: /^Todas \(\d+\)/ })).not.toHaveText('Todas (0)');
-      await capturar(page, `${EVIDENCIA}/02-ordenes-boton-${vp.nombre}.png`);
+      await capturar(page, `${EVIDENCIA}/02-ordenes-botones-${vp.nombre}.png`);
 
-      await page.getByTestId('lab-orders-new').click();
-      await expect(page.getByTestId('lab-new-order-card')).toBeVisible();
+      await page.getByTestId('lab-orders-new-qr').click();
+      await expect(page.getByTestId('lab-new-order-opciones')).toBeVisible();
       await capturar(page, `${EVIDENCIA}/03-nueva-orden-qr-${vp.nombre}.png`);
-
-      await page.getByRole('tab', { name: 'Orden propia' }).click();
-      await expect(page.getByTestId('lab-new-order-submit')).toBeVisible();
-      await capturar(page, `${EVIDENCIA}/04-nueva-orden-propia-${vp.nombre}.png`);
+      await page.keyboard.press('Escape');
+      await expect(page.getByTestId('lab-qr-order-dialog')).toHaveCount(0);
     }
 
-    // Tema oscuro (`:root[data-theme='dark']`, el mismo que fija el selector de tema): la tarjeta y las tres opciones.
+    // Dark theme (`:root[data-theme='dark']`, the one the theme switcher sets): the dialog and its three options.
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.getByRole('tab', { name: 'Con el QR del paciente' }).click();
     await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
+    await page.getByTestId('lab-orders-new-qr').click();
     await expect(page.getByTestId('lab-new-order-opciones')).toBeVisible();
     await capturar(page, `${EVIDENCIA}/13-nueva-orden-qr-oscuro-390.png`);
     await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
-    await page.getByRole('tab', { name: 'Orden propia' }).click();
+    await page.keyboard.press('Escape');
 
-    // Field validation: nothing filled in → two errors and no order.
+    // Way 3 is the list's own «Nueva orden» dialog (the real API contract): it must still open.
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.getByTestId('lab-new-order-submit').click();
-    await expect(page.getByText('Busque al paciente por su documento.')).toBeVisible();
-    await expect(page.getByText('Elija el estudio.').first()).toBeVisible();
-    await capturar(page, `${EVIDENCIA}/05-propia-errores-1440.png`);
-
-    // Real creation (the real API contract): find the patient by national id, pick a study.
-    await page.getByTestId('lab-new-order-national-id').fill('0000000');
-    await page.getByTestId('lab-new-order-lookup').click();
-    await expect(page.getByText('Nadie tiene ese documento.')).toBeVisible();
-    await page.getByTestId('lab-new-order-national-id').fill('5000000');
-    await page.getByTestId('lab-new-order-lookup').click();
-    await expect(page.getByTestId('lab-new-order-patient')).toBeVisible();
-    await page.getByRole('combobox', { name: /Estudio/ }).click();
-    await page.getByRole('option', { name: /Hemograma/ }).first().click();
-    // The demo catalog codes do not carry the family: say it by hand.
-    await page.getByText('Laboratorio', { exact: true }).last().click();
-    await page.getByTestId('lab-new-order-requester').fill('Dra. Paz');
-    await page.getByTestId('lab-new-order-submit').click();
-    await page.waitForURL(/estado=draft/);
-    await expect(page.locator('tbody tr', { hasText: 'Registrada por el centro' })).toBeVisible();
-    await capturar(page, `${EVIDENCIA}/06-propia-creada-1440.png`);
-
-    await page.reload();
-    await esperarAplicacionLista(page);
-    await expect(page.locator('tbody tr', { hasText: 'Registrada por el centro' })).toBeVisible();
+    await page.getByTestId('lab-orders-new').click();
+    await expect(page.getByRole('dialog', { name: 'Nueva orden' })).toBeVisible();
+    await capturar(page, `${EVIDENCIA}/04-nueva-orden-propia-1440.png`);
 
     expect(errores.filter((e) => !/favicon|Failed to load resource.*(401|404)|Transition was skipped|patients\/lookup → 404/.test(e))).toEqual([]);
   });
@@ -245,12 +222,12 @@ test.describe('Crear una orden en el laboratorio', () => {
     const pendiente = page.getByTestId('mis-ordenes-derivacion').first();
     await expect(pendiente).toContainText('Espera su aceptación');
     const fila = page.locator('tbody tr', { has: pendiente });
-    await fila.scrollIntoViewIfNeeded();
+    await fila.evaluate((el) => el.scrollIntoView({ block: 'center' }));
     await capturar(page, `${EVIDENCIA}/10-paciente-derivacion-pendiente-1440.png`);
     await abrirAcciones(page, fila);
     await page.getByRole('menuitem', { name: 'Aceptar la derivación' }).click();
     await expect(page.getByTestId('mis-ordenes-derivacion').first()).toContainText('Derivada a');
-    await page.getByTestId('mis-ordenes-derivacion').first().scrollIntoViewIfNeeded();
+    await page.getByTestId('mis-ordenes-derivacion').first().evaluate((el) => el.scrollIntoView({ block: 'center' }));
     await expect(page.getByText(/Aceptó la derivación/)).toHaveCount(0, { timeout: 20_000 }); // el aviso ya se fue
     await capturar(page, `${EVIDENCIA}/11-paciente-derivacion-aceptada-1440.png`);
     await salir(page);

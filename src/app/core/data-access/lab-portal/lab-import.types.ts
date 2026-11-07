@@ -57,6 +57,8 @@ export interface LabCatalogItem {
   readonly name: string;
   readonly loinc: string | null;
   readonly specimen: string | null;
+  /** What is drawn from the patient (BLOOD, URINE…), a code of `LabCatalog.sampleTypes`. */
+  readonly sampleType: string;
   readonly suggestedPrice: LabSuggestedPrice | null;
   /** The lab service already made from this item, if any. */
   readonly offeredServiceId: string | null;
@@ -72,9 +74,13 @@ export interface LabCatalogSection {
 /** `GET /diagnostics/lab/catalog`. */
 export interface LabCatalog {
   readonly sections: readonly LabCatalogSection[];
+  /** Sample types in display order (blood first): how the lab browses. */
+  readonly sampleTypes: readonly { readonly code: string; readonly name: string }[];
   readonly count: number;
   /** How suggested prices were chosen, to cite on screen. */
   readonly priceRule: string;
+  /** Version of the LOINC catalog loaded; null: only the basic análisis are there. */
+  readonly catalogVersion: string | null;
 }
 
 /** LINKED: a free-form service with the same code now points to the catalog item. */

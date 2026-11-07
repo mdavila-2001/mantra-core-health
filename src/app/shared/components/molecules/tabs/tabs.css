@@ -93,6 +93,7 @@
 
 .tabs__tab {
     position: relative;
+    outline-offset: -5px; /* 4px ring fully inside: the scrolling strip clips anything outside */
     /* Crecen para repartirse el ancho entero. `min-width: max-content` hace lo
        que antes hacía `flex-shrink: 0` —no encogen por debajo de su texto— sin
        impedirles crecer. */
@@ -216,8 +217,6 @@
     border: 1px solid transparent;
     border-bottom: none;
     border-radius: var(--r-sm) var(--r-sm) 0 0;
-    /* el anillo de foco hacia adentro: la tira recorta lo que se salga */
-    outline-offset: -3px;
 }
 
 /* Un rótulo partido en dos renglones deforma la tira entera: la pestaña de al
@@ -258,6 +257,7 @@
    aparecen porque la tira no desborda a lo ancho. */
 :host(.tabs--vertical) .tabs__bar {
     flex-direction: column;
+    flex: 0 0 var(--tabs-indice, auto); /* the host may fix the index width */
 }
 
 /* Width sharing does not apply in a column: `flex: 1 1 auto` would stretch each tab vertically. */
@@ -301,7 +301,7 @@
    work both ways (tabs.ts), so only the drawing changes. */
 @media (max-width: 40rem) {
     :host(.tabs--vertical) { flex-direction: column; }
-    :host(.tabs--vertical) .tabs__bar { flex-direction: row; }
+    :host(.tabs--vertical) .tabs__bar { flex-direction: row; flex: none; }
     :host(.tabs--vertical) .tabs__list {
         flex-direction: row;
         border-right: none;

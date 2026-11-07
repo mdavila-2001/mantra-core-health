@@ -1,11 +1,14 @@
 /* ============================================================================
-    Recorrido clínico. Ni un color propio: cada tipo toma un trío `--st-*` del
-    sistema (o la superficie hundida, si no tiene significado clínico), así que
-    el tema oscuro lo resuelve el tema y no esta hoja.
+    Clinical network by episodes. Not a single color of its own: each class
+    takes a `--st-*` trio from the system (or the inset surface, if it has no
+    clinical meaning), so the dark theme is solved by the theme, not this sheet.
 
-    Las medidas en píxeles de nodos, columnas y carriles NO son decoración: el
-    trazado de las conexiones se calcula con ellas en `recorrido-clinico.model.ts`
-    y se aplican desde la plantilla. Acá sólo vive lo que no mueve una línea.
+    The pixel measures of nodes, columns, threads and lanes are NOT
+    decoration: the routing is computed with them in `red-clinica.geometria.ts`
+    and applied from the template. Only what moves no line lives here. The
+    tones live in `red-clinica-tonos.css`, the strip and the lines in
+    `red-clinica-trazos.css`, and what is inside a node, a thread header or
+    the legend, in their subcomponents.
     ========================================================================== */
 
 :host {
@@ -13,25 +16,14 @@
   min-inline-size: 0;
 }
 
-/* -- Tonos ------------------------------------------------------------------
-   Mismo mapa que `shared/components/tone/tone.css`, que no se puede importar
-   acá porque está escrito para el `:host` de un átomo. */
-.tono--primary   { --t-bg: var(--st-primary-bg);   --t-fg: var(--st-primary-fg);   --t-bd: var(--st-primary-bd); }
-.tono--secondary { --t-bg: var(--st-secondary-bg); --t-fg: var(--st-secondary-fg); --t-bd: var(--st-secondary-bd); }
-.tono--success   { --t-bg: var(--st-success-bg);   --t-fg: var(--st-success-fg);   --t-bd: var(--st-success-bd); }
-.tono--warning   { --t-bg: var(--st-warning-bg);   --t-fg: var(--st-warning-fg);   --t-bd: var(--st-warning-bd); }
-.tono--error     { --t-bg: var(--st-error-bg);     --t-fg: var(--st-error-fg);     --t-bd: var(--st-error-bd); }
-.tono--info      { --t-bg: var(--st-info-bg);      --t-fg: var(--st-info-fg);      --t-bd: var(--st-info-bd); }
-.tono--neutral   { --t-bg: var(--bg-inset);        --t-fg: var(--text-secondary);  --t-bd: var(--border-default); }
-
-.recorrido {
+.red {
   display: grid;
   gap: var(--sp-3);
 }
 
-/* -- Barra: leyenda y saltos ---------------------------------------------- */
+/* -- Bar, legend ------------------------------------------------------------ */
 
-.recorrido__barra {
+.red__barra {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -39,7 +31,19 @@
   gap: var(--sp-3) var(--sp-6);
 }
 
-.recorrido__leyenda {
+.red__acciones,
+.red__saltos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.red__saltos app-nav-icon {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+.red__leyenda {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2) var(--sp-4);
@@ -51,32 +55,9 @@
   color: var(--text-secondary);
 }
 
-.recorrido__leyenda-item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-}
+/* -- The canvas -------------------------------------------------------------- */
 
-.recorrido__muestra {
-  inline-size: 28px;
-  block-size: 8px;
-  overflow: visible;
-}
-
-.recorrido__saltos {
-  display: flex;
-  gap: var(--sp-1);
-}
-
-.recorrido__saltos app-nav-icon {
-  inline-size: 16px;
-  block-size: 16px;
-}
-
-/* -- El lienzo ---------------------------------------------------------------
-   Contiene el desplazamiento: la página nunca se ensancha por el recorrido. */
-
-.recorrido__lienzo {
+.red__lienzo {
   position: relative;
   overflow-x: auto;
   overflow-y: hidden;
@@ -84,139 +65,35 @@
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   overscroll-behavior-x: contain;
+  /* The thread headers measure themselves against the visible canvas (cqi),
+     not the viewport: wider than the view, a sticky header slid out of its
+     band and the episode name was cut on the left. */
+  container-type: inline-size;
 }
 
-.recorrido__lienzo:focus-visible {
+.red__lienzo:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
-.recorrido__plano {
+.red__plano {
   position: relative;
   min-inline-size: 100%;
 }
 
-/* -- Carriles --------------------------------------------------------------- */
+/* -- The axis ---------------------------------------------------------------- */
 
-.recorrido__carril {
-  position: absolute;
-  inset-inline: 0;
-  border-block-start: 1px solid var(--border-default);
-}
-
-/* Sin bandas tintadas: el halo de las indicaciones es del color del lienzo,
-   y sobre una banda tintada se veía como una franja de otro color alrededor
-   de cada línea. Los carriles ya se separan por su filete y su rótulo. */
-
-/* Pegado al borde izquierdo visible: al desplazarse, el carril no pierde nombre.
-   Con fondo propio y por encima de la capa de líneas: sin eso, el tronco de una
-   atención le pasaba por encima al texto («OBSERVACIONES» tachado). */
-.recorrido__carril-rotulo {
-  position: sticky;
-  z-index: 1;
-  inset-inline-start: 0;
-  margin: var(--sp-1) var(--sp-2);
-  background: var(--bg-surface);
-  border-radius: var(--r-full);
-  box-shadow: var(--shadow-sm);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 2px var(--sp-3);
-  font-size: var(--fs-overline);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--t-fg);
-}
-
-.recorrido__carril-rotulo app-nav-icon {
-  inline-size: 14px;
-  block-size: 14px;
-}
-
-.recorrido__carril-cuenta {
-  padding: 0 var(--sp-2);
-  border-radius: var(--r-full);
-  background: var(--t-bg);
-  border: 1px solid var(--t-bd);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
-}
-
-/* -- Eje y conexiones ------------------------------------------------------- */
-
-.recorrido__trazos {
-  position: absolute;
-  inset: 0;
-  overflow: visible;
-  pointer-events: none;
-}
-
-.recorrido__eje {
-  stroke: var(--border-strong);
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-
-.recorrido__arista {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  transition:
-    opacity var(--dur-base) ease,
-    stroke-width var(--dur-fast) ease;
-}
-
-.recorrido__arista--atencion {
-  stroke: var(--brand-primary);
-  stroke-width: 1.5;
-  opacity: 0.55;
-}
-
-.recorrido__arista--indicacion {
-  stroke: var(--st-success-fg);
-  stroke-width: 2;
-  stroke-dasharray: 6 4;
-}
-
-/* Del color del lienzo: corta la línea que pasa por debajo en cada cruce. */
-.recorrido__halo {
-  fill: none;
-  stroke: var(--bg-inset);
-  stroke-width: 6;
-  stroke-linecap: butt;
-  stroke-linejoin: round;
-}
-
-.recorrido__punta {
-  fill: var(--st-success-fg);
-}
-
-.recorrido__arista--iluminada {
-  opacity: 1;
-  stroke-width: 3;
-}
-
-.recorrido__arista--atenuada {
-  opacity: 0.12;
-}
-
-/* -- Columnas --------------------------------------------------------------- */
-
-.recorrido__columnas {
+.red__eje,
+.red__hilos,
+.red__nodos {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.recorrido__columna {
+.red__columna {
   position: absolute;
-  inset-block: 0;
-}
-
-.recorrido__cabecera {
-  position: relative;
+  inset-block-start: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -224,27 +101,38 @@
   text-align: center;
 }
 
-.recorrido__fecha {
+.red__fecha {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  text-transform: capitalize;
   color: var(--text-primary);
+  white-space: nowrap;
 }
 
-.recorrido__contexto {
+.red__fecha--corta {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.red__contexto {
   margin: 0;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
-/* El hito sobre el eje: lleno si es una atención, hueco si es un día suelto. */
-.recorrido__hito {
+.red__columna--angosta .red__contexto {
+  font-size: var(--fs-overline);
+}
+
+/* The mark on the axis: filled for an encounter, hollow for a loose day. */
+.red__marca-eje {
   position: absolute;
+  z-index: 2;
   inset-block-end: 8px;
   inset-inline-start: 50%;
   inline-size: 12px;
@@ -255,18 +143,17 @@
   border: 2px solid var(--border-strong);
 }
 
-.recorrido__hito--atencion {
+.red__marca-eje--atencion {
   background: var(--brand-primary);
   border-color: var(--brand-primary);
   box-shadow: 0 0 0 4px var(--st-primary-bg);
 }
 
-/* El tiempo entre dos columnas, en el pasillo y sobre el eje. */
-.recorrido__intervalo {
+.red__intervalo {
   position: absolute;
+  /* Above the axis line (the SVG, z-index 1): under it the label read struck through. */
+  z-index: 2;
   inset-block-end: 2px;
-  /* El centro del pasillo lo fija la plantilla: el pasillo se ensancha
-     cuando bajan muchas indicaciones. */
   translate: -50% 0;
   padding: 0 var(--sp-2);
   border-radius: var(--r-full);
@@ -279,18 +166,72 @@
   font-variant-numeric: tabular-nums;
 }
 
-.recorrido__nodos {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+/* -- The threads ------------------------------------------------------------- */
+
+.red__hilo {
+  position: absolute;
+  inset-inline: 0;
+  border-block-start: 1px solid var(--border-default);
 }
 
-/* -- Nodos ------------------------------------------------------------------ */
+/* Expanded, the thread gets a brand rule on its left: it is what is being
+   read. No background of its own: the lines' halo has the canvas color, and
+   on another surface it would show as a stripe. */
+.red__hilo--desplegado {
+  border-block-end: 1px solid var(--border-default);
+  box-shadow: inset 3px 0 0 var(--brand-primary);
+}
 
-.recorrido__nodo {
+.red__hilo--resaltado {
+  box-shadow: inset 4px 0 0 var(--st-warning-fg);
+}
+
+/* The header sticks to the visible edge: when scrolling, the episode keeps
+   its name. Above the lines (z-index), with its own background. */
+.red__cabecera-hilo {
+  position: sticky;
+  z-index: 3;
+  inset-inline-start: 0;
+  display: inline-flex;
+  align-items: center;
+  max-inline-size: min(100%, calc(100cqi - var(--sp-2)));
+  padding-inline: var(--sp-2);
+}
+
+/* A collapsed thread whose milestones are out of view says so on its track:
+   the canvas opens at the end and an older episode looked empty. */
+.red__fuera {
   position: absolute;
+  z-index: 3;
+  translate: 0 -50%;
+  min-block-size: 28px;
+  padding: 0 var(--sp-3);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-link);
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-full);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.red__fuera--despues {
+  translate: -100% -50%;
+}
+
+.red__fuera:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* -- The nodes --------------------------------------------------------------- */
+
+.red__nodo {
+  position: absolute;
+  z-index: 2;
   overflow: hidden;
-  inset-inline: 0;
   display: grid;
   align-content: center;
   gap: var(--sp-1);
@@ -304,184 +245,147 @@
   border-radius: var(--r-sm);
   box-shadow: var(--shadow-sm);
   cursor: pointer;
+  /* Brought into view (alert, panel, guided step): clear of the fixed app
+     header above and of the canvas edges at the sides. */
+  scroll-margin-block: calc(var(--header-height, 4rem) + var(--sp-4)) var(--sp-6);
+  scroll-margin-inline: var(--sp-6);
   transition:
     opacity var(--dur-base) ease,
     box-shadow var(--dur-fast) ease,
     translate var(--dur-fast) ease;
 }
 
-.recorrido__nodo:hover,
-.recorrido__nodo--enfocado {
+.red__nodo:hover,
+.red__nodo--enfocado {
   box-shadow: var(--shadow-md);
   translate: 0 -1px;
   border-color: var(--t-bd);
   border-inline-start-color: var(--t-fg);
 }
 
-.recorrido__nodo:focus-visible {
+.red__nodo:focus-visible {
   outline: none;
   box-shadow:
     0 0 0 3px var(--focus-ring),
     var(--shadow-md);
 }
 
-.recorrido__nodo--atenuado {
-  opacity: 0.35;
+/* Off the lit path: the card recedes (flat, inset, faint border) but its
+   text keeps full contrast; a translucent card fell to 2:1 in dark mode. */
+.red__nodo--atenuado {
+  background: var(--bg-inset);
+  border-color: var(--border-subtle);
+  border-inline-start-color: var(--border-default);
+  box-shadow: none;
 }
 
-.recorrido__nodo-cabeza {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-2);
-  min-inline-size: 0;
+.red__nodo--resaltado {
+  outline: 2px solid var(--st-warning-fg);
+  outline-offset: 2px;
 }
 
-.recorrido__marca {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  inline-size: 22px;
-  block-size: 22px;
-  border-radius: var(--r-full);
-  background: var(--t-bg);
-  color: var(--t-fg);
-  border: 1px solid var(--t-bd);
+/* The record whose detail is open in the panel: full border in its tone, so
+   the map says which one is being read. */
+.red__nodo--abierto {
+  border-color: var(--t-fg);
+  box-shadow: var(--shadow-md);
 }
 
-.recorrido__marca app-nav-icon {
-  inline-size: 14px;
-  block-size: 14px;
+/* The group node is not a record: dashed border and no shadow. */
+.red__nodo--grupo {
+  background: transparent;
+  border-style: dashed;
+  border-inline-start-style: dashed;
+  border-inline-start-width: 1px;
+  box-shadow: none;
 }
 
-/* Dos renglones: un nombre clínico cortado al primero obliga a abrir el
-   detalle para saber qué medicamento es. */
-.recorrido__nodo-principal {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  font-weight: 600;
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
-}
-
-.recorrido__nodo-pie {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  min-inline-size: 0;
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-}
-
-.recorrido__nodo-estado {
-  flex: none;
-  padding: 0 var(--sp-2);
-  border-radius: var(--r-full);
-  background: var(--t-bg);
-  color: var(--t-fg);
-  font-weight: 600;
-}
-
-/* Cede espacio antes que la fecha: «Desde 8 oct 2026» dice más que la
-   posología, que el detalle trae completa. */
-.recorrido__nodo-secundario {
-  flex: 0 1000 auto;
-  min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* The collapsed ruled-out diagnosis: a discreet marker that opens. */
+.red__nodo--compacto {
+  padding-block: var(--sp-1);
+  background: var(--bg-inset);
+  border-style: dashed;
+  border-inline-start-style: solid;
+  box-shadow: none;
   color: var(--text-secondary);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .recorrido__arista,
-  .recorrido__nodo {
+  .red__nodo {
     transition: none;
   }
 
-  .recorrido__nodo:hover,
-  .recorrido__nodo--enfocado {
+  .red__nodo:hover,
+  .red__nodo--enfocado {
     translate: none;
   }
 }
 
-/* El nodo de grupo no es un registro: borde discontinuo y sin sombra, para
-   que se lea como «hay más acá» y no como un registro más. */
-.recorrido__nodo--grupo {
-  background: transparent;
-  border-style: dashed;
-  border-inline-start-style: solid;
-  box-shadow: none;
-}
+/* -- Vertical layout (phone) ------------------------------------------------- */
 
-.recorrido__nodo--grupo .recorrido__nodo-principal {
-  color: var(--t-fg);
-}
-
-/* La fecha propia del registro, cuando no es la de su columna. */
-/* No se encoge: el formato ya es corto (ver `fechaPropia`) y es la posología
-   la que cede. Mayúscula inicial en el mes, igual que las cabeceras. */
-.recorrido__nodo-fecha {
-  flex: none;
-  white-space: nowrap;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-  text-transform: capitalize;
-}
-
-/* La indicación en texto, sólo en la disposición vertical. */
-.recorrido__nodo-para {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--st-success-fg);
-  font-weight: 600;
-}
-
-/* -- Disposición vertical (teléfono) ----------------------------------------
-   Un momento por bloque, lo más reciente arriba. El tronco de la izquierda es
-   el eje del tiempo; los nodos se apilan en el flujo normal. */
-
-.recorrido-v {
-  position: relative;
+.red-v {
   display: grid;
-  gap: var(--sp-5);
+  gap: var(--sp-3);
   margin: 0;
-  padding: 0 0 0 var(--sp-6);
+  padding: 0;
   list-style: none;
 }
 
-.recorrido-v::before {
+.red-v__episodio {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* On the phone the highlight goes on the episode's own border (cabecera),
+   not as a second rule outside it: nested borders. */
+.red-v .red__hilo--resaltado {
+  box-shadow: none;
+}
+
+.red-v .red__cabecera-hilo {
+  position: static;
+  display: flex;
+  max-inline-size: none;
+  padding: 0;
+}
+
+
+.red-v__momentos {
+  position: relative;
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0 0 0 var(--sp-5);
+  list-style: none;
+}
+
+.red-v__momentos::before {
   content: '';
   position: absolute;
   inset-block: var(--sp-2) 0;
-  inset-inline-start: calc(var(--sp-2) + 1px);
+  inset-inline-start: var(--sp-2);
   border-inline-start: 2px solid var(--border-strong);
 }
 
-.recorrido-v__cabecera {
-  position: relative;
+.red-v__fecha {
   margin-block-end: var(--sp-2);
 }
 
-.recorrido-v__cabecera .recorrido__fecha,
-.recorrido-v__cabecera .recorrido__contexto {
-  text-align: start;
+/* «· Sin atención» next to the date: the date is capitalised, the context is not. */
+.red-v__fecha .red__contexto {
+  display: inline;
+  text-transform: none;
 }
 
-.recorrido-v__hito {
-  inset-block-start: var(--sp-1);
-  inset-block-end: auto;
-  inset-inline-start: calc(var(--sp-6) * -1 + var(--sp-2) + 2px);
-}
-
-.recorrido-v__nodos {
+.red-v__nodos {
   display: grid;
   gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.recorrido-v .recorrido__nodo {
-  position: static;
+.red-v .red__nodo {
+  position: relative;
   inline-size: 100%;
 }

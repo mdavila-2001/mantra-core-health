@@ -1,0 +1,54 @@
+@let r = registro();
+<app-fact-list [hechos]="r.detalle" [etiqueta]="r.nombre" />
+
+@for (ausente of ausentesDe(r); track ausente) {
+  <p class="recorrido__nota" data-testid="recorrido-detalle-ausente">{{ ausente }}</p>
+}
+
+<div class="recorrido__detalle-acciones">
+  @if (r.tipo === 'estudio' && r.conResultado && r.informeId !== null) {
+    <a
+      app-button
+      variant="primary"
+      size="sm"
+      data-testid="recorrido-ver-resultado"
+      routerLink="/my-account/diagnostic-results"
+      [fragment]="r.informeId"
+    >
+      Ver el resultado
+    </a>
+  }
+  @if (r.tipo === 'receta') {
+    <button
+      app-button
+      variant="primary"
+      size="sm"
+      type="button"
+      data-testid="recorrido-descargar-receta"
+      [isLoading]="descargandoReceta() === r.id"
+      (clicked)="descargarReceta.emit(r.id)"
+    >
+      Descargar receta oficial (PDF)
+    </button>
+    <a
+      app-button
+      variant="ghost"
+      size="sm"
+      [routerLink]="['/my-account/medical-record/where-to-buy', r.id]"
+    >
+      Dónde comprarla
+    </a>
+  }
+  @if (r.tipo === 'atencion' || r.tipo === 'diagnostico' || r.tipo === 'receta') {
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      type="button"
+      data-testid="recorrido-ir-a-seccion"
+      (clicked)="irAlRegistro.emit(r)"
+    >
+      Verlo en «Por fecha»
+    </button>
+  }
+</div>

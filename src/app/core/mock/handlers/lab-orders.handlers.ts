@@ -12,6 +12,7 @@ import { ORDER_CATEGORY, STATUS } from '../fixtures/concepts';
 import { TENANT_LABORATORIO } from '../mock-session';
 import { Coleccion, cuerpo } from '../mock-store';
 import { labInboxOrders } from './diagnostics.handlers';
+import { ordenesDelCentro } from './lab-order-intake.handlers';
 import type {
   LabOrder,
   LabOrderAction,
@@ -118,16 +119,26 @@ export function ordenDeRespuesta(orderId: string, deps: DependenciasDeOrdenes): 
   // Like the API: REJECT is recorded against the specimen, so only a received
   // laboratory order (imaging has no specimen) can be rejected.
   const conMuestra = orden.categoryConceptId === ORDER_CATEGORY['SRQ-LAB'];
+  // Like the API (v4.2.96): the center's own order names who signed the paper.
+  const propia = ordenesDelCentro.get(orderId);
   return {
     orderId,
     studyName: destino.studyName,
     patientName: destino.patientName,
-    requesterName: destino.requesterName,
+    requesterName: propia
+      ? (propia.externalRequesterName ?? 'A pedido del paciente')
+      : destino.requesterName,
     requestedAt: orden.requestedAt,
     status: status === 'PROCESSED' && files.length > 0 ? 'UPLOADED' : status,
     origin: orden.origin ?? 'CLINIC',
     reason: guardado?.reason ?? null,
     canReject: status === 'RECEIVED' && conMuestra,
+    registeredByPerformer: propia !== undefined,
+    canEdit: propia !== undefined && status === 'DRAFT',
+    codeConceptId: orden.codeConceptId,
+    priorityConceptId: orden.priorityConceptId,
+    externalRequesterName: propia?.externalRequesterName ?? null,
+    externalRequesterLicense: propia?.externalRequesterLicense ?? null,
     files,
   };
 }
@@ -185,9 +196,9 @@ export function registrarOrdenesDeLaboratorio(
     if ((action === 'CANCEL' || action === 'REJECT') && motivo === '') {
       return validationPipeRejected('reason should not be empty');
     }
-    // Like the API: the performer cannot cancel (the order belongs to the requester) and an
-    // imaging order has no specimen to reject.
-    if (action === 'CANCEL') {
+    // Like the API: the performer cancels only what it entered itself (a practitioner's order
+    // belongs to its requester) and an imaging order has no specimen to reject.
+    if (action === 'CANCEL' && ordenesDelCentro.get(orderId) === undefined) {
       return unprocessable('La orden es de quien la pidió: el laboratorio no puede cancelarla.');
     }
     if (action === 'REJECT' && orden.categoryConceptId !== ORDER_CATEGORY['SRQ-LAB']) {

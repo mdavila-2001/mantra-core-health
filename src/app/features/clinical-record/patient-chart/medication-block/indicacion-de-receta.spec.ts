@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { diagnosticoParaReceta, vinculoDeReceta } from './medication-block';
+import { diagnosticoParaReceta } from './medication-block';
+import { vinculoDeReceta } from './medication-block.vinculo';
 
 /**
  * Lo que el expediente y «Atención» le pasan al formulario de receta.

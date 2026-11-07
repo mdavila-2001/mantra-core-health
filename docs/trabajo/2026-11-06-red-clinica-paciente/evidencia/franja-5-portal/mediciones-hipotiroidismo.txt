@@ -1,0 +1,40 @@
+hilo-hipotiroidismo-1440-claro: URL /my-account/medical-record?vista=recorrido
+hilo-hipotiroidismo-1440-claro: hilos=7 → ["Hipertensión arterial esencial · Confirmado · desde 2 oct 2025","Dislipidemia · En estudio · desde 31 dic 2025","Infección respiratoria aguda · En estudio · desde 31 mar 2026","Trastorno de ansiedad generalizada · En estudio · desde 12 oct 2026","Hipotiroidismo · Confirmado · desde 15 may 2025","Infección urinaria · Resuelto · desde 10 abr 2026","Otras consultas · Sin diagnóstico asociado · desde 30 abr 2026"]
+hilo-hipotiroidismo-1440-claro plegado: overflow=false (scroll 1440 / client 1440), holgura izq 40 der 40, ancho 93%
+hilo-hipotiroidismo-1440-claro: aria-expanded antes=false
+hilo-hipotiroidismo-1440-claro: aria-expanded después (Enter)=true
+hilo-hipotiroidismo-1440-claro desplegado: overflow=false (scroll 1440 / client 1440), holgura izq 40 der 40, ancho 93%
+hilo-hipotiroidismo-1440-claro: narración recorrida:
+  - El 15 de mayo de 2025 consultó por cansancio, cefalea y caída de cabello de dos meses.
+  - Se anotó Hipotiroidismo como posible diagnóstico.
+  - Se anotó Anemia ferropénica como posible diagnóstico.
+  - Le pidieron Hemograma completo. El resultado ya está disponible.
+  - Le pidieron TSH por quimioluminiscencia. El resultado ya está disponible.
+  - El 29 de mayo de 2025 consultó por reconsulta: lectura de hemograma y TSH.
+  - El 29 de mayo de 2025 volvió a control.
+  - El 29 de mayo de 2025 se descartó Anemia ferropénica; en su lugar quedó Hipotiroidismo.
+  - El 29 de mayo de 2025 Anemia ferropénica se dio por resuelto.
+hilo-hipotiroidismo-1440-claro: narración="El 29 de mayo de 2025 Anemia ferropénica se dio por resuelto." | región viva="Paso 9 de 16: El 29 de mayo de 2025 Anemia ferropénica se dio por resuelto." aria-live=polite
+hilo-hipotiroidismo-1440-claro: en el camino=Lo que se descartó en el camino (1)DiagnósticoAnemia ferropénica · se descartó
+hilo-hipotiroidismo-1440-claro: errores=[]
+hilo-hipotiroidismo-390-oscuro: URL /my-account/medical-record?vista=recorrido
+hilo-hipotiroidismo-390-oscuro: hilos=7 → ["Hipertensión arterial esencial · Confirmado · desde 2 oct 2025","Dislipidemia · En estudio · desde 31 dic 2025","Infección respiratoria aguda · En estudio · desde 31 mar 2026","Trastorno de ansiedad generalizada · En estudio · desde 12 oct 2026","Hipotiroidismo · Confirmado · desde 15 may 2025","Infección urinaria · Resuelto · desde 10 abr 2026","Otras consultas · Sin diagnóstico asociado · desde 30 abr 2026"]
+hilo-hipotiroidismo-390-oscuro plegado: overflow=false (scroll 390 / client 390), holgura izq 12 der 12, ancho 94%
+hilo-hipotiroidismo-390-oscuro: aria-expanded antes=false
+hilo-hipotiroidismo-390-oscuro: aria-expanded después (Enter)=true
+hilo-hipotiroidismo-390-oscuro desplegado: overflow=false (scroll 390 / client 390), holgura izq 12 der 12, ancho 94%
+hilo-hipotiroidismo-390-oscuro: narración recorrida:
+  - El 15 de mayo de 2025 consultó por cansancio, cefalea y caída de cabello de dos meses.
+  - Se anotó Hipotiroidismo como posible diagnóstico.
+  - Se anotó Anemia ferropénica como posible diagnóstico.
+  - Le pidieron Hemograma completo. El resultado ya está disponible.
+  - Le pidieron TSH por quimioluminiscencia. El resultado ya está disponible.
+  - El 29 de mayo de 2025 consultó por reconsulta: lectura de hemograma y TSH.
+  - El 29 de mayo de 2025 volvió a control.
+  - El 29 de mayo de 2025 se descartó Anemia ferropénica; en su lugar quedó Hipotiroidismo.
+  - El 29 de mayo de 2025 Anemia ferropénica se dio por resuelto.
+hilo-hipotiroidismo-390-oscuro: narración="El 29 de mayo de 2025 Anemia ferropénica se dio por resuelto." | región viva="Paso 9 de 16: El 29 de mayo de 2025 Anemia ferropénica se dio por resuelto." aria-live=polite
+hilo-hipotiroidismo-390-oscuro: en el camino=Lo que se descartó en el camino (1)DiagnósticoAnemia ferropénica · se descartó
+hilo-hipotiroidismo-390-oscuro: errores=[]
+reduce-motion: transition-duration hecho=null · animation-duration región=0s
+entrada directa ?vista=recorrido: hilos=7

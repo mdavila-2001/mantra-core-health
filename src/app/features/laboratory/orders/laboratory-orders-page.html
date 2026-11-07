@@ -1,12 +1,12 @@
-@if (creating()) {
-  <app-page-header title="Nueva orden" subtitle="Por el QR del paciente o registrada por usted. Las que deriva un médico llegan solas.">
-    <app-organization-identity page-meta size="lg" [tenantId]="tenantId()" [name]="name()" subtitle="Laboratorio e imagenología" />
-  </app-page-header>
-  <app-new-laboratory-order (created)="onCreated($event)" (cancelled)="back()" />
-} @else {
-  <div class="bar">
-    <app-organization-identity size="lg" [tenantId]="tenantId()" [name]="name()" subtitle="Laboratorio e imagenología" />
-    <a app-button variant="primary" [routerLink]="[]" [queryParams]="{ nueva: '1' }" data-testid="lab-orders-new">Nueva orden</a>
-  </div>
-  <app-laboratory-orders />
+<div class="bar">
+  <app-organization-identity size="lg" [tenantId]="tenantId()" [name]="name()" subtitle="Laboratorio e imagenología" />
+  <button app-button variant="secondary" type="button" (clicked)="qrOpen.set(true)" data-testid="lab-orders-new-qr">
+    Orden con QR del paciente
+  </button>
+</div>
+
+@if (qrOpen()) {
+  <app-qr-order-dialog (created)="onCreated($event)" (closed)="qrOpen.set(false)" />
 }
+
+<app-laboratory-orders />

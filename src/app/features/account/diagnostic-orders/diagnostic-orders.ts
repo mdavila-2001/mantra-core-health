@@ -41,12 +41,13 @@ import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Pagination } from '../../../shared/components/molecules/pagination/pagination';
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
-import { rowActionsOf } from './diagnostic-orders.actions';
-import { ReferralResponse } from './referral-response';
+import { PatientInsuranceSettlement } from '../../../shared/components/molecules/patient-insurance-settlement/patient-insurance-settlement';
+import { studyDetailConceptIds, studyDetailSummary } from '../../../core/data-access/diagnostics/study-detail.summary';
+import { OrderPerformerSummary } from './order-performer-summary/order-performer-summary';
 import { OrderQrDialog } from './order-qr-dialog/order-qr-dialog';
 import { OrderReferralLine } from './order-referral-line/order-referral-line';
-import { PatientInsuranceSettlement } from '../../../shared/components/molecules/patient-insurance-settlement/patient-insurance-settlement';
-import { OrderPerformerSummary } from './order-performer-summary/order-performer-summary';
+import { rowActionsOf } from './diagnostic-orders.actions';
+import { ReferralResponse } from './referral-response';
 import {
   ANALYSIS_CATEGORIES,
   tipoDeOrden,
@@ -86,8 +87,6 @@ const PERIODOS: readonly { readonly value: string; readonly label: string; reado
 @Component({
   selector: 'app-diagnostic-orders',
   imports: [
-    OrderQrDialog,
-    OrderReferralLine,
     Alert,
     AppButton,
     Badge,
@@ -97,6 +96,8 @@ const PERIODOS: readonly { readonly value: string; readonly label: string; reado
     DatePipe,
     FilterBar,
     OrderPerformerSummary,
+    OrderQrDialog,
+    OrderReferralLine,
     PageHeader,
     Pagination,
     PatientInsuranceSettlement,
@@ -107,9 +108,9 @@ const PERIODOS: readonly { readonly value: string; readonly label: string; reado
     Tabs,
     ViewStateHost,
   ],
-  providers: [ReferralResponse],
   templateUrl: './diagnostic-orders.html',
   styleUrl: './diagnostic-orders.css',
+  providers: [ReferralResponse],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DiagnosticOrders {
@@ -223,12 +224,7 @@ export class DiagnosticOrders {
     const ids = [
       ...new Set(
         items.flatMap((item) =>
-          [
-            item.codeConceptId,
-            item.categoryConceptId,
-            item.statusConceptId,
-            item.performerSelectionConceptId,
-          ].filter(
+          [item.codeConceptId, item.categoryConceptId, item.statusConceptId, item.performerSelectionConceptId, ...studyDetailConceptIds(item)].filter(
             (id): id is string => id !== undefined,
           ),
         ),
@@ -277,6 +273,7 @@ export class DiagnosticOrders {
           : performerSelectionCodeOf(etiquetas.get(item.performerSelectionConceptId)?.code),
       suggestedSiteName: item.suggestedPracticeSiteName ?? null,
       referral: item.referral ?? null,
+      studyDetail: studyDetailSummary(item, (id) => etiquetas.get(id)?.display),
     };
   }
 
@@ -469,6 +466,7 @@ export class DiagnosticOrders {
   protected readonly liquidacionAbierta = signal<PatientOrderRow | null>(null);
   /** La orden cuyo turno está abierto en el diálogo, o `null`. */
   protected readonly turnoAbierto = signal<PatientOrderRow | null>(null);
+  /** The order whose QR is open in the dialog, or `null`. */
   protected readonly qrAbierto = signal<PatientOrderRow | null>(null);
   protected readonly cancelando = signal(false);
   protected readonly cancelacionFallida = signal(false);

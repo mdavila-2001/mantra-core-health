@@ -4,7 +4,7 @@ import { EMPTY, expand, map, reduce, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { simulatorOnly } from '../simulator-only';
-import type { LabOrderFromQr, LabPatientMatch, NewLabOrder } from './lab-order-intake.types';
+import type { LabOrderFromQr } from './lab-order-origin.types';
 import type {
   LabCategory,
   LabCategoryPage,
@@ -85,11 +85,17 @@ export class LabPortalClient {
     return this.http.get<LabCatalog>(this.url('/diagnostics/lab/catalog'));
   }
 
-  /** Adds catalog análisis: panel, one service per component, suggested prices. */
-  importCatalog(conceptIds: readonly string[]): Observable<LabCatalogImportResult> {
-    return this.http.post<LabCatalogImportResult>(this.url('/diagnostics/lab/catalog/import'), {
-      conceptIds,
-    });
+  /**
+   * Adds catalog análisis: panel, one service per component, suggested prices.
+   * `skipComponentIds` are the components the lab unticked: no service is made for them.
+   */
+  importCatalog(
+    conceptIds: readonly string[],
+    skipComponentIds: readonly string[] = [],
+  ): Observable<LabCatalogImportResult> {
+    // Sent only when something is unticked: an API without the field keeps accepting the call.
+    const body = skipComponentIds.length > 0 ? { conceptIds, skipComponentIds } : { conceptIds };
+    return this.http.post<LabCatalogImportResult>(this.url('/diagnostics/lab/catalog/import'), body);
   }
 
   /* ---- categorías ------------------------------------------------------- */
@@ -144,16 +150,6 @@ export class LabPortalClient {
         nextCursor: page.nextCursor,
       })),
     );
-  }
-
-  /** Finds the patient by national id (in the body: it is PHI). 404 when nobody holds it. */
-  lookupPatient(nationalId: string): Observable<LabPatientMatch> {
-    return this.http.post<LabPatientMatch>(this.url('/diagnostics/lab/patients/lookup'), { nationalId });
-  }
-
-  /** The center registers an order that arrives on paper or at the counter. */
-  createOrder(order: NewLabOrder): Observable<LabOrder> {
-    return this.http.post<LabOrder>(this.url('/diagnostics/lab/orders'), order);
   }
 
   /** Simulator-only: creates the order from the QR the patient sent. Idempotent per code. */

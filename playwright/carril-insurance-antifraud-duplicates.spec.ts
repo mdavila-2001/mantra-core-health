@@ -228,8 +228,19 @@ async function elegir(zona: Locator, campo: RegExp, opcion: string): Promise<voi
  * como texto visualmente oculto).
  */
 async function pedirEstudio(modal: Locator, estudio: string): Promise<void> {
+  // Lo primero que pregunta el formulario es el tipo de orden; «otro estudio» ofrece todo el catálogo.
+  await pickFromDropdown(
+    modal,
+    modal.getByRole('combobox', { name: /^Tipo de orden\b/ }),
+    (lista) => lista.getByRole('option', { name: /^Otro estudio/ }),
+  );
   await elegir(modal, /^Estudio\b/, estudio);
   await expect(modal.getByText(/^\s*Tipo: /)).toBeVisible();
+  // Un estudio de laboratorio pide la muestra (obligatoria desde 2026-11-06).
+  const muestra = modal.getByRole('combobox', { name: /^Muestra\b/ });
+  if ((await muestra.count()) > 0) {
+    await pickFromDropdown(modal, muestra, (lista) => lista.getByRole('option').first());
+  }
   await modal.getByRole('button', { name: 'Pedir estudio' }).click();
 }
 
@@ -414,10 +425,7 @@ test.describe('el badge de estudio duplicado en el detalle del reclamo (maqueta)
     await irA(page, '/administration/insurance-claims');
     await estable(page);
 
-    await page
-      .getByTestId('claim-link')
-      .filter({ hasText: 'CLM-2026-0142' })
-      .click();
+    await page.getByTestId('claim-link').filter({ hasText: 'CLM-2026-0142' }).click();
     await page.waitForURL(/\/administration\/insurance-claims\/[^/]+$/, { timeout: 60_000 });
     await estable(page);
 
@@ -468,9 +476,7 @@ test.describe('auditoría del reclamo: globo, cláusula y canales (maqueta)', ()
     expect(await globo.evaluate((el) => el.parentElement?.tagName ?? '')).toBe('BODY');
   });
 
-  test('una solicitud rechazada cita textualmente la cláusula de la póliza', async ({
-    page,
-  }) => {
+  test('una solicitud rechazada cita textualmente la cláusula de la póliza', async ({ page }) => {
     await entrar(page, ADMIN_MOCK);
     await abrirSolicitud(page, 'CLM-2026-0163');
 

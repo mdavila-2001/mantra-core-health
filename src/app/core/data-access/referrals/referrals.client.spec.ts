@@ -4,7 +4,8 @@ import { TestBed } from '@angular/core/testing';
 
 import { referralErrorDetail } from './referrals.errors';
 import { ReferralsClient } from './referrals.client';
-import { referralIssues, type Referral, type ReferralCreated } from './referrals.types';
+import { type Referral, type ReferralCreated } from './referrals.types';
+import { referralIssues } from './referral-issues';
 
 /** Una fila como la manda la API: opcionales en `null`, fechas en texto. */
 const ROW = {

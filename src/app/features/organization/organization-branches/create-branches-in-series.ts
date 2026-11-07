@@ -96,6 +96,7 @@ function newBranchFrom(draft: BranchDraft, code: string): NewBranch {
       : { latitude: draft.coordinates.latitude, longitude: draft.coordinates.longitude }),
     ...(draft.description === '' ? {} : { description: draft.description }),
     ...(draft.locationUrl === '' ? {} : { locationUrl: draft.locationUrl }),
+    ...(draft.category === undefined ? {} : { category: draft.category }),
   };
 }
 
