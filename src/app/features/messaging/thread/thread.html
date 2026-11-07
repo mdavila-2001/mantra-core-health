@@ -197,7 +197,9 @@
               [class.is-cierra]="linea.cierraBloque"
               [attr.data-propio]="linea.propio"
               [attr.data-cuantas]="fotosDeLaGrilla(linea.mensajes).length"
+              [class.is-seleccionado]="seleccion.has(linea.mensajes)"
             >
+              <ng-container *ngTemplateOutlet="selector; context: { $implicit: linea.mensajes }" />
               @if (esGrupo() && linea.abreBloque && !linea.propio) {
                 <p class="hilo__autor" [attr.data-tono]="linea.tono">{{ linea.autor }}</p>
               }
@@ -256,7 +258,9 @@
               (pointerup)="cancelarPulsacion()"
               (pointercancel)="cancelarPulsacion()"
               (pointerleave)="cancelarPulsacion()"
+              [class.is-seleccionado]="seleccion.has([linea.mensaje])"
             >
+              <ng-container *ngTemplateOutlet="selector; context: { $implicit: [linea.mensaje] }" />
               @if (esGrupo() && linea.abreBloque && !linea.propio) {
                 <p class="hilo__autor" [attr.data-tono]="linea.tono">{{ linea.autor }}</p>
               }
@@ -556,6 +560,9 @@
                           Reenviar
                         </button>
                       </li>
+                      <li role="none">
+                        <button role="menuitem" type="button" data-testid="hilo-seleccionar" (click)="seleccionar(linea.mensaje)">Seleccionar</button>
+                      </li>
                     }
                     <!-- Qué pasó con lo que mandaste: cuándo salió, llegó y se leyó. -->
                     @if (linea.propio) {
@@ -608,38 +615,23 @@
     <p>Bloqueó a {{ conQuien() }}. No puede enviarle mensajes ni recibir los suyos.</p>
     <button type="button" data-testid="hilo-desbloquear-aviso" (click)="desbloquear()">Desbloquear</button>
   </div>
+} @else if (seleccion.activa()) {
+  <app-selection-bar [cantidad]="seleccion.cantidad()" (reenviar)="reenviarSeleccion()" (cancelar)="seleccion.clear()" />
 } @else {
   <app-composer [sugerencias]="sugerencias()" (enviado)="alEnviar()" />
 }
 
-<!-- Elegir a quién reenviar: la misma lista de la bandeja, sin ésta.
-
-     En `app-content-dialog` y no en un `div role="dialog"` propio: aquél
-     declaraba `aria-modal` pero no lo cumplía —el `Tab` salía a la bandeja y
-     el hilo de atrás seguía tocable—. El `<dialog>` nativo con `showModal()`
-     trae la trampa de foco, el fondo inerte y `Escape`; el foco vuelve al
-     botón «Opciones del mensaje» (ver `reenviar`). -->
-@if (reenviando()) {
-  <app-content-dialog
-    #forwardDialog
-    heading="Reenviar a…"
-    size="sm"
-    closeLabel="Cancelar"
-    data-testid="thread-forward-dialog"
-    (closed)="cancelarReenvio()"
-  >
-    <ul class="hilo__reenvio-lista">
-      @for (destino of destinosDeReenvio(); track destino.id) {
-        <li>
-          <button type="button" data-testid="hilo-reenviar-destino" (click)="reenviarA(destino.id)">
-            <app-avatar [src]="avatarDeConversacion(destino)" [name]="nombreDeConversacion(destino)" size="md" />
-            <span>{{ nombreDeConversacion(destino) }}</span>
-          </button>
-        </li>
-      }
-    </ul>
-  </app-content-dialog>
+<!-- Elegir a quiénes reenviar: varios chats de la bandeja, sin éste. -->
+@if (reenviando(); as mensajes) {
+  <app-forward-dialog [destinos]="destinosDeReenvio()" [cantidad]="mensajes.length" (enviar)="reenviarA($event)" (cerrado)="cancelarReenvio()" />
 }
+
+<!-- The selection overlay of a bubble or a photo grid (see `thread-layers.css`). -->
+<ng-template #selector let-mensajes>
+  @if (seleccion.activa() && mensajes[0].estado === 'enviado') {
+    <button class="hilo__seleccion" type="button" data-testid="hilo-seleccionar-mensaje" aria-label="Seleccionar para reenviar" [attr.aria-pressed]="seleccion.has(mensajes)" (click)="seleccion.toggle(mensajes)"></button>
+  }
+</ng-template>
 
 <!-- Info. del mensaje: cuándo salió, cuándo llegó y cuándo se leyó. -->
 @if (infoDe(); as info) {
