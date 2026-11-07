@@ -7,9 +7,12 @@ import { environment } from '../../../environments/environment';
 import { API_BASE_URL } from '../data-access/api';
 import { SessionStore } from '../auth/session.store';
 import type { DirectMessage } from '../data-access/community/community.types';
+import { sinNulos, type ConNulos } from '../data-access/wire';
 
 /** Empujado al enviar un mensaje (`conversation:message`). */
 export type ChatMessageEvent = DirectMessage;
+
+type CamposSinFecha = Omit<DirectMessage, 'sentAt' | 'deletedAt'>;
 
 /**
  * El mensaje **como viaja por el cable**: las fechas son texto ISO.
@@ -23,7 +26,7 @@ export type ChatMessageEvent = DirectMessage;
  * mensaje que entraba en vivo tiraba `sentAt.getTime is not a function` en cada
  * ciclo de detección de cambios — el hilo quedaba inutilizable hasta recargar.
  */
-interface MensajeDelCable extends Omit<DirectMessage, 'sentAt' | 'deletedAt'> {
+interface MensajeDelCable extends ConNulos<CamposSinFecha> {
   readonly sentAt?: string | Date | null;
   readonly deletedAt?: string | Date | null;
 }
@@ -37,12 +40,16 @@ function aFecha(valor: string | Date | null | undefined): Date | undefined {
   return Number.isNaN(fecha.getTime()) ? undefined : fecha;
 }
 
-/** El mensaje del cable, con sus fechas ya convertidas. */
-function aMensaje(payload: MensajeDelCable): ChatMessageEvent {
+/**
+ * El mensaje del cable con la forma de la vista: fechas convertidas y sin los
+ * `null` del transporte, igual que la lectura HTTP. Un `attachmentFileId: null`
+ * se tomaría por un adjunto y el hilo pediría `/attachments/null/content`.
+ */
+function aMensaje({ sentAt, deletedAt, ...resto }: MensajeDelCable): ChatMessageEvent {
   return {
-    ...payload,
-    sentAt: aFecha(payload.sentAt),
-    deletedAt: aFecha(payload.deletedAt),
+    ...sinNulos<CamposSinFecha>(resto),
+    sentAt: aFecha(sentAt),
+    deletedAt: aFecha(deletedAt),
   };
 }
 
