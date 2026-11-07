@@ -29,23 +29,24 @@ test.describe('Catalog bulk load (admin, simulator)', () => {
     await page.getByTestId('login-password').fill('S3cret-passw0rd');
     await page.getByTestId('login-submit').click();
     await page.waitForURL((url) => !url.pathname.startsWith('/auth'), { timeout: 30_000 });
-    const bulkCalls: { dryRun: boolean; status: number; outcomes: string[] }[] = [];
-    page.on('response', async (res) => {
-      if (!res.url().endsWith('/categories/bulk')) return;
-      const body = (await res.json()) as { dryRun: boolean; results: { outcome: string }[] };
-      bulkCalls.push({ dryRun: body.dryRun, status: res.status(), outcomes: body.results.map((r) => r.outcome) });
-    });
+    // The simulator answers inside the browser: its request log is `window.__mockRequests`.
+    const bulkCalls = async (): Promise<{ method: string; status: number; body: { mode: string; dryRun: boolean; rows: unknown[] } }[]> =>
+      page.evaluate(() =>
+        ((window as unknown as { __mockRequests?: { method: string; url: string; status: number; body: never }[] }).__mockRequests ?? []).filter(
+          (r) => r.url.endsWith('/categories/bulk'),
+        ),
+      );
 
     await openAndLoad(page);
     await page.getByTestId('cb-simulate').click();
     await expect(page.getByTestId('cb-count-CREATED')).toContainText('2');
     await expect(page.getByTestId('cb-count-REJECTED')).toContainText('1');
     await expect(page.getByTestId('cb-results')).toContainText('repetida dentro del archivo');
-    expect(bulkCalls.map((c) => c.dryRun)).toEqual([true]);
+    expect((await bulkCalls()).map((c) => [c.method, c.status, c.body.mode, c.body.dryRun, c.body.rows.length])).toEqual([['POST', 200, 'UPSERT', true, 3]]);
 
     await page.getByTestId('cb-confirm').click();
     await expect(page.getByTestId('cb-snapshot')).toContainText('Vitaminas Spec');
-    expect(bulkCalls[1]).toEqual({ dryRun: false, status: 200, outcomes: ['CREATED', 'CREATED', 'REJECTED'] });
+    expect((await bulkCalls()).map((c) => c.body.dryRun)).toEqual([true, false]);
 
     // Full reload: the same file now reports the persisted rows as unchanged.
     await page.reload();
