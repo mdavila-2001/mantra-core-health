@@ -48,12 +48,8 @@ import { InformedConsentBadge } from '../informed-consent/informed-consent-badge
 import { InformedConsentDialog } from '../informed-consent/informed-consent-dialog';
 import { DuplicateStudyWarningDialog } from './duplicate-study-warning-dialog/duplicate-study-warning-dialog';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
-import {
-  DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS,
-  PRIORITY_LABELS,
-  conceptosDe,
-  mensajeDeAlta,
-} from './analysis-order-block.helpers';
+import { DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS, PRIORITY_LABELS, conceptosDe, mensajeDeAlta } from './analysis-order-block.helpers';
+import { StudyReferral } from './study-referral/study-referral';
 import { createPerformerOrderState } from './performer-selector/performer-order-state';
 import { PerformerSelector } from './performer-selector/performer-selector';
 import { CollectionPointSelect } from './collection-point-select/collection-point-select';
@@ -140,6 +136,7 @@ const TOPE = 25;
 @Component({
   selector: 'app-analysis-order-block',
   imports: [
+    StudyReferral,
     FormResponsePicker,
     Alert,
     AppButton,
@@ -332,7 +329,7 @@ export class AnalysisOrderBlock {
    */
   protected readonly estudios = computed<readonly EstudioEnFicha[]>(() => {
     const state = this.circuito();
-    return state.status === 'ready' ? filasDelCircuito(state.data, (id) => this.etiquetas().get(id)?.display, this.diagnosticos()) : [];
+    return state.status === 'ready' ? filasDelCircuito(state.data, (id) => this.etiquetas().get(id)?.display, this.diagnosticos(), (id) => this.etiquetas().get(id)?.code) : [];
   });
 
   /**

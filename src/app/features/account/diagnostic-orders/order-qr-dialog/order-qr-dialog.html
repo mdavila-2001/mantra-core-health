@@ -1,0 +1,45 @@
+<app-content-dialog
+  heading="QR para el laboratorio"
+  [description]="studyLabel()"
+  data-testid="mis-ordenes-qr-dialog"
+  (dismissAttempt)="closed.emit()"
+  (closed)="closed.emit()"
+>
+  <div class="qr">
+    <p class="qr__ayuda">
+      Muéstrelo en el laboratorio o centro de imagenología, o mándeselo por el chat: lo lee y su
+      orden queda en ese centro.
+    </p>
+    @if (qrDisponible()) {
+      <div class="qr__marco">
+        <p class="qr__estudio">{{ studyLabel() }}</p>
+      <canvas
+        #lienzo
+        class="qr__lienzo"
+        role="img"
+        aria-label="Código QR de la orden"
+        [width]="lado"
+        [height]="lado"
+        data-testid="mis-ordenes-qr-lienzo"
+      ></canvas>
+        <p class="qr__marca">AloVida · Orden de laboratorio e imagenología</p>
+      </div>
+    } @else {
+      <p class="qr__nota" data-testid="mis-ordenes-qr-nodisponible">
+        No pudimos dibujar el QR. Use el código de abajo.
+      </p>
+    }
+    <code class="qr__codigo" data-testid="mis-ordenes-qr-codigo">{{ code() }}</code>
+    <div class="qr__acciones">
+      <button app-button type="button" variant="primary" (clicked)="copyImage()" data-testid="mis-ordenes-qr-copiar-imagen">
+        Copiar imagen
+      </button>
+      <button app-button type="button" variant="outline" (clicked)="download()" data-testid="mis-ordenes-qr-descargar">
+        Descargar
+      </button>
+      <button app-button type="button" variant="outline" (clicked)="copyCode()" data-testid="mis-ordenes-qr-copiar-codigo">
+        Copiar código
+      </button>
+    </div>
+  </div>
+</app-content-dialog>

@@ -1,0 +1,23 @@
+<span class="identidad" [class.identidad--compacta]="compact()">
+  <span class="identidad__baldosa" [style.width]="side()" [style.height]="side()" aria-hidden="true">
+    @if (logo(); as url) {
+      @if (!failed()) {
+        <img class="identidad__logo" [src]="url" alt="" (error)="onError()" />
+      } @else {
+        <span class="identidad__iniciales">{{ initials() }}</span>
+      }
+    } @else {
+      <span class="identidad__iniciales">{{ initials() }}</span>
+    }
+  </span>
+  @if (!compact()) {
+    <span class="identidad__texto">
+      <span class="identidad__nombre">{{ name() }}</span>
+      @if (subtitle(); as sub) {
+        <span class="identidad__sub">{{ sub }}</span>
+      }
+    </span>
+  } @else {
+    <span class="sr-only">{{ name() }}</span>
+  }
+</span>

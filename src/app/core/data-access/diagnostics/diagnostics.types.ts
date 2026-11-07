@@ -1,3 +1,4 @@
+import type { OrderReferral } from './order-referral.types';
 import type { CollectionPointRef } from './sample-collection.types';
 import type { StudyDetailFields, StudyDetailRead } from './study-detail.types';
 import type { ServiceRequestPerformerInput } from './service-request-performer.types';
@@ -78,6 +79,8 @@ export interface DiagnosticOrder extends StudyDetailRead {
    * diagnosis behind it.
    */
   readonly reasonConditionId?: string;
+  /** Doctor's referral to a center (simulator-only). */
+  readonly referral?: OrderReferral;
 }
 
 /**

@@ -1,3 +1,4 @@
+import { ImageToOrder } from './image-to-order';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
@@ -58,6 +59,9 @@ export class ImageViewer implements OnDestroy {
   readonly imagenes = input.required<readonly ImagenDelVisor[]>();
   /** Cuál se está mirando. `model` para que el hilo sepa a cuál volver. */
   readonly indice = model.required<number>();
+
+  /** «Usar para una orden»: only offered to laboratory/imaging accounts. */
+  protected readonly toOrder = inject(ImageToOrder);
 
   readonly cerrado = output<void>();
   readonly responder = output<string>();
@@ -192,5 +196,9 @@ export class ImageViewer implements OnDestroy {
 
   protected alReenviar(imagen: ImagenDelVisor): void {
     this.reenviar.emit(imagen.clave);
+  }
+
+  protected alUsarParaOrden(imagen: ImagenDelVisor): void {
+    void this.toOrder.use(imagen.url);
   }
 }

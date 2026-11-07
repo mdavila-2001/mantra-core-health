@@ -1,0 +1,18 @@
+@if (referral(); as r) {
+  <span class="derivacion" [attr.data-status]="r.status" data-testid="mis-ordenes-derivacion">
+    <app-organization-identity [tenantId]="r.performerTenantId ?? null" [name]="r.performerName" size="sm" [compact]="true" />
+    <span>
+      @switch (r.status) {
+        @case ('PENDING') {
+          {{ r.requestedByName }} la deriva a {{ r.performerName }}. Espera su aceptación.
+        }
+        @case ('ACCEPTED') {
+          Derivada a {{ r.performerName }}.
+        }
+        @default {
+          Rechazó la derivación a {{ r.performerName }}.
+        }
+      }
+    </span>
+  </span>
+}

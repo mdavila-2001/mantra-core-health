@@ -1,0 +1,12 @@
+<div class="bar">
+  <app-organization-identity size="lg" [tenantId]="tenantId()" [name]="name()" subtitle="Laboratorio e imagenología" />
+  <button app-button variant="secondary" type="button" (clicked)="qrOpen.set(true)" data-testid="lab-orders-new-qr">
+    Orden con QR del paciente
+  </button>
+</div>
+
+@if (qrOpen()) {
+  <app-qr-order-dialog (created)="onCreated($event)" (closed)="qrOpen.set(false)" />
+}
+
+<app-laboratory-orders />

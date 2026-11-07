@@ -1,0 +1,59 @@
+<section class="qr" aria-labelledby="qr-title">
+  <h2 id="qr-title" class="qr__title">El paciente le mandó un QR</h2>
+  <p class="qr__help">
+    Léalo con la cámara, suba o suelte la imagen, péguela con Ctrl+V o, si lo recibió por la mensajería,
+    ábrala allí y use «Usar para una orden».
+  </p>
+
+  <!-- Three ways to hand over the QR; dropping an image on the zone also works. -->
+  <div
+    class="qr__options"
+    [class.qr__options--drop]="dragging()"
+    data-testid="lab-new-order-opciones"
+    (dragover)="onDragOver($event)"
+    (dragleave)="dragging.set(false)"
+    (drop)="onDrop($event)"
+  >
+    <button type="button" class="option" [disabled]="busy()" (click)="toggleCamera()" data-testid="lab-new-order-camera">
+      <span class="option__icon"><app-nav-icon name="camera" /></span>
+      <span class="option__title">{{ cameraOn() ? 'Apagar la cámara' : 'Leer con la cámara' }}</span>
+      <span class="option__help">Apunte al QR del paciente</span>
+    </button>
+    <button type="button" class="option" [disabled]="busy()" (click)="file.click()" data-testid="lab-new-order-upload">
+      <span class="option__icon"><app-nav-icon name="qr" /></span>
+      <span class="option__title">Subir una imagen</span>
+      <span class="option__help">O suéltela aquí</span>
+    </button>
+    <button type="button" class="option" [disabled]="busy()" (click)="pasteFromClipboard()" data-testid="lab-new-order-paste">
+      <span class="option__icon"><app-nav-icon name="clipboard" /></span>
+      <span class="option__title">Pegar del portapapeles</span>
+      <span class="option__help">Imagen o código, con Ctrl+V</span>
+    </button>
+  </div>
+  <input #file type="file" accept="image/*" class="sr-only" tabindex="-1" aria-hidden="true" data-testid="lab-new-order-file" (change)="onFileChosen($event)" />
+
+  @if (cameraOn()) {
+    <video #video class="qr__video" playsinline muted aria-label="Cámara apuntando al QR del paciente" data-testid="lab-new-order-video"></video>
+  }
+
+  <app-form-field label="O escriba el código" hint="Empieza con «ALOVIDA-ORDEN:». Viene debajo del QR.">
+    <app-input placeholder="ALOVIDA-ORDEN:v1:…" ariaLabel="Código de la orden" [(value)]="manualCode" testId="lab-new-order-code" />
+  </app-form-field>
+  <div>
+    <button
+      app-button
+      type="button"
+      variant="secondary"
+      [disabled]="busy() || manualCode().trim() === ''"
+      [isLoading]="busy()"
+      (clicked)="useManualCode()"
+      data-testid="lab-new-order-code-submit"
+    >
+      Crear la orden con este código
+    </button>
+  </div>
+
+  @if (error(); as message) {
+    <app-alert tone="error" dismissible data-testid="lab-new-order-error" (dismissed)="error.set(null)">{{ message }}</app-alert>
+  }
+</section>

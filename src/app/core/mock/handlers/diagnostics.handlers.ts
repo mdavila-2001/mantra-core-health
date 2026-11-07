@@ -36,6 +36,7 @@ import type { ServiceRequestPerformerInput } from '../../data-access/diagnostics
 import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, patientById, professionalById } from '../fixtures/people';
 import { conflict, forbidden, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENANT_TYPES, type MockUser } from '../mock-session';
+import { referralFieldsOf, type OrderIntakeFields } from './lab-referral.store';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 import { citaDeLaOrden } from '../fixtures/centros';
 import { decodeInboxCursor, encodeInboxCursor } from './diagnostics-inbox-cursor';
@@ -292,7 +293,7 @@ export interface LabInboxOrderRecord {
 
 const INBOX_STUDIES = ['STUDY-HEMOGRAMA', 'STUDY-GLUCOSA', 'STUDY-PERFIL-LIPIDICO', 'STUDY-TSH', 'STUDY-ORINA'] as const;
 
-export const labInboxOrders = new Coleccion<LabInboxOrderRecord>(
+export const labInboxOrders = new Coleccion<LabInboxOrderRecord & OrderIntakeFields>(
   PATIENTS.slice(0, 8).map((p, i) => ({
     id: uuid(`inbox-order-${p.id}`),
     patientProfileId: p.id,
@@ -1165,7 +1166,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       patientProfileId: id,
       orders: orderList
         .filtrar((o) => o.patientProfileId === id)
-        .map(({ patientProfileId: _p, reasonText: _r, ...o }) => ({ ...o, patientProfileId: id, ...ordenDeAnalisis(o), suggestedCareSpace: collectionPointRef((o as { suggestedCareSpaceId?: string }).suggestedCareSpaceId) })),
+        .map(({ patientProfileId: _p, reasonText: _r, ...o }) => ({ ...o, patientProfileId: id, ...ordenDeAnalisis(o), ...referralFieldsOf(o.id), suggestedCareSpace: collectionPointRef((o as { suggestedCareSpaceId?: string }).suggestedCareSpaceId) })),
       reports: informes.filtrar((r) => r.patientProfileId === id).map((r) => ({ id: r.id, patientProfileId: r.patientProfileId, serviceRequestId: r.serviceRequestId, codeConceptId: r.codeConceptId, categoryConceptId: r.categoryConceptId, lifecycleStatusConceptId: r.lifecycleStatusConceptId, currentVersionId: r.currentVersionId, currentReleasedVersionId: r.released ? r.currentVersionId : null, resultReleaseStatusConceptId: r.released ? STATUS['ST-PUBLISHED']! : STATUS['ST-PENDING']!, createdAt: r.createdAt })),
       limit,
       truncated: [],
@@ -1568,7 +1569,7 @@ export function registrarDiagnostico(router: MockRouter): void {
         reportId: informe !== undefined && esVisibleParaPaciente(informe) ? informe.id : undefined,
         // El turno que el paciente reservó en un centro para esta orden.
         appointment: citaDeLaOrden(o.id),
-        ...performerFieldsOfOrder(o),
+        ...performerFieldsOfOrder(o), ...referralFieldsOf(o.id),
       };
     });
     return { patientProfileId: id, items, limit: 50, truncated: false };
@@ -1740,7 +1741,6 @@ export function registrarDiagnostico(router: MockRouter): void {
   });
 
   void PRIORITY;
-  void PATIENTS;
 }
 
 /* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */

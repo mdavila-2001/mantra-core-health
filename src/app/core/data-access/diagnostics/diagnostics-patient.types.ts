@@ -1,5 +1,6 @@
 import type { OrderAppointment } from '../diagnostic-units/center-schedule.types';
 import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
+import type { OrderReferral } from './order-referral.types';
 import type { AnalysisCategory } from './analysis-category.types';
 import type { ServiceRequestPerformerFields } from './service-request-performer.types';
 import type { StudyDetailRead } from './study-detail.types';
@@ -99,6 +100,8 @@ export interface PatientOrder extends PatientSettlementFields, ServiceRequestPer
    * backend (P-CENTRO-HORARIOS).
    */
   readonly appointment?: OrderAppointment | null;
+  /** Doctor's referral to a center (simulator-only); absent = not referred. */
+  readonly referral?: OrderReferral;
 }
 
 /** Página de órdenes propias. */

@@ -1,0 +1,55 @@
+:host {
+  display: inline-block;
+  min-inline-size: 0;
+}
+
+.identidad {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+/* Always white: logos are designed for paper and would lose their ink on the dark theme. */
+.identidad__baldosa {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--border-default, var(--border-subtle));
+  border-radius: var(--r-ctrl);
+  background: var(--c-ivory-50);
+}
+
+.identidad__logo {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  padding: var(--sp-1);
+}
+
+.identidad__iniciales {
+  font-weight: 700;
+  font-size: var(--fs-caption);
+  letter-spacing: 0.04em;
+  /* Fixed ink: the tile is white in both themes. */
+  color: var(--c-sage-900);
+}
+
+.identidad__texto {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.identidad__nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.identidad__sub {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

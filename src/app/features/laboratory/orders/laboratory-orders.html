@@ -160,7 +160,7 @@
 
 <ng-template #patientCell let-order>
   <strong class="orders__patient">{{ order.patientName }}</strong>
-  <span class="orders__secondary">Pidió {{ order.requesterName }}</span>
+  <app-order-origin [order]="order" />
 </ng-template>
 
 <ng-template #studyCell let-order>{{ order.studyName }}</ng-template>

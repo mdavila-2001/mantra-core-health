@@ -17,6 +17,7 @@ export function filasDelCircuito(
   circuito: PatientDiagnostics,
   labelOf: (conceptId: string) => string | undefined,
   diagnosticos: readonly DiagnosisOption[],
+  codeOf: (conceptId: string) => string | undefined = () => undefined,
 ): readonly EstudioEnFicha[] {
   const conResultado = new Set(
     circuito.reports
@@ -29,7 +30,7 @@ export function filasDelCircuito(
   // el informe previo del paciente casi siempre está en esta misma lectura.
   const informesPorId = new Map(circuito.reports.map((informe) => [informe.id, informe]));
 
-  return circuito.orders.map((orden) => aFila(orden, conResultado, informesPorId, labelOf, diagnosticos));
+  return circuito.orders.map((orden) => aFila(orden, conResultado, informesPorId, labelOf, diagnosticos, codeOf));
 }
 
 /** The reports hanging from no order of this history (see `AnalysisOrderBlock.informesSueltos`). */
@@ -59,6 +60,7 @@ function aFila(
   informesPorId: ReadonlyMap<string, DiagnosticReport>,
   labelOf: (conceptId: string) => string | undefined,
   diagnosticos: readonly DiagnosisOption[],
+  codeOf: (conceptId: string) => string | undefined,
 ): EstudioEnFicha {
   const duplicado = duplicadoDe(orden);
   const etiquetaDe = (id: string | undefined): string => (id === undefined ? '—' : (labelOf(id) ?? '—'));
@@ -78,6 +80,9 @@ function aFila(
     justificacion: orden.duplicateOverrideReason ?? null,
     collectionPoint: orden.suggestedCareSpace ? `${orden.suggestedCareSpace.code} · ${orden.suggestedCareSpace.name}` : null,
     detalle: studyDetailSummary(orden, labelOf),
+    category: orden.category,
+    statusCode: codeOf(orden.statusConceptId) ?? '',
+    referral: orden.referral ?? null,
     ...(orden.encounterId === undefined ? {} : { encounterId: orden.encounterId }),
     ...diagnosticoDe(orden.reasonConditionId, diagnosticos),
   };

@@ -1,5 +1,6 @@
 import type { OrderAppointment } from '../../../core/data-access/diagnostic-units/center-schedule.types';
 import type { PerformerSelectionCode } from '../../../core/data-access/diagnostics/service-request-performer.types';
+import type { OrderReferral } from '../../../core/data-access/diagnostics/order-referral.types';
 import type { PatientSettlementFields } from '../../../core/data-access/insurance/patient-insurance-settlement.types';
 
 /**
@@ -126,4 +127,6 @@ export interface PatientOrderRow extends PatientSettlementFields {
   readonly suggestedSiteName: string | null;
   /** La muestra o la parte del cuerpo que pidió el médico, en una línea; `null` si la orden no la trae. */
   readonly studyDetail: string | null;
+  /** The doctor's referral to a center, or `null` when the order was not referred. */
+  readonly referral: OrderReferral | null;
 }

@@ -339,16 +339,10 @@
               } @else {
                 <span class="estudios__resultado">Sin resultado todavía</span>
               }
-              <button
-                app-button
-                variant="ghost"
-                size="sm"
-                type="button"
-                data-testid="study-consent"
-                (clicked)="consent.target.set(estudio)"
-              >
+              <button app-button variant="ghost" size="sm" type="button" data-testid="study-consent" (clicked)="consent.target.set(estudio)">
                 Consentimiento informado
               </button>
+              <app-study-referral [study]="estudio" />
             </div>
           </li>
         }

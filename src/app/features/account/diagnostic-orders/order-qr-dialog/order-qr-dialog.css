@@ -1,0 +1,59 @@
+.qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  text-align: center;
+}
+
+.qr__ayuda,
+.qr__nota {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* Black on white always: a camera reads it, not the interface theme. */
+.qr__lienzo {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--r-ctrl);
+}
+
+.qr__codigo {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.qr__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-3);
+}
+
+/* The QR sheet: a white card with its frame, to show or download. */
+.qr__marco {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-5, var(--sp-4));
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-card);
+  background: var(--c-ivory-50);
+  box-shadow: var(--shadow-sm);
+}
+
+.qr__estudio {
+  margin: 0;
+  font-weight: 700;
+  color: var(--c-sage-900);
+}
+
+.qr__marca {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--c-sage-800);
+}

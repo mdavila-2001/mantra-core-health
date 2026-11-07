@@ -1,3 +1,4 @@
+import type { OrderReferral } from '../../../../core/data-access/diagnostics/order-referral.types';
 import type {
   DiagnosticOrder,
   PatientDiagnostics,
@@ -57,6 +58,12 @@ export interface EstudioEnFicha {
   readonly paraDiagnostico?: string;
   /** La muestra o la parte del cuerpo, en una línea; `null` en las órdenes que no la traen. */
   readonly detalle: string | null;
+  /** Only laboratory and imaging orders can be referred to a center. */
+  readonly category?: DiagnosticOrder['category'];
+  /** Code of the order status (not its label): tells whether the order is still open. */
+  readonly statusCode: string;
+  /** The referral to a center and what the patient decided; `null` = never referred. */
+  readonly referral: OrderReferral | null;
 }
 
 /**

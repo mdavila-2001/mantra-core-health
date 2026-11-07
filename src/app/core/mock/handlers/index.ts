@@ -47,6 +47,8 @@ import { registerAdt } from './adt.handlers';
 import { registrarLaboratorioFarmaceutico } from './pharma-lab.handlers';
 import { ordenDeRespuesta, registrarOrdenesDeLaboratorio } from './lab-orders.handlers';
 import { registrarOrdenesDelCentro } from './lab-order-intake.handlers';
+import { registerLabOrderFromQr } from './lab-order-qr.handlers';
+import { registrarDerivaciones } from './lab-referral.handlers';
 import {
   destinoDeOrden,
   laboratorioDe,
@@ -188,6 +190,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarDiagnostico(router);
   const dependenciasDeOrdenes = { laboratorioDe, destinoDeOrden, archivos: resultadosDeLaboratorio };
   registrarOrdenesDeLaboratorio(router, dependenciasDeOrdenes);
+  registerLabOrderFromQr(router, dependenciasDeOrdenes);
   registrarOrdenesDelCentro(router, {
     laboratorioDe,
     responder: (orderId) => ordenDeRespuesta(orderId, dependenciasDeOrdenes),
@@ -198,6 +201,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarPortalDeLaboratorio(router);
   registerLabPortalApiParity(router);
   registerLabCatalog(router);
+  registrarDerivaciones(router);
   registrarProcedimientos(router);
   // F4 · quirófanos: salas, bloques, utilización y el día del caso.
   registerOperatingRooms(router);
