@@ -56,6 +56,21 @@ describe('aplicarFiltro', () => {
     expect(ids(r)).toEqual(['a3', 'e3', 'dx3']);
   });
 
+  it('compara el día clínico de La Paz con el día elegido, sea cual sea la zona del navegador', () => {
+    // 20:30 in La Paz on the 10th is 00:30 UTC on the 11th; the date picker builds the day at local noon.
+    const noche: NodoDeRed = { id: 'noche', tipo: 'atencion', titulo: 'Noche', cuando: new Date('2026-03-11T00:30:00Z') };
+    const manana: NodoDeRed = { id: 'manana', tipo: 'atencion', titulo: 'Mañana', cuando: new Date('2026-03-11T14:00:00Z') };
+    const dia = (n: number) => new Date(2026, 2, n, 12);
+    expect(ids(aplicarFiltro([noche, manana], con({ hasta: dia(10) })))).toEqual(['noche']);
+    expect(ids(aplicarFiltro([noche, manana], con({ desde: dia(11) })))).toEqual(['manana']);
+    expect(ids(aplicarFiltro([noche, manana], con({ desde: dia(10), hasta: dia(10) })))).toEqual(['noche']);
+  });
+
+  it('un nodo con fecha inválida queda fuera con un rango puesto', () => {
+    const rota: NodoDeRed = { id: 'x', tipo: 'nota', titulo: 'Nota', cuando: new Date('no es fecha') };
+    expect(aplicarFiltro([rota], con({ desde: new Date(2000, 0, 1) }))).toHaveLength(0);
+  });
+
   it('sólo «desde» o sólo «hasta»', () => {
     expect(ids(aplicarFiltro(NODOS_DEMO, con({ desde: new Date(2026, 9, 1) })))).toEqual(['d2']);
     expect(aplicarFiltro(NODOS_DEMO, con({ hasta: new Date(2026, 7, 4) })).map((n) => n.id)).toEqual([

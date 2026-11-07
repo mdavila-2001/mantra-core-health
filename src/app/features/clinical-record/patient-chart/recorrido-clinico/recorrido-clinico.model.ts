@@ -1,20 +1,20 @@
 /* ============================================================================
-    Lo que comparten las lecturas nuevas del expediente: los tipos de registro
-    (el filtro y la tabla unificada), el intervalo entre dos fechas y el camino
-    de un nodo.
+    What the chart's new readings share: the record types (the filter and the
+    unified table), the interval between two dates and a node's path.
 
-    La red por episodios vive en `red-clinica.model.ts` (agrupación) y
-    `red-clinica.geometria.ts` (dónde va cada cosa). La geometría de carriles
-    por tipo que vivía acá se reemplazó por esa red (ADR-0021).
+    The network by episodes lives in `red-clinica.model.ts` (grouping) and
+    `red-clinica.geometria.ts` (where each thing goes). The per-type lane
+    geometry that used to live here was replaced by that network (ADR-0021).
     ========================================================================== */
 
 import type { Tone } from '../../../../shared/components/tone/tone.types';
 import type { NavIconName } from '../../../../shared/components/atoms/nav-icon/nav-icon.types';
+import { diasClinicosEntre } from './dia-clinico';
 
 /**
- * Los tipos de registro, en el orden en que se **razona** una atención: se
- * atiende, se observa, se diagnostica, se trata, se deja constancia. Es el
- * orden de los carriles de arriba abajo, así las conexiones bajan.
+ * The record types, in the order an encounter is **reasoned**: attend,
+ * observe, diagnose, treat, leave a record. It is the lanes' order from top
+ * to bottom, so the connections go down.
  */
 export const TIPOS_DEL_RECORRIDO = [
   'encuentros',
@@ -29,7 +29,7 @@ export const TIPOS_DEL_RECORRIDO = [
 
 export type TipoDelRecorrido = (typeof TIPOS_DEL_RECORRIDO)[number];
 
-/** Cómo se presenta cada tipo. El tono nunca va solo: lleva ícono y nombre. */
+/** How each type is presented. Tone never goes alone: it carries icon and name. */
 export interface AspectoDelTipo {
   readonly singular: string;
   readonly plural: string;
@@ -64,17 +64,15 @@ export const ASPECTO_DEL_TIPO: Readonly<Record<TipoDelRecorrido, AspectoDelTipo>
 };
 
 /**
- * Cuánto pasó entre dos fechas, como lo diría quien atiende.
+ * How much time passed between two dates, as the clinician would say it.
  *
- * Redondea hacia lo legible —«3 meses», no «94 días»—: el intervalo orienta la
- * lectura del recorrido, no reemplaza a la fecha, que va en la cabecera.
+ * Rounds towards the readable —«3 meses», not «94 días»—: the interval guides
+ * the reading of the journey, it does not replace the date in the header.
  */
 export function describirIntervalo(antes: Date, despues: Date): string {
-  // Días de calendario, no tramos de 24 h: dos columnas con la misma fecha en
-  // la cabecera no pueden quedar a «1 día», ni dos fechas distintas al «mismo día».
-  const medianoche = (fecha: Date): number =>
-    Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
-  const dias = Math.round((medianoche(despues) - medianoche(antes)) / 86_400_000);
+  // Clinical calendar days (`dia-clinico.ts`), not 24 h spans: two columns on
+  // the same clinical day are never «1 día» apart, nor two different days «el mismo día».
+  const dias = diasClinicosEntre(antes, despues);
   if (dias <= 0) {
     return 'el mismo día';
   }
@@ -103,11 +101,11 @@ export interface AristaConectable {
 }
 
 /**
- * Lo conectado a un nodo: lo que lo originó y lo que se decidió a partir de él.
+ * What is connected to a node: what originated it and what was decided from it.
  *
- * Recorre hacia atrás (de dónde viene) y hacia adelante (qué derivó) por
- * separado. Juntarlos en un grafo sin sentido iluminaría a los hermanos —las
- * otras recetas de la misma consulta— que no tienen nada que ver con el nodo.
+ * Walks backwards (where it comes from) and forwards (what it led to)
+ * separately. Joining them in an undirected graph would light up the siblings
+ * —the other prescriptions of the same visit— that have nothing to do with the node.
  */
 export function conectadosA(
   id: string,

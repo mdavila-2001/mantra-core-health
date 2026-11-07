@@ -9,15 +9,16 @@
 
 import type { NodoDeRed, Referencia, TipoDeNodo } from './red-clinica.types';
 import type { AristaDeRed } from './red-clinica-vinculos.types';
+import { diaClinico, diaDelCalendario } from '../recorrido-clinico/dia-clinico';
 
 export interface FiltroDeRed {
-  /** Id de especialidad; `null` = todas. */
+  /** Specialty id; `null` = all. */
   readonly especialidadId: string | null;
-  /** Id de profesional; `null` = todos. */
+  /** Practitioner id; `null` = all. */
   readonly profesionalId: string | null;
-  /** Start of the range, inclusive from the day's 00:00. */
+  /** First day of the range, inclusive: a calendar date, compared with the records' clinical day. */
   readonly desde: Date | null;
-  /** End of the range, inclusive up to the day's 23:59:59.999. */
+  /** Last day of the range, inclusive: a calendar date, compared with the records' clinical day. */
   readonly hasta: Date | null;
   /** Id of the diagnosis node whose thread is to be seen alone; `null` = all. */
   readonly hiloDeDiagnosticoId: string | null;
@@ -52,14 +53,6 @@ export function criteriosActivos(filtro: FiltroDeRed): number {
     (normalizarTexto(filtro.texto) === '' ? 0 : 1) +
     (filtro.tipos.length === 0 ? 0 : 1)
   );
-}
-
-function inicioDelDia(fecha: Date): number {
-  return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()).getTime();
-}
-
-function finDelDia(fecha: Date): number {
-  return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), 23, 59, 59, 999).getTime();
 }
 
 /** The types that concentrate links: they enter the thread, but do not spread it. */
@@ -126,8 +119,9 @@ export function hiloDeDiagnostico(
 /**
  * Applies the filter. All criteria combine with «and».
  *
- * - With a date range set, a node **without a date** is left out: it cannot be
- *   asserted that it happened in that range.
+ * - With a date range set, a node **without a (valid) date** is left out: it
+ *   cannot be asserted that it happened in that range. The day compared is the
+ *   clinical one (La Paz, `dia-clinico.ts`), the same the network groups by.
  * - A node without practitioner or specialty is left out when filtering by
  *   practitioner or specialty, for the same reason.
  * - The text searches title, subtitle, status, practitioner, specialty,
@@ -146,8 +140,9 @@ export function aplicarFiltro(
       ? null
       : hiloDeDiagnostico(filtro.hiloDeDiagnosticoId, nodos, aristas);
   const tipos = filtro.tipos.length === 0 ? null : new Set(filtro.tipos);
-  const desde = filtro.desde === null ? null : inicioDelDia(filtro.desde);
-  const hasta = filtro.hasta === null ? null : finDelDia(filtro.hasta);
+  // `aaaa-mm-dd` keys compare as strings; the record's day is the clinical one (`dia-clinico.ts`).
+  const desde = filtro.desde === null ? null : diaDelCalendario(filtro.desde);
+  const hasta = filtro.hasta === null ? null : diaDelCalendario(filtro.hasta);
   const termino = normalizarTexto(filtro.texto);
 
   return nodos.filter((nodo) => {
@@ -159,10 +154,10 @@ export function aplicarFiltro(
       return false;
     }
     if (desde !== null || hasta !== null) {
-      if (nodo.cuando === null) return false;
-      const t = nodo.cuando.getTime();
-      if (desde !== null && t < desde) return false;
-      if (hasta !== null && t > hasta) return false;
+      if (nodo.cuando === null || Number.isNaN(nodo.cuando.getTime())) return false;
+      const dia = diaClinico(nodo.cuando);
+      if (desde !== null && dia < desde) return false;
+      if (hasta !== null && dia > hasta) return false;
     }
     if (hilo !== null && !hilo.has(nodo.id)) return false;
     if (termino !== '' && !normalizarTexto(textoBuscable(nodo)).includes(termino)) return false;
@@ -205,7 +200,7 @@ function textoBuscable(nodo: NodoDeRed): string {
     .join(' ');
 }
 
-/** Las aristas cuyas dos puntas sobrevivieron al filtro. */
+/** The edges whose two ends survived the filter. */
 export function aristasVisibles(
   aristas: readonly AristaDeRed[],
   visibles: readonly NodoDeRed[],
