@@ -24,3 +24,21 @@ test('con la práctica ya creada, el menú no ofrece «Configurar práctica» y 
   await page.goto('/administration/medical-center-setup', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'Configurar práctica' })).toBeVisible({ timeout: 60_000 });
 });
+
+test('la sede que declaró el registro no se pide de nuevo: una confirmación crea la práctica', async ({ page }) => {
+  await login(page, 'hospital.piloto@alovida.mock');
+  await page.goto('/administration/medical-center-setup', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.getByTestId('medical-center-setup-registered')).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId('medical-center-setup-registered-site')).not.toBeEmpty();
+  await expect(page.getByTestId('medical-center-setup-form')).toHaveCount(0);
+
+  // «Usar otros datos» is the way back to the form.
+  await page.getByTestId('medical-center-setup-registered-other').click();
+  await expect(page.getByTestId('medical-center-setup-form')).toBeVisible();
+  await expect(page.getByTestId('medical-center-setup-registered')).toHaveCount(0);
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.getByTestId('medical-center-setup-registered-create').click();
+  await expect(page.getByTestId('medical-center-setup-exito')).toBeVisible({ timeout: 60_000 });
+});
