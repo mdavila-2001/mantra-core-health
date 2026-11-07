@@ -81,6 +81,19 @@ describe('capacidadDeModalidad', () => {
 });
 
 describe('turnosDelDia', () => {
+  it('respeta la duración y el descanso propios de la franja, como el médico', () => {
+    const martes = new Date(2026, 9, 6);
+    const turnos = turnosDelDia(
+      { windows: [{ dayOfWeek: 2, startTime: '08:00', endTime: '09:30', slotMinutes: 20, gapMinutes: 10 }], slotMinutes: 30 },
+      martes,
+    );
+    expect(turnos.map((t) => `${t.inicio.getHours()}:${t.inicio.getMinutes()}-${t.fin.getMinutes()}`)).toEqual([
+      '8:0-20',
+      '8:30-50',
+      '9:0-20',
+    ]);
+  });
+
   it('genera los inicios que entran enteros antes del cierre', () => {
     const martes = new Date(2026, 9, 6);
     const turnos = turnosDelDia(horarioDeSemana('08:00', '09:10', 30, [2]), martes);
@@ -112,6 +125,18 @@ describe('validarHorario', () => {
 });
 
 describe('describirHorario', () => {
+  it('dice la duración y el descanso de los días que los tienen propios', () => {
+    expect(
+      describirHorario({
+        windows: [
+          { dayOfWeek: 1, startTime: '08:00', endTime: '12:00' },
+          { dayOfWeek: 2, startTime: '08:00', endTime: '12:00', slotMinutes: 20, gapMinutes: 10 },
+        ],
+        slotMinutes: 30,
+      }),
+    ).toBe('Lun 08:00–12:00 (citas de 30 min) · Mar 08:00–12:00 (citas de 20 min y 10 de descanso)');
+  });
+
   it('agrupa días consecutivos con la misma franja', () => {
     expect(describirHorario(GENERAL)).toBe('Lun a Vie 08:00–12:00 · citas de 30 min');
     expect(describirHorario(ECO)).toBe('Mar, Jue 14:00–18:00 · citas de 20 min');

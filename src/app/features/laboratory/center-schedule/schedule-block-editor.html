@@ -1,51 +1,143 @@
 <div class="bloque">
-  <ul class="bloque__dias" role="list">
-    @for (dia of dias(); track dia.dayOfWeek) {
-      <li class="bloque__dia" [class.bloque__dia--activo]="dia.franja !== null">
-        <span class="bloque__nombre">{{ dia.label }}</span>
-        <app-segmented-control
-          [attr.data-testid]="testPrefix() + '-dia-' + dia.dayOfWeek"
-          [ariaLabel]="nombre() + ': ¿atienden el ' + dia.label.toLowerCase() + '?'"
-          [options]="siNo"
-          [value]="dia.franja !== null ? 'si' : 'no'"
-          (valueChange)="fijarDia(dia.dayOfWeek, $event)"
-        />
-        @if (dia.franja; as franja) {
-          <div class="bloque__horas">
-            <app-select
-              class="bloque__hora"
-              [options]="horasCon(franja.startTime)"
-              [value]="franja.startTime"
-              [ariaLabel]="nombre() + ', ' + dia.label + ': desde'"
-              [attr.data-testid]="testPrefix() + '-desde-' + dia.dayOfWeek"
-              (valueChange)="$event !== null && fijarHora(dia.dayOfWeek, 'startTime', $event)"
-            />
-            <span class="bloque__a" aria-hidden="true">a</span>
-            <app-select
-              class="bloque__hora"
-              [options]="horasCon(franja.endTime)"
-              [value]="franja.endTime"
-              [ariaLabel]="nombre() + ', ' + dia.label + ': hasta'"
-              [attr.data-testid]="testPrefix() + '-hasta-' + dia.dayOfWeek"
-              (valueChange)="$event !== null && fijarHora(dia.dayOfWeek, 'endTime', $event)"
-            />
-          </div>
-        } @else {
-          <span class="bloque__cerrado">No atienden</span>
-        }
-      </li>
-    }
-  </ul>
+  <!-- The practitioner's week (`agenda-create`): the repeat button above the
+       table, one row per day, the lunch below and the preview at the end. -->
+  @if (diasActivos().length > 1) {
+    <div class="agenda-create__tabla-acciones">
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        type="button"
+        [attr.data-testid]="testPrefix() + '-masivo'"
+        (clicked)="abrirRepetir()"
+      >
+        Repetir un horario en todos los días
+      </button>
+    </div>
+  }
 
-  <div class="bloque__duracion">
-    <span class="bloque__rotulo" [id]="testPrefix() + '-duracion'">Cada cita dura</span>
-    <app-select
-      class="bloque__select"
-      [attr.data-testid]="testPrefix() + '-duracion'"
-      [ariaLabel]="nombre() + ': duración de cada cita'"
-      [options]="duraciones"
-      [value]="'' + block().slotMinutes"
-      (valueChange)="$event !== null && fijarDuracion($event)"
+  <div class="agenda-create__tabla-scroll">
+    <table class="agenda-create__tabla agenda-create__tabla--centro">
+      <caption class="agenda-create__tabla-caption">
+        {{
+          nombre()
+        }}: un día por fila. Marque «Sí» en los que atiende y complete su horario.
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Día</th>
+          <th scope="col">Desde</th>
+          <th scope="col">Hasta</th>
+          <th scope="col">Dura</th>
+          <th scope="col">Descanso</th>
+          <th scope="col">Horarios</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (fila of filas(); track fila.indice) {
+          <tr
+            app-schedule-day-row
+            class="agenda-create__fila"
+            [index]="fila.indice"
+            [dayName]="fila.largo"
+            [value]="fila.value"
+            [practitionerColumns]="false"
+            [testPrefix]="testPrefix()"
+            [slots]="turnos(fila.indice)"
+            (changed)="fijarDeLaFila(fila.indice, $event)"
+          ></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (diasActivos().length === 0) {
+    <p class="bloque__vacio">Marque «Sí» en los días que atiende para cargar su horario.</p>
+  }
+
+  <div class="agenda-create__pregunta">
+    <div class="agenda-create__pregunta-texto">
+      <span class="agenda-create__pregunta-titulo">¿Tiene hora de almuerzo?</span>
+      <span class="agenda-create__pregunta-ayuda"
+        >En ese rato no se dan citas, en ninguno de los días que atiende.</span
+      >
+    </div>
+    <app-segmented-control
+      [attr.data-testid]="testPrefix() + '-almuerzo'"
+      [ariaLabel]="nombre() + ': ¿tiene hora de almuerzo?'"
+      [options]="siNo"
+      [value]="almuerzo() !== null ? 'si' : 'no'"
+      (valueChange)="fijarConAlmuerzo($event)"
     />
   </div>
+
+  @if (almuerzo(); as l) {
+    <div class="agenda-create__almuerzo">
+      <app-form-field label="Almuerzo desde">
+        <app-input
+          type="time"
+          [step]="pasoDeHora"
+          [value]="l.from"
+          [testId]="testPrefix() + '-almuerzo-desde'"
+          (valueChange)="fijarAlmuerzo('from', $event)"
+        />
+      </app-form-field>
+      <app-form-field
+        label="Hasta"
+        [errorMessage]="almuerzoInvalido() ? 'Tiene que terminar después de empezar.' : ''"
+      >
+        <app-input
+          type="time"
+          [step]="pasoDeHora"
+          [value]="l.to"
+          [testId]="testPrefix() + '-almuerzo-hasta'"
+          (valueChange)="fijarAlmuerzo('to', $event)"
+        />
+      </app-form-field>
+    </div>
+  }
+
+  <app-center-week-preview
+    [block]="block()"
+    [semana]="semana()"
+    [nombre]="nombre()"
+    [testPrefix]="testPrefix()"
+  />
+
+  @if (repetirAbierto()) {
+    <app-content-dialog
+      heading="¿Repetir un horario en todos los días?"
+      description="Elija qué fila se copia. Se reemplazan el horario, la duración y el descanso de los demás días habilitados."
+      size="sm"
+      closeLabel="Cancelar"
+      (closed)="repetirAbierto.set(false)"
+    >
+      <app-form-field label="Fila que se repite">
+        <app-select
+          [attr.data-testid]="testPrefix() + '-masivo-fila'"
+          [options]="opcionesDeFila()"
+          [value]="filaARepetir()"
+          (valueChange)="filaARepetir.set($event)"
+        />
+      </app-form-field>
+      <button
+        dialog-actions
+        app-button
+        type="button"
+        variant="outline"
+        (clicked)="repetirAbierto.set(false)"
+      >
+        Cancelar
+      </button>
+      <button
+        dialog-actions
+        app-button
+        type="button"
+        [attr.data-testid]="testPrefix() + '-masivo-confirmar'"
+        (clicked)="repetirFila()"
+      >
+        Repetir en todos
+      </button>
+    </app-content-dialog>
+  }
 </div>

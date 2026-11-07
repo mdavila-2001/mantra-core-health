@@ -1,0 +1,86 @@
+@if (dias().length > 0) {
+  <div class="agenda-create__previa" role="status" [attr.data-testid]="testPrefix() + '-previa'">
+    <h3 class="agenda-create__previa-titulo">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+      Así van a quedar sus horarios
+    </h3>
+    <ul class="agenda-create__previa-lista">
+      @for (dia of dias(); track dia.dia) {
+        <li class="agenda-create__previa-dia">
+          <strong class="agenda-create__previa-cuenta">{{ dia.dia }}</strong>
+          @if (dia.citas > 0) {
+            <span class="agenda-create__previa-horas">{{ dia.desde }} – {{ dia.hasta }}</span>
+            <span class="agenda-create__previa-detalle">
+              {{ dia.citas }} {{ dia.citas === 1 ? 'cita' : 'citas' }} de {{ dia.duracion }} min
+              @if (dia.respiro > 0) {
+                · {{ dia.respiro }} min de descanso
+              }
+            </span>
+          } @else {
+            <span class="agenda-create__previa-horas agenda-create__previa-horas--vacia"
+              >No entra ninguna cita</span
+            >
+          }
+          @if (semana().lunch; as l) {
+            <p class="agenda-create__previa-resto">
+              Almuerzo de {{ l.from }} a {{ l.to }}: sin citas.
+            </p>
+          }
+        </li>
+      }
+    </ul>
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      type="button"
+      [attr.data-testid]="testPrefix() + '-previsualizar'"
+      (clicked)="abierta.set(true)"
+    >
+      Previsualizar horario
+    </button>
+  </div>
+}
+
+@if (abierta()) {
+  <app-content-dialog
+    heading="Así va a quedar su horario"
+    [description]="nombre()"
+    size="xl"
+    closeLabel="Cerrar"
+    (closed)="abierta.set(false)"
+  >
+    <!-- The same organism that draws a published schedule in «Mi agenda». -->
+    <app-schedule-grid [reglas]="reglas()" [conFechas]="false" [nombre]="nombre()" />
+    <p class="agenda-create__previa-total">
+      @if (total() === 0) {
+        Con estas horas no entra ninguna cita: revise las duraciones.
+      } @else {
+        {{ total() }} {{ total() === 1 ? 'horario' : 'horarios' }} por semana.
+      }
+    </p>
+    <button
+      dialog-actions
+      app-button
+      type="button"
+      variant="outline"
+      (clicked)="abierta.set(false)"
+    >
+      Volver a editar
+    </button>
+    <button dialog-actions app-button type="button" (clicked)="abierta.set(false)">
+      Está bien
+    </button>
+  </app-content-dialog>
+}

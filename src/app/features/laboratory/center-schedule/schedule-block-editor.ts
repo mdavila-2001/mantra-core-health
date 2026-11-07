@@ -1,97 +1,146 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 
-import {
-  WEEK_DAYS,
-  DURACIONES_DE_TURNO,
-} from '../../../core/data-access/diagnostic-units/center-schedule.rules';
-import type { ScheduleBlock, ScheduleWindow } from '../../../core/data-access/diagnostic-units/center-schedule.types';
-import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
-import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
+import type { ScheduleBlock } from '../../../core/data-access/diagnostic-units/center-schedule.types';
+import { AppButton } from '../../../shared/components/atoms/button/button';
+import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
-
-const HORAS: readonly string[] = Array.from({ length: 96 }, (_, i) => `${String(Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`);
-const OPCIONES_DE_HORA: readonly SelectOption<string>[] = HORAS.map((h) => ({ value: h, label: h }));
+import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
+import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
+import { ScheduleDayRow } from '../../agenda/agenda-create/schedule-day-row/schedule-day-row';
+import {
+  TIME_STEP_SECONDS,
+  YES_NO,
+  type ScheduleDayChange,
+} from '../../agenda/agenda-create/schedule-day-row/schedule-day';
+import { CenterWeekPreview } from './week/center-week-preview';
+import { WEEK, blockToWeek, slotsOfDay, weekToBlock, type CenterWeek } from './week/center-week';
 
 /* ============================================================================
-    Un horario: qué días se atiende, de qué hora a qué hora y cuánto dura cada
-    turno. Es la misma tabla «un día por fila, Sí / No» que usa la agenda del
-    médico, recortada a lo que un centro necesita (sin almuerzo ni descanso:
-    el turno de un equipo dura lo que dura el estudio).
+    One schedule of the center (general, a service, a study or a device),
+    edited with the practitioner's week: the same day table (`ScheduleDayRow`),
+    «Repetir un horario en todos los días», the lunch break and the same
+    preview with the weekly grid. Only the practitioner-only columns are off.
 
-    No guarda estado propio: recibe el horario y emite el horario nuevo en cada
-    cambio, así el padre arma el resumen en vivo con lo mismo que va a guardar.
+    Stateless: it receives the block and emits the new one on every change,
+    so the parent builds «Así queda» from what it is going to save.
     ========================================================================== */
-
-const POR_DEFECTO: Pick<ScheduleWindow, 'startTime' | 'endTime'> = { startTime: '08:00', endTime: '12:00' };
 
 @Component({
   selector: 'app-schedule-block-editor',
-  imports: [SegmentedControl, Select],
+  imports: [
+    AppButton,
+    Input,
+    Select,
+    FormField,
+    SegmentedControl,
+    ContentDialog,
+    ScheduleDayRow,
+    CenterWeekPreview,
+  ],
   templateUrl: './schedule-block-editor.html',
-  styleUrl: './schedule-block-editor.css',
+  styleUrls: [
+    './schedule-block-editor.css',
+    '../../agenda/agenda-create/schedule-day-row/schedule-week.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScheduleBlockEditor {
-  /** El horario que se edita. */
   readonly block = input.required<ScheduleBlock>();
-  /** Prefijo de los `data-testid`, para distinguir varios editores en la misma pantalla. */
+  /** `data-testid` prefix, to tell several editors apart on one screen. */
   readonly testPrefix = input.required<string>();
-  /** De qué horario se trata, para las etiquetas accesibles («Ecografía», «Resto de servicios»). */
+  /** Which schedule this is, for accessible names («Ecografía», «Resto de servicios»). */
   readonly nombre = input.required<string>();
 
   readonly blockChange = output<ScheduleBlock>();
 
-  protected readonly siNo: readonly SegmentedOption<'si' | 'no'>[] = [
-    { value: 'si', label: 'Sí' },
-    { value: 'no', label: 'No' },
-  ];
+  protected readonly siNo = YES_NO;
+  protected readonly pasoDeHora = TIME_STEP_SECONDS;
 
-  /**
-   * Las horas, de 15 en 15 y en 24 h. Un desplegable y no `<input type=time>`:
-   * el nativo sigue el idioma del navegador (en es-BO muestra «08:00 a.m.») y
-   * quedaba en otro formato que el resumen «Así queda», que va en 24 h.
-   */
-  protected horasCon(actual: string): readonly SelectOption<string>[] {
-    return HORAS.includes(actual) ? OPCIONES_DE_HORA : [...OPCIONES_DE_HORA, { value: actual, label: actual }].sort((a, b) => a.value.localeCompare(b.value));
-  }
+  /** The last week emitted: an inactive day keeps its hours to come back with. */
+  private readonly ultima = signal<CenterWeek | null>(null);
 
-  /** Siete duraciones no entran en un segmentado a 390 px: van en un desplegable. */
-  protected readonly duraciones: readonly SelectOption<string>[] = DURACIONES_DE_TURNO.map((m) => ({
-    value: String(m),
-    label: `${m} min`,
-  }));
+  /** The week shown: the one just emitted while the parent echoes it back, else read from the block. */
+  protected readonly semana = computed(() => {
+    const ultima = this.ultima();
+    const block = this.block();
+    const igual =
+      ultima !== null &&
+      JSON.stringify(weekToBlock(ultima, block.slotMinutes)) === JSON.stringify(block);
+    return igual ? ultima : blockToWeek(block, ultima);
+  });
 
-  protected readonly dias = computed(() =>
-    WEEK_DAYS.map((d) => {
-      const franja = this.block().windows.find((w) => w.dayOfWeek === d.dayOfWeek) ?? null;
-      return { ...d, franja };
-    }),
+  protected readonly filas = computed(() =>
+    WEEK.map((d, indice) => ({ indice, largo: d.label, value: this.semana().days[indice]! })),
   );
 
-  protected fijarDia(dayOfWeek: number, valor: 'si' | 'no'): void {
-    const sin = this.block().windows.filter((w) => w.dayOfWeek !== dayOfWeek);
-    const anterior = this.block().windows[this.block().windows.length - 1] ?? POR_DEFECTO;
-    const windows =
-      valor === 'si'
-        ? [...sin, { dayOfWeek, startTime: anterior.startTime, endTime: anterior.endTime }]
-        : sin;
-    this.emitir({ ...this.block(), windows: [...windows].sort((a, b) => a.dayOfWeek - b.dayOfWeek) });
+  protected readonly diasActivos = computed(() => this.filas().filter((f) => f.value.activo));
+
+  protected turnos(indice: number): number {
+    return slotsOfDay(this.semana().days[indice]!, this.semana().lunch);
   }
 
-  protected fijarHora(dayOfWeek: number, campo: 'startTime' | 'endTime', valor: string | number | null): void {
-    const texto = String(valor ?? '').slice(0, 5);
+  protected fijarDeLaFila(indice: number, cambio: ScheduleDayChange): void {
+    const days = this.semana().days.map((d, i) =>
+      i === indice ? { ...d, [cambio.field]: cambio.value } : d,
+    );
+    this.emitir({ ...this.semana(), days });
+  }
+
+  // ── Lunch: one for the whole week, as the practitioner's ───────────────────
+
+  protected readonly almuerzo = computed(() => this.semana().lunch);
+
+  protected fijarConAlmuerzo(valor: 'si' | 'no'): void {
     this.emitir({
-      ...this.block(),
-      windows: this.block().windows.map((w) => (w.dayOfWeek === dayOfWeek ? { ...w, [campo]: texto } : w)),
+      ...this.semana(),
+      lunch: valor === 'si' ? { from: '12:00', to: '13:00' } : null,
     });
   }
 
-  protected fijarDuracion(valor: string): void {
-    this.emitir({ ...this.block(), slotMinutes: Number(valor) });
+  protected fijarAlmuerzo(campo: 'from' | 'to', valor: string | number | null): void {
+    const actual = this.semana().lunch;
+    if (actual === null || valor === null) return;
+    this.emitir({ ...this.semana(), lunch: { ...actual, [campo]: String(valor).slice(0, 5) } });
   }
 
-  private emitir(block: ScheduleBlock): void {
-    this.blockChange.emit(block);
+  protected readonly almuerzoInvalido = computed(() => {
+    const l = this.almuerzo();
+    return l !== null && l.to <= l.from;
+  });
+
+  // ── «Repetir un horario en todos los días» ─────────────────────────────────
+
+  protected readonly repetirAbierto = signal(false);
+  protected readonly filaARepetir = signal<number | null>(null);
+
+  protected readonly opcionesDeFila = computed<readonly SelectOption<number>[]>(() =>
+    this.diasActivos().map((f) => ({
+      value: f.indice,
+      label: `${f.largo} (${f.value.desde} – ${f.value.hasta})`,
+    })),
+  );
+
+  protected abrirRepetir(): void {
+    this.filaARepetir.set(this.diasActivos()[0]?.indice ?? null);
+    this.repetirAbierto.set(true);
+  }
+
+  /** Copies the chosen row's hours, length and rest onto every enabled day. */
+  protected repetirFila(): void {
+    const origen = this.semana().days[this.filaARepetir() ?? -1];
+    this.repetirAbierto.set(false);
+    if (origen === undefined) return;
+    const { desde, hasta, duracion, respiro } = origen;
+    const days = this.semana().days.map((d) =>
+      d.activo ? { ...d, desde, hasta, duracion, respiro } : d,
+    );
+    this.emitir({ ...this.semana(), days });
+  }
+
+  private emitir(semana: CenterWeek): void {
+    this.ultima.set(semana);
+    this.blockChange.emit(weekToBlock(semana, this.block().slotMinutes));
   }
 }

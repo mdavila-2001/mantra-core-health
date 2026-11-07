@@ -192,7 +192,7 @@ interface DiaVisible {
     TitleCasePipe,
   ],
   templateUrl: './agenda-create.html',
-  styleUrl: './agenda-create.css',
+  styleUrls: ['./agenda-create.css', './schedule-day-row/schedule-week.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AgendaCreate {
