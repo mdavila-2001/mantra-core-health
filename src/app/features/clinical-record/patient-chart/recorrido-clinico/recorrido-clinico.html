@@ -226,7 +226,9 @@
                 [attr.d]="arista.trazo"
                 [attr.data-motivo]="arista.motivo"
                 [attr.marker-end]="arista.familia === 'enlace' ? (arista.inferido ? 'url(#red-punta-inferido)' : 'url(#red-punta)') : null"
-              />
+              >
+                <title>{{ nombreDelMotivo[arista.motivo] }}</title>
+              </path>
             }
           </svg>
 

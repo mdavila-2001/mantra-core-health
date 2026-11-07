@@ -19,7 +19,7 @@ import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { conectadosA } from './recorrido-clinico.model';
-import { ASPECTO_DE_LA_CLASE, type ClaseDeLaRed, type RegistroDeLaRed, type VinculoDeLaRed } from './red-clinica.model';
+import { ASPECTO_DE_LA_CLASE, NOMBRE_DEL_MOTIVO, type ClaseDeLaRed, type RegistroDeLaRed, type VinculoDeLaRed } from './red-clinica.model';
 import { agruparEnEpisodios } from './red-clinica.episodios';
 import { type EpisodioClinico } from './red-clinica.episodio';
 import { relacionesDe } from './red-clinica.vinculos';
@@ -112,6 +112,7 @@ export class RecorridoClinico {
   readonly elegido = output<NodoElegido>();
 
   protected readonly medidas = MEDIDAS_DE_LA_RED;
+  protected readonly nombreDelMotivo = NOMBRE_DEL_MOTIVO;
   protected readonly distanciaDelTronco = DISTANCIA_DEL_TRONCO;
   protected readonly contextoDe = contextoDe;
 

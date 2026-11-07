@@ -159,6 +159,8 @@
 
 .red__arista {
   fill: none;
+  /* Hover shows the relation name (<title>); nodes sit above (z-index 3). */
+  pointer-events: stroke;
   stroke-linecap: round;
   stroke-linejoin: round;
   transition:
