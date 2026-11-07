@@ -1,0 +1,85 @@
+ok   axe médica 1440 claro red plegada ([data-testid="red-superficie"]): 0 reglas con violaciones WCAG 2.2 AA
+ok   axe médica 1440 claro red expandida ([data-testid="red-superficie"]): 0 reglas con violaciones WCAG 2.2 AA
+ok   axe médica 1440 claro panel del estudio TSH ([data-testid="red-panel"]): 0 reglas con violaciones WCAG 2.2 AA
+ok   axe médica 1440 oscuro red plegada ([data-testid="red-superficie"]): 0 reglas con violaciones WCAG 2.2 AA
+ok   axe médica 1440 oscuro red expandida ([data-testid="red-superficie"]): 0 reglas con violaciones WCAG 2.2 AA
+ok   axe médica 1440 oscuro panel del estudio TSH ([data-testid="red-panel"]): 0 reglas con violaciones WCAG 2.2 AA
+ok   axe médica 390 claro red plegada ([data-testid="red-superficie"]): 0 reglas con violaciones WCAG 2.2 AA
+ok   axe médica 390 claro red expandida ([data-testid="red-superficie"]): 0 reglas con violaciones WCAG 2.2 AA
+ok   axe médica 390 claro panel del estudio TSH ([data-testid="red-panel"]): 0 reglas con violaciones WCAG 2.2 AA
+ok   axe médica 390 oscuro red plegada ([data-testid="red-superficie"]): 0 reglas con violaciones WCAG 2.2 AA
+ok   axe médica 390 oscuro red expandida ([data-testid="red-superficie"]): 0 reglas con violaciones WCAG 2.2 AA
+ok   axe médica 390 oscuro panel del estudio TSH ([data-testid="red-panel"]): 0 reglas con violaciones WCAG 2.2 AA
+ok   axe paciente 1440 claro «Mi recorrido» ([data-testid="mi-recorrido"]): 0 reglas con violaciones WCAG 2.2 AA
+ok   axe paciente 1440 oscuro «Mi recorrido» ([data-testid="mi-recorrido"]): 0 reglas con violaciones WCAG 2.2 AA
+ok   axe paciente 390 claro «Mi recorrido» ([data-testid="mi-recorrido"]): 0 reglas con violaciones WCAG 2.2 AA
+teclado-1440-claro Tab desde «Expandir todo»:
+  button[red-plegar-todo] «Contraer todo»
+  button «Lo más antiguo»
+  div «Recorrido clínico por episodios, de lo más antiguo a lo más »
+  button[red-episodio] «Episodio: Hipotiroidismo. Enfermedad activa. del 16 de marzo»
+  button[red-fuera] «Ver 5 marcas de Hipotiroidismo anteriores a lo visible»
+  button[red-episodio] «Episodio: Hipertensión arterial esencial. Enfermedad activa.»
+  button[red-episodio] «Episodio: Dislipidemia. En estudio. del 31 de diciembre de 2»
+  button[red-episodio] «Episodio: Infección respiratoria aguda. En estudio. del 31 d»
+  button[red-episodio] «Episodio: Infección urinaria. Diagnóstico histórico. del 8 d»
+  button[red-fuera] «Ver 3 marcas de Infección urinaria anteriores a lo visible»
+  button[red-episodio] «Episodio: Trastorno de ansiedad generalizada. En estudio. de»
+  button[red-fuera] «Ver 1 marca de Trastorno de ansiedad generalizada anterior a»
+  button[red-episodio] «Episodio: Atenciones sin diagnóstico asociado. del 10 de ene»
+  button[red-fuera] «Ver 9 marcas de Atenciones sin diagnóstico asociado anterior»
+  button «Datos de prueba»
+  a «Ver componentes»
+ok   teclado-1440-claro: tras «Expandir todo» con Enter el foco no cae en body (button[red-desplegar-todo] «Expandir todo»)
+ok   teclado-1440-claro: tras «Contraer todo» con Enter el foco no cae en body (button[red-plegar-todo] «Contraer todo»)
+ok   teclado-1440-claro: «Lo más antiguo» con Enter deja el foco en el lienzo (div «Recorrido clínico por episodios, de lo más antiguo a lo más » → div «Recorrido clínico por episodios, de lo más antiguo a lo más »)
+ok   teclado-1440-claro: Enter despliega el episodio (aria-expanded=true)
+ok   teclado-1440-claro: el nodo con foco queda entero en la pantalla
+ok   teclado-1440-claro: Enter sobre el nodo abre el panel con el foco dentro (h2 «TSH por quimioluminiscencia»)
+teclado-1440-claro Tab dentro del panel y la salida:
+  button[red-panel-cerrar] «Cerrar el detalle»
+  button[red-panel-archivo] «Descargar Informe de TSH por quimioluminiscencia.pdf»
+  button[red-panel-vinculo] «→ Se pidió para estudiar Diagnóstico: Hipotiroidismo16 mar 2»
+  button[red-panel-vinculo] «→ Se registró en Atención: Ambulatorio15 may 2025»
+  button[red-panel-vinculo] «← Su resultado Estudio: TSH por quimioluminiscencia17 may 20»
+  button «Datos de prueba»
+ok   teclado-1440-claro: Shift+Tab devuelve el foco al último vínculo del panel (button[red-panel-vinculo] «← Su resultado Estudio: TSH por quimioluminiscencia17 may 20»)
+ok   teclado-1440-claro: Escape cierra el panel y el foco vuelve al nodo (button[recorrido-nodo] «Estudio pedido: TSH por quimioluminiscencia. Orden de estudi»)
+ok   teclado-1440-claro: el foco nunca cayó en body en 27 pulsaciones []
+ok   teclado-1440-claro: consola sin errores []
+teclado-1440-oscuro Tab desde «Expandir todo»:
+  button[red-plegar-todo] «Contraer todo»
+  button «Lo más antiguo»
+  div «Recorrido clínico por episodios, de lo más antiguo a lo más »
+  button[red-episodio] «Episodio: Hipotiroidismo. Enfermedad activa. del 16 de marzo»
+  button[red-fuera] «Ver 5 marcas de Hipotiroidismo anteriores a lo visible»
+  button[red-episodio] «Episodio: Hipertensión arterial esencial. Enfermedad activa.»
+  button[red-episodio] «Episodio: Dislipidemia. En estudio. del 31 de diciembre de 2»
+  button[red-episodio] «Episodio: Infección respiratoria aguda. En estudio. del 31 d»
+  button[red-episodio] «Episodio: Infección urinaria. Diagnóstico histórico. del 8 d»
+  button[red-fuera] «Ver 3 marcas de Infección urinaria anteriores a lo visible»
+  button[red-episodio] «Episodio: Trastorno de ansiedad generalizada. En estudio. de»
+  button[red-fuera] «Ver 1 marca de Trastorno de ansiedad generalizada anterior a»
+  button[red-episodio] «Episodio: Atenciones sin diagnóstico asociado. del 10 de ene»
+  button[red-fuera] «Ver 9 marcas de Atenciones sin diagnóstico asociado anterior»
+  button «Datos de prueba»
+  a «Ver componentes»
+ok   teclado-1440-oscuro: tras «Expandir todo» con Enter el foco no cae en body (button[red-desplegar-todo] «Expandir todo»)
+ok   teclado-1440-oscuro: tras «Contraer todo» con Enter el foco no cae en body (button[red-plegar-todo] «Contraer todo»)
+ok   teclado-1440-oscuro: «Lo más antiguo» con Enter deja el foco en el lienzo (div «Recorrido clínico por episodios, de lo más antiguo a lo más » → div «Recorrido clínico por episodios, de lo más antiguo a lo más »)
+ok   teclado-1440-oscuro: Enter despliega el episodio (aria-expanded=true)
+ok   teclado-1440-oscuro: el nodo con foco queda entero en la pantalla
+ok   teclado-1440-oscuro: Enter sobre el nodo abre el panel con el foco dentro (h2 «TSH por quimioluminiscencia»)
+teclado-1440-oscuro Tab dentro del panel y la salida:
+  button[red-panel-cerrar] «Cerrar el detalle»
+  button[red-panel-archivo] «Descargar Informe de TSH por quimioluminiscencia.pdf»
+  button[red-panel-vinculo] «→ Se pidió para estudiar Diagnóstico: Hipotiroidismo16 mar 2»
+  button[red-panel-vinculo] «→ Se registró en Atención: Ambulatorio15 may 2025»
+  button[red-panel-vinculo] «← Su resultado Estudio: TSH por quimioluminiscencia17 may 20»
+  button «Datos de prueba»
+ok   teclado-1440-oscuro: Shift+Tab devuelve el foco al último vínculo del panel (button[red-panel-vinculo] «← Su resultado Estudio: TSH por quimioluminiscencia17 may 20»)
+ok   teclado-1440-oscuro: Escape cierra el panel y el foco vuelve al nodo (button[recorrido-nodo] «Estudio pedido: TSH por quimioluminiscencia. Orden de estudi»)
+ok   teclado-1440-oscuro: el foco nunca cayó en body en 27 pulsaciones []
+ok   teclado-1440-oscuro: consola sin errores []
+
+TODO OK

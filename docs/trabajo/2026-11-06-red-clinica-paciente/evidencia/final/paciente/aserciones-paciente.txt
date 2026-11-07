@@ -1,0 +1,86 @@
+ok   paciente-390-claro portada (/dashboard): síntomas y próxima cita visibles
+ok   paciente-390-claro portada: sin desplazamiento horizontal (390 ≤ 390)
+ok   paciente-390-claro recorrido: acordeones anidados, un hijo abierto y otro plegado dentro del hilo abierto (12 disparadores)
+ok   paciente-390-claro recorrido: cada flecha sigue a su aria-expanded (0 discrepancias)
+ok   paciente-390-claro recorrido: sin desplazamiento horizontal (390 ≤ 390)
+ok   paciente-390-claro S5: tono de aviso, sin código de soporte ni «Reintentar», lo que llegó sigue dibujado {"aviso":1,"error":0,"codigo":0,"reintentar":0,"hilos":7}
+ok   paciente-390-claro S9: muestra el ID de petición (mock-fallo) y ofrece «Reintentar» (1)
+ok   paciente-390-claro por fecha detalle-falta: el aviso «historia-detalle-falta» está a la vista y las atenciones siguen dibujadas {"hay":true,"codigo":"mock-fallo","reintentar":1,"atenciones":11}
+ok   paciente-390-claro por fecha detalle-falta: S9 con su ID de petición y «Reintentar» (mock-fallo, 1)
+ok   paciente-390-claro por fecha detalle-falta: sin desplazamiento horizontal (390 ≤ 390)
+ok   paciente-390-claro por fecha citas-sin-cargar: el aviso «historia-citas-sin-cargar» está a la vista y las atenciones siguen dibujadas {"hay":true,"codigo":"mock-fallo","reintentar":1,"atenciones":11}
+ok   paciente-390-claro por fecha citas-sin-cargar: S9 con su ID de petición y «Reintentar» (mock-fallo, 1)
+ok   paciente-390-claro por fecha citas-sin-cargar: sin desplazamiento horizontal (390 ≤ 390)
+ok   paciente-390-claro: consola sin errores ajenos a los fallos provocados (4 provocados) []
+ok   paciente-1024-claro portada (/dashboard): síntomas y próxima cita visibles
+ok   paciente-1024-claro portada: sin desplazamiento horizontal (1024 ≤ 1024)
+ok   paciente-1024-claro recorrido: acordeones anidados, un hijo abierto y otro plegado dentro del hilo abierto (12 disparadores)
+ok   paciente-1024-claro recorrido: cada flecha sigue a su aria-expanded (0 discrepancias)
+ok   paciente-1024-claro recorrido: sin desplazamiento horizontal (1024 ≤ 1024)
+ok   paciente-1024-claro S5: tono de aviso, sin código de soporte ni «Reintentar», lo que llegó sigue dibujado {"aviso":1,"error":0,"codigo":0,"reintentar":0,"hilos":7}
+ok   paciente-1024-claro S9: muestra el ID de petición (mock-fallo) y ofrece «Reintentar» (1)
+ok   paciente-1024-claro por fecha detalle-falta: el aviso «historia-detalle-falta» está a la vista y las atenciones siguen dibujadas {"hay":true,"codigo":"mock-fallo","reintentar":1,"atenciones":11}
+ok   paciente-1024-claro por fecha detalle-falta: S9 con su ID de petición y «Reintentar» (mock-fallo, 1)
+ok   paciente-1024-claro por fecha detalle-falta: sin desplazamiento horizontal (1024 ≤ 1024)
+ok   paciente-1024-claro por fecha citas-sin-cargar: el aviso «historia-citas-sin-cargar» está a la vista y las atenciones siguen dibujadas {"hay":true,"codigo":"mock-fallo","reintentar":1,"atenciones":11}
+ok   paciente-1024-claro por fecha citas-sin-cargar: S9 con su ID de petición y «Reintentar» (mock-fallo, 1)
+ok   paciente-1024-claro por fecha citas-sin-cargar: sin desplazamiento horizontal (1024 ≤ 1024)
+ok   paciente-1024-claro: consola sin errores ajenos a los fallos provocados (4 provocados) []
+ok   paciente-1440-claro portada (/dashboard): síntomas y próxima cita visibles
+ok   paciente-1440-claro portada: sin desplazamiento horizontal (1440 ≤ 1440)
+ok   paciente-1440-claro recorrido: acordeones anidados, un hijo abierto y otro plegado dentro del hilo abierto (12 disparadores)
+ok   paciente-1440-claro recorrido: cada flecha sigue a su aria-expanded (0 discrepancias)
+ok   paciente-1440-claro recorrido: sin desplazamiento horizontal (1440 ≤ 1440)
+ok   paciente-1440-claro S5: tono de aviso, sin código de soporte ni «Reintentar», lo que llegó sigue dibujado {"aviso":1,"error":0,"codigo":0,"reintentar":0,"hilos":7}
+ok   paciente-1440-claro S9: muestra el ID de petición (mock-fallo) y ofrece «Reintentar» (1)
+ok   paciente-1440-claro por fecha detalle-falta: el aviso «historia-detalle-falta» está a la vista y las atenciones siguen dibujadas {"hay":true,"codigo":"mock-fallo","reintentar":1,"atenciones":11}
+ok   paciente-1440-claro por fecha detalle-falta: S9 con su ID de petición y «Reintentar» (mock-fallo, 1)
+ok   paciente-1440-claro por fecha detalle-falta: sin desplazamiento horizontal (1440 ≤ 1440)
+ok   paciente-1440-claro por fecha citas-sin-cargar: el aviso «historia-citas-sin-cargar» está a la vista y las atenciones siguen dibujadas {"hay":true,"codigo":"mock-fallo","reintentar":1,"atenciones":11}
+ok   paciente-1440-claro por fecha citas-sin-cargar: S9 con su ID de petición y «Reintentar» (mock-fallo, 1)
+ok   paciente-1440-claro por fecha citas-sin-cargar: sin desplazamiento horizontal (1440 ≤ 1440)
+ok   paciente-1440-claro: consola sin errores ajenos a los fallos provocados (4 provocados) []
+ok   paciente-390-oscuro portada (/dashboard): síntomas y próxima cita visibles
+ok   paciente-390-oscuro portada: sin desplazamiento horizontal (390 ≤ 390)
+ok   paciente-390-oscuro recorrido: acordeones anidados, un hijo abierto y otro plegado dentro del hilo abierto (12 disparadores)
+ok   paciente-390-oscuro recorrido: cada flecha sigue a su aria-expanded (0 discrepancias)
+ok   paciente-390-oscuro recorrido: sin desplazamiento horizontal (390 ≤ 390)
+ok   paciente-390-oscuro S5: tono de aviso, sin código de soporte ni «Reintentar», lo que llegó sigue dibujado {"aviso":1,"error":0,"codigo":0,"reintentar":0,"hilos":7}
+ok   paciente-390-oscuro S9: muestra el ID de petición (mock-fallo) y ofrece «Reintentar» (1)
+ok   paciente-390-oscuro por fecha detalle-falta: el aviso «historia-detalle-falta» está a la vista y las atenciones siguen dibujadas {"hay":true,"codigo":"mock-fallo","reintentar":1,"atenciones":11}
+ok   paciente-390-oscuro por fecha detalle-falta: S9 con su ID de petición y «Reintentar» (mock-fallo, 1)
+ok   paciente-390-oscuro por fecha detalle-falta: sin desplazamiento horizontal (390 ≤ 390)
+ok   paciente-390-oscuro por fecha citas-sin-cargar: el aviso «historia-citas-sin-cargar» está a la vista y las atenciones siguen dibujadas {"hay":true,"codigo":"mock-fallo","reintentar":1,"atenciones":11}
+ok   paciente-390-oscuro por fecha citas-sin-cargar: S9 con su ID de petición y «Reintentar» (mock-fallo, 1)
+ok   paciente-390-oscuro por fecha citas-sin-cargar: sin desplazamiento horizontal (390 ≤ 390)
+ok   paciente-390-oscuro: consola sin errores ajenos a los fallos provocados (4 provocados) []
+ok   paciente-1024-oscuro portada (/dashboard): síntomas y próxima cita visibles
+ok   paciente-1024-oscuro portada: sin desplazamiento horizontal (1024 ≤ 1024)
+ok   paciente-1024-oscuro recorrido: acordeones anidados, un hijo abierto y otro plegado dentro del hilo abierto (12 disparadores)
+ok   paciente-1024-oscuro recorrido: cada flecha sigue a su aria-expanded (0 discrepancias)
+ok   paciente-1024-oscuro recorrido: sin desplazamiento horizontal (1024 ≤ 1024)
+ok   paciente-1024-oscuro S5: tono de aviso, sin código de soporte ni «Reintentar», lo que llegó sigue dibujado {"aviso":1,"error":0,"codigo":0,"reintentar":0,"hilos":7}
+ok   paciente-1024-oscuro S9: muestra el ID de petición (mock-fallo) y ofrece «Reintentar» (1)
+ok   paciente-1024-oscuro por fecha detalle-falta: el aviso «historia-detalle-falta» está a la vista y las atenciones siguen dibujadas {"hay":true,"codigo":"mock-fallo","reintentar":1,"atenciones":11}
+ok   paciente-1024-oscuro por fecha detalle-falta: S9 con su ID de petición y «Reintentar» (mock-fallo, 1)
+ok   paciente-1024-oscuro por fecha detalle-falta: sin desplazamiento horizontal (1024 ≤ 1024)
+ok   paciente-1024-oscuro por fecha citas-sin-cargar: el aviso «historia-citas-sin-cargar» está a la vista y las atenciones siguen dibujadas {"hay":true,"codigo":"mock-fallo","reintentar":1,"atenciones":11}
+ok   paciente-1024-oscuro por fecha citas-sin-cargar: S9 con su ID de petición y «Reintentar» (mock-fallo, 1)
+ok   paciente-1024-oscuro por fecha citas-sin-cargar: sin desplazamiento horizontal (1024 ≤ 1024)
+ok   paciente-1024-oscuro: consola sin errores ajenos a los fallos provocados (4 provocados) []
+ok   paciente-1440-oscuro portada (/dashboard): síntomas y próxima cita visibles
+ok   paciente-1440-oscuro portada: sin desplazamiento horizontal (1440 ≤ 1440)
+ok   paciente-1440-oscuro recorrido: acordeones anidados, un hijo abierto y otro plegado dentro del hilo abierto (12 disparadores)
+ok   paciente-1440-oscuro recorrido: cada flecha sigue a su aria-expanded (0 discrepancias)
+ok   paciente-1440-oscuro recorrido: sin desplazamiento horizontal (1440 ≤ 1440)
+ok   paciente-1440-oscuro S5: tono de aviso, sin código de soporte ni «Reintentar», lo que llegó sigue dibujado {"aviso":1,"error":0,"codigo":0,"reintentar":0,"hilos":7}
+ok   paciente-1440-oscuro S9: muestra el ID de petición (mock-fallo) y ofrece «Reintentar» (1)
+ok   paciente-1440-oscuro por fecha detalle-falta: el aviso «historia-detalle-falta» está a la vista y las atenciones siguen dibujadas {"hay":true,"codigo":"mock-fallo","reintentar":1,"atenciones":11}
+ok   paciente-1440-oscuro por fecha detalle-falta: S9 con su ID de petición y «Reintentar» (mock-fallo, 1)
+ok   paciente-1440-oscuro por fecha detalle-falta: sin desplazamiento horizontal (1440 ≤ 1440)
+ok   paciente-1440-oscuro por fecha citas-sin-cargar: el aviso «historia-citas-sin-cargar» está a la vista y las atenciones siguen dibujadas {"hay":true,"codigo":"mock-fallo","reintentar":1,"atenciones":11}
+ok   paciente-1440-oscuro por fecha citas-sin-cargar: S9 con su ID de petición y «Reintentar» (mock-fallo, 1)
+ok   paciente-1440-oscuro por fecha citas-sin-cargar: sin desplazamiento horizontal (1440 ≤ 1440)
+ok   paciente-1440-oscuro: consola sin errores ajenos a los fallos provocados (4 provocados) []
+
+TODO OK
