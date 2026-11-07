@@ -93,6 +93,12 @@ test('la cuenta de una organización: menú sin opciones de paciente, inicio pro
   await expect(page.getByTestId('ficha-representante')).toContainText('Mariana Siles');
   await page.getByTestId('representante-cambiar-nombre').click();
   // La ficha del alta de la maqueta sólo trae el nombre completo: las partes se escriben.
+  // The sheet takes the whole row and the name block fills the sheet (no empty column beside it).
+  const seccion = await page.getByTestId('ficha-representante').locator('xpath=..').boundingBox();
+  const ficha = await page.getByTestId('ficha-representante').boundingBox();
+  const bloque = await page.getByTestId('representante-editor').boundingBox();
+  expect(ficha!.width, 'la ficha no ocupa el ancho de la sección').toBeGreaterThan(seccion!.width * 0.95);
+  expect(bloque!.width, 'el formulario no ocupa el ancho de la ficha').toBeGreaterThan(ficha!.width * 0.85);
   // Same block as the registration: third name and any number of further names.
   await page.getByTestId('representante-nombre').fill('Mariana');
   await page.getByTestId('representante-segundo-nombre').fill('Elena');
