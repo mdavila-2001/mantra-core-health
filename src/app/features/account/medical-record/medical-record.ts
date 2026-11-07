@@ -25,7 +25,7 @@ import type { ConceptLabels } from '../../../core/data-access/terminology/termin
 import { isAllergyCode } from '../../../shared/utils/allergies/allergies';
 import { describeApiFailure } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
+import { dataOf, empty, failureOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
@@ -71,7 +71,7 @@ import {
   type EncounterInHistory,
 } from './history-view-model';
 import { recorridoDelPaciente, type Recorrido } from './mi-recorrido/episodios';
-import { fallido, MiRecorrido, type SeccionDeDestino } from './mi-recorrido/mi-recorrido';
+import { MiRecorrido, type SeccionDeDestino } from './mi-recorrido/mi-recorrido';
 import { registrosDelPortal } from './mi-recorrido/registro-con-vinculos';
 
 /** Tope por bloque. El backend admite hasta 200; nadie lee doscientas filas. */
@@ -330,7 +330,7 @@ export class MedicalRecord {
   protected readonly cargandoDetalle = computed(() => this.detalle()?.status === 'loading');
 
   /** The read failed, in its M34 state (S5 is not S9): the line is drawn with what there is. */
-  protected readonly faltaDelDetalle = computed(() => fallido(this.detalle()));
+  protected readonly faltaDelDetalle = computed(() => failureOf(this.detalle()));
 
   /**
    * Someone expanded an encounter.

@@ -1,7 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 
-import { hasData, isLoading } from '../../../../core/view-state/view-state';
+import { failureOf, isLoading } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AccordionPanel } from '../../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
@@ -92,8 +92,8 @@ export class MiRecorrido {
   });
 
   /** The read failed: `falta/` tells S5 from S9 (no retry on a wall, request id on a fault). */
-  protected readonly faltaDelDetalle = computed(() => fallido(this.detalle()));
-  protected readonly faltaDeLasCitas = computed(() => fallido(this.citasSinCargar()));
+  protected readonly faltaDelDetalle = computed(() => failureOf(this.detalle()));
+  protected readonly faltaDeLasCitas = computed(() => failureOf(this.citasSinCargar()));
 
   protected readonly vacio = computed(() => {
     const r = this.recorrido();
@@ -260,9 +260,4 @@ function registrosDe(episodio: Episodio): readonly RegistroConVinculos[] {
     ...episodio.descartados,
     ...episodio.sueltos.map((h) => h.registro),
   ];
-}
-
-/** The state when it is a failure (neither in flight nor with data), `null` otherwise. */
-export function fallido<T>(estado: ViewState<T> | null): ViewState<T> | null {
-  return estado === null || isLoading(estado) || hasData(estado) ? null : estado;
 }

@@ -2,6 +2,7 @@ import {
   canRequestSensitiveData,
   dataOf,
   empty,
+  failureOf,
   fieldIssueOf,
   forbidden,
   hasData,
@@ -314,6 +315,21 @@ describe('ViewState · los 9 estados del M34', () => {
     it('devuelve texto vacío fuera de S4: no hay problemas por campo que mostrar', () => {
       expect(fieldIssueOf(loading(), 'medicationConceptId')).toBe('');
       expect(fieldIssueOf(unexpectedError('req-1'), 'medicationConceptId')).toBe('');
+    });
+  });
+  describe('failureOf', () => {
+    it('devuelve el estado de falla tal cual (S5, S8, S9, S4, S6 y S3)', () => {
+      const fallas = [forbidden(), offline(), unexpectedError('req-1'), validation([]), notFound(), empty({ label: 'Ir' })];
+      for (const estado of fallas) {
+        expect(failureOf(estado)).toBe(estado);
+      }
+    });
+
+    it('devuelve null en vuelo, con datos o sin lectura', () => {
+      expect(failureOf(loading())).toBeNull();
+      expect(failureOf(ready(1))).toBeNull();
+      expect(failureOf(stale(1, new Date(0)))).toBeNull();
+      expect(failureOf(null)).toBeNull();
     });
   });
 });
