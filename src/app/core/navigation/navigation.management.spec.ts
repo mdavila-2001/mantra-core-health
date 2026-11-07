@@ -189,4 +189,32 @@ describe('Menú del perfil de gestión', () => {
       }
     });
   });
+
+  describe('menú real de una sesión mixta y orden por dominio', () => {
+    it('SUPERADMIN + PATIENT ve la gestión y «Mi cuenta», pero no «Atención» heredada por el comodín', () => {
+      abrirSesion(['SUPERADMIN', 'PATIENT']);
+      const grupos = service.menu().map((g) => g.label);
+      expect(rutasDelMenu()).toEqual(
+        expect.arrayContaining(['/superadmin/observability', '/my-account/appointments']),
+      );
+      expect(grupos).not.toContain('Atención');
+    });
+
+    it('una sesión solo de gestión sigue sin «Mi cuenta»', () => {
+      abrirSesion(['SUPERADMIN']);
+      expect(service.menu().map((g) => g.label)).not.toContain('Mi cuenta');
+    });
+
+    it('«Administración» se dibuja por dominio y no pierde ninguna ruta', () => {
+      abrirSesion(['SUPERADMIN']);
+      const admin = service.menu().find((g) => g.label === 'Administración')!;
+      const etiquetas = admin.blocks.map((b) => b.label);
+      expect(etiquetas.indexOf('Personas')).toBeLessThan(etiquetas.indexOf('Organizaciones'));
+      expect(etiquetas.indexOf('Identidad y accesos')).toBeLessThan(etiquetas.indexOf('Organizaciones'));
+      expect(etiquetas.indexOf('Organizaciones')).toBeLessThan(etiquetas.indexOf('Catálogos y contenido'));
+      expect(admin.blocks.flatMap((b) => b.items.map((i) => i.route)).sort()).toEqual(
+        admin.items.map((i) => i.route).sort(),
+      );
+    });
+  });
 });
