@@ -1,5 +1,5 @@
 import type { Routes } from '@angular/router';
-import { APP_TITLE } from '../core/navigation/navigation.types';
+import { APP_TITLE, ROLES_ROUTE_DATA } from '../core/navigation/navigation.types';
 import { seccionRolesGuard } from '../core/navigation/section-roles.guard';
 import { organizacionAdministrableGuard } from '../features/admin/organizations/organization-admin.guard';
 import { affiliationRoutes } from '../features/organization/practitioner-affiliations/affiliation.routes';
@@ -15,6 +15,17 @@ import { chunkFallido } from './chunk-fallido';
  * Pantallas hijas de reclamos de seguros, perfil/onboarding, afiliaciones, internación y organizaciones.
  */
 export const PANTALLAS_HIJAS_ADMIN: Routes = [
+  {
+    // Read-only services grid. Roles mirror `administration/services-catalog`; the API stays the authority.
+    path: 'administration/services-grid',
+    title: `${APP_TITLE} - Servicios por tipo`,
+    canActivate: [seccionRolesGuard],
+    data: { [ROLES_ROUTE_DATA]: ['SECURITY_ADMIN', 'BILLING'] },
+    loadComponent: () =>
+      import('../features/admin/services-grid/services-grid')
+        .then((m) => m.ServicesGrid)
+        .catch(chunkFallido),
+  },
   {
     path: 'administration/insurance-claims/:claimId',
     title: `${APP_TITLE} - Solicitud de seguro`,
