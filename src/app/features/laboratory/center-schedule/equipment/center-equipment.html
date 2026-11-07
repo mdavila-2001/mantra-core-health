@@ -4,7 +4,7 @@
     mantenimiento, márquelo y el cupo baja solo. Un turno propio se publica con «Publicar horarios».
   </p>
 
-  @if (error(); as mensaje) {
+  @if (editando() !== 'nuevo' && error(); as mensaje) {
     <app-alert tone="error" title="No se guardó" data-testid="centro-equipo-error" dismissible (dismissed)="error.set(null)">{{ mensaje }}</app-alert>
   }
   @if ((centro().bookingsWithoutEquipment ?? 0) > 0) {
@@ -14,14 +14,30 @@
     </app-alert>
   }
 
+  <div class="equipos__barra">
+    <button app-button variant="outline" data-testid="centro-equipo-agregar" [disabled]="ocupado()" (click)="openNew()">Agregar equipo</button>
+  </div>
+
   @if (editando() === 'nuevo') {
-    <app-equipment-form [guardando]="ocupado()" (guardar)="guardar($event)" (cancelar)="editando.set(null)" />
-  } @else {
-    <div class="equipos__barra">
-      <button app-button variant="outline" data-testid="centro-equipo-agregar" [disabled]="ocupado()" (click)="editando.set('nuevo')">
-        Agregar equipo
-      </button>
-    </div>
+    <app-content-dialog
+      heading="Agregar equipo"
+      [description]="newDraft() === null ? 'Elija su equipo del catálogo internacional y le completamos marca y modalidad.' : 'Revise los datos y agregue el número de serie.'"
+      size="xl"
+      [dismissible]="!ocupado()"
+      (closed)="closeNew()"
+    >
+      @if (error(); as mensaje) {
+        <app-alert tone="error" title="No se guardó" dismissible (dismissed)="error.set(null)">{{ mensaje }}</app-alert>
+      }
+      @if (newDraft(); as draft) {
+        <div class="new-step">
+          <button app-button variant="ghost" size="sm" type="button" data-testid="equipment-back-to-catalog" (clicked)="error.set(null); newDraft.set(null)">← Volver al catálogo</button>
+          <app-equipment-form [initial]="draft" [guardando]="ocupado()" (guardar)="guardar($event)" (cancelar)="dialog()?.close()" />
+        </div>
+      } @else {
+        <app-equipment-catalog (picked)="newDraft.set($event)" />
+      }
+    </app-content-dialog>
   }
 
   @for (g of grupos(); track g.code) {

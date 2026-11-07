@@ -15,12 +15,12 @@ export function withCorrectedRepresentative(
   return change && current ? { ...sheet, legalRepresentative: { ...current, ...change } } : sheet;
 }
 
-/** `PATCH /tenants/:id/legal-representative`, as the API answers it: administrators only. */
+/** `PATCH /tenants/:id/representatives/LEGAL_REPRESENTATIVE/name`, as the API answers it: administrators only. */
 export function registerLegalRepresentative(
   router: MockRouter,
   canAdminister: (tenantId: string, request: MockRequest) => boolean | undefined,
 ): void {
-  router.patch('/tenants/:id/legal-representative', (request) => {
+  router.patch('/tenants/:id/representatives/LEGAL_REPRESENTATIVE/name', (request) => {
     const id = request.params['id']!;
     const body = cuerpo<{ name: string; middleName: string; lastName: string; motherLastName: string }>(request);
     if (!body.name?.trim() || !body.lastName?.trim()) {

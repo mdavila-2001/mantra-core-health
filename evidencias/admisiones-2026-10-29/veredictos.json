@@ -23,7 +23,7 @@
     {
       "nombre": "La búsqueda va por POST /admissions/search",
       "cond": true,
-      "detalle": "{\"q\":\"4567\",\"status\":\"SUBMITTED\",\"limit\":25,\"sort\":\"due_at\"}"
+      "detalle": "{\"q\":\"4567\",\"status\":\"ENVIADA\",\"limit\":25,\"sort\":\"due_at\"}"
     },
     {
       "nombre": "La búsqueda no escribe el texto en la dirección",
@@ -43,7 +43,7 @@
     {
       "nombre": "Tomar revisión: la respuesta deja la admisión en revisión",
       "cond": true,
-      "detalle": "HTTP 200 → IN_REVIEW"
+      "detalle": "HTTP 200 → EN_REVISION"
     },
     {
       "nombre": "Tras recargar (F5) sigue en revisión",
@@ -63,7 +63,7 @@
     {
       "nombre": "Verificar: la petición lleva fuente, fecha, huella y versión",
       "cond": true,
-      "detalle": "{\"decision\":\"VERIFIED\",\"sourceType\":\"MINSALUD_REGISTRY\",\"sourceConsultedAt\":\"2026-10-29\",\"evidenceSha256\":\"a6627b7c85d544c8abc288cc89915cc4b6581653c0ab476ba555eb7881b6c46e\",\"expectedRowVersion\":3}"
+      "detalle": "{\"decision\":\"VERIFIED\",\"sourceType\":\"REGISTRO_MINSALUD\",\"sourceConsultedAt\":\"2026-11-07\",\"evidenceSha256\":\"d4a8cd5eabbc4efcac2dbd5e3c339c1add395d074c684abba65b3e94f0320372\",\"expectedRowVersion\":1}"
     },
     {
       "nombre": "Verificar: la respuesta marca el requisito como verificado",
@@ -83,7 +83,7 @@
     {
       "nombre": "Rechazar: código + texto para el médico + nota interna aparte",
       "cond": true,
-      "detalle": "{\"decision\":\"REJECTED\",\"reason\":\"Falta el reverso del documento.\",\"reasonCode\":\"INCOMPLETE_DOCUMENT\",\"internalNote\":\"Pedir también el original en la próxima cita.\",\"evidenceSha256\":\"fdb00aadd42d45abac7ed09e14b5eb08d7527ed24a8f43a8ad8d0f16cadd6cfa\",\"expectedRowVersion\":7}"
+      "detalle": "{\"decision\":\"REJECTED\",\"evidenceSha256\":\"95d08ff7d32d4a53a76e993c9bd05f7a69a7020e3f094784aa425736994191d2\",\"reasonCode\":\"DOCUMENTO_INCOMPLETO\",\"reason\":\"Falta el reverso del documento.\",\"internalNote\":\"Pedir también el original en la próxima cita.\",\"expectedRowVersion\":1}"
     },
     {
       "nombre": "La nota interna se rotula «no la ve el profesional»",
@@ -93,7 +93,7 @@
     {
       "nombre": "El carrusel muestra el contador «1 de N»",
       "cond": true,
-      "detalle": "1 de 66"
+      "detalle": "1 de 5"
     },
     {
       "nombre": "Las imágenes se muestran dentro de la ficha",
@@ -133,7 +133,7 @@
     {
       "nombre": "Decisión final: sin ítems en la petición, solo decisión y versión",
       "cond": true,
-      "detalle": "{\"decision\":\"VERIFIED\",\"expectedRowVersion\":8}"
+      "detalle": "{\"decision\":\"VERIFIED\",\"expectedRowVersion\":3}"
     },
     {
       "nombre": "Decisión final: la respuesta es VERIFIED",
@@ -161,7 +161,7 @@
       "detalle": ""
     },
     {
-      "nombre": "Reenviar sin la atestación no manda nada y lo dice",
+      "nombre": "Reenviar sin la atestación: el botón está bloqueado, no manda nada y lo dice",
       "cond": true,
       "detalle": ""
     },
@@ -198,7 +198,7 @@
     {
       "nombre": "409: evidencia cambiada, no se decide a ciegas",
       "cond": true,
-      "detalle": ""
+      "detalle": "HTTP 409 ADMISSION_EVIDENCE_CHANGED · evidencia reemplazada en «REGISTRO_COLEGIO_MEDICO»"
     },
     {
       "nombre": "Se avisa «El profesional cambió este documento; revíselo de nuevo.»",
@@ -213,12 +213,12 @@
     {
       "nombre": "Con 59 documentos el contador y la tira aguantan",
       "cond": true,
-      "detalle": "1 de 66"
+      "detalle": "1 de 63"
     },
     {
       "nombre": "El paciente no entra a «Admisiones» (el guard lo manda al panel)",
       "cond": true,
-      "detalle": "http://127.0.0.1:4301/dashboard"
+      "detalle": "http://localhost:4200/dashboard"
     },
     {
       "nombre": "Sin errores de consola de la aplicación",

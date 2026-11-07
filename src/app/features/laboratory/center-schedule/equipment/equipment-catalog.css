@@ -1,0 +1,91 @@
+/* International device catalog: filters on top, a responsive grid of cards. */
+
+:host {
+  display: block;
+}
+
+.catalog {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.catalog__filters {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.catalog__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  block-size: 100%;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+}
+
+.card__modality {
+  align-self: flex-start;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-pill);
+  background: var(--bg-active);
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+}
+
+.card__maker,
+.card__country,
+.card__detail {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.card__maker {
+  margin-block-start: var(--sp-2);
+}
+
+.card__model {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  color: var(--text-primary);
+}
+
+.card__detail {
+  flex: 1;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+}
+
+.card button {
+  align-self: flex-start;
+  margin-block-start: var(--sp-2);
+}
+
+.catalog__empty {
+  grid-column: 1 / -1;
+  color: var(--text-secondary);
+}
+
+.catalog__by-hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--text-secondary);
+}

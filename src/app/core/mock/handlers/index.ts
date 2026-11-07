@@ -90,6 +90,7 @@ import { registrarAltaDeMedicoAsistida } from './assisted-practitioner.handlers'
 import { registrarFlujos } from './flows.handlers';
 import { registrarTrafico } from './ops-traffic.handlers';
 import { registrarSondaDeVida } from './ops-liveness.handlers';
+import { registrarConsentimientoDeTracking } from './telemetry-consent.handlers';
 import { registrarSondaCatalogo } from './catalog-fit.handlers';
 import { registrarHerramientas } from './ops-tools.handlers';
 import { registrarDispositivos } from './analytics-devices.handlers';
@@ -225,6 +226,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarCatalogoDeModulos(router);
   registrarTrafico(router);
   registrarSondaDeVida(router);
+  registrarConsentimientoDeTracking(router);
   registrarSondaCatalogo(router);
   registrarHerramientas(router);
   registrarDispositivos(router);

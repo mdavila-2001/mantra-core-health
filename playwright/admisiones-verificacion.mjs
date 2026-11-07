@@ -160,7 +160,7 @@ async function main() {
   await esperar(900);
   const claim = (await desde(n)).find((p) => p.url.endsWith('/claim'));
   ok('Tomar revisión: la petición lleva la versión vista', claim?.method === 'POST' && typeof claim.body?.expectedRowVersion === 'number', JSON.stringify(claim?.body));
-  ok('Tomar revisión: la respuesta deja la admisión en revisión', claim?.status === 200 && claim?.respuesta?.status?.code === 'IN_REVIEW', `HTTP ${claim?.status} → ${claim?.respuesta?.status?.code}`);
+  ok('Tomar revisión: la respuesta deja la admisión en revisión', claim?.status === 200 && claim?.respuesta?.status?.code === 'EN_REVISION', `HTTP ${claim?.status} → ${claim?.respuesta?.status?.code}`);
   await pagina.reload({ waitUntil: 'domcontentloaded' });
   await pagina.waitForSelector('[data-testid="admission-card"]');
   ok('Tras recargar (F5) sigue en revisión', /En revisión/.test(await q('admission-status').innerText()));
@@ -173,7 +173,8 @@ async function main() {
 
   // Verificar el primero, con su fuente.
   n = await cuenta();
-  await q('requirement-verify').first().click();
+  // The first requirement (identity, a data item) needs no source; the second (the licence) does.
+  await q('requirement-verify').nth(1).click();
   await pagina.waitForSelector('[data-testid="admission-review-form"]');
   await fotos('05-dialogo-verificar-fuente', { completa: false });
   await q('admission-review-confirm').click();
@@ -184,8 +185,8 @@ async function main() {
   await q('admission-review-confirm').click();
   await esperar(900);
   let rev = (await desde(n)).find((p) => p.url.includes('/review'));
-  ok('Verificar: la petición lleva fuente, fecha, huella y versión', rev?.body?.decision === 'VERIFIED' && rev.body.sourceType === 'MINSALUD_REGISTRY' && /^\d{4}-\d{2}-\d{2}$/.test(rev.body.sourceConsultedAt ?? '') && /^[0-9a-f]{64}$/.test(rev.body.evidenceSha256 ?? ''), JSON.stringify(rev?.body));
-  ok('Verificar: la respuesta marca el requisito como verificado', rev?.status === 200 && rev.respuesta.requirements.some((r) => r.status === 'VERIFIED'));
+  ok('Verificar: la petición lleva fuente, fecha, huella y versión', rev?.body?.decision === 'VERIFIED' && rev.body.sourceType === 'REGISTRO_MINSALUD' && /^\d{4}-\d{2}-\d{2}$/.test(rev.body.sourceConsultedAt ?? '') && /^[0-9a-f]{64}$/.test(rev.body.evidenceSha256 ?? ''), JSON.stringify(rev?.body));
+  ok('Verificar: la respuesta marca el requisito como verificado', rev?.status === 200 && rev.respuesta.requirements.some((r) => r.satisfied === true || r.state === 'VERIFIED' || r.items?.some((i) => i.state === 'VERIFIED')));
 
   process.stdout.write('estado de las filas: ' + JSON.stringify(await pagina.locator('[data-testid="requirement-row"]').evaluateAll((rows) => rows.map((r) => `${r.dataset.estado}/${r.querySelector('[data-testid=requirement-verify]')?.getAttribute('aria-disabled')}`))) + ' · live: ' + (await q('admission-live').innerText()) + '\n');
   // Verificar los demás obligatorios, uno por uno, esperando a que cada diálogo se cierre.
@@ -194,8 +195,10 @@ async function main() {
     if ((await pendiente.count()) === 0) break;
     await pendiente.click();
     await pagina.waitForSelector('[data-testid="admission-review-form"]');
-    await pagina.selectOption('[data-testid="admission-review-source-type"]', 'PROVIDED_DOCUMENT');
-    await pagina.locator('app-admission-review-dialog input[type="text"], app-admission-review-dialog input:not([type])').first().fill('Documento cotejado con el original');
+    if ((await pagina.locator('[data-testid="admission-review-source-type"]').count()) > 0) {
+      await pagina.selectOption('[data-testid="admission-review-source-type"]', 'PROVIDED_DOCUMENT');
+      await pagina.locator('app-admission-review-dialog input[type="text"], app-admission-review-dialog input:not([type])').first().fill('Documento cotejado con el original');
+    }
     await q('admission-review-confirm').click();
     await pagina.waitForSelector('[data-testid="admission-review-form"]', { state: 'detached', timeout: 20_000 });
     await esperar(400);
@@ -205,7 +208,7 @@ async function main() {
 
   // Rechazar un opcional con motivo estructurado (y la nota interna separada).
   n = await cuenta();
-  const opcional = pagina.locator('[data-testid="requirement-row"]', { hasText: 'Opcional' }).first();
+  const opcional = pagina.locator('[data-testid="requirement-row"]', { hasText: 'Opcional', has: pagina.locator('[data-testid="requirement-reject"]') }).first();
   await opcional.locator('[data-testid="requirement-reject"]').click();
   await pagina.waitForSelector('[data-testid="admission-review-form"]');
   await q('admission-review-confirm').click();
@@ -218,8 +221,25 @@ async function main() {
   await q('admission-review-confirm').click();
   await esperar(900);
   rev = (await desde(n)).find((p) => p.url.includes('/review'));
-  ok('Rechazar: código + texto para el médico + nota interna aparte', rev?.body?.reasonCode === 'INCOMPLETE_DOCUMENT' && rev.body.reason === 'Falta el reverso del documento.' && rev.body.internalNote?.startsWith('Pedir también'), JSON.stringify(rev?.body));
+  ok('Rechazar: código + texto para el médico + nota interna aparte', rev?.body?.reasonCode === 'DOCUMENTO_INCOMPLETO' && rev.body.reason === 'Falta el reverso del documento.' && rev.body.internalNote?.startsWith('Pedir también'), JSON.stringify(rev?.body));
   ok('La nota interna se rotula «no la ve el profesional»', /Nota interna: no la ve el profesional/.test(await pagina.locator('main').innerText()));
+
+  // The API blocks «Verificar» while ANY item is still pending, even under an optional requirement:
+  // the leftovers are resolved so the approver can decide.
+  await pestana(/Requisitos/);
+  for (let i = 0; i < 8; i += 1) {
+    const sobrante = pagina.locator('[data-testid="requirement-row"][data-estado="pending"] [data-testid="requirement-verify"]').first();
+    if ((await sobrante.count()) === 0) break;
+    await sobrante.click();
+    await pagina.waitForSelector('[data-testid="admission-review-form"]');
+    if ((await pagina.locator('[data-testid="admission-review-source-type"]').count()) > 0) {
+      await pagina.selectOption('[data-testid="admission-review-source-type"]', 'PROVIDED_DOCUMENT');
+      await pagina.locator('app-admission-review-dialog input[type="text"], app-admission-review-dialog input:not([type])').first().fill('Documento cotejado con el original');
+    }
+    await q('admission-review-confirm').click();
+    await pagina.waitForSelector('[data-testid="admission-review-form"]', { state: 'detached', timeout: 20_000 });
+    await esperar(400);
+  }
 
   // Carrusel.
   await pestana(/Documentos/);
@@ -284,7 +304,7 @@ async function main() {
   await esperar(1000);
   const dec = (await desde(n)).find((p) => p.url.endsWith('/decision'));
   ok('Decisión final: sin ítems en la petición, solo decisión y versión', dec && !('items' in dec.body) && dec.body.decision === 'VERIFIED', JSON.stringify(dec?.body));
-  ok('Decisión final: la respuesta es VERIFIED', dec?.status === 200 && dec.respuesta?.status?.code === 'VERIFIED');
+  ok('Decisión final: la respuesta es VERIFIED', dec?.status === 200 && dec.respuesta?.status?.code === 'VERIFICADA');
   await pagina.reload({ waitUntil: 'domcontentloaded' });
   await pagina.waitForSelector('[data-testid="admission-card"]');
   ok('Tras recargar (F5) sigue verificada', /Verificada/.test(await q('admission-status').innerText()));
@@ -306,15 +326,16 @@ async function main() {
   await ir('/my-account');
   await pagina.waitForSelector('[data-testid="admission-status-card"]');
   await fotos('19-medico-perfil-tarjeta');
-  await q('admission-card-resubmit').click();
-  ok('Reenviar sin la atestación no manda nada y lo dice', (await q('admission-card-attest-error').count()) === 1);
+  // Without the declaration ticked the button is disabled (nothing can be sent) and the card says so.
+  n = await cuenta();
+  ok('Reenviar sin la atestación: el botón está bloqueado, no manda nada y lo dice', (await q('admission-card-resubmit').isDisabled()) && (await q('admission-card-attest-error').count()) === 1 && (await desde(n)).filter((p) => p.url.includes('/resubmit')).length === 0);
   await q('admission-card-attest').getByText('Declaro').click();
   n = await cuenta();
   await q('admission-card-resubmit').click();
   await esperar(1000);
   const reenvio = (await desde(n)).find((p) => p.url.endsWith('/resubmit'));
   ok('Reenviar: la petición lleva la atestación y su versión', reenvio?.body?.attested === true && /^\d{4}-\d{2}$/.test(reenvio.body.attestationVersion), JSON.stringify(reenvio?.body));
-  ok('Reenviar: la respuesta es SUBMITTED', reenvio?.status === 200 && reenvio.respuesta?.status?.code === 'SUBMITTED');
+  ok('Reenviar: la respuesta es SUBMITTED', reenvio?.status === 200 && reenvio.respuesta?.status?.code === 'ENVIADA');
   await pagina.reload({ waitUntil: 'domcontentloaded' });
   await pagina.waitForSelector('[data-testid="admission-status-card"]');
   ok('Tras recargar (F5) la tarjeta dice «Enviada»', /Enviada/.test(await q('admission-card-status').innerText()));
@@ -340,7 +361,7 @@ async function main() {
   await q('admission-review-confirm').click();
   await esperar(900);
   const viejo = (await desde(n)).find((p) => p.url.includes('/review'));
-  ok('409: la API responde versión vieja', viejo?.status === 409 && viejo.respuesta?.details?.reason === 'ADMISSION_STALE', `HTTP ${viejo?.status}`);
+  ok('409: la API responde versión vieja', viejo?.status === 409 && viejo.respuesta?.reason === 'ADMISSION_STALE', `HTTP ${viejo?.status}`);
   ok('409: el diálogo sigue abierto, conserva lo escrito y ofrece «Ver cambios»', (await q('admission-review-stale').count()) === 1 && (await pagina.locator('app-admission-review-dialog textarea').first().inputValue()) === 'El nombre no coincide con el registro.');
   await fotos('21-conflicto-409-version', { completa: false });
   await q('admission-review-reload').click();
@@ -350,20 +371,20 @@ async function main() {
   await esperar(900);
   const segundo = (await desde(n)).find((p) => p.url.includes('/review'));
   ok('Tras «Ver cambios» la confirmación sale con la versión nueva y funciona', segundo?.status === 200, `HTTP ${segundo?.status}`);
-  // Evidencia cambiada (409).
-  await q('requirement-verify').nth(1).click();
+  // Changed evidence (409): verify the first requirement that is still pending.
+  await pagina.locator('[data-testid="requirement-row"][data-estado="pending"] [data-testid="requirement-verify"]:not([disabled])').first().click();
   await pagina.waitForSelector('[data-testid="admission-review-form"]');
   await pagina.selectOption('[data-testid="admission-review-source-type"]', 'SEDES');
   const codigo = await pagina.evaluate((id) => {
     const r = window.__mockRequests.filter((x) => x.url.endsWith(`/admissions/${id}`)).pop();
-    return r?.respuesta?.requirements?.[1]?.code ?? 'PROFESSIONAL_LICENSE';
+    return r?.respuesta?.requirements?.find((x) => x.state === 'PENDING')?.code ?? 'PROFESSIONAL_LICENSE';
   }, otraId);
   await pagina.evaluate(([id, c]) => window.__mockAdmisiones.reemplazarEvidencia(id, c), [otraId, codigo]);
   n = await cuenta();
   await q('admission-review-confirm').click();
   await esperar(1200);
   const cambiado = (await desde(n)).find((p) => p.url.includes('/review'));
-  ok('409: evidencia cambiada, no se decide a ciegas', cambiado?.status === 409 && cambiado.respuesta?.details?.reason === 'ADMISSION_EVIDENCE_CHANGED');
+  ok('409: evidencia cambiada, no se decide a ciegas', cambiado?.status === 409 && cambiado.respuesta?.reason === 'ADMISSION_EVIDENCE_CHANGED', `HTTP ${cambiado?.status} ${cambiado?.respuesta?.reason ?? ''} · evidencia reemplazada en «${codigo}»`);
   ok('Se avisa «El profesional cambió este documento; revíselo de nuevo.»', /El profesional cambió este documento; revíselo de nuevo\./.test(await q('admission-notice').innerText()));
   await fotos('22-conflicto-409-evidencia');
 
