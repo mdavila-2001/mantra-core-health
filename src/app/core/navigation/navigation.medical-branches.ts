@@ -2,11 +2,14 @@ import { MEDICAL_ORGANIZATION_TYPES } from '../data-access/directory/directory.t
 import { ANY_ROLE } from './navigation.types';
 import type { AppSection } from './navigation.types';
 
+/** The «Configurar práctica» route: the menu hides it once the organization has its practice. */
+export const MEDICAL_SETUP_PATH = 'administration/medical-center-setup';
+
 /**
- * "Sucursales" for the medical organization (2026-11-06). Lives outside
- * `navigation.map.ts` because that registry is frozen by
- * `scripts/check-max-lines.mjs`; the map spreads it right before
- * "Configurar práctica", so the menu order is unchanged.
+ * "Sucursales" and «Configurar práctica» for the medical organization. They live outside
+ * `navigation.map.ts` because that registry is frozen by `scripts/check-max-lines.mjs`
+ * (Sucursales since 2026-11-06, «Configurar práctica» moved here on 2026-11-07); the
+ * map spreads them in the same place, so the menu order is unchanged.
  */
 export const MEDICAL_ORGANIZATION_BRANCH_SECTIONS: readonly AppSection[] = [
   {
@@ -25,5 +28,27 @@ export const MEDICAL_ORGANIZATION_BRANCH_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Sus sedes en el mapa, con su categoría: casa matriz, sucursal o por defecto.',
     module: 'M04 directory',
+  },
+  {
+    // CM-11 · la organización médica (los cinco tipos del alta) abre su práctica
+    // y su primera sede. Cuelga de `administration/`: una raíz propia se iría al
+    // proxy. La API decide quién puede (membresía OWNER/ADMIN de esa organización
+    // verificada); acá sólo se ofrece la puerta a quien tiene ese tipo de cuenta.
+    // Once the practice exists the menu stops offering it (`NavigationService.menu`);
+    // the route stays reachable for the links that point to it.
+    path: MEDICAL_SETUP_PATH,
+    onlyForTenantTypes: MEDICAL_ORGANIZATION_TYPES,
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Configurar práctica',
+    // Moved out of «Administración» into «Atención» on 2026-11-05 (owner request).
+    group: 'Atención',
+    icon: 'hospital',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary:
+      'Abra la práctica de su organización y su primera sede, con dirección y punto en el mapa.',
+    module: 'M14 practice',
   },
 ];

@@ -5,9 +5,11 @@ import { filter, map } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
 import { navScreenKey } from '../visibility/ui-element-keys';
+import { PracticeSetupStore } from '../data-access/practice-onboarding/practice-setup.store';
 import { UiVisibilityService } from '../visibility/ui-visibility.service';
 import { APP_SECTIONS } from './navigation.map';
 import { esPerfilDeGestion, seccionDeGestion } from './navigation.management';
+import { MEDICAL_SETUP_PATH } from './navigation.medical-branches';
 import { NAV_GROUP_ICONS, SUBGROUP_BY_PATH, seAplanaElGrupo } from './navigation.subgroups';
 import {
   apareceEnElMenu,
@@ -45,6 +47,7 @@ export class NavigationService {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly visibility = inject(UiVisibilityService);
+  private readonly practiceSetup = inject(PracticeSetupStore);
 
   /**
    * Si una regla de visibilidad (`GET /me/ui-visibility`) le oculta la sección a la sesión. Presentación, no
@@ -123,6 +126,8 @@ export class NavigationService {
       (section) =>
         apareceEnElMenu(section, roles, tenants, activeTenantType, accountKind) &&
         this.mostrar(section) &&
+        // «Configurar práctica» is only a door until the practice exists.
+        !(section.path === MEDICAL_SETUP_PATH && this.practiceSetup.done() === true) &&
         section.pinnedTop !== true &&
         (!deGestion || seccionDeGestion(section)),
     );
