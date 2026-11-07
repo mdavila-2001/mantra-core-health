@@ -1,12 +1,9 @@
 # Carril B — Grid de servicios (solo lectura)
 
-## Integración propuesta (NO registrada; la hace otra persona)
+## Integración
 
-- Ruta: `administration/services-grid`
-- Pantalla diferida (en `ADMIN_SCREENS`): `() => import('./services-grid/services-grid').then((m) => m.ServicesGrid)`
-- Entrada de menú (`navigation.map.ts`): `{ path: 'administration/services-grid', label: 'Servicios por tipo', group: 'Administración', icon: 'tag', roles: ['SECURITY_ADMIN', 'BILLING'], availability: 'disponible', module: 'M17 billing' }`
-- Añadirla también a la lista de `navigation.management.ts` junto a `administration/services-catalog`.
-- Los roles son una sugerencia: la autoridad es la API.
+- Ruta REGISTRADA como hija en `src/app/routes/app.routes.hijas-admin.ts`: `administration/services-grid`, con `seccionRolesGuard` y roles `SECURITY_ADMIN`/`BILLING` (los de `services-catalog`; la autoridad es la API).
+- NO registrada: entrada de menú ni `navigation.map.ts`. Propuesta para quien integre: `{ path: 'administration/services-grid', label: 'Servicios por tipo', group: 'Administración', icon: 'tag', roles: ['SECURITY_ADMIN', 'BILLING'], availability: 'disponible', module: 'M17 billing' }`, y sumarla a `navigation.management.ts`. Al hacerlo, quitar la ruta hija para no duplicarla.
 
 ## Estados
 
@@ -29,8 +26,15 @@ Para registrar la ruta y capturar se parchó `admin.screens.ts` y `navigation.ma
 
 ## Gate (`scripts/pre-push-gate.mjs`)
 
-Resultado: **BLOQUEADO — no se ejecutó completo, no hay PR ni push.**
-- `node scripts/pre-push-gate.mjs run --base dev` responde: «front code changed: pass --pw <spec>».
-- El spec debe vivir en `playwright/*.spec.ts` (fuera de la lista de archivos del carril) y la pantalla no es alcanzable sin registrar la ruta (fuera del carril). Se detiene y se reporta (regla 2).
-- Pasos del gate corridos a mano: typecheck 0 errores (`typecheck.log`), eslint limpio (`lint.log`), `yarn build` exit 0 (`build.log`). Playwright del gate: no se ejecutó.
-- Capturas hechas con `capturas.mjs` (Playwright, un navegador, sin `networkidle`; usa pausas fijas, por lo que el gate lo rechazaría como spec).
+Segunda corrida, con `--pw playwright/services-grid.spec.ts`: **PASS** (5 pasos: generate-env, typecheck, lint, build, playwright 4/4). Ver `gate.log`. Primeras corridas fallidas por: navegador del entorno (ver abajo) y dos errores míos del spec, corregidos en commits propios.
+- Ajuste de entorno (no es del repo): `/opt/pw-browsers/chromium_headless_shell-1234` → symlink a la build `1243`, porque el Playwright del repo pide la 1234.
+- La corrida final es sobre el commit que añade este README (solo docs).
+
+## Archivos adicionales a la lista original (autorizados)
+- `playwright/services-grid.spec.ts` (nuevo)
+- `src/app/routes/app.routes.hijas-admin.ts` (+12 líneas, una ruta)
+
+## Pruebas NO ejecutadas
+- API real (todo fue contra el simulador). El 403 de laboratorio se vio en el simulador y por lectura de `LabStaffGuard` en el código de la API; no se probó con la API real.
+- Estado vacío S3 en navegador (solo unitaria), modo oscuro, 768 px, la suite completa `yarn test`.
+- `capturas.mjs` es un script de captura manual (usa pausas fijas): no es el spec del gate.
